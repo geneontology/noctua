@@ -204,7 +204,7 @@ var Sugiyama = function() {
 			     // 	 {'name': 'foo', 'value': 1}
 			     // ],
 			     'body_content':
-			     'Try GO term ID URLs like: <a class="button" href="/term/GO:0022008">/term/GO:0022008</a>'
+			     'Try GO term ID URLs like: <a style="color: blue;" href="/term/GO:0022008">/term/GO:0022008</a>'
 			 };
 			 //console.log(tmpl.toString());
 			 //console.log(tmpl_args);
