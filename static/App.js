@@ -18,8 +18,11 @@ var AppInit = function(){
 	{
 	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
 	    PaintStyle: { strokeStyle:'#666' },
-	    EndpointStyle : { width:20, height:16, strokeStyle:'#666' },
-	    Endpoint : "Rectangle",
+	    EndpointStyles : [{ fillStyle:"#0d78bc" },
+			      { width:15, height:15, strokeStyle:'#666', fillStyle:"#333" }],
+            Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
+	    //Endpoint : "Rectangle",
+//	    Anchor : "AutoDefault",
 	    // Anchors : [
 	    // 	"TopCenter",
 	    // 	"TopCenter",
@@ -30,6 +33,10 @@ var AppInit = function(){
 	    // 	"BottomLeft",
 	    // 	"BottomRight"
 	    // ],
+	    PaintStyle : {
+		strokeStyle:"#558822",
+		lineWidth: 2
+	    },
 	    Container: "main"
         });
 
@@ -101,6 +108,12 @@ var AppInit = function(){
 
     instance.doWhileSuspended(
 	function(){
+	    
+	    // 
+	    //instance.makeSource(jsPlumb.getSelector(".window"),{isSource:true});
+	    //instance.makeSource(jsPlumb.getSelector(".waypoint"),{isSource:true});
+	    instance.makeTarget(jsPlumb.getSelector(".window"));
+	    instance.makeTarget(jsPlumb.getSelector(".waypoint"));
 
 	    // Now let's try to add edges/connections.
 	    each(layout['paths'],
