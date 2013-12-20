@@ -342,13 +342,16 @@ jsPlumb.ready(function(){
 		  var is_defined = bbop.core.is_defined;
 		  
 		  // Only roll if the env is correct.
-		  if( is_defined(global_id) &&
-		      is_defined(global_label) &&
-		      is_defined(global_graph) ){
+		  if( typeof(global_id) !== 'undefined' &&
+		      typeof(global_label) !== 'undefined' &&
+		      typeof(global_graph) !== 'undefined' ){
 		      if( global_switch == 'cytoscape' ){
 			  cytoscapeInit();
 		      }else{
 			  jsPlumbInit();			  
 		      }
+		  }else{
+		      jQuery('#main_cy').remove();
+		      jQuery('#main_jsp').remove();
 		  }
 	      });
