@@ -307,9 +307,14 @@ var expPlumbInit = function(){
 		alert('necessary field empty');
 	    }else{
 		// Add to table.
-		nav_tbl.add_to([b, mf, '', '', '']);
+		table_nav_rows.unshift([b, mf, '', '', '']);
+		var dyn_tbl = new bbop.html.table(table_nav_row_headers,
+						  table_nav_rows,
+						  {'class':
+						   'table table-condensed'});
 		jQuery('#main_exp_table').empty();
-		jQuery('#main_exp_table').append(nav_tbl.to_string());
+		jQuery('#main_exp_table').append(dyn_tbl.to_string());
+		//jQuery('#main_exp_table').append(nav_tbl.to_string());
 	    }
 
 	    // Add to graph.
