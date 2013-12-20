@@ -1,6 +1,6 @@
 var expPlumbInit = function(){
     
-    var logger = new bbop.logger('jsPlumbApp');
+    var logger = new bbop.logger('expPlumbApp');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
     
@@ -8,7 +8,7 @@ var expPlumbInit = function(){
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;
 
-    var container_id = '#' + 'main_jsp';
+    var container_id = '#' + 'main_exp';
     
     ///
     /// jsPlumb preamble.
@@ -19,25 +19,14 @@ var expPlumbInit = function(){
 	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
 	    PaintStyle: { strokeStyle:'#666' },
 	    EndpointStyles : [{ fillStyle:"#0d78bc" },
-			      { width:15, height:15, strokeStyle:'#666', fillStyle:"#333" }],
+			      { width:15, height:15,
+				strokeStyle:'#666', fillStyle:"#333" }],
             Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
-	    //Endpoint : "Rectangle",
-//	    Anchor : "AutoDefault",
-	    // Anchors : [
-	    // 	"TopCenter",
-	    // 	"TopCenter",
-	    // 	"TopLeft",
-	    // 	"TopRight",
-	    // 	"BottomCenter",
-	    // 	"BottomCenter",
-	    // 	"BottomLeft",
-	    // 	"BottomRight"
-	    // ],
 	    PaintStyle : {
 		strokeStyle:"#558822",
 		lineWidth: 2
 	    },
-	    Container: "main_jsp"
+	    Container: "main_exp"
         });
 
     ///

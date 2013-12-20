@@ -277,7 +277,10 @@ var Sugiyama = function() {
 		    var go = new bbop.golr.manager.nodejs(server_loc, gconf);
 		    go.set_personality(personality); // profile in gconf
 		    go.add_query_filter('document_category', doc_type);
-		    go.set_id(query);
+
+		    // Hook the query through this field.
+		    //go.set_id(query);
+		    go.add_query_filter(id_field, query);
 
 		    // Define what we do when our GOlr (async) information
 		    // comes back within the scope of the response we
@@ -351,10 +354,10 @@ var Sugiyama = function() {
 	// Dynamic GOlr output.
 	self.app.get('/demo/:query',
 		     create_request_function('expPlumb',
-					     'ontology',
-					     'ontology_class',
-					     'annotation_class',
-					     'annotation_class_label',
+					     'complex_annotation',
+					     'complex_annotation',
+					     'annotation_group',
+					     'annotation_group_label',
 					     'topology_graph_json'));
     };
 
