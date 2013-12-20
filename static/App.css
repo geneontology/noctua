@@ -169,6 +169,25 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     transition: box-shadow 0.15s ease-in;
 }
 
+.konn {
+    position:absolute;
+    bottom: 37%;
+    top: 5px;
+    right: 5px;
+    width:1em;
+    height:1em;
+    background-color: #B8860B;
+    cursor:pointer;
+    box-shadow: 0px 0px 2px black;
+    -webkit-transition:-webkit-box-shadow 0.25s ease-in;
+    -moz-transition:-moz-box-shadow 0.25s ease-in;
+    transition:box-shadow 0.25s ease-in;
+}
+.konn:hover {
+    box-shadow: 0px 0px 6px black;
+}
+
+
 .demo-links, .library-links {
     position: fixed;
     right: 0;

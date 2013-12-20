@@ -49,7 +49,8 @@ var expPlumbInit = function(){
 	    EndpointStyles : [{ fillStyle:"#0d78bc" },
 			      { width:15, height:15,
 				strokeStyle:'#666', fillStyle:"#333" }],
-            Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
+            Endpoint : ["Dot", { radius:7 } ],
+            //Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
 	    PaintStyle : {
 		strokeStyle:"#558822",
 		lineWidth: 2
@@ -187,7 +188,7 @@ var expPlumbInit = function(){
 	     ll('stack.length: ' + stack.length);
 	     //ll('table: ' + table);
 
-	     jQuery(container_id).append('<div class="demo-window" style="top: ' + _box_top(raw_y) + 'px; left: ' + _box_left(raw_x) + 'px;" id="' + div_id + '">' + table + '</div>');
+	     jQuery(container_id).append('<div class="demo-window" style="top: ' + _box_top(raw_y) + 'px; left: ' + _box_left(raw_x) + 'px;" id="' + div_id + '">' + table + '<div class="konn"></div></div>');
 	 });
 
     // Can not add to table.
@@ -226,6 +227,12 @@ var expPlumbInit = function(){
 	    instance.makeTarget(jsPlumb.getSelector(".demo-window"));
 	    instance.makeTarget(jsPlumb.getSelector(".waypoint"));
 
+            instance.makeSource(jsPlumb.getSelector(".demo-window"), {
+                                    filter:".konn",
+                                    anchor:"Continuous",
+                                    connector:[ "Bezier", { curviness:25 } ]
+                                });
+
 	    // Now let's try to add edges/connections.
 	    each(layout['paths'],
     		 function(path){
@@ -245,7 +252,8 @@ var expPlumbInit = function(){
 			     {
 			 	 source: sub_div,
 			 	 target: obj_div,
-				 anchors:["Top", "Bottom"],
+				 //anchors:["Top", "Bottom"],
+				 anchor:"Continuous",
 				 //connector:"Straight",
                                  connector: ["Bezier", { curviness: 25 } ]
 			     });
@@ -322,10 +330,15 @@ var expPlumbInit = function(){
 	    var dyn_x = 100 + jQuery(container_id).scrollLeft();
 	    var dyn_y = 100 + jQuery(container_id).scrollTop();
 	    var dyn_tbl = '<table><tr style="background-color: #FFFFFF;"><td>' + b + '</td></tr><tr style="background-color: #ADD8E6;"><td>' + mf + '</td></tr></table>';
-	    jQuery(container_id).append('<div class="demo-window" style="top: ' + dyn_y + 'px; left: ' + dyn_x + 'px;" id="' + dyn_id + '">' + dyn_tbl + '</div>');
+	    jQuery(container_id).append('<div class="demo-window" style="top: ' + dyn_y + 'px; left: ' + dyn_x + 'px;" id="' + dyn_id + '">' + dyn_tbl + '<div class="konn"></div></div>');
 
 	    instance.draggable(jsPlumb.getSelector('#' + dyn_id));
 	    instance.makeTarget(jsPlumb.getSelector('#' + dyn_id));
+            instance.makeSource(jsPlumb.getSelector('#' + dyn_id), {
+                                    filter:".konn",
+                                    anchor:"Continuous",
+                                    connector:[ "Bezier", { curviness:25 } ]
+                                });
 
             jsPlumb.repaintEverything();
 	}

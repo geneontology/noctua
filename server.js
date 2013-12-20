@@ -260,8 +260,8 @@ var Sugiyama = function() {
 	///
 
 	// Define the GOlr request conf.
-	//var server_loc = 'http://golr.berkeleybop.org/';
-	var server_loc = 'http://localhost:8080/solr/';
+	var server_loc = 'http://golr.berkeleybop.org/';
+	//var server_loc = 'http://localhost:8080/solr/';
 	var gconf = new bbop.golr.conf(amigo.data.golr);
 
 	// The request functions I use are very similar.
