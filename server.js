@@ -132,6 +132,7 @@ var Sugiyama = function() {
 		'bbop.js': '',
 		'amigo2.js': '',
 		'App.js': '',
+		'waiting_ac.gif': '',
 		'frame.tmpl': ''
 //		'index.html': ''
 	    };
@@ -244,6 +245,11 @@ var Sugiyama = function() {
 	// Other static routes.
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
+	self.app.get('/images/waiting_ac.gif',
+		     function(req, res){
+			 res.setHeader('Content-Type', 'image/gif');
+			 res.send(self.cache_get('waiting_ac.gif'));
+		     });
 	self.app.get('/favicon.ico',
 		     function(req, res){
 			 self.standard_response(res, 200, 'image/x-icon', '');
