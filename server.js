@@ -335,8 +335,8 @@ var Sugiyama = function() {
 
 		    // Run the agent action.
 		    go.register('search', 'do', golr_callback_action);
+		    //console.log('search: ' + go.get_query_url());
 		    go.update('search');
-		    //console.log('update: search');
 		}
 	    };
 	}
