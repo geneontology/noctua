@@ -314,8 +314,10 @@ var expPlumbInit = function(){
 
 	    // Add to graph.
 	    var dyn_id = bbop.core.uuid();
+	    var dyn_x = 100 + jQuery(container_id).scrollLeft();
+	    var dyn_y = 100 + jQuery(container_id).scrollTop();
 	    var dyn_tbl = '<table><tr style="background-color: #FFFFFF;"><td>' + b + '</td></tr><tr style="background-color: #ADD8E6;"><td>' + mf + '</td></tr></table>';
-	    jQuery(container_id).append('<div class="demo-window" style="top: ' + 100 + 'px; left: ' + 100 + 'px;" id="' + dyn_id + '">' + dyn_tbl + '</div>');
+	    jQuery(container_id).append('<div class="demo-window" style="top: ' + dyn_y + 'px; left: ' + dyn_x + 'px;" id="' + dyn_id + '">' + dyn_tbl + '</div>');
 
 	    instance.draggable(jsPlumb.getSelector('#' + dyn_id));
 	    instance.makeTarget(jsPlumb.getSelector('#' + dyn_id));
