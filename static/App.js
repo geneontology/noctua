@@ -35,9 +35,8 @@ var expPlumbInit = function(){
 	return _box_left(raw_x) + (box_width / 2.0);
     }
 
-    function _stack_to_div(stack, x, y){
-	
-    }
+    // function _stack_to_div(stack, x, y){	
+    // }
 
     ///
     /// jsPlumb preamble.
@@ -275,7 +274,7 @@ var expPlumbInit = function(){
 	'value_template': '{{annotation_class_label}}',
 	'list_select_callback':
 	function(doc){
-	    alert('adding: ' + doc['annotation_class_label']);
+	    //alert('adding: ' + doc['annotation_class_label']);
 	}
     };
     var mf_auto = new bbop.widget.search_box(gserv, gconf, 'mf_auto', mf_args);
@@ -283,18 +282,17 @@ var expPlumbInit = function(){
     mf_auto.add_query_filter('regulates_closure_label', 'molecular_function');
     mf_auto.set_personality('ontology');
 
-    var bp_args = {
-	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-	'value_template': '{{annotation_class_label}}',
+    var b_args = {
+	'label_template': '{{bioentity_label}} ({{bioentity}})',
+	'value_template': '{{bioentity_label}}',
 	'list_select_callback':
 	function(doc){
-	    alert('adding: ' + doc['annotation_class_label']);
+	    //alert('adding: ' + doc['bioentity_label']);
 	}
     };
-    var bp_auto = new bbop.widget.search_box(gserv, gconf, 'bp_auto', bp_args);
-    bp_auto.add_query_filter('document_category', 'ontology_class');
-    bp_auto.add_query_filter('regulates_closure_label', 'biological_process');
-    bp_auto.set_personality('ontology');
+    var b_auto = new bbop.widget.search_box(gserv, gconf, 'b_auto', b_args);
+    b_auto.add_query_filter('document_category', 'bioentity');
+    b_auto.set_personality('bioentity');
 
     ///
     /// Add button function activity.
@@ -303,19 +301,25 @@ var expPlumbInit = function(){
     jQuery('#adder').click(
 	function(){
 	    var mf = mf_auto.content();
-	    var bp = bp_auto.content();
+	    var b = b_auto.content();
 
-	    if( mf == '' || bp == '' ){
+	    if( mf == '' || b == '' ){
 		alert('necessary field empty');
 	    }else{
 		// Add to table.
-		nav_tbl.add_to(['', mf, '', bp, '']);
+		nav_tbl.add_to([b, mf, '', '', '']);
 		jQuery('#main_exp_table').empty();
 		jQuery('#main_exp_table').append(nav_tbl.to_string());
 	    }
 
 	    // Add to graph.
-	    
+	    var dyn_id = bbop.core.uuid();
+	    var dyn_tbl = '<table><tr style="background-color: #FFFFFF;"><td>' + b + '</td></tr><tr style="background-color: #ADD8E6;"><td>' + mf + '</td></tr></table>';
+	    jQuery(container_id).append('<div class="demo-window" style="top: ' + 100 + 'px; left: ' + 100 + 'px;" id="' + dyn_id + '">' + dyn_tbl + '</div>');
+
+	    instance.draggable(jsPlumb.getSelector('#' + dyn_id));
+	    instance.makeTarget(jsPlumb.getSelector('#' + dyn_id));
+
             jsPlumb.repaintEverything();
 	}
     );
