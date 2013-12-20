@@ -128,6 +128,7 @@ var Sugiyama = function() {
 		'bootstrap.min.js': '',
 		'jquery-ui-1.10.3.custom.min.js': '',
 		'jquery.jsPlumb-1.5.5.js': '',
+		'cytoscape.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',
 		'App.js': '',
@@ -204,7 +205,7 @@ var Sugiyama = function() {
 			     // 	 {'name': 'foo', 'value': 1}
 			     // ],
 			     'body_content':
-			     'Try GO term ID URLs like: <a style="color: blue;" href="/term/GO:0022008">/term/GO:0022008</a>'
+			     'Try GO term ID URLs like: <br /><a style="color: blue;" href="/term/GO:0022008">/term/GO:0022008</a> (jsPlumb)<br /><a style="color: blue;" href="/node/GO:0022008">/node/GO:0022008</a> (cytoscape.js)'
 			 };
 			 //console.log(tmpl.toString());
 			 //console.log(tmpl_args);
@@ -257,8 +258,9 @@ var Sugiyama = function() {
 	var gconf = new bbop.golr.conf(amigo.data.golr);
 
 	// The request functions I use are very similar.
-	function create_request_function(personality, doc_type,
-					 id_field, label_field, graph_field){
+	// This is for jsPlumb.
+	function create_request_function_1(personality, doc_type,
+					   id_field, label_field, graph_field){
 
 	    return function(req, res) {
 
@@ -298,6 +300,10 @@ var Sugiyama = function() {
 			    var tmpl_args = {
 				'js_variables': [
 					 {
+					     'name': 'global_switch',
+					     'value': '"jsPlumb"'
+					 },
+					 {
 					     'name': 'global_id',
 					     'value': '"' + id + '"'
 					 },
@@ -324,14 +330,94 @@ var Sugiyama = function() {
 		}
 	    };
 	}
-
 	// Dynamic GOlr output.
 	self.app.get('/term/:query',
-		     create_request_function('ontology',
-					     'ontology_class',
-					     'annotation_class',
-					     'annotation_class_label',
-					     'topology_graph_json'));
+		     create_request_function_1('ontology',
+					       'ontology_class',
+					       'annotation_class',
+					       'annotation_class_label',
+					       'topology_graph_json'));
+
+	// The request functions I use are very similar.
+	// This is for cytoscape.js.
+	function create_request_function_2(personality, doc_type,
+					   id_field, label_field, graph_field){
+
+	    return function(req, res) {
+
+		//console.log(req.route);
+		//console.log(req.route.params['query']);
+		var query = req.route.params['query'] || '';
+		if( ! query || query == '' ){
+		    // Catch error here if no proper ID.
+		    res.setHeader('Content-Type', 'text/html');
+		    res.send('no identifier');
+		}else{
+		    
+		    // Try AmiGO 2 action.
+		    var go = new bbop.golr.manager.nodejs(server_loc, gconf);
+		    go.set_personality(personality); // profile in gconf
+		    go.add_query_filter('document_category', doc_type);
+		    go.set_id(query);
+
+		    // Define what we do when our GOlr (async) information
+		    // comes back within the scope of the response we
+		    // need to end.
+		    function golr_callback_action(gresp){
+
+			// There should be only one return doc.
+			var doc = gresp.get_doc(0);
+			if( ! doc ){
+			    res.setHeader('Content-Type', 'text/html');
+			    res.send('bad doc:' + query);
+			}else{
+			    var id = doc[id_field];
+			    var label = doc[label_field];
+			    var graph = doc[graph_field];
+			    
+			    // Assemble return doc.
+			    res.setHeader('Content-Type', 'text/html');
+			    var tmpl = self.cache_get('frame.tmpl').toString();
+			    var tmpl_args = {
+				'js_variables': [
+					 {
+					     'name': 'global_switch',
+					     'value': '"cytoscape"'
+					 },
+					 {
+					     'name': 'global_id',
+					     'value': '"' + id + '"'
+					 },
+					 {
+					     'name': 'global_label',
+					     'value': '"' + label + '"'
+					 },
+					 {
+					     'name': 'global_graph',
+					     'value': graph
+					 }
+				],
+				'body_content': label + ' (' + id + ')'
+			    };
+			    var ret = mustache.render(tmpl, tmpl_args);
+			    res.send(ret);
+			}
+		    }
+
+		    // Run the agent action.
+		    go.register('search', 'do', golr_callback_action);
+		    go.update('search');
+		    //console.log('update: search');
+		}
+	    };
+	}
+	// Dynamic GOlr output.
+	self.app.get('/node/:query',
+		     create_request_function_2('ontology',
+					       'ontology_class',
+					       'annotation_class',
+					       'annotation_class_label',
+					       'topology_graph_json'));
     };
 
     // Initializes the sample application.
