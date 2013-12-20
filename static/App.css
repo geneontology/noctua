@@ -49,7 +49,7 @@ a:active {
 }
 
 
-.window, .label {
+.window, .demo-window, .label {
     
     text-align:center;
     z-index:24;
@@ -120,7 +120,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     -moz-box-shadow: 2px 2px 19px #e0e0e0;
     -moz-border-radius:0.5em;
     border-radius:0.5em;
-    width:5em; height:5em;
+    /* width:5em; height:5em; */
     position:absolute;
     color:black;
     padding:0.5em;
@@ -133,7 +133,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     transition: box-shadow 0.15s ease-in;
 }
 
-.window:hover {
+.window:hover, .demo-window:hover {
     border:1px solid #123456;
     box-shadow: 2px 2px 19px #444;
     -o-box-shadow: 2px 2px 19px #444;
@@ -143,8 +143,30 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     filter:alpha(opacity=90);
 }
 
-.window a {
+.window a, .demo-window a {
     font-family:helvetica;
+}
+
+.demo-window {
+    background-color:white;
+    border:1px solid #346789;
+    box-shadow: 2px 2px 19px #e0e0e0;
+    -o-box-shadow: 2px 2px 19px #e0e0e0;
+    -webkit-box-shadow: 2px 2px 19px #e0e0e0;
+    -moz-box-shadow: 2px 2px 19px #e0e0e0;
+    -moz-border-radius:0.5em;
+    border-radius:0.5em;
+    /* width:5em; height:5em; */
+    position:absolute;
+    color:black;
+    padding:0.5em;
+    width:150px;
+    /* height:100px; */
+    /* line-height: 80px; */
+    -webkit-transition: -webkit-box-shadow 0.15s ease-in;
+    -moz-transition: -moz-box-shadow 0.15s ease-in;
+    -o-transition: -o-box-shadow 0.15s ease-in;
+    transition: box-shadow 0.15s ease-in;
 }
 
 .demo-links, .library-links {

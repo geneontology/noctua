@@ -7,46 +7,18 @@ var expPlumbInit = function(){
     // Aliases
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;
+    var what_is = bbop.core.what_is;
 
-    var container_id = '#' + 'main_exp';
+    var container_id = '#' + 'main_exp_graph';
     
     ///
-    /// jsPlumb preamble.
+    /// Render helpers.
     ///
-
-    var instance = jsPlumb.getInstance(
-	{
-	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
-	    PaintStyle: { strokeStyle:'#666' },
-	    EndpointStyles : [{ fillStyle:"#0d78bc" },
-			      { width:15, height:15,
-				strokeStyle:'#666', fillStyle:"#333" }],
-            Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
-	    PaintStyle : {
-		strokeStyle:"#558822",
-		lineWidth: 2
-	    },
-	    Container: "main_exp"
-        });
-
-    ///
-    /// Graphy stuff.
-    ///
-
-    var id = global_id;
-    var label = global_label;
-    var graph_json = global_graph;
-
-    // Load graph and extract a layout.
-    var g = new bbop.model.graph();
-    g.load_json(graph_json);
-    var r = new bbop.layout.sugiyama.render();
-    var layout = r.layout(g);
 
     // Add the necessary elements to the display.
     var h_spacer = 75;
     var v_spacer = 75;
-    var box_width = 120;
+    var box_width = 150;
     var box_height = 100;
     var vbox_width = 5;
     var vbox_height = 5;
@@ -63,7 +35,50 @@ var expPlumbInit = function(){
 	return _box_left(raw_x) + (box_width / 2.0);
     }
 
+    function _stack_to_div(stack, x, y){
+	
+    }
+
+    ///
+    /// jsPlumb preamble.
+    ///
+
+    var instance = jsPlumb.getInstance(
+	{
+	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
+	    PaintStyle: { strokeStyle:'#666' },
+	    EndpointStyles : [{ fillStyle:"#0d78bc" },
+			      { width:15, height:15,
+				strokeStyle:'#666', fillStyle:"#333" }],
+            Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
+	    PaintStyle : {
+		strokeStyle:"#558822",
+		lineWidth: 2
+	    },
+	    Container: "main_exp_graph"
+        });
+
+    ///
+    /// Graphy stuff.
+    ///
+
+    var id = global_id;
+    var label = global_label;
+    var graph_json = global_graph;
+
+    // Load graph.
+    var g = new bbop.model.graph();
+    g.load_json(graph_json);
+
+    // Extract the gross layout.
+    var r = new bbop.layout.sugiyama.render();
+    var layout = r.layout(g);
+
+    //
     var term2div = {};
+    var table_nav_row_headers =
+	['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
+    var table_nav_rows = [];
     each(layout['nodes'],
 	 function(litem, index){
 
@@ -73,8 +88,116 @@ var expPlumbInit = function(){
 	     var div_id = 'ddid' + index;
 	     term2div[id] = div_id;
 
-	     jQuery(container_id).append('<div class="window" style="top: ' + _box_top(raw_y) + 'px; left: ' + _box_left(raw_x) + 'px;" id="' + div_id + '">' + id + '</div>');
+	     // Right, but we also want real data and
+	     // meta-information.
+	     var enby = '';
+	     var actv = '';
+	     var unk = [];
+	     var proc = '';
+	     var loc = [];
+	     var node = g.get_node(id);
+	     //var node = g._nodes.hash[id];
+	     if( node ){
+		 ll('node id: ' + id);
+		 ll('node: ' + bbop.core.dump(node));
+		 var meta = node.metadata();
+		 if( meta ){
+		     if( meta['enabled_by'] ){
+			 enby = meta['enabled_by'];
+		     }
+		     if( meta['unknown'] ){
+			 unk = meta['unknown'];
+		     }
+		     if( meta['activity'] ){
+			 actv = meta['activity'];
+		     }
+		     if( meta['process'] ){
+			 proc = meta['process'];
+		     }
+		     if( meta['location'] ){
+			 loc = meta['location'];
+		     }
+		 }
+	     }
+
+	     // Simulate VisualizeServer's stack.
+	     var table_row = [];
+	     var stack = [];
+
+	     table_row.push(enby);
+	     if( enby ){
+		 stack.push({
+				'color': '#FFFFFF',
+				'field': 'enabled by',
+				'label': enby
+			    });
+	     }
+
+	     table_row.push(actv);
+	     if( actv ){
+		 stack.push({
+				'color': '#ADD8E6',
+				'field': 'activity',
+				'label': actv
+			    });
+	     }
+
+	     table_row.push(unk.join('<br />'));
+	     if( unk && what_is(unk) == 'array' ){
+		 each(unk,
+		     function(item){
+			 stack.push({
+					'color': '#FFF0F5',
+					'field': 'unknown',
+					'label': item
+				    });
+		     });
+	     }
+
+	     table_row.push(proc);
+	     if( proc ){
+		 stack.push({
+				'color': '#FF7F50',
+				'field': 'process',
+				'label': proc
+			    });
+	     }
+
+	     table_row.push(loc.join('<br />'));
+	     if( loc && what_is(loc) == 'array' ){
+		 each(loc,
+		     function(item){
+			 stack.push({
+					'color': '#FFFF00',
+					'field': 'location',
+					'label': item
+				    });
+		     });
+	     }
+
+	     // Add possibly nested row into table
+	     table_nav_rows.push(table_row);
+
+	     // Assemble the stack into a table.
+	     var tr_cache = [];
+	     each(stack,
+		  function(item){
+		      tr_cache.push('<tr style="background-color: ' + item['color'] + ';"><td>' + item['label'] + '</td></tr>');   
+		  });
+	     var table = '<table>' + tr_cache.join('') + '</table>';
+	     ll('stack.length: ' + stack.length);
+	     //ll('table: ' + table);
+
+	     jQuery(container_id).append('<div class="demo-window" style="top: ' + _box_top(raw_y) + 'px; left: ' + _box_left(raw_x) + 'px;" id="' + div_id + '">' + table + '</div>');
 	 });
+
+    // Can not add to table.
+    var nav_tbl = new bbop.html.table(table_nav_row_headers,
+				      table_nav_rows,
+				      {'class': 'table table-condensed'});
+    jQuery('#main_exp_table').append(nav_tbl.to_string());
+
+    // Virtual/routing nodes.
     each(layout['virtual_nodes'],
 	 function(litem, index){
 
@@ -90,7 +213,7 @@ var expPlumbInit = function(){
     // Now that they are physically extant, add JS stuff.
     
     // Make nodes draggable.
-    var foo = jsPlumb.getSelector(".window");
+    var foo = jsPlumb.getSelector(".demo-window");
     instance.draggable(foo);
     var bar = jsPlumb.getSelector(".waypoint");
     instance.draggable(bar);
@@ -101,7 +224,7 @@ var expPlumbInit = function(){
 	    // 
 	    //instance.makeSource(jsPlumb.getSelector(".window"),{isSource:true});
 	    //instance.makeSource(jsPlumb.getSelector(".waypoint"),{isSource:true});
-	    instance.makeTarget(jsPlumb.getSelector(".window"));
+	    instance.makeTarget(jsPlumb.getSelector(".demo-window"));
 	    instance.makeTarget(jsPlumb.getSelector(".waypoint"));
 
 	    // Now let's try to add edges/connections.
@@ -110,9 +233,12 @@ var expPlumbInit = function(){
 		     var nodes = path['nodes'];
 		     var waypoints = path['waypoints']; // don't need right now?
 		     for(var ni = 0; ni < (nodes.length -1); ni++ ){
-			 var sub_id = nodes[ni];
-			 var obj_id = nodes[ni +1];
+		     	 var sub_id = nodes[ni];
+		     	 var obj_id = nodes[ni +1];
 			 
+		     	 // var sub_id = nodes[0];
+		     	 // var obj_id = nodes[nodes.length -1];
+
 			 var sub_div = term2div[sub_id];
 			 var obj_div = term2div[obj_id];
 			 
@@ -128,13 +254,72 @@ var expPlumbInit = function(){
        		 });
 	});
 
-    // jQuery(container_id).scroll(
-    //     function(){
-    //         jsPlumb.repaintEverything();
-    //     }
-    // );
+    jQuery(container_id).scroll(
+        function(){
+            jsPlumb.repaintEverything();
+        }
+    );
 
     //ll('starting:' + bbop.core.dump(layout));
+
+    ///
+    /// Activate AC
+    ///
+
+    var gserv = 'http://golr.berkeleybop.org/';
+    var gconf = new bbop.golr.conf(amigo.data.golr);
+
+    // mf
+    var mf_args = {
+	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+	'value_template': '{{annotation_class_label}}',
+	'list_select_callback':
+	function(doc){
+	    alert('adding: ' + doc['annotation_class_label']);
+	}
+    };
+    var mf_auto = new bbop.widget.search_box(gserv, gconf, 'mf_auto', mf_args);
+    mf_auto.add_query_filter('document_category', 'ontology_class');
+    mf_auto.add_query_filter('regulates_closure_label', 'molecular_function');
+    mf_auto.set_personality('ontology');
+
+    var bp_args = {
+	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+	'value_template': '{{annotation_class_label}}',
+	'list_select_callback':
+	function(doc){
+	    alert('adding: ' + doc['annotation_class_label']);
+	}
+    };
+    var bp_auto = new bbop.widget.search_box(gserv, gconf, 'bp_auto', bp_args);
+    bp_auto.add_query_filter('document_category', 'ontology_class');
+    bp_auto.add_query_filter('regulates_closure_label', 'biological_process');
+    bp_auto.set_personality('ontology');
+
+    ///
+    /// Add button function activity.
+    ///
+
+    jQuery('#adder').click(
+	function(){
+	    var mf = mf_auto.content();
+	    var bp = bp_auto.content();
+
+	    if( mf == '' || bp == '' ){
+		alert('necessary field empty');
+	    }else{
+		// Add to table.
+		nav_tbl.add_to(['', mf, '', bp, '']);
+		jQuery('#main_exp_table').empty();
+		jQuery('#main_exp_table').append(nav_tbl.to_string());
+	    }
+
+	    // Add to graph.
+	    
+            jsPlumb.repaintEverything();
+	}
+    );
+
 };
 
 var cytoscapeInit = function(){
