@@ -49,8 +49,8 @@ var expPlumbInit = function(){
 	    EndpointStyles : [{ fillStyle:"#0d78bc" },
 			      { width:15, height:15,
 				strokeStyle:'#666', fillStyle:"#333" }],
-            Endpoint : ["Dot", { radius:7 } ],
-            //Endpoints : [ ["Dot", { radius:7 } ], "Rectangle" ],
+            Endpoints : [ ["Dot", { radius:7 } ], "Rectangle"],
+            //Endpoint : ["Dot", { radius:7 } ],
 	    PaintStyle : {
 		strokeStyle:"#558822",
 		lineWidth: 2
@@ -222,10 +222,14 @@ var expPlumbInit = function(){
 	function(){
 	    
 	    // 
-	    //instance.makeSource(jsPlumb.getSelector(".window"),{isSource:true});
-	    //instance.makeSource(jsPlumb.getSelector(".waypoint"),{isSource:true});
-	    instance.makeTarget(jsPlumb.getSelector(".demo-window"));
-	    instance.makeTarget(jsPlumb.getSelector(".waypoint"));
+	    instance.makeTarget(jsPlumb.getSelector(".demo-window"), {
+				    anchor:"Continuous",
+                                    connector:[ "Bezier", { curviness:25 } ]
+				});
+	    instance.makeTarget(jsPlumb.getSelector(".waypoint"), {
+				    anchor:"Continuous",
+                                    connector:[ "Bezier", { curviness:25 } ]
+				});
 
             instance.makeSource(jsPlumb.getSelector(".demo-window"), {
                                     filter:".konn",
