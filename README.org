@@ -1,0 +1,13 @@
+* go-mme
+  Prototype editor frontend for the Molecular Modal Environment for
+  the Gene Ontology.
+
+  It is based on BBOP JS (using the AmiGO 2 environment) and jsPlumb.
+** Deployment
+   This should be deployable in most environments.
+*** Local testing
+    node server.js
+*** OpenShift
+    git push openshift master
+*** Heroku
+    TODO

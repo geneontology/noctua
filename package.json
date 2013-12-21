@@ -1,7 +1,7 @@
 {
-  "name": "go-exp",
+  "name": "go-mme",
   "version": "0.0.9",
-  "description": "Experimental technique server for GO.",
+  "description": "Experimental MME editor for GO.",
   "keywords": [
     "OpenShift",
     "Node.js",
@@ -19,7 +19,7 @@
   "homepage": "http://berkeleybop.org/",
   "repository": {
     "type": "git",
-    "url": "https://gitub.com/openshift/origin-server"
+    "url": "https://github.com/kltm/go-mme"
   },
   "engines": {
     "node": ">= 0.10.0",

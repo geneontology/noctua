@@ -25,16 +25,11 @@ var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
-// // Logger.
-// var logger = new bbop.logger();
-// logger.DEBUG = true;
-// function _ll(str){ logger.kvetch('app: ' + str); }
-
 ///
 /// Define the sample application.
 ///
 
-var Sugiyama = function() {
+var MMEEditorServer = function() {
 
     var self = this;
 
@@ -79,28 +74,6 @@ var Sugiyama = function() {
     };
 
     ///
-    /// Various static document helpers.
-    ///
-
-    // Default top-level page. Just say "hi!"
-    self.static_index = function(){
-
-	var indexdoc = [
-	    '<html>',
-	    '<head>',
-	    '<meta charset="utf-8">',
-	    '</head>',
-	    '<body>',
-	    '<p>',
-	    'Hello, World! (dynamic)',
-	    '</p>',
-	    '</body>',
-	    '</html>'
-	].join(' ');
-	return indexdoc;
-    };
-
-    ///
     /// Response helper.
     ///
     
@@ -128,13 +101,12 @@ var Sugiyama = function() {
 		'bootstrap.min.js': '',
 		'jquery-ui-1.10.3.custom.min.js': '',
 		'jquery.jsPlumb-1.5.5.js': '',
-		'cytoscape.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
-		'frame.tmpl': ''
-//		'index.html': ''
+		'frame.tmpl': '',
+		'index.html': ''
 	    };
         }
 	
@@ -191,29 +163,10 @@ var Sugiyama = function() {
 	/// Static routes.
 	///
 
-	// Internal static routes.
-	// self.app.get('/',
-	// 	     function(req, res){
-	// 		 self.standard_response(res, 200, 'text/html',
-	// 					self.static_index());
-	// 	     });
 	self.app.get('/',
 		     function(req, res) {
-			 res.setHeader('Content-Type', 'text/html');
-			 var tmpl = self.cache_get('frame.tmpl').toString();
-			 var tmpl_args = {
-			     // 'js_variables': [
-			     // 	 {'name': 'foo', 'value': 1}
-			     // ],
-			     'body_content':
-			     'Try GO term ID URLs like: <br /><a style="color: blue;" href="/term/GO:0022008">/term/GO:0022008</a> (jsPlumb)<br /><a style="color: blue;" href="/node/GO:0022008">/node/GO:0022008</a> (cytoscape.js)<br /><a style="color: blue;" href="/demo/textbook_glycolysis-mouse">/demo/textbook_glycolysis-mouse</a> (jsPlumb app prototype)'
-			 };
-			 //console.log(tmpl.toString());
-			 //console.log(tmpl_args);
-			 //var ret = mustache.to_html(tmpl, tmpl_args);
-			 var ret = mustache.to_html(tmpl, tmpl_args);
-			 res.send(ret);
-			 //res.send(tmpl);
+			 var ind = self.cache_get('index.html').toString();
+			 self.standard_response(res, 200, 'text/html', ind);
 		     });
 
 	// Cached static routes.
@@ -243,20 +196,20 @@ var Sugiyama = function() {
 	     });
 
 	// Other static routes.
-	// TODO: This obviously does not do anything than supress some types
-	// of error messages.
 	self.app.get('/images/waiting_ac.gif',
 		     function(req, res){
 			 res.setHeader('Content-Type', 'image/gif');
 			 res.send(self.cache_get('waiting_ac.gif'));
 		     });
+	// TODO: This obviously does not do anything than supress some types
+	// of error messages.
 	self.app.get('/favicon.ico',
 		     function(req, res){
 			 self.standard_response(res, 200, 'image/x-icon', '');
 		     });
 
 	///
-	/// Dynamic OpenSearch components/routes.
+	/// Dynamic components/routes.
 	///
 
 	// Define the GOlr request conf.
@@ -266,7 +219,7 @@ var Sugiyama = function() {
 
 	// The request functions I use are very similar.
 	// This is for jsPlumb.
-	function create_request_function(switch_type, personality, doc_type,
+	function create_request_function(personality, doc_type,
 					 id_field, label_field, graph_field){
 
 	    return function(req, res) {
@@ -310,10 +263,6 @@ var Sugiyama = function() {
 			    var tmpl_args = {
 				'js_variables': [
 					 {
-					     'name': 'global_switch',
-					     'value': '"' + switch_type + '"'
-					 },
-					 {
 					     'name': 'global_id',
 					     'value': '"' + id + '"'
 					 },
@@ -341,27 +290,8 @@ var Sugiyama = function() {
 	    };
 	}
 	// Dynamic GOlr output.
-	self.app.get('/term/:query',
-		     create_request_function('jsPlumb',
-					     'ontology',
-					     'ontology_class',
-					     'annotation_class',
-					     'annotation_class_label',
-					     'topology_graph_json'));
-
-	// Dynamic GOlr output.
-	self.app.get('/node/:query',
-		     create_request_function('cytoscape',
-					     'ontology',
-					     'ontology_class',
-					     'annotation_class',
-					     'annotation_class_label',
-					     'topology_graph_json'));
-
-	// Dynamic GOlr output.
-	self.app.get('/demo/:query',
-		     create_request_function('expPlumb',
-					     'complex_annotation',
+	self.app.get('/seed/complex_annotation/:query',
+		     create_request_function('complex_annotation',
 					     'complex_annotation',
 					     'annotation_group',
 					     'annotation_group_label',
@@ -407,6 +337,6 @@ var Sugiyama = function() {
 /// Main.
 ///
 
-var goo = new Sugiyama();
-goo.initialize();
-goo.start();
+var mmees = new MMEEditorServer();
+mmees.initialize();
+mmees.start();
