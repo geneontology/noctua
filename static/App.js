@@ -285,7 +285,6 @@ var MMEEditorInit = function(){
 					    'class': 'waypoint',
 					    'style': style_str});
 		 jQuery(graph_div).append(v.to_string());
-		 // jQuery(graph_div).append('<div class="waypoint" style="top: ' + _vbox_top(raw_y) + 'px; left: ' + _vbox_left(raw_x) + 'px;" id="' + div_id + '">' + '' + '</div>');
 	     });
     }
 
