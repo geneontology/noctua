@@ -1,8 +1,8 @@
 var MMEEditorInit = function(){
     
     // TODO: Add this as an argument.
-    //var use_waypoints_p = true;
-    var use_waypoints_p = false;
+    var use_waypoints_p = true;
+    //var use_waypoints_p = false;
     
     var logger = new bbop.logger('mmee');
     logger.DEBUG = true;
@@ -60,6 +60,102 @@ var MMEEditorInit = function(){
 	return _box_left(raw_x) + (box_width / 2.0);
     }
 
+    // Right, but we also want real data and
+    // meta-information.
+    function _extract_meta_info(node){
+	
+	var ret = {
+	    'enabled_by': '',
+	    'activity': '',
+	    'unknown': [],
+	    'process': '',
+	    'location': []
+	};
+
+	if( node ){
+	    var id = node.id();
+	    ll('node id: ' + id);
+	    ll('node: ' + bbop.core.dump(node));
+	    var meta = node.metadata();
+	    if( meta ){
+		if( meta['enabled_by'] ){
+		    ret['enabled_by'] = meta['enabled_by'];
+		}
+		if( meta['unknown'] ){
+		    ret['unknown'] = meta['unknown'];
+		}
+		if( meta['activity'] ){
+		    ret['activity'] = meta['activity'];
+		}
+		if( meta['process'] ){
+		    ret['process'] = meta['process'];
+		}
+		if( meta['location'] ){
+		    ret['location'] = meta['location'];
+		}
+	    }
+	}
+	return ret;
+    }
+
+    // Takes a real model node as the argument.
+    function _meta_to_stack(node){
+	
+	// Simulate VisualizeServer's stack.
+	var stack = [];
+	var meta = _extract_meta_info(node);
+
+	if( meta['enabled_by'] ){
+	    stack.push({
+			   'color': '#FFFFFF',
+			   'field': 'enabled by',
+			   'label': meta['enabled_by']
+		       });
+	}
+
+	if( meta['activity'] ){
+	    stack.push({
+			   'color': '#ADD8E6',
+			   'field': 'activity',
+			   'label': meta['activity']
+		       });
+	}
+
+	var unk = meta['unknown'];
+	if( unk && what_is(unk) == 'array' ){
+	    each(unk,
+		 function(item){
+		     stack.push({
+				    'color': '#FFF0F5',
+				    'field': 'unknown',
+				    'label': item
+				});
+		 });
+	}
+
+	if( meta['process'] ){
+	    stack.push({
+			   'color': '#FF7F50',
+			   'field': 'process',
+			   'label': meta['process']
+		       });
+	}
+
+	var loc = meta['location'];
+	if( loc && what_is(loc) == 'array' ){
+	    each(loc,
+		 function(item){
+		     stack.push({
+				    'color': '#FFFF00',
+				    'field': 'location',
+				    'label': item
+				});
+		 });
+	}
+	
+	return stack;
+    }
+
     ///
     /// jsPlumb preamble.
     ///
@@ -92,7 +188,7 @@ var MMEEditorInit = function(){
 		 jQuery(graph_div).css(b + "transform", scale_str);
 	     });
 	instance.setZoom(zlvl);
-};
+    };
 
     ///
     /// Graphy stuff.
@@ -110,11 +206,30 @@ var MMEEditorInit = function(){
     var r = new bbop.layout.sugiyama.render();
     var layout = r.layout(g);
 
-    //
-    var term2div = {};
-    var table_nav_row_headers =
+    // Add lines to descriptive table.
+    var nav_tbl_headers =
 	['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
-    var table_nav_rows = [];
+    var nav_tbl = new bbop.html.table(nav_tbl_headers, [],
+				      {'class': 'table table-condensed'});
+    each(layout['nodes'],
+	 function(litem){
+	     var id = litem['id'];
+	     var node = g.get_node(id);
+	     var meta = _extract_meta_info(node);
+	     var table_row = [];
+	     table_row.push(meta['enabled_by']);
+	     table_row.push(meta['activity']);
+	     table_row.push(meta['unknown'].join('<br />'));
+	     table_row.push(meta['process']);
+	     table_row.push(meta['location'].join('<br />'));
+	     // Add possibly nested row into table
+	     nav_tbl.add_to(table_row);
+	 });
+    // Add to display.
+    jQuery(table_div).append(nav_tbl.to_string());
+
+    // Add nodes to display.
+    var term2div = {};
     each(layout['nodes'],
 	 function(litem, index){
 
@@ -124,116 +239,35 @@ var MMEEditorInit = function(){
 	     var div_id = 'ddid' + index;
 	     term2div[id] = div_id;
 
-	     // Right, but we also want real data and
-	     // meta-information.
-	     var enby = '';
-	     var actv = '';
-	     var unk = [];
-	     var proc = '';
-	     var loc = [];
 	     var node = g.get_node(id);
-	     //var node = g._nodes.hash[id];
-	     if( node ){
-		 ll('node id: ' + id);
-		 ll('node: ' + bbop.core.dump(node));
-		 var meta = node.metadata();
-		 if( meta ){
-		     if( meta['enabled_by'] ){
-			 enby = meta['enabled_by'];
-		     }
-		     if( meta['unknown'] ){
-			 unk = meta['unknown'];
-		     }
-		     if( meta['activity'] ){
-			 actv = meta['activity'];
-		     }
-		     if( meta['process'] ){
-			 proc = meta['process'];
-		     }
-		     if( meta['location'] ){
-			 loc = meta['location'];
-		     }
-		 }
-	     }
-
-	     // Simulate VisualizeServer's stack.
-	     var table_row = [];
-	     var stack = [];
-
-	     table_row.push(enby);
-	     if( enby ){
-		 stack.push({
-				'color': '#FFFFFF',
-				'field': 'enabled by',
-				'label': enby
-			    });
-	     }
-
-	     table_row.push(actv);
-	     if( actv ){
-		 stack.push({
-				'color': '#ADD8E6',
-				'field': 'activity',
-				'label': actv
-			    });
-	     }
-
-	     table_row.push(unk.join('<br />'));
-	     if( unk && what_is(unk) == 'array' ){
-		 each(unk,
-		     function(item){
-			 stack.push({
-					'color': '#FFF0F5',
-					'field': 'unknown',
-					'label': item
-				    });
-		     });
-	     }
-
-	     table_row.push(proc);
-	     if( proc ){
-		 stack.push({
-				'color': '#FF7F50',
-				'field': 'process',
-				'label': proc
-			    });
-	     }
-
-	     table_row.push(loc.join('<br />'));
-	     if( loc && what_is(loc) == 'array' ){
-		 each(loc,
-		     function(item){
-			 stack.push({
-					'color': '#FFFF00',
-					'field': 'location',
-					'label': item
-				    });
-		     });
-	     }
-
-	     // Add possibly nested row into table
-	     table_nav_rows.push(table_row);
-
+		 
 	     // Assemble the stack into a table.
-	     var tr_cache = [];
-	     each(stack,
+	     // TODO/BUG: Rows need to be controlable elements as
+	     // well, will need to modify bbop.html.table to make that
+	     // work.
+	     //var tr_cache = [];
+	     var node_table = new bbop.html.tag('table', {});
+	     each(_meta_to_stack(node),
 		  function(item){
-		      tr_cache.push('<tr style="background-color: ' + item['color'] + ';"><td>' + item['label'] + '</td></tr>');   
+		      node_table.add_to('<tr style="background-color: ' +
+					item['color'] + ';"><td>' 
+					+ item['label'] + '</td></tr>');   
 		  });
-	     var table = '<table>' + tr_cache.join('') + '</table>';
-	     ll('stack.length: ' + stack.length);
-	     //ll('table: ' + table);
+	     //ll('table: ' + node_table);
 
-	     jQuery(graph_div).append('<div class="demo-window" style="top: ' + _box_top(raw_y) + 'px; left: ' + _box_left(raw_x) + 'px;" id="' + div_id + '">' + table + '<div class="konn"></div></div>');
+	     // Node as nested bbop.html.
+	     var k = new bbop.html.tag('div', {'class': 'konn'});
+	     var style_str = 'top: ' + _box_top(raw_y) + 'px; ' + 
+		 'left: ' + _box_left(raw_x) + 'px;';
+	     var w = new bbop.html.tag('div',
+				       {'id': div_id,
+					'class': 'demo-window',
+					'style': style_str}, [node_table, k]);
+
+	     jQuery(graph_div).append(w.to_string());
 	 });
 
-    // Can not add to table.
-    var nav_tbl = new bbop.html.table(table_nav_row_headers,
-				      table_nav_rows,
-				      {'class': 'table table-condensed'});
-    jQuery(table_div).append(nav_tbl.to_string());
-
-    // Virtual/routing nodes.
+    // Optional virtual/routing nodes.
     if( use_waypoints_p ){	
 	each(layout['virtual_nodes'],
 	     function(litem, index){
@@ -244,7 +278,14 @@ var MMEEditorInit = function(){
 		 var div_id = 'vdid' + index;
 		 term2div[id] = div_id;
 
-		 jQuery(graph_div).append('<div class="waypoint" style="top: ' + _vbox_top(raw_y) + 'px; left: ' + _vbox_left(raw_x) + 'px;" id="' + div_id + '">' + '' + '</div>');
+		 var style_str = 'top: ' + _vbox_top(raw_y) + 'px; ' + 
+		     'left: ' + _vbox_left(raw_x) + 'px;';
+		 var v = new bbop.html.tag('div',
+					   {'id': div_id,
+					    'class': 'waypoint',
+					    'style': style_str});
+		 jQuery(graph_div).append(v.to_string());
+		 // jQuery(graph_div).append('<div class="waypoint" style="top: ' + _vbox_top(raw_y) + 'px; left: ' + _vbox_left(raw_x) + 'px;" id="' + div_id + '">' + '' + '</div>');
 	     });
     }
 
@@ -322,10 +363,8 @@ var MMEEditorInit = function(){
         }
     );
 
-    //ll('starting:' + bbop.core.dump(layout));
-
     ///
-    /// Activate AC
+    /// Activate autocomplete in input boxes.
     ///
 
     // mf
@@ -355,7 +394,7 @@ var MMEEditorInit = function(){
     b_auto.set_personality('bioentity');
 
     ///
-    /// Add button function activity.
+    /// Add GUI button activity.
     ///
 
     // Add new node.
