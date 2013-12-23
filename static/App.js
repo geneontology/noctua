@@ -3,6 +3,9 @@ var MMEEditorInit = function(){
     var logger = new bbop.logger('mmee');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
+
+    //var use_waypoints_p = true;
+    var use_waypoints_p = false;
     
     // Aliases
     var each = bbop.core.each;
@@ -230,25 +233,30 @@ var MMEEditorInit = function(){
     jQuery(table_div).append(nav_tbl.to_string());
 
     // Virtual/routing nodes.
-    each(layout['virtual_nodes'],
-	 function(litem, index){
+    if( use_waypoints_p ){	
+	each(layout['virtual_nodes'],
+	     function(litem, index){
 
-	     var id = litem['id'];
-	     var raw_x = litem['x'];
-	     var raw_y = litem['y'];
-	     var div_id = 'vdid' + index;
-	     term2div[id] = div_id;
+		 var id = litem['id'];
+		 var raw_x = litem['x'];
+		 var raw_y = litem['y'];
+		 var div_id = 'vdid' + index;
+		 term2div[id] = div_id;
 
-	     jQuery(graph_div).append('<div class="waypoint" style="top: ' + _vbox_top(raw_y) + 'px; left: ' + _vbox_left(raw_x) + 'px;" id="' + div_id + '">' + '' + '</div>');
-	 });
+		 jQuery(graph_div).append('<div class="waypoint" style="top: ' + _vbox_top(raw_y) + 'px; left: ' + _vbox_left(raw_x) + 'px;" id="' + div_id + '">' + '' + '</div>');
+	     });
+    }
 
     // Now that they are physically extant, add JS stuff.
     
     // Make nodes draggable.
     var foo = jsPlumb.getSelector(".demo-window");
     instance.draggable(foo);
-    var bar = jsPlumb.getSelector(".waypoint");
-    instance.draggable(bar);
+
+    if( use_waypoints_p ){	
+	var bar = jsPlumb.getSelector(".waypoint");
+	instance.draggable(bar);
+    }
 
     instance.doWhileSuspended(
 	function(){
@@ -258,10 +266,12 @@ var MMEEditorInit = function(){
 				    anchor:"Continuous",
                                     connector:[ "Bezier", { curviness:25 } ]
 				});
-	    instance.makeTarget(jsPlumb.getSelector(".waypoint"), {
-				    anchor:"Continuous",
-                                    connector:[ "Bezier", { curviness:25 } ]
-				});
+	    if( use_waypoints_p ){	
+		instance.makeTarget(jsPlumb.getSelector(".waypoint"), {
+					anchor:"Continuous",
+					connector:[ "Bezier", { curviness:25 } ]
+				    });
+	    }
 
             instance.makeSource(jsPlumb.getSelector(".demo-window"), {
                                     filter:".konn",
@@ -270,21 +280,10 @@ var MMEEditorInit = function(){
                                 });
 
 	    // Now let's try to add edges/connections.
-	    each(layout['paths'],
-    		 function(path){
-		     var nodes = path['nodes'];
-		     var waypoints = path['waypoints']; // don't need right now?
-		     for(var ni = 0; ni < (nodes.length -1); ni++ ){
-		     	 var sub_id = nodes[ni];
-		     	 var obj_id = nodes[ni +1];
-			 
-		     	 // var sub_id = nodes[0];
-		     	 // var obj_id = nodes[nodes.length -1];
-
-			 var sub_div = term2div[sub_id];
-			 var obj_div = term2div[obj_id];
-			 
-			 instance.connect(
+	    function _make_connection(src_node_id, tgt_node_id){
+		var sub_div = term2div[src_node_id];
+		var obj_div = term2div[tgt_node_id];
+		instance.connect(
 			     {
 			 	 source: sub_div,
 			 	 target: obj_div,
@@ -293,6 +292,25 @@ var MMEEditorInit = function(){
 				 //connector:"Straight",
                                  connector: ["Bezier", { curviness: 25 } ]
 			     });
+		
+	    }
+	    each(layout['paths'],
+    		 function(path){
+		     var nodes = path['nodes'];
+		     var waypoints = path['waypoints']; // don't need right now?
+		     if( use_waypoints_p ){
+			 // Add all ways points (assumes they are
+			 // already in the graph).
+			 for(var ni = 0; ni < (nodes.length -1); ni++ ){
+		     	     var sub_id = nodes[ni];
+		     	     var obj_id = nodes[ni +1];
+			     _make_connection(sub_id, obj_id);
+			 }
+		     }else{
+			 // Just the first and last points.
+		     	 var sub_id = nodes[0];
+		     	 var obj_id = nodes[nodes.length -1];
+			 _make_connection(sub_id, obj_id);
 		     }
        		 });
 	});
