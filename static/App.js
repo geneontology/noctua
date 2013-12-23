@@ -1,12 +1,13 @@
 var MMEEditorInit = function(){
     
+    // TODO: Add this as an argument.
+    //var use_waypoints_p = true;
+    var use_waypoints_p = false;
+    
     var logger = new bbop.logger('mmee');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
-    //var use_waypoints_p = true;
-    var use_waypoints_p = false;
-    
     // Aliases
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;

@@ -296,6 +296,31 @@ var MMEEditorServer = function() {
 					     'annotation_group',
 					     'annotation_group_label',
 					     'topology_graph_json'));
+	self.app.get('/seed/null',
+		     function(req, res) {
+			 // Assemble return doc.
+			 res.setHeader('Content-Type', 'text/html');
+			 var tmpl = self.cache_get('frame.tmpl').toString();
+			 var tmpl_args = {
+			     'js_variables': [
+				 {
+				     'name': 'global_id',
+				     'value': '"unknown"'
+				 },
+				 {
+				     'name': 'global_label',
+				     'value': '"unknown"'
+				 },
+				 {
+				     'name': 'global_graph',
+				     'value': '{"nodes":[], "edges":[]}'
+				 }
+			     ],
+			     'body_content': 'unknown (unknown)'
+			 };
+			 var ret = mustache.render(tmpl, tmpl_args);
+			 res.send(ret);
+			});
     };
 
     // Initializes the sample application.
