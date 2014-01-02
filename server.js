@@ -92,7 +92,7 @@ var MMEEditorServer = function() {
     self.populateCache = function() {
         if( typeof self.zcache === "undefined" ){
             self.zcache = {
-		'bootstrap.min.js': '',
+		'bootstrap.min.css': '',
 		'jquery-ui-1.10.3.custom.min.css': '',
 		'bbop.css': '',
 		'amigo.css': '',
