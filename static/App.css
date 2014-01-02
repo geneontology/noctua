@@ -1,3 +1,61 @@
+/*
+ * Internal things to get the frame and app sized correctly in a
+ * bs3 browser environment.
+ */
+
+.app-full-height {
+    height: 100%;
+}
+
+.app-no-margin {
+    margin-bottom: 0;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.app-wrapper {
+    height: 100%;
+}
+
+.app-graph-container {
+    overflow: auto;
+    background-color: #FFEBCD;
+    margin-left: 15em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    height: 100%;
+}
+
+.app-graph {
+    position: relative;
+}
+
+.app-editor-bounds {
+    height: 70%;
+}
+
+.app-controls {
+    background-color: #d2d8c7;
+    padding: 0.25em;
+    width: 15em;
+    float:left;
+    height:100%;
+}
+
+.app-table-bounds {
+    height: 30%;
+    overflow: auto;
+}
+
+/*
+ * Below: things lifted from base themes and examples for jsPlumb.
+ */
+
 a, a:visited {
     text-decoration:none;
     /*color:#057D9F; */
