@@ -108,8 +108,7 @@ var MMEEditorServer = function() {
 		'base.tmpl': '',
 		'app_base.tmpl': '',
 		'index_content.tmpl': '',
-		'frame.tmpl': '',
-		'index.html': ''
+		'frame.tmpl': ''
 	    };
         }
 	
