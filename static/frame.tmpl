@@ -1,79 +1,45 @@
-<!DOCTYPE html>
-<html lang="en" style="height:100%;">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div id="main_exp" class="container" style="height:99%;">
+  
+  <div style="height:70%;">
+    
+    <div style="background-color: #d2d8c7; padding: 0.25em; width: 15em; float:left; height:100%;">
 
-    <title>GO-EXP</title>
-
-    <link rel="stylesheet" type="text/css" href="/bootstrap.min.js">
-    <link rel="stylesheet" type="text/css" href="/jquery-ui-1.10.3.custom.min.css">
-    <link rel="stylesheet" type="text/css" href="/bbop.css">
-    <link rel="stylesheet" type="text/css" href="/amigo.css">
-    <link rel="stylesheet" type="text/css" href="/App.css">
-
-    <!-- JS variables. -->
-    {{#js_variables}}
-    <script type="text/javascript">var {{name}} = {{{value}}};</script>
-    {{/js_variables}}
-
-    <script type="text/javascript" src="/jquery-1.9.1.min.js"></script>
-    <script type="text/javascript" src="/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/jquery-ui-1.10.3.custom.min.js"></script>
-    <script type="text/javascript" src="/jquery.jsPlumb-1.5.5.js"></script>
-    <script type="text/javascript" src="/cytoscape.js"></script>
-    <script type="text/javascript" src="/bbop.js"></script>
-    <script type="text/javascript" src="/amigo2.js"></script>
-    <script type="text/javascript" src="/App.js"></script>
-  </head>
-  <body style="height:100%; margin-bottom: 0; margin-top:0;">
-
-    <div id="main_exp" class="container" style="height:99%;">
-
-      <div style="height:70%;">
-
-	<div style="background-color: #d2d8c7; padding: 0.25em; width: 15em; float:left; height:100%;">
-
-	  <p>
-	    <button id="zoomin"
-		    type="button"
-		    class="btn btn-primary">-25%</button>
-	    <button id="zoomret"
-		    type="button"
-		    class="btn btn-primary">100%</button>
-	    <button id="zoomout"
-		    type="button"
-		    class="btn btn-primary">+25%</button>
-	  </p>
-
-	  <p>Form</p>
-	  <p>
-	    <input type="text" class="form-control" id="b_auto"
-		   placeholder="bioentity">
-	  </p>
-	  <p>
-	    <input type="text" class="form-control" id="mf_auto"
-		   placeholder="molecular function">
-	  </p>
-	  <p>
-	    <button id="adder"
-		    type="button"
-		    class="btn btn-primary">Add</button>
-	  </p>
-	</div>
-
-	<div id="main_exp_graph_container" style="overflow:auto; background-color: #FFEBCD; margin-left: 15em; padding-top:0.25em; padding-bottom:0.25em; height:100%;">
-	  <div id="main_exp_graph" style="position:relative;"></div>
-	</div>
-
-      </div>
-
-      <div style="clear: both;"></div> <!-- Clear the float -->
-
-      <div id="main_exp_table"style="height: 30%; overflow:auto;"></div>
-
+      <p>
+	<button id="zoomin"
+		type="button"
+		class="btn btn-primary">-25%</button>
+	<button id="zoomret"
+		type="button"
+		class="btn btn-primary">100%</button>
+	<button id="zoomout"
+		type="button"
+		class="btn btn-primary">+25%</button>
+      </p>
+      
+      <p>Form</p>
+      <p>
+	<input type="text" class="form-control" id="b_auto"
+	       placeholder="bioentity">
+      </p>
+      <p>
+	<input type="text" class="form-control" id="mf_auto"
+	       placeholder="molecular function">
+      </p>
+      <p>
+	<button id="adder"
+		type="button"
+		class="btn btn-primary">Add</button>
+      </p>
     </div>
-
-  </body>
-</html>
+    
+    <div id="main_exp_graph_container" style="overflow:auto; background-color: #FFEBCD; margin-left: 15em; padding-top:0.25em; padding-bottom:0.25em; height:100%;">
+      <div id="main_exp_graph" style="position:relative;"></div>
+    </div>
+    
+  </div>
+  
+  <div style="clear: both;"></div> <!-- Clear the float -->
+  
+  <div id="main_exp_table"style="height: 30%; overflow:auto;"></div>
+  
+</div>

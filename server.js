@@ -105,6 +105,9 @@ var MMEEditorServer = function() {
 		'amigo2.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
+		'base.tmpl': '',
+		'app_base.tmpl': '',
+		'index_content.tmpl': '',
 		'frame.tmpl': '',
 		'index.html': ''
 	    };
@@ -165,7 +168,18 @@ var MMEEditorServer = function() {
 
 	self.app.get('/',
 		     function(req, res) {
-			 var ind = self.cache_get('index.html').toString();
+			 //var ind = self.cache_get('index.html').toString();
+			 var index_tmpl =
+			     self.cache_get('index_content.tmpl').toString();
+			 var ind_cont = mustache.render(index_tmpl);
+
+			 var base_tmpl = self.cache_get('base.tmpl').toString();
+			 var base_tmpl_args = {
+			     'title': 'go-mme',
+			     'content': ind_cont
+			 };
+			 var ind = mustache.render(base_tmpl, base_tmpl_args);
+
 			 self.standard_response(res, 200, 'text/html', ind);
 		     });
 
@@ -259,8 +273,15 @@ var MMEEditorServer = function() {
 			    
 			    // Assemble return doc.
 			    res.setHeader('Content-Type', 'text/html');
-			    var tmpl = self.cache_get('frame.tmpl').toString();
-			    var tmpl_args = {
+
+			    var frame_tmpl =
+				self.cache_get('frame.tmpl').toString();
+			    var frame_cont = mustache.render(frame_tmpl);
+
+			    var base_tmpl =
+				self.cache_get('app_base.tmpl').toString();
+			    var base_tmpl_args = {
+				'title': 'go-mme: editor',
 				'js_variables': [
 					 {
 					     'name': 'global_id',
@@ -275,9 +296,9 @@ var MMEEditorServer = function() {
 					     'value': graph
 					 }
 				],
-				'body_content': label + ' (' + id + ')'
+				'content': frame_cont
 			    };
-			    var ret = mustache.render(tmpl, tmpl_args);
+			    var ret = mustache.render(base_tmpl,base_tmpl_args);
 			    res.send(ret);
 			}
 		    }
@@ -300,27 +321,34 @@ var MMEEditorServer = function() {
 		     function(req, res) {
 			 // Assemble return doc.
 			 res.setHeader('Content-Type', 'text/html');
-			 var tmpl = self.cache_get('frame.tmpl').toString();
-			 var tmpl_args = {
-			     'js_variables': [
-				 {
-				     'name': 'global_id',
-				     'value': '"unknown"'
-				 },
-				 {
-				     'name': 'global_label',
-				     'value': '"unknown"'
-				 },
-				 {
-				     'name': 'global_graph',
-				     'value': '{"nodes":[], "edges":[]}'
-				 }
-			     ],
-			     'body_content': 'unknown (unknown)'
-			 };
-			 var ret = mustache.render(tmpl, tmpl_args);
+
+			    var frame_tmpl =
+				self.cache_get('frame.tmpl').toString();
+			    var frame_cont = mustache.render(frame_tmpl);
+
+			    var base_tmpl =
+				self.cache_get('app_base.tmpl').toString();
+			    var base_tmpl_args = {
+				'title': 'go-mme: editor',
+				'js_variables': [
+				    {
+					'name': 'global_id',
+					'value': '"unknown"'
+				    },
+				    {
+					'name': 'global_label',
+					'value': '"unknown"'
+				    },
+				    {
+					'name': 'global_graph',
+					'value': '{"nodes":[], "edges":[]}'
+				    }
+				],
+				'content': frame_cont
+			    };
+			 var ret = mustache.render(base_tmpl, base_tmpl_args);
 			 res.send(ret);
-			});
+		     });
     };
 
     // Initializes the sample application.

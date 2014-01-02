@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height:100%;">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>go-mme</title>
+    <title>{{title}}</title>
 
-    <link rel="stylesheet" type="text/css" href="/bootstrap.min.js">
+    <link rel="stylesheet" type="text/css" href="/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/jquery-ui-1.10.3.custom.min.css">
     <link rel="stylesheet" type="text/css" href="/bbop.css">
     <link rel="stylesheet" type="text/css" href="/amigo.css">
     <link rel="stylesheet" type="text/css" href="/App.css">
+
+    <!-- JS variables. -->
+    {{#js_variables}}
+    <script type="text/javascript">var {{name}} = {{{value}}};</script>
+    {{/js_variables}}
+
     <script type="text/javascript" src="/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="/bootstrap.min.js"></script>
     <script type="text/javascript" src="/jquery-ui-1.10.3.custom.min.js"></script>
@@ -21,16 +27,11 @@
     <script type="text/javascript" src="/App.js"></script>
 
   </head>
-  <body>
-    <p>
-      Try URLs like:
-      <br />
-      <a style="color: blue;"
-	 href="/seed/null">/seed/null</a>
-      <br />
-      <a style="color: blue;"
-	 href="/seed/complex_annotation/textbook_glycolysis-mouse">/seed/complex_annotation/textbook_glycolysis-mouse</a>
-    </p>
+  <!-- <body> -->
+  <!-- <body style="padding-top: 70px; padding-bottom: 70px;"> -->
+  <body style="height:100%; margin-bottom: 0; margin-top:0;">
+  
+    {{&content}}
+
   </body>
 </html>
-
