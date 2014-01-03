@@ -52,6 +52,15 @@ var MMEEditorInit = function(){
     var zret_btn_elt = '#' + zret_btn_id;
     var zout_btn_id = 'zoomout';
     var zout_btn_elt = '#' + zout_btn_id;
+    var save_btn_id = 'action_save';
+    var save_btn_elt = '#' + save_btn_id;
+    var help_btn_id = 'action_help';
+    var help_btn_elt = '#' + help_btn_id;
+    // A hidden for to communicate with the outside world.
+    var action_form_id = 'invisible_action';
+    var action_form_elt = '#' + action_form_id;
+    var action_form_data_id = 'invisible_action_data';
+    var action_form_data_elt = '#' + action_form_data_id;
     
     ///
     /// Render helpers.
@@ -189,8 +198,8 @@ var MMEEditorInit = function(){
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
 	    EndpointStyles : [
 		{ 
-		    width:15,
-		    height:15,
+		    width: 15,
+		    height: 15,
 		    strokeStyle: '#666',
 		    fillStyle: "#333"
 		},
@@ -221,7 +230,8 @@ var MMEEditorInit = function(){
     };
 
     ///
-    /// Graphy stuff.
+    /// Load the incoming graph into something useable for population
+    /// of the editor.
     ///
 
     // var id = global_id;
@@ -236,9 +246,11 @@ var MMEEditorInit = function(){
     var r = new bbop.layout.sugiyama.render();
     var layout = r.layout(g);
 
-    // TODO: Using the graph and the layout, populate the edit core,
-    // as well as the optional initial layout values.
-    // ...
+    ///
+    /// Using the graph and the layout, populate the edit core,
+    /// as well as the optional initial layout values. Waypoints are
+    /// optional here.
+    ///
 
     // Add all graph-defined nodes.
     each(g.all_nodes(),
@@ -301,6 +313,10 @@ var MMEEditorInit = function(){
 		 }
 	     });
     }
+
+    ///
+    /// Editor rendering functions.
+    ///
 
     // Add graph_contents to descriptive table.
     function _edit_core_repaint_table(){
@@ -398,6 +414,7 @@ var MMEEditorInit = function(){
     function _make_selector_target(sel){
 	instance.makeTarget(jsPlumb.getSelector(sel), {
     				anchor:"Continuous",
+				//isTarget: true,
 				connector:[ "Bezier", { curviness: 25 } ]
     			    });
     }
@@ -406,7 +423,8 @@ var MMEEditorInit = function(){
         instance.makeSource(jsPlumb.getSelector(sel), {
                                 filter: subsel,
                                 anchor:"Continuous",
-                                connector:[ "Bezier", { curviness:25 } ]
+				//isSource: true,
+                                connector:[ "Bezier", { curviness: 25 } ]
                             });
     }
     
@@ -428,10 +446,10 @@ var MMEEditorInit = function(){
     	    		 //connector:"Straight",
                          connector: ["Bezier", { curviness: 25 } ],
 			 'overlays': [
-			     ["Arrow", {'location': -4}],
-			     ["Label", {'label': rn,
-					'location': 0.5,
-					'id': eedge.id() } ]
+			     // ["Label", {'label': rn,
+			     // 		'location': 0.5,
+			     // 		'id': eedge.id() } ],
+			     ["Arrow", {'location': -4}]
 			 ]
 		     });
     	     });
@@ -470,16 +488,30 @@ var MMEEditorInit = function(){
 
     // TODO
     // Click-on-edge-event.
-    instance.bind("click", function(c) {
+    instance.bind("click", function(conn) {
+		      //var cid = info.connection.id;
                       //instance.detach(c);
-		      alert('clicked!');
+		      //alert('clicked!');
+		      ll('there was an edge click: ' + conn);
                   });
     // TODO
     // Connection event.
     instance.bind("connection", function(info) {
 		      var cid = info.connection.id;
-                      info.connection.getOverlay("label").setLabel(cid);
+                      //info.connection.getOverlay("label").setLabel(cid);
+		      ll('there was a new connection: ' + cid);
 		  });
+    // TODO
+    // Connection event.
+    instance.bind("connectionDetached", function(info) {
+		      var cid = info.connection.id;
+		      ll('there was a connection detached: ' + cid);
+		  });
+    // // Connection event.
+    // instance.bind("connectionMoved", function(info) {
+    // 		      var cid = info.connection.id;
+    // 		      ll('there was a connection moved: ' + cid);
+    // 		  });
     
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(
@@ -554,6 +586,9 @@ var MMEEditorInit = function(){
 		_make_selector_draggable(ddid);
 		_make_selector_target(ddid);
 		_make_selector_source(ddid, '.konn');
+		// _make_selector_draggable('.demo-window');
+		// _make_selector_target('.demo-window');
+		// _make_selector_source('.demo-window', '.konn');
 		
     		jsPlumb.repaintEverything();
     	    }
@@ -563,7 +598,7 @@ var MMEEditorInit = function(){
     // Zoom buttons.
     jQuery(zin_btn_elt).click(
     	function(){
-    	    var nz = instance.getZoom() - 0.25;
+    	    var nz = instance.getZoom() + 0.25;
     	    _set_zoom(nz);
     	});
     jQuery(zret_btn_elt).click(
@@ -572,8 +607,24 @@ var MMEEditorInit = function(){
     	});
     jQuery(zout_btn_elt).click(
     	function(){
-    	    var nz = instance.getZoom() + 0.25;
+    	    var nz = instance.getZoom() - 0.25;
     	    _set_zoom(nz);
+    	});
+
+    // Save button.
+    jQuery(save_btn_elt).click(
+    	function(){
+	    // Change the form to add the data.
+	    //alert(ecore.dump());
+	    jQuery(action_form_data_elt).val(ecore.dump());
+	    // Run it off in a new tab.
+	    jQuery(action_form_elt).submit();
+    	});
+
+    // Help button.
+    jQuery(help_btn_elt).click(
+    	function(){
+	    alert('In prototypes nobody can hear you scream.');
     	});
 };
 

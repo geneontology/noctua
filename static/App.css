@@ -18,6 +18,10 @@
     padding-right: 0;
 }
 
+.app-menu-buffer {
+    padding-top: 50px;
+}
+
 .app-wrapper {
     height: 100%;
 }

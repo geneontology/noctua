@@ -161,6 +161,7 @@ var MMEEditorServer = function() {
     self.initializeServer = function() {
         //self.createRoutes();
         self.app = express();
+        self.app.use(express.bodyParser()); // middleware needed for post
 
 	///
 	/// Static routes.
@@ -348,6 +349,19 @@ var MMEEditorServer = function() {
 			    };
 			 var ret = mustache.render(base_tmpl, base_tmpl_args);
 			 res.send(ret);
+		     });
+
+	// Test external save handler.
+	self.app.post('/action/save',
+		     function(req, res) {
+
+			 // Deal with incoming parameters.
+			 var data = req.route.params['data'] ||
+			     req.body['data'] || '???';
+
+			 // Assemble return doc.
+			 res.setHeader('Content-Type', 'text/plain');
+			 res.send(data);
 		     });
     };
 

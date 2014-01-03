@@ -119,6 +119,35 @@ bbop_mme_edit.core.prototype.remove_edit_edge = function(eeid){
 	// delete this.core['elt2edge'][elt_id];
     }
 };
+bbop_mme_edit.core.prototype.dump = function(){
+
+    //
+    var dcache = [];
+    
+    bbop.core.each(this.core['nodes'],
+		   function(node_id, node){
+		       if( node.type() && node.type() == 'real' ){
+			   var ncache = ['node'];
+			   ncache.push(node.enabled_by());
+			   ncache.push(node.activity());
+			   ncache.push(node.unknown());
+			   ncache.push(node.process());
+			   ncache.push(node.location());
+			   dcache.push(ncache.join("\t"));
+		       }
+		   });
+    
+    bbop.core.each(this.core['edges'],
+		   function(edge_id, edge){
+		       var ecache = ['edge'];
+		       ecache.push(edge.source());
+		       ecache.push(edge.relation());
+		       ecache.push(edge.target());
+		       dcache.push(ecache.join("\t"));
+		   });
+    
+    return dcache.join("\n");
+};
 
 // Edit nodes.
 bbop_mme_edit.node = function(in_id, in_type){
