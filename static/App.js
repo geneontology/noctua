@@ -564,6 +564,7 @@ var MMEEditorInit = function(){
     		alert('necessary field empty');
     	    }else{
 
+		// Initial node settings.
 		var dyn_node = new bme_node();
 		dyn_node.enabled_by(b);
 		dyn_node.activity(mf);
@@ -572,6 +573,7 @@ var MMEEditorInit = function(){
 		dyn_node.x_init(dyn_x);
 		dyn_node.y_init(dyn_y);
 		
+		// Add it to the edit model.
 		ecore.add_edit_node(dyn_node);
 
     		// Redraw table with new info.
@@ -580,7 +582,7 @@ var MMEEditorInit = function(){
     		// Add to graph.
 		_add_enode_to_display(dyn_node);
 
-		// Make node active.
+		// Make node active in display.
 		var dnid = dyn_node.id();
 		var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
 		_make_selector_draggable(ddid);

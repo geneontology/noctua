@@ -1,4 +1,4 @@
-* go-mme
+* go-mme editor
   Prototype editor frontend for the Molecular Modal Environment for
   the Gene Ontology.
 
@@ -6,8 +6,10 @@
 ** Deployment
    This should be deployable in most environments.
 *** Local testing
-    node server.js
+    make start-app
+    (node server.js)
 *** OpenShift
     git push openshift master
+    (currently at: http://go-genkisugi.rhcloud.com/)
 *** Heroku
     TODO
