@@ -474,7 +474,10 @@ var MMEEditorInit = function(){
 	    jQuery(modal_node_title_elt).empty();
 	    jQuery(modal_node_title_elt).append('Node: ' + tid);
 	    jQuery(modal_node_body_elt).empty();
+	    jQuery(modal_node_body_elt).append('<h4>Information</h4>');
 	    jQuery(modal_node_body_elt).append('<p>type: ' + ttype + '</p>');
+	    jQuery(modal_node_body_elt).append('<hr />');
+	    jQuery(modal_node_body_elt).append('<h4>Operations</h4>');
 	    jQuery(modal_node_body_elt).append('<p><button id="' + dbid + '" type="button" class="btn btn-danger">Delete node</button></p>');
 
 	    // Add the deletion callback
