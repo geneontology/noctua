@@ -61,7 +61,14 @@ var MMEEditorInit = function(){
     var action_form_elt = '#' + action_form_id;
     var action_form_data_id = 'invisible_action_data';
     var action_form_data_elt = '#' + action_form_data_id;
-    
+    // Hidden reusable modal dialog.
+    var modal_id = 'modal_dialog';
+    var modal_elt = '#' + modal_id;
+    var modal_body_id = 'modal_dialog_body';
+    var modal_body_elt = '#' + modal_body_id;
+    var modal_title_id = 'modal_dialog_title';
+    var modal_title_elt = '#' + modal_title_id;
+
     ///
     /// Render helpers.
     ///
@@ -193,6 +200,7 @@ var MMEEditorInit = function(){
 
     var instance = jsPlumb.getInstance(
 	{
+	    // All connections have these properties.
 	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
 	    PaintStyle: { strokeStyle:'#666' },
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
@@ -299,7 +307,7 @@ var MMEEditorInit = function(){
 		 ecore.add_edit_node(vn);
 	     });	
 
-	// Add additional waypoint path informatio to the edges.
+	// Add additional waypoint path information to the edges.
 	each(layout['paths'],
     	     function(path){
 		 var nodes = path['nodes'];
@@ -318,7 +326,7 @@ var MMEEditorInit = function(){
     /// Editor rendering functions.
     ///
 
-    // Add graph_contents to descriptive table.
+    // Add edit model contents to descriptive table.
     function _edit_core_repaint_table(){
 	var nav_tbl_headers =
 	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
@@ -359,19 +367,23 @@ var MMEEditorInit = function(){
 				   'style': style_str});
 
 	// Colorful stack.
-	var enode_table = new bbop.html.tag('table', {});
+	var enode_stack_table = new bbop.html.tag('table', {});
 	each(_enode_to_stack(enode),
 	     function(item){
 		 var trstr = '<tr style="background-color: ' +
 		     item['color'] + ';"><td>' 
 		     + item['label'] + '</td></tr>';   
-		 enode_table.add_to(trstr);
+		 enode_stack_table.add_to(trstr);
 	     });
-	w.add_to(enode_table);
+	w.add_to(enode_stack_table);
 
-	// Drag new connections.	
+	// Box to drag new connections from.	
 	var konn = new bbop.html.tag('div', {'class': 'konn'});
 	w.add_to(konn);
+	
+	// Box to drag new connections from.	
+	var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
+	w.add_to(opend);
 	
 	jQuery(graph_div).append(w.to_string());
     }
@@ -428,6 +440,47 @@ var MMEEditorInit = function(){
                             });
     }
     
+    function _make_selector_editable(sel){
+
+	function edit_node_by(thing){
+
+	    // TODO: Jimmy out information about this node.
+	    var tid = thing.id();
+	    var ttype = thing.type();
+
+	    // Rewrite modal contents with node info and editing
+	    // options.
+	    jQuery(modal_title_elt).empty();
+	    jQuery(modal_title_elt).append('Node: ' + tid);
+	    jQuery(modal_body_elt).empty();
+	    jQuery(modal_body_elt).append('<p>type: ' + ttype + '</p>');
+	    jQuery(modal_body_elt).append('<p><button type="button" class="btn btn-warning">No action</button></p>');
+
+	    // Display modal.
+	    var modal_opts = {
+	    };
+	    jQuery(modal_elt).modal(modal_opts);
+	}
+
+	// Add this event to whatever we got called in.
+	jQuery(sel).click(
+	    function(evnt){
+		evnt.stopPropagation();
+
+		// TODO: Resolve the event into the edit core node.
+		var target_elt = jQuery(evnt.target);
+		var parent_elt = target_elt.parent();
+		var parent_id = parent_elt.attr('id');
+		var enode = ecore.get_edit_node_by_elt_id(parent_id);
+		if( enode ){		    
+		    // TODO: Pass said node to be edited.
+		    edit_node_by(enode);
+		}else{
+		    alert('Could not find related element.');
+		}
+	    });
+    }
+
     // function _connect_edge(src_div, target_div, label){	
     // }
 
@@ -481,6 +534,9 @@ var MMEEditorInit = function(){
 	    // Make the konn class available as source from inside the
 	    // real node class elements.
 	    _make_selector_source('.demo-window', '.konn');
+
+	    // Make nodes able to use edit dialog.
+	    _make_selector_editable(".open-dialog");
 
     	    // Now let's try to add all the edges/connections.
 	    _connect_all_edges();
@@ -588,6 +644,7 @@ var MMEEditorInit = function(){
 		_make_selector_draggable(ddid);
 		_make_selector_target(ddid);
 		_make_selector_source(ddid, '.konn');
+		_make_selector_editable(".open-dialog");
 		// _make_selector_draggable('.demo-window');
 		// _make_selector_target('.demo-window');
 		// _make_selector_source('.demo-window', '.konn');

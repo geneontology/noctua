@@ -52,7 +52,7 @@ bbop_mme_edit.core.prototype.get_edit_node_elt_id = function(enid){
 
 bbop_mme_edit.core.prototype.get_edit_node_by_elt_id = function(elt_id){
     var ret = null;
-    var enid = this.core['elt2node'][el_tid] || null;
+    var enid = this.core['elt2node'][elt_id] || null;
     if( enid ){
 	ret = this.core['nodes'][enid] || null;
     }
