@@ -11,8 +11,8 @@
 var MMEEditorInit = function(){
     
     // TODO: Add this as an argument.
-    var use_waypoints_p = true;
-    //var use_waypoints_p = false;
+    //var use_waypoints_p = true;
+    var use_waypoints_p = false;
     
     var logger = new bbop.logger('mmee');
     logger.DEBUG = true;
@@ -285,14 +285,22 @@ var MMEEditorInit = function(){
 	// All all graph-defined edges.
 	each(g.all_edges(),
 	     function(edge){
+
+		 // TODO: (Temporarily) trim the rel types.
+		 var epid = edge.predicate_id();
+		 var new_epid = epid.substring(epid.lastIndexOf('/') +1,
+					       epid.length -1);
+
 		 var new_eedge = new bme_edge(edge.subject_id(),
-					      edge.predicate_id(),
+					      new_epid,
 					      edge.object_id());
 		 ecore.add_edit_edge(new_eedge);
 	     });
 
     }else{
 	
+	alert('this method does not (yet) support rels on edges');
+
 	// Add waypoint virtual nodes.
 	each(layout['virtual_nodes'],
 	     function(litem, index){
@@ -487,30 +495,32 @@ var MMEEditorInit = function(){
     // function _connect_edge(src_div, target_div, label){	
     // }
 
-    var std_conn_opts = {
-    	//anchors:["Top", "Bottom"],
-	anchor:"Continuous",
-    	//connector:"Straight",
-        connector: ["Bezier", { curviness: 25 } ],
-	'overlays': [
-	    ["Arrow", {'location': -4}]
-	]
-    };
+    // var std_conn_opts = {
+    // 	//anchors:["Top", "Bottom"],
+    // 	//connector:"Straight",
+    // 	// 'overlays': [
+    // 	// ]
+    // };
 
     function _connect_with_edge(eedge){
 	var sn = eedge.source();
-	var rn = eedge.relation() || null;
+	var rn = eedge.relation() || 'n/a';
 	var tn = eedge.target();
     	instance.connect(
     	    { // remember that edge ids and elts ids are the same 
-    	    	source: ecore.get_edit_node_elt_id(sn),
-    	    	target: ecore.get_edit_node_elt_id(tn),
-		'overlays': [
-			     // ["Label", {'label': rn,
-			     // 		'location': 0.5,
-			     // 		'id': eedge.id() } ]
-		]
-	    }, std_conn_opts);
+    	    	'source': ecore.get_edit_node_elt_id(sn),
+    	    	'target': ecore.get_edit_node_elt_id(tn),
+		//'label': 'foo' // works
+		anchor:"Continuous",
+		connector: ["Bezier", { curviness: 25 } ],
+		'overlays': [ // does not!?
+		    ["Label", {'label': rn,
+			       'location': 0.5,
+			       cssClass: "aLabel",
+			       'id': 'label' } ],
+		    ["Arrow", {'location': -4}]
+		 ]
+	    });
     }
 
     // Programmatically (as opposed to implicitly by drag-and-drop)
@@ -557,7 +567,7 @@ var MMEEditorInit = function(){
     	});
 
     // TODO
-    // Click-on-edge-event.
+    // Click-on-edge-event: Use modal to edit label.
     instance.bind("click", function(conn) {
 		      //var cid = info.connection.id;
                       //instance.detach(c);
@@ -567,7 +577,8 @@ var MMEEditorInit = function(){
 
     // TODO/BUG: Read on.
     // Connection event.
-    instance.bind("connection", function(info, original_p) {
+    instance.bind("connection",
+		  function(info, original_p) {
 		      var cid = info.connection.id;
                       //info.connection.getOverlay("label").setLabel(cid);
 		      //var cid = info.connection.id;
@@ -577,11 +588,19 @@ var MMEEditorInit = function(){
 		      // TODO/BUG: This section needs to be redone/rethought.
 		      // If it looks like a drag-and-drop event...
 		      if( original_p ){
-			  // Get the info from the connection.
+
+			  // Get the necessary info from the
+			  // connection.
 			  var sn = info.sourceId;
 			  var tn = info.targetId;
 
+			  // Create a new edge based on this info.
 			  //alert(sn + ', ' + tn);
+			  var snode = ecore.get_edit_node_by_elt_id(sn);
+			  var tnode = ecore.get_edit_node_by_elt_id(tn);
+			  var new_eedge =
+			      new bme_edge(snode.id(), '???', tnode.id());
+			  ecore.add_edit_edge(new_eedge);
 
 			  // TODO/BUG: Destroy the autogen one (I
 			  // can't make them behave as well as the
@@ -589,16 +608,7 @@ var MMEEditorInit = function(){
 			  // http://jsplumbtoolkit.com/doc/connections).
 			  // then create the programmatic one.
 			  instance.detach(info.connection);
-			  instance.connect(
-    			      {
-				  source: sn,
-    	    			  target: tn,
-				  'overlays': [
-			     // ["Label", {'label': rn,
-			     // 		'location': 0.5,
-			     // 		'id': eedge.id() } ]
-				  ]
-			      }, std_conn_opts);
+			  _connect_with_edge(new_eedge);
 		      }
 		  });
     // TODO
