@@ -50,6 +50,7 @@
 	     href=""
 	     title="">Help</a>
 	</li>
+      </ul>
 	
     </div>
   </div>
@@ -62,20 +63,66 @@
     
     <div class="app-controls">
 
-      <p>Add node</p>
-      <p>
-	<input type="text" class="form-control" id="b_auto"
-	       placeholder="bioentity">
-      </p>
-      <p>
-	<input type="text" class="form-control" id="mf_auto"
-	       placeholder="molecular function">
-      </p>
-      <p>
-	<button id="adder"
-		type="button"
-		class="btn btn-primary">Add</button>
-      </p>
+      <div class="panel-group" id="control_accordion">
+
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseOne">
+		Add node (type 1)
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapseOne" class="panel-collapse collapse in">
+	    <div class="panel-body">
+	      
+	      <p>
+		<input type="text" class="form-control" id="b_auto"
+		       placeholder="bioentity">
+	      </p>
+	      <p>
+		<input type="text" class="form-control" id="mf_auto"
+		       placeholder="molecular function">
+	      </p>
+	      <p>
+		<button id="adder"
+			type="button"
+			class="btn btn-primary">Add</button>
+	      </p>
+
+	    </div>
+	    
+	  </div>
+	</div>
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseTwo">
+		Add node (type 2)
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapseTwo" class="panel-collapse collapse">
+	    <div class="panel-body">
+	      TODO
+	    </div>
+	  </div>
+	</div>
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseThree">
+		Add node (type 3)
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapseThree" class="panel-collapse collapse">
+	    <div class="panel-body">
+	      TODO
+	    </div>
+	  </div>
+	</div>
+      </div>
     </div>
     
     <div id="main_exp_graph_container" class="app-graph-container">
