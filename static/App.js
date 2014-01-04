@@ -426,7 +426,8 @@ var MMEEditorInit = function(){
     function _make_selector_target(sel){
 	instance.makeTarget(jsPlumb.getSelector(sel), {
     				anchor:"Continuous",
-				//isTarget: true,
+				isTarget: true,
+				//maxConnections: -1,
 				connector:[ "Bezier", { curviness: 25 } ]
     			    });
     }
@@ -435,13 +436,15 @@ var MMEEditorInit = function(){
         instance.makeSource(jsPlumb.getSelector(sel), {
                                 filter: subsel,
                                 anchor:"Continuous",
-				//isSource: true,
+				isSource: true,
+				//maxConnections: -1,
                                 connector:[ "Bezier", { curviness: 25 } ]
                             });
     }
     
     function _make_selector_editable(sel){
 
+	// TODO: This is likely somewhere else later.
 	function edit_node_by(thing){
 
 	    // TODO: Jimmy out information about this node.
@@ -484,27 +487,38 @@ var MMEEditorInit = function(){
     // function _connect_edge(src_div, target_div, label){	
     // }
 
+    var std_conn_opts = {
+    	//anchors:["Top", "Bottom"],
+	anchor:"Continuous",
+    	//connector:"Straight",
+        connector: ["Bezier", { curviness: 25 } ],
+	'overlays': [
+	    ["Arrow", {'location': -4}]
+	]
+    };
+
+    function _connect_with_edge(eedge){
+	var sn = eedge.source();
+	var rn = eedge.relation() || null;
+	var tn = eedge.target();
+    	instance.connect(
+    	    { // remember that edge ids and elts ids are the same 
+    	    	source: ecore.get_edit_node_elt_id(sn),
+    	    	target: ecore.get_edit_node_elt_id(tn),
+		'overlays': [
+			     // ["Label", {'label': rn,
+			     // 		'location': 0.5,
+			     // 		'id': eedge.id() } ]
+		]
+	    }, std_conn_opts);
+    }
+
+    // Programmatically (as opposed to implicitly by drag-and-drop)
+    // all edges in edit model.
     function _connect_all_edges(){
     	each(ecore.get_edit_edges(),
 	     function(eeid, eedge){
-	    	 var sn = eedge.source();
-	    	 var rn = eedge.relation() || null;
-	    	 var tn = eedge.target();
-    	    	 instance.connect(
-    	    	     { // remember that edge ids and elts ids are the same 
-    	    		 source: ecore.get_edit_node_elt_id(sn),
-    	    		 target: ecore.get_edit_node_elt_id(tn),
-    	    		 //anchors:["Top", "Bottom"],
-    	    		 anchor:"Continuous",
-    	    		 //connector:"Straight",
-                         connector: ["Bezier", { curviness: 25 } ],
-			 'overlays': [
-			     // ["Label", {'label': rn,
-			     // 		'location': 0.5,
-			     // 		'id': eedge.id() } ],
-			     ["Arrow", {'location': -4}]
-			 ]
-		     });
+		 _connect_with_edge(eedge);
     	     });
     }
 
@@ -550,12 +564,42 @@ var MMEEditorInit = function(){
 		      //alert('clicked!');
 		      ll('there was an edge click: ' + conn);
                   });
-    // TODO
+
+    // TODO/BUG: Read on.
     // Connection event.
-    instance.bind("connection", function(info) {
+    instance.bind("connection", function(info, original_p) {
 		      var cid = info.connection.id;
                       //info.connection.getOverlay("label").setLabel(cid);
+		      //var cid = info.connection.id;
 		      ll('there was a new connection: ' + cid);
+		      ll('oringinal?: ' + original_p);
+		      
+		      // TODO/BUG: This section needs to be redone/rethought.
+		      // If it looks like a drag-and-drop event...
+		      if( original_p ){
+			  // Get the info from the connection.
+			  var sn = info.sourceId;
+			  var tn = info.targetId;
+
+			  //alert(sn + ', ' + tn);
+
+			  // TODO/BUG: Destroy the autogen one (I
+			  // can't make them behave as well as the
+			  // programmatic ones--need to understand:
+			  // http://jsplumbtoolkit.com/doc/connections).
+			  // then create the programmatic one.
+			  instance.detach(info.connection);
+			  instance.connect(
+    			      {
+				  source: sn,
+    	    			  target: tn,
+				  'overlays': [
+			     // ["Label", {'label': rn,
+			     // 		'location': 0.5,
+			     // 		'id': eedge.id() } ]
+				  ]
+			      }, std_conn_opts);
+		      }
 		  });
     // TODO
     // Connection event.
@@ -642,12 +686,12 @@ var MMEEditorInit = function(){
 		var dnid = dyn_node.id();
 		var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
 		_make_selector_draggable(ddid);
-		_make_selector_target(ddid);
-		_make_selector_source(ddid, '.konn');
+		//_make_selector_target(ddid);
+		//_make_selector_source(ddid, '.konn');
 		_make_selector_editable(".open-dialog");
 		// _make_selector_draggable('.demo-window');
-		// _make_selector_target('.demo-window');
-		// _make_selector_source('.demo-window', '.konn');
+		_make_selector_target('.demo-window');
+		_make_selector_source('.demo-window', '.konn');
 		
     		jsPlumb.repaintEverything();
     	    }
