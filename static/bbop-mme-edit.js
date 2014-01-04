@@ -21,11 +21,11 @@ bbop_mme_edit.core = function(){
 	'edges': {}, // map of id to edit_edge
 	'node_order': [], // initial table order on redraws
 	'node2elt': {}, // map of id to physical object id
-	'elt2node': {}  // map of physical object id to id
-	// Remeber that edge ids and elts ids are the same, so no map
-	// is needed.
-	// 'edge2elt': {}, // map of id to physical object id
-	// 'elt2edge': {}  // map of physical object id to id
+	'elt2node': {},  // map of physical object id to id
+//	// Remeber that edge ids and elts ids are the same, so no map
+//	// is needed.
+	'edge2connector': {}, // map of edge id to virtual connector id
+	'connector2edge': {}  // map of virtual connector id to edge id 
     };
 };
 
@@ -99,6 +99,14 @@ bbop_mme_edit.core.prototype.add_edit_edge = function(eedge){
     //this.core['elt2edge'][elt_id] = eeid; // map it
 };
 
+bbop_mme_edit.core.prototype.get_edit_edge_id_by_connector_id = function(cid){
+    return this.core['connector2edge'][cid] || null;
+};
+
+bbop_mme_edit.core.prototype.get_edit_connector_id_by_edge_id = function(eid){
+    return this.core['edge2connector'][eid] || null;
+};
+
 bbop_mme_edit.core.prototype.get_edit_edge = function(eeid){
     return this.core['edges'][eeid] || null;
 };
@@ -119,6 +127,14 @@ bbop_mme_edit.core.prototype.remove_edit_edge = function(eeid){
 	// delete this.core['elt2edge'][elt_id];
     }
 };
+
+bbop_mme_edit.core.prototype.create_edge_mapping = function(eedge, connector){
+    var eid = eedge.id();
+    var cid = connector.id;
+    this.core['edge2connector'][eid] = cid;
+    this.core['connector2edge'][cid] = eid;
+};
+
 bbop_mme_edit.core.prototype.dump = function(){
 
     //

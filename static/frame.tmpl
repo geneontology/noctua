@@ -90,12 +90,12 @@
   
 </div>
 
-<!-- Invisible until it's not modal dialog. -->
-<div id="modal_dialog"
+<!-- Node modal: invisible until it's not modal dialog. -->
+<div id="modal_node_dialog"
      class="modal fade"
      tabindex="-1"
      role="dialog"
-     aria-labelledby="modal_dialog_title"
+     aria-labelledby="modal_node_dialog_title"
      aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -104,10 +104,10 @@
 		class="close"
 		data-dismiss="modal"
 		aria-hidden="true">&times;</button>
-        <h4 id="modal_dialog_title"
+        <h4 id="modal_node_dialog_title"
 	    class="modal-title">???</h4>
       </div>
-      <div id="modal_dialog_body" 
+      <div id="modal_node_dialog_body" 
 	   class="modal-body">
         ???
       </div>
@@ -115,8 +115,42 @@
         <button type="button"
 		class="btn btn-default"
 		data-dismiss="modal">Close</button>
-        <button type="button"
+        <button id=""
+	   type="button"
 		class="btn btn-primary">Do nothing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edge modal: invisible until it's not modal dialog. -->
+<div id="modal_edge_dialog"
+     class="modal fade"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modal_edge_dialog_title"
+     aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button"
+		class="close"
+		data-dismiss="modal"
+		aria-hidden="true">&times;</button>
+        <h4 id="modal_edge_dialog_title"
+	    class="modal-title">???</h4>
+      </div>
+      <div id="modal_edge_dialog_body" 
+	   class="modal-body">
+        ???
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+		class="btn btn-default"
+		data-dismiss="modal">Close</button>
+        <button id="modal_edge_dialog_save"
+		type="button"
+		class="btn btn-primary">Save</button>
       </div>
     </div>
   </div>

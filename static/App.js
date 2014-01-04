@@ -61,13 +61,22 @@ var MMEEditorInit = function(){
     var action_form_elt = '#' + action_form_id;
     var action_form_data_id = 'invisible_action_data';
     var action_form_data_elt = '#' + action_form_data_id;
-    // Hidden reusable modal dialog.
-    var modal_id = 'modal_dialog';
-    var modal_elt = '#' + modal_id;
-    var modal_body_id = 'modal_dialog_body';
-    var modal_body_elt = '#' + modal_body_id;
-    var modal_title_id = 'modal_dialog_title';
-    var modal_title_elt = '#' + modal_title_id;
+    // Hidden reusable modal dialog for nodes.
+    var modal_node_id = 'modal_node_dialog';
+    var modal_node_elt = '#' + modal_node_id;
+    var modal_node_body_id = 'modal_node_dialog_body';
+    var modal_node_body_elt = '#' + modal_node_body_id;
+    var modal_node_title_id = 'modal_node_dialog_title';
+    var modal_node_title_elt = '#' + modal_node_title_id;
+    // Hidden reusable modal dialog for edges.
+    var modal_edge_id = 'modal_edge_dialog';
+    var modal_edge_elt = '#' + modal_edge_id;
+    var modal_edge_body_id = 'modal_edge_dialog_body';
+    var modal_edge_body_elt = '#' + modal_edge_body_id;
+    var modal_edge_title_id = 'modal_edge_dialog_title';
+    var modal_edge_title_elt = '#' + modal_edge_title_id;
+    var modal_edge_save_id = 'modal_edge_dialog_save';
+    var modal_edge_save_elt = '#' + modal_edge_save_id;
 
     ///
     /// Render helpers.
@@ -289,7 +298,7 @@ var MMEEditorInit = function(){
 		 // TODO: (Temporarily) trim the rel types.
 		 var epid = edge.predicate_id();
 		 var new_epid = epid.substring(epid.lastIndexOf('/') +1,
-					       epid.length -1);
+					       epid.length);
 
 		 var new_eedge = new bme_edge(edge.subject_id(),
 					      new_epid,
@@ -461,16 +470,16 @@ var MMEEditorInit = function(){
 
 	    // Rewrite modal contents with node info and editing
 	    // options.
-	    jQuery(modal_title_elt).empty();
-	    jQuery(modal_title_elt).append('Node: ' + tid);
-	    jQuery(modal_body_elt).empty();
-	    jQuery(modal_body_elt).append('<p>type: ' + ttype + '</p>');
-	    jQuery(modal_body_elt).append('<p><button type="button" class="btn btn-warning">No action</button></p>');
+	    jQuery(modal_node_title_elt).empty();
+	    jQuery(modal_node_title_elt).append('Node: ' + tid);
+	    jQuery(modal_node_body_elt).empty();
+	    jQuery(modal_node_body_elt).append('<p>type: ' + ttype + '</p>');
+	    jQuery(modal_node_body_elt).append('<p><button type="button" class="btn btn-warning">No action</button></p>');
 
 	    // Display modal.
-	    var modal_opts = {
+	    var modal_node_opts = {
 	    };
-	    jQuery(modal_elt).modal(modal_opts);
+	    jQuery(modal_node_elt).modal(modal_node_opts);
 	}
 
 	// Add this event to whatever we got called in.
@@ -503,24 +512,30 @@ var MMEEditorInit = function(){
     // };
 
     function _connect_with_edge(eedge){
+
 	var sn = eedge.source();
 	var rn = eedge.relation() || 'n/a';
 	var tn = eedge.target();
-    	instance.connect(
+    	var new_conn = instance.connect(
     	    { // remember that edge ids and elts ids are the same 
     	    	'source': ecore.get_edit_node_elt_id(sn),
     	    	'target': ecore.get_edit_node_elt_id(tn),
 		//'label': 'foo' // works
-		anchor:"Continuous",
-		connector: ["Bezier", { curviness: 25 } ],
+		'anchor': "Continuous",
+		'connector': ["Bezier", { curviness: 25 } ],
 		'overlays': [ // does not!?
 		    ["Label", {'label': rn,
 			       'location': 0.5,
-			       cssClass: "aLabel",
+			       'cssClass': "aLabel",
 			       'id': 'label' } ],
 		    ["Arrow", {'location': -4}]
 		 ]
 	    });
+
+	// NOTE: This is necessary since these connectors are created
+	// under the covers of jsPlumb--I don't have access during
+	// creation like I do with the nodes.
+	ecore.create_edge_mapping(eedge, new_conn);
     }
 
     // Programmatically (as opposed to implicitly by drag-and-drop)
@@ -569,21 +584,67 @@ var MMEEditorInit = function(){
     // TODO
     // Click-on-edge-event: Use modal to edit label.
     instance.bind("click", function(conn) {
-		      //var cid = info.connection.id;
-                      //instance.detach(c);
-		      //alert('clicked!');
-		      ll('there was an edge click: ' + conn);
-                  });
+		      
+		      // Get the necessary info from the
+		      // connection.
+		      var eeid =
+			  ecore.get_edit_edge_id_by_connector_id(conn.id);
+		      ll('looks like edge: ' + eeid);
+		      var ee = ecore.get_edit_edge(eeid);
+
+		      // Assemble modal.
+		      jQuery(modal_edge_title_elt).empty();
+		      jQuery(modal_edge_title_elt).append('Edge: ' + eeid);
+		      jQuery(modal_edge_body_elt).empty();
+		      jQuery(modal_edge_body_elt).append('<h4>Set relation</h4>');
+		      jQuery(modal_edge_body_elt).append('<div class="radio"><label><input type="radio" name="rel_val" value="tastes_like" checked>tastes like</label></div><div class="radio"><label><input type="radio" name="rel_val" value="BFO:0000050">part of</label></div><div class="radio"><label><input type="radio" name="rel_val" value="refuses_to_talk_to">refuses to talk to</label></div>');
+		      jQuery(modal_edge_elt).modal({});
+
+		      // Add "save" callback to it to change the edge
+		      // label and the edit edge relation.
+		      function _save_callback(){
+
+			  //
+			  //ll('looks like edge (in cb): ' + eeid);
+			  var rval =
+			      jQuery("input:radio[name=rel_val]:checked").val();
+			  //ll('rel_val: ' + rval);
+
+			  // TODO: Should I report this too? Smells a
+			  // bit like the missing properties with
+			  // setParameter/s(),
+			  // Change label.
+			  //conn.setLabel(rval); // does not work!?
+			  conn.removeOverlay("label");
+			  conn.addOverlay(["Label", {'label': rval,
+						     'location': 0.5,
+						     'cssClass': "aLabel",
+						     'id': 'label' } ]);
+			  
+			  // Change edit model's releation.
+			  ee.relation(rval);
+
+			  // Close modal.
+			  jQuery(modal_edge_elt).modal('hide');
+		      }
+		      // Remove the previous save listeners.
+		      jQuery(modal_edge_save_elt).unbind('click');
+		      // And add the new one for this instance.
+		      jQuery(modal_edge_save_elt).click(
+			  function(evt){
+			      evt.stopPropagation();
+			      _save_callback();
+			  });
+		  });
 
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection",
 		  function(info, original_p) {
-		      var cid = info.connection.id;
-                      //info.connection.getOverlay("label").setLabel(cid);
+
 		      //var cid = info.connection.id;
-		      ll('there was a new connection: ' + cid);
-		      ll('oringinal?: ' + original_p);
+		      //ll('there was a new connection: ' + cid);
+		      //ll('oringinal?: ' + original_p);
 		      
 		      // TODO/BUG: This section needs to be redone/rethought.
 		      // If it looks like a drag-and-drop event...

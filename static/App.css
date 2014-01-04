@@ -320,21 +320,21 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
   */
 
 .aLabel {
-        -webkit-transition:background-color 0.25s ease-in;
-        -moz-transition:background-color 0.25s ease-in;
-        transition:background-color 0.25s ease-in;
+        -webkit-transition: background-color 0.17s ease-in;
+        -moz-transition: background-color 0.17s ease-in;
+        transition: background-color 0.17s ease-in;
 }
 .aLabel._jsPlumb_hover, ._jsPlumb_source_hover, ._jsPlumb_target_hover {
-        background-color:#1e8151;
+        background-color: #999999;
         /*color:white;*/
 }
 .aLabel {
-        background-color:white;
-        opacity:0.8;
-        padding:0.3em;                                
-        border-radius:0.5em;
-        border:1px solid #346789;
-        cursor:pointer;
+        background-color: white;
+        opacity: 0.8;
+        padding: 0.3em;                                
+        border-radius: 0.5em;
+        border: 1px solid #346789;
+        cursor: pointer;
 }
 
 .drag-drop-demo .window {
