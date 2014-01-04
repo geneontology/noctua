@@ -672,11 +672,17 @@ var MMEEditorInit = function(){
 			  _connect_with_edge(new_eedge);
 		      }
 		  });
-    // TODO
-    // Connection event.
+    // Detach event.
     instance.bind("connectionDetached", function(info) {
+
 		      var cid = info.connection.id;
 		      ll('there was a connection detached: ' + cid);
+		      var eeid =
+			  ecore.get_edit_edge_id_by_connector_id(cid);
+		      ll('looks like edge: ' + eeid);
+		      //var ee = ecore.get_edit_edge(eeid);
+		      
+		      ecore.remove_edit_edge(eeid);
 		  });
     // // Connection event.
     // instance.bind("connectionMoved", function(info) {

@@ -121,10 +121,10 @@ bbop_mme_edit.core.prototype.remove_edit_edge = function(eeid){
 	// Main bit out.
 	delete this.core['edges'][eeid];
 
-	// // And clean the maps.
-	// var elt_id = this.core['node2elt'][eeid];
-	// delete this.core['edge2elt'][eeid];
-	// delete this.core['elt2edge'][elt_id];
+	// And clean the maps.
+	var cid = this.core['edge2connector'][eeid];
+	delete this.core['edge2connector'][eeid];
+	delete this.core['connector2edge'][cid];
     }
 };
 
