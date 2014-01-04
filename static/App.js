@@ -462,19 +462,41 @@ var MMEEditorInit = function(){
     function _make_selector_editable(sel){
 
 	// TODO: This is likely somewhere else later.
-	function edit_node_by(thing){
+	function edit_node_by(enode){
 
 	    // TODO: Jimmy out information about this node.
-	    var tid = thing.id();
-	    var ttype = thing.type();
+	    var tid = enode.id();
+	    var ttype = enode.type();
 
 	    // Rewrite modal contents with node info and editing
 	    // options.
+	    var dbid = bbop.core.uuid();
 	    jQuery(modal_node_title_elt).empty();
 	    jQuery(modal_node_title_elt).append('Node: ' + tid);
 	    jQuery(modal_node_body_elt).empty();
 	    jQuery(modal_node_body_elt).append('<p>type: ' + ttype + '</p>');
-	    jQuery(modal_node_body_elt).append('<p><button type="button" class="btn btn-warning">No action</button></p>');
+	    jQuery(modal_node_body_elt).append('<p><button id="' + dbid + '" type="button" class="btn btn-danger">Delete node</button></p>');
+
+	    // Add the deletion callback
+	    jQuery('#' + dbid).click(
+		function(evt){
+		    evt.stopPropagation();
+
+		    // Delete all UI connections associated with
+		    // node. This also triggers the "connectioDetached"
+		    // event, so the edges are being removed from the
+		    // model at the same time.
+		    var nelt = ecore.get_edit_node_elt_id(tid);
+		    instance.detachAllConnections(nelt);
+		    //instance.removeAllEndpoints(nelt);
+
+		    // Delete node from UI/model.
+		    jQuery('#' + nelt).remove();
+		    ecore.remove_edit_node(tid);
+
+		    // Close modal.
+		    jQuery(modal_node_elt).modal('hide');
+		});
 
 	    // Display modal.
 	    var modal_node_opts = {
@@ -583,6 +605,7 @@ var MMEEditorInit = function(){
 
     // TODO
     // Click-on-edge-event: Use modal to edit label.
+    //instance.bind("dblclick", function(conn) {
     instance.bind("click", function(conn) {
 		      
 		      // Get the necessary info from the
@@ -672,6 +695,7 @@ var MMEEditorInit = function(){
 			  _connect_with_edge(new_eedge);
 		      }
 		  });
+
     // Detach event.
     instance.bind("connectionDetached", function(info) {
 
@@ -684,7 +708,8 @@ var MMEEditorInit = function(){
 		      
 		      ecore.remove_edit_edge(eeid);
 		  });
-    // // Connection event.
+
+    //
     // instance.bind("connectionMoved", function(info) {
     // 		      var cid = info.connection.id;
     // 		      ll('there was a connection moved: ' + cid);

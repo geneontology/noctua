@@ -69,14 +69,14 @@ bbop_mme_edit.core.prototype.remove_edit_node = function(enid){
 
 	// Removing node removes all related edges.
 	// TODO: Dumb scan right now.
-	each(this.core['edges'],
-	     function(edge){
-		 if( edge.source() == enid || edge.target() == enid ){
-		     var eeid = edge.id();
-		     this.remove_edit_edge(eeid);
-		 }
-	     });
-
+	bbop.core.each(this.core['edges'],
+		       function(edge_id, edge){
+			   if( edge.source() == enid || edge.target() == enid ){
+			       var eeid = edge.id();
+			       this.remove_edit_edge(eeid);
+			   }
+		       });
+	
 	// Also remove the node from the order list.
 	// TODO: Is this a dumb scan?
 	var ni = this.core['node_order'].indexOf(enid);
@@ -88,6 +88,9 @@ bbop_mme_edit.core.prototype.remove_edit_node = function(enid){
 	var elt_id = this.core['node2elt'][enid];
 	delete this.core['node2elt'][enid];
 	delete this.core['elt2node'][elt_id];
+
+	// Finally, remove the node itself.
+	delete this.core['nodes'][enid];
     }
 };
 
