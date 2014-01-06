@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEEditorInit = function(){
+var MMEEditorInit = function(in_graph){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -253,7 +253,7 @@ var MMEEditorInit = function(){
 
     // var id = global_id;
     // var label = global_label;
-    var graph_json = global_graph;
+    var graph_json = in_graph;
 
     // Load graph.
     var g = new bbop.model.graph();
@@ -824,7 +824,8 @@ var MMEEditorInit = function(){
     	function(){
 	    // Change the form to add the data.
 	    //alert(ecore.dump());
-	    jQuery(action_form_data_elt).val(ecore.dump());
+	    //jQuery(action_form_data_elt).val(ecore.dump());
+	    jQuery(action_form_data_elt).val(bbop.core.dump(ecore.to_graph()));
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();
     	});
@@ -840,9 +841,12 @@ var MMEEditorInit = function(){
 jsPlumb.ready(function(){
 		  // Only roll if the env is correct.
 		  if( typeof(global_id) !== 'undefined' &&
-		      typeof(global_label) !== 'undefined' &&
-		      typeof(global_graph) !== 'undefined' ){
-			  MMEEditorInit();
+		      typeof(global_label) !== 'undefined' ){
+			  if( typeof(global_graph) !== 'undefined' ){
+			      MMEEditorInit(global_graph);
+			  }else{
+			      throw new Error('to loadable graph found');
+			  }
 		      }else{
 			  throw new Error('environment not ready');
 		      }

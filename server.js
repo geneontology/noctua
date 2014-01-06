@@ -351,6 +351,44 @@ var MMEEditorServer = function() {
 			 res.send(ret);
 		     });
 
+	self.app.post('/action/load',
+		     function(req, res) {
+
+			 // Deal with incoming parameters.
+			 var graph_data = req.route.params['graph_data'] ||
+			     req.body['graph_data'] || '{"nodes":[], "edges":[]}';
+
+			 // Assemble return doc.
+			 res.setHeader('Content-Type', 'text/html');
+
+			    var frame_tmpl =
+				self.cache_get('frame.tmpl').toString();
+			    var frame_cont = mustache.render(frame_tmpl);
+
+			    var base_tmpl =
+				self.cache_get('app_base.tmpl').toString();
+			    var base_tmpl_args = {
+				'title': 'go-mme: editor',
+				'js_variables': [
+				    {
+					'name': 'global_id',
+					'value': '"unknown"'
+				    },
+				    {
+					'name': 'global_label',
+					'value': '"unknown"'
+				    },
+				    {
+					'name': 'global_graph',
+					'value': graph_data
+				    }
+				],
+				'content': frame_cont
+			    };
+			 var ret = mustache.render(base_tmpl, base_tmpl_args);
+			 res.send(ret);
+		     });
+
 	// Test external save handler.
 	self.app.post('/action/save',
 		     function(req, res) {

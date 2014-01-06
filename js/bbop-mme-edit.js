@@ -168,6 +168,46 @@ bbop_mme_edit.core.prototype.dump = function(){
     return dcache.join("\n");
 };
 
+bbop_mme_edit.core.prototype.to_graph = function(){
+
+    // 
+    var ex_graph = new bbop.model.graph();
+    
+    // Add nodes.
+    bbop.core.each(this.core['nodes'],
+		   function(node_id, node){
+		       if( node.type() && node.type() == 'real' ){
+
+			   // Assemble meta.
+			   var ex_meta = {};
+			   ex_meta['enabled_by'] = node.enabled_by();
+			   ex_meta['activity'] = node.activity();
+			   ex_meta['unknown'] = node.unknown();
+			   ex_meta['process'] = node.process();
+			   ex_meta['localtion'] = node.location();
+			   
+			   // Create node.
+			   var ex_node = new bbop.model.node(node_id);
+			   ex_node.metadata(ex_meta);
+
+			   // Add to export graph.
+			   ex_graph.add_node(ex_node);
+		       }
+		   });
+    
+    // Add edges to the export graph.
+    bbop.core.each(this.core['edges'],
+		   function(edge_id, edge){
+		       //
+		       var ex_edge = new bbop.model.edge(edge.source(),
+							 edge.target(),
+							 edge.relation());
+		       ex_graph.add_edge(ex_edge);
+		   });
+    
+    return ex_graph;
+};
+
 // Edit nodes.
 bbop_mme_edit.node = function(in_id, in_type){
 
