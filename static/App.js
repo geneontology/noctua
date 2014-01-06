@@ -825,7 +825,10 @@ var MMEEditorInit = function(in_graph){
 	    // Change the form to add the data.
 	    //alert(ecore.dump());
 	    //jQuery(action_form_data_elt).val(ecore.dump());
-	    jQuery(action_form_data_elt).val(bbop.core.dump(ecore.to_graph()));
+	    var exgraph = ecore.to_graph();
+	    var jout_obj = exgraph.to_json();
+	    var jout_str = bbop.core.dump(jout_obj);
+	    jQuery(action_form_data_elt).val(jout_str);
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();
     	});
