@@ -1869,7 +1869,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20131217";
+bbop.version.release = "20140106";
 /*
  * Package: logger.js
  * 
@@ -5251,7 +5251,8 @@ bbop.model.graph.prototype.get_ancestor_subgraph = function(nb_id_or_list, pid){
  * 
  * Load the graph from the specified JSON object (not string).
  * 
- * TODO: a work in progress
+ * TODO: a work in progress 'type' not currently imported (just as
+ * not exported)
  * 
  * Parameters:
  *  JSON object
@@ -5290,6 +5291,71 @@ bbop.model.graph.prototype.load_json = function(json_object){
     }
 
     return true;
+};
+
+/*
+ * Function: to_json
+ * 
+ * Dump out the graph into a JSON-able object.
+ * 
+ * TODO: a work in progress; 'type' not currently exported (just as
+ * not imported)
+ * 
+ * Parameters:
+ *  n/a
+ * 
+ * Returns:
+ *  An object that can be converted to a JSON string by dumping.
+ */
+bbop.model.graph.prototype.to_json = function(){
+
+    var anchor = this;
+
+    // Copy
+    var nset = [];
+    bbop.core.each(anchor.all_nodes(),
+		   function(raw_node){
+
+		       var node = bbop.core.clone(raw_node);
+		       var ncopy = {};
+
+		       var nid = node.id();
+		       if(nid){ ncopy['id'] = nid; }
+
+		       // var nt = node.type();
+		       // if(nt){ ncopy['type'] = nt; }
+
+		       var nlabel = node.label();
+		       if(nlabel){ ncopy['lbl'] = nlabel; }
+
+		       var nmeta = node.metadata();
+		       if(nmeta){ ncopy['meta'] = nmeta; }
+
+		       nset.push(ncopy);
+		   });
+
+    var eset = [];
+    var ecopy = bbop.core.clone(anchor._edges['array']);
+    bbop.core.each(anchor.all_edges(),
+		   function(node){
+		       var ecopy = {};
+
+		       var s = node.subject_id();
+		       if(s){ ecopy['sub'] = s; }
+
+		       var o = node.object_id();
+		       if(o){ ecopy['obj'] = o; }
+
+		       var p = node.predicate_id();
+		       if(p){ ecopy['pred'] = p; }
+
+		       eset.push(ecopy);
+		   });
+
+    // New exportable.
+    var ret_obj = {'nodes': nset, 'edges': eset};
+
+    return ret_obj;
 };
 /* 
  * Package: tree.js
@@ -6731,6 +6797,7 @@ bbop.layout.sugiyama.render = function(){
 	// TODO: Sugiyama method. Temporarily did naive method.
 	var real_vertex_locations = [];
 	var vertex_registry = {};
+	var virtual_vertex_locations = []; // 
 	var m = partitions.max_partition_width();
 	for( var i = 0; i < vertex_partitions.length; i++ ){
 	    var l = vertex_partitions[i].length;
@@ -6744,6 +6811,8 @@ bbop.layout.sugiyama.render = function(){
 		vertex_registry[ vid ] = {x: locale, y: i};
 		if( ! vertex_partitions[i][v].is_virtual ){
 		    real_vertex_locations.push({x: locale, y: i, id: vid});
+		}else{
+		    virtual_vertex_locations.push({x: locale, y: i, id: vid});
 		}
 		ll( vid + ', x:' + locale + ' y:' + i);
 	    }
@@ -6751,14 +6820,18 @@ bbop.layout.sugiyama.render = function(){
 	
 	// Convert logical paths to actual paths.
 	var logical_paths = partitions.get_logical_paths();
-	var actual_paths = new Array(logical_paths.length);
+	var described_paths = [];
 	for( var i = 0; i < logical_paths.length; i++ ){
-	    actual_paths[i] = [];
+	    var node_trans = [];
+	    var waypoints = [];
 	    for( var j = 0; j < logical_paths[i].length; j++ ){
 		var cursor = logical_paths[i][j];
-		actual_paths[i].push({x: vertex_registry[cursor].x,
-				      y: vertex_registry[cursor].y });
+		node_trans.push(cursor);
+		waypoints.push({x: vertex_registry[cursor].x,
+				y: vertex_registry[cursor].y });
 	    }
+	    described_paths.push({'nodes': node_trans,
+				  'waypoints': waypoints});
 	}
 	
 	// Create a return array 
@@ -6774,10 +6847,11 @@ bbop.layout.sugiyama.render = function(){
 	//   ll('');
 	
 	// Return this baddy to the world.
-	return { locations: real_vertex_locations,
-		 paths: actual_paths,
-		 width: partitions.max_partition_width(),
-		 height: partitions.number_of_vertex_partitions()};
+	return { nodes: real_vertex_locations,
+		 virtual_nodes: virtual_vertex_locations,
+		 paths: described_paths,
+		 height: partitions.max_partition_width(),
+		 width: partitions.number_of_vertex_partitions()};
     };
 };
 //bbop.core.extend(bbop.model.sugiyama.graph, bbop.model.graph);
