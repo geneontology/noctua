@@ -149,9 +149,9 @@ bbop_mme_edit.core.prototype.dump = function(){
 			   var ncache = ['node'];
 			   ncache.push(node.enabled_by());
 			   ncache.push(node.activity());
-			   ncache.push(node.unknown());
+			   ncache.push(node.unknown().join('|'));
 			   ncache.push(node.process());
-			   ncache.push(node.location());
+			   ncache.push(node.location().join('|'));
 			   dcache.push(ncache.join("\t"));
 		       }
 		   });
@@ -184,7 +184,7 @@ bbop_mme_edit.core.prototype.to_graph = function(){
 			   ex_meta['activity'] = node.activity();
 			   ex_meta['unknown'] = node.unknown();
 			   ex_meta['process'] = node.process();
-			   ex_meta['localtion'] = node.location();
+			   ex_meta['location'] = node.location();
 			   
 			   // Create node.
 			   var ex_node = new bbop.model.node(node_id);

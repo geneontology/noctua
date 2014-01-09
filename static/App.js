@@ -729,21 +729,8 @@ var MMEEditorInit = function(in_graph){
     /// Activate autocomplete in input boxes.
     ///
 
-    // mf
-    var mf_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-    	}
-    };
-    var mf_auto = new bbop.widget.search_box(gserv, gconf, 'mf_auto', mf_args);
-    mf_auto.add_query_filter('document_category', 'ontology_class');
-    mf_auto.add_query_filter('regulates_closure_label', 'molecular_function');
-    mf_auto.set_personality('ontology');
-
-    var b_args = {
+    // bioentity
+    var bio_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
@@ -751,9 +738,45 @@ var MMEEditorInit = function(in_graph){
     	    //alert('adding: ' + doc['bioentity_label']);
     	}
     };
-    var b_auto = new bbop.widget.search_box(gserv, gconf, 'b_auto', b_args);
-    b_auto.add_query_filter('document_category', 'bioentity');
-    b_auto.set_personality('bioentity');
+    // molecular function
+    var mfn_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+    	}
+    };
+    // location/occurs_in
+    var loc_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+    	}
+    };
+
+    ///
+    /// Add the local responders
+    ///
+
+    var bio_auto_local =
+	new bbop.widget.search_box(gserv, gconf, 'bio_auto_local', bio_args);
+    bio_auto_local.add_query_filter('document_category', 'bioentity');
+    bio_auto_local.set_personality('bioentity');
+
+    var mfn_auto_local =
+	new bbop.widget.search_box(gserv, gconf, 'mfn_auto_local', mfn_args);
+    mfn_auto_local.add_query_filter('document_category', 'ontology_class');
+    mfn_auto_local.add_query_filter('regulates_closure_label',
+				 'molecular_function');
+    mfn_auto_local.set_personality('ontology');
+
+    var loc_auto_local =
+	new bbop.widget.search_box(gserv, gconf, 'loc_auto_local', mfn_args);
+    loc_auto_local.add_query_filter('document_category', 'ontology_class');
+    loc_auto_local.set_personality('ontology');
 
     ///
     /// Add GUI button activity.
@@ -762,17 +785,19 @@ var MMEEditorInit = function(in_graph){
     // Add new node.
     jQuery(add_btn_elt).click(
     	function(){
-    	    var mf = mf_auto.content();
-    	    var b = b_auto.content();
+    	    var bio = bio_auto_local.content();
+    	    var mfn = mfn_auto_local.content();
+    	    var loc = loc_auto_local.content();
 
-    	    if( mf == '' || b == '' ){
+    	    if( mfn == '' || bio == '' || loc == '' ){
     		alert('necessary field empty');
     	    }else{
 
 		// Initial node settings.
 		var dyn_node = new bme_node();
-		dyn_node.enabled_by(b);
-		dyn_node.activity(mf);
+		dyn_node.enabled_by(bio);
+		dyn_node.activity(mfn);
+		dyn_node.location([loc]); // list type
     		var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
     		var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
 		dyn_node.x_init(dyn_x);
@@ -838,6 +863,53 @@ var MMEEditorInit = function(in_graph){
     	function(){
 	    alert('In prototypes nobody can hear you scream.');
     	});
+
+    ///
+    /// Playing with graph area scroll.
+    /// Take a look at: http://hitconsultants.com/dragscroll_scrollsync/scrollpane.html
+    ///
+
+    // TODO: This /should/ have worked, but the way the SVG is layed in
+    // seems to make in not work very well at all.
+    //jQuery(graph_div).draggable();
+
+    // // Hand made--not great either...
+    // var px = -1;
+    // var py = -1;
+    // function _update_start_pos(down_evt){
+    // 	px = down_evt.pageX;
+    // 	py = down_evt.pageY;
+    // 	ll("down at: " + px + "," + py);
+    // }
+    // function _scroller(move_evt){
+    // 	var offx = move_evt.pageX - px;
+    // 	var offy = move_evt.pageY - py;
+    // 	ll('scrolling: ' + offx + "," + offy);
+    // 	//window.scrollTo(offx, offy);
+    // 	jQuery(graph_container_div).scrollTo(offx, offy);
+    // 	px = move_evt.pageX;
+    // 	py = move_evt.pageY;
+    // }
+    // function _unbind_scroller(){
+    // 	jQuery(graph_container_div).unbind('mousemove');	
+    // }
+    
+    // jQuery(graph_container_div).mousedown(
+    // 	function(e){
+    // 	    _update_start_pos(e);
+    // 	    // Bind to moving.
+    // 	    jQuery(graph_container_div).mousemove(_scroller);
+    // 	});
+    // jQuery(graph_container_div).mouseup(
+    // 	function(e){
+    // 	    ll('unbind on mouseup');
+    // 	    _unbind_scroller();
+    // 	});
+    // jQuery(graph_container_div).mouseout(
+    // 	function(e){
+    // 	    ll('unbind on mouseup');
+    // 	    _unbind_scroller();
+    // 	});
 };
 
 // Start the day the jsPlumb way.
@@ -854,3 +926,25 @@ jsPlumb.ready(function(){
 			  throw new Error('environment not ready');
 		      }
 	      });
+
+// ///
+// /// EXP
+// ///
+
+// var logger = new bbop.logger('exp');
+// logger.DEBUG = true;
+// function ll(str){ logger.kvetch(str); } 
+// var m = new bbop.rest.manager.jquery(bbop.rest.response.json);
+// var t = 'http://localhost/cgi-bin/amigo2/amigo/term/GO:0022008/json'; 
+// var r = null;
+// function on_success(resp, man){
+//     r = resp;
+//     ll('success (' + resp.message_type() + '): ' + resp.message());
+// }
+// function on_fail(resp, man){
+//     r = resp;
+//     ll('failure (' + resp.message_type() + '): ' + resp.message());
+// }
+// m.register('success', 'foo', on_success);
+// m.register('error', 'foo', on_fail);
+// m.action(t);

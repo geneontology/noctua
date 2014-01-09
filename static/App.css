@@ -37,6 +37,11 @@
 
 .app-graph {
     position: relative;
+    /* Playing with draggable "canvas". */
+    /* height: 1000px; */
+    /* width: 1000px; */
+    /* cursor: all-scroll; */
+    /* color: blue; */
 }
 
 .app-editor-bounds {
