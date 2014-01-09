@@ -623,7 +623,42 @@ var MMEEditorInit = function(in_graph){
 		      jQuery(modal_edge_title_elt).append('Edge: ' + eeid);
 		      jQuery(modal_edge_body_elt).empty();
 		      jQuery(modal_edge_body_elt).append('<h4>Set relation</h4>');
-		      jQuery(modal_edge_body_elt).append('<div class="radio"><label><input type="radio" name="rel_val" value="tastes_like" checked>tastes like</label></div><div class="radio"><label><input type="radio" name="rel_val" value="BFO:0000050">part of</label></div><div class="radio"><label><input type="radio" name="rel_val" value="refuses_to_talk_to">refuses to talk to</label></div>');
+		      var tmp_rels = [
+			  ['RO:0002333', 'enabled by'],
+			  ['RO:0002332', 'regulates levels of'],
+			  ['RO:0002331', 'involved in'],
+			  ['RO:0002330', 'genomically related to'],
+			  ['RO:0002213', 'positively regulates'],
+			  ['RO:0002212', 'negatively regulates'],
+			  ['RO:0002211', 'regulates'],
+			  ['RO:0002202', 'develops from'],
+			  ['BFO:0000066', 'occurs in'],
+			  ['BFO:0000051', 'has part'],
+			  ['BFO:0000050', 'part of'],
+			  ['???', 'indirectly disables action of'],
+			  ['???', 'directly inhibits'],
+			  ['???', 'upstream of'],
+			  ['???', 'directly activates']
+		      ];
+		      var tmp_cache = [];
+		      each(tmp_rels,
+			   function(tmp_rel, rel_ind){
+			       tmp_cache.push('<div class="radio"><label>');
+			       tmp_cache.push('<input type="radio" ');
+			       tmp_cache.push('name="rel_val" ');
+			       tmp_cache.push('value="' + tmp_rel[1] +'"');
+				   if( rel_ind == 0 ){
+				       tmp_cache.push('checked>');
+				   }else{
+				       tmp_cache.push('>');
+				   }
+			       tmp_cache.push(tmp_rel[1] + ' ');
+			       tmp_cache.push('(' + tmp_rel[0] + ')');
+			       tmp_cache.push('</label></div>');
+			       
+			   });
+
+		      jQuery(modal_edge_body_elt).append(tmp_cache.join(''));
 		      jQuery(modal_edge_elt).modal({});
 
 		      // Add "save" callback to it to change the edge
