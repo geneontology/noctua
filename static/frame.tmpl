@@ -70,7 +70,7 @@
 	  <div class="panel-heading">
 	    <h4 class="panel-title">
               <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseOne">
-		Add node (local)
+		Add node (client)
               </a>
 	    </h4>
 	  </div>
@@ -90,7 +90,7 @@
 		       placeholder="location">
 	      </p>
 	      <p>
-		<button id="adder"
+		<button id="adder_local"
 			type="button"
 			class="btn btn-primary">Add</button>
 	      </p>
@@ -103,27 +103,31 @@
 	  <div class="panel-heading">
 	    <h4 class="panel-title">
               <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseTwo">
-		Add node (type 2)
+		Add node (localhost)
               </a>
 	    </h4>
 	  </div>
 	  <div id="collapseTwo" class="panel-collapse collapse">
 	    <div class="panel-body">
-	      TODO
-	    </div>
-	  </div>
-	</div>
-	<div class="panel panel-default">
-	  <div class="panel-heading">
-	    <h4 class="panel-title">
-              <a data-toggle="collapse" data-parent="#control_accordion" href="#collapseThree">
-		Add node (type 3)
-              </a>
-	    </h4>
-	  </div>
-	  <div id="collapseThree" class="panel-collapse collapse">
-	    <div class="panel-body">
-	      TODO
+
+	      <p>
+		<input type="text" class="form-control" id="bio_auto_remote"
+		       placeholder="bioentity">
+	      </p>
+	      <p>
+		<input type="text" class="form-control" id="mfn_auto_remote"
+		       placeholder="molecular function">
+	      </p>
+	      <p>
+		<input type="text" class="form-control" id="loc_auto_remote"
+		       placeholder="location">
+	      </p>
+	      <p>
+		<button id="adder_remote"
+			type="button"
+			class="btn btn-primary">Add</button>
+	      </p>
+
 	    </div>
 	  </div>
 	</div>
@@ -204,6 +208,53 @@
 		type="button"
 		class="btn btn-primary">Save</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Blocking modal: invisible until it's not modal input blocker. -->
+<div id="modal_blocking"
+     class="modal"
+     tabindex="-1"
+     role="dialog"
+     data-backdrop="static"
+     data-keyboard="false"
+     aria-labelledby="modal_blocking_title"
+     aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <!-- <button type="button" -->
+	<!-- 	class="close" -->
+	<!-- 	data-dismiss="modal" -->
+	<!-- 	aria-hidden="true">&times;</button> -->
+        <h4 id="modal_blocking_title"
+	    class="modal-title">Relax</h4>
+      </div>
+      <div id="modal_blocking_body" 
+	   class="modal-body">
+	<p>
+        Doing remote processing. This may take a minute...
+	</p>
+	<div class="progress progress-striped active">
+	  <div class="progress-bar"
+	       role="progressbar"
+	       aria-valuenow="100"
+	       aria-valuemin="0"
+	       aria-valuemax="100"
+	       style="width: 100%">
+	    <span class="sr-only">Working...</span>
+	  </div>
+	</div>
+      </div>
+      <!-- <div class="modal-footer"> -->
+      <!--   <button type="button" -->
+      <!-- 		class="btn btn-default" -->
+      <!-- 		data-dismiss="modal">Close</button> -->
+      <!--   <button id="modal_edge_dialog_save" -->
+      <!-- 		type="button" -->
+      <!-- 		class="btn btn-primary">Save</button> -->
+      <!-- </div> -->
     </div>
   </div>
 </div>

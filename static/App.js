@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEEditorInit = function(in_graph){
+var MMEEditorInit = function(in_graph, in_model){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -44,8 +44,10 @@ var MMEEditorInit = function(in_graph){
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
     // Button contact points.
-    var add_btn_id = 'adder';
-    var add_btn_elt = '#' + add_btn_id;
+    var add_btn_local_id = 'adder_local';
+    var add_btn_local_elt = '#' + add_btn_local_id;
+    var add_btn_remote_id = 'adder_remote';
+    var add_btn_remote_elt = '#' + add_btn_remote_id;
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -77,6 +79,13 @@ var MMEEditorInit = function(in_graph){
     var modal_edge_title_elt = '#' + modal_edge_title_id;
     var modal_edge_save_id = 'modal_edge_dialog_save';
     var modal_edge_save_elt = '#' + modal_edge_save_id;
+    // Hidden reusable modal for action blocking.
+    var modal_blocking_id = 'modal_blocking';
+    var modal_blocking_elt = '#' + modal_blocking_id;
+    var modal_blocking_body_id = 'modal_blocking_body';
+    var modal_blocking_body_elt = '#' + modal_blocking_body_id;
+    var modal_blocking_title_id = 'modal_blocking_title';
+    var modal_blocking_title_elt = '#' + modal_blocking_title_id;
 
     ///
     /// Render helpers.
@@ -254,10 +263,55 @@ var MMEEditorInit = function(in_graph){
     // var id = global_id;
     // var label = global_label;
     var graph_json = in_graph;
+    var model_json = in_model;
 
-    // Load graph.
+    // If we are actually working with a server model instead of a
+    // graph, make a conversion first so we can work with things like
+    // layout, etc.
     var g = new bbop.model.graph();
-    g.load_json(graph_json);
+    if( model_json ){
+
+	each(model_json['individuals'],
+	     function(indv){
+		 
+		 // TODO:
+		 // Add individual.
+		 if( indv['id'] ){
+		     var nn = new bbop.model.node(indv['id']);
+		     var meta = {};
+
+		     ll('indv');
+
+		     // Look @ type.
+		     if( indv['type'] ){
+			 each(indv['type'],
+			      function(type){
+				  if( type['type'] == 'Class' ){
+				      meta['activity'] =
+					  type['label'] || '???';
+				  }
+				  if( type['type'] == 'Restriction' ){
+				      meta['enabled_by'] =
+					  type['someValuesFrom']['id'] || '???';
+				  }
+			      });
+		     }
+
+		     nn.metadata(meta);
+		     g.add_node(nn);
+		 }
+		 
+		 // // Add its associated edges.
+		 // if(){
+		 // }
+	     });
+
+    }else if( graph_json ){
+	// Load graph.
+	g.load_json(graph_json);
+    }else{
+	throw new Error('no data defined!');	
+    }
 
     // Extract the gross layout.
     var r = new bbop.layout.sugiyama.render();
@@ -762,10 +816,11 @@ var MMEEditorInit = function(in_graph){
 
     ///
     /// Activate autocomplete in input boxes.
+    /// Add the local responders.
     ///
 
     // bioentity
-    var bio_args = {
+    var bio_args_local = {
     	'label_template': '{{bioentity_label}} ({{bioentity}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
@@ -774,7 +829,7 @@ var MMEEditorInit = function(in_graph){
     	}
     };
     // molecular function
-    var mfn_args = {
+    var mfn_args_local = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
@@ -783,7 +838,7 @@ var MMEEditorInit = function(in_graph){
     	}
     };
     // location/occurs_in
-    var loc_args = {
+    var loc_args_local = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
@@ -792,33 +847,130 @@ var MMEEditorInit = function(in_graph){
     	}
     };
 
-    ///
-    /// Add the local responders
-    ///
-
     var bio_auto_local =
-	new bbop.widget.search_box(gserv, gconf, 'bio_auto_local', bio_args);
+	new bbop.widget.search_box(gserv, gconf,
+				   'bio_auto_local', bio_args_local);
     bio_auto_local.add_query_filter('document_category', 'bioentity');
     bio_auto_local.set_personality('bioentity');
 
     var mfn_auto_local =
-	new bbop.widget.search_box(gserv, gconf, 'mfn_auto_local', mfn_args);
+	new bbop.widget.search_box(gserv, gconf,
+				   'mfn_auto_local', mfn_args_local);
     mfn_auto_local.add_query_filter('document_category', 'ontology_class');
     mfn_auto_local.add_query_filter('regulates_closure_label',
 				 'molecular_function');
     mfn_auto_local.set_personality('ontology');
 
     var loc_auto_local =
-	new bbop.widget.search_box(gserv, gconf, 'loc_auto_local', mfn_args);
+	new bbop.widget.search_box(gserv, gconf,
+				   'loc_auto_local', loc_args_local);
     loc_auto_local.add_query_filter('document_category', 'ontology_class');
     loc_auto_local.set_personality('ontology');
+
+    ///
+    /// Activate autocomplete in input boxes.
+    /// Add the remote responders.
+    ///
+
+    // Storage for the actual selected identifiers.
+    var bio_val_remote = null;
+    var mfn_val_remote = null;
+    var loc_val_remote = null;
+
+    // bioentity
+    var bio_args_remote = {
+    	'label_template': '{{bioentity_label}} ({{bioentity}})',
+    	'value_template': '{{bioentity_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['bioentity_label']);
+	    bio_val_remote = doc['bioentity'] || null;
+    	}
+    };
+    // molecular function
+    var mfn_args_remote = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    mfn_val_remote = doc['annotation_class'] || null;
+    	}
+    };
+    // location/occurs_in
+    var loc_args_remote = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    loc_val_remote = doc['annotation_class'] || null;
+    	}
+    };
+
+    var bio_auto_remote =
+	new bbop.widget.search_box(gserv, gconf,
+				   'bio_auto_remote', bio_args_remote);
+    bio_auto_remote.add_query_filter('document_category', 'bioentity');
+    bio_auto_remote.set_personality('bioentity');
+
+    var mfn_auto_remote =
+	new bbop.widget.search_box(gserv, gconf,
+				   'mfn_auto_remote', mfn_args_remote);
+    mfn_auto_remote.add_query_filter('document_category', 'ontology_class');
+    mfn_auto_remote.add_query_filter('regulates_closure_label',
+				 'molecular_function');
+    mfn_auto_remote.set_personality('ontology');
+
+    var loc_auto_remote =
+	new bbop.widget.search_box(gserv, gconf,
+				   'loc_auto_remote', loc_args_remote);
+    loc_auto_remote.add_query_filter('document_category', 'ontology_class');
+    loc_auto_remote.set_personality('ontology');
 
     ///
     /// Add GUI button activity.
     ///
 
-    // Add new node.
-    jQuery(add_btn_elt).click(
+    // Add to model and then to the display.
+    // Assume trivial single-valued arguments.
+    function _integrate_trivial_node(bio, mfn, loc){
+
+	// Initial node settings.
+	var dyn_node = new bme_node();
+	dyn_node.enabled_by(bio);
+	dyn_node.activity(mfn);
+	dyn_node.location([loc]); // list type
+    	var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
+    	var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
+	dyn_node.x_init(dyn_x);
+	dyn_node.y_init(dyn_y);
+	
+	// Add it to the edit model.
+	ecore.add_edit_node(dyn_node);
+	
+    	// Redraw table with new info.
+	_edit_core_repaint_table();
+	
+    	// Add to graph.
+	_add_enode_to_display(dyn_node);
+	
+	// Make node active in display.
+	var dnid = dyn_node.id();
+	var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
+	_make_selector_draggable(ddid);
+	//_make_selector_target(ddid);
+	//_make_selector_source(ddid, '.konn');
+	_make_selector_editable(".open-dialog");
+	// _make_selector_draggable('.demo-window');
+	_make_selector_target('.demo-window');
+	_make_selector_source('.demo-window', '.konn');
+	
+    	jsPlumb.repaintEverything();	
+    }
+
+    // Add new local node button.
+    jQuery(add_btn_local_elt).click(
     	function(){
     	    var bio = bio_auto_local.content();
     	    var mfn = mfn_auto_local.content();
@@ -827,38 +979,84 @@ var MMEEditorInit = function(in_graph){
     	    if( mfn == '' || bio == '' || loc == '' ){
     		alert('necessary field empty');
     	    }else{
+		_integrate_trivial_node(bio, mfn, loc);
+    	    }
+    	}
+    );
 
-		// Initial node settings.
-		var dyn_node = new bme_node();
-		dyn_node.enabled_by(bio);
-		dyn_node.activity(mfn);
-		dyn_node.location([loc]); // list type
-    		var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
-    		var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
-		dyn_node.x_init(dyn_x);
-		dyn_node.y_init(dyn_y);
-		
-		// Add it to the edit model.
-		ecore.add_edit_node(dyn_node);
+    // Add new remote node button.
+    jQuery(add_btn_remote_elt).click(
+    	function(){
+    	    var bio = bio_auto_remote.content();
+    	    var mfn = mfn_auto_remote.content();
+    	    var loc = loc_auto_remote.content();
 
-    		// Redraw table with new info.
-		_edit_core_repaint_table();
+    	    if( mfn == '' || bio == '' || loc == '' ){
+    		alert('Necessary field empty.');
+    	    }else if( ! mfn_val_remote ||
+		      ! bio_val_remote ||
+		      ! loc_val_remote ){
+    		alert('You actually need to have selected your ' +
+		      'values from the dropdowns in the autocompletes.');
+    	    }else{
 
-    		// Add to graph.
-		_add_enode_to_display(dyn_node);
+		// Block interface from taking user input while
+		// operating.
+		function _shields_up(){
+		    jQuery(modal_blocking).modal({'backdrop': 'static',
+						  'keyboard': false,
+						  'show': true});
+		}
 
-		// Make node active in display.
-		var dnid = dyn_node.id();
-		var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
-		_make_selector_draggable(ddid);
-		//_make_selector_target(ddid);
-		//_make_selector_source(ddid, '.konn');
-		_make_selector_editable(".open-dialog");
-		// _make_selector_draggable('.demo-window');
-		_make_selector_target('.demo-window');
-		_make_selector_source('.demo-window', '.konn');
-		
-    		jsPlumb.repaintEverything();
+		// Release interface when transaction done.
+		function _shields_down(){
+		    jQuery(modal_blocking).modal('hide');
+		}
+
+		// If successful, add returned data to editor/UI.
+		function on_success(resp, man){
+		    
+		    ll('Remote success (' +
+		       resp.message_type() + '): ' +
+		       resp.message());
+
+		    // Parse out what we got back.
+
+		    // Add to model and display.
+		    _integrate_trivial_node(bio_val_remote,
+					    mfn_val_remote,
+					    loc_val_remote);
+
+		    // Release interface when transaction done.
+		    _shields_down();
+		}
+
+		// If failed, report and reset.
+		function on_failure(resp, man){
+		    
+		    alert('This request failed (on ' +
+			  resp.message_type() + ') with message: ' +
+			  resp.message());
+
+		    // Release interface when transaction done.
+		    _shields_down();
+		}
+
+		// Attempt to adjust remote model with REST call.
+		// var server_loc = 'http://localhost:8300';
+		// var get_path = '/m3GetModel';
+		// var server_args ={
+		//   'modelId': ,
+		//   '': 
+		// };
+
+		var t = "http://toaster.lbl.gov:9000/solr/select?defType=edismax&qt=standard&indent=on&wt=json&rows=10&start=0&fl=bioentity%2Cbioentity_name%2Cannotation_class%2Cannotation_extension_class_handler%2Csource%2Ctaxon%2Cevidence_type%2Cevidence_with%2Cpanther_family%2Cbioentity_isoform%2Creference%2Cbioentity_label%2Cannotation_class_label%2Ctaxon_label%2Cpanther_family_label%2Cscore%2Cid&facet=true&facet.mincount=1&facet.sort=count&json.nl=arrarr&facet.limit=25&hl=true&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&fq=document_category:%22annotation%22&facet.field=source&facet.field=assigned_by&facet.field=aspect&facet.field=evidence_type_closure&facet.field=panther_family_label&facet.field=taxon_closure_label&facet.field=annotation_class_label&facet.field=isa_partof_closure_label&facet.field=regulates_closure_label&facet.field=annotation_extension_class_closure_label&q=apoptotic%20pro*&qf=annotation_class^2&qf=annotation_class_label_searchable^1&qf=bioentity^2&qf=bioentity_label_searchable^1&qf=bioentity_name_searchable^1&qf=annotation_extension_class^2&qf=annotation_extension_class_label_searchable^1&qf=reference^1&qf=panther_family_searchable^1&qf=panther_family_label_searchable^1&qf=bioentity_isoform^1&packet=27&callback_type=search";
+		var m = new bbop.rest.manager.jquery(bbop.rest.response.json);
+		m.use_jsonp(true); // use JSONP
+		m.register('success', 'foo', on_success);
+		m.register('error', 'bar', on_failure);
+		_shields_up(); // block just before start of action
+		m.action(t);
     	    }
     	}
     );
@@ -952,10 +1150,14 @@ jsPlumb.ready(function(){
 		  // Only roll if the env is correct.
 		  if( typeof(global_id) !== 'undefined' &&
 		      typeof(global_label) !== 'undefined' ){
-			  if( typeof(global_graph) !== 'undefined' ){
-			      MMEEditorInit(global_graph);
+			  if( typeof(global_graph) !== 'undefined' &&
+			      global_graph ){
+				  MMEEditorInit(global_graph, null);
+			  }else if( typeof(global_model) !== 'undefined' &&
+				    global_model ){
+				  MMEEditorInit(null, global_model);
 			  }else{
-			      throw new Error('to loadable graph found');
+			      throw new Error('to loadable anything found');
 			  }
 		      }else{
 			  throw new Error('environment not ready');

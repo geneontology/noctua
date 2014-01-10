@@ -295,6 +295,10 @@ var MMEEditorServer = function() {
 					 {
 					     'name': 'global_graph',
 					     'value': graph
+					 },
+					 {
+					     'name': 'global_model',
+					     'value': 'null'
 					 }
 				],
 				'content': frame_cont
@@ -343,6 +347,10 @@ var MMEEditorServer = function() {
 				    {
 					'name': 'global_graph',
 					'value': '{"nodes":[], "edges":[]}'
+				    },
+				    {
+					'name': 'global_model',
+					'value': null
 				    }
 				],
 				'content': frame_cont
@@ -351,12 +359,95 @@ var MMEEditorServer = function() {
 			 res.send(ret);
 		     });
 
+	self.app.get('/seed/model/:query',
+		     function(req, res) {
+
+			 //console.log(req.route);
+			 //console.log(req.route.params['query']);
+			 var query = req.route.params['query'] || '';
+			 if( ! query || query == '' ){
+			     // Catch error here if no proper ID.
+			     res.setHeader('Content-Type', 'text/html');
+			     res.send('no identifier');
+			 }else{
+		    
+			     //console.log('make attempt');
+
+			     // 
+			     function mme_callback_action(resp, man){
+
+				 if( ! resp.okay() ){
+				     res.setHeader('Content-Type', 'text/html');
+				     res.send('bad doc:' + query);
+				 }else{				   
+
+				     //console.log('in success callback');
+
+				     var obj = resp.raw();
+				     var obj_str = bbop.core.dump(obj);
+
+				     // Assemble return doc.
+				     res.setHeader('Content-Type', 'text/html');
+				     
+				     var frame_tmpl =
+					 self.cache_get('frame.tmpl').toString();
+				     var frame_cont = mustache.render(frame_tmpl);
+				     
+				     var base_tmpl =
+					 self.cache_get('app_base.tmpl').toString();
+				     var base_tmpl_args = {
+					 'title': 'go-mme: editor',
+					 'js_variables': [
+					     {
+						 'name': 'global_id',
+						 'value': '"???"'
+					     },
+					     {
+						 'name': 'global_label',
+						 'value': '"???"'
+					     },
+					     {
+						 'name': 'global_graph',
+						 'value': 'null'
+					     },
+					     {
+						 'name': 'global_model',
+						 'value': obj_str
+					     }
+					 ],
+					 'content': frame_cont
+				     };
+				     var ret = mustache.render(base_tmpl,base_tmpl_args);
+				     res.send(ret);
+				 }
+			     }
+			  
+			     // Assemble query to get the desired MME.
+			     var m = new bbop.rest.manager.node(bbop.rest.response.json);
+			     m.register('success', 'foo', mme_callback_action);
+			     m.register('error', 'bar',
+					function(resp, man){
+					    res.setHeader('Content-Type',
+							  'text/html');
+					    res.send('failure ('+
+						     resp.message_type() +'): '+
+						     resp.message());
+					});
+			     var t = 'http://localhost:8300/m3GetModel';
+			     var t_args = {
+				 'modelId': query
+			     };
+			     var astr = m.action(t, t_args);
+			     console.log("action to: " + astr);
+			 }
+		     });
+
 	self.app.post('/action/load',
 		     function(req, res) {
 
 			 // Deal with incoming parameters.
 			 var graph_data = req.route.params['graph_data'] ||
-			     req.body['graph_data'] || '{"nodes":[], "edges":[]}';
+			     req.body['graph_data']||'{"nodes":[], "edges":[]}';
 
 			 // Assemble return doc.
 			 res.setHeader('Content-Type', 'text/html');
@@ -381,6 +472,10 @@ var MMEEditorServer = function() {
 				    {
 					'name': 'global_graph',
 					'value': graph_data
+				    },
+				    {
+					'name': 'global_model',
+					'value': 'null'
 				    }
 				],
 				'content': frame_cont

@@ -7808,7 +7808,7 @@ bbop.rest.manager.jquery = function(response_handler){
     	}else{
     	    got = 'jQuery';
     	}
-    	ll('Using ' + got + ' for ajax calls.');
+    	//ll('Using ' + got + ' for ajax calls.');
     }
 };
 bbop.core.extend(bbop.rest.manager.jquery, bbop.rest.manager);
