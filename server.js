@@ -29,7 +29,7 @@ var app_base = sd.app_base();
 /// Define the sample application.
 ///
 
-var MMEEditorServer = function() {
+var MMEnvServer = function() {
 
     var self = this;
 
@@ -383,7 +383,7 @@ var MMEEditorServer = function() {
 
 				     //console.log('in success callback');
 
-				     var obj = resp.raw();
+				     var obj = resp.data();
 				     var obj_str = bbop.core.dump(obj);
 
 				     // Assemble return doc.
@@ -422,8 +422,8 @@ var MMEEditorServer = function() {
 				 }
 			     }
 			  
-			     // Assemble query to get the desired MME.
-			     var m = new bbop.rest.manager.node(bbop.rest.response.json);
+			     // Assemble query to get the desired MM.
+			     var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
 			     m.register('success', 'foo', mme_callback_action);
 			     m.register('error', 'bar',
 					function(resp, man){
@@ -433,7 +433,7 @@ var MMEEditorServer = function() {
 						     resp.message_type() +'): '+
 						     resp.message());
 					});
-			     var t = 'http://localhost:8300/m3GetModel';
+			     var t = 'http://localhost:6800/m3GetModel';
 			     var t_args = {
 				 'modelId': query
 			     };
@@ -537,6 +537,6 @@ var MMEEditorServer = function() {
 /// Main.
 ///
 
-var mmees = new MMEEditorServer();
+var mmees = new MMEnvServer();
 mmees.initialize();
 mmees.start();

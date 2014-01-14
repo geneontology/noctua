@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEEditorInit = function(in_graph, in_model){
+var MMEnvInit = function(in_graph, in_model){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -1152,10 +1152,10 @@ jsPlumb.ready(function(){
 		      typeof(global_label) !== 'undefined' ){
 			  if( typeof(global_graph) !== 'undefined' &&
 			      global_graph ){
-				  MMEEditorInit(global_graph, null);
+				  MMEnvInit(global_graph, null);
 			  }else if( typeof(global_model) !== 'undefined' &&
 				    global_model ){
-				  MMEEditorInit(null, global_model);
+				  MMEnvInit(null, global_model);
 			  }else{
 			      throw new Error('to loadable anything found');
 			  }
