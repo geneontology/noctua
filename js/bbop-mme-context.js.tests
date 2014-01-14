@@ -1,0 +1,8 @@
+////
+//// rhino -f ../bbop-js/staging/bbop.js -f js/bbop-mme-context.js -f -
+////
+
+var b = new bbop_mme_context();
+b.known_relations(); // long list
+b.readable('BFO_0000050'); // 'part of'
+b.readable('BFO_00'); // 'BFO_00'

@@ -296,14 +296,38 @@ var MMEnvInit = function(in_graph, in_model){
 				  }
 			      });
 		     }
-
 		     nn.metadata(meta);
 		     g.add_node(nn);
+
+		     // Now, let's probe the model to see what edges
+		     // we can find.
+		     var aid = new bbop_mme_context();
+		     var possible_rels = aid.known_relations();
+		     each(possible_rels,
+			  function(rel_to_try){
+			      if( indv[rel_to_try] && indv[rel_to_try].length ){
+
+				  // Cycle through each of the found
+				  // rels.
+				  var found_rels = indv[rel_to_try];
+				  each(found_rels,
+				       function(rel){
+					   var rt = rel['type'];
+					   if( rt && rt == 'NamedIndividual'){
+					       var tid = rel['id'];
+
+					       var en =
+						   new bbop.model.edge(indv['id'], tid, rel_to_try);
+		     g.add_edge(en);
+
+
+
+
+					   }
+				       });
+			      }
+			  });
 		 }
-		 
-		 // // Add its associated edges.
-		 // if(){
-		 // }
 	     });
 
     }else if( graph_json ){

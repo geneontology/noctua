@@ -103,6 +103,7 @@ var MMEnvServer = function() {
 		'jquery.jsPlumb-1.5.5.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',
+		'bbop-mme-context.js': '',
 		'bbop-mme-edit.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
