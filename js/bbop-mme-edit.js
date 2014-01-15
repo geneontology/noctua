@@ -22,8 +22,8 @@ bbop_mme_edit.core = function(){
 	'node_order': [], // initial table order on redraws
 	'node2elt': {}, // map of id to physical object id
 	'elt2node': {},  // map of physical object id to id
-//	// Remeber that edge ids and elts ids are the same, so no map
-//	// is needed.
+	// Remeber that edge ids and elts ids are the same, so no map
+	// is needed.
 	'edge2connector': {}, // map of edge id to virtual connector id
 	'connector2edge': {}  // map of virtual connector id to edge id 
     };
@@ -138,6 +138,7 @@ bbop_mme_edit.core.prototype.create_edge_mapping = function(eedge, connector){
     this.core['connector2edge'][cid] = eid;
 };
 
+// Debugging text output function.
 bbop_mme_edit.core.prototype.dump = function(){
 
     //
@@ -145,13 +146,14 @@ bbop_mme_edit.core.prototype.dump = function(){
     
     bbop.core.each(this.core['nodes'],
 		   function(node_id, node){
-		       if( node.type() && node.type() == 'real' ){
+		       if( node.existential() && node.existential() == 'real' ){
 			   var ncache = ['node'];
-			   ncache.push(node.enabled_by());
-			   ncache.push(node.activity());
-			   ncache.push(node.unknown().join('|'));
-			   ncache.push(node.process());
-			   ncache.push(node.location().join('|'));
+			   ncache.push(node.id());
+			   // ncache.push(node.enabled_by());
+			   // ncache.push(node.activity());
+			   // ncache.push(node.unknown().join('|'));
+			   // ncache.push(node.process());
+			   // ncache.push(node.location().join('|'));
 			   dcache.push(ncache.join("\t"));
 		       }
 		   });
@@ -168,6 +170,7 @@ bbop_mme_edit.core.prototype.dump = function(){
     return dcache.join("\n");
 };
 
+// Return gross high-level topology.
 bbop_mme_edit.core.prototype.to_graph = function(){
 
     // 
@@ -176,19 +179,19 @@ bbop_mme_edit.core.prototype.to_graph = function(){
     // Add nodes.
     bbop.core.each(this.core['nodes'],
 		   function(node_id, node){
-		       if( node.type() && node.type() == 'real' ){
+		       if( node.existential() && node.existential() == 'real' ){
 
-			   // Assemble meta.
-			   var ex_meta = {};
-			   ex_meta['enabled_by'] = node.enabled_by();
-			   ex_meta['activity'] = node.activity();
-			   ex_meta['unknown'] = node.unknown();
-			   ex_meta['process'] = node.process();
-			   ex_meta['location'] = node.location();
+			   // // Assemble meta.
+			   // var ex_meta = {};
+			   // ex_meta['enabled_by'] = node.enabled_by();
+			   // ex_meta['activity'] = node.activity();
+			   // ex_meta['unknown'] = node.unknown();
+			   // ex_meta['process'] = node.process();
+			   // ex_meta['location'] = node.location();
 			   
 			   // Create node.
 			   var ex_node = new bbop.model.node(node_id);
-			   ex_node.metadata(ex_meta);
+			   //ex_node.metadata(ex_meta);
 
 			   // Add to export graph.
 			   ex_graph.add_node(ex_node);
@@ -209,23 +212,27 @@ bbop_mme_edit.core.prototype.to_graph = function(){
 };
 
 // Edit nodes.
-bbop_mme_edit.node = function(in_id, in_type){
+/*
+ * Parameters:
+ *  in_id - *[optional]* generated if not given
+ *  in_types - *[serially optional]* empty list if no list given
+ *  in_existential - *[serially optional]* defaults to 'real' if not given
+ */
+bbop_mme_edit.node = function(in_id, in_types, in_existential){
+
+    this._types = [];
 
     if( typeof(in_id) === 'undefined' ){
 	this._id = bbop.core.uuid();
     }else{
 	this._id = in_id;
     }
-    if( typeof(in_type) === 'undefined' ){
-	this._type = 'real';
+    if( typeof(in_types) !== 'undefined' ){
+	this._types = in_types;
     }
-    
-    // Current model props.
-    this._enabled_by = '';
-    this._activity = '';
-    this._unknown = [];
-    this._process = '';
-    this._location = [];
+    if( typeof(in_existential) === 'undefined' ){
+	this._existential = 'real';
+    }
     
     // Optional layout hints.
     this._x_init = null; // initial layout hint
@@ -233,22 +240,23 @@ bbop_mme_edit.node = function(in_id, in_type){
     // this.xlast = null; // last known location
     // this.ylast = null;
 };
+
 bbop_mme_edit.node.prototype.id = function(value){ // (possibly generated) ID is RO
     return this._id; };
-bbop_mme_edit.node.prototype.type = function(value){
-    if(value) this._type = value; return this._type; };
-bbop_mme_edit.node.prototype.enabled_by = function(value){
-    if(value) this._enabled_by = value; return this._enabled_by; };
-bbop_mme_edit.node.prototype.activity = function(value){
-    if(value) this._activity = value; return this._activity; };
-bbop_mme_edit.node.prototype.unknown = function(value){
-    if(value) this._unknown = value; return this._unknown; };
-bbop_mme_edit.node.prototype.process = function(value){
-    if(value) this._process = value; return this._process; };
-bbop_mme_edit.node.prototype.location = function(value){
-    if(value) this._location = value; return this._location; };
+
+bbop_mme_edit.node.prototype.existential = function(value){
+    if(value) this._existential = value; return this._existential; };
+
+bbop_mme_edit.node.prototype.types = function(in_types){
+    if( in_types && bbop.core.what_is(in_types) == 'array' ){
+	this._types = in_types;
+    }
+    return this._types;
+};
+
 bbop_mme_edit.node.prototype.x_init = function(value){
     if(value) this._x_init = value; return this._x_init; };
+
 bbop_mme_edit.node.prototype.y_init = function(value){
     if(value) this._y_init = value; return this._y_init; };
 

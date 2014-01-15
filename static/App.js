@@ -14,7 +14,7 @@ var MMEnvInit = function(in_graph, in_model){
     //var use_waypoints_p = true;
     var use_waypoints_p = false;
     
-    var logger = new bbop.logger('mmee');
+    var logger = new bbop.logger('mme');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
@@ -25,6 +25,9 @@ var MMEnvInit = function(in_graph, in_model){
     var bme_core = bbop_mme_edit.core;
     var bme_edge = bbop_mme_edit.edge;
     var bme_node = bbop_mme_edit.node;
+    
+    // Help with strings and colors--configured separately.
+    var aid = new bbop_mme_context();
 
     // Create the core model.
     //var bbop_mme_edit = require('./js/bbop-mme-edit');
@@ -118,98 +121,38 @@ var MMEnvInit = function(in_graph, in_model){
 	var id = node.id();
 	var enode = new bme_node(id);
 
-	var ret = {
-	    'enabled_by': '',
-	    'activity': '',
-	    'unknown': [],
-	    'process': '',
-	    'location': []
-	};
+	// TODO: Convert meta-structure to JSON-LD type structure.
 
-	ll('new enode id: ' + id);
-	ll('node: ' + bbop.core.dump(node));
-	var meta = node.metadata();
-	if( meta ){
-	    if( meta['enabled_by'] ){
-		enode.enabled_by(meta['enabled_by']);
-	    }
-	    if( meta['unknown'] ){
-		enode.unknown(meta['unknown']);
-	    }
-	    if( meta['activity'] ){
-		enode.activity(meta['activity']);
-	    }
-	    if( meta['process'] ){
-		enode.process(meta['process']);
-	    }
-	    if( meta['location'] ){
-		enode.location(meta['location']);
-	    }
-	}
+	// var ret = {
+	//     'enabled_by': '',
+	//     'activity': '',
+	//     'unknown': [],
+	//     'process': '',
+	//     'location': []
+	// };
+
+	// ll('new enode id: ' + id);
+	// ll('node: ' + bbop.core.dump(node));
+	// var meta = node.metadata();
+	// if( meta ){
+	//     if( meta['enabled_by'] ){
+	// 	enode.enabled_by(meta['enabled_by']);
+	//     }
+	//     if( meta['unknown'] ){
+	// 	enode.unknown(meta['unknown']);
+	//     }
+	//     if( meta['activity'] ){
+	// 	enode.activity(meta['activity']);
+	//     }
+	//     if( meta['process'] ){
+	// 	enode.process(meta['process']);
+	//     }
+	//     if( meta['location'] ){
+	// 	enode.location(meta['location']);
+	//     }
+	// }
 
 	return enode;
-    }
-
-    // Takes a core edit node as the argument.
-    function _enode_to_stack(enode){
-	
-	// Simulate VisualizeServer's stack.
-	var stack = [];
-
-	if( enode.enabled_by() ){
-	   ll('has enby');
-	    stack.push({
-			   'color': '#FFFFFF',
-			   'field': 'enabled by',
-			   'label': enode.enabled_by()
-		       });
-	}
-
-	if( enode.activity() ){
-	   ll('has act');
-	    stack.push({
-			   'color': '#ADD8E6',
-			   'field': 'activity',
-			   'label': enode.activity()
-		       });
-	}
-
-	var unk = enode.unknown();
-	if( unk && what_is(unk) == 'array' ){
-	    ll('has unk');
-	    each(unk,
-		 function(item){
-		     stack.push({
-				    'color': '#FFF0F5',
-				    'field': 'unknown',
-				    'label': item
-				});
-		 });
-	}
-
-	if( enode.process() ){
-	    ll('has pro');
-	    stack.push({
-			   'color': '#FF7F50',
-			   'field': 'process',
-			   'label': enode.process()
-		       });
-	}
-
-	var loc = enode.location();
-	if( loc && what_is(loc) == 'array' ){
-	    ll('has loc');
-	    each(loc,
-		 function(item){
-		     stack.push({
-				    'color': '#FFFF00',
-				    'field': 'location',
-				    'label': item
-				});
-		 });
-	}
-	
-	return stack;
     }
 
     ///
@@ -268,106 +211,85 @@ var MMEnvInit = function(in_graph, in_model){
     // If we are actually working with a server model instead of a
     // graph, make a conversion first so we can work with things like
     // layout, etc.
-    var g = new bbop.model.graph();
     if( model_json ){
 
+	// Convert the JSON-LD lite model into the edit core.
+	function _process_individuals(indv){
+
+	    // Add individual to edit core if properly structured.
+	    var iid = indv['id'];
+	    if( iid ){
+		//var nn = new bbop.model.node(indv['id']);
+		//var meta = {};
+		//ll('indv');
+		
+		// See if there is type info that we want to add.
+		var itypes = indv['type'] || [];
+		if( bbop.core.what_is(itypes) != 'array' ){
+		    throw new Error('types is wrong');
+		}
+
+		var ne = new bme_node(iid, itypes);
+		ecore.add_edit_node(ne);
+
+		// // Look @ type.
+		// if( indv['type'] ){
+		//     each(indv['type'],
+		// 	 function(type){
+		// 	     if( type['type'] == 'Class' ){
+		// 		 meta['activity'] =
+		// 		     type['label'] || '???';
+		// 	     }
+		// 	     if( type['type'] == 'Restriction' ){
+		// 		 meta['enabled_by'] =
+		// 		     type['someValuesFrom']['id'] || '???';
+		// 	     }
+		// 	 });
+		// }
+		// //nn.metadata(meta);
+		// //g.add_node(nn);
+		
+		// Now, let's probe the model to see what edges
+		// we can find.
+		var possible_rels = aid.all_known();
+		each(possible_rels,
+		     function(rel_to_try){
+			 if( indv[rel_to_try] && indv[rel_to_try].length ){
+			     
+			     // Cycle through each of the found
+			     // rels.
+			     var found_rels = indv[rel_to_try];
+			     each(found_rels,
+				  function(rel){
+				      var tid = rel['id'];
+				      var rt = rel['type'];
+				      if( tid && rt && rt == 'NamedIndividual'){
+					  var en =
+					      new bme_edge(iid,rel_to_try,tid);
+					  ecore.add_edit_edge(en);
+				      }
+				  });
+			 }
+		     });
+	    }
+	}
 	each(model_json['individuals'],
 	     function(indv){
-		 
-		 // TODO:
-		 // Add individual.
-		 if( indv['id'] ){
-		     var nn = new bbop.model.node(indv['id']);
-		     var meta = {};
-
-		     ll('indv');
-
-		     // Look @ type.
-		     if( indv['type'] ){
-			 each(indv['type'],
-			      function(type){
-				  if( type['type'] == 'Class' ){
-				      meta['activity'] =
-					  type['label'] || '???';
-				  }
-				  if( type['type'] == 'Restriction' ){
-				      meta['enabled_by'] =
-					  type['someValuesFrom']['id'] || '???';
-				  }
-			      });
-		     }
-		     nn.metadata(meta);
-		     g.add_node(nn);
-
-		     // Now, let's probe the model to see what edges
-		     // we can find.
-		     var aid = new bbop_mme_context();
-		     var possible_rels = aid.known_relations();
-		     each(possible_rels,
-			  function(rel_to_try){
-			      if( indv[rel_to_try] && indv[rel_to_try].length ){
-
-				  // Cycle through each of the found
-				  // rels.
-				  var found_rels = indv[rel_to_try];
-				  each(found_rels,
-				       function(rel){
-					   var rt = rel['type'];
-					   if( rt && rt == 'NamedIndividual'){
-					       var tid = rel['id'];
-
-					       var en =
-						   new bbop.model.edge(indv['id'], tid, rel_to_try);
-		     g.add_edge(en);
-
-
-
-
-					   }
-				       });
-			      }
-			  });
-		 }
+		  _process_individuals(indv);
 	     });
 
     }else if( graph_json ){
-	// Load graph.
+
+	// Load graph into edit model.
+	var g = new bbop.model.graph();
 	g.load_json(graph_json);
-    }else{
-	throw new Error('no data defined!');	
-    }
 
-    // Extract the gross layout.
-    var r = new bbop.layout.sugiyama.render();
-    var layout = r.layout(g);
-
-    ///
-    /// Using the graph and the layout, populate the edit core,
-    /// as well as the optional initial layout values. Waypoints are
-    /// optional here.
-    ///
-
-    // Add all graph-defined nodes.
-    each(g.all_nodes(),
-	 function(node){
-	     var new_enode = _node_to_enode(node);
-	     ecore.add_edit_node(new_enode);
-	 });
-
-    // Add the initial layout position to the edit nodes.
-    each(layout['nodes'],
-	 function(litem, index){
-	     var id = litem['id'];
-	     var raw_x = litem['x'];
-	     var raw_y = litem['y'];
-
-	     var en = ecore.get_edit_node(id);
-	     en.x_init(_box_left(raw_x));
-	     en.y_init(_box_top(raw_y));
-	 });
-
-    // Add additional information if the waypoint flag is set.
-    if( ! use_waypoints_p ){
+	// Add all graph-defined nodes.
+	each(g.all_nodes(),
+	     function(node){
+		 var new_enode = _node_to_enode(node);
+		 ecore.add_edit_node(new_enode);
+	     });
 
 	// All all graph-defined edges.
 	each(g.all_edges(),
@@ -377,7 +299,6 @@ var MMEnvInit = function(in_graph, in_model){
 		 var epid = edge.predicate_id();
 		 var new_epid = epid.substring(epid.lastIndexOf('/') +1,
 					       epid.length);
-
 		 var new_eedge = new bme_edge(edge.subject_id(),
 					      new_epid,
 					      edge.object_id());
@@ -385,6 +306,32 @@ var MMEnvInit = function(in_graph, in_model){
 	     });
 
     }else{
+	throw new Error('no data defined!');	
+    }
+
+    ///
+    /// We now have a well-defined edit core. Let's try and add some
+    /// layout information if we can: edit core toplogy to graph.
+    ///
+
+    // Extract the gross layout.
+    var g = ecore.to_graph();
+    var r = new bbop.layout.sugiyama.render();
+    var layout = r.layout(g);
+
+    // Add the initial layout position to the edit nodes.
+    each(layout['nodes'],
+	 function(litem, index){
+	     var id = litem['id'];
+	     var raw_x = litem['x'];
+	     var raw_y = litem['y'];
+	     var en = ecore.get_edit_node(id);
+	     en.x_init(_box_left(raw_x));
+	     en.y_init(_box_top(raw_y));
+	 });	
+
+    // Add additional information if the waypoint flag is set.
+    if( use_waypoints_p ){
 	
 	alert('this method does not (yet) support rels on edges');
 
@@ -423,23 +370,75 @@ var MMEnvInit = function(in_graph, in_model){
 
     // Add edit model contents to descriptive table.
     function _edit_core_repaint_table(){
-	var nav_tbl_headers =
-	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
-	var nav_tbl = new bbop.html.table(nav_tbl_headers, [],
-					  {'class': 'table table-bordered table-hover table-condensed'});
+
+	// First, lets get the headers that we'll need by poking the
+	// model and getting all of the possible categories.
+	
+	var cat_list = [];
+	each(ecore.get_edit_nodes(),
+	     function(enode_id, enode){
+		 each(enode.types(),
+		      function(in_type){
+			   cat_list.push(aid.categorize(in_type));
+		      });
+	     });
+	// Dedupe list.
+	var tmph = bbop.core.hashify(cat_list);
+	cat_list = bbop.core.get_keys(tmph);
+
+	// Sort list according to known priorities.
+	cat_list = cat_list.sort(
+	    function(a, b){
+		return aid.priority(b) - aid.priority(a);
+	    });
+
+	// Convert the ids into readable headers.
+	var nav_tbl_headers = [];
+	each(cat_list,
+	     function(cat_id){
+		 nav_tbl_headers.push(aid.readable(cat_id));
+	     });
+
+//	var nav_tbl_headers = cat_list;
+//	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
+
+	var nav_tbl =
+	    new bbop.html.table(nav_tbl_headers, [],
+				{'class': ['table', 'table-bordered',
+					   'table-hover',
+					   'table-condensed'].join(' ')});
 
 	//each(ecore.get_edit_nodes(),
 	each(ecore.edit_node_order(),
 	     function(enode_id){
 		 var enode = ecore.get_edit_node(enode_id);
-		 if( enode.type() == 'real' ){
+		 if( enode.existential() == 'real' ){
+
+		     // Now that we have an enode, we want to mimic
+		     // the order that we created for the header
+		     // (cat_list). Start by binning the types.
+		     var bin = {};
+		     each(enode.types(),
+			  function(in_type){
+			      var cat = aid.categorize(in_type);
+			      if( ! bin[cat] ){ bin[cat] = []; }
+			      bin[cat].push(in_type);
+			  });
+
+		     // Now unfold the binned types into the table row
+		     // according to the sorted order.
 		     var table_row = [];
-		     table_row.push(enode.enabled_by());
-		     table_row.push(enode.activity());
-		     table_row.push(enode.unknown().join('<br />'));
-		     table_row.push(enode.process());
-		     table_row.push(enode.location().join('<br />'));
-		     // Add possibly nested row into table
+		     each(cat_list,
+			  function(cat_id){
+			      var accumulated_types = bin[cat_id];
+			      var cell_cache = [];
+			      each(accumulated_types,
+				   function(atype){
+				       var tt = bme_type_to_text(atype);
+				       cell_cache.push(tt);
+				   });
+			      table_row.push(cell_cache.join('<br />'));
+			  });
 		     nav_tbl.add_to(table_row);		     
 		 }
 	     });
@@ -461,13 +460,35 @@ var MMEnvInit = function(in_graph, in_model){
 				   'class': 'demo-window',
 				   'style': style_str});
 
-	// Colorful stack.
+	// Takes a core edit node as the argument, categorize the
+	// contained types, order them.
+	function _enode_to_stack(enode){
+	
+	    // Attach a category to each type.
+	    var bin_stack = [];
+	    each(enode.types(),
+		 function(in_type){
+		     var bin = aid.categorize(in_type);
+		     bin_stack.push({'category': bin, 'type': in_type});
+		 });
+	    
+	    // Sort the types within the stack according to the known
+	    // type priorities.
+	    bin_stack = bin_stack.sort(
+		function(a, b){
+		    return aid.priority(b) - aid.priority(a);
+		});
+
+	    return bin_stack;
+	}
+
+	// Create a colorful label stack into an individual table.
 	var enode_stack_table = new bbop.html.tag('table', {});
 	each(_enode_to_stack(enode),
 	     function(item){
 		 var trstr = '<tr style="background-color: ' +
-		     item['color'] + ';"><td>' 
-		     + item['label'] + '</td></tr>';   
+		     aid.color(item['category']) + ';"><td>' 
+		     + bme_type_to_text(item['type']) + '</td></tr>';   
 		 enode_stack_table.add_to(trstr);
 	     });
 	w.add_to(enode_stack_table);
@@ -491,7 +512,7 @@ var MMEnvInit = function(in_graph, in_model){
 	each(ecore.get_edit_nodes(),
 	     function(enode_id, enode){
 
-		 if( enode.type() == 'real' ){ // if a "real" node
+		 if( enode.existential() == 'real' ){ // if a "real" node
 
 		     _add_enode_to_display(enode);
 
@@ -544,7 +565,7 @@ var MMEnvInit = function(in_graph, in_model){
 
 	    // TODO: Jimmy out information about this node.
 	    var tid = enode.id();
-	    var ttype = enode.type();
+	    var ttype = enode.existential();
 
 	    // Rewrite modal contents with node info and editing
 	    // options.
@@ -619,6 +640,11 @@ var MMEnvInit = function(in_graph, in_model){
 	var sn = eedge.source();
 	var rn = eedge.relation() || 'n/a';
 	var tn = eedge.target();
+
+	// Readable label.
+	rn = aid.readable(rn);
+	var clr = aid.color(rn);
+
     	var new_conn = instance.connect(
     	    { // remember that edge ids and elts ids are the same 
     	    	'source': ecore.get_edit_node_elt_id(sn),
@@ -626,6 +652,10 @@ var MMEnvInit = function(in_graph, in_model){
 		//'label': 'foo' // works
 		'anchor': "Continuous",
 		'connector': ["Bezier", { curviness: 25 } ],
+		'paintStyle': {
+		    strokeStyle: clr,
+		    lineWidth: 5
+		},
 		'overlays': [ // does not!?
 		    ["Label", {'label': rn,
 			       'location': 0.5,
@@ -633,6 +663,7 @@ var MMEnvInit = function(in_graph, in_model){
 			       'id': 'label' } ],
 		    ["Arrow", {'location': -4}]
 		 ]
+	    //}, {'PaintStyle': { strokeStyle: clr, lineWidth: 5}});
 	    });
 
 	// NOTE: This is necessary since these connectors are created
@@ -759,6 +790,11 @@ var MMEnvInit = function(in_graph, in_model){
 						     'location': 0.5,
 						     'cssClass': "aLabel",
 						     'id': 'label' } ]);
+
+			  // TODO: Since we'll be talking to the
+			  // server, this will actually be: ping
+			  // server, destroy connector, create new
+			  // connector.
 			  
 			  // Change edit model's releation.
 			  ee.relation(rval);
@@ -962,9 +998,9 @@ var MMEnvInit = function(in_graph, in_model){
 
 	// Initial node settings.
 	var dyn_node = new bme_node();
-	dyn_node.enabled_by(bio);
-	dyn_node.activity(mfn);
-	dyn_node.location([loc]); // list type
+	// dyn_node.enabled_by(bio);
+	// dyn_node.activity(mfn);
+	// dyn_node.location([loc]); // list type
     	var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
     	var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
 	dyn_node.x_init(dyn_x);
