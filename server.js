@@ -33,6 +33,8 @@ var MMEnvServer = function() {
 
     var self = this;
 
+    var m3loc = 'http://localhost:6800';
+
     ///
     /// Environment helpers.
     ///
@@ -309,7 +311,7 @@ var MMEnvServer = function() {
 					 'js_variables': [
 					     {
 						 'name': 'global_id',
-						 'value': '"???"'
+						 'value': '"' + query + '"'
 					     },
 					     {
 						 'name': 'global_label',
@@ -338,7 +340,7 @@ var MMEnvServer = function() {
 						     resp.message_type() +'): '+
 						     resp.message());
 					});
-			     var t = 'http://localhost:6800/m3GetModel';
+			     var t = m3loc + '/m3GetModel';
 			     var t_args = {
 				 'modelId': query
 			     };
@@ -367,6 +369,7 @@ var MMEnvServer = function() {
 				'title': 'go-mme: editor',
 				'js_variables': [
 				    {
+					// TODO: need to extract the ID.
 					'name': 'global_id',
 					'value': '"unknown"'
 				    },
@@ -385,17 +388,18 @@ var MMEnvServer = function() {
 			 res.send(ret);
 		     });
 
-	// Test external save handler.
-	self.app.post('/action/save',
+	// Test export handler.
+	self.app.post('/action/export',
 		     function(req, res) {
 
 			 // Deal with incoming parameters.
-			 var data = req.route.params['data'] ||
-			     req.body['data'] || '???';
+			 var mid = req.route.params['model_id'] ||
+			     req.body['model_id'] || '???';
 
 			 // Assemble return doc.
-			 res.setHeader('Content-Type', 'text/plain');
-			 res.send(data);
+			 res.redirect(m3loc + '/m3ExportModel?modelId=' + mid); 
+			 //res.setHeader('Content-Type', 'text/plain');
+			 //res.send(data);
 		     });
     };
 

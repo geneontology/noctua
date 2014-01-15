@@ -203,8 +203,8 @@ var MMEnvInit = function(in_model){
     /// of the editor.
     ///
 
-    // var id = global_id;
-    // var label = global_label;
+    var model_id = global_id;
+    var model_label = global_label;
     var model_json = in_model;
 
     // If we are actually working with a server model instead of a
@@ -1103,10 +1103,10 @@ var MMEnvInit = function(in_model){
 	    // Change the form to add the data.
 	    //alert(ecore.dump());
 	    //jQuery(action_form_data_elt).val(ecore.dump());
-	    var exgraph = ecore.to_graph();
-	    var jout_obj = exgraph.to_json();
-	    var jout_str = bbop.core.dump(jout_obj);
-	    jQuery(action_form_data_elt).val(jout_str);
+	    //var exgraph = ecore.to_graph();
+	    //var jout_obj = exgraph.to_json();
+	    //var jout_str = bbop.core.dump(jout_obj);
+	    jQuery(action_form_data_elt).val(model_id);
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();
     	});
