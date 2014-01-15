@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_graph, in_model){
+var MMEnvInit = function(in_model){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -205,113 +205,63 @@ var MMEnvInit = function(in_graph, in_model){
 
     // var id = global_id;
     // var label = global_label;
-    var graph_json = in_graph;
     var model_json = in_model;
 
     // If we are actually working with a server model instead of a
     // graph, make a conversion first so we can work with things like
     // layout, etc.
-    if( model_json ){
 
-	// Convert the JSON-LD lite model into the edit core.
-	function _process_individuals(indv){
+    // Convert the JSON-LD lite model into the edit core.
+    function _process_individuals(indv){
 
-	    // Add individual to edit core if properly structured.
-	    var iid = indv['id'];
-	    if( iid ){
-		//var nn = new bbop.model.node(indv['id']);
-		//var meta = {};
-		//ll('indv');
-		
-		// See if there is type info that we want to add.
-		var itypes = indv['type'] || [];
-		if( bbop.core.what_is(itypes) != 'array' ){
-		    throw new Error('types is wrong');
-		}
-
-		var ne = new bme_node(iid, itypes);
-		ecore.add_edit_node(ne);
-
-		// // Look @ type.
-		// if( indv['type'] ){
-		//     each(indv['type'],
-		// 	 function(type){
-		// 	     if( type['type'] == 'Class' ){
-		// 		 meta['activity'] =
-		// 		     type['label'] || '???';
-		// 	     }
-		// 	     if( type['type'] == 'Restriction' ){
-		// 		 meta['enabled_by'] =
-		// 		     type['someValuesFrom']['id'] || '???';
-		// 	     }
-		// 	 });
-		// }
-		// //nn.metadata(meta);
-		// //g.add_node(nn);
-		
-		// Now, let's probe the model to see what edges
-		// we can find.
-		var possible_rels = aid.all_known();
-		each(possible_rels,
-		     function(rel_to_try){
-			 if( indv[rel_to_try] && indv[rel_to_try].length ){
-			     
-			     // Cycle through each of the found
-			     // rels.
-			     var found_rels = indv[rel_to_try];
-			     each(found_rels,
-				  function(rel){
-				      var tid = rel['id'];
-				      var rt = rel['type'];
-				      if( tid && rt && rt == 'NamedIndividual'){
-					  var en =
-					      new bme_edge(iid,rel_to_try,tid);
-					  ecore.add_edit_edge(en);
-				      }
-				  });
-			 }
-		     });
+	// Add individual to edit core if properly structured.
+	var iid = indv['id'];
+	if( iid ){
+	    //var nn = new bbop.model.node(indv['id']);
+	    //var meta = {};
+	    //ll('indv');
+	    
+	    // See if there is type info that we want to add.
+	    var itypes = indv['type'] || [];
+	    if( bbop.core.what_is(itypes) != 'array' ){
+		throw new Error('types is wrong');
 	    }
+	    
+	    var ne = new bme_node(iid, itypes);
+	    ecore.add_edit_node(ne);
+	    
+	    // Now, let's probe the model to see what edges
+	    // we can find.
+	    var possible_rels = aid.all_known();
+	    each(possible_rels,
+		 function(rel_to_try){
+		     if( indv[rel_to_try] && indv[rel_to_try].length ){
+			 
+			 // Cycle through each of the found
+			 // rels.
+			 var found_rels = indv[rel_to_try];
+			 each(found_rels,
+			      function(rel){
+				  var tid = rel['id'];
+				  var rt = rel['type'];
+				  if( tid && rt && rt == 'NamedIndividual'){
+				      var en =
+					  new bme_edge(iid,rel_to_try,tid);
+				      ecore.add_edit_edge(en);
+				  }
+			      });
+		     }
+		 });
 	}
-	each(model_json['individuals'],
-	     function(indv){
-		  _process_individuals(indv);
-	     });
-
-    }else if( graph_json ){
-
-	// Load graph into edit model.
-	var g = new bbop.model.graph();
-	g.load_json(graph_json);
-
-	// Add all graph-defined nodes.
-	each(g.all_nodes(),
-	     function(node){
-		 var new_enode = _node_to_enode(node);
-		 ecore.add_edit_node(new_enode);
-	     });
-
-	// All all graph-defined edges.
-	each(g.all_edges(),
-	     function(edge){
-
-		 // TODO: (Temporarily) trim the rel types.
-		 var epid = edge.predicate_id();
-		 var new_epid = epid.substring(epid.lastIndexOf('/') +1,
-					       epid.length);
-		 var new_eedge = new bme_edge(edge.subject_id(),
-					      new_epid,
-					      edge.object_id());
-		 ecore.add_edit_edge(new_eedge);
-	     });
-
-    }else{
-	throw new Error('no data defined!');	
     }
+    each(model_json['individuals'],
+	 function(indv){
+	     _process_individuals(indv);
+	 });
 
     ///
     /// We now have a well-defined edit core. Let's try and add some
-    /// layout information if we can: edit core toplogy to graph.
+    /// layout information if we can: edit core topology to graph.
     ///
 
     // Extract the gross layout.
@@ -372,8 +322,7 @@ var MMEnvInit = function(in_graph, in_model){
     function _edit_core_repaint_table(){
 
 	// First, lets get the headers that we'll need by poking the
-	// model and getting all of the possible categories.
-	
+	// model and getting all of the possible categories.	
 	var cat_list = [];
 	each(ecore.get_edit_nodes(),
 	     function(enode_id, enode){
@@ -386,66 +335,77 @@ var MMEnvInit = function(in_graph, in_model){
 	var tmph = bbop.core.hashify(cat_list);
 	cat_list = bbop.core.get_keys(tmph);
 
-	// Sort list according to known priorities.
-	cat_list = cat_list.sort(
-	    function(a, b){
-		return aid.priority(b) - aid.priority(a);
-	    });
+	// If we actually got something, render the table. Otherwise,
+	// a message.
+	if( bbop.core.is_empty(cat_list) ){
+	    
+	    // Add to display.
+	    jQuery(table_div).empty();
+	    jQuery(table_div).append('<p><h4>no instances</h4></p>');
 
-	// Convert the ids into readable headers.
-	var nav_tbl_headers = [];
-	each(cat_list,
-	     function(cat_id){
-		 nav_tbl_headers.push(aid.readable(cat_id));
-	     });
-
-//	var nav_tbl_headers = cat_list;
-//	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
-
-	var nav_tbl =
-	    new bbop.html.table(nav_tbl_headers, [],
-				{'class': ['table', 'table-bordered',
-					   'table-hover',
-					   'table-condensed'].join(' ')});
-
-	//each(ecore.get_edit_nodes(),
-	each(ecore.edit_node_order(),
-	     function(enode_id){
-		 var enode = ecore.get_edit_node(enode_id);
-		 if( enode.existential() == 'real' ){
-
-		     // Now that we have an enode, we want to mimic
-		     // the order that we created for the header
-		     // (cat_list). Start by binning the types.
-		     var bin = {};
-		     each(enode.types(),
-			  function(in_type){
-			      var cat = aid.categorize(in_type);
-			      if( ! bin[cat] ){ bin[cat] = []; }
-			      bin[cat].push(in_type);
-			  });
-
-		     // Now unfold the binned types into the table row
-		     // according to the sorted order.
-		     var table_row = [];
-		     each(cat_list,
-			  function(cat_id){
-			      var accumulated_types = bin[cat_id];
-			      var cell_cache = [];
-			      each(accumulated_types,
-				   function(atype){
-				       var tt = bme_type_to_text(atype);
-				       cell_cache.push(tt);
-				   });
-			      table_row.push(cell_cache.join('<br />'));
-			  });
-		     nav_tbl.add_to(table_row);		     
-		 }
-	     });
-
-	// Add to display.
-	jQuery(table_div).empty();
-	jQuery(table_div).append(nav_tbl.to_string());
+	}else{
+	    
+	    // Sort list according to known priorities.
+	    cat_list = cat_list.sort(
+		function(a, b){
+		    return aid.priority(b) - aid.priority(a);
+		});
+	    
+	    // Convert the ids into readable headers.
+	    var nav_tbl_headers = [];
+	    each(cat_list,
+		 function(cat_id){
+		     nav_tbl_headers.push(aid.readable(cat_id));
+		 });
+	    
+	    //	var nav_tbl_headers = cat_list;
+	    //	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
+	    
+	    var nav_tbl =
+		new bbop.html.table(nav_tbl_headers, [],
+				    {'class': ['table', 'table-bordered',
+					       'table-hover',
+					       'table-condensed'].join(' ')});
+	    
+	    //each(ecore.get_edit_nodes(),
+	    each(ecore.edit_node_order(),
+		 function(enode_id){
+		     var enode = ecore.get_edit_node(enode_id);
+		     if( enode.existential() == 'real' ){
+			 
+			 // Now that we have an enode, we want to mimic
+			 // the order that we created for the header
+			 // (cat_list). Start by binning the types.
+			 var bin = {};
+			 each(enode.types(),
+			      function(in_type){
+				  var cat = aid.categorize(in_type);
+				  if( ! bin[cat] ){ bin[cat] = []; }
+				  bin[cat].push(in_type);
+			      });
+			 
+			 // Now unfold the binned types into the table row
+			 // according to the sorted order.
+			 var table_row = [];
+			 each(cat_list,
+			      function(cat_id){
+				  var accumulated_types = bin[cat_id];
+				  var cell_cache = [];
+				  each(accumulated_types,
+				       function(atype){
+					   var tt = bme_type_to_text(atype);
+					   cell_cache.push(tt);
+				       });
+				  table_row.push(cell_cache.join('<br />'));
+			      });
+			 nav_tbl.add_to(table_row);		     
+		     }
+		 });
+	    
+	    // Add to display.
+	    jQuery(table_div).empty();
+	    jQuery(table_div).append(nav_tbl.to_string());
+	}
     }
 
     function _add_enode_to_display(enode){
@@ -1210,12 +1170,9 @@ jsPlumb.ready(function(){
 		  // Only roll if the env is correct.
 		  if( typeof(global_id) !== 'undefined' &&
 		      typeof(global_label) !== 'undefined' ){
-			  if( typeof(global_graph) !== 'undefined' &&
-			      global_graph ){
-				  MMEnvInit(global_graph, null);
-			  }else if( typeof(global_model) !== 'undefined' &&
+			  if( typeof(global_model) !== 'undefined' &&
 				    global_model ){
-				  MMEnvInit(null, global_model);
+				  MMEnvInit(global_model);
 			  }else{
 			      throw new Error('to loadable anything found');
 			  }

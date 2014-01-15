@@ -233,96 +233,8 @@ var MMEnvServer = function() {
 	//var server_loc = 'http://localhost:8080/solr/';
 	var gconf = new bbop.golr.conf(amigo.data.golr);
 
-	// The request functions I use are very similar.
-	// This is for jsPlumb.
-	function create_request_function(personality, doc_type,
-					 id_field, label_field, graph_field){
-
-	    return function(req, res) {
-
-		//console.log(req.route);
-		//console.log(req.route.params['query']);
-		var query = req.route.params['query'] || '';
-		if( ! query || query == '' ){
-		    // Catch error here if no proper ID.
-		    res.setHeader('Content-Type', 'text/html');
-		    res.send('no identifier');
-		}else{
-		    
-		    // Try AmiGO 2 action.
-		    var go = new bbop.golr.manager.nodejs(server_loc, gconf);
-		    go.set_personality(personality); // profile in gconf
-		    go.add_query_filter('document_category', doc_type);
-
-		    // Hook the query through this field.
-		    //go.set_id(query);
-		    go.add_query_filter(id_field, query);
-
-		    // Define what we do when our GOlr (async) information
-		    // comes back within the scope of the response we
-		    // need to end.
-		    function golr_callback_action(gresp){
-
-			// There should be only one return doc.
-			var doc = gresp.get_doc(0);
-			if( ! doc ){
-			    res.setHeader('Content-Type', 'text/html');
-			    res.send('bad doc:' + query);
-			}else{
-			    var id = doc[id_field];
-			    var label = doc[label_field];
-			    var graph = doc[graph_field];
-			    
-			    // Assemble return doc.
-			    res.setHeader('Content-Type', 'text/html');
-
-			    var frame_tmpl =
-				self.cache_get('frame.tmpl').toString();
-			    var frame_cont = mustache.render(frame_tmpl);
-
-			    var base_tmpl =
-				self.cache_get('app_base.tmpl').toString();
-			    var base_tmpl_args = {
-				'title': 'go-mme: editor',
-				'js_variables': [
-					 {
-					     'name': 'global_id',
-					     'value': '"' + id + '"'
-					 },
-					 {
-					     'name': 'global_label',
-					     'value': '"' + label + '"'
-					 },
-					 {
-					     'name': 'global_graph',
-					     'value': graph
-					 },
-					 {
-					     'name': 'global_model',
-					     'value': 'null'
-					 }
-				],
-				'content': frame_cont
-			    };
-			    var ret = mustache.render(base_tmpl,base_tmpl_args);
-			    res.send(ret);
-			}
-		    }
-
-		    // Run the agent action.
-		    go.register('search', 'do', golr_callback_action);
-		    //console.log('search: ' + go.get_query_url());
-		    go.update('search');
-		}
-	    };
-	}
-	// Dynamic GOlr output.
-	self.app.get('/seed/complex_annotation/:query',
-		     create_request_function('complex_annotation',
-					     'complex_annotation',
-					     'annotation_group',
-					     'annotation_group_label',
-					     'topology_graph_json'));
+	// Load a null setup.
+	// TODO: first get new ID before kicking.
 	self.app.get('/seed/null',
 		     function(req, res) {
 			 // Assemble return doc.
@@ -346,12 +258,8 @@ var MMEnvServer = function() {
 					'value': '"unknown"'
 				    },
 				    {
-					'name': 'global_graph',
-					'value': '{"nodes":[], "edges":[]}'
-				    },
-				    {
 					'name': 'global_model',
-					'value': null
+					'value': '{"instances":[]}'
 				    }
 				],
 				'content': frame_cont
@@ -408,10 +316,6 @@ var MMEnvServer = function() {
 						 'value': '"???"'
 					     },
 					     {
-						 'name': 'global_graph',
-						 'value': 'null'
-					     },
-					     {
 						 'name': 'global_model',
 						 'value': obj_str
 					     }
@@ -447,8 +351,8 @@ var MMEnvServer = function() {
 		     function(req, res) {
 
 			 // Deal with incoming parameters.
-			 var graph_data = req.route.params['graph_data'] ||
-			     req.body['graph_data']||'{"nodes":[], "edges":[]}';
+			 var model_data = req.route.params['model_data'] ||
+			     req.body['model_data']||'{"instances":[]}';
 
 			 // Assemble return doc.
 			 res.setHeader('Content-Type', 'text/html');
@@ -471,12 +375,8 @@ var MMEnvServer = function() {
 					'value': '"unknown"'
 				    },
 				    {
-					'name': 'global_graph',
-					'value': graph_data
-				    },
-				    {
 					'name': 'global_model',
-					'value': 'null'
+					'value': model_data
 				    }
 				],
 				'content': frame_cont
