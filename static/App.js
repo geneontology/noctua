@@ -1,5 +1,9 @@
 ////
 //// ...
+// http://localhost:6800/m3CreateIndividual?modelId=gomodel:wb-GO_0043053&classId=GO_0008150
+// http://localhost:6800/m3AddType?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d864050000001&classId=GO_0008150
+// http://localhost:6800/m3AddType?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d864050000001&classId=GO_0008850
+// http://localhost:6800/m3AddFact?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000002&fillerId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000001&propertyId=BFO_0000050
 ////
 
 ///
@@ -25,6 +29,7 @@ var MMEnvInit = function(in_model){
     var bme_core = bbop_mme_edit.core;
     var bme_edge = bbop_mme_edit.edge;
     var bme_node = bbop_mme_edit.node;
+    var widgets = bbop_mme_widgets;
     
     // Help with strings and colors--configured separately.
     var aid = new bbop_mme_context();
@@ -32,6 +37,11 @@ var MMEnvInit = function(in_model){
     // Create the core model.
     //var bbop_mme_edit = require('./js/bbop-mme-edit');
     var ecore = new bme_core();
+
+    // Events registry.
+    var manager = new bbop.registry(['update_instances', // add/change op
+				     'reset_model'
+				    ]);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -114,47 +124,6 @@ var MMEnvInit = function(in_model){
 	return _box_left(raw_x) + (box_width / 2.0);
     }
 
-    // Right, but we also want real data and
-    // meta-information.
-    function _node_to_enode(node){
-	
-	var id = node.id();
-	var enode = new bme_node(id);
-
-	// TODO: Convert meta-structure to JSON-LD type structure.
-
-	// var ret = {
-	//     'enabled_by': '',
-	//     'activity': '',
-	//     'unknown': [],
-	//     'process': '',
-	//     'location': []
-	// };
-
-	// ll('new enode id: ' + id);
-	// ll('node: ' + bbop.core.dump(node));
-	// var meta = node.metadata();
-	// if( meta ){
-	//     if( meta['enabled_by'] ){
-	// 	enode.enabled_by(meta['enabled_by']);
-	//     }
-	//     if( meta['unknown'] ){
-	// 	enode.unknown(meta['unknown']);
-	//     }
-	//     if( meta['activity'] ){
-	// 	enode.activity(meta['activity']);
-	//     }
-	//     if( meta['process'] ){
-	// 	enode.process(meta['process']);
-	//     }
-	//     if( meta['location'] ){
-	// 	enode.location(meta['location']);
-	//     }
-	// }
-
-	return enode;
-    }
-
     ///
     /// jsPlumb preamble.
     ///
@@ -199,6 +168,69 @@ var MMEnvInit = function(in_model){
     };
 
     ///
+    /// jsPlumb/edit core helpers.
+    ///
+
+    // TODO/BUG
+    function _delete_individual(indv_id){
+
+	// Delete all UI connections associated with
+	// node. This also triggers the "connectionDetached"
+	// event, so the edges are being removed from the
+	// model at the same time.
+	var nelt = ecore.get_edit_node_elt_id(indv_id);
+	instance.detachAllConnections(nelt);
+
+	// Delete node from UI/model.
+	jQuery('#' + nelt).remove();
+	ecore.remove_edit_node(indv_id); // recursively removes
+
+	// 
+	alert('this does not affect the server model--just the client');
+    }
+
+    ///
+    /// Edit core helpers.
+    ///
+
+    function _connect_with_edge(eedge){
+
+	var sn = eedge.source();
+	var rn = eedge.relation() || 'n/a';
+	var tn = eedge.target();
+
+	// Readable label.
+	rn = aid.readable(rn);
+	var clr = aid.color(rn);
+
+    	var new_conn = instance.connect(
+    	    { // remember that edge ids and elts ids are the same 
+    	    	'source': ecore.get_edit_node_elt_id(sn),
+    	    	'target': ecore.get_edit_node_elt_id(tn),
+		//'label': 'foo' // works
+		'anchor': "Continuous",
+		'connector': ["Bezier", { curviness: 25 } ],
+		'paintStyle': {
+		    strokeStyle: clr,
+		    lineWidth: 5
+		},
+		'overlays': [ // does not!?
+		    ["Label", {'label': rn,
+			       'location': 0.5,
+			       'cssClass': "aLabel",
+			       'id': 'label' } ],
+		    ["Arrow", {'location': -4}]
+		 ]
+	    //}, {'PaintStyle': { strokeStyle: clr, lineWidth: 5}});
+	    });
+
+	// NOTE: This is necessary since these connectors are created
+	// under the covers of jsPlumb--I don't have access during
+	// creation like I do with the nodes.
+	ecore.create_edge_mapping(eedge, new_conn);
+    }
+
+    ///
     /// Load the incoming graph into something useable for population
     /// of the editor.
     ///
@@ -207,56 +239,11 @@ var MMEnvInit = function(in_model){
     var model_label = global_label;
     var model_json = in_model;
 
-    // If we are actually working with a server model instead of a
-    // graph, make a conversion first so we can work with things like
-    // layout, etc.
-
-    // Convert the JSON-LD lite model into the edit core.
-    function _process_individuals(indv){
-
-	// Add individual to edit core if properly structured.
-	var iid = indv['id'];
-	if( iid ){
-	    //var nn = new bbop.model.node(indv['id']);
-	    //var meta = {};
-	    //ll('indv');
-	    
-	    // See if there is type info that we want to add.
-	    var itypes = indv['type'] || [];
-	    if( bbop.core.what_is(itypes) != 'array' ){
-		throw new Error('types is wrong');
-	    }
-	    
-	    var ne = new bme_node(iid, itypes);
-	    ecore.add_edit_node(ne);
-	    
-	    // Now, let's probe the model to see what edges
-	    // we can find.
-	    var possible_rels = aid.all_known();
-	    each(possible_rels,
-		 function(rel_to_try){
-		     if( indv[rel_to_try] && indv[rel_to_try].length ){
-			 
-			 // Cycle through each of the found
-			 // rels.
-			 var found_rels = indv[rel_to_try];
-			 each(found_rels,
-			      function(rel){
-				  var tid = rel['id'];
-				  var rt = rel['type'];
-				  if( tid && rt && rt == 'NamedIndividual'){
-				      var en =
-					  new bme_edge(iid,rel_to_try,tid);
-				      ecore.add_edit_edge(en);
-				  }
-			      });
-		     }
-		 });
-	}
-    }
+    // Initially, add everything to the edit model.
     each(model_json['individuals'],
 	 function(indv){
-	     _process_individuals(indv);
+	     ecore.add_node_from_individual(indv);
+	     ecore.add_edges_from_individual(indv, aid);
 	 });
 
     ///
@@ -296,7 +283,7 @@ var MMEnvInit = function(in_model){
 		 vn.x_init(_vbox_left(raw_x));
 		 vn.y_init(_vbox_top(raw_y));
 		 
-		 ecore.add_edit_node(vn);
+		 ecore.add_node(vn);
 	     });	
 
 	// Add additional waypoint path information to the edges.
@@ -309,185 +296,9 @@ var MMEnvInit = function(in_model){
 		     var obj_id = nodes[ni +1];
 		     
 		     var new_vedge = new bme_edge(sub_id, null, obj_id);
-		     ecore.add_edit_edge(new_vedge);
+		     ecore.add_edge(new_vedge);
 		 }
 	     });
-    }
-
-    ///
-    /// Editor rendering functions.
-    ///
-
-    // Add edit model contents to descriptive table.
-    function _edit_core_repaint_table(){
-
-	// First, lets get the headers that we'll need by poking the
-	// model and getting all of the possible categories.	
-	var cat_list = [];
-	each(ecore.get_edit_nodes(),
-	     function(enode_id, enode){
-		 each(enode.types(),
-		      function(in_type){
-			   cat_list.push(aid.categorize(in_type));
-		      });
-	     });
-	// Dedupe list.
-	var tmph = bbop.core.hashify(cat_list);
-	cat_list = bbop.core.get_keys(tmph);
-
-	// If we actually got something, render the table. Otherwise,
-	// a message.
-	if( bbop.core.is_empty(cat_list) ){
-	    
-	    // Add to display.
-	    jQuery(table_div).empty();
-	    jQuery(table_div).append('<p><h4>no instances</h4></p>');
-
-	}else{
-	    
-	    // Sort list according to known priorities.
-	    cat_list = cat_list.sort(
-		function(a, b){
-		    return aid.priority(b) - aid.priority(a);
-		});
-	    
-	    // Convert the ids into readable headers.
-	    var nav_tbl_headers = [];
-	    each(cat_list,
-		 function(cat_id){
-		     nav_tbl_headers.push(aid.readable(cat_id));
-		 });
-	    
-	    //	var nav_tbl_headers = cat_list;
-	    //	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
-	    
-	    var nav_tbl =
-		new bbop.html.table(nav_tbl_headers, [],
-				    {'class': ['table', 'table-bordered',
-					       'table-hover',
-					       'table-condensed'].join(' ')});
-	    
-	    //each(ecore.get_edit_nodes(),
-	    each(ecore.edit_node_order(),
-		 function(enode_id){
-		     var enode = ecore.get_edit_node(enode_id);
-		     if( enode.existential() == 'real' ){
-			 
-			 // Now that we have an enode, we want to mimic
-			 // the order that we created for the header
-			 // (cat_list). Start by binning the types.
-			 var bin = {};
-			 each(enode.types(),
-			      function(in_type){
-				  var cat = aid.categorize(in_type);
-				  if( ! bin[cat] ){ bin[cat] = []; }
-				  bin[cat].push(in_type);
-			      });
-			 
-			 // Now unfold the binned types into the table row
-			 // according to the sorted order.
-			 var table_row = [];
-			 each(cat_list,
-			      function(cat_id){
-				  var accumulated_types = bin[cat_id];
-				  var cell_cache = [];
-				  each(accumulated_types,
-				       function(atype){
-					   var tt = bme_type_to_text(atype);
-					   cell_cache.push(tt);
-				       });
-				  table_row.push(cell_cache.join('<br />'));
-			      });
-			 nav_tbl.add_to(table_row);		     
-		     }
-		 });
-	    
-	    // Add to display.
-	    jQuery(table_div).empty();
-	    jQuery(table_div).append(nav_tbl.to_string());
-	}
-    }
-
-    function _add_enode_to_display(enode){
-
-	// Node as table nested into bbop.html div.
-	var div_id = ecore.get_edit_node_elt_id(enode.id());
-	var style_str = 'top: ' + enode.y_init() + 'px; ' + 
-	    'left: ' + enode.x_init() + 'px;';
-	ll('style: ' + style_str);
-	var w = new bbop.html.tag('div',
-				  {'id': div_id,
-				   'class': 'demo-window',
-				   'style': style_str});
-
-	// Takes a core edit node as the argument, categorize the
-	// contained types, order them.
-	function _enode_to_stack(enode){
-	
-	    // Attach a category to each type.
-	    var bin_stack = [];
-	    each(enode.types(),
-		 function(in_type){
-		     var bin = aid.categorize(in_type);
-		     bin_stack.push({'category': bin, 'type': in_type});
-		 });
-	    
-	    // Sort the types within the stack according to the known
-	    // type priorities.
-	    bin_stack = bin_stack.sort(
-		function(a, b){
-		    return aid.priority(b) - aid.priority(a);
-		});
-
-	    return bin_stack;
-	}
-
-	// Create a colorful label stack into an individual table.
-	var enode_stack_table = new bbop.html.tag('table', {});
-	each(_enode_to_stack(enode),
-	     function(item){
-		 var trstr = '<tr style="background-color: ' +
-		     aid.color(item['category']) + ';"><td>' 
-		     + bme_type_to_text(item['type']) + '</td></tr>';   
-		 enode_stack_table.add_to(trstr);
-	     });
-	w.add_to(enode_stack_table);
-
-	// Box to drag new connections from.	
-	var konn = new bbop.html.tag('div', {'class': 'konn'});
-	w.add_to(konn);
-	
-	// Box to drag new connections from.	
-	var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
-	w.add_to(opend);
-	
-	jQuery(graph_div).append(w.to_string());
-    }
-
-    function _edit_core_init_display(){
-
-	jQuery(graph_div).empty();
-
-	// For all of the enodes we've collected.
-	each(ecore.get_edit_nodes(),
-	     function(enode_id, enode){
-
-		 if( enode.existential() == 'real' ){ // if a "real" node
-
-		     _add_enode_to_display(enode);
-
-		 }else{ // == 'virtual'; will not be used if added no waypoints
-    		     
-		     var div_id = ecore.get_edit_node_elt_id(enode.id());
-		     var style_str = 'top: ' + enode.y_init() + 'px; ' + 
-			 'left: ' + enode.x_init() + 'px;';
-		     var v = new bbop.html.tag('div',
-					       {'id': div_id,
-						'class': 'waypoint',
-						'style': style_str});
-		     jQuery(graph_div).append(v.to_string());
-		 }
-	 });
     }
 
     ///
@@ -544,17 +355,8 @@ var MMEnvInit = function(in_model){
 		function(evt){
 		    evt.stopPropagation();
 
-		    // Delete all UI connections associated with
-		    // node. This also triggers the "connectioDetached"
-		    // event, so the edges are being removed from the
-		    // model at the same time.
-		    var nelt = ecore.get_edit_node_elt_id(tid);
-		    instance.detachAllConnections(nelt);
-		    //instance.removeAllEndpoints(nelt);
-
-		    // Delete node from UI/model.
-		    jQuery('#' + nelt).remove();
-		    ecore.remove_edit_node(tid);
+		    // Delete ind and related edges.
+		    _delete_individual(tid);
 
 		    // Close modal.
 		    jQuery(modal_node_elt).modal('hide');
@@ -595,62 +397,32 @@ var MMEnvInit = function(in_model){
     // 	// ]
     // };
 
-    function _connect_with_edge(eedge){
-
-	var sn = eedge.source();
-	var rn = eedge.relation() || 'n/a';
-	var tn = eedge.target();
-
-	// Readable label.
-	rn = aid.readable(rn);
-	var clr = aid.color(rn);
-
-    	var new_conn = instance.connect(
-    	    { // remember that edge ids and elts ids are the same 
-    	    	'source': ecore.get_edit_node_elt_id(sn),
-    	    	'target': ecore.get_edit_node_elt_id(tn),
-		//'label': 'foo' // works
-		'anchor': "Continuous",
-		'connector': ["Bezier", { curviness: 25 } ],
-		'paintStyle': {
-		    strokeStyle: clr,
-		    lineWidth: 5
-		},
-		'overlays': [ // does not!?
-		    ["Label", {'label': rn,
-			       'location': 0.5,
-			       'cssClass': "aLabel",
-			       'id': 'label' } ],
-		    ["Arrow", {'location': -4}]
-		 ]
-	    //}, {'PaintStyle': { strokeStyle: clr, lineWidth: 5}});
-	    });
-
-	// NOTE: This is necessary since these connectors are created
-	// under the covers of jsPlumb--I don't have access during
-	// creation like I do with the nodes.
-	ecore.create_edge_mapping(eedge, new_conn);
-    }
-
-    // Programmatically (as opposed to implicitly by drag-and-drop)
-    // all edges in edit model.
-    function _connect_all_edges(){
-    	each(ecore.get_edit_edges(),
-	     function(eeid, eedge){
-		 _connect_with_edge(eedge);
-    	     });
-    }
-
-    // For our intitialzation/first drawing, suspend jsplumb stuff
+    // For our intitialization/first drawing, suspend jsplumb stuff
     // while we get a little work done.
     instance.doWhileSuspended(
     	function(){
 	    
 	    // Initialize table with data.
-	    _edit_core_repaint_table();
+	    widgets.repaint_table(ecore, aid, table_div);
 
 	    // Add all of the nodes to the display.
-	    _edit_core_init_display();
+    	    // For all of the enodes we've collected.
+    	    widgets.wipe(graph_div);
+
+	    // Initial render of the graph.
+    	    each(ecore.get_edit_nodes(),
+    		 function(enode_id, enode){
+    		     if( enode.existential() == 'real' ){ // if a "real" node
+    			 widgets.add_enode(ecore, enode, aid, graph_div);
+    		     }else{ // == 'virtual'; will not be used if no waypoints
+			 widgets.add_virtual_node(ecore, enode, aid, graph_div);
+    		     }
+    		 });
+    	    // Now let's try to add all the edges/connections.
+    	    each(ecore.get_edit_edges(),
+    		 function(eeid, eedge){
+    		     _connect_with_edge(eedge);
+    		 });
 
 	    // Make nodes draggable.
 	    _make_selector_draggable(".demo-window");
@@ -671,106 +443,107 @@ var MMEnvInit = function(in_model){
 	    // Make nodes able to use edit dialog.
 	    _make_selector_editable(".open-dialog");
 
-    	    // Now let's try to add all the edges/connections.
-	    _connect_all_edges();
     	});
 
-    // TODO
-    // Click-on-edge-event: Use modal to edit label.
-    //instance.bind("dblclick", function(conn) {
-    instance.bind("click", function(conn) {
+    // // TODO
+    // // Click-on-edge-event: Use modal to edit label.
+    // //instance.bind("dblclick", function(conn) {
+    // instance.bind("click", function(conn) {
 		      
-		      // Get the necessary info from the
-		      // connection.
-		      var eeid =
-			  ecore.get_edit_edge_id_by_connector_id(conn.id);
-		      ll('looks like edge: ' + eeid);
-		      var ee = ecore.get_edit_edge(eeid);
+    // 		      // Get the necessary info from the
+    // 		      // connection.
+    // 		      var eeid =
+    // 			  ecore.get_edit_edge_id_by_connector_id(conn.id);
+    // 		      ll('looks like edge: ' + eeid);
+    // 		      var ee = ecore.get_edit_edge(eeid);
 
-		      // Assemble modal.
-		      jQuery(modal_edge_title_elt).empty();
-		      jQuery(modal_edge_title_elt).append('Edge: ' + eeid);
-		      jQuery(modal_edge_body_elt).empty();
-		      jQuery(modal_edge_body_elt).append('<h4>Set relation</h4>');
-		      var tmp_rels = [
-			  ['RO:0002333', 'enabled by'],
-			  ['RO:0002332', 'regulates levels of'],
-			  ['RO:0002331', 'involved in'],
-			  ['RO:0002330', 'genomically related to'],
-			  ['RO:0002213', 'positively regulates'],
-			  ['RO:0002212', 'negatively regulates'],
-			  ['RO:0002211', 'regulates'],
-			  ['RO:0002202', 'develops from'],
-			  ['BFO:0000066', 'occurs in'],
-			  ['BFO:0000051', 'has part'],
-			  ['BFO:0000050', 'part of'],
-			  ['???', 'indirectly disables action of'],
-			  ['???', 'directly inhibits'],
-			  ['???', 'upstream of'],
-			  ['???', 'directly activates']
-		      ];
-		      var tmp_cache = [];
-		      each(tmp_rels,
-			   function(tmp_rel, rel_ind){
-			       tmp_cache.push('<div class="radio"><label>');
-			       tmp_cache.push('<input type="radio" ');
-			       tmp_cache.push('name="rel_val" ');
-			       tmp_cache.push('value="' + tmp_rel[1] +'"');
-				   if( rel_ind == 0 ){
-				       tmp_cache.push('checked>');
-				   }else{
-				       tmp_cache.push('>');
-				   }
-			       tmp_cache.push(tmp_rel[1] + ' ');
-			       tmp_cache.push('(' + tmp_rel[0] + ')');
-			       tmp_cache.push('</label></div>');
+    // 		      // Assemble modal.
+    // 		      jQuery(modal_edge_title_elt).empty();
+    // 		      jQuery(modal_edge_title_elt).append('Edge: ' + eeid);
+    // 		      jQuery(modal_edge_body_elt).empty();
+    // 		      jQuery(modal_edge_body_elt).append('<h4>Set relation</h4>');
+    // 		      var tmp_rels = [
+    // 			  ['RO:0002333', 'enabled by'],
+    // 			  ['RO:0002332', 'regulates levels of'],
+    // 			  ['RO:0002331', 'involved in'],
+    // 			  ['RO:0002330', 'genomically related to'],
+    // 			  ['RO:0002213', 'positively regulates'],
+    // 			  ['RO:0002212', 'negatively regulates'],
+    // 			  ['RO:0002211', 'regulates'],
+    // 			  ['RO:0002202', 'develops from'],
+    // 			  ['BFO:0000066', 'occurs in'],
+    // 			  ['BFO:0000051', 'has part'],
+    // 			  ['BFO:0000050', 'part of'],
+    // 			  ['???', 'indirectly disables action of'],
+    // 			  ['???', 'directly inhibits'],
+    // 			  ['???', 'upstream of'],
+    // 			  ['???', 'directly activates']
+    // 		      ];
+    // 		      var tmp_cache = [];
+    // 		      each(tmp_rels,
+    // 			   function(tmp_rel, rel_ind){
+    // 			       tmp_cache.push('<div class="radio"><label>');
+    // 			       tmp_cache.push('<input type="radio" ');
+    // 			       tmp_cache.push('name="rel_val" ');
+    // 			       tmp_cache.push('value="' + tmp_rel[1] +'"');
+    // 				   if( rel_ind == 0 ){
+    // 				       tmp_cache.push('checked>');
+    // 				   }else{
+    // 				       tmp_cache.push('>');
+    // 				   }
+    // 			       tmp_cache.push(tmp_rel[1] + ' ');
+    // 			       tmp_cache.push('(' + tmp_rel[0] + ')');
+    // 			       tmp_cache.push('</label></div>');
 			       
-			   });
+    // 			   });
 
-		      jQuery(modal_edge_body_elt).append(tmp_cache.join(''));
-		      jQuery(modal_edge_elt).modal({});
+    // 		      jQuery(modal_edge_body_elt).append(tmp_cache.join(''));
+    // 		      jQuery(modal_edge_elt).modal({});
 
-		      // Add "save" callback to it to change the edge
-		      // label and the edit edge relation.
-		      function _save_callback(){
+    // 		      // Add "save" callback to it to change the edge
+    // 		      // label and the edit edge relation.
+    // 		      function _save_callback(){
 
-			  //
-			  //ll('looks like edge (in cb): ' + eeid);
-			  var rval =
-			      jQuery("input:radio[name=rel_val]:checked").val();
-			  //ll('rel_val: ' + rval);
+    // 			  //
+    // 			  //ll('looks like edge (in cb): ' + eeid);
+    // 			  var rval =
+    // 			      jQuery("input:radio[name=rel_val]:checked").val();
+    // 			  //ll('rel_val: ' + rval);
 
-			  // TODO: Should I report this too? Smells a
-			  // bit like the missing properties with
-			  // setParameter/s(),
-			  // Change label.
-			  //conn.setLabel(rval); // does not work!?
-			  conn.removeOverlay("label");
-			  conn.addOverlay(["Label", {'label': rval,
-						     'location': 0.5,
-						     'cssClass': "aLabel",
-						     'id': 'label' } ]);
+    // 			  // TODO: Should I report this too? Smells a
+    // 			  // bit like the missing properties with
+    // 			  // setParameter/s(),
+    // 			  // Change label.
+    // 			  //conn.setLabel(rval); // does not work!?
+    // 			  conn.removeOverlay("label");
+    // 			  conn.addOverlay(["Label", {'label': rval,
+    // 						     'location': 0.5,
+    // 						     'cssClass': "aLabel",
+    // 						     'id': 'label' } ]);
 
-			  // TODO: Since we'll be talking to the
-			  // server, this will actually be: ping
-			  // server, destroy connector, create new
-			  // connector.
+    // 			  // TODO: Since we'll be talking to the
+    // 			  // server, this will actually be: ping
+    // 			  // server, destroy connector, create new
+    // 			  // connector.
 			  
-			  // Change edit model's releation.
-			  ee.relation(rval);
+    // 			  // Change edit model's releation.
+    // 			  ee.relation(rval);
 
-			  // Close modal.
-			  jQuery(modal_edge_elt).modal('hide');
-		      }
-		      // Remove the previous save listeners.
-		      jQuery(modal_edge_save_elt).unbind('click');
-		      // And add the new one for this instance.
-		      jQuery(modal_edge_save_elt).click(
-			  function(evt){
-			      evt.stopPropagation();
-			      _save_callback();
-			  });
-		  });
+    // 			  // Close modal.
+    // 			  jQuery(modal_edge_elt).modal('hide');
+    // 		      }
+    // 		      // Remove the previous save listeners.
+    // 		      jQuery(modal_edge_save_elt).unbind('click');
+    // 		      // And add the new one for this instance.
+    // 		      jQuery(modal_edge_save_elt).click(
+    // 			  function(evt){
+    // 			      evt.stopPropagation();
+    // 			      _save_callback();
+    // 			  });
+    // 		  });
+
+
+//    function
 
     // TODO/BUG: Read on.
     // Connection event.
@@ -779,7 +552,7 @@ var MMEnvInit = function(in_model){
 
 		      //var cid = info.connection.id;
 		      //ll('there was a new connection: ' + cid);
-		      //ll('oringinal?: ' + original_p);
+		      ll('oringinal?: ' + original_p);
 		      
 		      // TODO/BUG: This section needs to be redone/rethought.
 		      // If it looks like a drag-and-drop event...
@@ -794,17 +567,146 @@ var MMEnvInit = function(in_model){
 			  //alert(sn + ', ' + tn);
 			  var snode = ecore.get_edit_node_by_elt_id(sn);
 			  var tnode = ecore.get_edit_node_by_elt_id(tn);
-			  var new_eedge =
-			      new bme_edge(snode.id(), '???', tnode.id());
-			  ecore.add_edit_edge(new_eedge);
 
-			  // TODO/BUG: Destroy the autogen one (I
-			  // can't make them behave as well as the
-			  // programmatic ones--need to understand:
-			  // http://jsplumbtoolkit.com/doc/connections).
-			  // then create the programmatic one.
+			  // Get a sorted list of known rels.
+			  var rels = aid.all_known();
+			  rels = rels.sort(
+			      function(a,b){ 
+				  return aid.priority(b) - aid.priority(a);
+			      });
+			  var rellist = [];
+			  each(rels,
+			       function(rel){
+				   rellist.push([rel, aid.readable(rel)]);
+			       });
+
+ 			  // Assemble modal content.
+			  var mete = modal_edge_title_elt;
+			  var mebe = modal_edge_body_elt;
+			  jQuery(mete).empty();
+			  jQuery(mete).append('Add Edge');
+			  jQuery(mebe).empty();
+			  jQuery(mebe).append('<h4>Relation selection</h4>');
+			  jQuery(mebe).append('<b>Edge source:</b> ' +
+					      snode.id());
+			  jQuery(mebe).append('<br />');
+			  jQuery(mebe).append('<b>Edge target:</b> ' +
+					      tnode.id());
+			  var tcache = [];
+			  each(rellist,
+			       function(tmp_rel, rel_ind){
+				   tcache.push('<div class="radio"><label>');
+				   tcache.push('<input type="radio" ');
+				   tcache.push('name="rel_val" ');
+				   tcache.push('value="' + tmp_rel[1] +'"');
+				   if( rel_ind == 0 ){
+				       tcache.push('checked>');
+				   }else{
+				       tcache.push('>');
+				   }
+				   tcache.push(tmp_rel[1] + ' ');
+				   tcache.push('(' + tmp_rel[0] + ')');
+				   tcache.push('</label></div>');
+				   
+			       });
+
+			  // Put up modal shield.
+			  jQuery(modal_edge_body_elt).append(tcache.join(''));
+			  jQuery(modal_edge_elt).modal({});
+
+		  // 	  function _rel_save_success(individual_list){
+
+		  // 	      // What to do with each individual we
+		  // 	      // see in the list.
+		  // 	      function process_ind(ind){
+		  // 		  var iid = ind['id'];
+				  
+		  // 		  // Get all the currently extant
+		  // 		  // edges between the two nodes.
+		  // 		  var relevant_edges =
+		  // 		      ecore.get_edit_edges_by_source(iid);
+		  // 		  each(relevant_edges,
+		  // 		       function(red){
+		  // 			   var redid = red.id();
+
+		  // 			   // Delete them from the ecore.
+		  // 			   ecore.remove_edit_edge(redid);
+
+		  // 			   // Delete them from the UI.
+		  // 			   var redcon = ecore.get_edit_connector_id_by_edge_id(redid);
+		  // 		   });			      
+
+		  // 		  // Cycle through the individual list.
+		  // 		  // Add the new relations to the ecore.
+		  // 		  // Add the new relations to the UI.
+		  // 		  each(individual_list,
+		  // 		       function(indv){
+		  // 			   _add_facts_from_individual(indv);
+		  // 		       });
+				  
+		  // 	      // TODO: Drop shield.
+
+		  // 	      }
+		  // 	      each(individiual_list, _process_ind);
+
+		  // 	  }
+
+		  // 	  // Add action listener to the save button.
+		  // 	  function _rel_save_button_callback(){
+
+		  // 	      //
+		  // 	      //ll('looks like edge (in cb): ' + eeid);
+		  // 	      var qstr ='input:radio[name=rel_val]:checked';
+		  // 	      var rval = jQuery(qstr).val();
+		  // 	      //ll('rel_val: ' + rval);
+
+		  // 	  // TODO: Should I report this too? Smells a
+		  // 	  // bit like the missing properties with
+		  // 	  // setParameter/s(),
+		  // 	  // Change label.
+		  // 	  //conn.setLabel(rval); // does not work!?
+		  // 	  conn.removeOverlay("label");
+		  // 	  conn.addOverlay(["Label", {'label': rval,
+		  // 				     'location': 0.5,
+		  // 				     'cssClass': "aLabel",
+		  // 				     'id': 'label' } ]);
+
+		  // 	  // TODO: Since we'll be talking to the
+		  // 	  // server, this will actually be: ping
+		  // 	  // server, destroy connector, create new
+		  // 	  // connector.
+			  
+		  // 	  // Change edit model's releation.
+		  // 	  ee.relation(rval);
+
+		  // 	  // Close modal.
+		  // 	  jQuery(modal_edge_elt).modal('hide');
+		  //     }
+		  //     // Remove the previous save listeners.
+		  //     jQuery(modal_edge_save_elt).unbind('click');
+		  //     // And add the new one for this instance.
+		  //     jQuery(modal_edge_save_elt).click(
+		  // 	  function(evt){
+		  // 	      evt.stopPropagation();
+		  // 	      _save_callback();
+		  // 	  });
+		  // });
+
+			  // // // Destroy what we did.
+			  // // instance.detach(info);
+			  // // ll('boom');
+
+			  // var new_eedge =
+			  //     new bme_edge(snode.id(), '???', tnode.id());
+			  // ecore.add_edge(new_eedge);
+
+			  // // TODO/BUG: Destroy the autogen one (I
+			  // // can't make them behave as well as the
+			  // // programmatic ones--need to understand:
+			  // // http://jsplumbtoolkit.com/doc/connections).
+			  // // then create the programmatic one.
 			  instance.detach(info.connection);
-			  _connect_with_edge(new_eedge);
+			  //
 		      }
 		  });
 
@@ -967,14 +869,14 @@ var MMEnvInit = function(in_model){
 	dyn_node.y_init(dyn_y);
 	
 	// Add it to the edit model.
-	ecore.add_edit_node(dyn_node);
+	ecore.add_node(dyn_node);
 	
     	// Redraw table with new info.
-	_edit_core_repaint_table();
+	widgets.repaint_table();
 	
     	// Add to graph.
-	_add_enode_to_display(dyn_node);
-	
+	widgets.add_enode(ecore, dyn_node, aid, graph_div);
+
 	// Make node active in display.
 	var dnid = dyn_node.id();
 	var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
@@ -1100,12 +1002,7 @@ var MMEnvInit = function(in_model){
     // Save button.
     jQuery(save_btn_elt).click(
     	function(){
-	    // Change the form to add the data.
-	    //alert(ecore.dump());
-	    //jQuery(action_form_data_elt).val(ecore.dump());
-	    //var exgraph = ecore.to_graph();
-	    //var jout_obj = exgraph.to_json();
-	    //var jout_str = bbop.core.dump(jout_obj);
+	    // Change the form to add the id.
 	    jQuery(action_form_data_elt).val(model_id);
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();

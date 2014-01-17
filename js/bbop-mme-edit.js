@@ -29,13 +29,41 @@ bbop_mme_edit.core = function(){
     };
 };
 
-bbop_mme_edit.core.prototype.add_edit_node = function(enode){
+bbop_mme_edit.core.prototype.add_node = function(enode){
     var enid = enode.id();
     this.core['nodes'][enid] = enode; // add to nodes
     this.core['node_order'].unshift(enid); // add to default order
     var elt_id = bbop.core.uuid(); // generate the elt id we'll use
     this.core['node2elt'][enid] = elt_id; // map it
     this.core['elt2node'][elt_id] = enid; // map it
+};
+
+// Convert the JSON-LD lite model into the edit core.
+// Creates or adds as necessary.
+bbop_mme_edit.core.prototype.add_node_from_individual = function(indv){
+    var anchor = this;
+
+    var ret = null;
+
+    // Add individual to edit core if properly structured.
+    var iid = indv['id'];
+    if( iid ){
+	//var nn = new bbop.model.node(indv['id']);
+	//var meta = {};
+	//ll('indv');
+	
+	// See if there is type info that we want to add.
+	var itypes = indv['type'] || [];
+	if( bbop.core.what_is(itypes) != 'array' ){
+	    throw new Error('types is wrong');
+	}
+	    
+	var ne = new bbop_mme_edit.node(iid, itypes);
+	anchor.add_node(ne);
+	ret = ne;
+    }
+    
+    return ne;
 };
 
 bbop_mme_edit.core.prototype.edit_node_order = function(){
@@ -94,13 +122,53 @@ bbop_mme_edit.core.prototype.remove_edit_node = function(enid){
     }
 };
 
-bbop_mme_edit.core.prototype.add_edit_edge = function(eedge){
+bbop_mme_edit.core.prototype.add_edge = function(eedge){
     var eeid = eedge.id();
     this.core['edges'][eeid] = eedge;
     var elt_id = bbop.core.uuid(); // generate the elt id we'll use
     //this.core['edge2elt'][eeid] = elt_id; // map it
     //this.core['elt2edge'][elt_id] = eeid; // map it
 };
+
+// TODO/BUG: aid is used as a crutch here to scan our the edges
+bbop_mme_edit.core.prototype.add_edges_from_individual = function(indv, aid){
+
+    var anchor = this;
+    var each = bbop.core.each;
+
+    var ret_facts = [];
+    
+    // Add individual to edit core if properly structured.
+    var iid = indv['id'];
+    if( iid ){
+	// Now, let's probe the model to see what edges
+	// we can find.
+	var possible_rels = aid.all_known();
+	each(possible_rels,
+	     function(try_rel){
+		 if( indv[try_rel] && indv[try_rel].length ){
+		     
+		     // Cycle through each of the found
+		     // rels.
+		     var found_rels = indv[try_rel];
+		     each(found_rels,
+			  function(rel){
+			      var tid = rel['id'];
+			      var rt = rel['type'];
+			      if( tid && rt && rt == 'NamedIndividual'){
+				  var en =
+				      new bbop_mme_edit.edge(iid, try_rel, tid);
+				  anchor.add_edge(en);
+				  ret_facts.push(en);
+			      }
+			  });
+		 }
+	     });
+    }
+    
+    return ret_facts;
+};
+
 
 bbop_mme_edit.core.prototype.get_edit_edge_id_by_connector_id = function(cid){
     return this.core['connector2edge'][cid] || null;
@@ -116,6 +184,25 @@ bbop_mme_edit.core.prototype.get_edit_edge = function(eeid){
 
 bbop_mme_edit.core.prototype.get_edit_edges = function(){
     return this.core['edges'] || [];
+};
+
+/*
+ * Function: 
+ * 
+ * Return a list of edges that are concerned with the two nodes.
+ */
+bbop_mme_edit.core.prototype.get_edit_edges_by_source = function(srcid){
+
+    var rete = [];
+    bbop.core.each(this.core['edges'],
+		   function(edge_id, edge){
+		       var src = edge.source();
+		       if( src == srcid ){
+			   rete.push(edge);
+		       }
+		   });
+
+    return rete;
 };
 
 bbop_mme_edit.core.prototype.remove_edit_edge = function(eeid){

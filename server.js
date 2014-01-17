@@ -107,6 +107,8 @@ var MMEnvServer = function() {
 		'amigo2.js': '',
 		'bbop-mme-context.js': '',
 		'bbop-mme-edit.js': '',
+		'bbop-mme-manager.js': '',
+		'bbop-mme-widgets.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
 		'base.tmpl': '',
@@ -261,7 +263,7 @@ var MMEnvServer = function() {
 				    },
 				    {
 					'name': 'global_model',
-					'value': '{"instances":[]}'
+					'value': '{"id": "???", "instances":[]}'
 				    }
 				],
 				'content': frame_cont
@@ -354,7 +356,8 @@ var MMEnvServer = function() {
 
 			 // Deal with incoming parameters.
 			 var model_data = req.route.params['model_data'] ||
-			     req.body['model_data']||'{"instances":[]}';
+			     req.body['model_data'] ||
+			     '{"id": "???", "instances":[]}';
 
 			 // Assemble return doc.
 			 res.setHeader('Content-Type', 'text/html');

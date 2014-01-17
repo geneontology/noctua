@@ -23,7 +23,7 @@ var bbop_mme_context = function(){
     // Relations.
     // Colors are X11: http://cng.seas.rochester.edu/CNG/docs/x11color.html
     var entities = {
-	'is_a':
+	'instance_of':
 	{
 	    readable: 'activity',
 	    priority: 8,
@@ -179,7 +179,7 @@ var bbop_mme_context = function(){
     // The 
     var suggested_stack_order = [
 	'RO_0002333', // enabled by
-	'is_a', // activity
+	'instance_of', // activity
 	'',	
 	'BFO_0000066' // occurs in
     ];
@@ -301,7 +301,7 @@ var bbop_mme_context = function(){
 
 	var t = in_type['type'];
 	if( t == 'Class' ){
-	    ret = 'is_a';
+	    ret = 'instance_of';
 	}else if( t == 'Restriction' ){
 	    ret = in_type['onProperty']['id'];
 	}else{
@@ -323,7 +323,7 @@ var bme_categorize = function(in_type){
     if( t == 'Class' ){
 	var i = in_type['id'];
 	var l = in_type['label'];
-	ret['category'] = 'is_a';
+	ret['category'] = 'instance_of';
 	ret['text'] = l + ' (' + i + ')';
     }else if( t == 'Restriction' ){
 	var thing = in_type['someValuesFrom']['id'];
