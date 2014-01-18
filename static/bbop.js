@@ -7181,12 +7181,14 @@ bbop.rest.response.mmm = function(raw_data){
 
 		    var odata = data['data'] || null;
 		    var cdata = data['commentary'] || null;
-		    if( odata && bbop.core.what_is(odata) != 'object'){
+		    // If data, object or array.
+		    if( odata && bbop.core.what_is(odata) != 'object' &&
+			bbop.core.what_is(odata) != 'array' ){
 			this.message('data not object');
 			this.message_type('error');
 		    }else{
-			if( cdata && bbop.core.what_is(cdata) != 'object' && 
-			    bbop.core.what_is(cdata) != 'array' ){
+			// If commentary, object.
+			if( cdata && bbop.core.what_is(cdata) != 'object' ){
 			    this.message('commentary not object');
 			    this.message_type('error');
 			}else{
@@ -7196,7 +7198,7 @@ bbop.rest.response.mmm = function(raw_data){
 			    this.message(data['message']);
 
 			    // Add any additional fields.
-			    if( cdata ){ this._commantary = cdata; }
+			    if( cdata ){ this._commentary = cdata; }
 			    if( odata ){ this._data = odata; }
 			}
 		    }
@@ -8084,7 +8086,8 @@ bbop.rest.manager.jquery.prototype.update = function(callback_type){
 		response.message('bad response');
 	    }
 	    //anchor.apply_callbacks('error', [response, anchor]);
-	    anchor.apply_callbacks('error', [raw_data, anchor]);
+	    //anchor.apply_callbacks('error', [raw_data, anchor]);
+	    anchor.apply_callbacks('error', [response, anchor]);
 	}
     }
 

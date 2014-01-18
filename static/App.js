@@ -244,14 +244,25 @@ var MMEnvInit = function(in_model, in_server_base){
     function _shields_down(){
 	jQuery(modal_blocking).modal('hide');
     }
+
+    // This is a very important core function. It's purpose is to
+    // update the loval model and UI to be consistent with the current
+    // state and the data input.
+    function _merge_response(resp, man){
+
+	// 
+	var data = resp.data();
+	
+	alert('finished _merge_response');
+    }
     
     ///
     /// Manager registration and ordering.
     ///
     
+    // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'foo', _shields_down);
-
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
 			 alert('There was a connection error (' +
@@ -275,10 +286,18 @@ var MMEnvInit = function(in_model, in_server_base){
 
     manager.register('error', 'foo',
 		     function(resp, man){
+
+			 var ex_msg = '';
+			 if( resp.commentary() &&
+			     resp.commentary().exceptionMsg ){
+			     ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
+			 }
+
 			 alert('Error (' +
 			       resp.message_type() + '): ' +
 			       resp.message() + '; ' +
-			       'your operation was likely not performed');
+			       'your operation was likely not performed' +
+			       ex_msg);
 		     }, 10);
 
     manager.register('inconsistent', 'foo',
@@ -289,10 +308,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			       'try refreshing your browser');
 		     }, 10);
 
-    manager.register('merge', 'foo',
-		     function(resp, man){
-			 alert('Not yet handled: ' + resp.message());
-		     }, 10);
+    manager.register('merge', 'foo', _merge_response, 10);
 
     ///
     /// Load the incoming graph into something useable for population
@@ -666,9 +682,6 @@ var MMEnvInit = function(in_model, in_server_base){
 		  // 			   _add_facts_from_individual(indv);
 		  // 		       });
 				  
-		  // 	      // TODO: Drop shield.
-
-		  // 	      }
 		  // 	      each(individiual_list, _process_ind);
 
 		  // 	  }
@@ -680,7 +693,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		  	      //ll('looks like edge (in cb): ' + eeid);
 		  	      var qstr ='input:radio[name=rel_val]:checked';
 		  	      var rval = jQuery(qstr).val();
-		  	      //ll('rel_val: ' + rval);
+		  	      ll('rval: ' + rval);
 
 		  	      // // TODO: Should I report this too? Smells a
 		  	      // // bit like the missing properties with
@@ -704,7 +717,9 @@ var MMEnvInit = function(in_model, in_server_base){
 		  	      // Close modal.
 		  	      jQuery(modal_edge_elt).modal('hide');
 			      
-			      manager.get_model(model_id);
+			      //manager.get_model(model_id);
+			      manager.add_fact(model_id, snode.id(),
+					       tnode.id(), rval);
 			  }
 			  // Remove the previous save listeners.
 			  jQuery(modal_edge_save_elt).unbind('click');
@@ -860,13 +875,13 @@ var MMEnvInit = function(in_model, in_server_base){
     bio_auto_remote.add_query_filter('document_category', 'bioentity');
     bio_auto_remote.set_personality('bioentity');
 
-    var mfn_auto_remote =
+    var bpn_auto_remote =
 	new bbop.widget.search_box(gserv, gconf,
-				   'mfn_auto_remote', mfn_args_remote);
-    mfn_auto_remote.add_query_filter('document_category', 'ontology_class');
-    mfn_auto_remote.add_query_filter('regulates_closure_label',
+				   'bpn_auto_remote', mfn_args_remote);
+    bpn_auto_remote.add_query_filter('document_category', 'ontology_class');
+    bpn_auto_remote.add_query_filter('regulates_closure_label',
 				 'molecular_function');
-    mfn_auto_remote.set_personality('ontology');
+    bpn_auto_remote.set_personality('ontology');
 
     var loc_auto_remote =
 	new bbop.widget.search_box(gserv, gconf,
@@ -934,7 +949,7 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(add_btn_remote_elt).click(
     	function(){
     	    var bio = bio_auto_remote.content();
-    	    var mfn = mfn_auto_remote.content();
+    	    var mfn = bpn_auto_remote.content();
     	    var loc = loc_auto_remote.content();
 
     	    if( mfn == '' || bio == '' || loc == '' ){

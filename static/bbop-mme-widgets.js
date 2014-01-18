@@ -206,7 +206,7 @@ bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
 	     tcache.push('<div class="radio"><label>');
 	     tcache.push('<input type="radio" ');
 	     tcache.push('name="rel_val" ');
-	     tcache.push('value="' + tmp_rel[1] +'"');
+	     tcache.push('value="' + tmp_rel[0] +'"');
 	     if( rel_ind == 0 ){
 		 tcache.push('checked>');
 	     }else{

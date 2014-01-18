@@ -26,7 +26,6 @@ var bbop_mme_manager = function(server_base){
     // An internal manager for handling the unhappiness of AJAX callbacks.
     var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
     jqm.use_jsonp(true); // we are definitely doing this remotely
-    jqm.headers({'Accept':'application/javascript', 'Foo': 'Bar'});
 
     function _on_fail(resp, man){
 	var args = [resp.message_type(), resp.message()];
