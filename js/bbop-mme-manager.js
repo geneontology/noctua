@@ -11,12 +11,14 @@
  *  a classic manager
  */
 var bbop_mme_manager = function(server_base){
-    bbop.registry.call(this, ['success',
+    bbop.registry.call(this, ['prerun', // internal
+			      'postrun', // internal
+			      'manager_error', // internal
+			      'success',
 			      'warning',
 			      'error', // message, mtype, commentary
 			      'inconsistent',
-			      'merge',
-			      'manager_error' // message, mtype (impossible?)
+			      'merge'
 			     ]);
     this._is_a = 'bbop_mme_manager';
     var anchor = this;
@@ -51,6 +53,9 @@ var bbop_mme_manager = function(server_base){
 	}else{
 	    alert('unimplemented message_type');	    
 	}
+
+	// Postrun goes no matter what.
+	anchor.apply_callbacks('postrun', [resp, anchor]);
     }
     jqm.register('success', 'bar', _on_nominal_success);
 
@@ -63,6 +68,7 @@ var bbop_mme_manager = function(server_base){
 	var args = {
 	    'modelId': model_id
 	};
+	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');
     };
     
@@ -75,6 +81,7 @@ var bbop_mme_manager = function(server_base){
 	    'fillerId': target_id,
 	    'propertyId': rel_id
 	};
+	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');
     };
     

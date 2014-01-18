@@ -232,22 +232,38 @@ var MMEnvInit = function(in_model, in_server_base){
     /// Callback helpers and manager registration.
     ///
 
+    // Block interface from taking user input while
+    // operating.
+    function _shields_up(){
+	jQuery(modal_blocking).modal({'backdrop': 'static',
+				      'keyboard': false,
+				      'show': true});
+    }
+    
+    // Release interface when transaction done.
+    function _shields_down(){
+	jQuery(modal_blocking).modal('hide');
+    }
+    
     ///
     /// Manager registration and ordering.
     ///
     
+    manager.register('prerun', 'foo', _shields_up);
+    manager.register('postrun', 'foo', _shields_down);
+
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
 			 alert('There was a connection error (' +
 			       message_type + '): ' + message);
-		     });
+		     }, 10);
 
     manager.register('success', 'foo',
 		     function(resp, man){
 			 alert('Operation successful (' +
 			       resp.message_type() + '): ' +
 			       resp.message());
-		     });
+		     }, 10);
 
     manager.register('warning', 'foo',
 		     function(resp, man){
@@ -255,7 +271,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			       resp.message_type() + '): ' +
 			       resp.message() + '; ' +
 			       'your operation was likely not performed');
-		     });
+		     }, 10);
 
     manager.register('error', 'foo',
 		     function(resp, man){
@@ -263,7 +279,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			       resp.message_type() + '): ' +
 			       resp.message() + '; ' +
 			       'your operation was likely not performed');
-		     });
+		     }, 10);
 
     manager.register('inconsistent', 'foo',
 		     function(resp, man){
@@ -271,12 +287,12 @@ var MMEnvInit = function(in_model, in_server_base){
 			       resp.message_type() + '): ' +
 			       resp.message() + '; ' +
 			       'try refreshing your browser');
-		     });
+		     }, 10);
 
     manager.register('merge', 'foo',
 		     function(resp, man){
 			 alert('Not yet handled: ' + resp.message());
-		     });
+		     }, 10);
 
     ///
     /// Load the incoming graph into something useable for population
@@ -929,19 +945,6 @@ var MMEnvInit = function(in_model, in_server_base){
     		alert('You actually need to have selected your ' +
 		      'values from the dropdowns in the autocompletes.');
     	    }else{
-
-		// Block interface from taking user input while
-		// operating.
-		function _shields_up(){
-		    jQuery(modal_blocking).modal({'backdrop': 'static',
-						  'keyboard': false,
-						  'show': true});
-		}
-
-		// Release interface when transaction done.
-		function _shields_down(){
-		    jQuery(modal_blocking).modal('hide');
-		}
 
 		// If successful, add returned data to editor/UI.
 		function on_success(resp, man){
