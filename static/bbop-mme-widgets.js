@@ -170,3 +170,54 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
     
     jQuery(graph_div).append(w.to_string());
 };
+
+bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
+					      modal_edge_body_elt,
+					     source_id, target_id){
+    var each = bbop.core.each;
+
+    // Get a sorted list of known rels.
+    var rels = aid.all_known();
+    rels = rels.sort(
+	function(a,b){ 
+	    return aid.priority(b) - aid.priority(a);
+	});
+    var rellist = [];
+    each(rels,
+	 function(rel){
+	     rellist.push([rel, aid.readable(rel)]);
+	 });
+    
+    // Assemble modal content.
+    var mete = modal_edge_title_elt;
+    var mebe = modal_edge_body_elt;
+    jQuery(mete).empty();
+    jQuery(mete).append('Add Edge');
+    jQuery(mebe).empty();
+    jQuery(mebe).append('<h4>Relation selection</h4>');
+    jQuery(mebe).append('<b>Edge source:</b> ' +
+			source_id);
+    jQuery(mebe).append('<br />');
+    jQuery(mebe).append('<b>Edge target:</b> ' +
+			target_id);
+    var tcache = [];
+    each(rellist,
+	 function(tmp_rel, rel_ind){
+	     tcache.push('<div class="radio"><label>');
+	     tcache.push('<input type="radio" ');
+	     tcache.push('name="rel_val" ');
+	     tcache.push('value="' + tmp_rel[1] +'"');
+	     if( rel_ind == 0 ){
+		 tcache.push('checked>');
+	     }else{
+				       tcache.push('>');
+	     }
+	     tcache.push(tmp_rel[1] + ' ');
+	     tcache.push('(' + tmp_rel[0] + ')');
+	     tcache.push('</label></div>');
+	     
+	 });
+    
+    // Put up modal shield.
+    jQuery(modal_edge_body_elt).append(tcache.join(''));
+};

@@ -258,8 +258,8 @@ var MMEnvServer = function() {
 					'value': '"unknown"'
 				    },
 				    {
-					'name': 'global_label',
-					'value': '"unknown"'
+					'name': 'global_server_base',
+					'value': '"' + m3loc+ '"'
 				    },
 				    {
 					'name': 'global_model',
@@ -316,8 +316,8 @@ var MMEnvServer = function() {
 						 'value': '"' + query + '"'
 					     },
 					     {
-						 'name': 'global_label',
-						 'value': '"???"'
+						 'name': 'global_server_base',
+						 'value':  '"' + m3loc+ '"'
 					     },
 					     {
 						 'name': 'global_model',
@@ -377,8 +377,8 @@ var MMEnvServer = function() {
 					'value': '"unknown"'
 				    },
 				    {
-					'name': 'global_label',
-					'value': '"unknown"'
+					'name': 'global_server_base',
+					'value':  '"' + m3loc+ '"'
 				    },
 				    {
 					'name': 'global_model',

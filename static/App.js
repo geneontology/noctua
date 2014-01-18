@@ -12,7 +12,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_model){
+var MMEnvInit = function(in_model, in_server_base){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -39,9 +39,7 @@ var MMEnvInit = function(in_model){
     var ecore = new bme_core();
 
     // Events registry.
-    var manager = new bbop.registry(['update_instances', // add/change op
-				     'reset_model'
-				    ]);
+    var manager = new bbop_mme_manager(in_server_base);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -231,12 +229,61 @@ var MMEnvInit = function(in_model){
     }
 
     ///
+    /// Callback helpers and manager registration.
+    ///
+
+    ///
+    /// Manager registration and ordering.
+    ///
+    
+    manager.register('manager_error', 'foo',
+		     function(message_type, message){
+			 alert('There was a connection error (' +
+			       message_type + '): ' + message);
+		     });
+
+    manager.register('success', 'foo',
+		     function(resp, man){
+			 alert('Operation successful (' +
+			       resp.message_type() + '): ' +
+			       resp.message());
+		     });
+
+    manager.register('warning', 'foo',
+		     function(resp, man){
+			 alert('Warning (' +
+			       resp.message_type() + '): ' +
+			       resp.message() + '; ' +
+			       'your operation was likely not performed');
+		     });
+
+    manager.register('error', 'foo',
+		     function(resp, man){
+			 alert('Error (' +
+			       resp.message_type() + '): ' +
+			       resp.message() + '; ' +
+			       'your operation was likely not performed');
+		     });
+
+    manager.register('inconsistent', 'foo',
+		     function(resp, man){
+			 alert('Not yet handled (' +
+			       resp.message_type() + '): ' +
+			       resp.message() + '; ' +
+			       'try refreshing your browser');
+		     });
+
+    manager.register('merge', 'foo',
+		     function(resp, man){
+			 alert('Not yet handled: ' + resp.message());
+		     });
+
+    ///
     /// Load the incoming graph into something useable for population
     /// of the editor.
     ///
 
     var model_id = global_id;
-    var model_label = global_label;
     var model_json = in_model;
 
     // Initially, add everything to the edit model.
@@ -542,9 +589,6 @@ var MMEnvInit = function(in_model){
     // 			  });
     // 		  });
 
-
-//    function
-
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection",
@@ -563,55 +607,17 @@ var MMEnvInit = function(in_model){
 			  var sn = info.sourceId;
 			  var tn = info.targetId;
 
+			  // This connection is no longer needed.
+			  instance.detach(info.connection);
+
 			  // Create a new edge based on this info.
 			  //alert(sn + ', ' + tn);
 			  var snode = ecore.get_edit_node_by_elt_id(sn);
 			  var tnode = ecore.get_edit_node_by_elt_id(tn);
 
-			  // Get a sorted list of known rels.
-			  var rels = aid.all_known();
-			  rels = rels.sort(
-			      function(a,b){ 
-				  return aid.priority(b) - aid.priority(a);
-			      });
-			  var rellist = [];
-			  each(rels,
-			       function(rel){
-				   rellist.push([rel, aid.readable(rel)]);
-			       });
-
- 			  // Assemble modal content.
-			  var mete = modal_edge_title_elt;
-			  var mebe = modal_edge_body_elt;
-			  jQuery(mete).empty();
-			  jQuery(mete).append('Add Edge');
-			  jQuery(mebe).empty();
-			  jQuery(mebe).append('<h4>Relation selection</h4>');
-			  jQuery(mebe).append('<b>Edge source:</b> ' +
-					      snode.id());
-			  jQuery(mebe).append('<br />');
-			  jQuery(mebe).append('<b>Edge target:</b> ' +
-					      tnode.id());
-			  var tcache = [];
-			  each(rellist,
-			       function(tmp_rel, rel_ind){
-				   tcache.push('<div class="radio"><label>');
-				   tcache.push('<input type="radio" ');
-				   tcache.push('name="rel_val" ');
-				   tcache.push('value="' + tmp_rel[1] +'"');
-				   if( rel_ind == 0 ){
-				       tcache.push('checked>');
-				   }else{
-				       tcache.push('>');
-				   }
-				   tcache.push(tmp_rel[1] + ' ');
-				   tcache.push('(' + tmp_rel[0] + ')');
-				   tcache.push('</label></div>');
-				   
-			       });
-
-			  // Put up modal shield.
-			  jQuery(modal_edge_body_elt).append(tcache.join(''));
+			  widgets.render_edge_modal(aid, modal_edge_title_elt,
+						    modal_edge_body_elt,
+						    snode.id(), tnode.id());
 			  jQuery(modal_edge_elt).modal({});
 
 		  // 	  function _rel_save_success(individual_list){
@@ -650,47 +656,50 @@ var MMEnvInit = function(in_model){
 		  // 	      each(individiual_list, _process_ind);
 
 		  // 	  }
-
-		  // 	  // Add action listener to the save button.
-		  // 	  function _rel_save_button_callback(){
-
-		  // 	      //
-		  // 	      //ll('looks like edge (in cb): ' + eeid);
-		  // 	      var qstr ='input:radio[name=rel_val]:checked';
-		  // 	      var rval = jQuery(qstr).val();
-		  // 	      //ll('rel_val: ' + rval);
-
-		  // 	  // TODO: Should I report this too? Smells a
-		  // 	  // bit like the missing properties with
-		  // 	  // setParameter/s(),
-		  // 	  // Change label.
-		  // 	  //conn.setLabel(rval); // does not work!?
-		  // 	  conn.removeOverlay("label");
-		  // 	  conn.addOverlay(["Label", {'label': rval,
-		  // 				     'location': 0.5,
-		  // 				     'cssClass': "aLabel",
-		  // 				     'id': 'label' } ]);
-
-		  // 	  // TODO: Since we'll be talking to the
-		  // 	  // server, this will actually be: ping
-		  // 	  // server, destroy connector, create new
-		  // 	  // connector.
 			  
-		  // 	  // Change edit model's releation.
-		  // 	  ee.relation(rval);
+		  	  // Add action listener to the save button.
+		  	  function _rel_save_button_start(){
 
-		  // 	  // Close modal.
-		  // 	  jQuery(modal_edge_elt).modal('hide');
-		  //     }
-		  //     // Remove the previous save listeners.
-		  //     jQuery(modal_edge_save_elt).unbind('click');
-		  //     // And add the new one for this instance.
-		  //     jQuery(modal_edge_save_elt).click(
-		  // 	  function(evt){
-		  // 	      evt.stopPropagation();
-		  // 	      _save_callback();
-		  // 	  });
-		  // });
+		  	      //
+		  	      //ll('looks like edge (in cb): ' + eeid);
+		  	      var qstr ='input:radio[name=rel_val]:checked';
+		  	      var rval = jQuery(qstr).val();
+		  	      //ll('rel_val: ' + rval);
+
+		  	      // // TODO: Should I report this too? Smells a
+		  	      // // bit like the missing properties with
+		  	      // // setParameter/s(),
+		  	      // // Change label.
+		  	      // //conn.setLabel(rval); // does not work!?
+		  	      // conn.removeOverlay("label");
+		  	      // conn.addOverlay(["Label", {'label': rval,
+		  	      // 				 'location': 0.5,
+		  	      // 				 'cssClass': "aLabel",
+		  	      // 				 'id': 'label' } ]);
+			      
+		  	      // TODO: Since we'll be talking to the
+		  	      // server, this will actually be: ping
+		  	      // server, destroy connector, create new
+		  	      // connector.
+			      
+		  	      // // Change edit model's releation.
+		  	      // ee.relation(rval);
+			      
+		  	      // Close modal.
+		  	      jQuery(modal_edge_elt).modal('hide');
+			      
+			      manager.get_model(model_id);
+			  }
+			  // Remove the previous save listeners.
+			  jQuery(modal_edge_save_elt).unbind('click');
+			  // And add the new one for this instance.
+			  jQuery(modal_edge_save_elt).click(
+		  	      function(evt){
+		  		  evt.stopPropagation();
+		  		  _rel_save_button_start();
+		  	      });
+
+			  // });
 
 			  // // // Destroy what we did.
 			  // // instance.detach(info);
@@ -705,7 +714,6 @@ var MMEnvInit = function(in_model){
 			  // // programmatic ones--need to understand:
 			  // // http://jsplumbtoolkit.com/doc/connections).
 			  // // then create the programmatic one.
-			  instance.detach(info.connection);
 			  //
 		      }
 		  });
@@ -1066,12 +1074,12 @@ var MMEnvInit = function(in_model){
 jsPlumb.ready(function(){
 		  // Only roll if the env is correct.
 		  if( typeof(global_id) !== 'undefined' &&
-		      typeof(global_label) !== 'undefined' ){
+		      typeof(global_server_base) !== 'undefined' ){
 			  if( typeof(global_model) !== 'undefined' &&
 				    global_model ){
-				  MMEnvInit(global_model);
+				  MMEnvInit(global_model, global_server_base);
 			  }else{
-			      throw new Error('to loadable anything found');
+			      throw new Error('nothing loadable found');
 			  }
 		      }else{
 			  throw new Error('environment not ready');

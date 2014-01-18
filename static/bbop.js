@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140116";
+bbop.version.release = "20140117";
 /*
  * Package: logger.js
  * 
@@ -7185,7 +7185,8 @@ bbop.rest.response.mmm = function(raw_data){
 			this.message('data not object');
 			this.message_type('error');
 		    }else{
-			if( cdata && bbop.core.what_is(cdata) != 'object'){
+			if( cdata && bbop.core.what_is(cdata) != 'object' && 
+			    bbop.core.what_is(cdata) != 'array' ){
 			    this.message('commentary not object');
 			    this.message_type('error');
 			}else{
@@ -7946,6 +7947,7 @@ bbop.rest.manager.jquery = function(response_handler){
     this._is_a = 'bbop.rest.manager.jquery';
 
     this._use_jsonp = false;
+    this._headers = null;
 
     // Before anything else, if we cannot find a viable jQuery library
     // for use, we're going to create a fake one so we can still test
@@ -7993,6 +7995,25 @@ bbop.rest.manager.jquery.prototype.use_jsonp = function(use_p){
 };
 
 /*
+ * Function: headers
+ *
+ * Try and control the server with the headers.
+ * 
+ * Parameters: 
+ *  header_set - *[optional]* hash of headers; jQuery internal default
+ *
+ * Returns:
+ *  hash of headers
+ */
+bbop.rest.manager.jquery.prototype.headers = function(header_set){
+    var anchor = this;
+    if( bbop.core.is_defined(header_set) ){
+	anchor._headers = header_set;
+    }
+    return anchor._headers;
+};
+
+/*
  * Function: update
  *
  *  See the documentation in <manager.js> on update to get more
@@ -8023,6 +8044,7 @@ bbop.rest.manager.jquery.prototype.update = function(callback_type){
     var jq_vars = {
     	url: final_url,
     	dataType: 'json',
+	headers: { "Content-Type": "application/javascript", "Accept": "application/javascript" },
     	type: "GET"
     };
 
@@ -8030,6 +8052,9 @@ bbop.rest.manager.jquery.prototype.update = function(callback_type){
     if( anchor.use_jsonp() ){
 	jq_vars['dataType'] = 'jsonp';
 	jq_vars['jsonp'] = 'json.wrf';
+    }
+    if( anchor.headers() ){
+    	jq_vars['headers'] = anchor.headers();
     }
 
     // What to do if an error is triggered.

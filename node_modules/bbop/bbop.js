@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140113";
+bbop.version.release = "20140117";
 /*
  * Package: logger.js
  * 
@@ -7185,7 +7185,8 @@ bbop.rest.response.mmm = function(raw_data){
 			this.message('data not object');
 			this.message_type('error');
 		    }else{
-			if( cdata && bbop.core.what_is(cdata) != 'object'){
+			if( cdata && bbop.core.what_is(cdata) != 'object' && 
+			    bbop.core.what_is(cdata) != 'array' ){
 			    this.message('commentary not object');
 			    this.message_type('error');
 			}else{
@@ -7193,7 +7194,6 @@ bbop.rest.response.mmm = function(raw_data){
 			    this.okay(true);
 			    this.message_type(data['message_type']);
 			    this.message(data['message']);
-			    this.message_type('success');
 
 			    // Add any additional fields.
 			    if( cdata ){ this._commantary = cdata; }
@@ -7947,6 +7947,7 @@ bbop.rest.manager.jquery = function(response_handler){
     this._is_a = 'bbop.rest.manager.jquery';
 
     this._use_jsonp = false;
+    this._accepts = null;
 
     // Before anything else, if we cannot find a viable jQuery library
     // for use, we're going to create a fake one so we can still test
@@ -7994,6 +7995,25 @@ bbop.rest.manager.jquery.prototype.use_jsonp = function(use_p){
 };
 
 /*
+ * Function: accepts
+ *
+ * Try and control the server with the accepts header.
+ * 
+ * Parameters: 
+ *  accept - *[optional]* accept ???; jQuery internal default
+ *
+ * Returns:
+ *  ???
+ */
+bbop.rest.manager.jquery.prototype.accept = function(accept){
+    var anchor = this;
+    if( bbop.core.is_defined(accept) ){
+	anchor._accept = accept;
+    }
+    return anchor._accept;
+};
+
+/*
  * Function: update
  *
  *  See the documentation in <manager.js> on update to get more
@@ -8031,6 +8051,9 @@ bbop.rest.manager.jquery.prototype.update = function(callback_type){
     if( anchor.use_jsonp() ){
 	jq_vars['dataType'] = 'jsonp';
 	jq_vars['jsonp'] = 'json.wrf';
+    }
+    if( anchor.accepts() ){
+	jq_vars['accepts'] = anchor.accepts();
     }
 
     // What to do if an error is triggered.
