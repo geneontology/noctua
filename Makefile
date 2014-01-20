@@ -13,4 +13,4 @@ assemble-app:
 ##
 .PHONY: start-app
 start-app: assemble-app
-	node server.js
+	M3LOC="http://localhost:6800" node server.js
