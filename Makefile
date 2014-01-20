@@ -2,6 +2,8 @@
 ####
 ####
 
+M3LOC ?= http://localhost:6800
+
 .PHONY: assemble-app
 assemble-app:
 	cp ./js/bbop-mme-context.js static/
@@ -13,4 +15,4 @@ assemble-app:
 ##
 .PHONY: start-app
 start-app: assemble-app
-	M3LOC="http://localhost:6800" node server.js
+	M3LOC=$(M3LOC) node server.js
