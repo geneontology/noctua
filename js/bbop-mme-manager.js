@@ -62,6 +62,7 @@ var bbop_mme_manager = function(server_base){
     /// Actual mechanism.
     ///
     // http://localhost:6800/m3GetModel?modelId=gomodel:wb-GO_0043053&json.wrf=jQuery191016787577188636982_1389946235386&_=1389946235387
+    // Likely triggers "inconsistent".
     anchor.get_model = function(model_id){
 	var url = server_base + '/m3GetModel';
 	var args = {
@@ -72,6 +73,7 @@ var bbop_mme_manager = function(server_base){
     };
     
     // http://localhost:6800/m3AddFact?modelId=gomodel:wb-GO-0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000002&fillerId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000001&propertyId=BFO_0000051
+    // Likely triggers "merge".
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 	var url = server_base + '/m3AddFact';
 	var args = {

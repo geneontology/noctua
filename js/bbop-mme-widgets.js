@@ -12,7 +12,7 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
     // First, lets get the headers that we'll need by poking the
     // model and getting all of the possible categories.	
     var cat_list = [];
-    each(ecore.get_edit_nodes(),
+    each(ecore.get_nodes(),
 	 function(enode_id, enode){
 	     each(enode.types(),
 		  function(in_type){
@@ -55,10 +55,10 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 					   'table-hover',
 					   'table-condensed'].join(' ')});
 	
-	//each(ecore.get_edit_nodes(),
+	//each(ecore.get_nodes(),
 	each(ecore.edit_node_order(),
 	     function(enode_id){
-		 var enode = ecore.get_edit_node(enode_id);
+		 var enode = ecore.get_node(enode_id);
 		 if( enode.existential() == 'real' ){
 		     
 		     // Now that we have an enode, we want to mimic
@@ -102,7 +102,7 @@ bbop_mme_widgets.wipe = function(div){
 
 bbop_mme_widgets.add_virtual_node = function(ecore, enode, aid, graph_div){
 
-    var div_id = ecore.get_edit_node_elt_id(enode.id());
+    var div_id = ecore.get_node_elt_id(enode.id());
     var style_str =
 	'top: ' + enode.y_init() + 'px; ' +
 	'left: ' + enode.x_init() + 'px;';
@@ -118,7 +118,7 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
     var each = bbop.core.each;
 
     // Node as table nested into bbop.html div.
-    var div_id = ecore.get_edit_node_elt_id(enode.id());
+    var div_id = ecore.get_node_elt_id(enode.id());
     var style_str = 'top: ' + enode.y_init() + 'px; ' + 
 	'left: ' + enode.x_init() + 'px;';
     //ll('style: ' + style_str);

@@ -176,12 +176,12 @@ var MMEnvInit = function(in_model, in_server_base){
 	// node. This also triggers the "connectionDetached"
 	// event, so the edges are being removed from the
 	// model at the same time.
-	var nelt = ecore.get_edit_node_elt_id(indv_id);
+	var nelt = ecore.get_node_elt_id(indv_id);
 	instance.detachAllConnections(nelt);
 
 	// Delete node from UI/model.
 	jQuery('#' + nelt).remove();
-	ecore.remove_edit_node(indv_id); // recursively removes
+	ecore.remove_node(indv_id); // recursively removes
 
 	// 
 	alert('this does not affect the server model--just the client');
@@ -203,8 +203,8 @@ var MMEnvInit = function(in_model, in_server_base){
 
     	var new_conn = instance.connect(
     	    { // remember that edge ids and elts ids are the same 
-    	    	'source': ecore.get_edit_node_elt_id(sn),
-    	    	'target': ecore.get_edit_node_elt_id(tn),
+    	    	'source': ecore.get_node_elt_id(sn),
+    	    	'target': ecore.get_node_elt_id(tn),
 		//'label': 'foo' // works
 		'anchor': "Continuous",
 		'connector': ["Bezier", { curviness: 25 } ],
@@ -251,8 +251,35 @@ var MMEnvInit = function(in_model, in_server_base){
     function _merge_response(resp, man){
 
 	// 
-	var data = resp.data();
-	
+	var individuals = resp.data();
+	if( ! individuals ){
+	    alert('no data/individuals?');
+	}else{
+
+	    // First look at individuals/nodes for addition or updating.
+	    each(individuals,
+		 function(ind){
+		     var update_node = ecore.get_node_by_individual(ind);
+		     if( update_node ){
+			 // TODO: Update node.
+		     }else{
+			 // TODO: New node.
+		     }
+		 });
+
+	    // Now look at individuals/edges for purging and
+	    // reinitiation.
+	    each(individuals,
+		 function(ind){
+		     var source_node = ecore.get_node_by_individual(ind);
+		     
+		     // TODO: Delete all edges/connectors for said node.
+		     
+
+		     // TODO: Add all edges 
+		 });
+	}
+
 	alert('finished _merge_response');
     }
     
@@ -341,7 +368,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	     var id = litem['id'];
 	     var raw_x = litem['x'];
 	     var raw_y = litem['y'];
-	     var en = ecore.get_edit_node(id);
+	     var en = ecore.get_node(id);
 	     en.x_init(_box_left(raw_x));
 	     en.y_init(_box_top(raw_y));
 	 });	
@@ -456,7 +483,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		var target_elt = jQuery(evnt.target);
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
-		var enode = ecore.get_edit_node_by_elt_id(parent_id);
+		var enode = ecore.get_node_by_elt_id(parent_id);
 		if( enode ){		    
 		    // TODO: Pass said node to be edited.
 		    edit_node_by(enode);
@@ -489,7 +516,7 @@ var MMEnvInit = function(in_model, in_server_base){
     	    widgets.wipe(graph_div);
 
 	    // Initial render of the graph.
-    	    each(ecore.get_edit_nodes(),
+    	    each(ecore.get_nodes(),
     		 function(enode_id, enode){
     		     if( enode.existential() == 'real' ){ // if a "real" node
     			 widgets.add_enode(ecore, enode, aid, graph_div);
@@ -498,7 +525,7 @@ var MMEnvInit = function(in_model, in_server_base){
     		     }
     		 });
     	    // Now let's try to add all the edges/connections.
-    	    each(ecore.get_edit_edges(),
+    	    each(ecore.get_edges(),
     		 function(eeid, eedge){
     		     _connect_with_edge(eedge);
     		 });
@@ -524,103 +551,6 @@ var MMEnvInit = function(in_model, in_server_base){
 
     	});
 
-    // // TODO
-    // // Click-on-edge-event: Use modal to edit label.
-    // //instance.bind("dblclick", function(conn) {
-    // instance.bind("click", function(conn) {
-		      
-    // 		      // Get the necessary info from the
-    // 		      // connection.
-    // 		      var eeid =
-    // 			  ecore.get_edit_edge_id_by_connector_id(conn.id);
-    // 		      ll('looks like edge: ' + eeid);
-    // 		      var ee = ecore.get_edit_edge(eeid);
-
-    // 		      // Assemble modal.
-    // 		      jQuery(modal_edge_title_elt).empty();
-    // 		      jQuery(modal_edge_title_elt).append('Edge: ' + eeid);
-    // 		      jQuery(modal_edge_body_elt).empty();
-    // 		      jQuery(modal_edge_body_elt).append('<h4>Set relation</h4>');
-    // 		      var tmp_rels = [
-    // 			  ['RO:0002333', 'enabled by'],
-    // 			  ['RO:0002332', 'regulates levels of'],
-    // 			  ['RO:0002331', 'involved in'],
-    // 			  ['RO:0002330', 'genomically related to'],
-    // 			  ['RO:0002213', 'positively regulates'],
-    // 			  ['RO:0002212', 'negatively regulates'],
-    // 			  ['RO:0002211', 'regulates'],
-    // 			  ['RO:0002202', 'develops from'],
-    // 			  ['BFO:0000066', 'occurs in'],
-    // 			  ['BFO:0000051', 'has part'],
-    // 			  ['BFO:0000050', 'part of'],
-    // 			  ['???', 'indirectly disables action of'],
-    // 			  ['???', 'directly inhibits'],
-    // 			  ['???', 'upstream of'],
-    // 			  ['???', 'directly activates']
-    // 		      ];
-    // 		      var tmp_cache = [];
-    // 		      each(tmp_rels,
-    // 			   function(tmp_rel, rel_ind){
-    // 			       tmp_cache.push('<div class="radio"><label>');
-    // 			       tmp_cache.push('<input type="radio" ');
-    // 			       tmp_cache.push('name="rel_val" ');
-    // 			       tmp_cache.push('value="' + tmp_rel[1] +'"');
-    // 				   if( rel_ind == 0 ){
-    // 				       tmp_cache.push('checked>');
-    // 				   }else{
-    // 				       tmp_cache.push('>');
-    // 				   }
-    // 			       tmp_cache.push(tmp_rel[1] + ' ');
-    // 			       tmp_cache.push('(' + tmp_rel[0] + ')');
-    // 			       tmp_cache.push('</label></div>');
-			       
-    // 			   });
-
-    // 		      jQuery(modal_edge_body_elt).append(tmp_cache.join(''));
-    // 		      jQuery(modal_edge_elt).modal({});
-
-    // 		      // Add "save" callback to it to change the edge
-    // 		      // label and the edit edge relation.
-    // 		      function _save_callback(){
-
-    // 			  //
-    // 			  //ll('looks like edge (in cb): ' + eeid);
-    // 			  var rval =
-    // 			      jQuery("input:radio[name=rel_val]:checked").val();
-    // 			  //ll('rel_val: ' + rval);
-
-    // 			  // TODO: Should I report this too? Smells a
-    // 			  // bit like the missing properties with
-    // 			  // setParameter/s(),
-    // 			  // Change label.
-    // 			  //conn.setLabel(rval); // does not work!?
-    // 			  conn.removeOverlay("label");
-    // 			  conn.addOverlay(["Label", {'label': rval,
-    // 						     'location': 0.5,
-    // 						     'cssClass': "aLabel",
-    // 						     'id': 'label' } ]);
-
-    // 			  // TODO: Since we'll be talking to the
-    // 			  // server, this will actually be: ping
-    // 			  // server, destroy connector, create new
-    // 			  // connector.
-			  
-    // 			  // Change edit model's releation.
-    // 			  ee.relation(rval);
-
-    // 			  // Close modal.
-    // 			  jQuery(modal_edge_elt).modal('hide');
-    // 		      }
-    // 		      // Remove the previous save listeners.
-    // 		      jQuery(modal_edge_save_elt).unbind('click');
-    // 		      // And add the new one for this instance.
-    // 		      jQuery(modal_edge_save_elt).click(
-    // 			  function(evt){
-    // 			      evt.stopPropagation();
-    // 			      _save_callback();
-    // 			  });
-    // 		  });
-
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection",
@@ -644,8 +574,8 @@ var MMEnvInit = function(in_model, in_server_base){
 
 			  // Create a new edge based on this info.
 			  //alert(sn + ', ' + tn);
-			  var snode = ecore.get_edit_node_by_elt_id(sn);
-			  var tnode = ecore.get_edit_node_by_elt_id(tn);
+			  var snode = ecore.get_node_by_elt_id(sn);
+			  var tnode = ecore.get_node_by_elt_id(tn);
 
 			  widgets.render_edge_modal(aid, modal_edge_title_elt,
 						    modal_edge_body_elt,
@@ -662,16 +592,16 @@ var MMEnvInit = function(in_model, in_server_base){
 		  // 		  // Get all the currently extant
 		  // 		  // edges between the two nodes.
 		  // 		  var relevant_edges =
-		  // 		      ecore.get_edit_edges_by_source(iid);
+		  // 		      ecore.get_edges_by_source(iid);
 		  // 		  each(relevant_edges,
 		  // 		       function(red){
 		  // 			   var redid = red.id();
 
 		  // 			   // Delete them from the ecore.
-		  // 			   ecore.remove_edit_edge(redid);
+		  // 			   ecore.remove_edge(redid);
 
 		  // 			   // Delete them from the UI.
-		  // 			   var redcon = ecore.get_edit_connector_id_by_edge_id(redid);
+		  // 			   var redcon = ecore.get_connector_id_by_edge_id(redid);
 		  // 		   });			      
 
 		  // 		  // Cycle through the individual list.
@@ -755,11 +685,12 @@ var MMEnvInit = function(in_model, in_server_base){
 		      var cid = info.connection.id;
 		      ll('there was a connection detached: ' + cid);
 		      var eeid =
-			  ecore.get_edit_edge_id_by_connector_id(cid);
+			  ecore.get_edge_id_by_connector_id(cid);
 		      ll('looks like edge: ' + eeid);
-		      //var ee = ecore.get_edit_edge(eeid);
+		      //var ee = ecore.get_edge(eeid);
 		      
-		      ecore.remove_edit_edge(eeid);
+		      //alert('Action not yet supported: refresh page.');
+		      ecore.remove_edge(eeid);
 		  });
 
     //
@@ -918,7 +849,7 @@ var MMEnvInit = function(in_model, in_server_base){
 
 	// Make node active in display.
 	var dnid = dyn_node.id();
-	var ddid = '#' + ecore.get_edit_node_elt_id(dnid);
+	var ddid = '#' + ecore.get_node_elt_id(dnid);
 	_make_selector_draggable(ddid);
 	//_make_selector_target(ddid);
 	//_make_selector_source(ddid, '.konn');
@@ -985,25 +916,9 @@ var MMEnvInit = function(in_model, in_server_base){
 		    alert('This request failed (on ' +
 			  resp.message_type() + ') with message: ' +
 			  resp.message());
-
-		    // Release interface when transaction done.
-		    _shields_down();
 		}
 
-		// Attempt to adjust remote model with REST call.
-		// var server_loc = 'http://localhost:8300';
-		// var get_path = '/m3GetModel';
-		// var server_args ={
-		//   'modelId': ,
-		//   '': 
-		// };
-
-		var t = "http://toaster.lbl.gov:9000/solr/select?defType=edismax&qt=standard&indent=on&wt=json&rows=10&start=0&fl=bioentity%2Cbioentity_name%2Cannotation_class%2Cannotation_extension_class_handler%2Csource%2Ctaxon%2Cevidence_type%2Cevidence_with%2Cpanther_family%2Cbioentity_isoform%2Creference%2Cbioentity_label%2Cannotation_class_label%2Ctaxon_label%2Cpanther_family_label%2Cscore%2Cid&facet=true&facet.mincount=1&facet.sort=count&json.nl=arrarr&facet.limit=25&hl=true&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&fq=document_category:%22annotation%22&facet.field=source&facet.field=assigned_by&facet.field=aspect&facet.field=evidence_type_closure&facet.field=panther_family_label&facet.field=taxon_closure_label&facet.field=annotation_class_label&facet.field=isa_partof_closure_label&facet.field=regulates_closure_label&facet.field=annotation_extension_class_closure_label&q=apoptotic%20pro*&qf=annotation_class^2&qf=annotation_class_label_searchable^1&qf=bioentity^2&qf=bioentity_label_searchable^1&qf=bioentity_name_searchable^1&qf=annotation_extension_class^2&qf=annotation_extension_class_label_searchable^1&qf=reference^1&qf=panther_family_searchable^1&qf=panther_family_label_searchable^1&qf=bioentity_isoform^1&packet=27&callback_type=search";
-		var m = new bbop.rest.manager.jquery(bbop.rest.response.json);
-		m.use_jsonp(true); // use JSONP
-		m.register('success', 'foo', on_success);
-		m.register('error', 'bar', on_failure);
-		_shields_up(); // block just before start of action
+		// ???
 		m.action(t);
     	    }
     	}

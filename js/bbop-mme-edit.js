@@ -1,5 +1,5 @@
 ///
-/// Core model. Essentially several sets and an order.
+/// Core edit model. Essentially several sets and an order.
 /// This is meant to be changed when we get a richer model working,
 /// but for the prototype, I don't want to lock in to the bbop
 /// graph model, so I'm using something much dumber than can
@@ -70,15 +70,15 @@ bbop_mme_edit.core.prototype.edit_node_order = function(){
     return this.core['node_order'] || [];
 };
 
-bbop_mme_edit.core.prototype.get_edit_node = function(enid){
+bbop_mme_edit.core.prototype.get_node = function(enid){
     return this.core['nodes'][enid] || null;
 };
 
-bbop_mme_edit.core.prototype.get_edit_node_elt_id = function(enid){
+bbop_mme_edit.core.prototype.get_node_elt_id = function(enid){
     return this.core['node2elt'][enid] || null;
 };
 
-bbop_mme_edit.core.prototype.get_edit_node_by_elt_id = function(elt_id){
+bbop_mme_edit.core.prototype.get_node_by_elt_id = function(elt_id){
     var ret = null;
     var enid = this.core['elt2node'][elt_id] || null;
     if( enid ){
@@ -87,11 +87,25 @@ bbop_mme_edit.core.prototype.get_edit_node_by_elt_id = function(elt_id){
     return ret;
 };
 
-bbop_mme_edit.core.prototype.get_edit_nodes = function(){
+bbop_mme_edit.core.prototype.get_node_by_individual = function(indv){
+    var anchor = this;
+
+    var ret = null;
+
+    // Add individual to edit core if properly structured.
+    var iid = indv['id'];
+    if( iid ){	
+	ret = this.core['nodes'][iid] || null;
+    }
+    
+    return ret;
+};
+
+bbop_mme_edit.core.prototype.get_nodes = function(){
     return this.core['nodes'] || {};
 };
 
-bbop_mme_edit.core.prototype.remove_edit_node = function(enid){
+bbop_mme_edit.core.prototype.remove_node = function(enid){
     if( this.core['nodes'][enid] ){
 	var enode = this.core['nodes'][enid];
 
@@ -101,7 +115,7 @@ bbop_mme_edit.core.prototype.remove_edit_node = function(enid){
 		       function(edge_id, edge){
 			   if( edge.source() == enid || edge.target() == enid ){
 			       var eeid = edge.id();
-			       this.remove_edit_edge(eeid);
+			       this.remove_edge(eeid);
 			   }
 		       });
 	
@@ -170,19 +184,58 @@ bbop_mme_edit.core.prototype.add_edges_from_individual = function(indv, aid){
 };
 
 
-bbop_mme_edit.core.prototype.get_edit_edge_id_by_connector_id = function(cid){
+bbop_mme_edit.core.prototype.get_edge_id_by_connector_id = function(cid){
     return this.core['connector2edge'][cid] || null;
 };
 
-bbop_mme_edit.core.prototype.get_edit_connector_id_by_edge_id = function(eid){
+bbop_mme_edit.core.prototype.get_connector_id_by_edge_id = function(eid){
     return this.core['edge2connector'][eid] || null;
 };
 
-bbop_mme_edit.core.prototype.get_edit_edge = function(eeid){
+// // Get all of the edges by individual.
+// bbop_mme_edit.core.prototype.get_edges_by_individual = function(indv){
+
+//     var anchor = this;
+//     var each = bbop.core.each;
+
+//     var ret_facts = [];
+    
+//     // Add individual to edit core if properly structured.
+//     var iid = indv['id'];
+//     if( iid ){
+// 	// Now, let's probe the model to see what edges
+// 	// we can find.
+// 	var possible_rels = aid.all_known();
+// 	each(possible_rels,
+// 	     function(try_rel){
+// 		 if( indv[try_rel] && indv[try_rel].length ){
+		     
+// 		     // Cycle through each of the found
+// 		     // rels.
+// 		     var found_rels = indv[try_rel];
+// 		     each(found_rels,
+// 			  function(rel){
+// 			      var tid = rel['id'];
+// 			      var rt = rel['type'];
+// 			      if( tid && rt && rt == 'NamedIndividual'){
+// 				  var en =
+// 				      new bbop_mme_edit.edge(iid, try_rel, tid);
+// 				  anchor.add_edge(en);
+// 				  ret_facts.push(en);
+// 			      }
+// 			  });
+// 		 }
+// 	     });
+//     }
+    
+//     return ret_facts;
+// };
+
+bbop_mme_edit.core.prototype.get_edge = function(eeid){
     return this.core['edges'][eeid] || null;
 };
 
-bbop_mme_edit.core.prototype.get_edit_edges = function(){
+bbop_mme_edit.core.prototype.get_edges = function(){
     return this.core['edges'] || [];
 };
 
@@ -191,7 +244,7 @@ bbop_mme_edit.core.prototype.get_edit_edges = function(){
  * 
  * Return a list of edges that are concerned with the two nodes.
  */
-bbop_mme_edit.core.prototype.get_edit_edges_by_source = function(srcid){
+bbop_mme_edit.core.prototype.get_edges_by_source = function(srcid){
 
     var rete = [];
     bbop.core.each(this.core['edges'],
@@ -205,7 +258,7 @@ bbop_mme_edit.core.prototype.get_edit_edges_by_source = function(srcid){
     return rete;
 };
 
-bbop_mme_edit.core.prototype.remove_edit_edge = function(eeid){
+bbop_mme_edit.core.prototype.remove_edge = function(eeid){
     if( this.core['edges'][eeid] ){
 
 	// Main bit out.

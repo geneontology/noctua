@@ -109,6 +109,7 @@ var MMEnvServer = function() {
 		'bbop-mme-edit.js': '',
 		'bbop-mme-manager.js': '',
 		'bbop-mme-widgets.js': '',
+		'Landing.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
 		'base.tmpl': '',
@@ -182,7 +183,11 @@ var MMEnvServer = function() {
 			 var base_tmpl = self.cache_get('base.tmpl').toString();
 			 var base_tmpl_args = {
 			     'title': 'go-mme',
-			     'content': ind_cont
+			     'content': ind_cont,
+			     'js_variables': {
+				 'name': 'global_server_base',
+				 'value': '"' + m3loc+ '"'
+			     }
 			 };
 			 var ind = mustache.render(base_tmpl, base_tmpl_args);
 
