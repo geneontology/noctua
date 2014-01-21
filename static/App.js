@@ -245,6 +245,11 @@ var MMEnvInit = function(in_model, in_server_base){
 	jQuery(modal_blocking).modal('hide');
     }
 
+    // Update/repaint the table.
+    function _refresh_table(){
+	widgets.repaint_table(ecore, aid, table_div);
+    }
+
     // This is a very important core function. It's purpose is to
     // update the loval model and UI to be consistent with the current
     // state and the data input.
@@ -262,8 +267,17 @@ var MMEnvInit = function(in_model, in_server_base){
 		     var update_node = ecore.get_node_by_individual(ind);
 		     if( update_node ){
 			 // TODO: Update node.
+			 // .merge_node(ind)
+			 // wipe_node()
+			 // redraw_node()
 		     }else{
-			 // TODO: New node.
+			 // TODO: Does this work?
+			 // New node to edit core, pull it out, and
+			 // add it to the display.
+			 ecore.add_node_from_individual(ind);
+			 var recent_node = ecore.get_node_by_individual(ind);
+			 widgets.add_virtual_node(ecore, recent_node,
+						  aid, graph_div);
 		     }
 		 });
 
@@ -273,10 +287,28 @@ var MMEnvInit = function(in_model, in_server_base){
 		 function(ind){
 		     var source_node = ecore.get_node_by_individual(ind);
 		     
-		     // TODO: Delete all edges/connectors for said node.
+		     var src_edges =
+			 ecore.get_edges_by_source(source_node.id());
 		     
+		     // TODO: Does this work?
+		     // Delete all edges/connectors for said node.
+		     each(src_edges,
+			  function(src_edge){
+			      // TODO
+			      //instance.detach(info.connection);
+			      ecore.remove_edge(src_edge.id());
+			  });
+		     
+		     // TODO: Does this work?
+		     // Add all edges.
+		     var redges = ecore.add_edges_from_individual(ind, aid);
 
-		     // TODO: Add all edges 
+		     // TODO: Does this work?
+		     // Redraw display
+		     each(redges,
+			  function(redge){
+			      _connect_with_edge(redge);
+			  });
 		 });
 	}
 
@@ -289,13 +321,15 @@ var MMEnvInit = function(in_model, in_server_base){
     
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
-    manager.register('postrun', 'foo', _shields_down);
+    manager.register('postrun', 'fooB', _refresh_table, 10);
+    manager.register('postrun', 'fooA', _shields_down, 9);
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
 			 alert('There was a connection error (' +
 			       message_type + '): ' + message);
 		     }, 10);
 
+    // Remote action registrations.
     manager.register('success', 'foo',
 		     function(resp, man){
 			 alert('Operation successful (' +

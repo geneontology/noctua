@@ -12,6 +12,13 @@
 //     var
 // }
 
+// BUG/TODO:
+// Temporary cleansing until 
+var bme_context = new bbop_mme_context();
+var bme_clean = function(str){
+  return bme_context.cleanse(str);  
+};
+
 var bbop_mme_edit = {};
 
 // Edit control.
@@ -321,14 +328,6 @@ bbop_mme_edit.core.prototype.to_graph = function(){
 		   function(node_id, node){
 		       if( node.existential() && node.existential() == 'real' ){
 
-			   // // Assemble meta.
-			   // var ex_meta = {};
-			   // ex_meta['enabled_by'] = node.enabled_by();
-			   // ex_meta['activity'] = node.activity();
-			   // ex_meta['unknown'] = node.unknown();
-			   // ex_meta['process'] = node.process();
-			   // ex_meta['location'] = node.location();
-			   
 			   // Create node.
 			   var ex_node = new bbop.model.node(node_id);
 			   //ex_node.metadata(ex_meta);
@@ -365,7 +364,8 @@ bbop_mme_edit.node = function(in_id, in_types, in_existential){
     if( typeof(in_id) === 'undefined' ){
 	this._id = bbop.core.uuid();
     }else{
-	this._id = in_id;
+	//this._id = in_id;
+	this._id = bme_clean(in_id);
     }
     if( typeof(in_types) !== 'undefined' ){
 	this._types = in_types;
@@ -403,9 +403,12 @@ bbop_mme_edit.node.prototype.y_init = function(value){
 // Edit edges.
 bbop_mme_edit.edge = function(src_id, rel_id, tgt_id){
     this._id = bbop.core.uuid();
-    this._source_id = src_id;
-    this._relation_id = rel_id;
-    this._target_id = tgt_id;
+    // this._source_id = src_id;
+    // this._relation_id = rel_id;
+    // this._target_id = tgt_id;
+    this._source_id = bme_clean(src_id);
+    this._relation_id = bme_clean(rel_id);
+    this._target_id = bme_clean(tgt_id);
 };
 bbop_mme_edit.edge.prototype.id = function(){ // ID is RO
     return this._id; };
