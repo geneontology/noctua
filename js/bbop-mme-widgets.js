@@ -177,7 +177,7 @@ bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
     var each = bbop.core.each;
 
     // Get a sorted list of known rels.
-    var rels = aid.all_known();
+    var rels = aid.all_entities();
     rels = rels.sort(
 	function(a,b){ 
 	    return aid.priority(b) - aid.priority(a);

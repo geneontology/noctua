@@ -28,6 +28,7 @@ var bbop_mme_context = function(){
 	    readable: 'activity',
 	    priority: 8,
 	    aliases: [
+		'activity'
 	    ],
 	    color: '#FFFAFA' // snow
 	},
@@ -38,8 +39,8 @@ var bbop_mme_context = function(){
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
-		'part_of',
-		'part of'
+		'part of',
+		'part_of'
 	    ],
 	    color: '#add8e6' // light blue
 	},
@@ -49,6 +50,7 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
+		'has part',
 		'has_part'
 	    ],
 	    color: '#6495ED' // cornflower blue
@@ -59,8 +61,8 @@ var bbop_mme_context = function(){
 	    priority: 2,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000066',
-		'occurs_in',
-		'occurs in'
+		'occurs in',
+		'occurs_in'
 	    ],
 	    color: '#66CDAA' // medium aquamarine
 	},
@@ -68,7 +70,10 @@ var bbop_mme_context = function(){
 	{
 	    readable: 'develops from',
 	    priority: 0,
-	    aliases: [],
+	    aliases: [
+		'develops from',
+		'develops_from'
+	    ],
 	    color: '#A52A2A' // brown
 	},
 	'RO_0002211':
@@ -77,6 +82,7 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002211'
+		'regulates'
 	    ],
 	    color: '#2F4F4F' // dark slate grey
 	},
@@ -86,6 +92,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002212'
+		'negatively regulates',
+		'negatively_regulates'
 	    ],
 	    color: '#FF0000' // red
 	},
@@ -95,6 +103,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002213'
+		'positively regulates',
+		'positively_regulates'
 	    ],
 	    color: '#008000' //green
 	},
@@ -102,28 +112,40 @@ var bbop_mme_context = function(){
 	{
 	    readable: 'genomically related to',
 	    priority: 0,
-	    aliases: [],
+	    aliases: [
+		'genomically related to',
+		'genomically_related_to'
+	    ],
 	    color: '#9932CC' // darkorchid
 	},
 	'RO_0002331':
 	{
 	    readable: 'involved in',
 	    priority: 3,
-	    aliases: [],
+	    aliases: [
+		'involved in',
+		'involved_in'
+	    ],
 	    color: '#E9967A' // darksalmon
 	},
 	'RO_0002332':
 	{
 	    readable: 'regulates level of',
 	    priority: 0,
-	    aliases: [],
+	    aliases: [
+		'regulates level of',
+		'regulates_level_of'
+	    ],
 	    color: '#556B2F' // darkolivegreen
 	},
 	'RO_0002333':
 	{
 	    readable: 'enabled by',
 	    priority: 9,
-	    aliases: [],
+	    aliases: [
+		'enabled by',
+		'enabled_by'
+	    ],
 	    color: '#B8860B' // darkgoldenrod
 	},
 	'directly_activates':
@@ -132,7 +154,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_activates',
-		'directly activates'
+		'directly activates',
+		'directly_activates'
 	    ],
 	    color: '#8FBC8F' // darkseagreen
 	},
@@ -142,6 +165,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/upstream_of'
+		'upstream of',
+		'upstream_of'
 	    ],
 	    color: '#FF1493' // deeppink
 	},
@@ -151,6 +176,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_inhibits'
+		'directly inhibits',
+		'directly_inhibits'
 	    ],
 	    color: '#7FFF00' // chartreuse
 	},
@@ -160,6 +187,8 @@ var bbop_mme_context = function(){
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/indirectly_disables_action_of'
+		'indirectly disables action of',
+		'indirectly_disables_action_of'
 	    ],
 	    color: '#483D8B' // darkslateblue
 	}
