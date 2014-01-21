@@ -227,7 +227,9 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     position:absolute;
     color:black;
     padding:0.5em;
-    width:150px;
+    width:175px;
+    /* min-width:150px; */
+    /* max-width:150px; */
     /* height:100px; */
     /* line-height: 80px; */
     -webkit-transition: -webkit-box-shadow 0.15s ease-in;

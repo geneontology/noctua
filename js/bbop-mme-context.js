@@ -36,8 +36,8 @@ var bbop_mme_context = function(){
 	    readable: 'part of',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/BFO_0000050',
-		'http://purl.obolibrary.org/obo/part_of',
+		//'http://purl.obolibrary.org/obo/BFO_0000050',
+		//'http://purl.obolibrary.org/obo/part_of',
 		'part_of',
 		'part of'
 	    ],
@@ -48,7 +48,7 @@ var bbop_mme_context = function(){
 	    readable: 'has part',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/BFO_0000051',
+		//'http://purl.obolibrary.org/obo/BFO_0000051',
 		'has_part'
 	    ],
 	    color: '#6495ED' // cornflower blue
@@ -58,7 +58,7 @@ var bbop_mme_context = function(){
 	    readable: 'occurs in',
 	    priority: 2,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/BFO_0000066',
+		//'http://purl.obolibrary.org/obo/BFO_0000066',
 		'occurs_in',
 		'occurs in'
 	    ],
@@ -76,7 +76,7 @@ var bbop_mme_context = function(){
 	    readable: 'regulates',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/RO_0002211'
+		//'http://purl.obolibrary.org/obo/RO_0002211'
 	    ],
 	    color: '#2F4F4F' // dark slate grey
 	},
@@ -85,7 +85,7 @@ var bbop_mme_context = function(){
 	    readable: 'negatively regulates',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/RO_0002212'
+		//'http://purl.obolibrary.org/obo/RO_0002212'
 	    ],
 	    color: '#FF0000' // red
 	},
@@ -94,7 +94,7 @@ var bbop_mme_context = function(){
 	    readable: 'positively regulates',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/RO_0002213'
+		//'http://purl.obolibrary.org/obo/RO_0002213'
 	    ],
 	    color: '#008000' //green
 	},
@@ -131,7 +131,7 @@ var bbop_mme_context = function(){
 	    readable: 'directly activates',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/directly_activates',
+		//'http://purl.obolibrary.org/obo/directly_activates',
 		'directly activates'
 	    ],
 	    color: '#8FBC8F' // darkseagreen
@@ -141,7 +141,7 @@ var bbop_mme_context = function(){
 	    readable: 'upstream of',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/upstream_of'
+		//'http://purl.obolibrary.org/obo/upstream_of'
 	    ],
 	    color: '#FF1493' // deeppink
 	},
@@ -150,7 +150,7 @@ var bbop_mme_context = function(){
 	    readable: 'directly inhibits',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/directly_inhibits'
+		//'http://purl.obolibrary.org/obo/directly_inhibits'
 	    ],
 	    color: '#7FFF00' // chartreuse
 	},
@@ -159,7 +159,7 @@ var bbop_mme_context = function(){
 	    readable: 'indirectly disables action of',
 	    priority: 0,
 	    aliases: [
-		'http://purl.obolibrary.org/obo/indirectly_disables_action_of'
+		//'http://purl.obolibrary.org/obo/indirectly_disables_action_of'
 	    ],
 	    color: '#483D8B' // darkslateblue
 	}
@@ -268,6 +268,22 @@ var bbop_mme_context = function(){
     };
 
     /* 
+     * Function: all_entities
+     *
+     * Return a list of the currently known entities.
+     *
+     * Parameters: 
+     *  n/a
+     *
+     * Returns:
+     *  list
+     */
+    this.all_entities = function(){	
+	var rls = bbop.core.get_keys(entities);
+	return rls;
+    };
+
+    /* 
      * Function: all_known
      *
      * Return a list of the currently known entities and their aliases.
@@ -310,6 +326,38 @@ var bbop_mme_context = function(){
 
 	return ret;
     };
+
+    /* 
+     * Function: cleanse
+     *
+     * Turn ID strings into something standard:
+     *  ':' -> '_' and 'http://foo/bar' -> 'bar'.
+     *
+     * Parameters: 
+     *  id_string - the string to cleanse
+     *
+     * Returns:
+     *  string
+     */
+    this.cleanse = function(id_string){
+
+    	var retstr = id_string;
+
+    	// 'http://foo/bar' -> 'bar'
+    	retstr = retstr.substring(retstr.lastIndexOf("/") + 1, retstr.length);
+
+    	// ':' -> '_'
+    	retstr = retstr.replace(':', '_');
+
+    	// 
+    	if( ! retstr || retstr == '' ){
+    	    throw new Error('cleanse: entered with: ' +
+    			    retstr + ' ; nothing left');
+    	    retstr = id_string;
+    	}
+
+    	return retstr;
+    };
 };
 
 var bme_categorize = function(in_type){
@@ -350,7 +398,8 @@ var bme_type_to_text = function(in_type){
     }else if( t == 'Restriction' ){
 	var thing = in_type['someValuesFrom']['id'];
 	var thing_rel = in_type['onProperty']['id'];
-	text = thing_rel + '(' + thing + ')';
+	//text = thing_rel + '(' + thing + ')';
+	text = '<span alt="' + thing_rel + '" title="' + thing_rel + '">' + thing + '</span>';
     }
 
     return text;
