@@ -142,8 +142,20 @@
   
   <div style="clear: both;"></div> <!-- Clear the float. -->
   
-  <div id="main_exp_table" class="app-table-bounds"></div>
-  
+  <div class="app-table-bounds">
+
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#main_exp_table" data-toggle="tab">Table</a></li>
+      <li><a href="#empty_area" data-toggle="tab">Empty</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div id="main_exp_table" class="tab-pane active"></div>
+      <div id="empty_area" class="tab-pane">EMPTY</div>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- Node modal: invisible until it's not modal dialog. -->
