@@ -423,12 +423,12 @@ var bme_type_to_text = function(in_type){
     if( t == 'Class' ){
 	var i = in_type['id'];
 	var l = in_type['label'];
-	text = l + ' (' + i + ')';
+	text = '<span alt="' + l + '(' + i + ')' + '" title="' + l + ' (' + i + ')' + '">' + l + ' (' + i + ')' + '</span>';
     }else if( t == 'Restriction' ){
 	var thing = in_type['someValuesFrom']['id'];
 	var thing_rel = in_type['onProperty']['id'];
 	//text = thing_rel + '(' + thing + ')';
-	text = '<span alt="' + thing_rel + '" title="' + thing_rel + '">' + thing + '</span>';
+	text = '<span alt="' + thing_rel + '(' + thing + ')' + '" title="' + thing_rel + '(' + thing + ')' + '">' + thing + '</span>';
     }
 
     return text;
