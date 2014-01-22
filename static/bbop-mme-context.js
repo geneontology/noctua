@@ -422,8 +422,8 @@ var bme_type_to_text = function(in_type){
     var t = in_type['type'];
     if( t == 'Class' ){
 	var i = in_type['id'];
-	var l = in_type['label'];
-	text = '<span alt="' + l + '(' + i + ')' + '" title="' + l + ' (' + i + ')' + '">' + l + ' (' + i + ')' + '</span>';
+	var l = in_type['label'] || i;
+	text = '<span alt="' + l + '(' + i + ')' + '" title="' + l + ' (' + i + ')' + '">' + l + '</span>';
     }else if( t == 'Restriction' ){
 	var thing = in_type['someValuesFrom']['id'];
 	var thing_rel = in_type['onProperty']['id'];

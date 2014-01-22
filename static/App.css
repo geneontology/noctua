@@ -299,6 +299,17 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     padding:4px;
 }
 
+.bbop-mme-stack-table {
+    width: 100%;
+}
+
+.bbop-mme-stack-tr {
+}
+
+.bbop-mme-stack-td {
+    border: 1px solid #eeeeee;
+}
+
 .library-links {
     right: 454px;
     height: 19px;
