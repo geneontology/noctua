@@ -33,7 +33,8 @@ var MMEnvServer = function() {
 
     var self = this;
 
-    var m3loc = 'http://localhost:6800'; // default val
+    //var m3loc = 'http://localhost:6800'; // default val
+    var m3loc = 'http://toaster.lbl.gov:6800'; // default val
     if( process.env.M3LOC ){
 	m3loc = process.env.M3LOC;
 	console.log('server location taken from environment: ' + m3loc);
