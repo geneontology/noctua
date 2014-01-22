@@ -272,11 +272,21 @@ var MMEnvInit = function(in_model, in_server_base){
 			 // redraw_node()
 		     }else{
 			 // TODO: Does this work?
-			 // New node to edit core, pull it out, and
-			 // add it to the display.
+			 // New node to edit core, pull it out for
+			 // some work.
 			 ecore.add_node_from_individual(ind);
-			 var recent_node = ecore.get_node_by_individual(ind);
-			 widgets.add_virtual_node(ecore, recent_node,
+			 var dyn_node = ecore.get_node_by_individual(ind);
+
+			 // Initial node layout settings.
+    			 var dyn_x =
+			     100 + jQuery(graph_container_div).scrollLeft();
+    			 var dyn_y =
+			     100 + jQuery(graph_container_div).scrollTop();
+			 dyn_node.x_init(dyn_x);
+			 dyn_node.y_init(dyn_y);
+
+			 // Draw it to screen.
+			 widgets.add_virtual_node(ecore, dyn_node,
 						  aid, graph_div);
 		     }
 		 });
@@ -862,24 +872,22 @@ var MMEnvInit = function(in_model, in_server_base){
     // Assume trivial single-valued arguments.
     function _integrate_trivial_node(bio, mfn, loc){
 
-	// Initial node settings.
-	var dyn_node = new bme_node();
 	// dyn_node.enabled_by(bio);
 	// dyn_node.activity(mfn);
 	// dyn_node.location([loc]); // list type
+	// Initial node settings.
+	var dyn_node = new bme_node();
     	var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
     	var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
 	dyn_node.x_init(dyn_x);
 	dyn_node.y_init(dyn_y);
 	
-	// Add it to the edit model.
-	ecore.add_node(dyn_node);
-	
-    	// Redraw table with new info.
-	widgets.repaint_table();
-	
-    	// Add to graph.
-	widgets.add_enode(ecore, dyn_node, aid, graph_div);
+	// // Add it to the edit model.
+	// ecore.add_node(dyn_node);	
+    	// // Redraw table with new info.
+	// widgets.repaint_table();	
+    	// // Add to graph.
+	// widgets.add_enode(ecore, dyn_node, aid, graph_div);
 
 	// Make node active in display.
 	var dnid = dyn_node.id();
