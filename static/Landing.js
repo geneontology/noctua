@@ -41,6 +41,11 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var modal_blocking_title_id = 'modal_blocking_title';
     var modal_blocking_title_elt = '#' + modal_blocking_title_id;
     //
+    var select_jump_id = 'select_jump';
+    var select_jump_elt = '#' + select_jump_id;
+    var select_jump_button_id = 'select_jump_button';
+    var select_jump_button_elt = '#' + select_jump_button_id;
+    //
     var model_data_button_id = 'model_data_button';
     var model_data_button_elt = '#' + model_data_button_id;
 
@@ -112,9 +117,37 @@ var MMEnvBootstrappingInit = function(in_server_base){
 
     manager.register('information', 'foo',
 		     function(resp, man){
-			 alert('Meta-information not yet handled (' +
-			       resp.message_type() + '): ' +
-			       resp.message() );
+			 
+			 var data = resp.data();
+			 if( data['models_all'] ){
+
+			     // Clear interface.
+			     jQuery(select_jump_elt).empty();
+
+			     // Insert model IDs into interface.
+			     var model_ids = data['models_all'];
+			     var rep_cache = [];
+			     each(model_ids,
+				  function(mid){
+				      rep_cache.push('<option>');
+				      rep_cache.push(mid);
+				      rep_cache.push('</option>');
+				  });
+			     var rep_str = rep_cache.join('');
+			     jQuery(select_jump_elt).append(rep_str);
+			     
+			     // Make interface jump on click.
+			     jQuery(select_jump_button_elt).click(
+				 function(evt){
+				     var id = jQuery(select_jump_elt).val();
+				     //alert('val: '+ id);
+				     window.location.replace("/seed/model/"+id);
+				 });
+			 }else{
+			     alert('Meta-information \not yet handled (' +
+				   resp.message_type() + '): ' +
+				   resp.message() );			     
+			 }
 		     });
 
     manager.register('inconsistent', 'foo',
@@ -203,6 +236,12 @@ var MMEnvBootstrappingInit = function(in_server_base){
     // 	    }
     // 	}
     // );
+
+    ///
+    /// Get info from server.
+    ///
+
+    manager.get_model_ids();
 };
 
 // Start the day the jsPlumb way.
