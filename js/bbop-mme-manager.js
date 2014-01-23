@@ -17,6 +17,7 @@ var bbop_mme_manager = function(server_base){
 			      'success',
 			      'warning',
 			      'error', // message, mtype, commentary
+			      'information',
 			      'inconsistent',
 			      'merge'
 			     ]);
@@ -45,6 +46,8 @@ var bbop_mme_manager = function(server_base){
 	    anchor.apply_callbacks('warning', [resp, anchor]);
 	}else if( m == 'error' ){
 	    anchor.apply_callbacks('error', [resp, anchor]);
+	}else if( m == 'information' ){
+	    anchor.apply_callbacks('information', [resp, anchor]);
 	}else if( m == 'inconsistent' ){
 	    anchor.apply_callbacks('inconsistent', [resp, anchor]);
 	}else if( m == 'merge' ){
@@ -94,6 +97,16 @@ var bbop_mme_manager = function(server_base){
 	var args = {
 	    'classId': class_id,
 	    'db': db_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
+    // 
+    // Likely triggers "information".
+    anchor.get_model_ids = function(){
+	var url = server_base + '/m3GetAllModelIds';
+	var args = {
 	};
 	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');

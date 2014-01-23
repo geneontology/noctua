@@ -110,6 +110,13 @@ var MMEnvBootstrappingInit = function(in_server_base){
 			       ex_msg);
 		     }, 10);
 
+    manager.register('information', 'foo',
+		     function(resp, man){
+			 alert('Meta-information not yet handled (' +
+			       resp.message_type() + '): ' +
+			       resp.message() );
+		     });
+
     manager.register('inconsistent', 'foo',
 		     function(resp, man){
 			 _generated_model(resp, man);
