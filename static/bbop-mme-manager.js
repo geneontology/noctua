@@ -61,6 +61,7 @@ var bbop_mme_manager = function(server_base){
     ///
     /// Actual mechanism.
     ///
+
     // http://localhost:6800/m3GetModel?modelId=gomodel:wb-GO_0043053&json.wrf=jQuery191016787577188636982_1389946235386&_=1389946235387
     // Likely triggers "inconsistent".
     anchor.get_model = function(model_id){
@@ -81,6 +82,18 @@ var bbop_mme_manager = function(server_base){
 	    'individualId': source_id,
 	    'fillerId': target_id,
 	    'propertyId': rel_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
+    // 
+    // Likely triggers "inconsistent".
+    anchor.generate_model = function(class_id, db_id){
+	var url = server_base + '/m3GenerateMolecularModel';
+	var args = {
+	    'classId': class_id,
+	    'db': db_id
 	};
 	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');
