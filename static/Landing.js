@@ -26,9 +26,9 @@ var MMEnvBootstrappingInit = function(in_server_base){
 
     // Contact point's for Chris's wizard.
     var auto_wizard_term_id = 'auto_wizard_term';
-    var auto_wizard_term_elt = '#auto_wizard_term';
+    var auto_wizard_term_elt = '#' + auto_wizard_term_id;
     var auto_wizard_spdb_id = 'auto_wizard_spdb';
-    var auto_wizard_spdb_elt = '#auto_wizard_spdb';
+    var auto_wizard_spdb_elt = '#' + auto_wizard_spdb_id;
     var auto_wizard_button_generate_id = 'auto_wizard_button_generate';
     var auto_wizard_button_generate_elt = '#' + auto_wizard_button_generate_id;
     var auto_wizard_button_jump_id = 'auto_wizard_button_jump';
@@ -40,6 +40,9 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var modal_blocking_body_elt = '#' + modal_blocking_body_id;
     var modal_blocking_title_id = 'modal_blocking_title';
     var modal_blocking_title_elt = '#' + modal_blocking_title_id;
+    //
+    var model_data_button_id = 'model_data_button';
+    var model_data_button_elt = '#' + model_data_button_id;
 
     ///
     /// Helpers.
@@ -169,6 +172,14 @@ var MMEnvBootstrappingInit = function(in_server_base){
     	    }
     	}
     );
+
+    // 
+    jQuery(model_data_button_elt).click(
+    	function(evt){
+	    evt.stopPropagation();
+	    evt.preventDefault();
+	    alert('not yet implemented');
+	});
 
     // jQuery(auto_wizard_button_jump_elt).click(
     // 	function(){
