@@ -35,6 +35,11 @@
     height: 100%;
 }
 
+/* When app is maximized, the navbar should behave as desktop apps. */
+.bbop-bs3-override-nav-scale {
+    max-width: 100%;
+}
+
 .app-graph {
     position: relative;
     /* Playing with draggable "canvas". */
