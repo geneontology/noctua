@@ -1054,10 +1054,12 @@ jsPlumb.ready(function(){
 				    global_model ){
 				  MMEnvInit(global_model, global_server_base);
 			  }else{
-			      throw new Error('nothing loadable found');
+			      alert('nothing loadable found');
+			      //throw new Error('nothing loadable found');
 			  }
 		      }else{
-			  throw new Error('environment not ready');
+			  alert('environment not ready');
+			  //throw new Error('environment not ready');
 		      }
 	      });
 
