@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140123";
+bbop.version.release = "20140124";
 /*
  * Package: logger.js
  * 
@@ -6742,6 +6742,7 @@ bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
     }
 
     // DEBUG relation matrix:
+    // BUG: subject _vector occasionally undefined
     for( var m = 0; m <= object_vector.length -1; m++ ){
 	ll("obj: <<o: " + object_vector[m].id() + ">>"); }
     for( var n = 0; n <= subject_vector.length -1; n++ ){
@@ -6886,19 +6887,29 @@ bbop.layout.sugiyama.render = function(){
 	// BUG: Need to catch num_partitions < 2 Create an instatiation of
 	// all of the matrix representations of the partitions.
 	for( var i = 0; i < partitions.number_of_edge_partitions(); i++ ){
-	    edge_partitions.push(partitions.get_edge_partition(i));
+	    var epart = partitions.get_edge_partition(i);
+	    if( ! vpart ){
+		throw new Error('bad edge partition at level: ' + i);
+	    }else{
+		edge_partitions.push(epart);
+	    }
 	}
 
 	//
 	for( var i = 0; i < partitions.number_of_vertex_partitions(); i++ ){
-	    vertex_partitions.push(partitions.get_vertex_partition(i));
+	    var vpart = partitions.get_vertex_partition(i);
+	    if( ! vpart ){
+		throw new Error('bad vertex partition at level: ' + i);
+	    }else{
+		vertex_partitions.push(vpart);
+	    }
 	}  
 	
 	//
 	for( var i = 0; i < edge_partitions.length; i++ ){
 	    var m = new bbop.layout.sugiyama.bmatrix(vertex_partitions[i],
-						    vertex_partitions[i +1],
-						    edge_partitions[i]);
+						     vertex_partitions[i +1],
+						     edge_partitions[i]);
 	    
 	    ll('Matrix: ' + i);
 	    m.dump();
