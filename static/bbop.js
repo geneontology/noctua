@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140117";
+bbop.version.release = "20140123";
 /*
  * Package: logger.js
  * 
@@ -6439,58 +6439,181 @@ bbop.layout.sugiyama.partitioner = function(graph){
 	return logical_paths;
     };
 
-    // Define the partitioner. Recursively walk the graph.
+    // // Define the partitioner. Recursively walk the graph. BFS.
+    // //function recursivePartitioner(graph, node, relation, level){
+    // function recursivePartitioner(graph, node, level){
+	
+    // 	var curr_level = level;
+    // 	var next_level = level +1;
+
+    // 	ll("Saw " + node.id() + " at level " + level + "!");
+
+    // 	// Have we seen it before or is it new?
+    // 	var was_seen = false;
+    // 	if( ! vertex_set[ node.id() ] ){
+
+    // 	    // Create new vertex and add to set.
+    // 	    var new_vertex = new bbop.layout.sugiyama.simple_vertex(node.id());
+    // 	    new_vertex.level = level;
+    // 	    vertex_set[ new_vertex.id() ] = new_vertex;
+
+    // 	    // Check the node in to the 'seen' references.
+    // 	    first_seen_reference[ new_vertex.id() ] = level;
+    // 	    last_seen_reference[ new_vertex.id() ] = level;
+
+    // 	}else{
+
+    // 	    if( first_seen_reference[ node.id() ] > level ){
+    // 		first_seen_reference[ node.id() ] = level;
+    // 	    }
+    // 	    if( last_seen_reference[ node.id() ] < level ){
+    // 		last_seen_reference[ node.id() ] = level;
+    // 	    }
+
+    // 	    was_seen = true;
+    // 	}
+	
+    // 	// Get all the child nodes and down we go!
+    // 	//var child_nodes = graph.getExtantChildren(node.id(), relation);
+    // 	var child_nodes = graph.get_child_nodes(node.id());
+    // 	// TODO: Better way?
+    // 	//var child_nodes = graph.getChildren(node.id(), relation);
+    // 	for( var i = 0; i < child_nodes.length; i++ ){
+    // 	    // Add edge and descend.
+    // 	    var new_edge =
+    // 		new bbop.layout.sugiyama.simple_edge(child_nodes[i].id(),
+    // 						    node.id());
+    // 	    edge_set[ new_edge.id() ] = new_edge;
+
+    // 	    // Do not recur on seen nodes.
+    // 	    if( ! was_seen ){
+    // 		//recursivePartitioner(graph, child_nodes[i], relation, level +1);
+    // 		recursivePartitioner(graph, child_nodes[i], level +1);
+    // 	    }
+    // 	}
+    // }
+    
+    // TODO/BUG: make this less hyper-dumb.
+    function _cycle_p(node, stack){
+	var ret = false;
+
+	var id = node.id();
+	each(stack,
+	     function(item){
+		 if( item == id ){
+		     ret = true;
+		 }
+	     });
+
+	return ret;
+    }
+
+    // Add a new node to the global variables.
+    function _new_node_at(bnode, level){
+
+	ll("adding " + bnode.id() + " at level " + level + "!");
+
+	// Create new vertex and add to set.
+	var new_vertex = new bbop.layout.sugiyama.simple_vertex(bnode.id());
+	new_vertex.level = level;
+	vertex_set[ new_vertex.id() ] = new_vertex;
+	
+	// Check the node in to the 'seen' references.
+	first_seen_reference[ new_vertex.id() ] = level;
+	last_seen_reference[ new_vertex.id() ] = level;		 
+    }
+
+    // Define the partitioner. Recursively walk the graph. BFS.
     //function recursivePartitioner(graph, node, relation, level){
-    function recursivePartitioner(graph, node, level){
+    function recursivePartitioner(graph, node, call_stack){
 	
-	ll("Saw " + node.id() + " at level " + level + "!");
+	var curr_level = call_stack.length -1;
+	var next_level = curr_level +1;
 
-	// Have we seen it before or is it new?
-	if( ! vertex_set[ node.id() ] ){
+	ll("recur on " + node.id() + " at level " + curr_level);
 
-	    // Create new vertex and add to set.
-	    var new_vertex = new bbop.layout.sugiyama.simple_vertex(node.id());
-	    new_vertex.level = level;
-	    vertex_set[ new_vertex.id() ] = new_vertex;
-
-	    // Check the node in to the 'seen' references.
-	    first_seen_reference[ new_vertex.id() ] = level;
-	    last_seen_reference[ new_vertex.id() ] = level;
-
-	}else{
-
-	    if( first_seen_reference[ node.id() ] > level ){
-		first_seen_reference[ node.id() ] = level;
-	    }
-	    if( last_seen_reference[ node.id() ] < level ){
-		last_seen_reference[ node.id() ] = level;
-	    }
-	}
-	
-	// Get all the child nodes and down we go!
-	//var child_nodes = graph.getExtantChildren(node.id(), relation);
+	// Get children and see where there are.
+	//var child_nodes = graph.get_child_nodes(node.id(), relation);
 	var child_nodes = graph.get_child_nodes(node.id());
-	// TODO: Better way?
-	//var child_nodes = graph.getChildren(node.id(), relation);
+	ll(node.id() + " has " + (child_nodes.length || 'no' ) + ' child(ren)');
 	for( var i = 0; i < child_nodes.length; i++ ){
-	    // Add edge and descend.
-	    var new_edge =
-		new bbop.layout.sugiyama.simple_edge(child_nodes[i].id(),
-						    node.id());
-	    edge_set[ new_edge.id() ] = new_edge;
-	    //recursivePartitioner(graph, child_nodes[i], relation, level +1);
-	    recursivePartitioner(graph, child_nodes[i], level +1);
+	    var cnode = child_nodes[i];
+
+	    ll("looking at " + cnode.id());
+
+	    if( _cycle_p(cnode, call_stack) ){
+		ll('no update to ' + cnode.id() + ': cycle');
+	    }else{
+
+		// Add edges--safe since they're definition-based and will
+		// clobber if they're already in.
+		var new_edge =
+		    new bbop.layout.sugiyama.simple_edge(cnode.id(), node.id());
+		edge_set[ new_edge.id() ] = new_edge;
+
+		// Nodes we have to be a little more careful with since
+		// they're what we're using for traversal.
+		if( ! vertex_set[ cnode.id() ] ){
+		
+		    _new_node_at(cnode, next_level);
+		    
+		    // // Create new vertex and add to set.
+		    // var new_vertex =
+		    //     new bbop.layout.sugiyama.simple_vertex(cnode.id());
+		    // new_vertex.level = next_level;
+		    // vertex_set[ new_vertex.id() ] = new_vertex;
+		    
+		    // // Check the node in to the 'seen' references.
+		    // first_seen_reference[ new_vertex.id() ] = next_level;
+		    // last_seen_reference[ new_vertex.id() ] = next_level;
+		    
+		    // Since it is a new node, we traverse it.
+		    ll('cs (a): ' + call_stack);
+		    var new_cs = bbop.core.clone(call_stack);
+		    ll('cs (b): ' + new_cs);
+		    new_cs.push(cnode.id());
+		    ll('cs (c): ' + new_cs);
+		    recursivePartitioner(graph, cnode, new_cs);
+		    
+		}else{
+		    
+		    ll('update ' + cnode.id() + ' level to ' + next_level);
+		    
+		    // Otherwise, just update the levels that we've seen
+		    // the child at--do not descend.
+		    if( first_seen_reference[ cnode.id() ] > next_level ){
+			first_seen_reference[ cnode.id() ] = next_level;
+		    }
+		    if( last_seen_reference[ cnode.id() ] < next_level ){
+			last_seen_reference[ cnode.id() ] = next_level;
+		    }
+		}
+	    }
 	}
     }
     
-    // Run the partitioner.
-    //var roots = graph.getRoots(rel);
-    //var roots = graph.getRootNodes(rel);
+
+    // Run the partitioner after getting the root values (or whatever)
+    // bootstrapped in.
+    //var roots = graph.get_root_nodes(rel);
     var roots = graph.get_root_nodes();
-    for( var i = 0; i < roots.length; i++ ){
-	last_seen_reference[ roots[i].id() ] = 0;
-	//recursivePartitioner(graph, roots[i], 'is_a', 0);
-	recursivePartitioner(graph, roots[i], 0);
+    if( roots.length > 0 ){
+	//partitionerBootstrap(roots);
+	for( var i = 0; i < roots.length; i++ ){
+	    _new_node_at(roots[i], 0);
+	    recursivePartitioner(graph, roots[i], [roots[i].id()]);
+	}
+    }else{
+    	// If there is no root (think of a "top-level" cycle),
+    	// a node should be picked randomly.
+    	// TODO: Test this.
+    	var a_node = graph.all_nodes()[0] || null;
+    	if( ! a_node){
+    	    throw new Error('apparently the graph is empty--stop it!');
+    	}else{
+	    _new_node_at(a_node, 0);
+    	    recursivePartitioner(graph, a_node, [a_node.id()]);
+    	}
     }
 
     // Now we have a listing of the first and last level that a node
