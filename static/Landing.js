@@ -179,27 +179,28 @@ var MMEnvBootstrappingInit = function(in_server_base){
     auto_wizard_term.add_query_filter('document_category', 'ontology_class');
     auto_wizard_term.set_personality('ontology');
 
-    // species database
-    //var auto_wizard_spdb_val = null;
-    var auto_wizard_spdb_args = {
-    	'label_template': '{{assigned_by}}',
-    	'value_template': '{{assigned_by}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //auto_wizard_spdb_val = doc['assigned_by'];
-    	}
-    };
-    var auto_wizard_spdb =
-	new bbop.widget.search_box(gserv, gconf,
-				   'auto_wizard_spdb', auto_wizard_spdb_args);
-    auto_wizard_spdb.add_query_filter('document_category', 'annotation');
-    auto_wizard_spdb.set_personality('annotation');
+    // // species database
+    // //var auto_wizard_spdb_val = null;
+    // var auto_wizard_spdb_args = {
+    // 	'label_template': '{{assigned_by}}',
+    // 	'value_template': '{{assigned_by}}',
+    // 	'list_select_callback':
+    // 	function(doc){
+    // 	    //auto_wizard_spdb_val = doc['assigned_by'];
+    // 	}
+    // };
+    // var auto_wizard_spdb =
+    // 	new bbop.widget.search_box(gserv, gconf,
+    // 				   'auto_wizard_spdb', auto_wizard_spdb_args);
+    // auto_wizard_spdb.add_query_filter('document_category', 'annotation');
+    // auto_wizard_spdb.set_personality('annotation');
 
     // ...
     jQuery(auto_wizard_button_generate_elt).click(
     	function(){
     	    var term = auto_wizard_term.content();
-    	    var spdb = auto_wizard_spdb.content();
+    	    //var spdb = auto_wizard_spdb.content();
+    	    var spdb = jQuery(auto_wizard_spdb_elt).val();
 
     	    if( ! term || term == '' || ! spdb || spdb == '' ){
     		alert('necessary field empty');

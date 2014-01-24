@@ -65,6 +65,8 @@ var MMEnvInit = function(in_model, in_server_base){
     var zret_btn_elt = '#' + zret_btn_id;
     var zout_btn_id = 'zoomout';
     var zout_btn_elt = '#' + zout_btn_id;
+    var export_btn_id = 'action_export';
+    var export_btn_elt = '#' + export_btn_id;
     var save_btn_id = 'action_save';
     var save_btn_elt = '#' + save_btn_id;
     var help_btn_id = 'action_help';
@@ -982,13 +984,20 @@ var MMEnvInit = function(in_model, in_server_base){
     	    _set_zoom(nz);
     	});
 
-    // Save button.
-    jQuery(save_btn_elt).click(
+    // Export button.
+    jQuery(export_btn_elt).click(
     	function(){
 	    // Change the form to add the id.
 	    jQuery(action_form_data_elt).val(model_id);
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();
+    	});
+
+    // Save button.
+    jQuery(save_btn_elt).click(
+    	function(){
+	    // Run it off in a new tab.
+	    manager.store_model(model_id);
     	});
 
     // Help button.
