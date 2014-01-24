@@ -6888,21 +6888,21 @@ bbop.layout.sugiyama.render = function(){
 	// all of the matrix representations of the partitions.
 	for( var i = 0; i < partitions.number_of_edge_partitions(); i++ ){
 	    var epart = partitions.get_edge_partition(i);
-	    if( ! vpart ){
-		throw new Error('bad edge partition at level: ' + i);
-	    }else{
+	    // if( ! part ){
+	    // 	throw new Error('bad edge partition at level: ' + i);
+	    // }else{
 		edge_partitions.push(epart);
-	    }
+	    // }
 	}
 
 	//
 	for( var i = 0; i < partitions.number_of_vertex_partitions(); i++ ){
 	    var vpart = partitions.get_vertex_partition(i);
-	    if( ! vpart ){
-		throw new Error('bad vertex partition at level: ' + i);
-	    }else{
+	    // if( ! vpart ){
+	    // 	throw new Error('bad vertex partition at level: ' + i);
+	    // }else{
 		vertex_partitions.push(vpart);
-	    }
+	    // }
 	}  
 	
 	//
