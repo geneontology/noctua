@@ -297,30 +297,37 @@ var MMEnvInit = function(in_model, in_server_base){
 		     }
 		 });
 
-	    // Now look at individuals/edges for purging and
-	    // reinitiation.
+	    // Now look at individuals/edges (by individual) for
+	    // purging and reinitiation.
 	    each(individuals,
 		 function(ind){
 		     var source_node = ecore.get_node_by_individual(ind);
 		     
-		     var src_edges =
-			 ecore.get_edges_by_source(source_node.id());
+		     var snid = source_node.id();
+		     var src_edges = ecore.get_edges_by_source(snid);
 		     
-		     // TODO: Does this work?
-		     // Delete all edges/connectors for said node.
+		     // Delete all edges/connectors for said node in
+		     // model.
 		     each(src_edges,
 			  function(src_edge){
-			      // TODO
-			      //instance.detach(info.connection);
-			      ecore.remove_edge(src_edge.id());
+			      ecore.remove_edge(snid);
+			  });
+
+		     // Now delete all edges for the node in the UI.
+		     var snid_elt = ecore.get_node_elt_id(snid);
+		     var src_conns =
+			 instance.getConnections({'source': snid_elt});
+		     each(src_conns,
+			  function(src_conn){
+			      instance.detach(src_conn);
 			  });
 		     
-		     // TODO: Does this work?
-		     // Add all edges.
+
+		     // Add all edges from the new individuals to the
+		     // model.
 		     var redges = ecore.add_edges_from_individual(ind, aid);
 
-		     // TODO: Does this work?
-		     // Redraw display
+		     // Now add them to the display.
 		     each(redges,
 			  function(redge){
 			      _connect_with_edge(redge);
@@ -328,7 +335,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		 });
 	}
 
-	alert('finished _merge_response');
+	//alert('finished _merge_response');
     }
     
     ///
