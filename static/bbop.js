@@ -6493,7 +6493,9 @@ bbop.layout.sugiyama.partitioner = function(graph){
     // 	}
     // }
     
-    // TODO/BUG: make this less hyper-dumb.
+    // Detect a cycle by seeing if the ID in question appears in the
+    // search history stack.
+    // TODO/BUG: make this less hyper-dumb and/or slow.
     function _cycle_p(node, stack){
 	var ret = false;
 
@@ -6890,7 +6892,7 @@ bbop.layout.sugiyama.render = function(){
 	for( var i = 0; i < partitions.number_of_edge_partitions(); i++ ){
 	    var epart = partitions.get_edge_partition(i);
 	    if( ! epart ){
-	    	throw new Error('bad edge partition at level: ' + i);
+	    	throw new Error('null edge partition at level: ' + i);
 	    }else{
 		edge_partitions.push(epart);
 	    }
@@ -6900,7 +6902,7 @@ bbop.layout.sugiyama.render = function(){
 	for( var i = 0; i < partitions.number_of_vertex_partitions(); i++ ){
 	    var vpart = partitions.get_vertex_partition(i);
 	    if( ! vpart ){
-	    	throw new Error('bad vertex partition at level: ' + i);
+	    	throw new Error('null vertex partition at level: ' + i);
 	    }else{
 		vertex_partitions.push(vpart);
 	    }
@@ -19610,6 +19612,10 @@ renderer.prototype._do_layout = function() {
 // call this when the width of the tree's parent element changes
 renderer.prototype.width_changed = function(parent_width) {
     var leaves = this.leaves();
+    var avail_width = ( parent_width 
+                        - (this.config.node_size / 2)
+                        - (this.config.parent_padding * 2)
+                        - this.config.leaf_margin );
 
     var min_width = Number.MAX_VALUE;
     for (var li = 0; li < leaves.length; li++) {
@@ -19622,14 +19628,10 @@ renderer.prototype.width_changed = function(parent_width) {
         // all the potential widths we calculate here.
         var potential_width =
             // dividing px by 100 because px is in percentage units
-            (parent_width - phynode.width()) / (phynode.px / 100)
+            (avail_width - phynode.width()) / (phynode.px / 100)
         min_width = Math.min(min_width, potential_width);
     }
-    var new_width = Math.max(0, ( min_width
-				  - (this.config.node_size / 2)
-				  - (this.config.parent_padding * 2)
-                                  - this.config.leaf_margin ) );
-    this.container.style.width = new_width + "px";
+    this.container.style.width = Math.max(0, min_width | 0) + "px";
 };
 
 // hides the subtree under the given node_id; for that node,
@@ -20155,13 +20157,19 @@ renderer.prototype.show_pgraph = function(pgraph) {
     this.parent = ( ( "string" == typeof this.parent )
 		    ? document.getElementById(this.parent)
 		    : this.parent );
+
     jQuery(this.parent).empty();
 
-    var tree_container = document.createElement("div");
-    tree_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; left: 0px;";
+    var parentPos = getStyle(this.parent, "position");
+    if (! (("absolute" == parentPos) || ("relative" == parentPos))) {
+        this.parent.style.position = "relative";
+    }
+
+    this.tree_container = document.createElement("div");
+    this.tree_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; left: 0px;";
     
-    var mat_container = document.createElement("div");
-    mat_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; background-color: #ddd;";
+    this.mat_container = document.createElement("div");
+    this.mat_container.style.cssText = "position: absolute; top: 0px; bottom: 100%;";
 
     var all_go_terms = {};
     var go_term_list = [];
@@ -20191,14 +20199,14 @@ renderer.prototype.show_pgraph = function(pgraph) {
 
     var mat_width = coldescs.length * this.config.mat_cell_width;
     var tree_width = 500;
-    tree_container.style.width = tree_width + "px";
-    mat_container.style.width = mat_width + "px";
-    mat_container.style.left = tree_width + "px";
-    this.parent.style.width = (tree_width + mat_width) + "px";
+    this.tree_container.style.width = tree_width + "px";
+    this.mat_container.style.width = mat_width + "px";
+    this.mat_container.style.left = tree_width + "px";
+    //this.parent.style.width = (tree_width + mat_width) + "px";
 
-    this.parent.appendChild(tree_container);
-    this.parent.appendChild(mat_container);
-    var tree_renderer = new bbop.widget.phylo_tree.renderer(tree_container, {
+    this.parent.appendChild(this.tree_container);
+    this.parent.appendChild(this.mat_container);
+    var tree_renderer = new bbop.widget.phylo_tree.renderer(this.tree_container, {
         box_height: this.config.row_height,
         box_spacing: this.config.row_spacing,
         leaf_font: this.config.font,
@@ -20322,16 +20330,15 @@ renderer.prototype.show_pgraph = function(pgraph) {
     }
 
     function cell_renderer(cell, row, col) {
-        var cell_bg = "#fff";
         var node_go = node_go_annots[row];
-        if (node_go !== undefined) {
-            if (col in node_go) {
-                cell_bg = "#555";
-            }
+        if ((node_go !== undefined) && (col in node_go)) {
+            var cell = document.createElement("div");
+            cell.style.backgroundColor = "#555";
+            cell.title =
+                node_label(node_id_map[row]) + " - " + all_go_terms[col].name;
+            return cell;
         }
-        cell.style.backgroundColor = cell_bg;
-        cell.title =
-            node_label(node_id_map[row]) + " - " + all_go_terms[col].name;
+        return null;
     }
     
     var mat_config = {
@@ -20342,7 +20349,7 @@ renderer.prototype.show_pgraph = function(pgraph) {
         transition_time: this.config.transition_time
     };
     var mat_renderer =
-        new bbop.widget.matrix.renderer(mat_container, node_id_list,
+        new bbop.widget.matrix.renderer(this.mat_container, node_id_list,
                                         coldescs, cell_renderer, mat_config);
 
     var leaf_id_list = tree_renderer.leaves().map(
@@ -20415,6 +20422,15 @@ renderer.prototype.render_tree = function() {
     );
 
 };
+
+function getStyle(el, styleProp) {
+    if (el.currentStyle) {
+        var y = el.currentStyle[styleProp];
+    } else if (window.getComputedStyle) {
+        var y = window.getComputedStyle(el,null).getPropertyValue(styleProp);
+    }
+    return y;
+}
 
 })();
 if ( typeof bbop == "undefined" ){ var bbop = {}; }
@@ -20495,6 +20511,59 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.rowindex_map = Array(row_descriptors.length);
     //colindex_map: displayed col index -> matrix col index
     this.colindex_map = Array(col_descriptors.length);
+    this.grid_vert = [];
+    this.grid_horiz = [];
+
+    var vert_class = css_prefix + "_vert";
+    //create vertical grid lines
+    for (var i = 0; i < col_descriptors.length; i++) {
+        var gridline = document.createElement("div");
+        gridline.className = vert_class;
+        gridline.style.top = "0px";
+        this.parent.appendChild(gridline);
+        this.grid_vert.push(gridline);
+    }
+    this.first_vert_gridline = document.createElement("div");
+    this.first_vert_gridline.className = vert_class;
+    this.first_vert_gridline.style.cssText = [
+        "top: 0px;", "width: 0px;", "left: 0px;",
+        "margin-left: 0px;", "margin-right: 0px;",
+        "padding-left: 0px;", "padding-right: 0px;"
+    ].join("\n");
+    this.parent.appendChild(this.first_vert_gridline);
+
+    var horiz_class = css_prefix + "_horiz";
+    //create horizontal grid lines
+    for (var i = 0; i < row_descriptors.length; i++) {
+        var gridline = document.createElement("div");
+        gridline.className = horiz_class;
+        gridline.style.left = "0px";
+        gridline.style.top = ( (this.config.show_headers ?
+                                this.config.header_height : 0)
+                               + (i * this.config.cell_height) ) + "px";
+        this.parent.appendChild(gridline);
+        this.grid_horiz.push(gridline);
+    }
+    this.first_horiz_gridline = document.createElement("div");
+    this.first_horiz_gridline.className = horiz_class;
+    this.first_horiz_gridline.style.cssText = [
+        "top: 0px;", "height: 0px;", "left: 0px;",
+        "margin-top: 0px;", "margin-bottom: 0px;",
+        "padding-top: 0px;", "padding-bottom: 0px;"
+    ].join("\n");
+    this.parent.appendChild(this.first_horiz_gridline);
+    if (this.config.show_headers) {
+        this.header_gridline = document.createElement("div");
+        this.header_gridline.className = horiz_class;
+        this.header_gridline.style.cssText = [
+            "top: " + ( this.config.header_height 
+                        - this.config.cell_border ) + "px;",
+            "height: 0px;", "left: 0px;",
+            //"margin-bottom: 0px;",
+            "padding-top: 0px;", "padding-bottom: 0px;"
+        ].join("\n");
+        this.parent.appendChild(this.header_gridline);
+    }
 
     for (var i = 0; i < col_descriptors.length; i++) {
         if (this.config.show_headers) {
@@ -20510,17 +20579,20 @@ function renderer(parent, row_descriptors, col_descriptors,
         this.colindex_map[i] = i;
         this.coldesc_map[col_descriptors[i]] = i;
     }
+
     for( var ri = 0; ri < row_descriptors.length; ri++ ){
         var row = [];
 
         for (var ci = 0; ci < col_descriptors.length; ci++) {
-            var cell = document.createElement("div");
-            cell.className = cell_class;
-            cell_renderer(cell, row_descriptors[ri], col_descriptors[ci]);
-            cell.style.top = ( (this.config.show_headers ?
-                                this.config.header_height : 0)
-                               + (ri * this.config.cell_height) ) + "px";
-            this.parent.appendChild(cell);
+            var cell = cell_renderer(cell, row_descriptors[ri],
+                                     col_descriptors[ci]);
+            if (null != cell) {
+                cell.className += " " + cell_class;
+                cell.style.top = ( (this.config.show_headers ?
+                                    this.config.header_height : 0)
+                                   + (ri * this.config.cell_height) ) + "px";
+                this.parent.appendChild(cell);
+            }
             row.push(cell);
         }
 
@@ -20529,14 +20601,40 @@ function renderer(parent, row_descriptors, col_descriptors,
         this.rowdesc_map[row_descriptors[ri]] = ri;
     }
 
+    this.vert_style = [
+        "  position: absolute;",
+        "  border-right: " + this.config.cell_border + "px solid black;",
+        "  padding: " + this.config.cell_padding + "px;",
+        "  margin-left: " + this.config.cell_border + "px;",
+        "  overflow: hidden;",
+        "  z-index: 0;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
+    ].join("\n");
+
+    this.horiz_style = [
+        "  position: absolute;",
+        "  border-bottom: " + this.config.cell_border + "px solid black;",
+        "  padding: " + this.config.cell_padding + "px;",
+        "  height: " + (this.config.cell_height
+                        - this.offset_size_delta) + "px;",
+        "  margin: 0px;",
+        "  margin-top: " + this.config.cell_border + "px;",
+        "  z-index: 1;",
+        "  overflow: hidden;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
+    ].join("\n");
+
     this.cell_style = [
         "  position: absolute;",
         "  white-space: nowrap;",
         "  height: " + (this.config.cell_height
                         - this.offset_size_delta) + "px;",
-        "  border: " + this.config.cell_border + "px solid black;",
+        "  margin: " + this.config.cell_border + "px;",
         "  padding: " + this.config.cell_padding + "px;",
-        "  margin: 0px;",
+        //"  margin: 0px;",
+        "  z-index: 10;",
         "  font: " + cell_font_size + "px" + " " + this.config.cell_font + ";",
         "  line-height: 0.7em;",
         "  overflow: hidden;",
@@ -20549,7 +20647,8 @@ function renderer(parent, row_descriptors, col_descriptors,
         "  white-space: nowrap;",
         "  height: " + (this.config.header_height
                         - this.offset_size_delta) + "px;",
-        "  border: " + this.config.cell_border + "px solid black;",
+        //"  border: " + this.config.cell_border + "px solid black;",
+        "  margin: " + this.config.cell_border + "px;",
         "  padding: " + this.config.cell_padding + "px;",
         "  font: " + header_font_size + "px" + " "
             + this.config.header_font + ";",
@@ -20573,11 +20672,17 @@ function renderer(parent, row_descriptors, col_descriptors,
         "}",
         "div." + cell_class + " { ",
         this.cell_style,
+        "}",
+        "div." + vert_class + " { ",
+        this.vert_style,
+        "}",
+        "div." + horiz_class + " { ",
+        this.horiz_style,
         "}"
     ].join("\n"));
 
     this.update_height();
-    this.width = this.update_widths() + this.offset_size_delta;
+    this.width = this.update_widths();// + this.offset_size_delta;
     this.parent.style.width = this.width + this.config.cell_border + "px";
 
     this.set_styles([
@@ -20588,6 +20693,14 @@ function renderer(parent, row_descriptors, col_descriptors,
         "div." + cell_class + " { ",
         this.cell_style,
         this.transition_style,
+        "}",
+        "div." + vert_class + " { ",
+        this.vert_style,
+        this.transition_style,
+        "}",
+        "div." + horiz_class + " { ",
+        this.horiz_style,
+        this.transition_style,
         "}"
     ].join("\n"));
 }
@@ -20595,7 +20708,13 @@ function renderer(parent, row_descriptors, col_descriptors,
 renderer.prototype.update_height = function() {
     this.height = ( (this.config.show_headers ? this.config.header_height : 0)
                     + (this.config.cell_height * this.rowindex_map.length) );
-    this.parent.style.height = this.height + this.config.cell_border + "px";
+    var grid_height = ( this.height - this.offset_size_delta
+                        + (2 * this.config.cell_border) ) + "px";
+    for (var ci = 0; ci < this.colindex_map.length; ci++) {
+        this.grid_vert[this.colindex_map[ci]].style.height = grid_height;
+    }
+    this.first_vert_gridline.style.height = grid_height;
+    this.parent.style.height = (this.height + this.config.cell_border) + "px";
 };
 
 renderer.prototype.set_styles = function(css_string) {
@@ -20623,7 +20742,7 @@ renderer.prototype.update_widths = function() {
         for (var row = 0; row < matrix.length; row++) {
             for (var col = 0; col < matrix[row].length; col++) {
                 var cell = matrix[row][col];
-                if (cell !== undefined) {
+                if (cell) {
                     cell.style.width = "";
                     if (! (col in widths)) widths[col] = 0;
                     widths[col] = Math.max(widths[col], cell.offsetWidth);
@@ -20637,8 +20756,11 @@ renderer.prototype.update_widths = function() {
         var left = 0;
         for (var col = 0; col < colindex_map.length; col++) {
             var cell = row[colindex_map[col]];
-            cell.style.width = (widths[colindex_map[col]] - offset_delta) + "px";
-            cell.style.left = left + "px";
+            if (cell) {
+                cell.style.width =
+                    (widths[colindex_map[col]] - offset_delta) + "px";
+                cell.style.left = left + "px";
+            }
             left += widths[col];
         }
     }
@@ -20670,9 +20792,21 @@ renderer.prototype.update_widths = function() {
         set_widths(this.matrix[ri], this.colindex_map, widths,
                    this.offset_size_delta);
     }
+    set_widths(this.grid_vert, this.colindex_map, widths,
+               this.offset_size_delta);
 
+    var grid_width = ( totalWidth - this.offset_size_delta
+                       + (2 * this.config.cell_border) ) + "px";
+    for (var ri = 0; ri < this.grid_horiz.length; ri++) {
+        this.grid_horiz[ri].style.width = grid_width;
+    }
+    this.first_horiz_gridline.style.width = grid_width;
+    if (this.config.show_headers) {
+        this.header_gridline.style.width = grid_width;
+    }
+        
     this.widths = widths;
-    return totalWidth - this.offset_size_delta;
+    return totalWidth;
 };
 
 renderer.prototype.show_rows = function(row_list) {
@@ -20683,28 +20817,30 @@ renderer.prototype.show_rows = function(row_list) {
     for (var dci = 0; dci < this.colindex_map.length; dci++) {
         displayed_colindices[this.colindex_map[dci]] = dci;
     }
-    var displayed_rowindices = Array(this.num_rows);
-    for (var dri = 0; dri < this.rowindex_map.length; dri++) {
-        displayed_rowindices[this.rowindex_map[dri]] = dri;
-    }
 
     // set new row y-positions
     for( var ri = 0; ri < row_list.length; ri++ ){
         if (row_list[ri] in this.rowdesc_map) {
             var matrix_row_index = this.rowdesc_map[row_list[ri]];
             var row = this.matrix[matrix_row_index];
+            var row_top = ( (this.config.show_headers ?
+                             this.config.header_height : 0)
+                            + (ri * this.config.cell_height) ) + "px";
+
+            var horiz_gridline = this.grid_horiz[matrix_row_index];
+            horiz_gridline.style.top = row_top;
+            horiz_gridline.style.display = "";
 
             for (var ci = 0; ci < this.num_cols; ci++) {
                 var cell = row[ci];
-                cell.style.top = ( (this.config.show_headers ?
-                                    this.config.header_height : 0)
-                                   + (ri * this.config.cell_height) ) + "px";
-
-                var displayed_colindex = displayed_colindices[ci];
-                if (displayed_colindex == undefined) {
-                    cell.style.display = "none";
-                } else {
-                    cell.style.display = "";
+                if (cell) {
+                    cell.style.top = row_top;
+                    var displayed_colindex = displayed_colindices[ci];
+                    if (displayed_colindex == undefined) {
+                        cell.style.display = "none";
+                    } else {
+                        cell.style.display = "";
+                    }
                 }
             }
 
@@ -20719,9 +20855,14 @@ renderer.prototype.show_rows = function(row_list) {
     for(var i = 0; i < this.row_descriptors.length; i++) {
         var rowdesc = this.row_descriptors[i];
         if (! (rowdesc in new_row_map)) {
-            var row = this.matrix[this.rowdesc_map[rowdesc]];
+            var row_index = this.rowdesc_map[rowdesc];
+
+            this.grid_horiz[row_index].style.display = "none";
+
+            var row = this.matrix[row_index];
             for (var j = 0; j < row.length; j++) {
-                row[j].style.display = "none";
+                var cell = row[j];
+                if (cell) cell.style.display = "none";
             }
         }
     }
@@ -20742,19 +20883,24 @@ renderer.prototype.show_cols = function(col_list) {
     for( var ci = 0; ci < col_list.length; ci++ ){
         matrix_col_index = this.coldesc_map[col_list[ci]];
 
+        var vert_gridline = this.grid_vert[matrix_col_index];
+        vert_gridline.style.left = left + "px";
+        vert_gridline.style.display = "";
         for (var ri = 0; ri < this.num_rows; ri++) {
             var row = this.matrix[ri];
             var cell = row[matrix_col_index];
-            cell.style.left = left + "px";
+            if (cell) {
+                cell.style.left = left + "px";
 
-            var displayed_rowindex = displayed_rowindices[ri];
-            if (displayed_rowindex == undefined) {
-                cell.style.display = "none";
-            } else {
-                cell.style.display = "";
+                var displayed_rowindex = displayed_rowindices[ri];
+                if (displayed_rowindex == undefined) {
+                    cell.style.display = "none";
+                } else {
+                    cell.style.display = "";
+                }
             }
         }
-        if (this.show_headers) {
+        if (this.config.show_headers) {
             this.headers[matrix_col_index].style.left = left + "px";
             this.headers[matrix_col_index].style.display = "";
         }
@@ -20773,8 +20919,9 @@ renderer.prototype.show_cols = function(col_list) {
             matrix_col_index = this.coldesc_map[coldesc];
             for (var j = 0; j < this.matrix.length; j++) {
                 var cell = this.matrix[j][matrix_col_index];
-                cell.style.display = "none";
+                if (cell) cell.style.display = "none";
             }
+            this.grid_vert[matrix_col_index].style.display = "none";
             if (this.config.show_headers) {
                 this.headers[matrix_col_index].style.display = "none";
             }
@@ -20782,6 +20929,15 @@ renderer.prototype.show_cols = function(col_list) {
     }
 
     this.width = left;
+    var grid_width = ( left - this.offset_size_delta
+                       + (2 * this.config.cell_border) ) + "px";
+    for (var ri = 0; ri < this.rowindex_map.length; ri++) {
+        this.grid_horiz[this.rowindex_map[ri]].style.width = grid_width;
+    }
+    this.first_horiz_gridline.style.width = grid_width;
+    if (this.config.show_headers) {
+        this.header_gridline.style.width = grid_width;
+    }
     this.parent.style.width = this.width + this.config.cell_border + "px";
 };
 
