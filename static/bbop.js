@@ -6608,7 +6608,7 @@ bbop.layout.sugiyama.partitioner = function(graph){
     	// a node should be picked randomly.
     	// TODO: Test this.
     	var a_node = graph.all_nodes()[0] || null;
-    	if( ! a_node){
+    	if( ! a_node ){
     	    throw new Error('apparently the graph is empty--stop it!');
     	}else{
 	    _new_node_at(a_node, 0);
@@ -6874,6 +6874,7 @@ bbop.layout.sugiyama.render = function(){
 	//var partitions = new bbop.layout.sugiyama.partitioner(anchor);
 
 	// DEBUG:
+	ll('Dump paritions:');
 	partitions.dump();
 	ll('');
 
@@ -6888,21 +6889,21 @@ bbop.layout.sugiyama.render = function(){
 	// all of the matrix representations of the partitions.
 	for( var i = 0; i < partitions.number_of_edge_partitions(); i++ ){
 	    var epart = partitions.get_edge_partition(i);
-	    // if( ! part ){
-	    // 	throw new Error('bad edge partition at level: ' + i);
-	    // }else{
+	    if( ! epart ){
+	    	throw new Error('bad edge partition at level: ' + i);
+	    }else{
 		edge_partitions.push(epart);
-	    // }
+	    }
 	}
 
 	//
 	for( var i = 0; i < partitions.number_of_vertex_partitions(); i++ ){
 	    var vpart = partitions.get_vertex_partition(i);
-	    // if( ! vpart ){
-	    // 	throw new Error('bad vertex partition at level: ' + i);
-	    // }else{
+	    if( ! vpart ){
+	    	throw new Error('bad vertex partition at level: ' + i);
+	    }else{
 		vertex_partitions.push(vpart);
-	    // }
+	    }
 	}  
 	
 	//
