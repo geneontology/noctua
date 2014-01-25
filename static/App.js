@@ -278,18 +278,22 @@ var MMEnvInit = function(in_model, in_server_base){
 			 // some work.
 			 ecore.add_node_from_individual(ind);
 			 var dyn_node = ecore.get_node_by_individual(ind);
+			 if( ! dyn_node ){
+			     alert('id issue somewhere--refresh to see state');
+			 }else{
 
-			 // Initial node layout settings.
-    			 var dyn_x =
-			     100 + jQuery(graph_container_div).scrollLeft();
-    			 var dyn_y =
-			     100 + jQuery(graph_container_div).scrollTop();
-			 dyn_node.x_init(dyn_x);
-			 dyn_node.y_init(dyn_y);
-
-			 // Draw it to screen.
-			 widgets.add_virtual_node(ecore, dyn_node,
-						  aid, graph_div);
+			     // Initial node layout settings.
+    			     var dyn_x =
+				 100 + jQuery(graph_container_div).scrollLeft();
+    			     var dyn_y =
+				 100 + jQuery(graph_container_div).scrollTop();
+			     dyn_node.x_init(dyn_x);
+			     dyn_node.y_init(dyn_y);
+			     
+			     // Draw it to screen.
+			     widgets.add_virtual_node(ecore, dyn_node,
+						      aid, graph_div);
+			 }
 		     }
 		 });
 

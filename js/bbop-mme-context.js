@@ -32,19 +32,20 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#FFFAFA' // snow
 	},
-	'BFO_0000050':
+	'BFO:0000050':
 	{
 	    readable: 'part of',
 	    priority: 0,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
+		'BFO_0000050',
 		'part of',
 		'part_of'
 	    ],
 	    color: '#add8e6' // light blue
 	},
-	'BFO_0000051':
+	'BFO:0000051':
 	{
 	    readable: 'has part',
 	    priority: 0,
@@ -55,7 +56,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#6495ED' // cornflower blue
 	},
-	'BFO_0000066':
+	'BFO:0000066':
 	{
 	    readable: 'occurs in',
 	    priority: 2,
@@ -66,7 +67,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#66CDAA' // medium aquamarine
 	},
-	'RO_0002202':
+	'RO:0002202':
 	{
 	    readable: 'develops from',
 	    priority: 0,
@@ -76,7 +77,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#A52A2A' // brown
 	},
-	'RO_0002211':
+	'RO:0002211':
 	{
 	    readable: 'regulates',
 	    priority: 0,
@@ -86,7 +87,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#2F4F4F' // dark slate grey
 	},
-	'RO_0002212':
+	'RO:0002212':
 	{
 	    readable: 'negatively regulates',
 	    priority: 0,
@@ -97,7 +98,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#FF0000' // red
 	},
-	'RO_0002213':
+	'RO:0002213':
 	{
 	    readable: 'positively regulates',
 	    priority: 0,
@@ -108,7 +109,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#008000' //green
 	},
-	'RO_0002330':
+	'RO:0002330':
 	{
 	    readable: 'genomically related to',
 	    priority: 0,
@@ -118,7 +119,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#9932CC' // darkorchid
 	},
-	'RO_0002331':
+	'RO:0002331':
 	{
 	    readable: 'involved in',
 	    priority: 3,
@@ -128,7 +129,7 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#E9967A' // darksalmon
 	},
-	'RO_0002332':
+	'RO:0002332':
 	{
 	    readable: 'regulates level of',
 	    priority: 0,
@@ -138,11 +139,12 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#556B2F' // darkolivegreen
 	},
-	'RO_0002333':
+	'RO:0002333':
 	{
 	    readable: 'enabled by',
 	    priority: 9,
 	    aliases: [
+		'RO_0002333',
 		'enabled by',
 		'enabled_by'
 	    ],
@@ -207,10 +209,10 @@ var bbop_mme_context = function(){
 
     // The 
     var suggested_stack_order = [
-	'RO_0002333', // enabled by
+	'RO:0002333', // enabled by
 	'instance_of', // activity
 	'',	
-	'BFO_0000066' // occurs in
+	'BFO:0000066' // occurs in
     ];
 
     // Helper fuction to go from unknown id -> alias -> data structure.
@@ -361,6 +363,8 @@ var bbop_mme_context = function(){
      *
      * Turn ID strings into something standard:
      *  ':' -> '_' and 'http://foo/bar' -> 'bar'.
+     * 
+     * NOTE: Cleanse currently does nothing.
      *
      * Parameters: 
      *  id_string - the string to cleanse
@@ -372,18 +376,18 @@ var bbop_mme_context = function(){
 
     	var retstr = id_string;
 
-    	// 'http://foo/bar' -> 'bar'
-    	retstr = retstr.substring(retstr.lastIndexOf("/") + 1, retstr.length);
+    	// // 'http://foo/bar' -> 'bar'
+    	// retstr = retstr.substring(retstr.lastIndexOf("/") + 1, retstr.length);
 
-    	// ':' -> '_'
-    	retstr = retstr.replace(':', '_');
+    	// // ':' -> '_'
+    	// retstr = retstr.replace(':', '_');
 
-    	// 
-    	if( ! retstr || retstr == '' ){
-    	    throw new Error('cleanse: entered with: ' +
-    			    retstr + ' ; nothing left');
-    	    retstr = id_string;
-    	}
+    	// // 
+    	// if( ! retstr || retstr == '' ){
+    	//     throw new Error('cleanse: entered with: ' +
+    	// 		    retstr + ' ; nothing left');
+    	//     retstr = id_string;
+    	// }
 
     	return retstr;
     };
