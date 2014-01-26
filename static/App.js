@@ -55,10 +55,18 @@ var MMEnvInit = function(in_model, in_server_base){
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
     // Button contact points.
-    var add_btn_local_id = 'adder_local';
-    var add_btn_local_elt = '#' + add_btn_local_id;
-    var add_btn_remote_id = 'adder_remote';
-    var add_btn_remote_elt = '#' + add_btn_remote_id;
+    // var add_btn_local_id = 'adder_local';
+    // var add_btn_local_elt = '#' + add_btn_local_id;
+    // var add_btn_remote_id = 'adder_remote';
+    // var add_btn_remote_elt = '#' + add_btn_remote_id;
+    var simple_enb_auto_id = 'simple_enb_auto';
+    var simple_enb_auto_elt = '#' + simple_enb_auto_id;
+    var simple_act_auto_id = 'simple_act_auto';
+    var simple_act_auto_elt = '#' + simple_act_auto_id;
+    var simple_occ_auto_id = 'simple_occ_auto';
+    var simple_occ_auto_elt = '#' + simple_occ_auto_id;
+    var simple_add_btn_id = 'simple_adder_button';
+    var simple_add_btn_elt = '#' + simple_add_btn_id;
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -291,8 +299,20 @@ var MMEnvInit = function(in_model, in_server_base){
 			     dyn_node.y_init(dyn_y);
 			     
 			     // Draw it to screen.
-			     widgets.add_virtual_node(ecore, dyn_node,
-						      aid, graph_div);
+			     widgets.add_enode(ecore, dyn_node, aid, graph_div);
+
+			     // Make node active in display.
+			     var dnid = dyn_node.id();
+			     var ddid = '#' + ecore.get_node_elt_id(dnid);
+			     _make_selector_draggable(ddid);
+			     //_make_selector_target(ddid);
+			     //_make_selector_source(ddid, '.konn');
+			     _make_selector_editable(".open-dialog");
+			     // _make_selector_draggable('.demo-window');
+			     _make_selector_target('.demo-window');
+			     _make_selector_source('.demo-window', '.konn');
+			     
+    			     jsPlumb.repaintEverything();	
 			 }
 		     }
 		 });
@@ -322,7 +342,6 @@ var MMEnvInit = function(in_model, in_server_base){
 			      instance.detach(src_conn);
 			  });
 		     
-
 		     // Add all edges from the new individuals to the
 		     // model.
 		     var redges = ecore.add_edges_from_individual(ind, aid);
@@ -639,40 +658,6 @@ var MMEnvInit = function(in_model, in_server_base){
 						    snode.id(), tnode.id());
 			  jQuery(modal_edge_elt).modal({});
 
-		  // 	  function _rel_save_success(individual_list){
-
-		  // 	      // What to do with each individual we
-		  // 	      // see in the list.
-		  // 	      function process_ind(ind){
-		  // 		  var iid = ind['id'];
-				  
-		  // 		  // Get all the currently extant
-		  // 		  // edges between the two nodes.
-		  // 		  var relevant_edges =
-		  // 		      ecore.get_edges_by_source(iid);
-		  // 		  each(relevant_edges,
-		  // 		       function(red){
-		  // 			   var redid = red.id();
-
-		  // 			   // Delete them from the ecore.
-		  // 			   ecore.remove_edge(redid);
-
-		  // 			   // Delete them from the UI.
-		  // 			   var redcon = ecore.get_connector_id_by_edge_id(redid);
-		  // 		   });			      
-
-		  // 		  // Cycle through the individual list.
-		  // 		  // Add the new relations to the ecore.
-		  // 		  // Add the new relations to the UI.
-		  // 		  each(individual_list,
-		  // 		       function(indv){
-		  // 			   _add_facts_from_individual(indv);
-		  // 		       });
-				  
-		  // 	      each(individiual_list, _process_ind);
-
-		  // 	  }
-			  
 		  	  // Add action listener to the save button.
 		  	  function _rel_save_button_start(){
 
@@ -765,216 +750,88 @@ var MMEnvInit = function(in_model, in_server_base){
 
     ///
     /// Activate autocomplete in input boxes.
-    /// Add the local responders.
-    ///
-
-    // bioentity
-    var bio_args_local = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}})',
-    	'value_template': '{{bioentity_label}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['bioentity_label']);
-    	}
-    };
-    // molecular function
-    var mfn_args_local = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-    	}
-    };
-    // location/occurs_in
-    var loc_args_local = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-    	}
-    };
-
-    var bio_auto_local =
-	new bbop.widget.search_box(gserv, gconf,
-				   'bio_auto_local', bio_args_local);
-    bio_auto_local.add_query_filter('document_category', 'bioentity');
-    bio_auto_local.set_personality('bioentity');
-
-    var mfn_auto_local =
-	new bbop.widget.search_box(gserv, gconf,
-				   'mfn_auto_local', mfn_args_local);
-    mfn_auto_local.add_query_filter('document_category', 'ontology_class');
-    mfn_auto_local.add_query_filter('regulates_closure_label',
-				 'molecular_function');
-    mfn_auto_local.set_personality('ontology');
-
-    var loc_auto_local =
-	new bbop.widget.search_box(gserv, gconf,
-				   'loc_auto_local', loc_args_local);
-    loc_auto_local.add_query_filter('document_category', 'ontology_class');
-    loc_auto_local.set_personality('ontology');
-
-    ///
-    /// Activate autocomplete in input boxes.
     /// Add the remote responders.
     ///
 
     // Storage for the actual selected identifiers.
-    var bio_val_remote = null;
-    var mfn_val_remote = null;
-    var loc_val_remote = null;
+    var simple_enb_auto_val = null;
+    var simple_act_auto_val = null;
+    var simple_occ_auto_val = null;
 
     // bioentity
-    var bio_args_remote = {
+    var simple_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    bio_val_remote = doc['bioentity'] || null;
+	    simple_enb_auto_val = doc['bioentity'] || null;
     	}
     };
     // molecular function
-    var mfn_args_remote = {
+    var simple_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    mfn_val_remote = doc['annotation_class'] || null;
+	    simple_act_auto_val = doc['annotation_class'] || null;
     	}
     };
     // location/occurs_in
-    var loc_args_remote = {
+    var simple_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    loc_val_remote = doc['annotation_class'] || null;
+	    simple_occ_auto_val = doc['annotation_class'] || null;
     	}
     };
 
-    var bio_auto_remote =
-	new bbop.widget.search_box(gserv, gconf,
-				   'bio_auto_remote', bio_args_remote);
-    bio_auto_remote.add_query_filter('document_category', 'bioentity');
-    bio_auto_remote.set_personality('bioentity');
+    var simple_enb_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_enb_auto_id,
+				   simple_enb_auto_args);
+    simple_enb_auto.add_query_filter('document_category', 'bioentity');
+    simple_enb_auto.set_personality('bioentity');
 
-    var bpn_auto_remote =
-	new bbop.widget.search_box(gserv, gconf,
-				   'bpn_auto_remote', mfn_args_remote);
-    bpn_auto_remote.add_query_filter('document_category', 'ontology_class');
-    bpn_auto_remote.add_query_filter('regulates_closure_label',
-				 'molecular_function');
-    bpn_auto_remote.set_personality('ontology');
+    var simple_act_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_act_auto_id,
+				   simple_act_auto_args);
+    simple_act_auto.add_query_filter('document_category', 'ontology_class');
+    // simple_act_auto.add_query_filter('regulates_closure_label',
+    // 				     'molecular_function');
+    simple_act_auto.set_personality('ontology');
 
-    var loc_auto_remote =
-	new bbop.widget.search_box(gserv, gconf,
-				   'loc_auto_remote', loc_args_remote);
-    loc_auto_remote.add_query_filter('document_category', 'ontology_class');
-    loc_auto_remote.set_personality('ontology');
+    var simple_occ_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_occ_auto_id,
+				   simple_occ_auto_args);
+    simple_occ_auto.add_query_filter('document_category', 'ontology_class');
+    simple_occ_auto.set_personality('ontology');
 
     ///
     /// Add GUI button activity.
     ///
 
-    // Add to model and then to the display.
-    // Assume trivial single-valued arguments.
-    function _integrate_trivial_node(bio, mfn, loc){
-
-	// dyn_node.enabled_by(bio);
-	// dyn_node.activity(mfn);
-	// dyn_node.location([loc]); // list type
-	// Initial node settings.
-	var dyn_node = new bme_node();
-    	var dyn_x = 100 + jQuery(graph_container_div).scrollLeft();
-    	var dyn_y = 100 + jQuery(graph_container_div).scrollTop();
-	dyn_node.x_init(dyn_x);
-	dyn_node.y_init(dyn_y);
-	
-	// // Add it to the edit model.
-	// ecore.add_node(dyn_node);	
-    	// // Redraw table with new info.
-	// widgets.repaint_table();	
-    	// // Add to graph.
-	// widgets.add_enode(ecore, dyn_node, aid, graph_div);
-
-	// Make node active in display.
-	var dnid = dyn_node.id();
-	var ddid = '#' + ecore.get_node_elt_id(dnid);
-	_make_selector_draggable(ddid);
-	//_make_selector_target(ddid);
-	//_make_selector_source(ddid, '.konn');
-	_make_selector_editable(".open-dialog");
-	// _make_selector_draggable('.demo-window');
-	_make_selector_target('.demo-window');
-	_make_selector_source('.demo-window', '.konn');
-	
-    	jsPlumb.repaintEverything();	
-    }
-
-    // Add new local node button.
-    jQuery(add_btn_local_elt).click(
-    	function(){
-    	    var bio = bio_auto_local.content();
-    	    var mfn = mfn_auto_local.content();
-    	    var loc = loc_auto_local.content();
-
-    	    if( mfn == '' || bio == '' || loc == '' ){
-    		alert('necessary field empty');
-    	    }else{
-		_integrate_trivial_node(bio, mfn, loc);
-    	    }
-    	}
-    );
-
     // Add new remote node button.
-    jQuery(add_btn_remote_elt).click(
+    jQuery(simple_add_btn_elt).click(
     	function(){
-    	    var bio = bio_auto_remote.content();
-    	    var mfn = bpn_auto_remote.content();
-    	    var loc = loc_auto_remote.content();
+    	    // var enb = simple_enb_auto.content() || '';
+    	    // var act = simple_act_auto.content() || '';
+    	    // var occ = simple_occ_auto.content() || '';
+    	    var enb = simple_enb_auto_val || '';
+    	    var act = simple_act_auto_val || '';
+    	    var occ = simple_occ_auto_val || '';
 
-    	    if( mfn == '' || bio == '' || loc == '' ){
-    		alert('Necessary field empty.');
-    	    }else if( ! mfn_val_remote ||
-		      ! bio_val_remote ||
-		      ! loc_val_remote ){
-    		alert('You actually need to have selected your ' +
-		      'values from the dropdowns in the autocompletes.');
+    	    if( act == '' ){
+    		alert('Must select activity field from autocomplete list.');
+    	    // }else if( ! mfn_val_remote ||
+	    // 	      ! bio_val_remote ||
+	    // 	      ! loc_val_remote ){
+    	    // 	alert('You actually need to have selected your ' +
+	    // 	      'values from the dropdowns in the autocompletes.');
     	    }else{
-
-		// If successful, add returned data to editor/UI.
-		function on_success(resp, man){
-		    
-		    ll('Remote success (' +
-		       resp.message_type() + '): ' +
-		       resp.message());
-
-		    // Parse out what we got back.
-
-		    // Add to model and display.
-		    _integrate_trivial_node(bio_val_remote,
-					    mfn_val_remote,
-					    loc_val_remote);
-
-		    // Release interface when transaction done.
-		    _shields_down();
-		}
-
-		// If failed, report and reset.
-		function on_failure(resp, man){
-		    
-		    alert('This request failed (on ' +
-			  resp.message_type() + ') with message: ' +
-			  resp.message());
-		}
-
-		// ???
-		m.action(t);
+		manager.add_simple_composite(model_id, act, enb, occ);
     	    }
     	}
     );
@@ -1082,25 +939,4 @@ jsPlumb.ready(function(){
 			  //throw new Error('environment not ready');
 		      }
 	      });
-
-// ///
-// /// EXP
-// ///
-
-// var logger = new bbop.logger('exp');
-// logger.DEBUG = true;
-// function ll(str){ logger.kvetch(str); } 
-// var m = new bbop.rest.manager.jquery(bbop.rest.response.json);
-// var t = 'http://localhost/cgi-bin/amigo2/amigo/term/GO:0022008/json'; 
-// var r = null;
-// function on_success(resp, man){
-//     r = resp;
-//     ll('success (' + resp.message_type() + '): ' + resp.message());
-// }
-// function on_fail(resp, man){
-//     r = resp;
-//     ll('failure (' + resp.message_type() + '): ' + resp.message());
-// }
-// m.register('success', 'foo', on_success);
-// m.register('error', 'foo', on_fail);
-// m.action(t);
+k

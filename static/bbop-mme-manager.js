@@ -101,6 +101,20 @@ var bbop_mme_manager = function(server_base){
 	jqm.action(url, args, 'GET');
     };
     
+    // Likely triggers "merge".
+    anchor.add_simple_composite = function(model_id, class_id,
+					   enabled_by_id, occurs_in_id){
+	var url = server_base + '/m3CreateSimpleCompositeIndividual';
+	var args = {
+	    'modelId': model_id,
+	    'classId': class_id,
+	    'enabledById': enabled_by_id,
+	    'occursInId': occurs_in_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
     // 
     // Likely triggers "inconsistent".
     anchor.generate_model = function(class_id, db_id){
