@@ -276,10 +276,12 @@ var MMEnvInit = function(in_model, in_server_base){
 		 function(ind){
 		     var update_node = ecore.get_node_by_individual(ind);
 		     if( update_node ){
-			 // TODO: Update node.
-			 // .merge_node(ind)
-			 // wipe_node()
-			 // redraw_node()
+			 // TODO: Update node. This is preferred since
+			 // deleting it would mean that all the connections
+			 // would have to be reconstructed as well.
+			 // ecore.merge_node(ind)
+			 // wipe_node_contents()
+			 // redraw_node_contents()
 		     }else{
 			 // TODO: Does this work?
 			 // New node to edit core, pull it out for
@@ -290,6 +292,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			     alert('id issue somewhere--refresh to see state');
 			 }else{
 
+			     // Somewhat vary the intitial placement.
 			     function _vari(){
 				 var min = -25;
 				 var max = 25;
