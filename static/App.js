@@ -290,11 +290,18 @@ var MMEnvInit = function(in_model, in_server_base){
 			     alert('id issue somewhere--refresh to see state');
 			 }else{
 
+			     function _vari(){
+				 var min = -25;
+				 var max = 25;
+				 var rand = Math.random();
+				 return Math.floor(rand * (max - min +1) + min);
+			     }
+
 			     // Initial node layout settings.
-    			     var dyn_x =
-				 100 + jQuery(graph_container_div).scrollLeft();
-    			     var dyn_y =
-				 100 + jQuery(graph_container_div).scrollTop();
+    			     var dyn_x = _vari() + 100 +
+				 jQuery(graph_container_div).scrollLeft();
+    			     var dyn_y = _vari() + 100 +
+				 jQuery(graph_container_div).scrollTop();
 			     dyn_node.x_init(dyn_x);
 			     dyn_node.y_init(dyn_y);
 			     
