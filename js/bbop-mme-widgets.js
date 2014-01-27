@@ -154,8 +154,10 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
 					      {'class':'bbop-mme-stack-table'});
     each(_enode_to_stack(enode),
 	 function(item){
-	     var trstr = '<tr class="bbop-mme-stack-tr" style="background-color: ' +
-		 aid.color(item['category']) + ';"><td class="bbop-mme-stack-td">' 
+	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
+		 'style="background-color: ' +
+		 aid.color(item['category']) +
+		 ';"><td class="bbop-mme-stack-td">' 
 		 + bme_type_to_text(item['type']) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });

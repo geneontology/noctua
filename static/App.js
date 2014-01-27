@@ -841,6 +841,15 @@ var MMEnvInit = function(in_model, in_server_base){
     	    // 	alert('You actually need to have selected your ' +
 	    // 	      'values from the dropdowns in the autocompletes.');
     	    }else{
+		// Wipe controls' state, internal and external.
+		simple_enb_auto_val = null;
+    		simple_act_auto_val = null;
+    		simple_occ_auto_val = null;
+		jQuery(simple_enb_auto_elt).val('');
+    		jQuery(simple_act_auto_elt).val('');
+    		jQuery(simple_occ_auto_elt).val('');
+
+		// Send message to server.
 		manager.add_simple_composite(model_id, act, enb, occ);
     	    }
     	}
