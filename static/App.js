@@ -536,11 +536,18 @@ var MMEnvInit = function(in_model, in_server_base){
 	    jQuery(modal_node_title_elt).empty();
 	    jQuery(modal_node_title_elt).append('Node: ' + tid);
 	    jQuery(modal_node_body_elt).empty();
-	    jQuery(modal_node_body_elt).append('<h4>Information</h4>');
-	    jQuery(modal_node_body_elt).append('<p>type: ' + ttype + '</p>');
-	    jQuery(modal_node_body_elt).append('<hr />');
-	    jQuery(modal_node_body_elt).append('<h4>Operations</h4>');
-	    jQuery(modal_node_body_elt).append('<p><button id="' + dbid + '" type="button" class="btn btn-danger">Delete node</button></p>');
+	    var appy = [
+		'<h4>Information</h4>',
+		'<p>type: ' + ttype + '</p>',
+		'<hr />',
+		'<h4>Operations</h4>',
+		'<p>',
+		'<button id="'+ dbid +'" type="button" class="btn btn-danger">',
+		'Delete node',
+		'</button>',
+		'</p>'
+	    ];
+	    jQuery(modal_node_body_elt).append(appy.join(''));
 
 	    // Add the deletion callback
 	    jQuery('#' + dbid).click(
