@@ -429,8 +429,10 @@ var bme_type_to_text = function(in_type){
 	var l = in_type['label'] || i;
 	text = '<span alt="' + l + '(' + i + ')' + '" title="' + l + ' (' + i + ')' + '">' + l + '</span>';
     }else if( t == 'Restriction' ){
-	var thing = in_type['someValuesFrom']['id'];
-	var thing_rel = in_type['onProperty']['id'];
+	var thing = in_type['someValuesFrom']['label'] ||
+	    in_type['someValuesFrom']['id'];
+	var thing_rel = in_type['onProperty']['label'] ||
+	    in_type['onProperty']['id'];
 	//text = thing_rel + '(' + thing + ')';
 	text = '<span alt="' + thing_rel + '(' + thing + ')' + '" title="' + thing_rel + '(' + thing + ')' + '">' + thing + '</span>';
     }
