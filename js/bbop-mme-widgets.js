@@ -81,7 +81,7 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 			      var cell_cache = [];
 			      each(accumulated_types,
 				   function(atype){
-				       var tt = bme_type_to_text(atype);
+				       var tt = bme_type_to_text(atype, aid);
 				       cell_cache.push(tt);
 				   });
 			      table_row.push(cell_cache.join('<br />'));
@@ -158,7 +158,7 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
 		 'style="background-color: ' +
 		 aid.color(item['category']) +
 		 ';"><td class="bbop-mme-stack-td">' 
-		 + bme_type_to_text(item['type']) + '</td></tr>';   
+		 + bme_type_to_text(item['type'], aid) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });
     w.add_to(enode_stack_table);
