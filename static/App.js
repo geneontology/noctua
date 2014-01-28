@@ -132,6 +132,15 @@ var MMEnvInit = function(in_model, in_server_base){
 	return _box_left(raw_x) + (box_width / 2.0);
     }
 
+    // Somewhat vary the intitial placement.
+    function _vari(){
+	var min = -25;
+	var max = 25;
+	var rand = Math.random();
+	var seed = Math.floor(rand * (max-min+1) +min);
+	return seed + 100;
+    }
+
     ///
     /// jsPlumb preamble.
     ///
@@ -292,18 +301,10 @@ var MMEnvInit = function(in_model, in_server_base){
 			     alert('id issue somewhere--refresh to see state');
 			 }else{
 
-			     // Somewhat vary the intitial placement.
-			     function _vari(){
-				 var min = -25;
-				 var max = 25;
-				 var rand = Math.random();
-				 return Math.floor(rand * (max - min +1) + min);
-			     }
-
 			     // Initial node layout settings.
-    			     var dyn_x = _vari() + 100 +
+    			     var dyn_x = _vari() +
 				 jQuery(graph_container_div).scrollLeft();
-    			     var dyn_y = _vari() + 100 +
+    			     var dyn_y = _vari() +
 				 jQuery(graph_container_div).scrollTop();
 			     dyn_node.x_init(dyn_x);
 			     dyn_node.y_init(dyn_y);
@@ -448,15 +449,38 @@ var MMEnvInit = function(in_model, in_server_base){
     var r = new bbop.layout.sugiyama.render();
     var layout = r.layout(g);
 
-    // Add the initial layout position to the edit nodes.
+    // Find the initial layout position of the layout. There might be
+    // some missing due to finding cycles in the graph, so we have
+    // this two-step process.
+    var layout_coord_lookup = {};
     each(layout['nodes'],
 	 function(litem, index){
 	     var id = litem['id'];
 	     var raw_x = litem['x'];
 	     var raw_y = litem['y'];
-	     var en = ecore.get_node(id);
-	     en.x_init(_box_left(raw_x));
-	     en.y_init(_box_top(raw_y));
+	     var fin_x = _box_left(raw_x);
+	     var fin_y = _box_top(raw_y);
+	     layout_coord_lookup[id] = {'x': fin_x, 'y': fin_y};
+	 });
+    // Now got through all of the actual nodes.
+    each(ecore.get_nodes(),
+	 function(enid, en){
+	     //var enid = en.id();
+
+	     // Try and see if we have coords; if not, make some up.
+	     var fin_x = _vari();
+	     var fin_y = _vari();
+	     var try_coords = layout_coord_lookup[enid];
+	     if( try_coords ){   
+		 fin_x = try_coords['x'];
+		 fin_y = try_coords['y'];
+	     }
+
+	     // TODO: This is where another hash of saved positions
+	     // would go.
+
+	     en.x_init(fin_x);
+	     en.y_init(fin_y);
 	 });	
 
     // Add additional information if the waypoint flag is set.
