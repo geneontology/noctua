@@ -10,6 +10,7 @@ assemble-app:
 	cp ./js/bbop-mme-edit.js static/
 	cp ./js/bbop-mme-manager.js static/
 	cp ./js/bbop-mme-widgets.js static/
+	cp ./js/bbop-draggable-canvas.js static/
 	cp ../bbop-js/staging/bbop.js static/
 
 ##

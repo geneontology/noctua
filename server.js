@@ -116,6 +116,7 @@ var MMEnvServer = function() {
 		'bbop-mme-edit.js': '',
 		'bbop-mme-manager.js': '',
 		'bbop-mme-widgets.js': '',
+		'bbop-draggable-canvas.js': '',
 		'Landing.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',

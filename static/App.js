@@ -18,7 +18,7 @@ var MMEnvInit = function(in_model, in_server_base){
     //var use_waypoints_p = true;
     var use_waypoints_p = false;
     
-    var logger = new bbop.logger('mme');
+    var logger = new bbop.logger('app');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
@@ -924,86 +924,9 @@ var MMEnvInit = function(in_model, in_server_base){
 	    alert('In prototypes nobody can hear you scream.');
     	});
 
-    ///
-    /// Playing with graph area scroll.
-    /// Take a look at: http://hitconsultants.com/dragscroll_scrollsync/scrollpane.html
-    ///
-
-    // TODO: This /should/ have worked, but the way the SVG is layed in
-    // seems to make in not work very well at all.
-    //jQuery(graph_div).draggable();
-
-    // Hand made--not great either...
-    var px = -1;
-    var py = -1;
-    function _update_start_pos(down_evt){
-    	px = down_evt.pageX;
-    	py = down_evt.pageY;
-    	ll("down at: " + px + "," + py);
-    }
-    function _scroller(move_evt){
-	var page_x = move_evt.pageX;
-	var page_y = move_evt.pageY;
-    	var offx = page_x - px;
-    	var offy = page_y - py;
-	var old_left = jQuery(graph_container_div).scrollLeft();
-	var old_top = jQuery(graph_container_div).scrollTop();
-    	ll('scrolling: ' +
-	   page_x + "," + page_y + '; ' +
-	   offx + "," + offy + '; ' +
-	   old_left + "," + old_top);
-    	//window.scrollTo(offx, offy);
-    	//jQuery(graph_container_div).scrollTo(offx, offy);
-	jQuery(graph_container_div).scrollLeft(old_left - offx);
-	jQuery(graph_container_div).scrollTop(old_top - offy);
-    	px = move_evt.pageX;
-    	py = move_evt.pageY;
-    }
-    function _unbind_scroller(){
-    	jQuery(graph_container_div).unbind('mousemove');	
-    }
-    
-    // Stat on mouse down.
-    jQuery(graph_container_div).mousedown(
-    	function(e){
-	     if( this == e.target ){ // only stat if actual, not child
-    		 _update_start_pos(e);
-    		 // Bind to moving.
-    		 jQuery(graph_container_div).mousemove(_scroller);
-	     }
-    	});
-
-    // Stop for almost any reason.
-    jQuery(graph_container_div).mouseup(
-    	function(e){
-    	    ll('unbind on mouseup');
-    	    _unbind_scroller();
-    	});
-    jQuery(graph_container_div).mouseout(
-    	function(e){
-    	    ll('unbind on mouseup');
-    	    _unbind_scroller();
-    	});
-    jQuery(graph_container_div).mouseleave(
-    	function(e){
-    	    ll('unbind on mouseleave');
-    	    _unbind_scroller();
-    	});
-    jQuery(graph_container_div).select( // to trigger, we're moving fast
-    	function(e){
-    	    ll('unbind on select');
-    	    _unbind_scroller();
-    	});
-    // jQuery(graph_container_div).blur(
-    // 	function(e){
-    // 	    ll('unbind on blur');
-    // 	    _unbind_scroller();
-    // 	});
-    // jQuery(graph_container_div).focusout(
-    // 	function(e){
-    // 	    ll('unbind on focusout');
-    // 	    _unbind_scroller();
-    // 	});
+    // Let the canvas (div) underneath be dragged around in an
+    // intuitive way.
+    bbop_draggable_canvas(graph_container_id);
 };
 
 // Start the day the jsPlumb way.
