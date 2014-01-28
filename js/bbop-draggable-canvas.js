@@ -7,7 +7,8 @@
 function bbop_draggable_canvas(container_id){
 
     var logger = new bbop.logger('drag');
-    logger.DEBUG = true;
+    //logger.DEBUG = true;
+    logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
 
     var container_div = '#' + container_id;

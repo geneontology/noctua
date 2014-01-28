@@ -7,7 +7,8 @@
 function bbop_draggable_canvas(container_id){
 
     var logger = new bbop.logger('drag');
-    logger.DEBUG = true;
+    //logger.DEBUG = true;
+    logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
 
     var container_div = '#' + container_id;
@@ -48,6 +49,8 @@ function bbop_draggable_canvas(container_id){
 	   'dim: ' + dim_width + "," + dim_height);
 
 	// Check bounds, unbind if we stray.
+	// TODO: complete if this is actually effective; get the
+	// feeling it's not.
 	if( pos_top >= page_y || // top
 	    dim_height + pos_top <= page_y ){ //bottom
 	    ll('dimensional unbind');
