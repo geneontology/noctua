@@ -23,27 +23,48 @@ function bbop_draggable_canvas(container_id){
     	px = down_evt.pageX;
     	py = down_evt.pageY;
     	ll("down at: " + px + "," + py);
+	// TODO: start cursor drag
     }
     function _scroller(move_evt){
 	var page_x = move_evt.pageX;
 	var page_y = move_evt.pageY;
     	var offx = page_x - px;
     	var offy = page_y - py;
+	var pos_left = jQuery(container_div).position().left;
+	var pos_top = jQuery(container_div).position().top;
 	var old_left = jQuery(container_div).scrollLeft();
 	var old_top = jQuery(container_div).scrollTop();
+	var scroll_width = jQuery(container_div).get(0).scrollWidth;
+	var scroll_height= jQuery(container_div).get(0).scrollHeight;
+	var dim_width = jQuery(container_div).width();
+	var dim_height = jQuery(container_div).height();
     	ll('scrolling: ' +
-	   page_x + "," + page_y + '; ' +
-	   offx + "," + offy + '; ' +
-	   old_left + "," + old_top);
-    	//window.scrollTo(offx, offy);
-    	//jQuery(container_div).scrollTo(offx, offy);
-	jQuery(container_div).scrollLeft(old_left - offx);
-	jQuery(container_div).scrollTop(old_top - offy);
-    	px = move_evt.pageX;
-    	py = move_evt.pageY;
+	   //'p:' + px + "," + py + '; ' +
+	   'page:' + page_x + "," + page_y + '; ' +
+	   'off: ' + offx + "," + offy + '; ' +
+	   'pos: ' + pos_left + "," + pos_top + '; ' + 
+	   'old: ' + old_left + "," + old_top + '; ' + 
+	   'scroll: ' + scroll_width + "," + scroll_height + '; ' + 
+	   'dim: ' + dim_width + "," + dim_height);
+
+	// Check bounds, unbind if we stray.
+	// TODO: complete if this is actually effective; get the
+	// feeling it's not.
+	if( pos_top >= page_y || // top
+	    dim_height + pos_top <= page_y ){ //bottom
+	    ll('dimensional unbind');
+	    _unbind_scroller();
+	}else{
+	    // Otherwise, make the move.
+	    jQuery(container_div).scrollLeft(old_left - offx);
+	    jQuery(container_div).scrollTop(old_top - offy);
+    	    px = move_evt.pageX;
+    	    py = move_evt.pageY;	    
+	}
     }
     function _unbind_scroller(){
     	jQuery(container_div).unbind('mousemove');	
+	// TODO: revert cursor
     }
     
     // Stat on mouse down.
