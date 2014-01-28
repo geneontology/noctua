@@ -933,43 +933,49 @@ var MMEnvInit = function(in_model, in_server_base){
     // seems to make in not work very well at all.
     //jQuery(graph_div).draggable();
 
-    // // Hand made--not great either...
-    // var px = -1;
-    // var py = -1;
-    // function _update_start_pos(down_evt){
-    // 	px = down_evt.pageX;
-    // 	py = down_evt.pageY;
-    // 	ll("down at: " + px + "," + py);
-    // }
-    // function _scroller(move_evt){
-    // 	var offx = move_evt.pageX - px;
-    // 	var offy = move_evt.pageY - py;
-    // 	ll('scrolling: ' + offx + "," + offy);
-    // 	//window.scrollTo(offx, offy);
-    // 	jQuery(graph_container_div).scrollTo(offx, offy);
-    // 	px = move_evt.pageX;
-    // 	py = move_evt.pageY;
-    // }
-    // function _unbind_scroller(){
-    // 	jQuery(graph_container_div).unbind('mousemove');	
-    // }
+    // Hand made--not great either...
+    var px = -1;
+    var py = -1;
+    function _update_start_pos(down_evt){
+    	px = down_evt.pageX;
+    	py = down_evt.pageY;
+    	ll("down at: " + px + "," + py);
+    }
+    function _scroller(move_evt){
+    	var offx = move_evt.pageX - px;
+    	var offy = move_evt.pageY - py;
+    	ll('scrolling: ' + offx + "," + offy);
+    	//window.scrollTo(offx, offy);
+    	//jQuery(graph_container_div).scrollTo(offx, offy);
+	var old_top = jQuery(graph_container_div).scrollTop();
+	var old_left = jQuery(graph_container_div).scrollLeft();
+	jQuery(graph_container_div).scrollTop(old_top - offy);
+	jQuery(graph_container_div).scrollLeft(old_left - offx);
+    	px = move_evt.pageX;
+    	py = move_evt.pageY;
+    }
+    function _unbind_scroller(){
+    	jQuery(graph_container_div).unbind('mousemove');	
+    }
     
-    // jQuery(graph_container_div).mousedown(
-    // 	function(e){
-    // 	    _update_start_pos(e);
-    // 	    // Bind to moving.
-    // 	    jQuery(graph_container_div).mousemove(_scroller);
-    // 	});
-    // jQuery(graph_container_div).mouseup(
-    // 	function(e){
-    // 	    ll('unbind on mouseup');
-    // 	    _unbind_scroller();
-    // 	});
-    // jQuery(graph_container_div).mouseout(
-    // 	function(e){
-    // 	    ll('unbind on mouseup');
-    // 	    _unbind_scroller();
-    // 	});
+    jQuery(graph_container_div).mousedown(
+    	function(e){
+	     if( this == e.target ){ // only stat if actual, not child
+    		 _update_start_pos(e);
+    		 // Bind to moving.
+    		 jQuery(graph_container_div).mousemove(_scroller);
+	     }
+    	});
+    jQuery(graph_container_div).mouseup(
+    	function(e){
+    	    ll('unbind on mouseup');
+    	    _unbind_scroller();
+    	});
+    jQuery(graph_container_div).mouseout(
+    	function(e){
+    	    ll('unbind on mouseup');
+    	    _unbind_scroller();
+    	});
 };
 
 // Start the day the jsPlumb way.
