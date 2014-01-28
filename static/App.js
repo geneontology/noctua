@@ -965,4 +965,3 @@ jsPlumb.ready(function(){
 			  //throw new Error('environment not ready');
 		      }
 	      });
-k
