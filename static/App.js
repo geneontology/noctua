@@ -942,15 +942,20 @@ var MMEnvInit = function(in_model, in_server_base){
     	ll("down at: " + px + "," + py);
     }
     function _scroller(move_evt){
-    	var offx = move_evt.pageX - px;
-    	var offy = move_evt.pageY - py;
-    	ll('scrolling: ' + offx + "," + offy);
+	var page_x = move_evt.pageX;
+	var page_y = move_evt.pageY;
+    	var offx = page_x - px;
+    	var offy = page_y - py;
+	var old_left = jQuery(graph_container_div).scrollLeft();
+	var old_top = jQuery(graph_container_div).scrollTop();
+    	ll('scrolling: ' +
+	   page_x + "," + page_y + '; ' +
+	   offx + "," + offy + '; ' +
+	   old_left + "," + old_top);
     	//window.scrollTo(offx, offy);
     	//jQuery(graph_container_div).scrollTo(offx, offy);
-	var old_top = jQuery(graph_container_div).scrollTop();
-	var old_left = jQuery(graph_container_div).scrollLeft();
-	jQuery(graph_container_div).scrollTop(old_top - offy);
 	jQuery(graph_container_div).scrollLeft(old_left - offx);
+	jQuery(graph_container_div).scrollTop(old_top - offy);
     	px = move_evt.pageX;
     	py = move_evt.pageY;
     }
@@ -958,6 +963,7 @@ var MMEnvInit = function(in_model, in_server_base){
     	jQuery(graph_container_div).unbind('mousemove');	
     }
     
+    // Stat on mouse down.
     jQuery(graph_container_div).mousedown(
     	function(e){
 	     if( this == e.target ){ // only stat if actual, not child
@@ -966,6 +972,8 @@ var MMEnvInit = function(in_model, in_server_base){
     		 jQuery(graph_container_div).mousemove(_scroller);
 	     }
     	});
+
+    // Stop for almost any reason.
     jQuery(graph_container_div).mouseup(
     	function(e){
     	    ll('unbind on mouseup');
@@ -976,6 +984,26 @@ var MMEnvInit = function(in_model, in_server_base){
     	    ll('unbind on mouseup');
     	    _unbind_scroller();
     	});
+    jQuery(graph_container_div).mouseleave(
+    	function(e){
+    	    ll('unbind on mouseleave');
+    	    _unbind_scroller();
+    	});
+    jQuery(graph_container_div).select( // to trigger, we're moving fast
+    	function(e){
+    	    ll('unbind on select');
+    	    _unbind_scroller();
+    	});
+    // jQuery(graph_container_div).blur(
+    // 	function(e){
+    // 	    ll('unbind on blur');
+    // 	    _unbind_scroller();
+    // 	});
+    // jQuery(graph_container_div).focusout(
+    // 	function(e){
+    // 	    ll('unbind on focusout');
+    // 	    _unbind_scroller();
+    // 	});
 };
 
 // Start the day the jsPlumb way.
