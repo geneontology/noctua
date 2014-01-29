@@ -121,10 +121,10 @@ var MMEnvServer = function() {
 		'Landing.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
-		'base.tmpl': '',
+		'index_base.tmpl': '',
 		'app_base.tmpl': '',
 		'index_content.tmpl': '',
-		'frame.tmpl': ''
+		'app_content.tmpl': ''
 	    };
         }
 	
@@ -197,7 +197,7 @@ var MMEnvServer = function() {
 			     self.cache_get('index_content.tmpl').toString();
 			 var ind_cont = mustache.render(index_tmpl);
 
-			 var base_tmpl = self.cache_get('base.tmpl').toString();
+			 var base_tmpl = self.cache_get('index_base.tmpl').toString();
 			 var base_tmpl_args = {
 			     'title': 'go-mme',
 			     'content': ind_cont,
@@ -267,7 +267,7 @@ var MMEnvServer = function() {
 			 res.setHeader('Content-Type', 'text/html');
 
 			    var frame_tmpl =
-				self.cache_get('frame.tmpl').toString();
+				self.cache_get('app_content.tmpl').toString();
 			    var frame_cont = mustache.render(frame_tmpl);
 
 			    var base_tmpl =
@@ -325,7 +325,7 @@ var MMEnvServer = function() {
 				     res.setHeader('Content-Type', 'text/html');
 				     
 				     var frame_tmpl =
-					 self.cache_get('frame.tmpl').toString();
+					 self.cache_get('app_content.tmpl').toString();
 				     var frame_cont = mustache.render(frame_tmpl);
 				     
 				     var base_tmpl =
@@ -385,7 +385,7 @@ var MMEnvServer = function() {
 			 res.setHeader('Content-Type', 'text/html');
 
 			    var frame_tmpl =
-				self.cache_get('frame.tmpl').toString();
+				self.cache_get('app_content.tmpl').toString();
 			    var frame_cont = mustache.render(frame_tmpl);
 
 			    var base_tmpl =
