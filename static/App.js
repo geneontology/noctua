@@ -292,8 +292,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			 // wipe_node_contents()
 			 // redraw_node_contents()
 		     }else{
-			 // TODO: Does this work?
-			 // New node to edit core, pull it out for
+			 // Add new node to edit core, pull it out for
 			 // some work.
 			 ecore.add_node_from_individual(ind);
 			 var dyn_node = ecore.get_node_by_individual(ind);
@@ -452,7 +451,8 @@ var MMEnvInit = function(in_model, in_server_base){
     // Find the initial layout position of the layout. There might be
     // some missing due to finding cycles in the graph, so we have
     // this two-step process.
-    var layout_coord_lookup = {};
+    var layout_store = new bbop_location_store();
+    var historical_store = new bbop_location_store();
     each(layout['nodes'],
 	 function(litem, index){
 	     var id = litem['id'];
@@ -460,25 +460,31 @@ var MMEnvInit = function(in_model, in_server_base){
 	     var raw_y = litem['y'];
 	     var fin_x = _box_left(raw_x);
 	     var fin_y = _box_top(raw_y);
-	     layout_coord_lookup[id] = {'x': fin_x, 'y': fin_y};
+	     layout_store.add(id, fin_x, fin_y);
 	 });
     // Now got through all of the actual nodes.
     each(ecore.get_nodes(),
 	 function(enid, en){
-	     //var enid = en.id();
 
-	     // Try and see if we have coords; if not, make some up.
-	     var fin_x = _vari();
-	     var fin_y = _vari();
-	     var try_coords = layout_coord_lookup[enid];
-	     if( try_coords ){   
-		 fin_x = try_coords['x'];
-		 fin_y = try_coords['y'];
+	     // Try and see if we have coords; the precedence is:
+	     // historical (drop), layout, make some up.
+	     var fin_x = null;
+	     var fin_y = null;
+	     var hist_coords = layout_store.get(enid);
+	     var layout_coords = layout_store.get(enid);
+	     if( hist_coords ){
+		 fin_x = hist_coords['x'];
+		 fin_y = hist_coords['y'];
+	     }else if( layout_coords ){
+		 fin_x = layout_coords['x'];
+		 fin_y = layout_coords['y'];
+	     }else{
+		 fin_x = _vari();
+		 fin_y = _vari();		 
 	     }
 
-	     // TODO: This is where another hash of saved positions
-	     // would go.
-
+	     // Take the final coordinate and add it as a hint into
+	     // the edit node.
 	     en.x_init(fin_x);
 	     en.y_init(fin_y);
 	 });	
@@ -522,8 +528,44 @@ var MMEnvInit = function(in_model, in_server_base){
     ///    
 
     function _make_selector_draggable(sel){
+
 	var foo = jsPlumb.getSelector(sel);
-	instance.draggable(foo);
+
+	// Make it draggable, and update where it is when it is
+	// dropped.
+	function _on_drag_stop(evt, ui){
+
+	    // Try an jimmy out the enode ssociated with this event.
+	    var enid = ui.helper.attr('id');
+	    var en = ecore.get_node_by_elt_id(enid);
+
+	    // If we got something, locate it and save the position.
+	    if( en ){
+
+		// Grab position.
+		var t = ui.position.top;
+		var l = ui.position.left;
+
+		ll('stop (' + en.id() + ') at:' + t + ', ' + l);
+
+		// Keep track of where we leave it when we move it.
+		historical_store.add(en.id(), t, l);
+	    }
+	}
+	instance.draggable(foo, {stop: _on_drag_stop});
+
+	// TODO: Map the event back to a real node in the graph.
+
+	// // Also make it report what it's doing when it gets dropped.
+	// jQuery(sel).unbind('mousedown');
+	// jQuery(sel).mousedown(
+	//     function(evt){
+	// 	if( this == evt.target ){ // only stat if actual, not child
+    	// 	    var x = evt.pageX;
+    	// 	    var y = evt.pageY;
+	// 	    ll('release at: ' + x + ', ' + y);
+	// 	}
+	//     });
     }
 
     function _make_selector_target(sel){
