@@ -131,8 +131,16 @@ var MMEnvServer = function() {
         // Local cache for static content.
 	each(self.zcache,
 	     function(cache_item){
-		 self.zcache[cache_item] =
-		     fs.readFileSync('./static/' + cache_item);
+		 // Try to read from static and js.
+		 each(['static', 'js'],
+		      function(loc){
+			  var path = './' + loc + '/' + cache_item;
+			  //console.log('l@: ' + path);
+			  if( fs.existsSync(path) ){
+			      console.log('found: ' + path);
+			      self.zcache[cache_item] = fs.readFileSync(path);
+			  }
+		      });
 	     });
     };
 
