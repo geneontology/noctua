@@ -132,7 +132,7 @@ var MMEnvServer = function() {
 	each(self.zcache,
 	     function(cache_item){
 		 // Try to read from static and js.
-		 each(['static', 'js'],
+		 each(['static', 'js', 'templates'],
 		      function(loc){
 			  var path = './' + loc + '/' + cache_item;
 			  //console.log('l@: ' + path);
