@@ -137,7 +137,7 @@ var MMEnvServer = function() {
 			  var path = './' + loc + '/' + cache_item;
 			  //console.log('l@: ' + path);
 			  if( fs.existsSync(path) ){
-			      console.log('found: ' + path);
+			      //console.log('found: ' + path);
 			      self.zcache[cache_item] = fs.readFileSync(path);
 			  }
 		      });
