@@ -550,7 +550,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		var t = ui.position.top;
 		var l = ui.position.left;
 
-		ll('stop (' + en.id() + ') at:' + t + ', ' + l);
+		//ll('stop (' + en.id() + ') at:' + t + ', ' + l);
 
 		// Keep track of where we leave it when we move it.
 		historical_store.add(en.id(), t, l);

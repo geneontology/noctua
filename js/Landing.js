@@ -31,8 +31,11 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var auto_wizard_spdb_elt = '#' + auto_wizard_spdb_id;
     var auto_wizard_button_generate_id = 'auto_wizard_button_generate';
     var auto_wizard_button_generate_elt = '#' + auto_wizard_button_generate_id;
-    var auto_wizard_button_jump_id = 'auto_wizard_button_jump';
-    var auto_wizard_button_jump_elt = '#' + auto_wizard_button_jump_id;
+    // Contact point for the simpler blank generator.
+    var auto_blank_spdb_id = 'auto_blank_spdb';
+    var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
+    var auto_blank_button_generate_id = 'auto_blank_button_generate';
+    var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
     // Hidden reusable modal for action blocking.
     var modal_blocking_id = 'modal_blocking';
     var modal_blocking_elt = '#' + modal_blocking_id;
@@ -66,9 +69,9 @@ var MMEnvBootstrappingInit = function(in_server_base){
 	jQuery(modal_blocking_elt).modal('hide');
     }
 
-    // On model build success, forward to the new page.
-    var wizard_jump_term = null;
-    var wizard_jump_db = null;
+    // On any model build success, forward to the new page.
+    // var wizard_jump_term = null;
+    // var wizard_jump_db = null;
     function _generated_model(resp, man){
 	var id = resp.data()['id'];	
 	window.location.replace("/seed/model/" + id);
@@ -205,11 +208,25 @@ var MMEnvBootstrappingInit = function(in_server_base){
     	    if( ! term || term == '' || ! spdb || spdb == '' ){
     		alert('necessary field empty');
     	    }else{
-
 		// BUG: For Chris.
-		wizard_jump_term = term;
-		wizard_jump_db = spdb;
-		manager.generate_model(wizard_jump_term, wizard_jump_db);
+		// wizard_jump_term = term;
+		// wizard_jump_db = spdb;
+		// manager.generate_model(wizard_jump_term, wizard_jump_db);
+		manager.generate_model(term, spdb);
+    	    }
+    	}
+    );
+
+    // ...
+    jQuery(auto_blank_button_generate_elt).click(
+    	function(){
+    	    var spdb = jQuery(auto_blank_spdb_elt).val();
+
+    	    if( ! spdb || spdb == '' ){
+    		alert('necessary field empty');
+    	    }else{
+		// BUG: For Chris.
+		manager.generate_blank_model(spdb);
     	    }
     	}
     );
@@ -221,22 +238,6 @@ var MMEnvBootstrappingInit = function(in_server_base){
 	    evt.preventDefault();
 	    alert('not yet implemented');
 	});
-
-    // jQuery(auto_wizard_button_jump_elt).click(
-    // 	function(){
-    // 	    var term = auto_wizard_term.content();
-    // 	    var spdb = auto_wizard_spdb.content();
-
-    // 	    if( ! term || term == '' || ! spdb || spdb == '' ){
-    // 		alert('necessary field empty');
-    // 	    }else{
-
-    // 		// BUG: For Chris.
-    // 		wizard_jump_term = term;
-    // 		wizard_jump_db = spdb;
-    // 	    }
-    // 	}
-    // );
 
     ///
     /// Get info from server.

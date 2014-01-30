@@ -128,6 +128,17 @@ var bbop_mme_manager = function(server_base){
     };
     
     // 
+    // Likely triggers "inconsistent".
+    anchor.generate_blank_model = function(db_id){
+	var url = server_base + '/m3GenerateBlankMolecularModel';
+	var args = {
+	    'db': db_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
+    // 
     // Likely triggers "information".
     anchor.get_model_ids = function(){
 	var url = server_base + '/m3GetAllModelIds';
