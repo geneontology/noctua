@@ -1,9 +1,5 @@
 ////
 //// ...
-// http://localhost:6800/m3CreateIndividual?modelId=gomodel:wb-GO_0043053&classId=GO_0008150
-// http://localhost:6800/m3AddType?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d864050000001&classId=GO_0008150
-// http://localhost:6800/m3AddType?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d864050000001&classId=GO_0008850
-// http://localhost:6800/m3AddFact?modelId=gomodel:wb-GO_0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000002&fillerId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000001&propertyId=BFO_0000050
 ////
 
 ///
@@ -498,21 +494,17 @@ var MMEnvInit = function(in_model, in_server_base){
 	// stuff while we get a little work done rebuilding the UI.
 	instance.doWhileSuspended(
     	    function(){
-	    
-		// // Initialize table with data.
-		// widgets.repaint_table(ecore, aid, table_div);
-		
-		// // Add all of the nodes to the display.
-    		// // For all of the enodes we've collected.
-    		// widgets.wipe(graph_div);
 
 		// Initial render of the graph.
     		each(ecore.get_nodes(),
     		     function(enode_id, enode){
-    			 if( enode.existential() == 'real' ){ // if a "real" node
+			 // Add if a "real" node.
+    			 if( enode.existential() == 'real' ){
     			     widgets.add_enode(ecore, enode, aid, graph_div);
-    			 }else{ // == 'virtual'; will not be used if no waypoints
-			     widgets.add_virtual_node(ecore, enode, aid, graph_div);
+    			 }else{
+			     // == 'virtual'; will not be used if no waypoints.
+			     widgets.add_virtual_node(ecore, enode,
+						      aid, graph_div);
     			 }
     		     });
     		// Now let's try to add all the edges/connections.
@@ -725,7 +717,7 @@ var MMEnvInit = function(in_model, in_server_base){
 
 		      //var cid = info.connection.id;
 		      //ll('there was a new connection: ' + cid);
-		      ll('oringinal?: ' + original_p);
+		      ll('original?: ' + original_p);
 		      
 		      // TODO/BUG: This section needs to be redone/rethought.
 		      // If it looks like a drag-and-drop event...
@@ -736,6 +728,11 @@ var MMEnvInit = function(in_model, in_server_base){
 			  var sn = info.sourceId;
 			  var tn = info.targetId;
 
+			  // TODO/BUG: Destroy the autogen one (I
+			  // can't make them behave as well as the
+			  // programmatic ones--need to understand:
+			  // http://jsplumbtoolkit.com/doc/connections).
+			  // then create the programmatic one.
 			  // This connection is no longer needed.
 			  instance.detach(info.connection);
 
@@ -765,9 +762,9 @@ var MMEnvInit = function(in_model, in_server_base){
 		  	      // //conn.setLabel(rval); // does not work!?
 		  	      // conn.removeOverlay("label");
 		  	      // conn.addOverlay(["Label", {'label': rval,
-		  	      // 				 'location': 0.5,
-		  	      // 				 'cssClass': "aLabel",
-		  	      // 				 'id': 'label' } ]);
+		  	      // 			 'location': 0.5,
+		  	      // 			 'cssClass': "aLabel",
+		  	      // 			 'id': 'label' } ]);
 			      
 		  	      // TODO: Since we'll be talking to the
 		  	      // server, this will actually be: ping
@@ -792,23 +789,6 @@ var MMEnvInit = function(in_model, in_server_base){
 		  		  evt.stopPropagation();
 		  		  _rel_save_button_start();
 		  	      });
-
-			  // });
-
-			  // // // Destroy what we did.
-			  // // instance.detach(info);
-			  // // ll('boom');
-
-			  // var new_eedge =
-			  //     new bme_edge(snode.id(), '???', tnode.id());
-			  // ecore.add_edge(new_eedge);
-
-			  // // TODO/BUG: Destroy the autogen one (I
-			  // // can't make them behave as well as the
-			  // // programmatic ones--need to understand:
-			  // // http://jsplumbtoolkit.com/doc/connections).
-			  // // then create the programmatic one.
-			  //
 		      }
 		  });
 
