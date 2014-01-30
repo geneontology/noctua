@@ -43,7 +43,11 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 	var nav_tbl_headers = [];
 	each(cat_list,
 	     function(cat_id){
-		 nav_tbl_headers.push(aid.readable(cat_id));
+		 var hdrc = [
+		     aid.readable(cat_id),
+		     '&uarr;&darr;'
+		 ];
+		 nav_tbl_headers.push(hdrc.join(' '));
 	     });
 	
 	//	var nav_tbl_headers = cat_list;
@@ -51,7 +55,8 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 	
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
-				{'class': ['table', 'table-bordered',
+				{'generate_id': true,
+				 'class': ['table', 'table-bordered',
 					   'table-hover',
 					   'table-condensed'].join(' ')});
 	
@@ -93,6 +98,9 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 	// Add to display.
 	jQuery(table_div).empty();
 	jQuery(table_div).append(nav_tbl.to_string());
+
+	// Make it sortable using the plugin.
+	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
     }
 };
 

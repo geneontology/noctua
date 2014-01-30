@@ -110,6 +110,7 @@ var MMEnvServer = function() {
 		'bootstrap.min.js': '',
 		'jquery-ui-1.10.3.custom.min.js': '',
 		'jquery.jsPlumb-1.5.5.js': '',
+		'jquery.tablesorter.min.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',
 		'bbop-mme-context.js': '',
