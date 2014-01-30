@@ -38,6 +38,9 @@ var MMEnvInit = function(in_model, in_server_base){
     //var bbop_mme_edit = require('./js/bbop-mme-edit');
     var ecore = new bme_core();
 
+    // Where we move the nodes during this session.
+    var historical_store = new bbop_location_store();
+
     // Events registry.
     var manager = new bbop_mme_manager(in_server_base);
 
@@ -192,8 +195,122 @@ var MMEnvInit = function(in_model, in_server_base){
     /// jsPlumb/edit core helpers.
     ///
 
+    function _make_selector_draggable(sel){
+
+	var foo = jsPlumb.getSelector(sel);
+
+	// Make it draggable, and update where it is when it is
+	// dropped.
+	function _on_drag_stop(evt, ui){
+
+	    // Try an jimmy out the enode ssociated with this event.
+	    var enid = ui.helper.attr('id');
+	    var en = ecore.get_node_by_elt_id(enid);
+
+	    // If we got something, locate it and save the position.
+	    if( en ){
+
+		// Grab position.
+		var t = ui.position.top;
+		var l = ui.position.left;
+
+		//ll('stop (' + en.id() + ') at:' + t + ', ' + l);
+
+		// Keep track of where we leave it when we move it.
+		historical_store.add(en.id(), l, t);
+	    }
+	}
+
+	instance.draggable(foo, {stop: _on_drag_stop});
+    }
+
+    function _make_selector_target(sel){
+	instance.makeTarget(jsPlumb.getSelector(sel), {
+    				anchor:"Continuous",
+				isTarget: true,
+				//maxConnections: -1,
+				connector:[ "Bezier", { curviness: 25 } ]
+    			    });
+    }
+
+    function _make_selector_source(sel, subsel){
+        instance.makeSource(jsPlumb.getSelector(sel), {
+                                filter: subsel,
+                                anchor:"Continuous",
+				isSource: true,
+				//maxConnections: -1,
+                                connector:[ "Bezier", { curviness: 25 } ]
+                            });
+    }
+    
+    function _make_selector_editable(sel){
+
+	// TODO: This is likely somewhere else later.
+	function edit_node_by(enode){
+
+	    // TODO: Jimmy out information about this node.
+	    var tid = enode.id();
+	    var ttype = enode.existential();
+
+	    // Rewrite modal contents with node info and editing
+	    // options.
+	    var dbid = bbop.core.uuid();
+	    jQuery(modal_node_title_elt).empty();
+	    jQuery(modal_node_title_elt).append('Node: ' + tid);
+	    jQuery(modal_node_body_elt).empty();
+	    var appy = [
+		'<h4>Information</h4>',
+		'<p>type: ' + ttype + '</p>',
+		'<hr />',
+		'<h4>Operations</h4>',
+		'<p>',
+		'<button id="'+ dbid +'" type="button" class="btn btn-danger">',
+		'Delete node',
+		'</button>',
+		'</p>'
+	    ];
+	    jQuery(modal_node_body_elt).append(appy.join(''));
+
+	    // Add the deletion callback
+	    jQuery('#' + dbid).click(
+		function(evt){
+		    evt.stopPropagation();
+
+		    // Delete ind and related edges.
+		    _delete_iae_from_ui(tid);
+		    _delete_iae_from_ecore(tid);
+
+		    // Close modal.
+		    jQuery(modal_node_elt).modal('hide');
+		});
+
+	    // Display modal.
+	    var modal_node_opts = {
+	    };
+	    jQuery(modal_node_elt).modal(modal_node_opts);
+	}
+
+	// Add this event to whatever we got called in.
+	jQuery(sel).click(
+	    function(evnt){
+		evnt.stopPropagation();
+
+		// TODO: Resolve the event into the edit core node.
+		var target_elt = jQuery(evnt.target);
+		var parent_elt = target_elt.parent();
+		var parent_id = parent_elt.attr('id');
+		var enode = ecore.get_node_by_elt_id(parent_id);
+		if( enode ){		    
+		    // TODO: Pass said node to be edited.
+		    edit_node_by(enode);
+		}else{
+		    alert('Could not find related element.');
+		}
+	    });
+    }
+
     // TODO/BUG
-    function _delete_individual(indv_id){
+    function _delete_iae_from_ui(indv_id){
 
 	// Delete all UI connections associated with
 	// node. This also triggers the "connectionDetached"
@@ -204,15 +321,12 @@ var MMEnvInit = function(in_model, in_server_base){
 
 	// Delete node from UI/model.
 	jQuery('#' + nelt).remove();
-	ecore.remove_node(indv_id); // recursively removes
-
-	// 
-	alert('this does not affect the server model--just the client');
     }
 
-    ///
-    /// Edit core helpers.
-    ///
+    //
+    function _delete_iae_from_ecore(indv_id){
+	ecore.remove_node(indv_id); // recursively removes
+    }
 
     function _connect_with_edge(eedge){
 
@@ -273,102 +387,250 @@ var MMEnvInit = function(in_model, in_server_base){
 	widgets.repaint_table(ecore, aid, table_div);
     }
 
-    // This is a very important core function. It's purpose is to
-    // update the loval model and UI to be consistent with the current
-    // state and the data input.
-    function _merge_response(resp, man){
+    // The core initial layout function.
+    function _rebuild_from_individuals(individuals){
+	ll('Not yet handled...try refreshing your browser');
+	
+	// Wipe UI.
+	each(ecore.get_nodes(),
+	     function(enid, en){
+		 _delete_iae_from_ui(enid);
+		 _delete_iae_from_ecore(enid);
+	     });
+	widgets.wipe(graph_div); // rather severe
 
-	// 
-	var individuals = resp.data();
-	if( ! individuals ){
-	    alert('no data/individuals?');
-	}else{
+	// Wipe ecore.
+	ecore = new bme_core(); // nuke it from orbit
 
-	    // First look at individuals/nodes for addition or updating.
-	    each(individuals,
-		 function(ind){
-		     var update_node = ecore.get_node_by_individual(ind);
-		     if( update_node ){
-			 // TODO: Update node. This is preferred since
-			 // deleting it would mean that all the connections
-			 // would have to be reconstructed as well.
-			 // ecore.merge_node(ind)
-			 // wipe_node_contents()
-			 // redraw_node_contents()
-		     }else{
-			 // Add new node to edit core, pull it out for
-			 // some work.
-			 ecore.add_node_from_individual(ind);
-			 var dyn_node = ecore.get_node_by_individual(ind);
-			 if( ! dyn_node ){
-			     alert('id issue somewhere--refresh to see state');
-			 }else{
+	// Starting fresh, add everything coming in to the edit model.
+	each(individuals,
+	     function(indv){
+		 ecore.add_node_from_individual(indv);
+		 ecore.add_edges_from_individual(indv, aid);
+	     });
 
-			     // Initial node layout settings.
-    			     var dyn_x = _vari() +
-				 jQuery(graph_container_div).scrollLeft();
-    			     var dyn_y = _vari() +
-				 jQuery(graph_container_div).scrollTop();
-			     dyn_node.x_init(dyn_x);
-			     dyn_node.y_init(dyn_y);
-			     
-			     // Draw it to screen.
-			     widgets.add_enode(ecore, dyn_node, aid, graph_div);
+	///
+	/// We now have a well-defined edit core. Let's try and add
+	/// some layout information if we can: edit core topology to
+	/// graph.
+	///
 
-			     // Make node active in display.
-			     var dnid = dyn_node.id();
-			     var ddid = '#' + ecore.get_node_elt_id(dnid);
-			     _make_selector_draggable(ddid);
-			     //_make_selector_target(ddid);
-			     //_make_selector_source(ddid, '.konn');
-			     _make_selector_editable(".open-dialog");
-			     // _make_selector_draggable('.demo-window');
-			     _make_selector_target('.demo-window');
-			     _make_selector_source('.demo-window', '.konn');
-			     
-    			     jsPlumb.repaintEverything();	
-			 }
+	// Extract the gross layout.
+	var g = ecore.to_graph();
+	var r = new bbop.layout.sugiyama.render();
+	var layout = r.layout(g);
+
+	// Find the initial layout position of the layout. There might
+	// be some missing due to finding cycles in the graph, so we
+	// have this two-step process.
+	var layout_store = new bbop_location_store();
+	each(layout['nodes'],
+	     function(litem, index){
+		 var id = litem['id'];
+		 var raw_x = litem['x'];
+		 var raw_y = litem['y'];
+		 var fin_x = _box_left(raw_x);
+		 var fin_y = _box_top(raw_y);
+		 layout_store.add(id, fin_x, fin_y);
+	     });
+	// Now got through all of the actual nodes.
+	each(ecore.get_nodes(),
+	     function(enid, en){
+
+		 // Try and see if we have coords; the precedence is:
+		 // historical (drop), layout, make some up.
+		 var fin_x = null;
+		 var fin_y = null;
+		 var hist_coords = historical_store.get(enid);
+		 var layout_coords = layout_store.get(enid);
+		 if( hist_coords ){
+		     fin_x = hist_coords['x'];
+		     fin_y = hist_coords['y'];
+		 }else if( layout_coords ){
+		     fin_x = layout_coords['x'];
+		     fin_y = layout_coords['y'];
+		 }else{
+		     fin_x = _vari();
+		     fin_y = _vari();		 
+		 }
+
+		 // Take the final coordinate and add it as a hint into
+		 // the edit node.
+		 en.x_init(fin_x);
+		 en.y_init(fin_y);
+	     });	
+
+	// Add additional information if the waypoint flag is set.
+	if( use_waypoints_p ){
+	
+	    alert('this method does not (yet) support rels on edges');
+
+	    // Add waypoint virtual nodes.
+	    each(layout['virtual_nodes'],
+		 function(litem, index){
+		     var id = litem['id'];
+		     var raw_x = litem['x'];
+		     var raw_y = litem['y'];
+
+		     var vn = new bme_node(id, 'virtual');
+		     vn.x_init(_vbox_left(raw_x));
+		     vn.y_init(_vbox_top(raw_y));
+		     
+		     ecore.add_node(vn);
+		 });	
+
+	    // Add additional waypoint path information to the edges.
+	    each(layout['paths'],
+    		 function(path){
+		     var nodes = path['nodes'];
+		     //var waypoints = path['waypoints']; // not right now?
+		     for(var ni = 0; ni < (nodes.length -1); ni++ ){
+			 var sub_id = nodes[ni];
+			 var obj_id = nodes[ni +1];
+			 
+			 var new_vedge = new bme_edge(sub_id, null, obj_id);
+			 ecore.add_edge(new_vedge);
 		     }
-		 });
-
-	    // Now look at individuals/edges (by individual) for
-	    // purging and reinitiation.
-	    each(individuals,
-		 function(ind){
-		     var source_node = ecore.get_node_by_individual(ind);
-		     
-		     var snid = source_node.id();
-		     var src_edges = ecore.get_edges_by_source(snid);
-		     
-		     // Delete all edges/connectors for said node in
-		     // model.
-		     each(src_edges,
-			  function(src_edge){
-			      ecore.remove_edge(snid);
-			  });
-
-		     // Now delete all edges for the node in the UI.
-		     var snid_elt = ecore.get_node_elt_id(snid);
-		     var src_conns =
-			 instance.getConnections({'source': snid_elt});
-		     each(src_conns,
-			  function(src_conn){
-			      instance.detach(src_conn);
-			  });
-		     
-		     // Add all edges from the new individuals to the
-		     // model.
-		     var redges = ecore.add_edges_from_individual(ind, aid);
-
-		     // Now add them to the display.
-		     each(redges,
-			  function(redge){
-			      _connect_with_edge(redge);
-			  });
 		 });
 	}
 
-	//alert('finished _merge_response');
+	// For our intitialization/first drawing, suspend jsPlumb
+	// stuff while we get a little work done rebuilding the UI.
+	instance.doWhileSuspended(
+    	    function(){
+	    
+		// // Initialize table with data.
+		// widgets.repaint_table(ecore, aid, table_div);
+		
+		// // Add all of the nodes to the display.
+    		// // For all of the enodes we've collected.
+    		// widgets.wipe(graph_div);
+
+		// Initial render of the graph.
+    		each(ecore.get_nodes(),
+    		     function(enode_id, enode){
+    			 if( enode.existential() == 'real' ){ // if a "real" node
+    			     widgets.add_enode(ecore, enode, aid, graph_div);
+    			 }else{ // == 'virtual'; will not be used if no waypoints
+			     widgets.add_virtual_node(ecore, enode, aid, graph_div);
+    			 }
+    		     });
+    		// Now let's try to add all the edges/connections.
+    		each(ecore.get_edges(),
+    		     function(eeid, eedge){
+    			 _connect_with_edge(eedge);
+    		     });
+		
+		// Make nodes draggable.
+		_make_selector_draggable(".demo-window");
+		if( use_waypoints_p ){	
+		    _make_selector_draggable(".waypoint");
+		}
+		
+    		// Make normal nodes availables as edge targets.
+		_make_selector_target('.demo-window');
+    		if( use_waypoints_p ){ // same for waypoints/virtual nodes
+		    _make_selector_target('.waypoint');
+    		}
+		
+		// Make the konn class available as source from inside the
+		// real node class elements.
+		_make_selector_source('.demo-window', '.konn');
+		
+		// Make nodes able to use edit dialog.
+		_make_selector_editable(".open-dialog");
+		
+    	    });	
+    }
+
+    // This is a very important core function. It's purpose is to
+    // update the loval model and UI to be consistent with the current
+    // state and the data input.
+    function _merge_from_individuals(individuals){
+
+	// First look at individuals/nodes for addition or updating.
+	each(individuals,
+	     function(ind){
+		 var update_node = ecore.get_node_by_individual(ind);
+		 if( update_node ){
+		     // TODO: Update node. This is preferred since
+		     // deleting it would mean that all the connections
+		     // would have to be reconstructed as well.
+		     // ecore.merge_node(ind)
+		     // wipe_node_contents()
+		     // redraw_node_contents()
+		     alert('cannot update nodes yet; suggest refreshing');
+		 }else{
+		     // Add new node to edit core, pull it out for
+		     // some work.
+		     ecore.add_node_from_individual(ind);
+		     var dyn_node = ecore.get_node_by_individual(ind);
+		     if( ! dyn_node ){
+			 alert('id issue somewhere--refresh to see state');
+		     }else{
+			 
+			 // Initial node layout settings.
+    			 var dyn_x = _vari() +
+			     jQuery(graph_container_div).scrollLeft();
+    			 var dyn_y = _vari() +
+			     jQuery(graph_container_div).scrollTop();
+			 dyn_node.x_init(dyn_x);
+			 dyn_node.y_init(dyn_y);
+			 
+			 // Draw it to screen.
+			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
+			 
+			 // Make node active in display.
+			 var dnid = dyn_node.id();
+			 var ddid = '#' + ecore.get_node_elt_id(dnid);
+			 _make_selector_draggable(ddid);
+			 //_make_selector_target(ddid);
+			 //_make_selector_source(ddid, '.konn');
+			 _make_selector_editable(".open-dialog");
+			 // _make_selector_draggable('.demo-window');
+			 _make_selector_target('.demo-window');
+			 _make_selector_source('.demo-window', '.konn');
+			 
+    			 jsPlumb.repaintEverything();	
+		     }
+		 }
+	     });
+	
+	// Now look at individuals/edges (by individual) for
+	// purging and reinitiation.
+	each(individuals,
+	     function(ind){
+		 var source_node = ecore.get_node_by_individual(ind);
+		 
+		 var snid = source_node.id();
+		 var src_edges = ecore.get_edges_by_source(snid);
+		 
+		 // Delete all edges/connectors for said node in
+		 // model.
+		 each(src_edges,
+		      function(src_edge){
+			  ecore.remove_edge(snid);
+		      });
+		 
+		 // Now delete all edges for the node in the UI.
+		 var snid_elt = ecore.get_node_elt_id(snid);
+		 var src_conns =
+		     instance.getConnections({'source': snid_elt});
+		 each(src_conns,
+		      function(src_conn){
+			  instance.detach(src_conn);
+		      });
+		 
+		 // Add all edges from the new individuals to the
+		 // model.
+		 var redges = ecore.add_edges_from_individual(ind, aid);
+		 
+		 // Now add them to the display.
+		 each(redges,
+		      function(redge){
+			  _connect_with_edge(redge);
+		      });
+	     });
     }
     
     ///
@@ -419,13 +681,23 @@ var MMEnvInit = function(in_model, in_server_base){
 
     manager.register('inconsistent', 'foo',
 		     function(resp, man){
-			 alert('Not yet handled (' +
-			       resp.message_type() + '): ' +
-			       resp.message() + '; ' +
-			       'try refreshing your browser');
+			 var dmodel = resp.data();
+			 if( ! dmodel || ! dmodel['individuals'] ){
+			     alert('no data/individuals in inconsistent');
+			 }else{
+			     _rebuild_from_individuals(dmodel['individuals']);
+			 }
 		     }, 10);
 
-    manager.register('merge', 'foo', _merge_response, 10);
+    manager.register('merge', 'foo',
+		     function(resp, man){
+			 var individuals = resp.data();
+			 if( ! individuals ){
+			     alert('no data/individuals in merge');
+			 }else{
+			     _merge_from_individuals(individuals);
+			 }
+		     }, 10);
 
     ///
     /// Load the incoming graph into something useable for population
@@ -435,284 +707,16 @@ var MMEnvInit = function(in_model, in_server_base){
     var model_id = global_id;
     var model_json = in_model;
 
-    // Initially, add everything to the edit model.
-    each(model_json['individuals'],
-	 function(indv){
-	     ecore.add_node_from_individual(indv);
-	     ecore.add_edges_from_individual(indv, aid);
-	 });
+    // Since we're doing this "manually", apply the prerun and postrun
+    // "manually".
+    _shields_up();
+    _rebuild_from_individuals(model_json['individuals']);
+    _refresh_table();
+    _shields_down();
 
     ///
-    /// We now have a well-defined edit core. Let's try and add some
-    /// layout information if we can: edit core topology to graph.
-    ///
-
-    // Extract the gross layout.
-    var g = ecore.to_graph();
-    var r = new bbop.layout.sugiyama.render();
-    var layout = r.layout(g);
-
-    // Find the initial layout position of the layout. There might be
-    // some missing due to finding cycles in the graph, so we have
-    // this two-step process.
-    var layout_store = new bbop_location_store();
-    var historical_store = new bbop_location_store();
-    each(layout['nodes'],
-	 function(litem, index){
-	     var id = litem['id'];
-	     var raw_x = litem['x'];
-	     var raw_y = litem['y'];
-	     var fin_x = _box_left(raw_x);
-	     var fin_y = _box_top(raw_y);
-	     layout_store.add(id, fin_x, fin_y);
-	 });
-    // Now got through all of the actual nodes.
-    each(ecore.get_nodes(),
-	 function(enid, en){
-
-	     // Try and see if we have coords; the precedence is:
-	     // historical (drop), layout, make some up.
-	     var fin_x = null;
-	     var fin_y = null;
-	     var hist_coords = layout_store.get(enid);
-	     var layout_coords = layout_store.get(enid);
-	     if( hist_coords ){
-		 fin_x = hist_coords['x'];
-		 fin_y = hist_coords['y'];
-	     }else if( layout_coords ){
-		 fin_x = layout_coords['x'];
-		 fin_y = layout_coords['y'];
-	     }else{
-		 fin_x = _vari();
-		 fin_y = _vari();		 
-	     }
-
-	     // Take the final coordinate and add it as a hint into
-	     // the edit node.
-	     en.x_init(fin_x);
-	     en.y_init(fin_y);
-	 });	
-
-    // Add additional information if the waypoint flag is set.
-    if( use_waypoints_p ){
-	
-	alert('this method does not (yet) support rels on edges');
-
-	// Add waypoint virtual nodes.
-	each(layout['virtual_nodes'],
-	     function(litem, index){
-		 var id = litem['id'];
-		 var raw_x = litem['x'];
-		 var raw_y = litem['y'];
-
-		 var vn = new bme_node(id, 'virtual');
-		 vn.x_init(_vbox_left(raw_x));
-		 vn.y_init(_vbox_top(raw_y));
-		 
-		 ecore.add_node(vn);
-	     });	
-
-	// Add additional waypoint path information to the edges.
-	each(layout['paths'],
-    	     function(path){
-		 var nodes = path['nodes'];
-		 //var waypoints = path['waypoints']; // don't need right now?
-		 for(var ni = 0; ni < (nodes.length -1); ni++ ){
-		     var sub_id = nodes[ni];
-		     var obj_id = nodes[ni +1];
-		     
-		     var new_vedge = new bme_edge(sub_id, null, obj_id);
-		     ecore.add_edge(new_vedge);
-		 }
-	     });
-    }
-
-    ///
-    /// Now that they are physically extant, add JS stuff.
+    /// Add our general driving events.
     ///    
-
-    function _make_selector_draggable(sel){
-
-	var foo = jsPlumb.getSelector(sel);
-
-	// Make it draggable, and update where it is when it is
-	// dropped.
-	function _on_drag_stop(evt, ui){
-
-	    // Try an jimmy out the enode ssociated with this event.
-	    var enid = ui.helper.attr('id');
-	    var en = ecore.get_node_by_elt_id(enid);
-
-	    // If we got something, locate it and save the position.
-	    if( en ){
-
-		// Grab position.
-		var t = ui.position.top;
-		var l = ui.position.left;
-
-		//ll('stop (' + en.id() + ') at:' + t + ', ' + l);
-
-		// Keep track of where we leave it when we move it.
-		historical_store.add(en.id(), t, l);
-	    }
-	}
-	instance.draggable(foo, {stop: _on_drag_stop});
-
-	// TODO: Map the event back to a real node in the graph.
-
-	// // Also make it report what it's doing when it gets dropped.
-	// jQuery(sel).unbind('mousedown');
-	// jQuery(sel).mousedown(
-	//     function(evt){
-	// 	if( this == evt.target ){ // only stat if actual, not child
-    	// 	    var x = evt.pageX;
-    	// 	    var y = evt.pageY;
-	// 	    ll('release at: ' + x + ', ' + y);
-	// 	}
-	//     });
-    }
-
-    function _make_selector_target(sel){
-	instance.makeTarget(jsPlumb.getSelector(sel), {
-    				anchor:"Continuous",
-				isTarget: true,
-				//maxConnections: -1,
-				connector:[ "Bezier", { curviness: 25 } ]
-    			    });
-    }
-
-    function _make_selector_source(sel, subsel){
-        instance.makeSource(jsPlumb.getSelector(sel), {
-                                filter: subsel,
-                                anchor:"Continuous",
-				isSource: true,
-				//maxConnections: -1,
-                                connector:[ "Bezier", { curviness: 25 } ]
-                            });
-    }
-    
-    function _make_selector_editable(sel){
-
-	// TODO: This is likely somewhere else later.
-	function edit_node_by(enode){
-
-	    // TODO: Jimmy out information about this node.
-	    var tid = enode.id();
-	    var ttype = enode.existential();
-
-	    // Rewrite modal contents with node info and editing
-	    // options.
-	    var dbid = bbop.core.uuid();
-	    jQuery(modal_node_title_elt).empty();
-	    jQuery(modal_node_title_elt).append('Node: ' + tid);
-	    jQuery(modal_node_body_elt).empty();
-	    var appy = [
-		'<h4>Information</h4>',
-		'<p>type: ' + ttype + '</p>',
-		'<hr />',
-		'<h4>Operations</h4>',
-		'<p>',
-		'<button id="'+ dbid +'" type="button" class="btn btn-danger">',
-		'Delete node',
-		'</button>',
-		'</p>'
-	    ];
-	    jQuery(modal_node_body_elt).append(appy.join(''));
-
-	    // Add the deletion callback
-	    jQuery('#' + dbid).click(
-		function(evt){
-		    evt.stopPropagation();
-
-		    // Delete ind and related edges.
-		    _delete_individual(tid);
-
-		    // Close modal.
-		    jQuery(modal_node_elt).modal('hide');
-		});
-
-	    // Display modal.
-	    var modal_node_opts = {
-	    };
-	    jQuery(modal_node_elt).modal(modal_node_opts);
-	}
-
-	// Add this event to whatever we got called in.
-	jQuery(sel).click(
-	    function(evnt){
-		evnt.stopPropagation();
-
-		// TODO: Resolve the event into the edit core node.
-		var target_elt = jQuery(evnt.target);
-		var parent_elt = target_elt.parent();
-		var parent_id = parent_elt.attr('id');
-		var enode = ecore.get_node_by_elt_id(parent_id);
-		if( enode ){		    
-		    // TODO: Pass said node to be edited.
-		    edit_node_by(enode);
-		}else{
-		    alert('Could not find related element.');
-		}
-	    });
-    }
-
-    // function _connect_edge(src_div, target_div, label){	
-    // }
-
-    // var std_conn_opts = {
-    // 	//anchors:["Top", "Bottom"],
-    // 	//connector:"Straight",
-    // 	// 'overlays': [
-    // 	// ]
-    // };
-
-    // For our intitialization/first drawing, suspend jsplumb stuff
-    // while we get a little work done.
-    instance.doWhileSuspended(
-    	function(){
-	    
-	    // Initialize table with data.
-	    widgets.repaint_table(ecore, aid, table_div);
-
-	    // Add all of the nodes to the display.
-    	    // For all of the enodes we've collected.
-    	    widgets.wipe(graph_div);
-
-	    // Initial render of the graph.
-    	    each(ecore.get_nodes(),
-    		 function(enode_id, enode){
-    		     if( enode.existential() == 'real' ){ // if a "real" node
-    			 widgets.add_enode(ecore, enode, aid, graph_div);
-    		     }else{ // == 'virtual'; will not be used if no waypoints
-			 widgets.add_virtual_node(ecore, enode, aid, graph_div);
-    		     }
-    		 });
-    	    // Now let's try to add all the edges/connections.
-    	    each(ecore.get_edges(),
-    		 function(eeid, eedge){
-    		     _connect_with_edge(eedge);
-    		 });
-
-	    // Make nodes draggable.
-	    _make_selector_draggable(".demo-window");
-	    if( use_waypoints_p ){	
-		_make_selector_draggable(".waypoint");
-	    }
-
-    	    // Make normal nodes availables as edge targets.
-	    _make_selector_target('.demo-window');
-    	    if( use_waypoints_p ){ // same for waypoints/virtual nodes
-		_make_selector_target('.waypoint');
-    	    }
-
-	    // Make the konn class available as source from inside the
-	    // real node class elements.
-	    _make_selector_source('.demo-window', '.konn');
-
-	    // Make nodes able to use edit dialog.
-	    _make_selector_editable(".open-dialog");
-
-    	});
 
     // TODO/BUG: Read on.
     // Connection event.
