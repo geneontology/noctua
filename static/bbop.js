@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140124";
+bbop.version.release = "20140129";
 /*
  * Package: logger.js
  * 
@@ -6594,7 +6594,6 @@ bbop.layout.sugiyama.partitioner = function(graph){
 	}
     }
     
-
     // Run the partitioner after getting the root values (or whatever)
     // bootstrapped in.
     //var roots = graph.get_root_nodes(rel);
@@ -6611,7 +6610,7 @@ bbop.layout.sugiyama.partitioner = function(graph){
     	// TODO: Test this.
     	var a_node = graph.all_nodes()[0] || null;
     	if( ! a_node ){
-    	    throw new Error('apparently the graph is empty--stop it!');
+    	    //throw new Error('apparently the graph is empty--stop it!');
     	}else{
 	    _new_node_at(a_node, 0);
     	    recursivePartitioner(graph, a_node, [a_node.id()]);
