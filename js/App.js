@@ -948,6 +948,14 @@ var MMEnvInit = function(in_model, in_server_base){
     	    _set_zoom(nz);
     	});
 
+    // Refresh button.
+    // Trigger a model get and an inconsistent redraw.
+    jQuery(refresh_btn_elt).click(
+	function(){
+	    ll('starting refresh of model: ' + model_id);
+	    manager.get_model(model_id);
+	});
+
     // Export button.
     jQuery(export_btn_elt).click(
     	function(){
