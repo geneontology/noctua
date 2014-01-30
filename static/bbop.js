@@ -6610,6 +6610,7 @@ bbop.layout.sugiyama.partitioner = function(graph){
     	// TODO: Test this.
     	var a_node = graph.all_nodes()[0] || null;
     	if( ! a_node ){
+    	    ll('warning: apparently the graph is empty');
     	    //throw new Error('apparently the graph is empty--stop it!');
     	}else{
 	    _new_node_at(a_node, 0);
