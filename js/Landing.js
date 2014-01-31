@@ -44,10 +44,18 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var modal_blocking_title_id = 'modal_blocking_title';
     var modal_blocking_title_elt = '#' + modal_blocking_title_id;
     //
-    var select_jump_id = 'select_jump';
-    var select_jump_elt = '#' + select_jump_id;
-    var select_jump_button_id = 'select_jump_button';
-    var select_jump_button_elt = '#' + select_jump_button_id;
+    // var select_memory_jump_id = 'select_memory_jump';
+    // var select_memory_jump_elt = '#' + select_memory_jump_id;
+    // var select_memory_jump_button_id = 'select_memory_jump_button';
+    // var select_memory_jump_button_elt = '#' + select_memory_jump_button_id;
+    var select_stored_jump_id = 'select_stored_jump';
+    var select_stored_jump_elt = '#' + select_stored_jump_id;
+    var select_stored_jump_button_id = 'select_stored_jump_button';
+    var select_stored_jump_button_elt = '#' + select_stored_jump_button_id;
+    // var select_scratch_jump_id = 'select_scratch_jump';
+    // var select_scratch_jump_elt = '#' + select_scratch_jump_id;
+    // var select_scratch_jump_button_id = 'select_scratch_jump_button';
+    // var select_scratch_jump_button_elt = '#' + select_scratch_jump_button_id;
     //
     var model_data_button_id = 'model_data_button';
     var model_data_button_elt = '#' + model_data_button_id;
@@ -121,36 +129,52 @@ var MMEnvBootstrappingInit = function(in_server_base){
     manager.register('information', 'foo',
 		     function(resp, man){
 			 
+			 var list = [
+			     {
+				 //'id': 'models_stored',
+				 'id': 'models_all',
+				 'input_elt': select_stored_jump_elt,
+				 'button_elt': select_stored_jump_button_elt
+			     }
+			 ];
+
 			 var data = resp.data();
-			 if( data['models_all'] ){
 
-			     // Clear interface.
-			     jQuery(select_jump_elt).empty();
+			 each(list,
+			      function(model_def){
+				  var mid = model_def['id'];
+				  var input_elt = model_def['input_elt'];
+				  var button_elt = model_def['button_elt'];
 
-			     // Insert model IDs into interface.
-			     var model_ids = data['models_all'];
-			     var rep_cache = [];
-			     each(model_ids,
-				  function(mid){
-				      rep_cache.push('<option>');
-				      rep_cache.push(mid);
-				      rep_cache.push('</option>');
-				  });
-			     var rep_str = rep_cache.join('');
-			     jQuery(select_jump_elt).append(rep_str);
+				  if( ! data[mid] ){
+				      ll('no data in for: ' + mid);
+				  }else{
+
+				      // Clear interface.
+				      jQuery(input_elt).empty();
+
+				      // Insert model IDs into interface.
+				      var model_ids = data[mid];
+				      var rep_cache = [];
+				      each(model_ids,
+					   function(model_id){
+					       rep_cache.push('<option>');
+					       rep_cache.push(model_id);
+					       rep_cache.push('</option>');
+					   });
+				      var rep_str = rep_cache.join('');
+				      jQuery(input_elt).append(rep_str);
 			     
-			     // Make interface jump on click.
-			     jQuery(select_jump_button_elt).click(
-				 function(evt){
-				     var id = jQuery(select_jump_elt).val();
-				     //alert('val: '+ id);
-				     window.location.replace("/seed/model/"+id);
-				 });
-			 }else{
-			     alert('Meta-information \not yet handled (' +
-				   resp.message_type() + '): ' +
-				   resp.message() );			     
-			 }
+				      // Make interface jump on click.
+				      jQuery(button_elt).click(
+					  function(evt){
+					      var id = jQuery(input_elt).val();
+					      //alert('val: '+ id);
+					      var new_url = "/seed/model/" + id;
+					      window.location.replace(new_url);
+					  });
+				  }
+			      });
 		     });
 
     manager.register('inconsistent', 'foo',
