@@ -126,6 +126,9 @@ bbop_mme_edit.core.prototype.get_nodes = function(){
 };
 
 bbop_mme_edit.core.prototype.remove_node = function(enid){
+
+    var anchor = this;
+
     if( this.core['nodes'][enid] ){
 	var enode = this.core['nodes'][enid];
 
@@ -135,7 +138,7 @@ bbop_mme_edit.core.prototype.remove_node = function(enid){
 		       function(edge_id, edge){
 			   if( edge.source() == enid || edge.target() == enid ){
 			       var eeid = edge.id();
-			       this.remove_edge(eeid);
+			       anchor.remove_edge(eeid);
 			   }
 		       });
 	
