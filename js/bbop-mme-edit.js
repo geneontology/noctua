@@ -24,6 +24,8 @@ var bbop_mme_edit = {};
 // Edit control.
 bbop_mme_edit.core = function(){
     this.core = {
+	//'id': [], // currently optional
+	'id': null, // currently optional
 	'nodes': {}, // map of id to edit_node
 	'edges': {}, // map of id to edit_edge
 	'node_order': [], // initial table order on redraws
@@ -34,6 +36,17 @@ bbop_mme_edit.core = function(){
 	'edge2connector': {}, // map of edge id to virtual connector id
 	'connector2edge': {}  // map of virtual connector id to edge id 
     };
+};
+
+bbop_mme_edit.core.prototype.add_id = function(id){
+    // TODO: make this smarter/useful
+    //this.core['id'].push(id);
+    this.core['id'] = id;
+    return this.core['id'];
+};
+
+bbop_mme_edit.core.prototype.get_id = function(){
+    return this.core['id'];
 };
 
 bbop_mme_edit.core.prototype.add_node = function(enode){

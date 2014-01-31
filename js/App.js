@@ -49,6 +49,8 @@ var MMEnvInit = function(in_model, in_server_base){
     var graph_container_div = '#' + graph_container_id;
     var graph_id = 'main_exp_graph';
     var graph_div = '#' + graph_id;
+    var table_info_id = 'main_info_table';
+    var table_info_div = '#' + table_info_id;
     var table_exp_id = 'main_exp_table';
     var table_exp_div = '#' + table_exp_id;
     var table_edge_id = 'main_edge_table';
@@ -370,25 +372,44 @@ var MMEnvInit = function(in_model, in_server_base){
     // Block interface from taking user input while
     // operating.
     function _shields_up(){
-	jQuery(modal_blocking).modal({'backdrop': 'static',
-				      'keyboard': false,
-				      'show': true});
+	jQuery(modal_blocking_elt).modal({'backdrop': 'static',
+					  'keyboard': false,
+					  'show': true});
     }
     
     // Release interface when transaction done.
     function _shields_down(){
-	jQuery(modal_blocking).modal('hide');
+	jQuery(modal_blocking_elt).modal('hide');
     }
 
     // Update/repaint the table.
     function _refresh_tables(){
+	widgets.repaint_info(ecore, aid, table_info_div);
 	widgets.repaint_exp_table(ecore, aid, table_exp_div);
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
+    function _rebuild_meta(model){
+
+	// Deal with ID(s).
+	// First and only setting of this right now.
+	// Override if there is real data.
+	if( model['id'] ){
+	    ecore.add_id(model['id']);
+	    ll('model id from data: ' + ecore.get_id());
+	}else if( typeof(global_id) !== 'undefined' && global_id ){
+	    ecore.add_id(global_id);
+	    ll('model id from environment: ' + ecore.get_id());
+	}else{
+	    ll('model id missing');
+	    throw new Error('missing model id');
+	}
+    }
+	
     // The core initial layout function.
-    function _rebuild_from_individuals(individuals){
-	ll('Not yet handled...try refreshing your browser');
+    function _rebuild_model_and_display(model){
+
+	ll('rebuilding from scratch');
 	
 	// Wipe UI.
 	each(ecore.get_nodes(),
@@ -400,6 +421,11 @@ var MMEnvInit = function(in_model, in_server_base){
 
 	// Wipe ecore.
 	ecore = new bme_core(); // nuke it from orbit
+
+	// Reconstruct ecore meta.
+	_rebuild_meta(model);
+
+	var individuals = model['individuals'];
 
 	// Starting fresh, add everything coming in to the edit model.
 	each(individuals,
@@ -677,10 +703,13 @@ var MMEnvInit = function(in_model, in_server_base){
     manager.register('inconsistent', 'foo',
 		     function(resp, man){
 			 var dmodel = resp.data();
-			 if( ! dmodel || ! dmodel['individuals'] ){
+
+			 // Deal with model.
+			 if( ! dmodel || ! dmodel['id'] ||
+			     ! dmodel['individuals'] ){
 			     alert('no data/individuals in inconsistent');
 			 }else{
-			     _rebuild_from_individuals(dmodel['individuals']);
+			     _rebuild_model_and_display(dmodel);
 			 }
 		     }, 10);
 
@@ -699,13 +728,12 @@ var MMEnvInit = function(in_model, in_server_base){
     /// of the editor.
     ///
 
-    var model_id = global_id;
     var model_json = in_model;
 
     // Since we're doing this "manually", apply the prerun and postrun
     // "manually".
     _shields_up();
-    _rebuild_from_individuals(model_json['individuals']);
+    _rebuild_model_and_display(model_json);
     _refresh_tables();
     _shields_down();
 
@@ -780,8 +808,8 @@ var MMEnvInit = function(in_model, in_server_base){
 		  	      // Close modal.
 		  	      jQuery(modal_edge_elt).modal('hide');
 			      
-			      //manager.get_model(model_id);
-			      manager.add_fact(model_id, snode.id(),
+			      //manager.get_model(ecore.get_id());
+			      manager.add_fact(ecore.get_id(), snode.id(),
 					       tnode.id(), rval);
 			  }
 			  // Remove the previous save listeners.
@@ -914,7 +942,7 @@ var MMEnvInit = function(in_model, in_server_base){
     		jQuery(simple_occ_auto_elt).val('');
 
 		// Send message to server.
-		manager.add_simple_composite(model_id, act, enb, occ);
+		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	    }
     	}
     );
@@ -939,15 +967,15 @@ var MMEnvInit = function(in_model, in_server_base){
     // Trigger a model get and an inconsistent redraw.
     jQuery(refresh_btn_elt).click(
 	function(){
-	    ll('starting refresh of model: ' + model_id);
-	    manager.get_model(model_id);
+	    ll('starting refresh of model: ' + ecore.get_id());
+	    manager.get_model(ecore.get_id());
 	});
 
     // Export button.
     jQuery(export_btn_elt).click(
     	function(){
 	    // Change the form to add the id.
-	    jQuery(action_form_data_elt).val(model_id);
+	    jQuery(action_form_data_elt).val(ecore.get_id());
 	    // Run it off in a new tab.
 	    jQuery(action_form_elt).submit();
     	});
@@ -956,7 +984,7 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(save_btn_elt).click(
     	function(){
 	    // Run it off in a new tab.
-	    manager.store_model(model_id);
+	    manager.store_model(ecore.get_id());
     	});
 
     // Help button.

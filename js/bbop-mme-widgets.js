@@ -5,6 +5,36 @@
 var bbop_mme_widgets = {};
 
 // Add edit model node contents to a descriptive table.
+bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
+
+    var nds = bbop.core.get_keys(ecore.get_nodes()) || [];
+    var eds = bbop.core.get_keys(ecore.get_edges()) || [];
+
+    var str_cache = [
+	'<dl class="dl-horizontal">',
+	// '<dt></dt>',
+	// '<dd>',
+	// '</dd>',
+	'<dt>ID</dt>',
+	'<dd>',
+	ecore.get_id(),
+	'</dd>',
+	'<dt>Individuals</dt>',
+	'<dd>',
+	nds.length || 0,
+	'</dd>',
+	'<dt>Indv. Rels.</dt>',
+	'<dd>',
+	eds.length || 0,
+	'</dd>'
+    ];
+    
+    // Add to display.
+    jQuery(info_div).empty();
+    jQuery(info_div).append(str_cache.join(' '));
+};
+
+// Add edit model node contents to a descriptive table.
 bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 
     var each = bbop.core.each;
