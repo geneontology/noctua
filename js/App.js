@@ -276,6 +276,8 @@ var MMEnvInit = function(in_model, in_server_base){
 		function(evt){
 		    evt.stopPropagation();
 
+		    alert('node deletion not yet supported on the server');
+
 		    // Delete ind and related edges.
 		    _delete_iae_from_ui(tid);
 		    _delete_iae_from_ecore(tid);
@@ -826,6 +828,8 @@ var MMEnvInit = function(in_model, in_server_base){
 
     // Detach event.
     instance.bind("connectionDetached", function(info) {
+
+		      alert('edge deletion not yet supported on the server');
 
 		      var cid = info.connection.id;
 		      ll('there was a connection detached: ' + cid);
