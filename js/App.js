@@ -275,17 +275,13 @@ var MMEnvInit = function(in_model, in_server_base){
 	    jQuery('#' + dbid).click(
 		function(evt){
 		    evt.stopPropagation();
-
+		    ll('deleteing node: ' + tid);
 		    //alert('node deletion not yet supported on the server');
-		    //ll('node deletion not yet supported on the server');
-
-		    // // Delete ind and related edges.
-		    // _delete_iae_from_ui(tid);
-		    // _delete_iae_from_ecore(tid);
 
 		    // Close modal.
 		    jQuery(modal_node_elt).modal('hide');
 
+		    // Trigger the delete--hopefully inconsistent.
 		    manager.remove_individual(ecore.get_id(), tid);
 		});
 
