@@ -728,35 +728,20 @@ var MMEnvInit = function(in_model, in_server_base){
 		     }, 10);
 
     ///
-    /// Load the incoming graph into something useable for population
-    /// of the editor.
-    ///
-
-    var model_json = in_model;
-
-    // Since we're doing this "manually", apply the prerun and postrun
-    // "manually".
-    _shields_up();
-    _rebuild_model_and_display(model_json);
-    _refresh_tables();
-    _shields_down();
-
-    ///
-    /// Add our general driving events.
+    /// UI event registration.
     ///    
 
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection",
-		  function(info, original_p) {
+		  function(info, original_evt) {
 
-		      //var cid = info.connection.id;
-		      //ll('there was a new connection: ' + cid);
-		      ll('original?: ' + original_p);
-		      
-		      // TODO/BUG: This section needs to be redone/rethought.
-		      // If it looks like a drag-and-drop event...
-		      if( original_p ){
+		      // If it looks like a new drag-and-drop event
+		      // connection.
+		      if( ! original_evt ){
+			  ll('knock-on "connection": ignoring.');
+		      }else{
+			  ll('direct "connection" event.');
 
 			  // Get the necessary info from the
 			  // connection.
@@ -772,10 +757,10 @@ var MMEnvInit = function(in_model, in_server_base){
 			  instance.detach(info.connection);
 
 			  // Create a new edge based on this info.
-			  //alert(sn + ', ' + tn);
 			  var snode = ecore.get_node_by_elt_id(sn);
 			  var tnode = ecore.get_node_by_elt_id(tn);
 
+			  // Pop up the modal.
 			  widgets.render_edge_modal(aid, modal_edge_title_elt,
 						    modal_edge_body_elt,
 						    snode.id(), tnode.id());
@@ -820,14 +805,14 @@ var MMEnvInit = function(in_model, in_server_base){
 
     // Detach event.
     instance.bind("connectionDetached",
-		  function(info, original_p) {
+		  function(info, original_evt) {
 		      
 		      // Only to this for direct detachments, not
 		      // knock-on effects from things like merge.
-		      if( ! original_p ){
-			  ll('knock-on detach: merge? ignoring.');
+		      if( ! original_evt ){
+			  ll('knock-on "connectionDetached": ignoring.');
 		      }else{
-			  ll('direct detach event.');
+			  ll('direct "connectionDetach" event.');
 
 			  //alert('edge deletion not supported on the server');
 			  ll('edge deletion not supported on the server');
@@ -840,17 +825,18 @@ var MMEnvInit = function(in_model, in_server_base){
 			  var edge = ecore.get_edge(eeid);
 			  manager.remove_fact(ecore.get_id(), edge.source(),
 					      edge.target(), edge.relation());
-
-			  // //alert('Action not yet supported: refresh page.');
-			  // ecore.remove_edge(eeid);
 		      }
 		  });
 
-    // //
-    // instance.bind("connectionMoved", function(info) {
-    // 		      var cid = info.connection.id;
-    // 		      ll('there was a connection moved: ' + cid);
-    // 		  });
+    // TODO: 
+    // Would like this, since otherwise I'll have to deal with
+    // decoding what is happening and possibly a race condition.
+    // https://github.com/sporritt/jsPlumb/issues/157
+    instance.bind("connectionMoved", function(info, original_evt) {
+    		      var cid = info.connection.id;
+    		      //ll('there was a connection moved: ' + cid);
+    		      alert('there was a "connectionMoved" event: ' + cid);
+    		  });
     
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(
@@ -1005,6 +991,20 @@ var MMEnvInit = function(in_model, in_server_base){
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
     bbop_draggable_canvas(graph_container_id);
+
+    ///
+    /// Load the incoming graph into something useable for population
+    /// of the editor.
+    ///
+
+    var model_json = in_model;
+
+    // Since we're doing this "manually", apply the prerun and postrun
+    // "manually".
+    _shields_up();
+    _rebuild_model_and_display(model_json);
+    _refresh_tables();
+    _shields_down();
 };
 
 // Start the day the jsPlumb way.
