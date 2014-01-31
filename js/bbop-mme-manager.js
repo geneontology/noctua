@@ -129,6 +129,17 @@ var bbop_mme_manager = function(server_base){
 	jqm.action(url, args, 'GET');
     };
     
+    // Likely triggers "inconsistent".
+    anchor.remove_individual = function(model_id, indv_id){
+	var url = server_base + '/m3DeleteIndividual';
+	var args = {
+	    'modelId': model_id,
+	    'individualId': indv_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
     // 
     // Likely triggers "inconsistent".
     anchor.generate_model = function(class_id, db_id){
