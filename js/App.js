@@ -387,6 +387,7 @@ var MMEnvInit = function(in_model, in_server_base){
 
     // Update/repaint the table.
     function _refresh_tables(){
+	ll('refreshing tables/info');
 	widgets.repaint_info(ecore, aid, table_info_div);
 	widgets.repaint_exp_table(ecore, aid, table_exp_div);
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
@@ -583,9 +584,11 @@ var MMEnvInit = function(in_model, in_server_base){
 		     // ecore.merge_node(ind)
 		     // wipe_node_contents()
 		     // redraw_node_contents()
-		     ll('cannot update nodes yet; suggest refreshing');
+		     ll('update node: cannot yet; suggest refreshing');
 		     //alert('cannot update nodes yet; suggest refreshing');
 		 }else{
+		     ll('add node');
+
 		     // Add new node to edit core, pull it out for
 		     // some work.
 		     ecore.add_node_from_individual(ind);
@@ -629,12 +632,13 @@ var MMEnvInit = function(in_model, in_server_base){
 		 
 		 var snid = source_node.id();
 		 var src_edges = ecore.get_edges_by_source(snid);
+		 //var src_edges = ecore.get_edges_by_target(snid);
 		 
 		 // Delete all edges/connectors for said node in
 		 // model.
 		 each(src_edges,
 		      function(src_edge){
-			  ecore.remove_edge(snid);
+			  ecore.remove_edge(src_edge.id());
 		      });
 		 
 		 // Now delete all edges for the node in the UI.
@@ -813,9 +817,6 @@ var MMEnvInit = function(in_model, in_server_base){
 			  ll('knock-on "connectionDetached": ignoring.');
 		      }else{
 			  ll('direct "connectionDetach" event.');
-
-			  //alert('edge deletion not supported on the server');
-			  ll('edge deletion not supported on the server');
 
 			  var cid = info.connection.id;
 			  ll('there was a connection detached: ' + cid);
