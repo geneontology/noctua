@@ -101,6 +101,20 @@ var bbop_mme_manager = function(server_base){
 	jqm.action(url, args, 'GET');
     };
     
+    // 
+    // Likely triggers "merge". TODO: that's right, right?
+    anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
+	var url = server_base + '/m3RemoveFact';
+	var args = {
+	    'modelId': model_id,
+	    'individualId': source_id,
+	    'fillerId': target_id,
+	    'propertyId': rel_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
     // Likely triggers "merge".
     anchor.add_simple_composite = function(model_id, class_id,
 					   enabled_by_id, occurs_in_id){

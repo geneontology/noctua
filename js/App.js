@@ -801,18 +801,9 @@ var MMEnvInit = function(in_model, in_server_base){
 		  	      // 			 'cssClass': "aLabel",
 		  	      // 			 'id': 'label' } ]);
 			      
-		  	      // TODO: Since we'll be talking to the
-		  	      // server, this will actually be: ping
-		  	      // server, destroy connector, create new
-		  	      // connector.
-			      
-		  	      // // Change edit model's releation.
-		  	      // ee.relation(rval);
-			      
 		  	      // Close modal.
 		  	      jQuery(modal_edge_elt).modal('hide');
 			      
-			      //manager.get_model(ecore.get_id());
 			      manager.add_fact(ecore.get_id(), snode.id(),
 					       tnode.id(), rval);
 			  }
@@ -835,16 +826,18 @@ var MMEnvInit = function(in_model, in_server_base){
 
 		      var cid = info.connection.id;
 		      ll('there was a connection detached: ' + cid);
-		      var eeid =
-			  ecore.get_edge_id_by_connector_id(cid);
+		      var eeid = ecore.get_edge_id_by_connector_id(cid);
 		      ll('looks like edge: ' + eeid);
-		      //var ee = ecore.get_edge(eeid);
 		      
-		      //alert('Action not yet supported: refresh page.');
-		      ecore.remove_edge(eeid);
+		      var edge = ecore.get_edge(eeid);
+		      manager.remove_fact(ecore.get_id(), edge.source(),
+					  edge.target(), edge.relation());
+
+		      // //alert('Action not yet supported: refresh page.');
+		      // ecore.remove_edge(eeid);
 		  });
 
-    //
+    // //
     // instance.bind("connectionMoved", function(info) {
     // 		      var cid = info.connection.id;
     // 		      ll('there was a connection moved: ' + cid);
