@@ -580,7 +580,8 @@ var MMEnvInit = function(in_model, in_server_base){
 		     // ecore.merge_node(ind)
 		     // wipe_node_contents()
 		     // redraw_node_contents()
-		     alert('cannot update nodes yet; suggest refreshing');
+		     ll('cannot update nodes yet; suggest refreshing');
+		     //alert('cannot update nodes yet; suggest refreshing');
 		 }else{
 		     // Add new node to edit core, pull it out for
 		     // some work.
