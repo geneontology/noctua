@@ -819,22 +819,31 @@ var MMEnvInit = function(in_model, in_server_base){
 		  });
 
     // Detach event.
-    instance.bind("connectionDetached", function(info) {
-
-		      //alert('edge deletion not yet supported on the server');
-		      ll('edge deletion not yet supported on the server');
-
-		      var cid = info.connection.id;
-		      ll('there was a connection detached: ' + cid);
-		      var eeid = ecore.get_edge_id_by_connector_id(cid);
-		      ll('looks like edge: ' + eeid);
+    instance.bind("connectionDetached",
+		  function(info, original_p) {
 		      
-		      var edge = ecore.get_edge(eeid);
-		      manager.remove_fact(ecore.get_id(), edge.source(),
-					  edge.target(), edge.relation());
+		      // Only to this for direct detachments, not
+		      // knock-on effects from things like merge.
+		      if( ! original_p ){
+			  ll('knock-on detach: merge? ignoring.');
+		      }else{
+			  ll('direct detach event.');
 
-		      // //alert('Action not yet supported: refresh page.');
-		      // ecore.remove_edge(eeid);
+			  //alert('edge deletion not supported on the server');
+			  ll('edge deletion not supported on the server');
+
+			  var cid = info.connection.id;
+			  ll('there was a connection detached: ' + cid);
+			  var eeid = ecore.get_edge_id_by_connector_id(cid);
+			  ll('looks like edge: ' + eeid);
+		      
+			  var edge = ecore.get_edge(eeid);
+			  manager.remove_fact(ecore.get_id(), edge.source(),
+					      edge.target(), edge.relation());
+
+			  // //alert('Action not yet supported: refresh page.');
+			  // ecore.remove_edge(eeid);
+		      }
 		  });
 
     // //
