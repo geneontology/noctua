@@ -265,7 +265,7 @@ bbop_mme_edit.core.prototype.get_edges = function(){
 /*
  * Function: 
  * 
- * Return a list of edges that are concerned with the two nodes.
+ * Return a list of edges that are concerned with the nodes as source.
  */
 bbop_mme_edit.core.prototype.get_edges_by_source = function(srcid){
 
@@ -274,6 +274,25 @@ bbop_mme_edit.core.prototype.get_edges_by_source = function(srcid){
 		   function(edge_id, edge){
 		       var src = edge.source();
 		       if( src == srcid ){
+			   rete.push(edge);
+		       }
+		   });
+
+    return rete;
+};
+
+/*
+ * Function: 
+ * 
+ * Return a list of edges that are concerned with the nodes as target.
+ */
+bbop_mme_edit.core.prototype.get_edges_by_target = function(tgtid){
+
+    var rete = [];
+    bbop.core.each(this.core['edges'],
+		   function(edge_id, edge){
+		       var tgt = edge.target();
+		       if( tgt == tgtid ){
 			   rete.push(edge);
 		       }
 		   });
