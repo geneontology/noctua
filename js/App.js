@@ -49,8 +49,10 @@ var MMEnvInit = function(in_model, in_server_base){
     var graph_container_div = '#' + graph_container_id;
     var graph_id = 'main_exp_graph';
     var graph_div = '#' + graph_id;
-    var table_id = 'main_exp_table';
-    var table_div = '#' + table_id;
+    var table_exp_id = 'main_exp_table';
+    var table_exp_div = '#' + table_exp_id;
+    var table_edge_id = 'main_edge_table';
+    var table_edge_div = '#' + table_edge_id;
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
     // Button contact points.
@@ -379,8 +381,9 @@ var MMEnvInit = function(in_model, in_server_base){
     }
 
     // Update/repaint the table.
-    function _refresh_table(){
-	widgets.repaint_table(ecore, aid, table_div);
+    function _refresh_tables(){
+	widgets.repaint_exp_table(ecore, aid, table_exp_div);
+	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
     // The core initial layout function.
@@ -631,7 +634,7 @@ var MMEnvInit = function(in_model, in_server_base){
     
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
-    manager.register('postrun', 'fooB', _refresh_table, 10);
+    manager.register('postrun', 'fooB', _refresh_tables, 10);
     manager.register('postrun', 'fooA', _shields_down, 9);
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
@@ -703,7 +706,7 @@ var MMEnvInit = function(in_model, in_server_base){
     // "manually".
     _shields_up();
     _rebuild_from_individuals(model_json['individuals']);
-    _refresh_table();
+    _refresh_tables();
     _shields_down();
 
     ///

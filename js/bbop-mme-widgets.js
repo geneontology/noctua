@@ -4,8 +4,8 @@
 
 var bbop_mme_widgets = {};
 
-// Add edit model contents to descriptive table.
-bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
+// Add edit model node contents to a descriptive table.
+bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 
     var each = bbop.core.each;
 
@@ -50,9 +50,6 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 		 nav_tbl_headers.push(hdrc.join(' '));
 	     });
 	
-	//	var nav_tbl_headers = cat_list;
-	//	    ['enabled&nbsp;by', 'activity', 'unknown', 'process', 'location'];
-	
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
 				{'generate_id': true,
@@ -93,6 +90,67 @@ bbop_mme_widgets.repaint_table = function(ecore, aid, table_div){
 			  });
 		     nav_tbl.add_to(table_row);		     
 		 }
+	     });
+	
+	// Add to display.
+	jQuery(table_div).empty();
+	jQuery(table_div).append(nav_tbl.to_string());
+
+	// Make it sortable using the plugin.
+	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
+    }
+};
+
+// Add edit model edge contents to a descriptive table.
+bbop_mme_widgets.repaint_edge_table = function(ecore, aid, table_div){
+
+    var each = bbop.core.each;
+
+    var edge_list = ecore.get_edges();
+
+    // If we actually got something, render the table. Otherwise,
+    // a message.
+    if( bbop.core.is_empty(edge_list) ){
+	
+	// Add to display.
+	jQuery(table_div).empty();
+	jQuery(table_div).append('<p><h4>no relations</h4></p>');
+
+    }else{
+	
+	// Make the (obvjously known) headers pretty.
+	var nav_tbl_headers = [];
+	each(['subject', 'relation', 'object'],
+	     function(hdr){
+		 var hdrc = [
+		     hdr,
+		     '&uarr;&darr;'
+		 ];
+		 nav_tbl_headers.push(hdrc.join(' '));
+	     });
+		
+	var nav_tbl =
+	    new bbop.html.table(nav_tbl_headers, [],
+				{'generate_id': true,
+				 'class': ['table', 'table-bordered',
+					   'table-hover',
+					   'table-condensed'].join(' ')});
+	
+	each(edge_list,
+	     function(edge_id){
+		 var edge = ecore.get_edge(edge_id);
+		 var s = edge.source();
+		 var r = edge.relation();
+		 var t = edge.target();
+
+		 // according to the sorted order.
+		 var table_row = [
+		     aid.readable(s),
+		     aid.readable(r),
+		     aid.readable(t)
+		 ];
+
+		 nav_tbl.add_to(table_row);		     
 	     });
 	
 	// Add to display.
