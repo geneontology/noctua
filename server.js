@@ -6,8 +6,7 @@
  * A server that will render GO graphs into jsPlumb.
  */
 
-// Required Node libs.
-var express = require('express');
+// Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
 
@@ -29,17 +28,25 @@ var app_base = sd.app_base();
 /// Define the sample application.
 ///
 
-var MMEnvServer = function() {
-
+var MMEnvLauncher = function() {
     var self = this;
 
-    //var m3loc = 'http://localhost:6800'; // default val
+    var laucher_app = require('express');
+
     var m3loc = 'http://toaster.lbl.gov:6800'; // default val
     if( process.env.M3LOC ){
 	m3loc = process.env.M3LOC;
 	console.log('server location taken from environment: ' + m3loc);
     }else{
 	console.log('server location taken from default: ' + m3loc);
+    }
+
+    var msgloc = 'http://localhost:3400'; // default val
+    if( process.env.MSGLOC ){
+	msgloc = process.env.MSGLOC;
+	console.log('messenger location taken from environment: ' + msgloc);
+    }else{
+	console.log('messenger location taken from default: ' + msgloc);
     }
 
     ///
@@ -119,6 +126,7 @@ var MMEnvServer = function() {
 		'bbop-mme-widgets.js': '',
 		'bbop-draggable-canvas.js': '',
 		'bbop-location-store.js': '',
+		'bbop-messenger-client.js': '',
 		'Landing.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
@@ -180,12 +188,12 @@ var MMEnvServer = function() {
     /// App server functions (main app logic here).
     ///
 
-    // Initialize the server (express) and create the routes and register
+    // Initialize the server (laucher_app) and create the routes and register
     // the handlers.
     self.initializeServer = function() {
         //self.createRoutes();
-        self.app = express();
-        self.app.use(express.bodyParser()); // middleware needed for post
+        self.app = laucher_app();
+        self.app.use(laucher_app.bodyParser()); // middleware needed for post
 
 	///
 	/// Static routes.
@@ -260,40 +268,40 @@ var MMEnvServer = function() {
 	//var server_loc = 'http://localhost:8080/solr/';
 	var gconf = new bbop.golr.conf(amigo.data.golr);
 
-	// Load a null setup.
-	// TODO: first get new ID before kicking.
-	self.app.get('/seed/null',
-		     function(req, res) {
-			 // Assemble return doc.
-			 res.setHeader('Content-Type', 'text/html');
+	// // Load a null setup.
+	// // TODO: first get new ID before kicking.
+	// self.app.get('/seed/null',
+	// 	     function(req, res) {
+	// 		 // Assemble return doc.
+	// 		 res.setHeader('Content-Type', 'text/html');
 
-			    var frame_tmpl =
-				self.cache_get('app_content.tmpl').toString();
-			    var frame_cont = mustache.render(frame_tmpl);
+	// 		    var frame_tmpl =
+	// 			self.cache_get('app_content.tmpl').toString();
+	// 		    var frame_cont = mustache.render(frame_tmpl);
 
-			    var base_tmpl =
-				self.cache_get('app_base.tmpl').toString();
-			    var base_tmpl_args = {
-				'title': 'go-mme: editor',
-				'js_variables': [
-				    {
-					'name': 'global_id',
-					'value': '"unknown"'
-				    },
-				    {
-					'name': 'global_server_base',
-					'value': '"' + m3loc+ '"'
-				    },
-				    {
-					'name': 'global_model',
-					'value': '{"id": "???", "instances":[]}'
-				    }
-				],
-				'content': frame_cont
-			    };
-			 var ret = mustache.render(base_tmpl, base_tmpl_args);
-			 res.send(ret);
-		     });
+	// 		    var base_tmpl =
+	// 			self.cache_get('app_base.tmpl').toString();
+	// 		    var base_tmpl_args = {
+	// 			'title': 'go-mme: editor',
+	// 			'js_variables': [
+	// 			    {
+	// 				'name': 'global_id',
+	// 				'value': '"unknown"'
+	// 			    },
+	// 			    {
+	// 				'name': 'global_server_base',
+	// 				'value': '"' + m3loc+ '"'
+	// 			    },
+	// 			    {
+	// 				'name': 'global_model',
+	// 				'value': '{"id": "???", "instances":[]}'
+	// 			    }
+	// 			],
+	// 			'content': frame_cont
+	// 		    };
+	// 		 var ret = mustache.render(base_tmpl, base_tmpl_args);
+	// 		 res.send(ret);
+	// 	     });
 
 	self.app.get('/seed/model/:query',
 		     function(req, res) {
@@ -343,6 +351,10 @@ var MMEnvServer = function() {
 						 'value':  '"' + m3loc+ '"'
 					     },
 					     {
+						 'name':'global_message_server',
+						 'value':  '"' + msgloc+ '"'
+					     },
+					     {
 						 'name': 'global_model',
 						 'value': obj_str
 					     }
@@ -374,45 +386,49 @@ var MMEnvServer = function() {
 			 }
 		     });
 
-	self.app.post('/action/load',
-		     function(req, res) {
+	// self.app.post('/action/load',
+	// 	     function(req, res) {
 
-			 // Deal with incoming parameters.
-			 var model_data = req.route.params['model_data'] ||
-			     req.body['model_data'] ||
-			     '{"id": "???", "instances":[]}';
+	// 		 // Deal with incoming parameters.
+	// 		 var model_data = req.route.params['model_data'] ||
+	// 		     req.body['model_data'] ||
+	// 		     '{"id": "???", "instances":[]}';
 
-			 // Assemble return doc.
-			 res.setHeader('Content-Type', 'text/html');
+	// 		 // Assemble return doc.
+	// 		 res.setHeader('Content-Type', 'text/html');
 
-			    var frame_tmpl =
-				self.cache_get('app_content.tmpl').toString();
-			    var frame_cont = mustache.render(frame_tmpl);
+	// 		    var frame_tmpl =
+	// 			self.cache_get('app_content.tmpl').toString();
+	// 		    var frame_cont = mustache.render(frame_tmpl);
 
-			    var base_tmpl =
-				self.cache_get('app_base.tmpl').toString();
-			    var base_tmpl_args = {
-				'title': 'go-mme: editor',
-				'js_variables': [
-				    {
-					// TODO: need to extract the ID.
-					'name': 'global_id',
-					'value': '"unknown"'
-				    },
-				    {
-					'name': 'global_server_base',
-					'value':  '"' + m3loc+ '"'
-				    },
-				    {
-					'name': 'global_model',
-					'value': model_data
-				    }
-				],
-				'content': frame_cont
-			    };
-			 var ret = mustache.render(base_tmpl, base_tmpl_args);
-			 res.send(ret);
-		     });
+	// 		    var base_tmpl =
+	// 			self.cache_get('app_base.tmpl').toString();
+	// 		    var base_tmpl_args = {
+	// 			'title': 'go-mme: editor',
+	// 			'js_variables': [
+	// 			    {
+	// 				// TODO: need to extract the ID.
+	// 				'name': 'global_id',
+	// 				'value': '"unknown"'
+	// 			    },
+	// 			    {
+	// 				'name': 'global_server_base',
+	// 				'value':  '"' + m3loc+ '"'
+	// 			    },
+	// 			    {
+	// 				'name':'global_message_server',
+	// 				'value':  '"' + msgloc+ '"'
+	// 			    },
+	// 			    {
+	// 				'name': 'global_model',
+	// 				'value': model_data
+	// 			    }
+	// 			],
+	// 			'content': frame_cont
+	// 		    };
+	// 		 var ret = mustache.render(base_tmpl, base_tmpl_args);
+	// 		 res.send(ret);
+	// 	     });
 
 	// Test export handler.
 	self.app.post('/action/export',
@@ -468,6 +484,7 @@ var MMEnvServer = function() {
 /// Main.
 ///
 
-var mmees = new MMEnvServer();
+// Deliver the prototype JS MME application to the client.
+var mmees = new MMEnvLauncher();
 mmees.initialize();
 mmees.start();

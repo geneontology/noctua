@@ -1004,6 +1004,15 @@ var MMEnvInit = function(in_model, in_server_base){
     _rebuild_model_and_display(model_json);
     _refresh_tables();
     _shields_down();
+
+    // Optionally experiment with the messaging server.
+    if( typeof(global_message_server) === 'undefined'  ){
+	ll('no setup for messaging--passing');
+    }else{
+	//var msgloc_srv = 'http://localhost:3400';
+	ll('try setup for messaging at:' + global_message_server);
+	bbop_messenger_client(global_message_server);
+    }
 };
 
 // Start the day the jsPlumb way.
