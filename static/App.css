@@ -315,6 +315,10 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     border: 1px solid #eeeeee;
 }
 
+.bbop-mme-new-info {
+    color: red;
+}
+
 .library-links {
     right: 454px;
     height: 19px;

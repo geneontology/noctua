@@ -84,6 +84,8 @@ var MMEnvInit = function(in_model, in_server_base){
     var export_btn_elt = '#' + export_btn_id;
     var save_btn_id = 'action_save';
     var save_btn_elt = '#' + save_btn_id;
+    var ping_btn_id = 'action_ping';
+    var ping_btn_elt = '#' + ping_btn_id;
     var help_btn_id = 'action_help';
     var help_btn_elt = '#' + help_btn_id;
     // A hidden for to communicate with the outside world.
@@ -114,6 +116,14 @@ var MMEnvInit = function(in_model, in_server_base){
     var modal_blocking_body_elt = '#' + modal_blocking_body_id;
     var modal_blocking_title_id = 'modal_blocking_title';
     var modal_blocking_title_elt = '#' + modal_blocking_title_id;
+
+    // Some experimental stuff for optional messaging server.
+    var message_area_id = 'message_area';
+    var message_area_elt = '#' + message_area_id;
+    var message_area_tab_id = 'message_area_tab';
+    var message_area_tab_elt = '#' + message_area_tab_id;
+    var remote_area_id = 'remote_area';
+    var remote_area_elt = '#' + remote_area_id;
 
     ///
     /// Render helpers.
@@ -1005,14 +1015,74 @@ var MMEnvInit = function(in_model, in_server_base){
     _refresh_tables();
     _shields_down();
 
-    // Optionally experiment with the messaging server.
+    ///
+    /// Optional: experiment with the messaging server.
+    ///
+
+    var msngr = null;
+
+    // ...
+    function _zero_fill(n){
+	var ret = n;
+	if( ret < 10 ){
+	    ret = '0' + ret;
+	}
+	return ret;
+    }
+    
+    // Allow the message board to be cleared.
+    var new_list_elt = null;
+    function _on_connect(){
+	jQuery(message_area_elt).empty();
+	var new_list_id = bbop.core.uuid();
+	new_list_elt = '#' + new_list_id;
+	jQuery(message_area_elt).append('<ul id="' + new_list_id + '"></ul>');
+    }
+
+    function _on_info_update(str){
+
+	// Add to the top of the message
+	// queue.
+	var now = new Date();
+	var dts = now.getFullYear() + '/' +
+	    _zero_fill(now.getMonth() +1) + '/' +
+	    _zero_fill(now.getDate()) + ' ' +
+	    _zero_fill(now.getHours()) + ':' +
+	    _zero_fill(now.getMinutes()) + ':' +
+	    _zero_fill(now.getSeconds());
+	jQuery(new_list_elt).prepend('<li>'+ dts +': '+ str +'</li>');
+		
+	//alert('someone did something');
+	// Skip hightlighting if we're already over it.
+	if( jQuery(message_area_tab_elt).parent().hasClass('active') ){
+	    // Do not change.
+	}else{
+	    // Highlight.
+	    jQuery(message_area_tab_elt).addClass('bbop-mme-new-info');
+	    // Clear 
+	    jQuery(message_area_tab_elt).unbind('click');
+	    jQuery(message_area_tab_elt).click(
+		function(){
+		    jQuery(message_area_tab_elt).removeClass('bbop-mme-new-info');
+		});
+	}	
+    }
+
     if( typeof(global_message_server) === 'undefined'  ){
 	ll('no setup for messaging--passing');
     }else{
 	//var msgloc_srv = 'http://localhost:3400';
-	ll('try setup for messaging at:' + global_message_server);
-	bbop_messenger_client(global_message_server);
+	ll('try setup for messaging at: ' + global_message_server);
+	msngr = new bbop_messenger_client(global_message_server,
+					  _on_connect,
+					  _on_info_update);
+	msngr.connect(ecore.get_id());
     }
+    jQuery(ping_btn_elt).click(
+	function(){
+	    msngr.info('ping from another client for ' + ecore.get_id());
+	}
+    );
 };
 
 // Start the day the jsPlumb way.

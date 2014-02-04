@@ -45,6 +45,8 @@
 		   href="#">Export</a></li>
             <li><a id="action_save"
 		   href="#">Save</a></li>
+            <li><a id="action_ping"
+		   href="#">Ping live</a></li>
           </ul>
 	</li>
       </ul>
@@ -162,16 +164,25 @@
       <li class="active"><a href="#main_info_table" data-toggle="tab">Info</a></li>
       <li><a href="#main_exp_table" data-toggle="tab">Individuals</a></li>
       <li><a href="#main_edge_table" data-toggle="tab">Indv. Rels.</a></li>
-      <li><a href="#chat_area" data-toggle="tab">TODO</a></li>
-      <li><a href="#empty_area" data-toggle="tab">Empty</a></li>
+      <li><a id="message_area_tab"
+	     href="#message_area" data-toggle="tab">Live</a></li>
+      <li><a href="#remote_area" data-toggle="tab">Remote</a></li>
     </ul>
 
     <div class="tab-content">
       <div id="main_info_table" class="tab-pane active"></div>
       <div id="main_exp_table" class="tab-pane"></div>
       <div id="main_edge_table" class="tab-pane"></div>
-      <div id="chat_area" class="tab-pane">TODO</div>
-      <div id="empty_area" class="tab-pane">EMPTY</div>
+      <div id="message_area" class="tab-pane">
+	<p>
+	  no connection
+	</p>
+      </div>
+      <div id="remote_area" class="tab-pane">
+	<p>
+	  no connection
+	</p>
+      </div>
     </div>
 
   </div>
