@@ -67,19 +67,25 @@ var MMEnvInit = function(in_model, in_server_base){
     var table_edge_div = '#' + table_edge_id;
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
-    // Button contact points.
-    // var add_btn_local_id = 'adder_local';
-    // var add_btn_local_elt = '#' + add_btn_local_id;
-    // var add_btn_remote_id = 'adder_remote';
-    // var add_btn_remote_elt = '#' + add_btn_remote_id;
-    var simple_enb_auto_id = 'simple_enb_auto';
-    var simple_enb_auto_elt = '#' + simple_enb_auto_id;
-    var simple_act_auto_id = 'simple_act_auto';
-    var simple_act_auto_elt = '#' + simple_act_auto_id;
-    var simple_occ_auto_id = 'simple_occ_auto';
-    var simple_occ_auto_elt = '#' + simple_occ_auto_id;
-    var simple_add_btn_id = 'simple_adder_button';
-    var simple_add_btn_elt = '#' + simple_add_btn_id;
+    // BP button contact points.
+    var simple_bp_enb_auto_id = 'simple_bp_enb_auto';
+    var simple_bp_enb_auto_elt = '#' + simple_bp_enb_auto_id;
+    var simple_bp_act_auto_id = 'simple_bp_act_auto';
+    var simple_bp_act_auto_elt = '#' + simple_bp_act_auto_id;
+    var simple_bp_occ_auto_id = 'simple_bp_occ_auto';
+    var simple_bp_occ_auto_elt = '#' + simple_bp_occ_auto_id;
+    var simple_bp_add_btn_id = 'simple_bp_adder_button';
+    var simple_bp_add_btn_elt = '#' + simple_bp_add_btn_id;
+    // MF button contact points.
+    var simple_mf_enb_auto_id = 'simple_mf_enb_auto';
+    var simple_mf_enb_auto_elt = '#' + simple_mf_enb_auto_id;
+    var simple_mf_act_auto_id = 'simple_mf_act_auto';
+    var simple_mf_act_auto_elt = '#' + simple_mf_act_auto_id;
+    var simple_mf_occ_auto_id = 'simple_mf_occ_auto';
+    var simple_mf_occ_auto_elt = '#' + simple_mf_occ_auto_id;
+    var simple_mf_add_btn_id = 'simple_mf_adder_button';
+    var simple_mf_add_btn_elt = '#' + simple_mf_add_btn_id;
+    // Other contact points.
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -897,101 +903,176 @@ var MMEnvInit = function(in_model, in_server_base){
     );
 
     ///
-    /// Activate autocomplete in input boxes.
-    /// Add the remote responders.
+    /// Activate addition template for BP.
     ///
 
     // Storage for the actual selected identifiers.
-    var simple_enb_auto_val = null;
-    var simple_act_auto_val = null;
-    var simple_occ_auto_val = null;
+    var simple_bp_enb_auto_val = null;
+    var simple_bp_act_auto_val = null;
+    var simple_bp_occ_auto_val = null;
 
     // bioentity
-    var simple_enb_auto_args = {
+    var simple_bp_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_enb_auto_val = doc['bioentity'] || null;
+	    simple_bp_enb_auto_val = doc['bioentity'] || null;
     	}
     };
     // molecular function
-    var simple_act_auto_args = {
+    var simple_bp_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_act_auto_val = doc['annotation_class'] || null;
+	    simple_bp_act_auto_val = doc['annotation_class'] || null;
     	}
     };
     // location/occurs_in
-    var simple_occ_auto_args = {
+    var simple_bp_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_occ_auto_val = doc['annotation_class'] || null;
+	    simple_bp_occ_auto_val = doc['annotation_class'] || null;
     	}
     };
 
-    var simple_enb_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_enb_auto_id,
-				   simple_enb_auto_args);
-    simple_enb_auto.add_query_filter('document_category', 'bioentity');
-    simple_enb_auto.set_personality('bioentity');
+    var simple_bp_enb_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_bp_enb_auto_id,
+				   simple_bp_enb_auto_args);
+    simple_bp_enb_auto.add_query_filter('document_category', 'bioentity');
+    simple_bp_enb_auto.set_personality('bioentity');
 
-    var simple_act_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_act_auto_id,
-				   simple_act_auto_args);
-    simple_act_auto.add_query_filter('document_category', 'ontology_class');
-    // simple_act_auto.add_query_filter('regulates_closure_label',
-    // 				     'molecular_function');
-    simple_act_auto.set_personality('ontology');
+    var simple_bp_act_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_bp_act_auto_id,
+				   simple_bp_act_auto_args);
+    simple_bp_act_auto.add_query_filter('document_category', 'ontology_class');
+    simple_bp_act_auto.add_query_filter('regulates_closure_label',
+    					'biological_process');
+    simple_bp_act_auto.set_personality('ontology');
 
-    var simple_occ_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_occ_auto_id,
-				   simple_occ_auto_args);
-    simple_occ_auto.add_query_filter('document_category', 'ontology_class');
-    simple_occ_auto.set_personality('ontology');
-
-    ///
-    /// Add GUI button activity.
-    ///
+    var simple_bp_occ_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_bp_occ_auto_id,
+				   simple_bp_occ_auto_args);
+    simple_bp_occ_auto.add_query_filter('document_category', 'ontology_class');
+    simple_bp_occ_auto.set_personality('ontology');
 
     // Add new remote node button.
-    jQuery(simple_add_btn_elt).click(
+    jQuery(simple_bp_add_btn_elt).click(
     	function(){
-    	    // var enb = simple_enb_auto.content() || '';
-    	    // var act = simple_act_auto.content() || '';
-    	    // var occ = simple_occ_auto.content() || '';
-    	    var enb = simple_enb_auto_val || '';
-    	    var act = simple_act_auto_val || '';
-    	    var occ = simple_occ_auto_val || '';
+    	    var enb = simple_bp_enb_auto_val || '';
+    	    var act = simple_bp_act_auto_val || '';
+    	    var occ = simple_bp_occ_auto_val || '';
 
     	    if( act == '' ){
     		alert('Must select activity field from autocomplete list.');
-    	    // }else if( ! mfn_val_remote ||
-	    // 	      ! bio_val_remote ||
-	    // 	      ! loc_val_remote ){
-    	    // 	alert('You actually need to have selected your ' +
-	    // 	      'values from the dropdowns in the autocompletes.');
     	    }else{
 		// Wipe controls' state, internal and external.
-		simple_enb_auto_val = null;
-    		simple_act_auto_val = null;
-    		simple_occ_auto_val = null;
-		jQuery(simple_enb_auto_elt).val('');
-    		jQuery(simple_act_auto_elt).val('');
-    		jQuery(simple_occ_auto_elt).val('');
+		simple_bp_enb_auto_val = null;
+    		simple_bp_act_auto_val = null;
+    		simple_bp_occ_auto_val = null;
+		jQuery(simple_bp_enb_auto_elt).val('');
+    		jQuery(simple_bp_act_auto_elt).val('');
+    		jQuery(simple_bp_occ_auto_elt).val('');
 
 		// Send message to server.
 		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	    }
     	}
     );
+
+    ///
+    /// Activate addition template for MF.
+    ///
+
+    // Storage for the actual selected identifiers.
+    var simple_mf_enb_auto_val = null;
+    var simple_mf_act_auto_val = null;
+    var simple_mf_occ_auto_val = null;
+
+    // bioentity
+    var simple_mf_enb_auto_args = {
+    	'label_template': '{{bioentity_label}} ({{bioentity}})',
+    	'value_template': '{{bioentity_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['bioentity_label']);
+	    simple_mf_enb_auto_val = doc['bioentity'] || null;
+    	}
+    };
+    // molecular function
+    var simple_mf_act_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_mf_act_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+    // location/occurs_in
+    var simple_mf_occ_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_mf_occ_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+
+    var simple_mf_enb_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_mf_enb_auto_id,
+				   simple_mf_enb_auto_args);
+    simple_mf_enb_auto.add_query_filter('document_category', 'bioentity');
+    simple_mf_enb_auto.set_personality('bioentity');
+
+    var simple_mf_act_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_mf_act_auto_id,
+				   simple_mf_act_auto_args);
+    simple_mf_act_auto.add_query_filter('document_category', 'ontology_class');
+    simple_mf_act_auto.add_query_filter('regulates_closure_label',
+    					'molecular_function');
+    simple_mf_act_auto.set_personality('ontology');
+
+    var simple_mf_occ_auto =
+	new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
+				   simple_mf_occ_auto_args);
+    simple_mf_occ_auto.add_query_filter('document_category', 'ontology_class');
+    simple_mf_occ_auto.set_personality('ontology');
+
+    // Add new remote node button.
+    jQuery(simple_mf_add_btn_elt).click(
+    	function(){
+    	    var enb = simple_mf_enb_auto_val || '';
+    	    var act = simple_mf_act_auto_val || '';
+    	    var occ = simple_mf_occ_auto_val || '';
+
+    	    if( act == '' ){
+    		alert('Must select activity field from autocomplete list.');
+    	    }else{
+		// Wipe controls' state, internal and external.
+		simple_mf_enb_auto_val = null;
+    		simple_mf_act_auto_val = null;
+    		simple_mf_occ_auto_val = null;
+		jQuery(simple_mf_enb_auto_elt).val('');
+    		jQuery(simple_mf_act_auto_elt).val('');
+    		jQuery(simple_mf_occ_auto_elt).val('');
+
+		// Send message to server.
+		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+    	    }
+    	}
+    );
+
+    ///
+    /// Other button activities.
+    ///
 
     // Zoom buttons.
     jQuery(zin_btn_elt).click(
@@ -1156,6 +1237,10 @@ var MMEnvInit = function(in_model, in_server_base){
 	    }
 	});
 };
+
+///
+/// Startup.
+///
 
 // Start the day the jsPlumb way.
 jsPlumb.ready(function(){
