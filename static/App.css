@@ -64,6 +64,11 @@
 .app-table-bounds {
     height: 30%;
     overflow: auto;
+    padding: 3px;
+}
+
+.app-table-container {
+    padding: 3px;
 }
 
 /*
