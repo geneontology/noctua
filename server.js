@@ -344,6 +344,7 @@ var MMEnvLauncher = function() {
 					 self.cache_get('app_base.tmpl').toString();
 				     var base_tmpl_args = {
 					 'title': 'go-mme: editor',
+					 'messaging_server_location': msgloc,
 					 'js_variables': [
 					     {
 						 'name': 'global_id',
