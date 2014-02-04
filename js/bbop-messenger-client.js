@@ -21,7 +21,7 @@ var bbop_messenger_client = function(msgloc, on_connect,
     // Check to make sure that the optional library was correctly
     // loaded.
     if( typeof(io) === 'undefined' || typeof(io.connect) === 'undefined' ){
-	ll('unable to load');
+	ll('was unable to load server.io from messaging server (io undefined)');
 	anchor.okay_p = false;
     }else{
 	ll('likely have the right setup--attempting');
