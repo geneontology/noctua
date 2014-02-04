@@ -3,8 +3,17 @@
 ####  M3LOC=http://localhost:6800 make start-app
 ####
 
+## Variable to pass the location of the MMM server to the deploying
+## app.
 M3LOC ?= http://localhost:6800
+
+## Variable to pass the location of the (optional) messaging server to
+## the deploying app.
 MSGLOC ?= http://localhost:3400
+
+## Variable to pass the desired port to use to the messaging server at
+## startup.
+MSGPORT ?= 3400
 
 .PHONY: assemble-app
 assemble-app:
@@ -13,17 +22,21 @@ assemble-app:
 ##
 .PHONY: start-app-dev
 start-app-dev: assemble-app
-	M3LOC=$(M3LOC) node server.js
+	M3LOC=$(M3LOC) MSGLOC=$(MSGLOC) node server.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-app
 start-app:
-	M3LOC=$(M3LOC) node server.js
+	M3LOC=$(M3LOC) MSGLOC=$(MSGLOC) node server.js
 
 ###
-### TODO/BUG: Fix commands/environment for messaging server.
+### Commands/environment for messaging server.
 ###
+
+.PHONY: start-messenger-dev
+start-messenger-dev: assemble-app
+	MSGPORT=$(MSGPORT) node messenger.js
 
 .PHONY: start-messenger
 start-messenger:
-	MSGLOC=$(MSGLOC) node messenger.js
+	MSGPORT=$(MSGPORT) node messenger.js

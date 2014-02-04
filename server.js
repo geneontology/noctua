@@ -33,6 +33,7 @@ var MMEnvLauncher = function() {
 
     var laucher_app = require('express');
 
+    // Deal with location of MMM server.
     var m3loc = 'http://toaster.lbl.gov:6800'; // default val
     if( process.env.M3LOC ){
 	m3loc = process.env.M3LOC;
@@ -41,7 +42,7 @@ var MMEnvLauncher = function() {
 	console.log('server location taken from default: ' + m3loc);
     }
 
-    var msgloc = 'http://localhost:3400'; // default val
+    var msgloc = 'http://toaster.lbl.gov:3400'; // default val
     if( process.env.MSGLOC ){
 	msgloc = process.env.MSGLOC;
 	console.log('messenger location taken from environment: ' + msgloc);

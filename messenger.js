@@ -6,6 +6,16 @@
 ////  static/messenger.html
 ////  node_modules/socket.io/
 ////
+//// MSGPORT=3400 make start-messenger
+////
+
+var msgport = '3400'; // default val
+if( process.env.MSGPORT ){
+    msgport = process.env.MSGPORT;
+    console.log('messenger server port taken from environment: ' + msgport);
+}else{
+    console.log('messenger server port taken from default: ' + msgport);
+}
 
 // Spin up the chat server.
 var chat_app = require('express')();
