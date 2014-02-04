@@ -14,8 +14,8 @@ var bbop_messenger_client = function(msgloc, on_connect,
     anchor.okay_p = null;
 
     var logger = new bbop.logger('msg client');
-    //logger.DEBUG = true;
-    logger.DEBUG = false;
+    logger.DEBUG = true;
+    //logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
 
     // Check to make sure that the optional library was correctly

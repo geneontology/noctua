@@ -9,19 +9,26 @@
 //// MSGPORT=3400 make start-messenger
 ////
 
-var msgport = '3400'; // default val
+var msgport = 3400; // default val
+var msgdebug = 0; // default val
 if( process.env.MSGPORT ){
     msgport = process.env.MSGPORT;
     console.log('messenger server port taken from environment: ' + msgport);
 }else{
     console.log('messenger server port taken from default: ' + msgport);
 }
+if( process.env.MSGDEBUG ){
+    msgport = process.env.MSGDEBUG;
+    console.log('messenger debug level taken from environment: ' + msgdebug);
+}else{
+    console.log('messenger debug level taken from default: ' + msgdebug);
+}
 
 // Spin up the chat server.
 var chat_app = require('express')();
 var chat_server = require('http').createServer(chat_app);
 var sio = require('socket.io').listen(chat_server);
-chat_server.listen(3400);
+chat_server.listen(msgport);
 
 chat_app.get('/', function (req, res) {
 		 res.sendfile(__dirname + '/static/messenger.html');
@@ -32,7 +39,7 @@ chat_app.get('/', function (req, res) {
 sio.enable('browser client minification');
 sio.enable('browser client etag');
 sio.enable('browser client gzip');
-sio.set('log level', 0);
+sio.set('log level', msgdebug);
 
 sio.sockets.on('connection',
 	       function(socket){

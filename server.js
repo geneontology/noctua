@@ -4,6 +4,8 @@
  * This is a Heroku/NodeJS/local script, using the require environment.
  * 
  * A server that will render GO graphs into jsPlumb.
+ * 
+ * M3LOC=http://localhost:6800 MSGLOC=http://localhost:3400 make start-app
  */
 
 // Required shareable Node libs.
