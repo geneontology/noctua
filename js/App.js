@@ -1107,7 +1107,17 @@ var MMEnvInit = function(in_model, in_server_base){
 				  id + '"></div>');
 	}
 
-	// Update to the most recent location data.
+	// Update to the most recent location data, but trying to
+	// bound it within our window (doing otherwise causes the
+	// document bounds to stretch in strange ways).
+	var wX = jQuery(window).width();
+	var wY = jQuery(window).height();
+	var cursor_spacer = 5;
+	var cursor_buffer = 2 * cursor_spacer;
+	if( top > (wY - cursor_buffer) ){ top = wY - cursor_buffer; }
+	if( left > (wX - cursor_buffer) ){ left = wX - cursor_buffer; }
+	if( top < cursor_spacer ){ top = cursor_spacer; }
+	if( left < cursor_spacer ){ left = cursor_spacer; }
 	jQuery(jelt).css('top', top);
 	jQuery(jelt).css('left', left);
 	// jQuery(jelt).css('color', color);
