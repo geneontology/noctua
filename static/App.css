@@ -319,6 +319,18 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     color: red;
 }
 
+.bbop-mme-cursor {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    -moz-border-radius: 10px/10px;
+    -webkit-border-radius: 10px 10px;
+    border-radius: 10px/10px;;
+    border:solid 2px #f00; 
+    width:10px;
+    height:10px;   
+}
+
 .library-links {
     right: 454px;
     height: 19px;

@@ -5,7 +5,8 @@
 //// out.
 ////
 
-var bbop_messenger_client = function(msgloc, on_connect, on_info_event){
+var bbop_messenger_client = function(msgloc, on_connect,
+				     on_info_event, on_remote_event){
 
     var anchor = this;
     anchor.socket = null;
@@ -69,18 +70,39 @@ var bbop_messenger_client = function(msgloc, on_connect, on_info_event){
 		var mid = data['model_id'] || null;
 		var str = data['text'] || '???';
 
+		// Check to make sure it interestes us.
 		if( ! mid || mid != anchor.model_id ){
 		    ll('skip info packet--not for us');
 		}else{
 		    ll('received info: ' + str);
 		
 		    // Trigger whatever function we were given.
-		    if( typeof(on_info_event) !== 'undefined' && on_info_event ){
+		    if(typeof(on_info_event) !== 'undefined' && on_info_event){
 			on_info_event(str);
 		    }
 		}
 	    }
 	    anchor.socket.on('info', _got_info);
+
+	    function _got_remote(data){
+		var mid = data['model_id'] || null;
+		var top = data['top'] || null;
+		var left = data['left'] || null;
+
+		// Check to make sure it interestes us.
+		if( ! mid || mid != anchor.model_id ){
+		    ll('skip info packet--not for us');
+		}else{
+		    //ll('received remote: ' + str);
+		
+		    // Trigger whatever function we were given.
+		    if(typeof(on_remote_event) !== 'undefined' &&
+		       on_remote_event){
+			on_remote_event(top, left);
+		    }
+		}		
+	    }
+	    anchor.socket.on('remote', _got_remote);
 
 	    // // ...
 	    // anchor.socket.on('remote', function (data) {
@@ -104,6 +126,23 @@ var bbop_messenger_client = function(msgloc, on_connect, on_info_event){
 		text: str
 	    };
 	    anchor.socket.emit('info', msg_packet);
+	}
+    };
+
+    // 
+    anchor.location = function(identifier, top, left){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('send location: (' + anchor.model_id + ')');
+
+	    var msg_packet = {
+		model_id: anchor.model_id,
+		top: top,
+		left: left,
+		identifier: identifier
+	    };
+	    anchor.socket.emit('remote', msg_packet);
 	}
     };
 };

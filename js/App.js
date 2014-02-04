@@ -161,6 +161,27 @@ var MMEnvInit = function(in_model, in_server_base){
 	return seed + 100;
     }
 
+    // ...
+    function _date_str(n){
+
+	function _zero_fill(n){
+	    var ret = n;
+	    if( ret < 10 ){
+		ret = '0' + ret;
+	    }
+	    return ret;
+	}
+	
+	var now = new Date();
+	var dts = now.getFullYear() + '/' +
+	    _zero_fill(now.getMonth() +1) + '/' +
+	    _zero_fill(now.getDate()) + ' ' +
+	    _zero_fill(now.getHours()) + ':' +
+	    _zero_fill(now.getMinutes()) + ':' +
+	    _zero_fill(now.getSeconds());
+	return dts;
+    }	
+    
     ///
     /// jsPlumb preamble.
     ///
@@ -1033,15 +1054,6 @@ var MMEnvInit = function(in_model, in_server_base){
     /// Optional: experiment with the messaging server.
     ///
 
-    // ...
-    function _zero_fill(n){
-	var ret = n;
-	if( ret < 10 ){
-	    ret = '0' + ret;
-	}
-	return ret;
-    }
-    
     // Allow the message board to be cleared.
     var new_list_elt = null;
     function _on_connect(){
@@ -1055,29 +1067,28 @@ var MMEnvInit = function(in_model, in_server_base){
 
 	// Add to the top of the message
 	// queue.
-	var now = new Date();
-	var dts = now.getFullYear() + '/' +
-	    _zero_fill(now.getMonth() +1) + '/' +
-	    _zero_fill(now.getDate()) + ' ' +
-	    _zero_fill(now.getHours()) + ':' +
-	    _zero_fill(now.getMinutes()) + ':' +
-	    _zero_fill(now.getSeconds());
-	jQuery(new_list_elt).prepend('<li>'+ dts +': '+ str +'</li>');
+	jQuery(new_list_elt).prepend('<li>'+ _date_str() +': '+ str +'</li>');
 		
 	//alert('someone did something');
 	// Skip hightlighting if we're already over it.
+	var cls = 'bbop-mme-new-info';
 	if( jQuery(message_area_tab_elt).parent().hasClass('active') ){
 	    // Do not change.
 	}else{
 	    // Highlight.
-	    jQuery(message_area_tab_elt).addClass('bbop-mme-new-info');
+	    jQuery(message_area_tab_elt).addClass(cls);
 	    // Clear 
 	    jQuery(message_area_tab_elt).unbind('click');
 	    jQuery(message_area_tab_elt).click(
 		function(){
-		    jQuery(message_area_tab_elt).removeClass('bbop-mme-new-info');
+		    jQuery(message_area_tab_elt).removeClass(cls);
 		});
 	}	
+    }
+
+    function _on_remote_update(top, left){
+	jQuery(remote_area_elt).empty();
+	jQuery(remote_area_elt).append('top: ' + top + ', left: ' + left);
     }
 
     if( typeof(global_message_server) === 'undefined'  ){
@@ -1087,9 +1098,12 @@ var MMEnvInit = function(in_model, in_server_base){
 	ll('try setup for messaging at: ' + global_message_server);
 	msngr = new bbop_messenger_client(global_message_server,
 					  _on_connect,
-					  _on_info_update);
+					  _on_info_update,
+					  _on_remote_update);
 	msngr.connect(ecore.get_id());
     }
+
+    //
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
@@ -1097,6 +1111,17 @@ var MMEnvInit = function(in_model, in_server_base){
 	    }
 	}
     );
+
+    //jQuery(graph_container_div).on( // conflict with draggable canvas
+    jQuery('body').on(
+	'mousemove',
+	function(evt){
+	    if( msngr ){
+		var top = evt.pageY;
+		var left = evt.pageX;
+		msngr.location('???', top, left);
+	    }
+	});
 };
 
 // Start the day the jsPlumb way.

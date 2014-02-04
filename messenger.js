@@ -26,16 +26,26 @@ chat_app.get('/', function (req, res) {
 
 sio.sockets.on('connection',
 	       function(socket){
-		   //socket.emit('info', {text: 'client connected to server'});
+
+		   // Relays.
 		   socket.on('info',
 			     function(data){
 				 //console.log('srv info: ' + data['text']);
 				 socket.broadcast.emit('info', data);
 			     });
+		   socket.on('remote',
+			     function(data){
+				 //console.log('srv remove: ' + data);
+				 socket.broadcast.emit('remote', data);
+			     });
+
+		   // Disconnect info.
 		   socket.on('disconnect',
 			     function(data){
 				 console.log('srv disconnect');
-				 socket.broadcast.emit('info',
-					     {text: 'client disconnected from server'});
+				 var dispack = {
+				     text: 'client disconnected from server'
+				 };
+				 socket.broadcast.emit('info', dispack);
 			     });
 	       });
