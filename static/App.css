@@ -330,6 +330,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     width:10px;
     height:10px;
     opacity: 0.5;
+    z-index: 1000; /* get it above most of the riff raff */
 }
 
 .library-links {
