@@ -18,7 +18,7 @@ if( process.env.MSGPORT ){
     console.log('messenger server port taken from default: ' + msgport);
 }
 if( process.env.MSGDEBUG ){
-    msgport = process.env.MSGDEBUG;
+    msgdebug = process.env.MSGDEBUG;
     console.log('messenger debug level taken from environment: ' + msgdebug);
 }else{
     console.log('messenger debug level taken from default: ' + msgdebug);
