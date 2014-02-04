@@ -37,6 +37,13 @@ var MMEnvInit = function(in_model, in_server_base){
     // Optionally use the messaging server as an experiment.
     var msngr = null;
 
+    // This would eventually be information delivered by the
+    // authentication system.
+    var user_details = {
+	'uid': bbop.core.uuid()
+	// 'ucolor': '#00ff00'
+    };
+
     // Where we move the nodes during this session.
     var historical_store = new bbop_location_store();
 
@@ -125,8 +132,8 @@ var MMEnvInit = function(in_model, in_server_base){
     var message_area_elt = '#' + message_area_id;
     var message_area_tab_id = 'message_area_tab';
     var message_area_tab_elt = '#' + message_area_tab_id;
-    var remote_area_id = 'remote_area';
-    var remote_area_elt = '#' + remote_area_id;
+    // var remote_area_id = 'remote_area';
+    // var remote_area_elt = '#' + remote_area_id;
 
     ///
     /// Render helpers.
@@ -1061,6 +1068,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	var new_list_id = bbop.core.uuid();
 	new_list_elt = '#' + new_list_id;
 	jQuery(message_area_elt).append('<ul id="' + new_list_id + '"></ul>');
+	jQuery(new_list_elt).prepend('<li>you are connected</li>');
     }
 
     function _on_info_update(str){
@@ -1086,9 +1094,23 @@ var MMEnvInit = function(in_model, in_server_base){
 	}	
     }
 
-    function _on_remote_update(top, left){
-	jQuery(remote_area_elt).empty();
-	jQuery(remote_area_elt).append('top: ' + top + ', left: ' + left);
+    function _on_remote_update(id, color, top, left){
+	// jQuery(remote_area_elt).empty();
+	// jQuery(remote_area_elt).append('top: ' + top + ', left: ' + left);
+
+	// Ensure there is a div for the user.
+	var jelt = '#' + id;
+	if( ! jQuery(jelt).length ) {
+	    jQuery('body').append('<div id="' +
+				  id + '" class="bbop-mme-cursor" alt="user: ' +
+				  id + '" title="user: ' +
+				  id + '"></div>');
+	}
+
+	// Update to the most recent location data.
+	jQuery(jelt).css('top', top);
+	jQuery(jelt).css('left', left);
+	// jQuery(jelt).css('color', color);
     }
 
     if( typeof(global_message_server) === 'undefined'  ){
@@ -1119,7 +1141,8 @@ var MMEnvInit = function(in_model, in_server_base){
 	    if( msngr ){
 		var top = evt.pageY;
 		var left = evt.pageX;
-		msngr.location('???', top, left);
+		msngr.location(user_details['uid'], user_details['ucolor'],
+			       top, left);
 	    }
 	});
 };

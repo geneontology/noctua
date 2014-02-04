@@ -88,6 +88,8 @@ var bbop_messenger_client = function(msgloc, on_connect,
 		var mid = data['model_id'] || null;
 		var top = data['top'] || null;
 		var left = data['left'] || null;
+		var uid = data['user_id'] || '???';
+		var ucolor = data['user_color'] || '#ffffff';
 
 		// Check to make sure it interestes us.
 		if( ! mid || mid != anchor.model_id ){
@@ -98,7 +100,7 @@ var bbop_messenger_client = function(msgloc, on_connect,
 		    // Trigger whatever function we were given.
 		    if(typeof(on_remote_event) !== 'undefined' &&
 		       on_remote_event){
-			on_remote_event(top, left);
+			on_remote_event(uid, ucolor, top, left);
 		    }
 		}		
 	    }
@@ -130,19 +132,20 @@ var bbop_messenger_client = function(msgloc, on_connect,
     };
 
     // 
-    anchor.location = function(identifier, top, left){
+    anchor.location = function(user_id, user_color, top, left){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
 	    ll('send location: (' + anchor.model_id + ')');
 
-	    var msg_packet = {
+	    var loc_packet = {
 		model_id: anchor.model_id,
 		top: top,
 		left: left,
-		identifier: identifier
+		user_id: user_id,
+		user_color: user_color
 	    };
-	    anchor.socket.emit('remote', msg_packet);
+	    anchor.socket.emit('remote', loc_packet);
 	}
     };
 };

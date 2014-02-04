@@ -326,9 +326,10 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     -moz-border-radius: 10px/10px;
     -webkit-border-radius: 10px 10px;
     border-radius: 10px/10px;;
-    border:solid 2px #f00; 
+    border:solid 3px #FF0000; 
     width:10px;
-    height:10px;   
+    height:10px;
+    opacity: 0.5;
 }
 
 .library-links {
