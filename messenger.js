@@ -17,12 +17,12 @@ chat_app.get('/', function (req, res) {
 		 res.sendfile(__dirname + '/static/messenger.html');
 	     });
 
-// // TODO: Turn on recommended production settings when in production.
-// // https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO#wiki-recommended-production-settings
-// sio.enable('browser client minification');
-// sio.enable('browser client etag');
-// sio.enable('browser client gzip');
-// sio.set('log level', 1);
+// TODO: Turn on recommended production settings when in production.
+// https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO#wiki-recommended-production-settings
+sio.enable('browser client minification');
+sio.enable('browser client etag');
+sio.enable('browser client gzip');
+sio.set('log level', 0);
 
 sio.sockets.on('connection',
 	       function(socket){
