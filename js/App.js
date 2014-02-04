@@ -34,6 +34,9 @@ var MMEnvInit = function(in_model, in_server_base){
     //var bbop_mme_edit = require('./js/bbop-mme-edit');
     var ecore = new bme_core();
 
+    // Optionally use the messaging server as an experiment.
+    var msngr = null;
+
     // Where we move the nodes during this session.
     var historical_store = new bbop_location_store();
 
@@ -676,8 +679,19 @@ var MMEnvInit = function(in_model, in_server_base){
     
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
-    manager.register('postrun', 'fooB', _refresh_tables, 10);
-    manager.register('postrun', 'fooA', _shields_down, 9);
+    manager.register('postrun', 'fooA', _refresh_tables, 10);
+    manager.register('postrun', 'fooB', _shields_down, 9);
+    manager.register('postrun', 'fooC', function(){ // experimental
+			 if( msngr ){	
+			     // var msg = 'another client completed an op: ' + 
+			     // 	 'please refresh';
+			     // TODO/BUG: Get into a refresh war pretty
+			     // easy since you trigger an inconsistent
+			     // on refresh--need a better measure.
+			     var msg = 'FYI: another client completed an op'; 
+			     msngr.info(msg);
+			 }
+		     }, 8);
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
 			 alert('There was a connection error (' +
@@ -1019,8 +1033,6 @@ var MMEnvInit = function(in_model, in_server_base){
     /// Optional: experiment with the messaging server.
     ///
 
-    var msngr = null;
-
     // ...
     function _zero_fill(n){
 	var ret = n;
@@ -1080,7 +1092,9 @@ var MMEnvInit = function(in_model, in_server_base){
     }
     jQuery(ping_btn_elt).click(
 	function(){
-	    msngr.info('ping from another client for ' + ecore.get_id());
+	    if( msngr ){
+		msngr.info('"hello" from another client for ' + ecore.get_id());
+	    }
 	}
     );
 };
