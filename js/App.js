@@ -268,7 +268,13 @@ var MMEnvInit = function(in_model, in_server_base){
 	    }
 	}
 
-	instance.draggable(foo, {stop: _on_drag_stop});
+	// Try top-level container containment to prevent inaccessible
+	// nodes.
+	//instance.draggable(foo, {stop: _on_drag_stop});
+	instance.draggable(foo, {stop: _on_drag_stop,
+				 containment: graph_div,
+				 scroll: false
+				});
     }
 
     function _make_selector_target(sel){
