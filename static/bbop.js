@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140129";
+bbop.version.release = "20140204";
 /*
  * Package: logger.js
  * 
@@ -6271,8 +6271,8 @@ if ( typeof bbop.layout == "undefined" ){ bbop.layout = {}; }
 if ( typeof bbop.layout.sugiyama == "undefined" ){ bbop.layout.sugiyama = {}; }
 
 // Speciality variables in the namespace.
-bbop.layout.sugiyama.DEBUG = true;
-//bbop.layout.sugiyama.DEBUG = false;
+//bbop.layout.sugiyama.DEBUG = true;
+bbop.layout.sugiyama.DEBUG = false;
 bbop.layout.sugiyama.iterations = 10;
 
 ///
