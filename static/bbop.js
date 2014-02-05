@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140204";
+bbop.version.release = "20140205";
 /*
  * Package: logger.js
  * 
@@ -7370,7 +7370,7 @@ bbop.rest.response.mmm.prototype.commentary = function(){
  * Function: data
  * 
  * Returns the data object (whatever that might be in any given
- * case).
+ * case). This grossly returns all response data, if any.
  * 
  * Arguments:
  *  n/a
@@ -7382,6 +7382,85 @@ bbop.rest.response.mmm.prototype.data = function(){
     var ret = null;
     if( this._data ){
 	ret = bbop.core.clone(this._data);
+    }
+    return ret;
+};
+
+/*
+ * Function: model_id
+ * 
+ * Returns the model id of the response.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbop.rest.response.mmm.prototype.model_id = function(){
+    var ret = null;
+    if( this._data && this._data['id'] ){
+	ret = this._data['id'];
+    }
+    return ret;
+};
+
+/*
+ * Function: facts
+ * 
+ * Returns a list of the facts in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.facts = function(){
+    var ret = [];
+    if( this._data && this._data['facts'] && 
+	bbop.core.is_array(this._data['facts']) ){
+	ret = this._data['facts'];
+    }
+    return ret;
+};
+
+/*
+ * Function: properties
+ * 
+ * Returns a list of the properties in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.properties = function(){
+    var ret = [];
+    if( this._data && this._data['properties'] && 
+	bbop.core.is_array(this._data['properties']) ){
+	ret = this._data['properties'];
+    }
+    return ret;
+};
+
+/*
+ * Function: individuals
+ * 
+ * Returns a list of the individuals in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.individuals = function(){
+    var ret = [];
+    if( this._data && this._data['individuals'] && 
+	bbop.core.is_array(this._data['individuals']) ){
+	ret = this._data['individuals'];
     }
     return ret;
 };
