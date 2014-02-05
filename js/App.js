@@ -966,6 +966,8 @@ var MMEnvInit = function(in_model, in_server_base){
 	new bbop.widget.search_box(gserv, gconf, simple_bp_occ_auto_id,
 				   simple_bp_occ_auto_args);
     simple_bp_occ_auto.add_query_filter('document_category', 'ontology_class');
+    simple_bp_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
+    simple_bp_occ_auto.add_query_filter('source', 'biological_process', ['-']);
     simple_bp_occ_auto.set_personality('ontology');
 
     // Add new remote node button.
@@ -1050,6 +1052,8 @@ var MMEnvInit = function(in_model, in_server_base){
 	new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
 				   simple_mf_occ_auto_args);
     simple_mf_occ_auto.add_query_filter('document_category', 'ontology_class');
+    simple_mf_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
+    simple_mf_occ_auto.add_query_filter('source', 'biological_process', ['-']);
     simple_mf_occ_auto.set_personality('ontology');
 
     // Add new remote node button.
