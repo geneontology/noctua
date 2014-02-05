@@ -21,6 +21,7 @@ var MMEnvInit = function(in_model, in_server_base){
     // Aliases
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;
+    var is_empty = bbop.core.is_empty;
     var what_is = bbop.core.what_is;
     var bme_core = bbop_mme_edit.core;
     var bme_edge = bbop_mme_edit.edge;
@@ -444,13 +445,13 @@ var MMEnvInit = function(in_model, in_server_base){
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
-    function _rebuild_meta(model){
+    function _rebuild_meta(model_id){
 
 	// Deal with ID(s).
 	// First and only setting of this right now.
 	// Override if there is real data.
-	if( model['id'] ){
-	    ecore.add_id(model['id']);
+	if( model_id ){
+	    ecore.add_id(model_id);
 	    ll('model id from data: ' + ecore.get_id());
 	}else if( typeof(global_id) !== 'undefined' && global_id ){
 	    ecore.add_id(global_id);
@@ -462,7 +463,7 @@ var MMEnvInit = function(in_model, in_server_base){
     }
 	
     // The core initial layout function.
-    function _rebuild_model_and_display(model){
+    function _rebuild_model_and_display(model_id, individuals, facts){
 
 	ll('rebuilding from scratch');
 	
@@ -478,15 +479,16 @@ var MMEnvInit = function(in_model, in_server_base){
 	ecore = new bme_core(); // nuke it from orbit
 
 	// Reconstruct ecore meta.
-	_rebuild_meta(model);
-
-	var individuals = model['individuals'];
+	_rebuild_meta(model_id);
 
 	// Starting fresh, add everything coming in to the edit model.
 	each(individuals,
 	     function(indv){
 		 ecore.add_node_from_individual(indv);
-		 ecore.add_edges_from_individual(indv, aid);
+	     });
+	each(facts,
+	     function(fact){
+		 ecore.add_edge_from_fact(fact, aid);
 	     });
 
 	///
@@ -622,7 +624,7 @@ var MMEnvInit = function(in_model, in_server_base){
     // This is a very important core function. It's purpose is to
     // update the loval model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_individuals(individuals){
+    function _merge_from_new_data(individuals, facts){
 
 	// First look at individuals/nodes for addition or updating.
 	each(individuals,
@@ -676,7 +678,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	     });
 	
 	// Now look at individuals/edges (by individual) for
-	// purging and reinitiation.
+	// purging.
 	each(individuals,
 	     function(ind){
 		 var source_node = ecore.get_node_by_individual(ind);
@@ -701,15 +703,21 @@ var MMEnvInit = function(in_model, in_server_base){
 			  instance.detach(src_conn);
 		      });
 		 
-		 // Add all edges from the new individuals to the
-		 // model.
-		 var redges = ecore.add_edges_from_individual(ind, aid);
+		 // // Add all edges from the new individuals to the
+		 // // model.
+		 // var redges = ecore.add_edges_from_individual(ind, aid);
 		 
-		 // Now add them to the display.
-		 each(redges,
-		      function(redge){
-			  _connect_with_edge(redge);
-		      });
+		 // // Now add them to the display.
+		 // each(redges,
+		 //      function(redge){
+		 // 	  _connect_with_edge(redge);
+		 //      });
+	     });
+	// Reinitiate from all facts.
+	each(facts,
+	     function(fact){
+		 var edg = ecore.add_edge_from_fact(fact, aid);
+		 _connect_with_edge(edg);
 	     });
     }
     
@@ -772,24 +780,27 @@ var MMEnvInit = function(in_model, in_server_base){
 
     manager.register('inconsistent', 'foo',
 		     function(resp, man){
-			 var dmodel = resp.data();
+			 var mid = resp.model_id();
+			 var mindividuals = resp.individuals();
+			 var mfacts = resp.facts();
 
 			 // Deal with model.
-			 if( ! dmodel || ! dmodel['id'] ||
-			     ! dmodel['individuals'] ){
+			 if( ! mid || is_empty(mindividuals) ){
 			     alert('no data/individuals in inconsistent');
 			 }else{
-			     _rebuild_model_and_display(dmodel);
+			     _rebuild_model_and_display(mid, mindividuals,
+							mfacts);
 			 }
 		     }, 10);
 
     manager.register('merge', 'foo',
 		     function(resp, man){
-			 var individuals = resp.data();
+			 var individuals = resp.individuals();
+			 var facts = resp.facts();
 			 if( ! individuals ){
 			     alert('no data/individuals in merge');
 			 }else{
-			     _merge_from_individuals(individuals);
+			     _merge_from_new_data(individuals, facts);
 			 }
 		     }, 10);
 
@@ -1144,7 +1155,10 @@ var MMEnvInit = function(in_model, in_server_base){
     // Since we're doing this "manually", apply the prerun and postrun
     // "manually".
     _shields_up();
-    _rebuild_model_and_display(model_json);
+    var init_mid = model_json['id'];
+    var init_indvs = model_json['individuals'];
+    var init_facts = model_json['facts'];
+    _rebuild_model_and_display(init_mid, init_indvs, init_facts);
     _refresh_tables();
     _shields_down();
 

@@ -167,45 +167,66 @@ bbop_mme_edit.core.prototype.add_edge = function(eedge){
     //this.core['elt2edge'][elt_id] = eeid; // map it
 };
 
-// TODO/BUG: aid is used as a crutch here to scan our the edges
-bbop_mme_edit.core.prototype.add_edges_from_individual = function(indv, aid){
+// 
+bbop_mme_edit.core.prototype.add_edge_from_fact = function(fact, aid){
 
     var anchor = this;
     var each = bbop.core.each;
 
-    var ret_facts = [];
+    var ret_fact = null;
     
     // Add individual to edit core if properly structured.
-    var iid = indv['id'];
-    if( iid ){
-	// Now, let's probe the model to see what edges
-	// we can find.
-	var possible_rels = aid.all_known();
-	each(possible_rels,
-	     function(try_rel){
-		 if( indv[try_rel] && indv[try_rel].length ){
-		     
-		     // Cycle through each of the found
-		     // rels.
-		     var found_rels = indv[try_rel];
-		     each(found_rels,
-			  function(rel){
-			      var tid = rel['id'];
-			      var rt = rel['type'];
-			      if( tid && rt && rt == 'NamedIndividual'){
-				  var en =
-				      new bbop_mme_edit.edge(iid, try_rel, tid);
-				  anchor.add_edge(en);
-				  ret_facts.push(en);
-			      }
-			  });
-		 }
-	     });
+    var sid = fact['subject'];
+    var oid = fact['object'];
+    var pid = fact['property'];
+    if( sid && oid && pid ){
+
+	var en = new bbop_mme_edit.edge(sid, pid, oid);
+	anchor.add_edge(en);
+	ret_fact = en;
     }
     
-    return ret_facts;
+    return ret_fact;
 };
 
+// // TODO/BUG: aid is used as a crutch here to scan out the edges
+// bbop_mme_edit.core.prototype.add_edges_from_individual = function(indv, aid){
+
+//     var anchor = this;
+//     var each = bbop.core.each;
+
+//     var ret_facts = [];
+    
+//     // Add individual to edit core if properly structured.
+//     var iid = indv['id'];
+//     if( iid ){
+// 	// Now, let's probe the model to see what edges
+// 	// we can find.
+// 	var possible_rels = aid.all_known();
+// 	each(possible_rels,
+// 	     function(try_rel){
+// 		 if( indv[try_rel] && indv[try_rel].length ){
+		     
+// 		     // Cycle through each of the found
+// 		     // rels.
+// 		     var found_rels = indv[try_rel];
+// 		     each(found_rels,
+// 			  function(rel){
+// 			      var tid = rel['id'];
+// 			      var rt = rel['type'];
+// 			      if( tid && rt && rt == 'NamedIndividual'){
+// 				  var en =
+// 				      new bbop_mme_edit.edge(iid, try_rel, tid);
+// 				  anchor.add_edge(en);
+// 				  ret_facts.push(en);
+// 			      }
+// 			  });
+// 		 }
+// 	     });
+//     }
+    
+//     return ret_facts;
+// };
 
 bbop_mme_edit.core.prototype.get_edge_id_by_connector_id = function(cid){
     return this.core['connector2edge'][cid] || null;

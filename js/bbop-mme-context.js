@@ -151,6 +151,15 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#B8860B' // darkgoldenrod
 	},
+	'activates':
+	{
+	    readable: 'activates',
+	    priority: 0,
+	    aliases: [
+		'http://purl.obolibrary.org/obo/activates'
+	    ],
+	    color: '#8FBC8F' // darkseagreen
+	},
 	'directly_activates':
 	{
 	    readable: 'directly activates',
@@ -160,7 +169,7 @@ var bbop_mme_context = function(){
 		'directly activates',
 		'directly_activates'
 	    ],
-	    color: '#8FBC8F' // darkseagreen
+	    color: '#2F4F4F' // darkslategray
 	},
 	'upstream_of':
 	{
