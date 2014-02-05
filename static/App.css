@@ -318,6 +318,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 
 .bbop-mme-stack-td {
     border: 1px solid #eeeeee;
+    word-break: break-word; /* to get chrome a little nicer */ 
 }
 
 .bbop-mme-new-info {
