@@ -120,6 +120,7 @@ var MMEnvLauncher = function() {
 		'bootstrap.min.js': '',
 		'jquery-ui-1.10.3.custom.min.js': '',
 		'jquery.jsPlumb-1.5.5.js': '',
+		'connectors-sugiyama.js': '',
 		'jquery.tablesorter.min.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',

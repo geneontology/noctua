@@ -283,7 +283,7 @@ var MMEnvInit = function(in_model, in_server_base){
     				anchor:"Continuous",
 				isTarget: true,
 				//maxConnections: -1,
-				connector:[ "Bezier", { curviness: 25 } ]
+				connector:[ "Sugiyama", { curviness: 25 } ]
     			    });
     }
 
@@ -293,7 +293,7 @@ var MMEnvInit = function(in_model, in_server_base){
                                 anchor:"Continuous",
 				isSource: true,
 				//maxConnections: -1,
-                                connector:[ "Bezier", { curviness: 25 } ]
+                                connector:[ "Sugiyama", { curviness: 25 } ]
                             });
     }
     
@@ -399,7 +399,7 @@ var MMEnvInit = function(in_model, in_server_base){
     	    	'target': ecore.get_node_elt_id(tn),
 		//'label': 'foo' // works
 		'anchor': "Continuous",
-		'connector': ["Bezier", { curviness: 75 } ],
+		'connector': ["Sugiyama", { curviness: 75 } ],
 		'paintStyle': {
 		    strokeStyle: clr,
 		    lineWidth: 5
