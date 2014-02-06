@@ -9,6 +9,10 @@
 
 (function() {
 
+     var logger = new bbop.logger('jsPlumb-sugi');
+     logger.DEBUG = true;
+     function ll(str){ logger.kvetch(str); }
+
      var Sugiyama = function(params) {
          params = params || {};
 	 
@@ -18,6 +22,9 @@
          var stub = params.stub || 50;
          var majorAnchor = params.curviness || 150;
          var minorAnchor = 10;
+
+	 // Attempting waypoint usage.
+	 var waypoints = params['waypoints'] || null;
 
          this.type = "Sugiyama";	
          this.getCurviness = function() {
@@ -56,7 +63,7 @@
                  }else{
 		     p.push(point[1] + (majorAnchor * too[1]));
 		 }
-             }else{
+             }else{ // perp
                  if( too[0] === 0 ){ // X
 
 		     if( targetAnchorPosition[0] < sourceAnchorPosition[0] ){
@@ -84,26 +91,62 @@
          };        
 	 
          this._compute = function(paintInfo, p) {
-	     var sp = p.sourcePos,
-	     tp = p.targetPos,				
-             _w = Math.abs(sp[0] - tp[0]),
-             _h = Math.abs(sp[1] - tp[1]),            
-             _sx = sp[0] < tp[0] ? _w : 0,
-             _sy = sp[1] < tp[1] ? _h : 0,
-             _tx = sp[0] < tp[0] ? 0 : _w,
-             _ty = sp[1] < tp[1] ? 0 : _h,
-             _CP = self._findControlPoint([_sx, _sy], sp, tp,
-					  p.sourceEndpoint, p.targetEndpoint),
-             _CP2 = self._findControlPoint([_tx, _ty], tp, sp,
-					   p.targetEndpoint, p.sourceEndpoint);
+	     var compute_anchor = this;
+
+	     // Calc.
+	     var sp = p.sourcePos;
+	     var tp = p.targetPos;			
+             var _w = Math.abs(sp[0] - tp[0]);
+             var _h = Math.abs(sp[1] - tp[1]);
+	     // Used.
+             var _sx = sp[0] < tp[0] ? _w : 0;
+             var _sy = sp[1] < tp[1] ? _h : 0;
+             var _tx = sp[0] < tp[0] ? 0 : _w;
+             var _ty = sp[1] < tp[1] ? 0 : _h;
+             var _CP = self._findControlPoint([_sx, _sy], sp, tp,
+					      p.sourceEndpoint,
+					      p.targetEndpoint);
+             var _CP2 = self._findControlPoint([_tx, _ty], tp, sp,
+					       p.targetEndpoint,
+					       p.sourceEndpoint);
+
+	     // // Control over waypoints.
+	     // if( waypoints ){
+	     // 	 ll('has waypoints');
+
+	     // 	 // Tack on the first and last points that we know.
+	     // 	 waypoints.unshift([sp[0], sp[1]]);
+	     // 	 waypoints.push([tp[0], tp[1]]);
+	     // 	 // Since we're always looking one ahead, skip last
+	     // 	 // iteration.
+	     // 	 for( var wpi = 0; wpi < (waypoints.length -2); wpi++ ){
+	     // 	     var curr_wp = waypoints[wpi];
+	     // 	     var next_wp = waypoints[wpi +1];
+		     
+	     // 	     var seg_args = {
+	     // 	     	 x1: curr_wp[0], y1: curr_wp[1],
+	     // 	     	 x2: next_wp[0], y2: next_wp[1] 
+	     // 	     };
+		     
+	     // 	     // ll('waypoint (' + index + '): ' +
+	     // 	     // 	bbop.core.dump(waypoint));
+	     // 	     // ll('segments: ' + bbop.core.dump(seg_args));
+	     // 	     _super.addSegment(compute_anchor, "Straight", seg_args);
+	     // 	 }
+
+	     // }else{
+
+	     // 	 ll('no waypoints');
+
+		 var seg_args = {
+		     x1:_sx, y1:_sy,
+		     x2:_tx, y2:_ty,
+		     cp1x:_CP[0], cp1y:_CP[1],
+		     cp2x:_CP2[0], cp2y:_CP2[1]
+		 };
+		 _super.addSegment(compute_anchor, "Bezier", seg_args);
+//	     }
 	     
-	     var seg_args = {
-		 x1:_sx, y1:_sy,
-		 x2:_tx, y2:_ty,
-		 cp1x:_CP[0], cp1y:_CP[1],
-		 cp2x:_CP2[0], cp2y:_CP2[1]
-	     };
-	     _super.addSegment(this, "Bezier", seg_args);
          }; 
      };
      

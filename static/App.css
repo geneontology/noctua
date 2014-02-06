@@ -179,14 +179,14 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     filter:alpha(opacity=90);
 }
 
-.waypoint {
-    background-color:white;
-    border:1px solid #346789;
-    width: 5px;
-    height: 5px;
-    border-radius:0.5em;
-    position: absolute;
-}
+/* .waypoint { */
+/*     background-color:white; */
+/*     border:1px solid #346789; */
+/*     width: 5px; */
+/*     height: 5px; */
+/*     border-radius:0.5em; */
+/*     position: absolute; */
+/* } */
 
 .window {
     background-color:white;
