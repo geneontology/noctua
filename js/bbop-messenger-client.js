@@ -8,7 +8,7 @@
 var bbop_messenger_client = function(msgloc,
 				     on_connect,
 				     on_info_event,
-				     on_telepathy_event,
+				     on_clairvoyance_event,
 				     on_telekinesis_event){
 
     var anchor = this;
@@ -88,7 +88,7 @@ var bbop_messenger_client = function(msgloc,
 	    }
 	    anchor.socket.on('info', _got_info);
 
-	    function _got_telepathy(data){
+	    function _got_clairvoyance(data){
 		var mid = data['model_id'] || null;
 		var top = data['top'] || null;
 		var left = data['left'] || null;
@@ -99,16 +99,16 @@ var bbop_messenger_client = function(msgloc,
 		if( ! mid || mid != anchor.model_id ){
 		    ll('skip info packet--not for us');
 		}else{
-		    //ll('received telepathy: ' + str);
+		    //ll('received clairvoyance: ' + str);
 		
 		    // Trigger whatever function we were given.
-		    if(typeof(on_telepathy_event) !== 'undefined' &&
-		       on_telepathy_event){
-			on_telepathy_event(uid, ucolor, top, left);
+		    if(typeof(on_clairvoyance_event) !== 'undefined' &&
+		       on_clairvoyance_event){
+			on_clairvoyance_event(uid, ucolor, top, left);
 		    }
 		}		
 	    }
-	    anchor.socket.on('telepathy', _got_telepathy);
+	    anchor.socket.on('clairvoyance', _got_clairvoyance);
 
 	    function _got_telekinesis(data){
 		var mid = data['model_id'] || null;
@@ -151,7 +151,7 @@ var bbop_messenger_client = function(msgloc,
     };
 
     // Remote awareness of location.
-    anchor.telepathy = function(user_id, user_color, top, left){
+    anchor.clairvoyance = function(user_id, user_color, top, left){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
@@ -164,7 +164,7 @@ var bbop_messenger_client = function(msgloc,
 		user_id: user_id,
 		user_color: user_color
 	    };
-	    anchor.socket.emit('telepathy', loc_packet);
+	    anchor.socket.emit('clairvoyance', loc_packet);
 	}
     };
 

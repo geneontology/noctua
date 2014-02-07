@@ -1295,7 +1295,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	}	
     }
 
-    function _on_telepathy_update(id, color, top, left){
+    function _on_clairvoyance_update(id, color, top, left){
 
 	// Ensure there is a div for the user.
 	var jelt = '#' + id;
@@ -1346,7 +1346,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	msngr = new bbop_messenger_client(global_message_server,
 					  _on_connect,
 					  _on_info_update,
-					  _on_telepathy_update,
+					  _on_clairvoyance_update,
 					  _on_telekinesis_update);
 	msngr.connect(ecore.get_id());
     }
@@ -1378,8 +1378,8 @@ var MMEnvInit = function(in_model, in_server_base){
 		var left = evt.pageX;
 		var scroll_left = jQuery(graph_container_div).scrollLeft();
 		var scroll_top = jQuery(graph_container_div).scrollTop();
-		msngr.telepathy(user_details['uid'], user_details['ucolor'],
-				top + scroll_top, left + scroll_left);
+		msngr.clairvoyance(user_details['uid'], user_details['ucolor'],
+				   top + scroll_top, left + scroll_left);
 	    }
 	});
 };

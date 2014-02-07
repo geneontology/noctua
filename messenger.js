@@ -50,10 +50,10 @@ sio.sockets.on('connection',
 				 //console.log('srv info: ' + data['text']);
 				 socket.broadcast.emit('info', data);
 			     });
-		   socket.on('telepathy',
+		   socket.on('clairvoyance',
 			     function(data){
 				 //console.log('srv remove: ' + data);
-				 socket.broadcast.emit('telepathy', data);
+				 socket.broadcast.emit('clairvoyance', data);
 			     });
 		   socket.on('telekinesis',
 			     function(data){
