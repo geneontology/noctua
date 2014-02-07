@@ -132,8 +132,8 @@ var bbop_messenger_client = function(msgloc, on_connect,
 	}
     };
 
-    // 
-    anchor.location = function(user_id, user_color, top, left){
+    // Remote awareness of location.
+    anchor.telepathy = function(user_id, user_color, top, left){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{

@@ -7,8 +7,8 @@
 function bbop_draggable_canvas(container_id){
 
     var logger = new bbop.logger('drag');
-    //logger.DEBUG = true;
-    logger.DEBUG = false;
+    logger.DEBUG = true;
+    //logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
 
     var container_div = '#' + container_id;
@@ -64,7 +64,7 @@ function bbop_draggable_canvas(container_id){
 	}
     }
     function _unbind_scroller(){
-    	jQuery(container_div).unbind('mousemove');	
+    	jQuery(container_div).unbind('mousemove', _scroller);
 	// TODO: revert cursor
     }
     
@@ -74,7 +74,7 @@ function bbop_draggable_canvas(container_id){
 	     if( this == e.target ){ // only stat if actual, not child
     		 _update_start_pos(e);
     		 // Bind to moving.
-    		 jQuery(container_div).mousemove(_scroller);
+    		 jQuery(container_div).bind('mousemove', _scroller);
 	     }
     	});
 

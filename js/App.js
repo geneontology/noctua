@@ -1221,10 +1221,6 @@ var MMEnvInit = function(in_model, in_server_base){
 	    alert('In prototypes nobody can hear you scream.');
     	});
 
-    // Let the canvas (div) underneath be dragged around in an
-    // intuitive way.
-    bbop_draggable_canvas(graph_container_id);
-
     ///
     /// Load the incoming graph into something useable for population
     /// of the editor.
@@ -1286,6 +1282,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	// Ensure there is a div for the user.
 	var jelt = '#' + id;
 	if( ! jQuery(jelt).length ) {
+	    //jQuery(graph_container_div).append('<div id="' +
 	    jQuery('body').append('<div id="' +
 				  id + '" class="bbop-mme-cursor" alt="user: ' +
 				  id + '" title="user: ' +
@@ -1298,14 +1295,16 @@ var MMEnvInit = function(in_model, in_server_base){
 	// document bounds to stretch in strange ways).
 	var wX = jQuery(window).width();
 	var wY = jQuery(window).height();
+	var scroll_left = jQuery(graph_container_div).scrollLeft();
+	var scroll_top = jQuery(graph_container_div).scrollTop();
 	var cursor_spacer = 5;
 	var cursor_buffer = 2 * cursor_spacer;
 	if( top > (wY - cursor_buffer) ){ top = wY - cursor_buffer; }
 	if( left > (wX - cursor_buffer) ){ left = wX - cursor_buffer; }
 	if( top < cursor_spacer ){ top = cursor_spacer; }
 	if( left < cursor_spacer ){ left = cursor_spacer; }
-	jQuery(jelt).css('top', top);
-	jQuery(jelt).css('left', left);
+	jQuery(jelt).css('top', top - scroll_top);
+	jQuery(jelt).css('left', left - scroll_left);
 	// jQuery(jelt).css('color', color);
     }
 
@@ -1336,15 +1335,20 @@ var MMEnvInit = function(in_model, in_server_base){
 	}
     );
 
-    //jQuery(graph_container_div).on( // conflict with draggable canvas
-    jQuery('body').on(
+    // Let the canvas (div) underneath be dragged around in an
+    // intuitive way.
+    bbop_draggable_canvas(graph_container_id);
+
+    jQuery(graph_container_div).on( // conflict with draggable canvas
 	'mousemove',
 	function(evt){
 	    if( msngr ){
 		var top = evt.pageY;
 		var left = evt.pageX;
-		msngr.location(user_details['uid'], user_details['ucolor'],
-			       top, left);
+		var scroll_left = jQuery(graph_container_div).scrollLeft();
+		var scroll_top = jQuery(graph_container_div).scrollTop();
+		msngr.telepathy(user_details['uid'], user_details['ucolor'],
+				top + scroll_top, left + scroll_left);
 	    }
 	});
 };
