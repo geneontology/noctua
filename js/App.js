@@ -288,7 +288,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		var t = ui.position.top;
 		var l = ui.position.left;
 
-		ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
+		//ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
 		msngr.telekinesis(user_details['uid'], en.id(), t, l);
 	    }
 	}
