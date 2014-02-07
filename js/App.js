@@ -1325,7 +1325,9 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
-		msngr.info('Please contact <span class="bbop-mme-message-uid">'+
+		msngr.info('Please contact ' +
+			   '<span class="bbop-mme-message-uid" style="color: '+
+			   user_details['ucolor'] +';">'+
 			   user_details['uid'] + '</span>' +
 			   ' for discussion about ' +
 			   '<span class="bbop-mme-message-op">'+
