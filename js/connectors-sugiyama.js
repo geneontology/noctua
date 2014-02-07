@@ -95,8 +95,8 @@
 
 	     // Calc.
 	     var sp = p.sourcePos;
-	     var tp = p.targetPos;			
-             var _w = Math.abs(sp[0] - tp[0]);
+	     var tp = p.targetPos;
+             var _w = Math.abs(sp[0] - tp[0]); // width & height of segment
              var _h = Math.abs(sp[1] - tp[1]);
 	     // Used.
              var _sx = sp[0] < tp[0] ? _w : 0;
@@ -112,14 +112,14 @@
 
 	     // // Control over waypoints.
 	     // if( waypoints ){
-	     // 	 ll('has waypoints');
+	     // 	 ll('has waypoints: ' + waypoints.length);
 
 	     // 	 // Tack on the first and last points that we know.
 	     // 	 waypoints.unshift([sp[0], sp[1]]);
 	     // 	 waypoints.push([tp[0], tp[1]]);
 	     // 	 // Since we're always looking one ahead, skip last
 	     // 	 // iteration.
-	     // 	 for( var wpi = 0; wpi < (waypoints.length -2); wpi++ ){
+	     // 	 for( var wpi = 0; wpi < (waypoints.length -1); wpi++ ){
 	     // 	     var curr_wp = waypoints[wpi];
 	     // 	     var next_wp = waypoints[wpi +1];
 		     
@@ -128,9 +128,10 @@
 	     // 	     	 x2: next_wp[0], y2: next_wp[1] 
 	     // 	     };
 		     
-	     // 	     // ll('waypoint (' + index + '): ' +
-	     // 	     // 	bbop.core.dump(waypoint));
-	     // 	     // ll('segments: ' + bbop.core.dump(seg_args));
+	     // 	     ll('waypoint segment (' + wpi + '): ' +
+	     // 	      	bbop.core.dump(curr_wp) + ' / ' +
+	     // 	      	bbop.core.dump(next_wp));
+	     // 	     ll('waypoint args: ' + bbop.core.dump(seg_args));
 	     // 	     _super.addSegment(compute_anchor, "Straight", seg_args);
 	     // 	 }
 
@@ -144,8 +145,9 @@
 		     cp1x:_CP[0], cp1y:_CP[1],
 		     cp2x:_CP2[0], cp2y:_CP2[1]
 		 };
+	     	 ll('simple segment: ' + bbop.core.dump(seg_args));
 		 _super.addSegment(compute_anchor, "Bezier", seg_args);
-//	     }
+	     // }
 	     
          }; 
      };
