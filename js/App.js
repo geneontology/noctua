@@ -43,9 +43,11 @@ var MMEnvInit = function(in_model, in_server_base){
 
     // This would eventually be information delivered by the
     // authentication system.
+    var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
     var user_details = {
-	'uid': bbop.core.uuid()
-	// 'ucolor': '#00ff00'
+	'uid': bbop.core.uuid(),
+	//'ucolor': '#00ff00'
+	'ucolor': ucolor_list[Math.floor(Math.random() * ucolor_list.length)]
     };
 
     // Where we move the nodes during this session.
@@ -1288,6 +1290,7 @@ var MMEnvInit = function(in_model, in_server_base){
 				  id + '" class="bbop-mme-cursor" alt="user: ' +
 				  id + '" title="user: ' +
 				  id + '"></div>');
+	     jQuery(jelt).css('border', 'solid 3px ' + color);
 	}
 
 	// Update to the most recent location data, but trying to
