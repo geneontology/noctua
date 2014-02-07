@@ -145,7 +145,7 @@
 		     cp1x:_CP[0], cp1y:_CP[1],
 		     cp2x:_CP2[0], cp2y:_CP2[1]
 		 };
-	     	 ll('simple segment: ' + bbop.core.dump(seg_args));
+	     	 //ll('simple segment: ' + bbop.core.dump(seg_args));
 		 _super.addSegment(compute_anchor, "Bezier", seg_args);
 	     // }
 	     

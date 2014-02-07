@@ -274,10 +274,30 @@ var MMEnvInit = function(in_model, in_server_base){
 	    }
 	}
 
+	// While we are dragging, make note.
+	function _on_dragging(evt, ui){
+
+	    // Try an jimmy out the enode ssociated with this event.
+	    var enid = ui.helper.attr('id');
+	    var en = ecore.get_node_by_elt_id(enid);
+
+	    // If we got something, locate it and save the position.
+	    if( en ){
+
+		// Grab position.
+		var t = ui.position.top;
+		var l = ui.position.left;
+
+		ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
+		msngr.telekinesis(user_details['uid'], en.id(), t, l);
+	    }
+	}
+
 	// Try top-level container containment to prevent inaccessible
 	// nodes.
 	//instance.draggable(foo, {stop: _on_drag_stop});
 	instance.draggable(foo, {stop: _on_drag_stop,
+				 drag: _on_dragging,
 				 containment: graph_div,
 				 scroll: false
 				});
@@ -712,7 +732,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			 _make_selector_target('.demo-window');
 			 _make_selector_source('.demo-window', '.konn');
 			 
-    			 jsPlumb.repaintEverything();	
+    			 jsPlumb.repaintEverything();
 		     }
 		 }
 	     });
@@ -1275,9 +1295,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	}	
     }
 
-    function _on_remote_update(id, color, top, left){
-	// jQuery(remote_area_elt).empty();
-	// jQuery(remote_area_elt).append('top: ' + top + ', left: ' + left);
+    function _on_telepathy_update(id, color, top, left){
 
 	// Ensure there is a div for the user.
 	var jelt = '#' + id;
@@ -1305,7 +1323,19 @@ var MMEnvInit = function(in_model, in_server_base){
 	if( left < cursor_spacer ){ left = cursor_spacer; }
 	jQuery(jelt).css('top', top - scroll_top);
 	jQuery(jelt).css('left', left - scroll_left);
-	// jQuery(jelt).css('color', color);
+    }
+
+    function _on_telekinesis_update(uid, iid, top, left){
+	//var en = ecore.get_node(iid);
+	var enelt = ecore.get_node_elt_id(iid);
+	if( enelt ){
+	    // ll('tkn callback: ' +
+	    //    uid + ' moved '+ iid + ': ' +
+	    //    top + ', ' + left);
+	    jQuery('#' + enelt).css('top', top + 'px');
+	    jQuery('#' + enelt).css('left', left + 'px');
+    	    instance.repaintEverything();	
+	}
     }
 
     if( typeof(global_message_server) === 'undefined'  ){
@@ -1316,7 +1346,8 @@ var MMEnvInit = function(in_model, in_server_base){
 	msngr = new bbop_messenger_client(global_message_server,
 					  _on_connect,
 					  _on_info_update,
-					  _on_remote_update);
+					  _on_telepathy_update,
+					  _on_telekinesis_update);
 	msngr.connect(ecore.get_id());
     }
 

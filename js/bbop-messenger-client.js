@@ -5,8 +5,11 @@
 //// out.
 ////
 
-var bbop_messenger_client = function(msgloc, on_connect,
-				     on_info_event, on_remote_event){
+var bbop_messenger_client = function(msgloc,
+				     on_connect,
+				     on_info_event,
+				     on_telepathy_event,
+				     on_telekinesis_event){
 
     var anchor = this;
     anchor.socket = null;
@@ -85,7 +88,7 @@ var bbop_messenger_client = function(msgloc, on_connect,
 	    }
 	    anchor.socket.on('info', _got_info);
 
-	    function _got_remote(data){
+	    function _got_telepathy(data){
 		var mid = data['model_id'] || null;
 		var top = data['top'] || null;
 		var left = data['left'] || null;
@@ -96,24 +99,39 @@ var bbop_messenger_client = function(msgloc, on_connect,
 		if( ! mid || mid != anchor.model_id ){
 		    ll('skip info packet--not for us');
 		}else{
-		    //ll('received remote: ' + str);
+		    //ll('received telepathy: ' + str);
 		
 		    // Trigger whatever function we were given.
-		    if(typeof(on_remote_event) !== 'undefined' &&
-		       on_remote_event){
-			on_remote_event(uid, ucolor, top, left);
+		    if(typeof(on_telepathy_event) !== 'undefined' &&
+		       on_telepathy_event){
+			on_telepathy_event(uid, ucolor, top, left);
 		    }
 		}		
 	    }
-	    anchor.socket.on('remote', _got_remote);
+	    anchor.socket.on('telepathy', _got_telepathy);
 
-	    // // ...
-	    // anchor.socket.on('remote', function (data) {
-	    // 		     ll('remote: ' + 'foo');
-	    // 		     // console.log(data);
-	    // 		     // anchor.socket.emit('my other event',
-	    // 		     // 			{ my: 'app_base' });
-	    // 		 });
+	    function _got_telekinesis(data){
+		var mid = data['model_id'] || null;
+		var top = data['top'] || null;
+		var left = data['left'] || null;
+		var uid = data['user_id'] || '???';
+		var iid = data['item_id'] || null;
+
+		// Check to make sure it interestes us.
+		if( ! mid || mid != anchor.model_id ){
+		    ll('skip info packet--not for us');
+		}else{
+		    //ll('received telekinesis: ' + str);
+		
+		    // Trigger whatever function we were given.
+		    if(typeof(on_telekinesis_event) !== 'undefined' &&
+		       on_telekinesis_event){
+			on_telekinesis_event(uid, iid, top, left);
+		    }
+		}		
+	    }
+	    anchor.socket.on('telekinesis', _got_telekinesis);
+
 	}
     };
 
@@ -146,7 +164,25 @@ var bbop_messenger_client = function(msgloc, on_connect,
 		user_id: user_id,
 		user_color: user_color
 	    };
-	    anchor.socket.emit('remote', loc_packet);
+	    anchor.socket.emit('telepathy', loc_packet);
+	}
+    };
+
+    // Move objects at a distance.
+    anchor.telekinesis = function(user_id, item_id, top, left){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('send location (tkn): (' + anchor.model_id + ')');
+
+	    var tkn_packet = {
+		model_id: anchor.model_id,
+		top: top,
+		left: left,
+		user_id: user_id,
+		item_id: item_id
+	    };
+	    anchor.socket.emit('telekinesis', tkn_packet);
 	}
     };
 };

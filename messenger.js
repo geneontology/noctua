@@ -50,10 +50,15 @@ sio.sockets.on('connection',
 				 //console.log('srv info: ' + data['text']);
 				 socket.broadcast.emit('info', data);
 			     });
-		   socket.on('remote',
+		   socket.on('telepathy',
 			     function(data){
 				 //console.log('srv remove: ' + data);
-				 socket.broadcast.emit('remote', data);
+				 socket.broadcast.emit('telepathy', data);
+			     });
+		   socket.on('telekinesis',
+			     function(data){
+				 //console.log('srv remove: ' + data);
+				 socket.broadcast.emit('telekinesis', data);
 			     });
 
 		   // Disconnect info.
