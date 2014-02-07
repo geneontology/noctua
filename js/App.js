@@ -767,15 +767,34 @@ var MMEnvInit = function(in_model, in_server_base){
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'fooA', _refresh_tables, 10);
     manager.register('postrun', 'fooB', _shields_down, 9);
-    manager.register('postrun', 'fooC', function(){ // experimental
+    manager.register('postrun', 'fooC',
+		     function(resp, man){ // experimental
 			 if( msngr ){	
-			     // var msg = 'another client completed an op: ' + 
-			     // 	 'please refresh';
 			     // TODO/BUG: Get into a refresh war pretty
 			     // easy since you trigger an inconsistent
 			     // on refresh--need a better measure.
-			     var msg = 'FYI: another client completed an op'; 
-			     msngr.info(msg);
+			     // TODO: Would this be fixed by also
+			     // passing an "intent" argument? An intention
+			     // of refreshing and getting an inconsistent
+			     // is different than getting inconsistent on
+			     // adding a term. Papered over for the
+			     // time being by adding the additional
+			     // "instantiate" message type.
+			     var mtype = resp.message_type();
+			     var msg = [
+				 '<span class="bbop-mme-message-uid">',
+				 user_details['uid'],
+				 '</span>',
+				 ' completed op ',
+				 '<span class="bbop-mme-message-op">',
+				 resp.message_type(),
+				 '</span>'
+			     ];
+			     if( mtype == 'inconsistent' || 
+				 mtype == 'merge' ){
+				 msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
+				 }
+			     msngr.info(msg.join(''));
 			 }
 		     }, 8);
     manager.register('manager_error', 'foo',
@@ -817,6 +836,27 @@ var MMEnvInit = function(in_model, in_server_base){
 		     }, 10);
 
     manager.register('inconsistent', 'foo',
+		     function(resp, man){
+			 var mid = resp.model_id();
+			 var mindividuals = resp.individuals();
+			 var mfacts = resp.facts();
+
+			 // Deal with model.
+			 if( ! mid || is_empty(mindividuals) ){
+			     alert('no data/individuals in inconsistent');
+			 }else{
+			     _rebuild_model_and_display(mid, mindividuals,
+							mfacts);
+			 }
+		     }, 10);
+
+    // TODO/BUG: Currently the same as inconsistent, need to ask if we
+    // want an entirely server-driven model (in which case we have
+    // more MSResponse types), or if the intention of
+    // the client counts (in which case we have fewer M3Response
+    // types, but pass around an intention argument provided by the
+    // client on request).
+    manager.register('instantiate', 'foo',
 		     function(resp, man){
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
@@ -1282,7 +1322,11 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
-		msngr.info('"hello" from another client for ' + ecore.get_id());
+		msngr.info('Please contact <span class="bbop-mme-message-uid">'+
+			   user_details['uid'] + '</span>' +
+			   ' for discussion about ' +
+			   '<span class="bbop-mme-message-op">'+
+			   ecore.get_id() + '</span>');
 	    }
 	}
     );

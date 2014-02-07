@@ -339,6 +339,17 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     z-index: 1000; /* get it above most of the riff raff */
 }
 
+.bbop-mme-message-uid {
+    font-weight: bold;
+}
+.bbop-mme-message-op {
+    font-weight: bold;
+}
+.bbop-mme-message-req {
+    font-weight: bold;
+    color: #8B0000;
+}
+
 .library-links {
     right: 454px;
     height: 19px;

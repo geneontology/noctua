@@ -19,6 +19,7 @@ var bbop_mme_manager = function(server_base){
 			      'error', // message, mtype, commentary
 			      'information',
 			      'inconsistent',
+			      'instantiate',
 			      'merge'
 			     ]);
     this._is_a = 'bbop_mme_manager';
@@ -50,6 +51,8 @@ var bbop_mme_manager = function(server_base){
 	    anchor.apply_callbacks('information', [resp, anchor]);
 	}else if( m == 'inconsistent' ){
 	    anchor.apply_callbacks('inconsistent', [resp, anchor]);
+	}else if( m == 'instantiate' ){
+	    anchor.apply_callbacks('instantiate', [resp, anchor]);
 	}else if( m == 'merge' ){
 	    anchor.apply_callbacks('merge', [resp, anchor]);
 	}else{
