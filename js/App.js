@@ -108,6 +108,8 @@ var MMEnvInit = function(in_model, in_server_base){
     var save_btn_elt = '#' + save_btn_id;
     var ping_btn_id = 'action_ping';
     var ping_btn_elt = '#' + ping_btn_id;
+    var test_btn_id = 'action_test';
+    var test_btn_elt = '#' + test_btn_id;
     var help_btn_id = 'action_help';
     var help_btn_elt = '#' + help_btn_id;
     // A hidden for to communicate with the outside world.
@@ -1334,7 +1336,12 @@ var MMEnvInit = function(in_model, in_server_base){
 	    //    top + ', ' + left);
 	    jQuery('#' + enelt).css('top', top + 'px');
 	    jQuery('#' + enelt).css('left', left + 'px');
-    	    instance.repaintEverything();	
+
+	    // TODO: Still seems a bit slow. Tried throwing events as
+	    // well, but didn't work. This is certainly the "right"
+	    // way to do it...
+    	    //instance.repaintEverything();	
+	    instance.repaint(enelt);
 	}
     }
 
@@ -1362,6 +1369,24 @@ var MMEnvInit = function(in_model, in_server_base){
 			   ' for discussion about ' +
 			   '<span class="bbop-mme-message-op">'+
 			   ecore.get_id() + '</span>');
+	    }
+	}
+    );
+
+    // 
+    jQuery(test_btn_elt).click(
+	function(){
+	    //alert('in progress');
+
+	    // Grab node.
+	    var nset = ecore.get_nodes();
+	    var nkeys = bbop.core.get_keys(nset);
+	    var node = nset[nkeys[0]];
+	    if( node ){
+		// 
+		//alert('in progress: + ' + node.id());
+		//bbop_mme_widgets.contained_modal('shield');
+		bbop_mme_widgets.contained_modal('dialog');
 	    }
 	}
     );

@@ -320,3 +320,116 @@ bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
     // Put up modal shield.
     jQuery(modal_edge_body_elt).append(tcache.join(''));
 };
+
+/*
+ * The contained_modal is a simple modal dialog 
+ * Node modal: invisible until it's not modal dialog.
+ * 
+ * NOTE: We're skipping some of the bbop.html stuff since we
+ * specifically want BS3 stuff and not the jQuery-UI stuff that is
+ * sometimes haning around in there.
+ */
+bbop_mme_widgets.contained_modal = function(type){
+    
+    var tag = bbop.html.tag;
+
+    var shield_p = false;
+    if( type && type == 'shield' ){
+	shield_p = true;
+    }else{
+	// ???
+    }
+
+    // Define buttons first.
+    var x_btn_args = {
+	'type': 'button',
+	'class': 'close',
+	'data-dismiss': 'modal',
+	'aria-hidden': 'true'
+    };
+    var x_btn = new tag('button', x_btn_args, '&times;');
+    var close_btn_args = {
+	'type': 'button',
+	'class': 'btn btn-default',
+	'data-dismiss': 'modal'
+    };
+    var close_btn = new tag('button', close_btn_args, 'Close');
+
+    // Then the title.
+    var title_args = {
+	'generate_id': true,
+	'class': 'modal-title'	
+    };
+    var title = new tag('div', title_args, '???');
+
+    // One button and the title are in the header.
+    var header_args = {
+	'class': 'modal-header'
+    };
+    var header = null;
+    if( shield_p ){
+	header = new tag('div', header_args, title);
+    }else{
+	header = new tag('div', header_args, [x_btn, title]);
+    }
+
+    // The footer has the other button.
+    var footer_args = {
+	'class': 'modal-footer'
+    };
+    var footer = new tag('div', footer_args, close_btn);
+
+    // Ready the body.
+    var body_args = {
+	'generate_id': true,
+	'class': 'modal-body'	
+    };
+    var body = new tag('div', body_args, '???');
+
+    // Content has header, body, and footer.
+    var content_args = {
+	'class': 'modal-content'
+    };
+    var content = null;
+    if( shield_p ){
+	content = new tag('div', content_args, [header, body]);
+    }else{
+	content = new tag('div', content_args, [header, body, footer]); 
+    }
+
+    // Dialog contains content.
+    var dialog_args = {
+	'class': 'modal-dialog'
+    };
+    var dialog = new tag('div', dialog_args, content); 
+    
+    // And the container contains it all.
+    var container_args = {
+	'generate_id': true,
+	'class': 'modal fade',
+	'tabindex': '-1',
+	'role': 'dialog',
+	'aria-labelledby': body.get_id(),
+	'aria-hidden': 'true'
+    };
+    var container = new tag('div', container_args, dialog); 
+
+    // Attach the assembly to the DOM.
+    var modal_elt = '#' + container.get_id();
+    jQuery('body').append(container.to_string());
+    var modal_opts = {
+    };
+    if( shield_p ){
+	modal_opts['backdrop'] = 'static';
+	modal_opts['keyboard'] = false;
+    }
+    jQuery(modal_elt).modal(modal_opts);
+
+    // Add destructor to hidden listener--clicking on the close with
+    // eliminate this dialog from the DOM completely.
+    jQuery(modal_elt).on('hidden.bs.modal',
+			 function(){ jQuery(this).remove(); });
+
+    // Add activities.
+    
+};
