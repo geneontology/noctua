@@ -81,10 +81,10 @@ var bbop_mme_manager = function(server_base){
     
     // 
     // Likely triggers "instantiate".
-    anchor.import_model = function(model_id){
+    anchor.import_model = function(model_string){
 	var url = server_base + '/m3ImportModel';
 	var args = {
-	    'modelId': model_id
+	    'modelString': model_string
 	};
 	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');
