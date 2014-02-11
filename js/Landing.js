@@ -36,13 +36,6 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
     var auto_blank_button_generate_id = 'auto_blank_button_generate';
     var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
-    // Hidden reusable modal for action blocking.
-    var modal_blocking_id = 'modal_blocking';
-    var modal_blocking_elt = '#' + modal_blocking_id;
-    var modal_blocking_body_id = 'modal_blocking_body';
-    var modal_blocking_body_elt = '#' + modal_blocking_body_id;
-    var modal_blocking_title_id = 'modal_blocking_title';
-    var modal_blocking_title_elt = '#' + modal_blocking_title_id;
     //
     // var select_memory_jump_id = 'select_memory_jump';
     // var select_memory_jump_elt = '#' + select_memory_jump_id;

@@ -132,11 +132,14 @@ var MMEnvLauncher = function() {
 		'bbop-location-store.js': '',
 		'bbop-messenger-client.js': '',
 		'Landing.js': '',
+		'Basic.js': '',
 		'App.js': '',
 		'waiting_ac.gif': '',
 		'index_base.tmpl': '',
-		'app_base.tmpl': '',
 		'index_content.tmpl': '',
+		'basic_base.tmpl': '',
+		'basic_content.tmpl': '',
+		'app_base.tmpl': '',
 		'app_content.tmpl': ''
 	    };
         }
@@ -209,8 +212,29 @@ var MMEnvLauncher = function() {
 			 var index_tmpl =
 			     self.cache_get('index_content.tmpl').toString();
 			 var ind_cont = mustache.render(index_tmpl);
+			 var base_tmpl =
+			     self.cache_get('index_base.tmpl').toString();
+			 var base_tmpl_args = {
+			     'title': 'go-mme',
+			     'content': ind_cont,
+			     'js_variables': {
+				 'name': 'global_server_base',
+				 'value': '"' + m3loc+ '"'
+			     }
+			 };
+			 var ind = mustache.render(base_tmpl, base_tmpl_args);
 
-			 var base_tmpl = self.cache_get('index_base.tmpl').toString();
+			 self.standard_response(res, 200, 'text/html', ind);
+		     });
+
+	self.app.get('/basic',
+		     function(req, res) {
+			 //var ind = self.cache_get('index.html').toString();
+			 var index_tmpl =
+			     self.cache_get('basic_content.tmpl').toString();
+			 var ind_cont = mustache.render(index_tmpl);
+			 var base_tmpl =
+			     self.cache_get('basic_base.tmpl').toString();
 			 var base_tmpl_args = {
 			     'title': 'go-mme',
 			     'content': ind_cont,
