@@ -80,6 +80,28 @@ var bbop_mme_manager = function(server_base){
     };
     
     // 
+    // Likely triggers "instantiate".
+    anchor.import_model = function(model_id){
+	var url = server_base + '/m3ImportModel';
+	var args = {
+	    'modelId': model_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
+    // 
+    // BUG/TODO: Likely triggers ???
+    anchor.export_model = function(model_id){
+	var url = server_base + '/m3ExportModel';
+	var args = {
+	    'modelId': model_id
+	};
+	anchor.apply_callbacks('prerun', [anchor]);
+	jqm.action(url, args, 'GET');
+    };
+    
+    // 
     // Likely triggers "success", "error", etc.
     anchor.store_model = function(model_id){
 	var url = server_base + '/m3StoreModel';
