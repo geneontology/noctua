@@ -467,10 +467,49 @@ var MMEnvLauncher = function() {
 			 var mid = req.route.params['model_id'] ||
 			     req.body['model_id'] || '???';
 
-			 // Assemble return doc.
-			 res.redirect(m3loc + '/m3ExportModel?modelId=' + mid); 
-			 //res.setHeader('Content-Type', 'text/plain');
-			 //res.send(data);
+			 // // Assemble return doc.
+			 // res.redirect(m3loc + '/m3ExportModel?modelId=' + mid); 
+			 // //res.setHeader('Content-Type', 'text/plain');
+			 // //res.send(data);
+
+			 // 
+			 function export_callback_action(resp, man){
+
+			     if( ! resp.okay() ){
+				 res.setHeader('Content-Type', 'text/html');
+				 res.send('bad doc from: ' + mid);
+			     }else{				   
+
+				 //console.log('in success callback');
+
+				 var obj = resp.data();
+				 var obj_str = obj['export'];
+
+				 // Assemble return doc.
+				 //res.setHeader('Content-Type', 'text/owl');
+				 res.setHeader('Content-Type', 'text/plain');
+				 res.send(obj_str);
+			     }
+			 }
+			  
+			 // Assemble query to get the desired MM.
+			 var m =
+			     new bbop.rest.manager.node(bbop.rest.response.mmm);
+			 m.register('success', 'foo', export_callback_action);
+			 m.register('error', 'bar',
+				    function(resp, man){
+					res.setHeader('Content-Type',
+						      'text/html');
+					res.send('failure ('+
+						 resp.message_type() +'): '+
+						 resp.message());
+				    });
+			 var t = m3loc + '/m3ExportModel';
+			 var t_args = {
+			     'modelId': mid
+			 };
+			 var astr = m.action(t, t_args);
+			 console.log("action to: " + astr);
 		     });
     };
 
