@@ -52,6 +52,8 @@ var MMEnvBootstrappingInit = function(in_server_base){
     //
     var model_data_button_id = 'model_data_button';
     var model_data_button_elt = '#' + model_data_button_id;
+    var model_data_input_id = 'model_data_input';
+    var model_data_input_elt = '#' + model_data_input_id;
 
     ///
     /// Helpers.
@@ -265,7 +267,9 @@ var MMEnvBootstrappingInit = function(in_server_base){
     	function(evt){
 	    evt.stopPropagation();
 	    evt.preventDefault();
-	    alert('not yet implemented');
+	    //alert('not yet implemented');
+	    var in_str = jQuery(model_data_input_elt).val(); 
+	    manager.import_model(in_str);
 	});
 
     ///
