@@ -64,17 +64,28 @@ var MMEnvBootstrappingInit = function(in_server_base){
     /// Helpers.
     ///
 
+    var compute_shield_modal = null;
+
     // Block interface from taking user input while
     // operating.
     function _shields_up(){
-	jQuery(modal_blocking_elt).modal({'backdrop': 'static',
-					  'keyboard': false,
-					  'show': true});
-    }
-    
+	if( compute_shield_modal ){
+	    // Already have one.
+	}else{
+	    ll('shield up');
+	    compute_shield_modal = bbop_mme_widgets.compute_shield();
+	    compute_shield_modal.show();
+	}
+    }    
     // Release interface when transaction done.
     function _shields_down(){
-	jQuery(modal_blocking_elt).modal('hide');
+	if( compute_shield_modal ){
+	    ll('shield down');
+	    compute_shield_modal.destroy();
+	    compute_shield_modal = null;
+	}else{
+	    // None to begin with.
+	}
     }
 
     // On any model build success, forward to the new page.
@@ -177,7 +188,8 @@ var MMEnvBootstrappingInit = function(in_server_base){
 			      });
 		     });
 
-    manager.register('inconsistent', 'foo',
+    //manager.register('inconsistent', 'foo',
+    manager.register('instantiate', 'foo',
 		     function(resp, man){
 			 _generated_model(resp, man);
 			 // alert('Not yet handled (' +

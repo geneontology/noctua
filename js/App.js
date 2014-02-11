@@ -133,13 +133,6 @@ var MMEnvInit = function(in_model, in_server_base){
     var modal_edge_title_elt = '#' + modal_edge_title_id;
     var modal_edge_save_id = 'modal_edge_dialog_save';
     var modal_edge_save_elt = '#' + modal_edge_save_id;
-    // Hidden reusable modal for action blocking.
-    var modal_blocking_id = 'modal_blocking';
-    var modal_blocking_elt = '#' + modal_blocking_id;
-    var modal_blocking_body_id = 'modal_blocking_body';
-    var modal_blocking_body_elt = '#' + modal_blocking_body_id;
-    var modal_blocking_title_id = 'modal_blocking_title';
-    var modal_blocking_title_elt = '#' + modal_blocking_title_id;
 
     // Some experimental stuff for optional messaging server.
     var message_area_id = 'message_area';
@@ -461,17 +454,28 @@ var MMEnvInit = function(in_model, in_server_base){
     /// Callback helpers and manager registration.
     ///
 
+    var compute_shield_modal = null;
+
     // Block interface from taking user input while
     // operating.
     function _shields_up(){
-	jQuery(modal_blocking_elt).modal({'backdrop': 'static',
-					  'keyboard': false,
-					  'show': true});
+	if( compute_shield_modal ){
+	    // Already have one.
+	}else{
+	    ll('shield up');
+	    compute_shield_modal = bbop_mme_widgets.compute_shield();
+	    compute_shield_modal.show();
+	}
     }
-    
     // Release interface when transaction done.
     function _shields_down(){
-	jQuery(modal_blocking_elt).modal('hide');
+	if( compute_shield_modal ){
+	    ll('shield down');
+	    compute_shield_modal.destroy();
+	    compute_shield_modal = null;
+	}else{
+	    // None to begin with.
+	}
     }
 
     // Update/repaint the table.
@@ -1386,7 +1390,8 @@ var MMEnvInit = function(in_model, in_server_base){
 		// 
 		//alert('in progress: + ' + node.id());
 		//bbop_mme_widgets.contained_modal('shield');
-		var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
+		//var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
+		var mdl = bbop_mme_widgets.compute_shield();
 		mdl.show();
 
 		// Works.

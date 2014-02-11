@@ -322,6 +322,8 @@ bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
 };
 
 /*
+ * Object.
+ * 
  * The contained_modal is a simple modal dialog 
  * Node modal: invisible until it's not modal dialog.
  * 
@@ -451,4 +453,37 @@ bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
     this.destroy = function(){
 	jQuery(modal_elt).modal('hide');
     };
+};
+
+/*
+ * Function that returns object.
+ * 
+ * TODO: make subclass
+ */ 
+bbop_mme_widgets.compute_shield = function(){
+
+    var tag = bbop.html.tag;
+
+    // Text.
+    var p = new tag('p', {},
+		    'Doing remote processing. This may take a minute...');
+
+    // Progress bar.
+    var pb_args = {
+	'class': 'progress-bar',
+	'role': 'progressbar',
+	'aria-valuenow': '100',
+	'aria-valuemin': '0',
+	'aria-valuemax': '100',
+	'style': 'width: 100%'
+    };
+    var pb = new tag('div', pb_args, '<span class="sr-only">Working...</span>');
+    var pb_container_args = {
+	'class': 'progress progress-striped active'
+    };
+    var pb_container = new tag('div', pb_container_args, pb);
+
+    var mdl = new bbop_mme_widgets.contained_modal('shield', 'Relax',
+						   [p, pb_container]);
+    return mdl;
 };
