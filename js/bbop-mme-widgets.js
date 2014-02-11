@@ -328,8 +328,12 @@ bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
  * NOTE: We're skipping some of the bbop.html stuff since we
  * specifically want BS3 stuff and not the jQuery-UI stuff that is
  * sometimes haning around in there.
+ * 
+ * arg_title may be null, string, or bbop.html
+ * arg_body may be null, string, or bbop.html
+ * 
  */
-bbop_mme_widgets.contained_modal = function(type){
+bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
     
     var tag = bbop.html.tag;
 
@@ -360,7 +364,7 @@ bbop_mme_widgets.contained_modal = function(type){
 	'generate_id': true,
 	'class': 'modal-title'	
     };
-    var title = new tag('div', title_args, '???');
+    var title = new tag('div', title_args, arg_title);
 
     // One button and the title are in the header.
     var header_args = {
@@ -384,7 +388,7 @@ bbop_mme_widgets.contained_modal = function(type){
 	'generate_id': true,
 	'class': 'modal-body'	
     };
-    var body = new tag('div', body_args, '???');
+    var body = new tag('div', body_args, arg_body);
 
     // Content has header, body, and footer.
     var content_args = {
@@ -423,7 +427,6 @@ bbop_mme_widgets.contained_modal = function(type){
 	modal_opts['backdrop'] = 'static';
 	modal_opts['keyboard'] = false;
     }
-    jQuery(modal_elt).modal(modal_opts);
 
     // Add destructor to hidden listener--clicking on the close with
     // eliminate this dialog from the DOM completely.
@@ -431,5 +434,21 @@ bbop_mme_widgets.contained_modal = function(type){
 			 function(){ jQuery(this).remove(); });
 
     // Add activities.
+    // TODO
+
+    ///
+    /// Add external controls, etc.
+    ///
+
+    //
+    this.show = function(){
+	jQuery(modal_elt).modal(modal_opts);	
+    };
     
+    //
+    // Will end up destorying it since we are listening for the
+    // "hidden" event above.
+    this.destroy = function(){
+	jQuery(modal_elt).modal('hide');
+    };
 };

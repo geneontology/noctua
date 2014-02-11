@@ -1386,7 +1386,12 @@ var MMEnvInit = function(in_model, in_server_base){
 		// 
 		//alert('in progress: + ' + node.id());
 		//bbop_mme_widgets.contained_modal('shield');
-		bbop_mme_widgets.contained_modal('dialog');
+		var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
+		mdl.show();
+
+		// Works.
+		// // Test that destroy works.
+		// window.setTimeout(function(){ mdl.destroy(); }, 2000);
 	    }
 	}
     );
