@@ -203,6 +203,16 @@ var bbop_mme_context = function(){
 		'indirectly_disables_action_of'
 	    ],
 	    color: '#483D8B' // darkslateblue
+	},
+	'provides_input_for':
+	{
+	    readable: 'provides input for',
+	    priority: 0,
+	    aliases: [
+		'GOREL_provides_input_for',
+		'http://purl.obolibrary.org/obo/GOREL_provides_input_for'
+	    ],
+	    color: '#483D8B' // darkslateblue
 	}
     };
 
