@@ -486,6 +486,20 @@ var MMEnvInit = function(in_model, in_server_base){
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
+    // 
+    function _inconsistency_check(resp, man){
+	ll('doing the inconsistent_p check');
+	if( resp.inconsistent_p() &&
+	    ! jQuery(graph_container_div).hasClass('model-inconsistent') ){
+	    // Recolor the interface.
+	    jQuery(graph_container_div).addClass('model-inconsistent');
+	}else if( ! resp.inconsistent_p() &&
+		  jQuery(graph_container_div).hasClass('model-inconsistent') ){
+	    // Restore the interface coloration.
+	    jQuery(graph_container_div).removeClass('model-inconsistent');
+	}
+    }
+
     function _rebuild_meta(model_id){
 
 	// Deal with ID(s).
@@ -793,9 +807,10 @@ var MMEnvInit = function(in_model, in_server_base){
     
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
-    manager.register('postrun', 'fooA', _refresh_tables, 10);
-    manager.register('postrun', 'fooB', _shields_down, 9);
-    manager.register('postrun', 'fooC',
+    manager.register('postrun', 'foo1', _inconsistency_check, 10);
+    manager.register('postrun', 'foo2', _refresh_tables, 9);
+    manager.register('postrun', 'foo3', _shields_down, 8);
+    manager.register('postrun', 'foo4',
 		     function(resp, man){ // experimental
 			 if( msngr ){	
 			     // TODO/BUG: Get into a refresh war pretty
@@ -824,7 +839,7 @@ var MMEnvInit = function(in_model, in_server_base){
 				 }
 			     msngr.info(msg.join(''));
 			 }
-		     }, 8);
+		     }, 7);
     manager.register('manager_error', 'foo',
 		     function(message_type, message){
 			 alert('There was a connection error (' +

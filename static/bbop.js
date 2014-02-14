@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140205";
+bbop.version.release = "20140213";
 /*
  * Package: logger.js
  * 
@@ -7262,7 +7262,7 @@ bbop.rest.response.mmm = function(raw_data){
     bbop.rest.response.call(this);
     this._is_a = 'bbop.rest.response.mmm';
 
-    // Add the required commentary and data
+    // Add the required commentary, inconsistency, and data.
     this._commentary = null;
     this._data = null;
 
@@ -7318,6 +7318,7 @@ bbop.rest.response.mmm = function(raw_data){
 
 		    var odata = data['data'] || null;
 		    var cdata = data['commentary'] || null;
+
 		    // If data, object or array.
 		    if( odata && bbop.core.what_is(odata) != 'object' &&
 			bbop.core.what_is(odata) != 'array' ){
@@ -7401,6 +7402,28 @@ bbop.rest.response.mmm.prototype.model_id = function(){
     var ret = null;
     if( this._data && this._data['id'] ){
 	ret = this._data['id'];
+    }
+    return ret;
+};
+
+/*
+ * Function: inconsistent_p
+ * 
+ * Returns true or false on whether or not the returned model is
+ * thought to be inconsistent. Starting assumption is that it is not.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  true or false
+ */
+bbop.rest.response.mmm.prototype.inconsistent_p = function(){
+    var ret = false;
+    if( this._data &&
+	typeof(this._data['inconsistent_p']) !== 'undefined' &&
+	this._data['inconsistent_p'] == true ){
+	ret = true;
     }
     return ret;
 };
