@@ -796,7 +796,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			     var msg = [
 				 'completed op ',
 				 '<span class="bbop-mme-message-op">',
-				 resp.message_type(),
+				 mtype,
 				 '</span>'
 			     ];
 			     if( mtype == 'inconsistent' || 
@@ -1258,14 +1258,7 @@ var MMEnvInit = function(in_model, in_server_base){
     function _on_info_update(uid, ucolor, message){
 
 	// Add to the top of the message list.
-	var msg = [
-	    '<span class="bbop-mme-message-uid" style="color:'+ ucolor +';">',
-	    uid,
-	    '</span>',
-	    ' ',
-	    message
-	];
-	reporter.comment(msg.join(''));
+	reporter.comment(message, uid, ucolor);
 		
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
@@ -1290,7 +1283,6 @@ var MMEnvInit = function(in_model, in_server_base){
 	// Ensure there is a div for the user.
 	var jelt = '#' + id;
 	if( ! jQuery(jelt).length ) {
-	    //jQuery(graph_container_div).append('<div id="' +
 	    jQuery('body').append('<div id="' +
 				  id + '" class="bbop-mme-cursor" alt="user: ' +
 				  id + '" title="user: ' +
@@ -1350,8 +1342,7 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
-		msngr.info('Please contact me' +
-			   ' for discussion about ' +
+		msngr.info('Please contact me for discussion about ' +
 			   '<span class="bbop-mme-message-op">'+
 			   ecore.get_id() + '</span>');
 	    }

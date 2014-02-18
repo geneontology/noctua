@@ -200,7 +200,8 @@ var MMEnvLauncher = function() {
     self.initializeServer = function() {
         //self.createRoutes();
         self.app = laucher_app();
-        self.app.use(laucher_app.bodyParser()); // middleware needed for post
+	// Middleware needed for POST and browserid
+        self.app.use(laucher_app.bodyParser());
 
 	///
 	/// Static routes.

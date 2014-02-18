@@ -532,9 +532,10 @@ bbop_mme_widgets.reporter = function(output_id){
 	var out = '<li>';
 	out += _date_str() + ': ';
 	if( uid && color ){
-	    out += '<span style="color' + color + ';">uid</span> :';
+	    out += '<span class="bbop-mme-message-uid" style="color:' +
+		color + ';">'+ uid + '</span>: ';
 	}else if( uid ){
-	    out += '<span>uid</span> :';
+	    out += '<span class="bbop-mme-message-uid">'+ uid + '</span>: ';
 	}
 	out += str;
 	out += '</li>';
@@ -542,6 +543,27 @@ bbop_mme_widgets.reporter = function(output_id){
 	// Actually do it.
 	jQuery(list_elt).prepend(out);
     };
+
+    // this.heard_op = function(op, uid, color){
+    // 	var out = '<li>';
+    // 	out += _date_str() + ': ';
+
+    // 	var msg = [
+    // 	    'completed op ',
+    // 	    '<span class="bbop-mme-message-op">',
+    // 	    op,
+    // 	    '</span>'
+    // 	];
+    // 	if( op == 'inconsistent' || op == 'merge' ){
+    // 	    msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
+    // 	}
+
+    // 	out += msg.join('');
+    // 	out += '</li>';
+
+    // 	// Actually do it.
+    // 	jQuery(list_elt).prepend(out);
+    // };
 
     // Initialize.
     this.reset();
