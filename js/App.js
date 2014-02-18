@@ -115,15 +115,6 @@ var MMEnvInit = function(in_model, in_server_base){
     var modal_node_body_elt = '#' + modal_node_body_id;
     var modal_node_title_id = 'modal_node_dialog_title';
     var modal_node_title_elt = '#' + modal_node_title_id;
-    // Hidden reusable modal dialog for edges.
-    var modal_edge_id = 'modal_edge_dialog';
-    var modal_edge_elt = '#' + modal_edge_id;
-    var modal_edge_body_id = 'modal_edge_dialog_body';
-    var modal_edge_body_elt = '#' + modal_edge_body_id;
-    var modal_edge_title_id = 'modal_edge_dialog_title';
-    var modal_edge_title_elt = '#' + modal_edge_title_id;
-    var modal_edge_save_id = 'modal_edge_dialog_save';
-    var modal_edge_save_elt = '#' + modal_edge_save_id;
 
     // Some experimental stuff for optional messaging server.
     var message_area_id = 'message_area';
@@ -288,65 +279,19 @@ var MMEnvInit = function(in_model, in_server_base){
     
     function _make_selector_editable(sel){
 
-	// TODO: This is likely somewhere else later.
-	function edit_node_by(enode){
-
-	    // TODO: Jimmy out information about this node.
-	    var tid = enode.id();
-	    var ttype = enode.existential();
-
-	    // Rewrite modal contents with node info and editing
-	    // options.
-	    var dbid = bbop.core.uuid();
-	    jQuery(modal_node_title_elt).empty();
-	    jQuery(modal_node_title_elt).append('Node: ' + tid);
-	    jQuery(modal_node_body_elt).empty();
-	    var appy = [
-		'<h4>Information</h4>',
-		'<p>type: ' + ttype + '</p>',
-		'<hr />',
-		'<h4>Operations</h4>',
-		'<p>',
-		'<button id="'+ dbid +'" type="button" class="btn btn-danger">',
-		'Delete node',
-		'</button>',
-		'</p>'
-	    ];
-	    jQuery(modal_node_body_elt).append(appy.join(''));
-
-	    // Add the deletion callback
-	    jQuery('#' + dbid).click(
-		function(evt){
-		    evt.stopPropagation();
-		    ll('deleteing node: ' + tid);
-		    //alert('node deletion not yet supported on the server');
-
-		    // Close modal.
-		    jQuery(modal_node_elt).modal('hide');
-
-		    // Trigger the delete--hopefully inconsistent.
-		    manager.remove_individual(ecore.get_id(), tid);
-		});
-
-	    // Display modal.
-	    var modal_node_opts = {
-	    };
-	    jQuery(modal_node_elt).modal(modal_node_opts);
-	}
-
 	// Add this event to whatever we got called in.
 	jQuery(sel).click(
 	    function(evnt){
 		evnt.stopPropagation();
 
-		// TODO: Resolve the event into the edit core node.
+		// Resolve the event into the edit core node.
 		var target_elt = jQuery(evnt.target);
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
 		if( enode ){		    
-		    // TODO: Pass said node to be edited.
-		    edit_node_by(enode);
+		    var nedit = widgets.edit_node_modal(ecore, manager, enode);
+		    nedit.show();
 		}else{
 		    alert('Could not find related element.');
 		}
@@ -1190,7 +1135,7 @@ var MMEnvInit = function(in_model, in_server_base){
     // Help button.
     jQuery(help_btn_elt).click(
     	function(){
-	    alert('In prototypes nobody can hear you scream.');
+	    alert('In alphas, nobody can hear you scream.');
     	});
 
     ///

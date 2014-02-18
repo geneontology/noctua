@@ -565,6 +565,63 @@ bbop_mme_widgets.add_edge_modal = function(ecore, manager, aid,
 };
 
 /*
+ * Contained shield for editing the properties of a node (including
+ * deletion).
+ * 
+ * Function that returns object.
+ * 
+ * TODO: make subclass?
+ */
+bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
+    var each = bbop.core.each;
+    var tag = bbop.html.tag;
+
+    // Jimmy out information about this node.
+    var tid = enode.id();
+    var ttype = enode.existential();
+
+    var del_btn_args = {
+    	'generate_id': true,
+    	'type': 'button',
+    	'class': 'btn btn-danger'
+    };
+    var del_btn = new tag('button', del_btn_args, 'Delete instance');
+
+    //
+    var tcache = [
+	'<h4>Information</h4>',
+	'<p>type: ' + ttype + '</p>',
+	'<hr />',
+	'<h4>Operations</h4>',
+	'<p>',
+	del_btn.to_string(),
+	'</p>'
+    ];
+
+    // Setup base modal.
+    var mdl = new bbop_mme_widgets.contained_modal('dialog',
+						   'Edit Instance: ' + tid);
+    mdl.add_to_body(tcache.join(''));
+
+    // Add delete action.
+    jQuery('#' + del_btn.get_id()).click(
+	function(evt){
+	    evt.stopPropagation();
+	    // ll('deleteing node: ' + tid);
+	    //alert('node deletion not yet supported on the server');
+
+	    // Trigger the delete--hopefully inconsistent.
+	    manager.remove_individual(ecore.get_id(), tid);
+
+	    // Wipe out modal.
+	    mdl.destroy();	    
+	});
+    
+    // Return our final product.
+    return mdl;
+};
+
+/*
  * Object.
  * 
  * Output formatted commentary to element.
