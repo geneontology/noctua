@@ -63,8 +63,8 @@ var bbop_messenger_client = function(msgloc,
 		
 		// Run our external callback.
 		if( typeof(on_connect) !== 'undefined' && on_connect ){
-		    on_connect();				 
-		}	    
+		    on_connect();
+		}
 	    }
 	    anchor.socket.on('connect', _internal_on_connect);
 
@@ -72,6 +72,8 @@ var bbop_messenger_client = function(msgloc,
 	    // on if they were meant for us.
 	    function _got_info(data){
 		var mid = data['model_id'] || null;
+		var uid = data['user_id'] || '???';
+		var ucolor = data['user_color'] || '???';
 		var str = data['text'] || '???';
 
 		// Check to make sure it interestes us.
@@ -82,7 +84,7 @@ var bbop_messenger_client = function(msgloc,
 		
 		    // Trigger whatever function we were given.
 		    if(typeof(on_info_event) !== 'undefined' && on_info_event){
-			on_info_event(str);
+			on_info_event(uid, ucolor, str);
 		    }
 		}
 	    }
@@ -151,7 +153,7 @@ var bbop_messenger_client = function(msgloc,
     };
 
     // Remote awareness of location.
-    anchor.clairvoyance = function(user_id, user_color, top, left){
+    anchor.clairvoyance = function(top, left){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
@@ -160,16 +162,14 @@ var bbop_messenger_client = function(msgloc,
 	    var loc_packet = {
 		model_id: anchor.model_id,
 		top: top,
-		left: left,
-		user_id: user_id,
-		user_color: user_color
+		left: left
 	    };
 	    anchor.socket.emit('clairvoyance', loc_packet);
 	}
     };
 
     // Move objects at a distance.
-    anchor.telekinesis = function(user_id, item_id, top, left){
+    anchor.telekinesis = function(item_id, top, left){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
@@ -179,7 +179,6 @@ var bbop_messenger_client = function(msgloc,
 		model_id: anchor.model_id,
 		top: top,
 		left: left,
-		user_id: user_id,
 		item_id: item_id
 	    };
 	    anchor.socket.emit('telekinesis', tkn_packet);

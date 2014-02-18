@@ -41,15 +41,6 @@ var MMEnvInit = function(in_model, in_server_base){
     // Optionally use the messaging server as an experiment.
     var msngr = null;
 
-    // This would eventually be information delivered by the
-    // authentication system.
-    var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
-    var user_details = {
-	'uid': bbop.core.uuid(),
-	//'ucolor': '#00ff00'
-	'ucolor': ucolor_list[Math.floor(Math.random() * ucolor_list.length)]
-    };
-
     // Where we move the nodes during this session.
     var historical_store = new bbop_location_store();
 
@@ -262,7 +253,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		var l = ui.position.left;
 
 		//ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
-		msngr.telekinesis(user_details['uid'], en.id(), t, l);
+		msngr.telekinesis(en.id(), t, l);
 	    }
 	}
 
@@ -803,10 +794,7 @@ var MMEnvInit = function(in_model, in_server_base){
 			     // "instantiate" message type.
 			     var mtype = resp.message_type();
 			     var msg = [
-				 '<span class="bbop-mme-message-uid">',
-				 user_details['uid'],
-				 '</span>',
-				 ' completed op ',
+				 'completed op ',
 				 '<span class="bbop-mme-message-op">',
 				 resp.message_type(),
 				 '</span>'
@@ -1267,10 +1255,17 @@ var MMEnvInit = function(in_model, in_server_base){
 	reporter.comment('you are connected');
     }
 
-    function _on_info_update(str){
+    function _on_info_update(uid, ucolor, message){
 
 	// Add to the top of the message list.
-	reporter.comment(str);
+	var msg = [
+	    '<span class="bbop-mme-message-uid" style="color:'+ ucolor +';">',
+	    uid,
+	    '</span>',
+	    ' ',
+	    message
+	];
+	reporter.comment(msg.join(''));
 		
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
@@ -1287,7 +1282,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		function(){
 		    jQuery(message_area_tab_elt).removeClass(cls);
 		});
-	}	
+	}
     }
 
     function _on_clairvoyance_update(id, color, top, left){
@@ -1355,10 +1350,7 @@ var MMEnvInit = function(in_model, in_server_base){
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
-		msngr.info('Please contact ' +
-			   '<span class="bbop-mme-message-uid" style="color: '+
-			   user_details['ucolor'] +';">'+
-			   user_details['uid'] + '</span>' +
+		msngr.info('Please contact me' +
 			   ' for discussion about ' +
 			   '<span class="bbop-mme-message-op">'+
 			   ecore.get_id() + '</span>');
@@ -1402,8 +1394,7 @@ var MMEnvInit = function(in_model, in_server_base){
 		var left = evt.pageX;
 		var scroll_left = jQuery(graph_container_div).scrollLeft();
 		var scroll_top = jQuery(graph_container_div).scrollTop();
-		msngr.clairvoyance(user_details['uid'], user_details['ucolor'],
-				   top + scroll_top, left + scroll_left);
+		msngr.clairvoyance(top + scroll_top, left + scroll_left);
 	    }
 	});
 };

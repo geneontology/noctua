@@ -41,33 +41,68 @@ sio.enable('browser client etag');
 sio.enable('browser client gzip');
 sio.set('log level', msgdebug);
 
+// This would eventually be information delivered by the
+// authentication system.
+// TODO: This would disappear in a merged moderator system.
+var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
+var client_sockets = {};
+
 sio.sockets.on('connection',
 	       function(socket){
+
+		   // Add this client to the socket list.
+		   // Store for injection.
+		   var socket_id = socket.id;
+		   var rci = Math.floor(Math.random() * ucolor_list.length);
+		   client_sockets[socket_id] = {
+		       'uid': socket_id,
+		       'ucolor': ucolor_list[rci]
+		   };
+		   var user_id = client_sockets[socket_id]['uid'];
+		   var user_color = client_sockets[socket_id]['ucolor'];
 
 		   // Relays.
 		   socket.on('info',
 			     function(data){
-				 //console.log('srv info: ' + data['text']);
+				 //console.log('srv info: %j', data);
+				 // Inject user data.
+				 data['user_id'] = user_id;
+				 data['user_color'] = user_color;
 				 socket.broadcast.emit('info', data);
 			     });
 		   socket.on('clairvoyance',
 			     function(data){
 				 //console.log('srv remove: ' + data);
+				 data['user_id'] = user_id;
+				 data['user_color'] = user_color;
 				 socket.broadcast.emit('clairvoyance', data);
 			     });
 		   socket.on('telekinesis',
 			     function(data){
 				 //console.log('srv remove: ' + data);
+				 data['user_id'] = user_id;
+				 data['user_color'] = user_color;
 				 socket.broadcast.emit('telekinesis', data);
 			     });
 
 		   // Disconnect info.
 		   socket.on('disconnect',
-			     function(data){
+			     function(){
 				 console.log('srv disconnect');
-				 var dispack = {
-				     text: 'client disconnected from server'
-				 };
-				 socket.broadcast.emit('info', dispack);
+
+				 // TODO: find a way to report disconnecting
+				 // from a specific model--might have to wait
+				 // for using channels.
+				 // // Broadcast the disconnection.
+				 // var data = {
+				 //     type: 'disconnect',
+				 //     message: 'disconnect from server'
+				 // };
+				 // data['user_id'] = user_id;
+				 // data['user_color'] = user_color;
+				 // socket.broadcast.emit('info', data);
+				 
+				 // Remove from the pack.
+				 delete client_sockets[socket_id];
 			     });
 	       });
