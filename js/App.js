@@ -1281,7 +1281,7 @@ var MMEnvInit = function(in_model, in_server_base){
 	}else{
 	    // Highlight.
 	    jQuery(message_area_tab_elt).addClass(cls);
-	    // Clear 
+	    // Clear when clicked on.
 	    jQuery(message_area_tab_elt).unbind('click');
 	    jQuery(message_area_tab_elt).click(
 		function(){
