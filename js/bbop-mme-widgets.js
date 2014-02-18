@@ -456,6 +456,8 @@ bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
 };
 
 /*
+ * Contained blocking shield for general compute activity.
+ * 
  * Function that returns object.
  * 
  * TODO: make subclass
@@ -486,4 +488,61 @@ bbop_mme_widgets.compute_shield = function(){
     var mdl = new bbop_mme_widgets.contained_modal('shield', 'Relax',
 						   [p, pb_container]);
     return mdl;
+};
+
+/*
+ * Object.
+ * 
+ * Output formatted commentary to element.
+ */
+bbop_mme_widgets.reporter = function(output_id){
+
+    var output_elt = '#' + output_id;
+    var list_elt = null;
+
+    // ...
+    function _date_str(n){
+
+	function _zero_fill(n){
+	    var ret = n;
+	    if( ret < 10 ){
+		ret = '0' + ret;
+	    }
+	    return ret;
+	}
+	
+	var now = new Date();
+	var dts = now.getFullYear() + '/' +
+	    _zero_fill(now.getMonth() +1) + '/' +
+	    _zero_fill(now.getDate()) + ' ' +
+	    _zero_fill(now.getHours()) + ':' +
+	    _zero_fill(now.getMinutes()) + ':' +
+	    _zero_fill(now.getSeconds());
+	return dts;
+    }	
+    
+    this.reset = function(){
+	jQuery(output_elt).empty();
+	var new_list_id = bbop.core.uuid();
+	list_elt = '#' + new_list_id;
+	jQuery(output_elt).append('<ul id="' + new_list_id + '"></ul>');
+    };
+
+    this.comment = function(str, uid, color){
+	var out = '<li>';
+	out += _date_str() + ': ';
+	if( uid && color ){
+	    out += '<span style="color' + color + ';">uid</span> :';
+	}else if( uid ){
+	    out += '<span>uid</span> :';
+	}
+	out += str;
+	out += '</li>';
+
+	// Actually do it.
+	jQuery(list_elt).prepend(out);
+    };
+
+    // Initialize.
+    this.reset();
 };

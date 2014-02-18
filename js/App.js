@@ -136,11 +136,10 @@ var MMEnvInit = function(in_model, in_server_base){
 
     // Some experimental stuff for optional messaging server.
     var message_area_id = 'message_area';
-    var message_area_elt = '#' + message_area_id;
+    //var message_area_elt = '#' + message_area_id;
     var message_area_tab_id = 'message_area_tab';
     var message_area_tab_elt = '#' + message_area_tab_id;
-    // var remote_area_id = 'remote_area';
-    // var remote_area_elt = '#' + remote_area_id;
+    var reporter = new widgets.reporter(message_area_id);
 
     ///
     /// Render helpers.
@@ -175,27 +174,6 @@ var MMEnvInit = function(in_model, in_server_base){
 	return seed + 100;
     }
 
-    // ...
-    function _date_str(n){
-
-	function _zero_fill(n){
-	    var ret = n;
-	    if( ret < 10 ){
-		ret = '0' + ret;
-	    }
-	    return ret;
-	}
-	
-	var now = new Date();
-	var dts = now.getFullYear() + '/' +
-	    _zero_fill(now.getMonth() +1) + '/' +
-	    _zero_fill(now.getDate()) + ' ' +
-	    _zero_fill(now.getHours()) + ':' +
-	    _zero_fill(now.getMinutes()) + ':' +
-	    _zero_fill(now.getSeconds());
-	return dts;
-    }	
-    
     ///
     /// jsPlumb preamble.
     ///
@@ -1284,23 +1262,19 @@ var MMEnvInit = function(in_model, in_server_base){
     ///
 
     // Allow the message board to be cleared.
-    var new_list_elt = null;
     function _on_connect(){
-	jQuery(message_area_elt).empty();
-	var new_list_id = bbop.core.uuid();
-	new_list_elt = '#' + new_list_id;
-	jQuery(message_area_elt).append('<ul id="' + new_list_id + '"></ul>');
-	jQuery(new_list_elt).prepend('<li>you are connected</li>');
+	reporter.reset();
+	reporter.comment('you are connected');
     }
 
     function _on_info_update(str){
 
-	// Add to the top of the message
-	// queue.
-	jQuery(new_list_elt).prepend('<li>'+ _date_str() +': '+ str +'</li>');
+	// Add to the top of the message list.
+	reporter.comment(str);
 		
-	//alert('someone did something');
+	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
+	//alert('someone did something');
 	var cls = 'bbop-mme-new-info';
 	if( jQuery(message_area_tab_elt).parent().hasClass('active') ){
 	    // Do not change.
