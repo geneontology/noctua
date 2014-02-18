@@ -270,57 +270,6 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
     jQuery(graph_div).append(w.to_string());
 };
 
-bbop_mme_widgets.render_edge_modal = function(aid, modal_edge_title_elt,
-					      modal_edge_body_elt,
-					     source_id, target_id){
-    var each = bbop.core.each;
-
-    // Get a sorted list of known rels.
-    var rels = aid.all_entities();
-    rels = rels.sort(
-	function(a,b){ 
-	    return aid.priority(b) - aid.priority(a);
-	});
-    var rellist = [];
-    each(rels,
-	 function(rel){
-	     rellist.push([rel, aid.readable(rel)]);
-	 });
-    
-    // Assemble modal content.
-    var mete = modal_edge_title_elt;
-    var mebe = modal_edge_body_elt;
-    jQuery(mete).empty();
-    jQuery(mete).append('Add Edge');
-    jQuery(mebe).empty();
-    jQuery(mebe).append('<h4>Relation selection</h4>');
-    jQuery(mebe).append('<b>Edge source:</b> ' +
-			source_id);
-    jQuery(mebe).append('<br />');
-    jQuery(mebe).append('<b>Edge target:</b> ' +
-			target_id);
-    var tcache = [];
-    each(rellist,
-	 function(tmp_rel, rel_ind){
-	     tcache.push('<div class="radio"><label>');
-	     tcache.push('<input type="radio" ');
-	     tcache.push('name="rel_val" ');
-	     tcache.push('value="' + tmp_rel[0] +'"');
-	     if( rel_ind == 0 ){
-		 tcache.push('checked>');
-	     }else{
-				       tcache.push('>');
-	     }
-	     tcache.push(tmp_rel[1] + ' ');
-	     tcache.push('(' + tmp_rel[0] + ')');
-	     tcache.push('</label></div>');
-	     
-	 });
-    
-    // Put up modal shield.
-    jQuery(modal_edge_body_elt).append(tcache.join(''));
-};
-
 /*
  * Object.
  * 
@@ -381,6 +330,7 @@ bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
 
     // The footer has the other button.
     var footer_args = {
+	'generate_id': true,
 	'class': 'modal-footer'
     };
     var footer = new tag('div', footer_args, close_btn);
@@ -442,6 +392,27 @@ bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
     /// Add external controls, etc.
     ///
 
+    // To be used before show--add elements (as a string) to the main
+    // modal DOM (which can have events attached).
+    this.add_to_body = function(str){
+	var add_to_elt = '#' + body.get_id();
+	jQuery(add_to_elt).append(str);
+    };
+    
+    // // To be used before show--add elements (as a string) to the main
+    // // modal DOM (which can have events attached).
+    // this.reset_footer = function(){
+    // 	var add_to_elt = '#' + footer.get_id();
+    // 	jQuery(add_to_elt).append(str);
+    // };
+    
+    // To be used before show--add elements (as a string) to the main
+    // modal DOM (which can have events attached).
+    this.add_to_footer = function(str){
+	var add_to_elt = '#' + footer.get_id();
+	jQuery(add_to_elt).append(str);
+    };
+    
     //
     this.show = function(){
 	jQuery(modal_elt).modal(modal_opts);	
@@ -460,7 +431,7 @@ bbop_mme_widgets.contained_modal = function(type, arg_title, arg_body){
  * 
  * Function that returns object.
  * 
- * TODO: make subclass
+ * TODO: make subclass?
  */ 
 bbop_mme_widgets.compute_shield = function(){
 
@@ -487,6 +458,109 @@ bbop_mme_widgets.compute_shield = function(){
 
     var mdl = new bbop_mme_widgets.contained_modal('shield', 'Relax',
 						   [p, pb_container]);
+    return mdl;
+};
+
+/*
+ * Contained shield for creating new edges between nodes.
+ * 
+ * Function that returns object.
+ * 
+ * TODO: make subclass?
+ */
+bbop_mme_widgets.add_edge_modal = function(ecore, manager, aid,
+					   source_id, target_id){
+    var each = bbop.core.each;
+    var tag = bbop.html.tag;
+
+    // Get a sorted list of known rels.
+    var rels = aid.all_entities();
+    rels = rels.sort(
+	function(a,b){ 
+	    return aid.priority(b) - aid.priority(a);
+	});
+    var rellist = [];
+    each(rels,
+	 function(rel){
+	     rellist.push([rel, aid.readable(rel)]);
+	 });
+    
+    // Preamble.
+    var mebe = [
+	'<h4>Relation selection</h4>',
+	'<b>Edge source:</b>',
+	source_id,
+	'<br />',
+	'<b>Edge target:</b>',
+	target_id
+    ];
+
+    // Randomized radio.
+    var radio_name = bbop.core.uuid();
+    var tcache = [mebe.join(' ')];
+    each(rellist,
+	 function(tmp_rel, rel_ind){
+	     tcache.push('<div class="radio"><label>');
+	     tcache.push('<input type="radio" ');
+	     tcache.push('name="' + radio_name + '" ');
+	     tcache.push('value="' + tmp_rel[0] +'"');
+	     if( rel_ind == 0 ){
+		 tcache.push('checked>');
+	     }else{
+		 tcache.push('>');
+	     }
+	     tcache.push(tmp_rel[1] + ' ');
+	     tcache.push('(' + tmp_rel[0] + ')');
+	     tcache.push('</label></div>');	     
+	 });
+    
+    var save_btn_args = {
+	'generate_id': true,
+	'type': 'button',
+	'class': 'btn btn-primary'
+    };
+    var save_btn = new tag('button', save_btn_args, 'Save');
+
+    // Setup base modal.
+    var mdl = new bbop_mme_widgets.contained_modal('dialog', 'Add Relation');
+    mdl.add_to_body(tcache.join(''));
+    mdl.add_to_footer(save_btn.to_string());
+
+    // Add action listener to the save button.
+    function _rel_save_button_start(){
+
+	//
+	//ll('looks like edge (in cb): ' + eeid);
+	var qstr ='input:radio[name=' + radio_name + ']:checked';
+	var rval = jQuery(qstr).val();
+	// ll('rval: ' + rval);
+	
+	// // TODO: Should I report this too? Smells a
+	// // bit like the missing properties with
+	// // setParameter/s(),
+	// // Change label.
+	// //conn.setLabel(rval); // does not work!?
+	// conn.removeOverlay("label");
+	// conn.addOverlay(["Label", {'label': rval,
+	// 			 'location': 0.5,
+	// 			 'cssClass': "aLabel",
+	// 			 'id': 'label' } ]);
+
+	// Kick off callback.	
+	manager.add_fact(ecore.get_id(), source_id,
+			 target_id, rval);
+
+	// Close modal.
+	mdl.destroy();
+    }
+    // And add the new one for this instance.
+    jQuery('#' + save_btn.get_id()).click(
+	function(evt){
+	    evt.stopPropagation();
+	    _rel_save_button_start();
+	});
+    
+    // Return our final product.
     return mdl;
 };
 

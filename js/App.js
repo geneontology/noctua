@@ -925,45 +925,10 @@ var MMEnvInit = function(in_model, in_server_base){
 			  var tnode = ecore.get_node_by_elt_id(tn);
 
 			  // Pop up the modal.
-			  widgets.render_edge_modal(aid, modal_edge_title_elt,
-						    modal_edge_body_elt,
-						    snode.id(), tnode.id());
-			  jQuery(modal_edge_elt).modal({});
-
-		  	  // Add action listener to the save button.
-		  	  function _rel_save_button_start(){
-
-		  	      //
-		  	      //ll('looks like edge (in cb): ' + eeid);
-		  	      var qstr ='input:radio[name=rel_val]:checked';
-		  	      var rval = jQuery(qstr).val();
-		  	      ll('rval: ' + rval);
-
-		  	      // // TODO: Should I report this too? Smells a
-		  	      // // bit like the missing properties with
-		  	      // // setParameter/s(),
-		  	      // // Change label.
-		  	      // //conn.setLabel(rval); // does not work!?
-		  	      // conn.removeOverlay("label");
-		  	      // conn.addOverlay(["Label", {'label': rval,
-		  	      // 			 'location': 0.5,
-		  	      // 			 'cssClass': "aLabel",
-		  	      // 			 'id': 'label' } ]);
-			      
-		  	      // Close modal.
-		  	      jQuery(modal_edge_elt).modal('hide');
-			      
-			      manager.add_fact(ecore.get_id(), snode.id(),
-					       tnode.id(), rval);
-			  }
-			  // Remove the previous save listeners.
-			  jQuery(modal_edge_save_elt).unbind('click');
-			  // And add the new one for this instance.
-			  jQuery(modal_edge_save_elt).click(
-		  	      function(evt){
-		  		  evt.stopPropagation();
-		  		  _rel_save_button_start();
-		  	      });
+			  var init_edge =
+			      widgets.add_edge_modal(ecore, manager, aid,
+						     snode.id(), tnode.id());
+			  init_edge.show();
 		      }
 		  });
 
