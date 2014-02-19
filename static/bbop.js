@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140217";
+bbop.version.release = "20140218";
 /*
  * Package: logger.js
  * 
@@ -7562,6 +7562,27 @@ bbop.rest.response.mmm.prototype.individuals = function(){
     if( this._data && this._data['individuals'] && 
 	bbop.core.is_array(this._data['individuals']) ){
 	ret = this._data['individuals'];
+    }
+    return ret;
+};
+
+/*
+ * Function: relations
+ * 
+ * Returns a list of the relations found in the response. Likely not
+ * to be there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.relations = function(){
+    var ret = [];
+    if( this._data && this._data['relations'] && 
+	bbop.core.is_array(this._data['relations']) ){
+	ret = this._data['relations'];
     }
     return ret;
 };
