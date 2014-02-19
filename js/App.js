@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_model, in_server_base){
+var MMEnvInit = function(in_model, in_relations, in_server_base){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -108,13 +108,6 @@ var MMEnvInit = function(in_model, in_server_base){
     var action_form_elt = '#' + action_form_id;
     var action_form_data_id = 'invisible_action_data';
     var action_form_data_elt = '#' + action_form_data_id;
-    // Hidden reusable modal dialog for nodes.
-    var modal_node_id = 'modal_node_dialog';
-    var modal_node_elt = '#' + modal_node_id;
-    var modal_node_body_id = 'modal_node_dialog_body';
-    var modal_node_body_elt = '#' + modal_node_body_id;
-    var modal_node_title_id = 'modal_node_dialog_title';
-    var modal_node_title_elt = '#' + modal_node_title_id;
 
     // Some experimental stuff for optional messaging server.
     var message_area_id = 'message_area';
@@ -871,7 +864,8 @@ var MMEnvInit = function(in_model, in_server_base){
 
 			  // Pop up the modal.
 			  var init_edge =
-			      widgets.add_edge_modal(ecore, manager, aid,
+			      widgets.add_edge_modal(ecore, manager,
+						     in_relations, aid,
 						     snode.id(), tnode.id());
 			  init_edge.show();
 		      }
@@ -1311,7 +1305,9 @@ jsPlumb.ready(function(){
 		      typeof(global_server_base) !== 'undefined' ){
 			  if( typeof(global_model) !== 'undefined' &&
 				    global_model ){
-				  MMEnvInit(global_model, global_server_base);
+				  MMEnvInit(global_model,
+					    global_known_relations,
+					    global_server_base);
 			  }else{
 			      alert('nothing loadable found');
 			      //throw new Error('nothing loadable found');

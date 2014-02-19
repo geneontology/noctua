@@ -35,7 +35,7 @@ var bbop_mme_context = function(){
 	'BFO:0000050':
 	{
 	    readable: 'part of',
-	    priority: 0,
+	    priority: 5,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
@@ -48,7 +48,7 @@ var bbop_mme_context = function(){
 	'BFO:0000051':
 	{
 	    readable: 'has part',
-	    priority: 0,
+	    priority: 4,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
 		'has part',
@@ -163,7 +163,7 @@ var bbop_mme_context = function(){
 	'directly_activates':
 	{
 	    readable: 'directly activates',
-	    priority: 0,
+	    priority: 3,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_activates',
 		'directly activates',
@@ -174,7 +174,7 @@ var bbop_mme_context = function(){
 	'upstream_of':
 	{
 	    readable: 'upstream of',
-	    priority: 0,
+	    priority: 2,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/upstream_of'
 		'upstream of',
@@ -185,7 +185,7 @@ var bbop_mme_context = function(){
 	'directly_inhibits':
 	{
 	    readable: 'directly inhibits',
-	    priority: 0,
+	    priority: 2,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_inhibits'
 		'directly inhibits',

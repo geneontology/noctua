@@ -43,6 +43,7 @@ var MMEnvLauncher = function() {
     }else{
 	console.log('server location taken from default: ' + m3loc);
     }
+    self.m3loc = m3loc;
 
     var msgloc = 'http://toaster.lbl.gov:3400'; // default val
     if( process.env.MSGLOC ){
@@ -197,7 +198,7 @@ var MMEnvLauncher = function() {
 
     // Initialize the server (laucher_app) and create the routes and register
     // the handlers.
-    self.initializeServer = function() {
+    self.initializeServer = function(known_relations) {
         //self.createRoutes();
         self.app = laucher_app();
 	// Middleware needed for POST and browserid
@@ -218,10 +219,16 @@ var MMEnvLauncher = function() {
 			 var base_tmpl_args = {
 			     'title': 'go-mme',
 			     'content': ind_cont,
-			     'js_variables': {
-				 'name': 'global_server_base',
-				 'value': '"' + m3loc+ '"'
-			     }
+			     'js_variables': [
+				 {
+				     'name': 'global_server_base',
+				     'value': '"' + m3loc + '"'
+				 },
+				 {
+				     'name': 'global_known_relations',
+				     'value': bbop.core.dump(known_relations)
+				 }
+			     ]
 			 };
 			 var ind = mustache.render(base_tmpl, base_tmpl_args);
 
@@ -239,10 +246,16 @@ var MMEnvLauncher = function() {
 			 var base_tmpl_args = {
 			     'title': 'go-mme',
 			     'content': ind_cont,
-			     'js_variables': {
-				 'name': 'global_server_base',
-				 'value': '"' + m3loc+ '"'
-			     }
+			     'js_variables': [
+				 {
+				     'name': 'global_server_base',
+				     'value': '"' + m3loc+ '"'
+				 },
+				 {
+				     'name': 'global_known_relations',
+				     'value': bbop.core.dump(known_relations)
+				 }
+			     ]
 			 };
 			 var ind = mustache.render(base_tmpl, base_tmpl_args);
 
@@ -387,6 +400,12 @@ var MMEnvLauncher = function() {
 					     {
 						 'name': 'global_model',
 						 'value': obj_str
+					     },
+					     {
+						 'name':
+						 'global_known_relations',
+						 'value':
+						 bbop.core.dump(known_relations)
 					     }
 					 ],
 					 'content': frame_cont
@@ -515,13 +534,16 @@ var MMEnvLauncher = function() {
     };
 
     // Initializes the sample application.
-    self.initialize = function() {
+    self.initialize = function(known_relations){
+
+	var knw_rel = known_relations || [];
+
         self.setupVariables();
         self.populateCache();
         self.setupTerminationHandlers();
 
         // Create the express server and routes.
-        self.initializeServer();
+        self.initializeServer(knw_rel);
     };
 
     // Start the server (starts up the sample application).
@@ -555,5 +577,25 @@ var MMEnvLauncher = function() {
 
 // Deliver the prototype JS MME application to the client.
 var mmees = new MMEnvLauncher();
-mmees.initialize();
-mmees.start();
+
+// Setup calls: don't finalize the startup until we pull the rest of
+// the interesting things we need from the web.
+// In this case, we're going after RO so we can pass it in once and
+// early.
+var imngr = new bbop.rest.manager.node(bbop.rest.response.mmm);
+imngr.register('success', 's1',
+	       function(resp, man){
+		   console.log("got getRelations, starting initializing seq");
+		   console.log(bbop.core.what_is(resp));
+		   mmees.initialize(resp.relations());
+		   mmees.start();
+	       });
+imngr.register('error', 'e1',
+	       function(resp, man){
+		   //console.log('erred out: %j', resp); 
+		   console.log('okay: %j', resp.okay());
+	       });
+var t = mmees.m3loc + '/getRelations';
+var t_args = {};
+var astr = imngr.action(t, t_args);
+console.log("action to: " + astr);

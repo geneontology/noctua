@@ -468,21 +468,31 @@ bbop_mme_widgets.compute_shield = function(){
  * 
  * TODO: make subclass?
  */
-bbop_mme_widgets.add_edge_modal = function(ecore, manager, aid,
+bbop_mme_widgets.add_edge_modal = function(ecore, manager,
+					   relations, aid,
 					   source_id, target_id){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
 
     // Get a sorted list of known rels.
-    var rels = aid.all_entities();
-    rels = rels.sort(
+    //var rels = aid.all_entities();
+    var rels = relations.sort(
 	function(a,b){ 
-	    return aid.priority(b) - aid.priority(a);
+	    var rid_a = a['id'];
+	    var rid_b = b['id'];
+	    return aid.priority(rid_b) - aid.priority(rid_a);
 	});
     var rellist = [];
     each(rels,
 	 function(rel){
-	     rellist.push([rel, aid.readable(rel)]);
+	     // We have the id.
+	     var r = [rel['id']];
+	     if( rel['label'] ){ // use their label
+		 r.push(rel['label']);
+	     }else{ // otherwise, try readable
+		 r.push(aid.readable(rel['id']));
+	     }
+	     rellist.push(r);
 	 });
     
     // Preamble.
@@ -497,7 +507,8 @@ bbop_mme_widgets.add_edge_modal = function(ecore, manager, aid,
 
     // Randomized radio.
     var radio_name = bbop.core.uuid();
-    var tcache = [mebe.join(' ')];
+    var tcache = [mebe.join(' '),
+		  '<div style="height: 25em; overflow-y: scroll;">'];
     each(rellist,
 	 function(tmp_rel, rel_ind){
 	     tcache.push('<div class="radio"><label>');
@@ -513,6 +524,7 @@ bbop_mme_widgets.add_edge_modal = function(ecore, manager, aid,
 	     tcache.push('(' + tmp_rel[0] + ')');
 	     tcache.push('</label></div>');	     
 	 });
+    tcache.push('</div>');
     
     var save_btn_args = {
 	'generate_id': true,
