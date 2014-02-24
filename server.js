@@ -125,6 +125,7 @@ var MMEnvLauncher = function() {
 		'jquery.tablesorter.min.js': '',
 		'bbop.js': '',
 		'amigo2.js': '',
+		'bbop-rest-response-mmm.js': '',
 		'bbop-mme-context.js': '',
 		'bbop-mme-edit.js': '',
 		'bbop-mme-manager.js': '',
