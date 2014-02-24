@@ -322,23 +322,28 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 
 	// Try and detect the proper edge type.
 	var rglyph = aid.glyph(rn);
-	var glyph = 'PlainArrow';
+	var glyph = null;
 	var glyph_args = {};
 	if( rglyph == 'arrow' ){
 	    glyph = 'Arrow';
 	    glyph_args['location'] = -4;
 	}else if( rglyph == 'diamond' ){
 	    glyph = 'Diamond';
-	    glyph_args['location'] = -4;
+	    glyph_args['location'] = -5;
 	}else if( rglyph == 'bar' ){
 	    glyph = 'Arrow';
 	    glyph_args['length'] = 2;
 	    glyph_args['width'] = 25;
 	    glyph_args['foldback'] = 2.0;
 	    glyph_args['location'] = -5;
-	}else{
-	    // Probably "wedge", leave as above glyph default.
+	}else if( rglyph == 'wedge' ){
+	    glyph = 'PlainArrow';
 	    glyph_args['location'] = -4;
+	}else if( ! rglyph || rglyph == 'none' ){
+	    // Let it go as nothing.
+	}else{
+	    // Unpossible.
+	    throw new Error('unpossible glyph...is apparently possible');
 	}
 
 	// Try and see if there are waypoints.
@@ -347,31 +352,34 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	    usable_waypoints = waypoints[sn][tn];
 	}
 
-    	var new_conn = instance.connect(
-    	    { // remember that edge ids and elts ids are the same 
-    	    	'source': ecore.get_node_elt_id(sn),
-    	    	'target': ecore.get_node_elt_id(tn),
-		//'label': 'foo' // works
-		'anchor': "Continuous",
-		// TODO/BUG: Finish Sugiyama implementation.
-		//'connector': ["Sugiyama", { curviness: 75 } ],
-		'connector': ["Sugiyama", {
-				  'curviness': 75,
-				  'waypoints': usable_waypoints
-			      } ],
-		'paintStyle': {
-		    strokeStyle: clr,
-		    lineWidth: 5
-		},
-		'overlays': [ // does not!?
-		    ["Label", {'label': rn,
-			       'location': 0.5,
-			       'cssClass': "aLabel",
-			       'id': 'label' } ],
-		    [glyph, glyph_args]
-		 ]
+    	var new_conn_args = {
+	    // remember that edge ids and elts ids are the same 
+    	    'source': ecore.get_node_elt_id(sn),
+    	    'target': ecore.get_node_elt_id(tn),
+	    //'label': 'foo' // works
+	    'anchor': "Continuous",
+	    // TODO/BUG: Finish Sugiyama implementation.
+	    //'connector': ["Sugiyama", { curviness: 75 } ],
+	    'connector': ["Sugiyama", {
+			      'curviness': 75,
+			      'waypoints': usable_waypoints
+			  } ],
+	    'paintStyle': {
+		strokeStyle: clr,
+		lineWidth: 5
+	    },
+	    'overlays': [ // does not!?
+		["Label", {'label': rn,
+			   'location': 0.5,
+			   'cssClass': "aLabel",
+			   'id': 'label' } ]
+	    ]
 	    //}, {'PaintStyle': { strokeStyle: clr, lineWidth: 5}});
-	    });
+	};
+	if( glyph ){
+    	    new_conn_args['overlays'].push([glyph, glyph_args]);
+	}
+    	var new_conn = instance.connect(new_conn_args);
 
 	// NOTE: This is necessary since these connectors are created
 	// under the covers of jsPlumb--I don't have access during

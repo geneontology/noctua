@@ -158,7 +158,10 @@ var bbop_mme_context = function(){
 	    aliases: [
 		'http://purl.obolibrary.org/obo/activates'
 	    ],
-	    glyph: 'arrow',
+	    //glyph: 'arrow',
+	    //glyph: 'diamond',
+	    glyph: 'wedge',
+	    //glyph: 'bar',
 	    color: '#8FBC8F' // darkseagreen
 	},
 	'directly_activates':
@@ -307,11 +310,11 @@ var bbop_mme_context = function(){
      *  ind - incoming data id
      *
      * Returns:
-     *  appropriate color string or 'wedge'
+     *  appropriate color string or null
      */
     this.glyph = function(ind){
 	
-	var ret = 'wedge'; // default
+	var ret = null; // default
 
 	var data = this._dealias_data(ind);
 	if( data && data['glyph'] ){
