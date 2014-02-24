@@ -129,6 +129,7 @@ var MMEnvLauncher = function() {
 		'bbop-mme-context.js': '',
 		'bbop-mme-edit.js': '',
 		'bbop-mme-manager.js': '',
+		'bbop-mme-manager2.js': '',
 		'bbop-mme-widgets.js': '',
 		'bbop-draggable-canvas.js': '',
 		'bbop-location-store.js': '',
