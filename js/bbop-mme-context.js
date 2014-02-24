@@ -158,6 +158,7 @@ var bbop_mme_context = function(){
 	    aliases: [
 		'http://purl.obolibrary.org/obo/activates'
 	    ],
+	    glyph: 'arrow',
 	    color: '#8FBC8F' // darkseagreen
 	},
 	'directly_activates':
@@ -169,6 +170,7 @@ var bbop_mme_context = function(){
 		'directly activates',
 		'directly_activates'
 	    ],
+	    glyph: 'arrow',
 	    color: '#2F4F4F' // darkslategray
 	},
 	'upstream_of':
@@ -180,6 +182,7 @@ var bbop_mme_context = function(){
 		'upstream of',
 		'upstream_of'
 	    ],
+	    glyph: 'diamond',
 	    color: '#FF1493' // deeppink
 	},
 	'directly_inhibits':
@@ -191,6 +194,7 @@ var bbop_mme_context = function(){
 		'directly inhibits',
 		'directly_inhibits'
 	    ],
+	    glyph: 'bar',
 	    color: '#7FFF00' // chartreuse
 	},
 	'indirectly_disables_action_of':
@@ -289,6 +293,29 @@ var bbop_mme_context = function(){
 	var data = this._dealias_data(ind);
 	if( data && data['color'] ){
 	    ret = data['color'];
+	}
+	
+	return ret;
+    };
+
+    /* 
+     * Function: relation_glyph
+     *
+     * Return the string indicating the glyph to use for the edge marking.
+     *
+     * Parameters: 
+     *  ind - incoming data id
+     *
+     * Returns:
+     *  appropriate color string or 'wedge'
+     */
+    this.glyph = function(ind){
+	
+	var ret = 'wedge'; // default
+
+	var data = this._dealias_data(ind);
+	if( data && data['glyph'] ){
+	    ret = data['glyph'];
 	}
 	
 	return ret;
