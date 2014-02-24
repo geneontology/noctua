@@ -97,6 +97,7 @@ var bbop_mme_context = function(){
 		'negatively regulates',
 		'negatively_regulates'
 	    ],
+	    glyph: 'bar',
 	    color: '#FF0000' // red
 	},
 	'RO:0002213':
@@ -108,6 +109,7 @@ var bbop_mme_context = function(){
 		'positively regulates',
 		'positively_regulates'
 	    ],
+	    glyph: 'arrow',
 	    color: '#008000' //green
 	},
 	'RO:0002330':
@@ -160,7 +162,7 @@ var bbop_mme_context = function(){
 	    ],
 	    //glyph: 'arrow',
 	    //glyph: 'diamond',
-	    glyph: 'wedge',
+	    //glyph: 'wedge',
 	    //glyph: 'bar',
 	    color: '#8FBC8F' // darkseagreen
 	},
@@ -185,7 +187,6 @@ var bbop_mme_context = function(){
 		'upstream of',
 		'upstream_of'
 	    ],
-	    glyph: 'diamond',
 	    color: '#FF1493' // deeppink
 	},
 	'directly_inhibits':
@@ -219,6 +220,18 @@ var bbop_mme_context = function(){
 		'GOREL_provides_input_for',
 		'http://purl.obolibrary.org/obo/GOREL_provides_input_for'
 	    ],
+	    color: '#483D8B' // darkslateblue
+	},
+	'RO:0002413':
+	{
+	    readable: 'directly provides input for',
+	    priority: 1,
+	    aliases: [
+		'directly_provides_input_for',
+		'GOREL_directly_provides_input_for',
+		'http://purl.obolibrary.org/obo/GOREL_directly_provides_input_for'
+	    ],
+	    glyph: 'diamond',
 	    color: '#483D8B' // darkslateblue
 	}
     };
