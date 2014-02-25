@@ -41,6 +41,10 @@ $(TESTS):
 	echo "trying: $@"
 	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(basename $(@F)) -f $(@D)/$(@F)
 
+.PHONY: pass
+pass:
+	make test | grep -i fail; test $$? -ne 0
+
 ###
 ### Commands/environment for application server.
 ###
