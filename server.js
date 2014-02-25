@@ -126,6 +126,7 @@ var MMEnvLauncher = function() {
 		'bbop.js': '',
 		'amigo2.js': '',
 		'bbop-rest-response-mmm.js': '',
+		'bbop-mmm-requests.js': '',
 		'bbop-mme-context.js': '',
 		'bbop-mme-edit.js': '',
 		'bbop-mme-manager.js': '',
