@@ -33,11 +33,13 @@ assemble-app:
 ### Tests.
 ###
 
+## Have to do a little something with basename to make sure we can
+## deal with the odd pre-bbop namespacey modules.
 .PHONY: test $(TESTS)
 test: assemble-app $(TESTS)
 $(TESTS):
 	echo "trying: $@"
-	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(@F)
+	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(basename $(@F)) -f $(@D)/$(@F)
 
 ###
 ### Commands/environment for application server.

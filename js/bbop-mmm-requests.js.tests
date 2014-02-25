@@ -2,7 +2,8 @@
 //// Some unit testing for bbop-mmm-requests.js
 ////
 //// Usage:
-////  ???
+////  rhino -modules static/bbop.js -opt -1 -f js/bbop-mmm-requests.js -f js/bbop-mmm-requests.js.tests -f -
+
 ////
 
 // Load bbop.
@@ -13,9 +14,18 @@ var mr_t = new bbop.test();
 /// Start unit testing.
 ///
 
+var sok = mr_t.is_same_atom;
+
 // 
 //(function(){
 
+var reqs = new bbop_mmm_request_set('foo', 'information');
+var req = new bbop_mmm_request('model', 'get');
+req.model_id('123');
+reqs.add(req);
+var args = reqs.callable();
+
+sok(args.intention, 'information', 'information intent');
 
 // })();
 

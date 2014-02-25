@@ -94,7 +94,7 @@ var bbop_mmm_request_set = function(user_id, intention){
 		 reqs.push(req.bundle());
 	     });
 	var str = bbop.json.stringify(reqs);
-	var enc = encodeURIComponent(pre);
+	var enc = encodeURIComponent(str);
 	rset['requests'] = enc;
 
 	return rset;
