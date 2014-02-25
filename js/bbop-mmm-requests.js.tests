@@ -17,17 +17,26 @@ var mr_t = new bbop.test();
 var sok = mr_t.is_same_atom;
 
 // 
-//(function(){
+(function(){
 
-var reqs = new bbop_mmm_request_set('foo', 'information');
-var req = new bbop_mmm_request('model', 'get');
-req.model_id('123');
-reqs.add(req);
-var args = reqs.callable();
+     var reqs = new bbop_mmm_request_set('foo', 'information');
+     var req = new bbop_mmm_request('model', 'get');
+     req.model_id('123');
+     reqs.add(req);
+     var args = reqs.callable();
+     
+     sok(args.uid, 'foo', 'foo uid');
+     sok(args.intention, 'information', 'information intent');
+     
+     var blob = args.requests;
+     var deblob = decodeURIComponent(blob);
+     var jsblob = bbop.json.parse(deblob);
+     sok(jsblob.length, 1, 'one request');
+     sok(jsblob[0].entity, 'model', 'model entity');
+     sok(jsblob[0].operation, 'get', 'get model');
+     sok(jsblob[0].arguments.modelId, '123', 'model 123');
 
-sok(args.intention, 'information', 'information intent');
-
-// })();
+ })();
 
 ///
 /// End unit testing.
