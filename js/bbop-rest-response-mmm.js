@@ -19,6 +19,8 @@
 // if ( typeof bbop == "undefined" ){ var bbop = {}; }
 // if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
 // if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
+// TODO/BUG: workaround until I get this properly folded into bbop-js.
+if ( typeof bbop == "undefined" ){ bbop = require('bbop').bbop; }
 
 /*
  * Constructor: mmm
