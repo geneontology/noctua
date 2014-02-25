@@ -134,7 +134,7 @@ var bbop_rest_response_mmm = function(raw){
 			    this.message_type(jresp['message_type']);
 			    this.message(jresp['message']);
 
-			    // Plug-in the other required fields.
+			    // Plug in the other required fields.
 			    this._uid = jresp['uid'] || 'unknown';
 			    this._intention = jresp['intention'] || 'unknown';
 			    this._signal = jresp['signal'] || 'unknown';
@@ -151,6 +151,58 @@ var bbop_rest_response_mmm = function(raw){
 };
 //bbop.core.extend(bbop.rest.response.mmm, bbop.rest.response);
 bbop.core.extend(bbop_rest_response_mmm, bbop.rest.response);
+
+/*
+ * Function: user_id
+ * 
+ * Returns the user id (uid) for a call if it was generated my a known
+ * user.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbop_rest_response_mmm.prototype.user_id = function(){
+    var ret = null;
+    if( this._uid ){ ret = this._uid; }
+    return ret;
+};
+
+/*
+ * Function: intention
+ * 
+ * Returns the user intention (uid) for a call.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbop_rest_response_mmm.prototype.intention = function(){
+    var ret = null;
+    if( this._intention ){ ret = this._intention; }
+    return ret;
+};
+
+/*
+ * Function: signal
+ * 
+ * Returns the server's action signal, if there was one.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbop_rest_response_mmm.prototype.signal = function(){
+    var ret = null;
+    if( this._signal ){ ret = this._signal; }
+    return ret;
+};
 
 /*
  * Function: commentary
@@ -186,7 +238,7 @@ bbop_rest_response_mmm.prototype.commentary = function(){
  *  copy of data object or null
  */
 //bbop.rest.response.mmm.prototype.data = function(){
-bbop_rest_response_mmm.data = function(){
+bbop_rest_response_mmm.prototype.data = function(){
     var ret = null;
     if( this._data ){
 	ret = bbop.core.clone(this._data);
@@ -303,8 +355,8 @@ bbop_rest_response_mmm.prototype.individuals = function(){
 /*
  * Function: relations
  * 
- * Returns a list of the relations found in the response. Likely not
- * to be there, so check the return.
+ * Returns a list of the relations found in the response. Sometimes not
+ * there, so check the return.
  * 
  * Arguments:
  *  n/a
@@ -317,6 +369,27 @@ bbop_rest_response_mmm.prototype.relations = function(){
     if( this._data && this._data['relations'] && 
 	bbop.core.is_array(this._data['relations']) ){
 	ret = this._data['relations'];
+    }
+    return ret;
+};
+
+/*
+ * Function: evidence
+ * 
+ * Returns a list of the evidence found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop_rest_response_mmm.prototype.evidence = function(){
+    var ret = [];
+    if( this._data && this._data['evidence'] && 
+	bbop.core.is_array(this._data['evidence']) ){
+	ret = this._data['evidence'];
     }
     return ret;
 };
