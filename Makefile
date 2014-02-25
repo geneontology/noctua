@@ -15,9 +15,33 @@ MSGLOC ?= http://localhost:3400
 ## startup.
 MSGPORT ?= 3400
 
+## Testing.
+TESTS = \
+ $(wildcard js/*.js.tests)
+TEST_JS = rhino
+TEST_JS_FLAGS = -modules static/bbop.js -opt -1
+
+###
+### Building.
+###
+
 .PHONY: assemble-app
 assemble-app:
 	cp ../bbop-js/staging/bbop.js static/
+
+###
+### Tests.
+###
+
+.PHONY: test $(TESTS)
+test: assemble-app $(TESTS)
+$(TESTS):
+	echo "trying: $@"
+	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(@F)
+
+###
+### Commands/environment for application server.
+###
 
 ##
 .PHONY: start-app-dev

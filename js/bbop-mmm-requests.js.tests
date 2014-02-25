@@ -1,0 +1,27 @@
+////
+//// Some unit testing for bbop-mmm-requests.js
+////
+//// Usage:
+////  ???
+////
+
+// Load bbop.
+var bbop = require('bbop').bbop;
+var mr_t = new bbop.test();
+
+///
+/// Start unit testing.
+///
+
+// 
+//(function(){
+
+
+// })();
+
+///
+/// End unit testing.
+///
+
+// Final report.
+mr_t.report();
