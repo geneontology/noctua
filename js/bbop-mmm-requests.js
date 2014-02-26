@@ -58,6 +58,10 @@ var bbop_mmm_request = function(entity, operation){
 	anchor.add('object', obj_id);
 	anchor.add('predicate', pred_id);
     };
+
+    anchor.individual = function(ind_id){
+	anchor.add('individual', ind_id);
+    };
 };
 
 /*
