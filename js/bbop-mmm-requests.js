@@ -52,6 +52,12 @@ var bbop_mmm_request = function(entity, operation){
     anchor.model_id = function(model_id){
 	anchor.add('modelId', model_id);
     };
+
+    anchor.fact = function(sub_id, obj_id, pred_id){
+	anchor.add('subject', sub_id);
+	anchor.add('object', obj_id);
+	anchor.add('predicate', pred_id);
+    };
 };
 
 /*

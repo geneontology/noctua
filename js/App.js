@@ -45,7 +45,10 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var historical_store = new bbop_location_store();
 
     // Events registry.
-    var manager = new bbop_mme_manager(in_server_base);
+    //var manager = new bbop_mme_manager(in_server_base);
+    // BUG/TODO: Right now, just hardwiring the uid, but this needs to
+    // be distributed by the moderator after authenication.
+    var manager = new bbop_mme_manager2('amigo', in_server_base);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -780,19 +783,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			       message_type + '): ' + message);
 		     }, 10);
 
-    // Remote action registrations.
-    manager.register('success', 'foo',
-		     function(resp, man){
-			 alert('Operation successful (' +
-			       resp.message_type() + '): ' +
-			       resp.message());
-		     }, 10);
-
     manager.register('warning', 'foo',
 		     function(resp, man){
-			 alert('Warning (' +
-			       resp.message_type() + '): ' +
-			       resp.message() + '; ' +
+			 alert('Warning: ' + resp.message() + '; ' +
 			       'your operation was likely not performed');
 		     }, 10);
 
@@ -812,28 +805,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			       ex_msg);
 		     }, 10);
 
-    manager.register('inconsistent', 'foo',
-		     function(resp, man){
-			 var mid = resp.model_id();
-			 var mindividuals = resp.individuals();
-			 var mfacts = resp.facts();
+    // Remote action registrations.
+    manager.register('meta', 'foo',
+    		     function(resp, man){
+    			 alert('Meta operation successful: ' + resp.message());
+    		     }, 10);
 
-			 // Deal with model.
-			 if( ! mid || is_empty(mindividuals) ){
-			     alert('no data/individuals in inconsistent');
-			 }else{
-			     _rebuild_model_and_display(mid, mindividuals,
-							mfacts);
-			 }
-		     }, 10);
-
-    // TODO/BUG: Currently the same as inconsistent, need to ask if we
-    // want an entirely server-driven model (in which case we have
-    // more MSResponse types), or if the intention of
-    // the client counts (in which case we have fewer M3Response
-    // types, but pass around an intention argument provided by the
-    // client on request).
-    manager.register('instantiate', 'foo',
+    manager.register('rebuild', 'foo',
 		     function(resp, man){
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
@@ -853,7 +831,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 var individuals = resp.individuals();
 			 var facts = resp.facts();
 			 if( ! individuals ){
-			     alert('no data/individuals in merge');
+			     alert('no data/individuals in merge--unable to do');
 			 }else{
 			     _merge_from_new_data(individuals, facts);
 			 }

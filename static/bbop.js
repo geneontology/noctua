@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0-rc1.2";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140218";
+bbop.version.release = "20140225";
 /*
  * Package: logger.js
  * 
@@ -14161,11 +14161,12 @@ if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
  * 
  * Arguments:
  *  spinner_img_src - *[optional]* optional source of a spinner image to use
+ *  wait_msg - *[optional]* the wait message to use; may be a string or bbop.html; defaults to "Waiting..."
  * 
  * Returns:
  *  self
  */
-bbop.widget.display.filter_shield = function(spinner_img_src){
+bbop.widget.display.filter_shield = function(spinner_img_src, wait_msg){
 
     this._is_a = 'bbop.widget.display.filter_shield';
 
@@ -14176,10 +14177,17 @@ bbop.widget.display.filter_shield = function(spinner_img_src){
     logger.DEBUG = true;
     function ll(str){ logger.kvetch('W (filter_shield): ' + str); }
 
+    // Determine wait_msg, if any.
+    if( ! wait_msg ){
+	wait_msg = 'Waiting...';
+    }else{
+	// pass it through
+    }
+
     // Variables that we'll need to keep.
     var is_open_p = false;
     var parea = new bbop.html.tag('div', {'generate_id': true});
-    var pmsg = new bbop.html.tag('div', {'generate_id': true}, "Waiting...");
+    var pmsg = new bbop.html.tag('div', {'generate_id': true}, wait_msg);
     parea.add_to(pmsg);
 
     var div = new bbop.html.tag('div', {'generate_id': true}, parea);
@@ -14437,6 +14445,7 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
     // Globally declared (or not) icons.
     var ui_spinner_search_source = '';
     var ui_spinner_shield_source = '';
+    var ui_spinner_shield_message = null;
     var ui_icon_positive_label = '';
     var ui_icon_positive_source = '';
     var ui_icon_negative_label = '';
@@ -14776,13 +14785,15 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
      *  icon_negative_label - *[optional]* string or bbop.html for positive icon
      *  icon_negative_source - *[optional]* string to define the src of img 
      *  spinner_shield_source - *[optional]* string to define the src of img 
+     *  spinner_shield_message - *[optional]* string or bbop.html for message 
      *
      * Returns: 
      *  n/a
      */
     this.setup_accordion = function(icon_positive_label, icon_positive_source,
 				    icon_negative_label, icon_negative_source,
-				    spinner_shield_source){
+				    spinner_shield_source,
+				    spinner_shield_message){
 	
 	ll('setup_accordion UI for class configuration: ' +
 	   this.class_conf.id());
@@ -14790,6 +14801,8 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
 	// Set the class variables for use when we do the redraws.
 	if( spinner_shield_source ){
 	    ui_spinner_shield_source = spinner_shield_source; }
+	if( spinner_shield_message ){
+	    ui_spinner_shield_message = spinner_shield_message; }
 	if( icon_positive_label ){
 	    ui_icon_positive_label = icon_positive_label; }
 	if( icon_positive_source ){
@@ -15837,7 +15850,8 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
 			 // Create the shield and pop-up the
 			 // placeholder.
 			 var fs = bbop.widget.display.filter_shield;
-			 var filter_shield = new fs(ui_spinner_shield_source); 
+			 var filter_shield = new fs(ui_spinner_shield_source,
+						    ui_spinner_shield_message); 
 			 filter_shield.start_wait();
 
 			 // Open the populated shield.
@@ -17601,6 +17615,7 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  *  show_checkboxes_p - show/enable the item select checkboxes (default true)
  *  spinner_search_source - source for the spinner used during typical searching
  *  spinner_shield_source - source for the spinner used shield waiting
+ *  spinner_shield_message - message to display on the spinner shield while waiting
  *  icon_clear_label - (default: text button based on 'X')
  *  icon_clear_source - (default: '')
  *  icon_reset_label - (default: text button based on 'X')
@@ -17669,6 +17684,7 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
     	    'show_checkboxes_p' : true,
     	    'spinner_search_source' : '',
     	    'spinner_shield_source' : '',
+    	    'spinner_shield_message' : null,
 	    'icon_clear_label': _button_wrapper('X', 'Clear text from query'),
 	    'icon_clear_source': '',
 	    'icon_reset_label': _button_wrapper('!','Reset user query filters'),
@@ -17695,6 +17711,7 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
     var show_checkboxes_p = arg_hash['show_checkboxes_p'];
     var spinner_search_source = arg_hash['spinner_search_source'];
     var spinner_shield_source = arg_hash['spinner_shield_source'];
+    var spinner_shield_message = arg_hash['spinner_shield_message'];
     var icon_clear_label = arg_hash['icon_clear_label'];
     var icon_clear_source = arg_hash['icon_clear_source'];
     var icon_reset_label = arg_hash['icon_reset_label'];
@@ -17829,7 +17846,8 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
 				      icon_positive_source,
 				      icon_negative_label,
 				      icon_negative_source,
-				      spinner_shield_source);
+				      spinner_shield_source,
+				      spinner_shield_message);
 	}
     	anchor.ui.setup_results({'meta': show_pager_p,
 				 'spinner_source': spinner_search_source});

@@ -15,9 +15,12 @@ var bbop_mme_manager2 = function(user_id, server_base){
     bbop.registry.call(this, ['prerun', // internal
 			      'postrun', // internal
 			      'manager_error', // internal
-			      'success',
-			      'warning',
-			      'error'
+			      //'success', // uninformative
+			      'merge',
+			      'rebuild',
+			      'meta',
+			      'warning', // trump
+			      'error' //trump
 			     ]);
     this._is_a = 'bbop_mme_manager2';
     var anchor = this;
@@ -46,12 +49,19 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	
 	// Switch on message type when there isn't a complete failure.
 	var m = resp.message_type();
-	if( m == 'success' ){
-	    anchor.apply_callbacks('success', [resp, anchor]);
-	}else if( m == 'warning' ){
-	    anchor.apply_callbacks('warning', [resp, anchor]);
-	}else if( m == 'error' ){
+	if( m == 'error' ){
+	    // Errors trump everything.
 	    anchor.apply_callbacks('error', [resp, anchor]);
+	}else if( m == 'warning' ){
+	    // Don't really have anything warning yet.
+	    anchor.apply_callbacks('warning', [resp, anchor]);
+	}else if( m == 'success' ){
+	    var sig = resp.signal();
+	    if( sig == 'merge' || sig == 'rebuild' || sig == 'meta' ){
+		anchor.apply_callbacks(sig, [resp, anchor]);		
+	    }else{
+		alert('unknown signal: very bad');
+	    }
 	}else{
 	    alert('unimplemented message_type');	    
 	}
@@ -65,12 +75,12 @@ var bbop_mme_manager2 = function(user_id, server_base){
     /// Actual mechanism.
     ///
 
-    // http://localhost:6800/m3GetModel?modelId=gomodel:wb-GO_0043053&json.wrf=jQuery191016787577188636982_1389946235386&_=1389946235387
-    // Likely triggers "inconsistent".
+    // Intent: "query".
+    // Expect: "success" and "rebuild".
     anchor.get_model = function(model_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_id, 'information');
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'query');
 	var req = new bbop_mmm_request('model', 'get');
 	req.model_id(model_id);
 	reqs.add(req);
@@ -80,15 +90,49 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	jqm.action(url, args, 'GET');
     };
     
-    // // 
-    // // Likely triggers "information".
-    // anchor.get_model_ids = function(){
-    // 	var url = server_base + '/m3GetAllModelIds';
-    // 	var args = {
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "query".
+    // Expect: "success" and "meta".
+    anchor.get_model_ids = function(){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'query');
+	var req = new bbop_mmm_request('model', 'all-model-ids');
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.add_fact = function(model_id, source_id, target_id, rel_id){
+
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('edge', 'add');
+	req.model_id(model_id);
+	req.fact(source_id, target_id, rel_id);
+	reqs.add(req);
+	var args = reqs.callable();
+
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
+
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('edge', 'remove');
+	req.model_id(model_id);
+	req.fact(source_id, target_id, rel_id);
+	reqs.add(req);
+	var args = reqs.callable();
+
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
     // // 
     // // Likely triggers "instantiate".
@@ -118,34 +162,6 @@ var bbop_mme_manager2 = function(user_id, server_base){
     // 	var url = server_base + '/m3StoreModel';
     // 	var args = {
     // 	    'modelId': model_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
-    
-    // // http://localhost:6800/m3AddFact?modelId=gomodel:wb-GO-0043053&individualId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000002&fillerId=gomodel:wb-GO_0043053-GO_0008150-52d86a450000001&propertyId=BFO_0000051
-    // // Likely triggers "merge".
-    // anchor.add_fact = function(model_id, source_id, target_id, rel_id){
-    // 	var url = server_base + '/m3AddFact';
-    // 	var args = {
-    // 	    'modelId': model_id,
-    // 	    'individualId': source_id,
-    // 	    'fillerId': target_id,
-    // 	    'propertyId': rel_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
-    
-    // // 
-    // // Likely triggers "merge". TODO: that's right, right?
-    // anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
-    // 	var url = server_base + '/m3RemoveFact';
-    // 	var args = {
-    // 	    'modelId': model_id,
-    // 	    'individualId': source_id,
-    // 	    'fillerId': target_id,
-    // 	    'propertyId': rel_id
     // 	};
     // 	anchor.apply_callbacks('prerun', [anchor]);
     // 	jqm.action(url, args, 'GET');
