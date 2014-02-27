@@ -164,27 +164,35 @@ var bbop_mme_manager2 = function(user_id, server_base){
     	jqm.action(url, args, 'GET');
     };
     
-    // // 
-    // // Likely triggers "instantiate".
-    // anchor.import_model = function(model_string){
-    // 	var url = server_base + '/m3ImportModel';
-    // 	var args = {
-    // 	    'modelString': model_string
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "query".
+    // Expect: "success" and "meta".
+    anchor.export_model = function(model_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'query');
+	var req = new bbop_mmm_request('model', 'export');
+	req.model_id(model_id);
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
-    // // 
-    // // BUG/TODO: Likely triggers ???
-    // anchor.export_model = function(model_id){
-    // 	var url = server_base + '/m3ExportModel';
-    // 	var args = {
-    // 	    'modelId': model_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.import_model = function(model_string){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('model', 'import');
+	req.add('importModel', model_string);
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
     // // 
     // // Likely triggers "success", "error", etc.

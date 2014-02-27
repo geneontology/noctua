@@ -1131,7 +1131,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     jQuery(save_btn_elt).click(
     	function(){
 	    // Run it off in a new tab.
-	    manager.store_model(ecore.get_id());
+	    // TODO/BUG: Not extant in batch?
+	    //manager.store_model(ecore.get_id());
+	    alert('This functionality has been temporarily suspended.');
     	});
 
     // Help button.
@@ -1279,8 +1281,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		mdl.show();
 
 		// Works.
-		// // Test that destroy works.
-		// window.setTimeout(function(){ mdl.destroy(); }, 2000);
+ 		// Test that destroy works.
+		window.setTimeout(
+		    function(){
+			mdl.destroy();
+			alert('I did nothing. You wasted two seconds.');
+		    }, 2000);
 	    }
 	}
     );
