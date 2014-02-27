@@ -393,3 +393,24 @@ bbop_rest_response_mmm.prototype.evidence = function(){
     }
     return ret;
 };
+
+/*
+ * Function: model_ids
+ * 
+ * Returns a list the model ids found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop_rest_response_mmm.prototype.model_ids = function(){
+    var ret = [];
+    if( this._data && this._data['model_ids'] && 
+	bbop.core.is_array(this._data['model_ids']) ){
+	ret = this._data['model_ids'];
+    }
+    return ret;
+};
