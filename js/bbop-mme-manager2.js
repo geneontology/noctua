@@ -194,7 +194,7 @@ var bbop_mme_manager2 = function(user_id, server_base){
     	jqm.action(url, args, 'GET');
     };
     
-    // // 
+    // // TODO
     // // Likely triggers "success", "error", etc.
     // anchor.store_model = function(model_id){
     // 	var url = server_base + '/m3StoreModel';
@@ -205,28 +205,34 @@ var bbop_mme_manager2 = function(user_id, server_base){
     // 	jqm.action(url, args, 'GET');
     // };
     
-    // // 
-    // // Likely triggers "inconsistent".
-    // anchor.generate_model = function(class_id, db_id){
-    // 	var url = server_base + '/m3GenerateMolecularModel';
-    // 	var args = {
-    // 	    'classId': class_id,
-    // 	    'db': db_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.generate_model = function(class_id, db_id){
+
+	//
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('model', 'generate');
+	req.add('db', db_id);
+	req.add('subject', class_id);
+	reqs.add(req);
+
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
-    // // 
-    // // Likely triggers "inconsistent".
-    // anchor.generate_blank_model = function(db_id){
-    // 	var url = server_base + '/m3GenerateBlankMolecularModel';
-    // 	var args = {
-    // 	    'db': db_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.generate_blank_model = function(db_id){
+
+	//
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('model', 'generate-blank');
+	req.add('db', db_id);
+	reqs.add(req);
+
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
 };
 bbop.core.extend(bbop_mme_manager2, bbop.registry);
