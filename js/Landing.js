@@ -18,7 +18,10 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var what_is = bbop.core.what_is;
 
     // Events registry.
-    var manager = new bbop_mme_manager(in_server_base);
+    //var manager = new bbop_mme_manager(in_server_base);
+    // BUG/TODO: Right now, just hardwiring the uid, but this needs to
+    // be distributed by the moderator after authenication.
+    var manager = new bbop_mme_manager2('amigo', in_server_base);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -100,19 +103,15 @@ var MMEnvBootstrappingInit = function(in_server_base){
 			       message_type + '): ' + message);
 		     }, 10);
 
-    // Remote action registrations.
-    manager.register('success', 'foo',
-		     function(resp, man){
-			 alert('Operation successful (' +
-			       resp.message_type() + '): ' +
-			       resp.message());
-		     }, 10);
+    // // Remote action registrations.
+    // manager.register('meta', 'foo',
+    // 		     function(resp, man){
+    // 			 alert('Meta operation successful: ' + resp.message());
+    // 		     }, 10);
 
     manager.register('warning', 'foo',
 		     function(resp, man){
-			 alert('Warning (' +
-			       resp.message_type() + '): ' +
-			       resp.message() + '; ' +
+			 alert('Warning: ' + resp.message() + '; ' +
 			       'your operation was likely not performed');
 		     }, 10);
 
@@ -132,59 +131,35 @@ var MMEnvBootstrappingInit = function(in_server_base){
 			       ex_msg);
 		     }, 10);
 
-    manager.register('information', 'foo',
+    manager.register('meta', 'foo',
 		     function(resp, man){
 			 
-			 var list = [
-			     {
-				 //'id': 'models_stored',
-				 'id': 'models_all',
-				 'input_elt': select_stored_jump_elt,
-				 'button_elt': select_stored_jump_button_elt
-			     }
-			 ];
+			 // Clear interface.
+			 jQuery(select_stored_jump_elt).empty();
 
-			 var data = resp.data();
-
-			 each(list,
-			      function(model_def){
-				  var mid = model_def['id'];
-				  var input_elt = model_def['input_elt'];
-				  var button_elt = model_def['button_elt'];
-
-				  if( ! data[mid] ){
-				      ll('no data in for: ' + mid);
-				  }else{
-
-				      // Clear interface.
-				      jQuery(input_elt).empty();
-
-				      // Insert model IDs into interface.
-				      var model_ids = data[mid];
-				      var rep_cache = [];
-				      each(model_ids,
-					   function(model_id){
-					       rep_cache.push('<option>');
-					       rep_cache.push(model_id);
-					       rep_cache.push('</option>');
-					   });
-				      var rep_str = rep_cache.join('');
-				      jQuery(input_elt).append(rep_str);
-			     
-				      // Make interface jump on click.
-				      jQuery(button_elt).click(
-					  function(evt){
-					      var id = jQuery(input_elt).val();
-					      //alert('val: '+ id);
-					      var new_url = "/seed/model/" + id;
-					      window.location.replace(new_url);
-					  });
-				  }
+			 // Insert model IDs into interface.
+			 var model_ids = resp.model_ids();
+			 var rep_cache = [];
+			 each(model_ids,
+			      function(model_id){
+				  rep_cache.push('<option>');
+				  rep_cache.push(model_id);
+				  rep_cache.push('</option>');
 			      });
+			 var rep_str = rep_cache.join('');
+			 jQuery(select_stored_jump_elt).append(rep_str);
+			 
+			 // Make interface jump on click.
+			 jQuery(select_stored_jump_button_elt).click(
+			     function(evt){
+				 var id = jQuery(select_stored_jump_elt).val();
+				 //alert('val: '+ id);
+				 var new_url = "/seed/model/" + id;
+				 window.location.replace(new_url);
+			     });
 		     });
 
-    //manager.register('inconsistent', 'foo',
-    manager.register('instantiate', 'foo',
+    manager.register('rebuild', 'foo',
 		     function(resp, man){
 			 _generated_model(resp, man);
 			 // alert('Not yet handled (' +
