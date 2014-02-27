@@ -134,8 +134,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
     	jqm.action(url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    // // Intent: "action".
+    // // Expect: "success" and "merge".
     // anchor.add_simple_composite = function(model_id, class_id,
     // 					   enabled_by_id, occurs_in_id){
     // 	var url = server_base + '/m3CreateSimpleCompositeIndividual';
