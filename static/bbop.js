@@ -436,7 +436,7 @@ bbop.core.pare = function(in_thing, filter_function, sort_function){
     var ret = [];
     
     // Probably an not array then.
-    if( typeof(in_thing) == 'undefined' ){
+    if( typeof(in_thing) === 'undefined' ){
 	// this is a nothing, to nothing....
     }else if( typeof(in_thing) != 'object' ){
 	throw new Error('Unsupported type in bbop.core.pare: ' +
@@ -494,23 +494,23 @@ bbop.core.clone = function(thing){
 
     var clone = null;
 
-    if( typeof(thing) == 'undefined' ){
+    if( typeof(thing) === 'undefined' ){
 	// Nothin' doin'.
 	//print("looks undefined");
-    }else if( typeof(thing) == 'function' ){
+    }else if( typeof(thing) === 'function' ){
 	// Dunno about this case...
 	//print("looks like a function");
 	clone = thing;
-    }else if( typeof(thing) == 'boolean' ||
-	      typeof(thing) == 'number' ||
-	      typeof(thing) == 'string' ){
+    }else if( typeof(thing) === 'boolean' ||
+	      typeof(thing) === 'number' ||
+	      typeof(thing) === 'string' ){
 	// Atomic types can be returned as-is (i.e. assignment in
 	// JS is the same as copy for atomic types).
 	//print("cloning atom: " + thing);
 	clone = thing;
-    }else if( typeof(thing) == 'object' ){
+    }else if( typeof(thing) === 'object' ){
 	// Is it a hash or an array?
-	if( typeof(thing.length) == 'undefined' ){
+	if( typeof(thing.length) === 'undefined' ){
 	    // Looks like a hash!
 	    //print("looks like a hash");
 	    clone = {};
@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.0";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140226";
+bbop.version.release = "20140227";
 /*
  * Package: logger.js
  * 
