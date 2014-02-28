@@ -62,6 +62,14 @@ var bbop_mmm_request = function(entity, operation){
     anchor.individual = function(ind_id){
 	anchor.add('individual', ind_id);
     };
+
+    anchor.annotation_values = function(key, val){
+	// Our list of values must be defined if we go this way.
+	if( ! anchor._arguments['values'] ){
+	    anchor._arguments['values'] = [];
+	}
+	anchor._arguments['values'].push({'key': key, 'value': val});
+    };
 };
 
 /*

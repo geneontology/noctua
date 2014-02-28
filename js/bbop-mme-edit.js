@@ -34,7 +34,7 @@ bbop_mme_edit.annotation = function(kv_set){
     this._properties = {};
 
     if( kv_set && bbop.core.what_is(kv_set) == 'object' ){
-	this._annotations = bbop.core.clone(kv_set);
+	this._properties = bbop.core.clone(kv_set);
     }
 };
 
@@ -88,7 +88,7 @@ bbop_mme_edit._get_annotations_by_filter = function(filter){
 
     var anchor = this;
     var ret = [];
-    bbop.care.each(anchor._annotations,
+    bbop.core.each(anchor._annotations,
 		  function(ann){
 		      var res = filter(ann);
 		      if( res && res == true ){
@@ -101,7 +101,7 @@ bbop_mme_edit._get_annotation_by_id = function(aid){
 
     var anchor = this;
     var ret = null;
-    bbop.care.each(anchor._annotations,
+    bbop.core.each(anchor._annotations,
 		  function(ann){
 		      if( ann.id() == aid ){
 			  ret = ann;
@@ -178,8 +178,23 @@ bbop_mme_edit.core.prototype.add_node_from_individual = function(indv){
 	if( bbop.core.what_is(itypes) != 'array' ){
 	    throw new Error('types is wrong');
 	}
-	    
-	var ne = new bbop_mme_edit.node(iid, itypes);
+
+	// Create the node.
+	var ne = new bbop_mme_edit.node(iid, itypes, ianns);
+
+	// See if there is type info that we want to add.
+	var ianns = indv['annotations'] || [];
+	if( bbop.core.what_is(ianns) != 'array' ){
+	    throw new Error('annotations is wrong');
+	}else{
+	    // Add the annotations individually.
+	    bbop.core.each(ianns,
+			   function(ann_kv_set){
+			       var na = new bbop_mme_edit.annotation(ann_kv_set);
+			       ne.add_annotation(na);
+			   });
+	}
+
 	anchor.add_node(ne);
 	ret = ne;
     }
@@ -536,9 +551,12 @@ bbop_mme_edit.node = function(in_id, in_types, in_annotations){
     if( typeof(in_types) !== 'undefined' ){
 	this._types = in_types;
     }
-    if( typeof(in_annotations) !== 'undefined' ){
-	this._annotations = in_annotations;
-    }
+    // if( typeof(in_annotations) !== 'undefined' ){
+    // 	bbop.core.each(in_annotations,
+    // 		      function(ann_kv_set){
+    // 			  this._annotations = in_annotations;
+    // 		      });
+    // }
     
     // Optional layout hints.
     this._x_init = null; // initial layout hint

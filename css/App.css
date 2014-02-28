@@ -39,6 +39,12 @@
     background-color: #FF0000;
 }
 
+.app-delete-mark {
+    cursor: pointer;
+    color: white;
+    background-color: red;
+}
+
 /* When app is maximized, the navbar should behave as desktop apps. */
 .bbop-bs3-override-nav-scale {
     max-width: 100%;
