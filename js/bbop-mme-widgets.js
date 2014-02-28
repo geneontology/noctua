@@ -7,8 +7,21 @@ var bbop_mme_widgets = {};
 // Add edit model node contents to a descriptive table.
 bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
 
+    // Node and edge counts.
     var nds = bbop.core.get_keys(ecore.get_nodes()) || [];
     var eds = bbop.core.get_keys(ecore.get_edges()) || [];
+
+    // Any annotation information that came in.
+    var anns = '';
+    bbop.core.each(ecore.annotations(),
+		   function(ann){
+		       if( ann['comment'] ){
+			   anns += '<dd>' + ann['comment'] + '</dd>';
+		       }
+		   });
+    if( anns == '' ){
+	anns = '<dd>none</dd>';
+    }
 
     var str_cache = [
 	'<dl class="dl-horizontal">',
@@ -26,7 +39,9 @@ bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
 	'<dt>Indv. Rels.</dt>',
 	'<dd>',
 	eds.length || 0,
-	'</dd>'
+	'</dd>',
+	'<dt>Annotations</dt>',
+	anns
     ];
     
     // Add to display.
@@ -91,35 +106,33 @@ bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 	each(ecore.edit_node_order(),
 	     function(enode_id){
 		 var enode = ecore.get_node(enode_id);
-		 if( enode.existential() == 'real' ){
 		     
-		     // Now that we have an enode, we want to mimic
-		     // the order that we created for the header
-		     // (cat_list). Start by binning the types.
-		     var bin = {};
-		     each(enode.types(),
-			  function(in_type){
-			      var cat = aid.categorize(in_type);
-			      if( ! bin[cat] ){ bin[cat] = []; }
-			      bin[cat].push(in_type);
-			  });
+		 // Now that we have an enode, we want to mimic
+		 // the order that we created for the header
+		 // (cat_list). Start by binning the types.
+		 var bin = {};
+		 each(enode.types(),
+		      function(in_type){
+			  var cat = aid.categorize(in_type);
+			  if( ! bin[cat] ){ bin[cat] = []; }
+			  bin[cat].push(in_type);
+		      });
 		     
-		     // Now unfold the binned types into the table row
-		     // according to the sorted order.
-		     var table_row = [];
-		     each(cat_list,
-			  function(cat_id){
-			      var accumulated_types = bin[cat_id];
-			      var cell_cache = [];
-			      each(accumulated_types,
-				   function(atype){
-				       var tt = bme_type_to_text(atype, aid);
-				       cell_cache.push(tt);
-				   });
-			      table_row.push(cell_cache.join('<br />'));
-			  });
-		     nav_tbl.add_to(table_row);		     
-		 }
+		 // Now unfold the binned types into the table row
+		 // according to the sorted order.
+		 var table_row = [];
+		 each(cat_list,
+		      function(cat_id){
+			  var accumulated_types = bin[cat_id];
+			  var cell_cache = [];
+			  each(accumulated_types,
+			       function(atype){
+				   var tt = bme_type_to_text(atype, aid);
+				   cell_cache.push(tt);
+			       });
+			  table_row.push(cell_cache.join('<br />'));
+		      });
+		 nav_tbl.add_to(table_row);		     
 	     });
 	
 	// Add to display.
@@ -590,7 +603,6 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 
     // Jimmy out information about this node.
     var tid = enode.id();
-    var ttype = enode.existential();
 
     var del_btn_args = {
     	'generate_id': true,
@@ -602,7 +614,6 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
     //
     var tcache = [
 	'<h4>Information</h4>',
-	'<p>type: ' + ttype + '</p>',
 	'<hr />',
 	'<h4>Operations</h4>',
 	'<p>',

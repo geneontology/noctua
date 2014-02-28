@@ -395,6 +395,27 @@ bbop_rest_response_mmm.prototype.evidence = function(){
 };
 
 /*
+ * Function: annotations
+ * 
+ * Returns a list of the (complex) annotations found in the
+ * response. Sometimes not there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop_rest_response_mmm.prototype.annotations = function(){
+    var ret = [];
+    if( this._data && this._data['annotations'] && 
+	bbop.core.is_array(this._data['annotations']) ){
+	ret = this._data['annotations'];
+    }
+    return ret;
+};
+
+/*
  * Function: model_ids
  * 
  * Returns a list the model ids found in the response. Sometimes not

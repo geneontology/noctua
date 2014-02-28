@@ -273,7 +273,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
                             });
     }
     
-    function _make_selector_editable(sel){
+    function _make_selector_on_node_editable(sel){
 
 	// Add this event to whatever we got called in.
 	jQuery(sel).click(
@@ -440,7 +440,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
     }
 
-    function _rebuild_meta(model_id){
+    function _rebuild_meta(model_id, annotations){
 
 	// Deal with ID(s).
 	// First and only setting of this right now.
@@ -455,10 +455,16 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	    ll('model id missing');
 	    throw new Error('missing model id');
 	}
+
+	// Bring in any annotations lying around.
+	if( annotations ){
+	    ecore.annotations(annotations);
+	}
     }
 	
     // The core initial layout function.
-    function _rebuild_model_and_display(model_id, individuals, facts){
+    function _rebuild_model_and_display(model_id, individuals,
+					facts, annotations){
 
 	ll('rebuilding from scratch');
 	
@@ -474,7 +480,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	ecore = new bme_core(); // nuke it from orbit
 
 	// Reconstruct ecore meta.
-	_rebuild_meta(model_id);
+	_rebuild_meta(model_id, annotations);
 
 	// Starting fresh, add everything coming in to the edit model.
 	each(individuals,
@@ -605,13 +611,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     		each(ecore.get_nodes(),
     		     function(enode_id, enode){
 			 // Add if a "real" node.
-    			 if( enode.existential() == 'real' ){
+    			 // if( enode.existential() == 'real' ){
     			     widgets.add_enode(ecore, enode, aid, graph_div);
-    			 }else{
-			     // == 'virtual'; will not be used if no waypoints.
-			     widgets.add_virtual_node(ecore, enode,
-						      aid, graph_div);
-    			 }
+    			 // }else{
+			 //   // == 'virtual'; will not be used if no waypoints.
+			 //     widgets.add_virtual_node(ecore, enode,
+			 // 			      aid, graph_div);
+    			 // }
     		     });
     		// Now let's try to add all the edges/connections.
     		each(ecore.get_edges(),
@@ -636,7 +642,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		_make_selector_source('.demo-window', '.konn');
 		
 		// Make nodes able to use edit dialog.
-		_make_selector_editable(".open-dialog");
+		_make_selector_on_node_editable(".open-dialog");
 		
     	    });	
     }
@@ -687,7 +693,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 _make_selector_draggable(ddid);
 			 //_make_selector_target(ddid);
 			 //_make_selector_source(ddid, '.konn');
-			 _make_selector_editable(".open-dialog");
+			 _make_selector_on_node_editable(".open-dialog");
 			 // _make_selector_draggable('.demo-window');
 			 _make_selector_target('.demo-window');
 			 _make_selector_source('.demo-window', '.konn');
@@ -816,13 +822,14 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
 			 var mfacts = resp.facts();
+			 var mannotations = resp.annotations();
 
 			 // Deal with model.
 			 if( ! mid || is_empty(mindividuals) ){
 			     alert('no data/individuals in inconsistent');
 			 }else{
 			     _rebuild_model_and_display(mid, mindividuals,
-							mfacts);
+							mfacts, mannotations);
 			 }
 		     }, 10);
 
@@ -1155,7 +1162,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var init_mid = model_json['id'];
     var init_indvs = model_json['individuals'];
     var init_facts = model_json['facts'];
-    _rebuild_model_and_display(init_mid, init_indvs, init_facts);
+    var init_anns = model_json['annotations'] || [];
+    _rebuild_model_and_display(init_mid, init_indvs, init_facts, init_anns);
     _refresh_tables();
     _shields_down();
 

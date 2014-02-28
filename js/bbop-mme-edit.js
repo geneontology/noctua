@@ -21,8 +21,104 @@ var bme_clean = function(str){
 
 var bbop_mme_edit = {};
 
-// Edit control.
-bbop_mme_edit.core = function(){
+/*
+ * Edit annotations.
+ * Everything can take annotations.
+ * 
+ * Parameters:
+ *  kv_set - *[optional]* a set of keys and values; a simple object
+ */
+bbop_mme_edit.annotation = function(kv_set){
+    this._id = bbop.core.uuid();
+
+    this._properties = {};
+
+    if( kv_set && bbop.core.what_is(kv_set) == 'object' ){
+	this._annotations = bbop.core.clone(kv_set);
+    }
+};
+
+bbop_mme_edit.annotation.prototype.id = function(){ return this._id; };
+
+bbop_mme_edit.annotation.prototype.property = function(key, value){
+
+    var anchor = this;
+    var ret = null;
+
+    // Set if the key and value are there.
+    if( key ){
+	if( typeof(value) !== 'undefined' ){
+	    anchor._properties[key] = value;
+	}
+	ret = anchor._properties[key];
+    }
+
+    return ret;
+};
+
+bbop_mme_edit.annotation.prototype.delete_property = function(key){
+
+    var anchor = this;
+    var ret = null;
+
+    if( key ){
+	ret = delete anchor._properties[key];
+    }
+
+    return ret;
+};
+
+///
+/// Generic annotation operations
+///
+
+bbop_mme_edit._annotations = function(in_ann){
+    if( in_ann && bbop.core.what_is(in_ann) == 'array' ){
+	this._annotations = in_ann;
+    }
+    return this._annotations;
+};
+bbop_mme_edit._add_annotation = function(in_ann){
+    if( in_ann && bbop.core.what_is(in_ann) != 'array' ){
+	this._annotations.push(in_ann);
+    }
+    return this._annotations;
+};
+bbop_mme_edit._get_annotations_by_filter = function(filter){
+
+    var anchor = this;
+    var ret = [];
+    bbop.care.each(anchor._annotations,
+		  function(ann){
+		      var res = filter(ann);
+		      if( res && res == true ){
+			  ret.push(ann);
+		      }
+		  });
+    return ret;
+};
+bbop_mme_edit._get_annotation_by_id = function(aid){
+
+    var anchor = this;
+    var ret = null;
+    bbop.care.each(anchor._annotations,
+		  function(ann){
+		      if( ann.id() == aid ){
+			  ret = ann;
+		      }
+		  });
+    return ret;
+};
+
+/*
+ *  Edit control.
+ * 
+ * Parameters:
+ *  in_id - *[optional]* generated if not given
+ *  in_types - *[serially optional]*
+ *  in_annotations - *[serially optional]* empty list if no list given
+ */
+bbop_mme_edit.core = function(in_annotations){
     this.core = {
 	//'id': [], // currently optional
 	'id': null, // currently optional
@@ -36,6 +132,11 @@ bbop_mme_edit.core = function(){
 	'edge2connector': {}, // map of edge id to virtual connector id
 	'connector2edge': {}  // map of virtual connector id to edge id 
     };
+
+    this._annotations = [];
+    if( typeof(in_annotations) !== 'undefined' ){
+	this._annotations = in_annotations;
+    }
 };
 
 bbop_mme_edit.core.prototype.add_id = function(id){
@@ -349,16 +450,15 @@ bbop_mme_edit.core.prototype.dump = function(){
     
     bbop.core.each(this.core['nodes'],
 		   function(node_id, node){
-		       if( node.existential() && node.existential() == 'real' ){
-			   var ncache = ['node'];
-			   ncache.push(node.id());
-			   // ncache.push(node.enabled_by());
-			   // ncache.push(node.activity());
-			   // ncache.push(node.unknown().join('|'));
-			   // ncache.push(node.process());
-			   // ncache.push(node.location().join('|'));
-			   dcache.push(ncache.join("\t"));
-		       }
+
+		       var ncache = ['node'];
+		       ncache.push(node.id());
+		       // ncache.push(node.enabled_by());
+		       // ncache.push(node.activity());
+		       // ncache.push(node.unknown().join('|'));
+		       // ncache.push(node.process());
+		       // ncache.push(node.location().join('|'));
+		       dcache.push(ncache.join("\t"));
 		   });
     
     bbop.core.each(this.core['edges'],
@@ -382,15 +482,13 @@ bbop_mme_edit.core.prototype.to_graph = function(){
     // Add nodes.
     bbop.core.each(this.core['nodes'],
 		   function(node_id, node){
-		       if( node.existential() && node.existential() == 'real' ){
 
-			   // Create node.
-			   var ex_node = new bbop.model.node(node_id);
-			   //ex_node.metadata(ex_meta);
+		       // Create node.
+		       var ex_node = new bbop.model.node(node_id);
+		       //ex_node.metadata(ex_meta);
 
-			   // Add to export graph.
-			   ex_graph.add_node(ex_node);
-		       }
+		       // Add to export graph.
+		       ex_graph.add_node(ex_node);
 		   });
     
     // Add edges to the export graph.
@@ -406,16 +504,28 @@ bbop_mme_edit.core.prototype.to_graph = function(){
     return ex_graph;
 };
 
-// Edit nodes.
+// Add annotation operations to prototype.
+bbop_mme_edit.core.prototype.annotations =
+    bbop_mme_edit._annotations;
+bbop_mme_edit.core.prototype.add_annotation =
+    bbop_mme_edit._add_annotation;
+bbop_mme_edit.core.prototype.get_annotations_by_filter =
+    bbop_mme_edit._get_annotations_by_filter;
+bbop_mme_edit.core.prototype.get_annotation_by_id =
+    bbop_mme_edit._get_annotation_by_id;
+
 /*
+ *  Edit nodes.
+ * 
  * Parameters:
  *  in_id - *[optional]* generated if not given
- *  in_types - *[serially optional]* empty list if no list given
- *  in_existential - *[serially optional]* defaults to 'real' if not given
+ *  in_types - *[serially optional]*
+ *  in_annotations - *[serially optional]* empty list if no list given
  */
-bbop_mme_edit.node = function(in_id, in_types, in_existential){
+bbop_mme_edit.node = function(in_id, in_types, in_annotations){
 
     this._types = [];
+    this._annotations = [];
 
     if( typeof(in_id) === 'undefined' ){
 	this._id = bbop.core.uuid();
@@ -426,8 +536,8 @@ bbop_mme_edit.node = function(in_id, in_types, in_existential){
     if( typeof(in_types) !== 'undefined' ){
 	this._types = in_types;
     }
-    if( typeof(in_existential) === 'undefined' ){
-	this._existential = 'real';
+    if( typeof(in_annotations) !== 'undefined' ){
+	this._annotations = in_annotations;
     }
     
     // Optional layout hints.
@@ -439,9 +549,6 @@ bbop_mme_edit.node = function(in_id, in_types, in_existential){
 
 bbop_mme_edit.node.prototype.id = function(value){ // (possibly generated) ID is RO
     return this._id; };
-
-bbop_mme_edit.node.prototype.existential = function(value){
-    if(value) this._existential = value; return this._existential; };
 
 bbop_mme_edit.node.prototype.types = function(in_types){
     if( in_types && bbop.core.what_is(in_types) == 'array' ){
@@ -456,8 +563,26 @@ bbop_mme_edit.node.prototype.x_init = function(value){
 bbop_mme_edit.node.prototype.y_init = function(value){
     if(value) this._y_init = value; return this._y_init; };
 
-// Edit edges.
-bbop_mme_edit.edge = function(src_id, rel_id, tgt_id){
+// Add annotation operations to prototype.
+bbop_mme_edit.node.prototype.annotations =
+    bbop_mme_edit._annotations;
+bbop_mme_edit.node.prototype.add_annotation =
+    bbop_mme_edit._add_annotation;
+bbop_mme_edit.node.prototype.get_annotations_by_filter =
+    bbop_mme_edit._get_annotations_by_filter;
+bbop_mme_edit.node.prototype.get_annotation_by_id =
+    bbop_mme_edit._get_annotation_by_id;
+
+/*
+ * Edit edges.
+ * 
+ * Parameters:
+ *  src_id - source id
+ *  rel_id - relation id
+ *  tgt_id - target/object id
+ *  in_annotations - *[serially optional]* empty list if no list given
+ */
+bbop_mme_edit.edge = function(src_id, rel_id, tgt_id, in_annotations){
     this._id = bbop.core.uuid();
     // this._source_id = src_id;
     // this._relation_id = rel_id;
@@ -465,6 +590,11 @@ bbop_mme_edit.edge = function(src_id, rel_id, tgt_id){
     this._source_id = bme_clean(src_id);
     this._relation_id = bme_clean(rel_id);
     this._target_id = bme_clean(tgt_id);
+
+    this._annotations = [];
+    if( typeof(in_annotations) !== 'undefined' ){
+	this._annotations = in_annotations;
+    }
 };
 bbop_mme_edit.edge.prototype.id = function(){ // ID is RO
     return this._id; };
@@ -479,3 +609,13 @@ bbop_mme_edit.edge.prototype.target = function(value){
 if( typeof(exports) != 'undefined' ){
     exports.bbop_mme_edit = bbop_mme_edit;
 }
+
+// Add annotation operations to prototype.
+bbop_mme_edit.edge.prototype.annotations =
+    bbop_mme_edit._annotations;
+bbop_mme_edit.edge.prototype.add_annotation =
+    bbop_mme_edit._add_annotation;
+bbop_mme_edit.edge.prototype.get_annotations_by_filter =
+    bbop_mme_edit._get_annotations_by_filter;
+bbop_mme_edit.edge.prototype.get_annotation_by_id =
+    bbop_mme_edit._get_annotation_by_id;
