@@ -373,7 +373,7 @@ var MMEnvLauncher = function() {
 				     //console.log('in success callback');
 
 				     var obj = resp.data();
-				     var obj_str = bbop.core.dump(obj);
+				     var obj_str = JSON.stringify(obj);
 
 				     // Assemble return doc.
 				     res.setHeader('Content-Type', 'text/html');

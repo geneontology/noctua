@@ -729,7 +729,7 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 							  'comment', ann_cmm);
 		     
 		     // Wipe out modal.
-		     mdl.destroy();	    
+		     mdl.destroy();
 		 });
 	 });
 
