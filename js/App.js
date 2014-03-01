@@ -276,6 +276,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     function _make_selector_on_node_editable(sel){
 
 	// Add this event to whatever we got called in.
+	jQuery(sel).unbind('click');
 	jQuery(sel).click(
 	    function(evnt){
 		evnt.stopPropagation();
@@ -621,7 +622,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     		     function(enode_id, enode){
 			 // Add if a "real" node.
     			 // if( enode.existential() == 'real' ){
-    			     widgets.add_enode(ecore, enode, aid, graph_div);
+    			 widgets.add_enode(ecore, enode, aid, graph_div);
     			 // }else{
 			 //   // == 'virtual'; will not be used if no waypoints.
 			 //     widgets.add_virtual_node(ecore, enode,
@@ -657,7 +658,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     }
 
     // This is a very important core function. It's purpose is to
-    // update the loval model and UI to be consistent with the current
+    // update the local model and UI to be consistent with the current
     // state and the data input.
     function _merge_from_new_data(individuals, facts, annotations){
 
@@ -675,14 +676,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     // "Update" the edit node in core by clobbering it.
 		     var unode = ecore.add_node_from_individual(ind);
 
-		     // // TODO: Re-draw the visible node.
-		     // var uelt = ecore.get_node_elt_id(unode.id());
-		     // ll('trying to wipe: ' + uelt);
-		     // jQuery('#' + uelt).empty();
-		 
-		     // // TODO:
-		     // // wipe_node_contents()
-		     // // redraw_node_contents()
+		     // Wipe node contents; redraw node contents.
 		     widgets.update_enode(ecore, unode, aid);
 
 		     // Mark it for refreshing.
@@ -723,14 +717,18 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     var dnid = refresh_node_id;
 		     var ddid = '#' + ecore.get_node_elt_id(dnid);
 		     _make_selector_draggable(ddid);
-		     //_make_selector_target(ddid);
-		     //_make_selector_source(ddid, '.konn');
+		     // //_make_selector_target(ddid);
+		     // //_make_selector_source(ddid, '.konn');
+		     // // _make_selector_draggable('.demo-window');
 		     _make_selector_on_node_editable(".open-dialog");
-		     // _make_selector_draggable('.demo-window');
 		     _make_selector_target('.demo-window');
 		     _make_selector_source('.demo-window', '.konn');
+		     // _make_selector_on_node_editable(ddid);
+		     // _make_selector_target(ddid);
+		     // _make_selector_source(ddid, '.konn');
 		     
     		     jsPlumb.repaintEverything();
+		     refresh_node_id = null; // reset in case of error
 		 }
 	     });
 	
