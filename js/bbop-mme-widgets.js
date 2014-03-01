@@ -209,33 +209,23 @@ bbop_mme_widgets.wipe = function(div){
     jQuery(div).empty();
 };
 
-bbop_mme_widgets.add_virtual_node = function(ecore, enode, aid, graph_div){
+// bbop_mme_widgets.add_virtual_node = function(ecore, enode, aid, graph_div){
 
-    var div_id = ecore.get_node_elt_id(enode.id());
-    var style_str =
-	'top: ' + enode.y_init() + 'px; ' +
-	'left: ' + enode.x_init() + 'px;';
-    var v = new bbop.html.tag('div',
-    			      {'id': div_id,
-    			       'class': 'waypoint',
-    			       'style': style_str});
-    jQuery(graph_div).append(v.to_string());
-};
+//     var div_id = ecore.get_node_elt_id(enode.id());
+//     var style_str =
+// 	'top: ' + enode.y_init() + 'px; ' +
+// 	'left: ' + enode.x_init() + 'px;';
+//     var v = new bbop.html.tag('div',
+//     			      {'id': div_id,
+//     			       'class': 'waypoint',
+//     			       'style': style_str});
+//     jQuery(graph_div).append(v.to_string());
+// };
 
-bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
+bbop_mme_widgets.render_node_stack = function(enode, aid){
 
     var each = bbop.core.each;
 
-    // Node as table nested into bbop.html div.
-    var div_id = ecore.get_node_elt_id(enode.id());
-    var style_str = 'top: ' + enode.y_init() + 'px; ' + 
-	'left: ' + enode.x_init() + 'px;';
-    //ll('style: ' + style_str);
-    var w = new bbop.html.tag('div',
-			      {'id': div_id,
-			       'class': 'demo-window',
-			       'style': style_str});
-    
     // Takes a core edit node as the argument, categorize the
     // contained types, order them.
     function _enode_to_stack(enode){
@@ -270,6 +260,28 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
 		 + bme_type_to_text(item['type'], aid) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });
+
+    return enode_stack_table;
+};
+
+/*
+ * Add a new enode.
+ */
+bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
+
+    var each = bbop.core.each;
+
+    // Node as table nested into bbop.html div.
+    var div_id = ecore.get_node_elt_id(enode.id());
+    var style_str = 'top: ' + enode.y_init() + 'px; ' + 
+	'left: ' + enode.x_init() + 'px;';
+    //ll('style: ' + style_str);
+    var w = new bbop.html.tag('div',
+			      {'id': div_id,
+			       'class': 'demo-window',
+			       'style': style_str});
+    
+    var enode_stack_table = bbop_mme_widgets.render_node_stack(enode, aid);
     w.add_to(enode_stack_table);
     
     // Box to drag new connections from.	
@@ -281,6 +293,29 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
     w.add_to(opend);
     
     jQuery(graph_div).append(w.to_string());
+};
+
+/*
+ * Update the displayed contents of an enode.
+ */
+bbop_mme_widgets.update_enode = function(ecore, enode, aid){
+
+    var each = bbop.core.each;
+
+    // Node as table nested into bbop.html div.
+    var uelt = ecore.get_node_elt_id(enode.id());
+    jQuery('#' + uelt).empty();
+
+    var enode_stack_table = bbop_mme_widgets.render_node_stack(enode, aid);
+    jQuery('#' + uelt).append(enode_stack_table.to_string());
+    
+    // Box to drag new connections from.	
+    var konn = new bbop.html.tag('div', {'class': 'konn'});
+    jQuery('#' + uelt).append(konn.to_string());
+    
+    // Box to drag new connections from.	
+    var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
+    jQuery('#' + uelt).append(opend.to_string());
 };
 
 /*
@@ -617,7 +652,7 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
     	'generate_id': true,
     	'type': 'button',
     	'class': 'form-control',
-    	'placeholder': 'Comment...',
+    	'placeholder': 'Add comment...',
     	'rows': '2'
     };
     var cmm_text = new tag('textarea', cmm_text_args);
@@ -673,7 +708,7 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 	 });
     var cms_str = '<li class="list-group-item">none</li>';
     if( cache['comment'].length > 0 ){
-	cms_str = cache['comment'].join('<br />');
+	cms_str = cache['comment'].join('');
     }
     // var ev_str = 'none';
     // //if( cache['comment'].length > 0 ){ ev_str = cache['comment'].join(' '); }

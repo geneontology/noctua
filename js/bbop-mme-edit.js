@@ -151,12 +151,20 @@ bbop_mme_edit.core.prototype.get_id = function(){
 };
 
 bbop_mme_edit.core.prototype.add_node = function(enode){
+
+    // Add/update node.
     var enid = enode.id();
     this.core['nodes'][enid] = enode; // add to nodes
-    this.core['node_order'].unshift(enid); // add to default order
-    var elt_id = bbop.core.uuid(); // generate the elt id we'll use
-    this.core['node2elt'][enid] = elt_id; // map it
-    this.core['elt2node'][elt_id] = enid; // map it
+
+    // Only create a new elt ID and order if one isn't already in
+    // there (or reuse things to keep GUI working smoothly).
+    var elt_id = this.core['node2elt'][enid];
+    if( ! elt_id ){ // first time
+	this.core['node_order'].unshift(enid); // add to default order
+	elt_id = bbop.core.uuid(); // generate the elt id we'll use from now on
+	this.core['node2elt'][enid] = elt_id; // map it
+	this.core['elt2node'][elt_id] = enid; // map it	
+    }
 };
 
 // Convert the JSON-LD lite model into the edit core.

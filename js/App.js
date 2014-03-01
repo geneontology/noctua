@@ -650,20 +650,35 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // This is a very important core function. It's purpose is to
     // update the loval model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_new_data(individuals, facts){
+    function _merge_from_new_data(individuals, facts, annotations){
 
 	// First look at individuals/nodes for addition or updating.
 	each(individuals,
 	     function(ind){
+		 // Update node. This is preferred since
+		 // deleting it would mean that all the connections
+		 // would have to be reconstructed as well.
+		 var refresh_node_id = null;
 		 var update_node = ecore.get_node_by_individual(ind);
 		 if( update_node ){
-		     // TODO: Update node. This is preferred since
-		     // deleting it would mean that all the connections
-		     // would have to be reconstructed as well.
-		     // ecore.merge_node(ind)
-		     // wipe_node_contents()
-		     // redraw_node_contents()
-		     ll('update node: cannot yet; suggest refreshing');
+		     ll('update node');
+
+		     // "Update" the edit node in core by clobbering it.
+		     var unode = ecore.add_node_from_individual(ind);
+
+		     // // TODO: Re-draw the visible node.
+		     // var uelt = ecore.get_node_elt_id(unode.id());
+		     // ll('trying to wipe: ' + uelt);
+		     // jQuery('#' + uelt).empty();
+		 
+		     // // TODO:
+		     // // wipe_node_contents()
+		     // // redraw_node_contents()
+		     widgets.update_enode(ecore, unode, aid);
+
+		     // Mark it for refreshing.
+		     refresh_node_id = unode.id();
+
 		     //alert('cannot update nodes yet; suggest refreshing');
 		 }else{
 		     ll('add node');
@@ -687,19 +702,26 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 // Draw it to screen.
 			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
 			 
-			 // Make node active in display.
-			 var dnid = dyn_node.id();
-			 var ddid = '#' + ecore.get_node_elt_id(dnid);
-			 _make_selector_draggable(ddid);
-			 //_make_selector_target(ddid);
-			 //_make_selector_source(ddid, '.konn');
-			 _make_selector_on_node_editable(".open-dialog");
-			 // _make_selector_draggable('.demo-window');
-			 _make_selector_target('.demo-window');
-			 _make_selector_source('.demo-window', '.konn');
-			 
-    			 jsPlumb.repaintEverything();
+			 // Mark it for refreshing.
+			 refresh_node_id = unode.id();
 		     }
+		 }
+
+		 // Refresh any node created or updated.
+		 if( refresh_node_id ){
+		     
+		     // Make node active in display.
+		     var dnid = refresh_node_id;
+		     var ddid = '#' + ecore.get_node_elt_id(dnid);
+		     _make_selector_draggable(ddid);
+		     //_make_selector_target(ddid);
+		     //_make_selector_source(ddid, '.konn');
+		     _make_selector_on_node_editable(".open-dialog");
+		     // _make_selector_draggable('.demo-window');
+		     _make_selector_target('.demo-window');
+		     _make_selector_source('.demo-window', '.konn');
+		     
+    		     jsPlumb.repaintEverything();
 		 }
 	     });
 	
@@ -837,10 +859,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     function(resp, man){
 			 var individuals = resp.individuals();
 			 var facts = resp.facts();
+			 var annotations = resp.annotations();
 			 if( ! individuals ){
 			     alert('no data/individuals in merge--unable to do');
 			 }else{
-			     _merge_from_new_data(individuals, facts);
+			     _merge_from_new_data(individuals, facts,
+						  annotations);
 			 }
 		     }, 10);
 
