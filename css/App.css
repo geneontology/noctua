@@ -296,6 +296,34 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     box-shadow: 0px 0px 6px black;
 }
 
+/* /\* open modal location *\/ */
+/* .open-annotation-dialog { */
+/*     position: absolute; */
+/*     top: 5px; */
+/*     left: 1.5em; */
+/*     -moz-border-radius: 10px/10px; */
+/*     -webkit-border-radius: 10px 10px; */
+/*     border-radius: 10px/10px;; */
+/*     border:solid 7px #FF0000;  */
+/*     width: 1em; */
+/*     height: 1em; */
+/*     /\* position: absolute; *\/ */
+/*     /\* bottom: 37%; *\/ */
+/*     /\* top: 5px; *\/ */
+/*     /\* left: 1.5em; *\/ */
+/*     /\* width: 1em; *\/ */
+/*     /\* height: 1em; *\/ */
+/*     /\* background-color: #00cc66; *\/ */
+/*     cursor: pointer; */
+/*     box-shadow: 0px 0px 2px black; */
+/*     -webkit-transition:-webkit-box-shadow 0.25s ease-in; */
+/*     -moz-transition:-moz-box-shadow 0.25s ease-in; */
+/*     transition:box-shadow 0.25s ease-in; */
+/* } */
+/* .open-annotation-dialog:hover { */
+/*     box-shadow: 0px 0px 6px black; */
+/* } */
+
 .demo-links, .library-links {
     position: fixed;
     right: 0;

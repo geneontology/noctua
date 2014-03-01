@@ -288,9 +288,13 @@ bbop_mme_widgets.add_enode = function(ecore, enode, aid, graph_div){
     var konn = new bbop.html.tag('div', {'class': 'konn'});
     w.add_to(konn);
     
-    // Box to drag new connections from.	
+    // Box to click for edit dialog.
     var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
     w.add_to(opend);
+    
+    // // Box to click for annotation dialog.
+    // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
+    // w.add_to(openann);
     
     jQuery(graph_div).append(w.to_string());
 };
@@ -316,6 +320,10 @@ bbop_mme_widgets.update_enode = function(ecore, enode, aid){
     // Box to drag new connections from.	
     var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
     jQuery('#' + uelt).append(opend.to_string());
+
+    // // Box to click for annotation dialog.
+    // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
+    // jQuery('#' + uelt).append(openann.to_string());
 };
 
 /*
@@ -821,15 +829,21 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
     // model, node, edge.
     var entity = null;
     var entity_type = null;
+    var entity_title = null;
     if( ecore.get_id() == entity_id ){
 	entity = ecore;
 	entity_type = 'model';
+	entity_title = entity_id;
     }else if( ecore.get_node(entity_id) ){
 	entity = ecore.get_node(entity_id);
 	entity_type = 'individual';
+	entity_title = entity_id;
     }else if( ecore.get_edge(entity_id) ){
 	entity = ecore.get_edge(entity_id);
 	entity_type = 'fact';
+	entity_title = entity.source() + ' / ' +
+	    entity.relation() + ' / ' +
+	    entity.target();
     }else{
 	// Apparently a bum ID.
     }
@@ -919,7 +933,7 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 	
 	// Setup base modal.
 	mdl = new bbop_mme_widgets.contained_modal('dialog','Annotations for: ' +
-						   entity_id);
+						   entity_title);
 	mdl.add_to_body(tcache.join(''));
 	
 	// Add delete comment actions.

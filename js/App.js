@@ -199,7 +199,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     /// jsPlumb/edit core helpers.
     ///
 
-    function _make_selector_draggable(sel){
+    function _attach_node_draggable(sel){
 
 	var foo = jsPlumb.getSelector(sel);
 
@@ -273,7 +273,29 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
                             });
     }
     
-    function _make_selector_on_node_editable(sel){
+    function _attach_node_dblclick_ann(sel){
+
+	// BUG/TODO: trial
+	// Add activity listener to the new edge.
+	jQuery(sel).unbind('dblclick');
+	jQuery(sel).dblclick(
+	    function(event){
+		event.stopPropagation();
+		
+		//var target_elt = jQuery(event.target);
+		var target_id = jQuery(this).attr('id');
+		var enode = ecore.get_node_by_elt_id(target_id);
+		if( enode ){		    
+		    var ann_edit_modal = widgets.edit_annotations_modal;
+		    var eam = ann_edit_modal(ecore, manager, enode.id());
+		    eam.show();
+		}else{
+		    alert('Could not find related test element.');
+		}
+	    });
+    }
+
+    function _attach_node_click_edit(sel){
 
 	// Add this event to whatever we got called in.
 	jQuery(sel).unbind('click');
@@ -386,7 +408,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     	var new_conn = instance.connect(new_conn_args);
 
 	// Add activity listener to the new edge.
-	new_conn.bind('click',
+	new_conn.bind('dblclick',
 		      function(connection, event){
 			  //alert('edge click: ' + eedge.id());
 			  var ann_edit_modal = widgets.edit_annotations_modal;
@@ -635,12 +657,18 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     			 _connect_with_edge(eedge);
     		     });
 		
+		// Edit annotations on doible click.
+		_attach_node_dblclick_ann('.demo-window');
+
 		// Make nodes draggable.
-		_make_selector_draggable(".demo-window");
+		_attach_node_draggable(".demo-window");
 		// if( use_waypoints_p ){	
-		//     _make_selector_draggable(".waypoint");
+		//     _attach_node_draggable(".waypoint");
 		// }
 		
+		// Make nodes able to use edit dialog.
+		_attach_node_click_edit('.open-dialog');
+
     		// Make normal nodes availables as edge targets.
 		_make_selector_target('.demo-window');
     		// if( use_waypoints_p ){ // same for waypoints/virtual nodes
@@ -650,9 +678,6 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		// Make the konn class available as source from inside the
 		// real node class elements.
 		_make_selector_source('.demo-window', '.konn');
-		
-		// Make nodes able to use edit dialog.
-		_make_selector_on_node_editable(".open-dialog");
 		
     	    });	
     }
@@ -716,14 +741,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     // Make node active in display.
 		     var dnid = refresh_node_id;
 		     var ddid = '#' + ecore.get_node_elt_id(dnid);
-		     _make_selector_draggable(ddid);
+		     _attach_node_dblclick_ann('.demo-window');
+		     _attach_node_draggable(ddid);
 		     // //_make_selector_target(ddid);
 		     // //_make_selector_source(ddid, '.konn');
-		     // // _make_selector_draggable('.demo-window');
-		     _make_selector_on_node_editable(".open-dialog");
+		     // // _attach_node_draggable('.demo-window');
+		     _attach_node_click_edit(".open-dialog");
 		     _make_selector_target('.demo-window');
 		     _make_selector_source('.demo-window', '.konn');
-		     // _make_selector_on_node_editable(ddid);
+		     // _attach_node_click_edit(ddid);
 		     // _make_selector_target(ddid);
 		     // _make_selector_source(ddid, '.konn');
 		     
