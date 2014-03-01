@@ -86,6 +86,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var simple_mf_add_btn_id = 'simple_mf_adder_button';
     var simple_mf_add_btn_elt = '#' + simple_mf_add_btn_id;
     // Other contact points.
+    var model_ann_id = 'menu-model-annotations';
+    var model_ann_elt = '#' + model_ann_id;
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -472,7 +474,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
     }
 
-    function _rebuild_meta(model_id, annotations){
+    function _rebuild_meta(model_id, raw_annotations){
 
 	// Deal with ID(s).
 	// First and only setting of this right now.
@@ -489,7 +491,14 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
 
 	// Bring in any annotations lying around.
-	if( annotations ){
+	// Completely replace the old ones in the process.
+	if( raw_annotations ){
+	    var annotations = [];
+	    each(raw_annotations,
+		 function(ann_kv_set){
+		     var na = new bbop_mme_edit.annotation(ann_kv_set);
+		     annotations.push(na);
+		 });
 	    ecore.annotations(annotations);
 	}
     }
@@ -685,7 +694,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // This is a very important core function. It's purpose is to
     // update the local model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_new_data(individuals, facts, annotations){
+    function _merge_from_new_data(individuals, facts, raw_annotations){
 
 	// First look at individuals/nodes for addition or updating.
 	each(individuals,
@@ -800,6 +809,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		 var edg = ecore.add_edge_from_fact(fact, aid);
 		 _connect_with_edge(edg);
 	     });
+
+	// Reinitiate from all annotations.
+	var replacement_annotations = [];
+	each(raw_annotations,
+	     function(ann_kv_set){
+		 var na = new bbop_mme_edit.annotation(ann_kv_set);
+		 replacement_annotations.push(na);
+	     });
+	ecore.annotations(replacement_annotations);
     }
     
     ///
@@ -1325,6 +1343,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			   '<span class="bbop-mme-message-op">'+
 			   ecore.get_id() + '</span>');
 	    }
+	}
+    );
+
+    //
+    jQuery(model_ann_elt).click(
+	function(){
+	    var ann_edit_modal = widgets.edit_annotations_modal;
+	    var eam = ann_edit_modal(ecore, manager, ecore.get_id());
+	    eam.show();
 	}
     );
 

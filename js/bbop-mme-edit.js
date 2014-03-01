@@ -114,11 +114,9 @@ bbop_mme_edit._get_annotation_by_id = function(aid){
  *  Edit control.
  * 
  * Parameters:
- *  in_id - *[optional]* generated if not given
- *  in_types - *[serially optional]*
- *  in_annotations - *[serially optional]* empty list if no list given
+ *  n/a
  */
-bbop_mme_edit.core = function(in_annotations){
+bbop_mme_edit.core = function(){
     this.core = {
 	//'id': [], // currently optional
 	'id': null, // currently optional
@@ -134,9 +132,6 @@ bbop_mme_edit.core = function(in_annotations){
     };
 
     this._annotations = [];
-    if( typeof(in_annotations) !== 'undefined' ){
-	this._annotations = in_annotations;
-    }
 };
 
 bbop_mme_edit.core.prototype.add_id = function(id){

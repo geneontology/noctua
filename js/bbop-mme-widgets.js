@@ -15,8 +15,8 @@ bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
     var anns = '';
     bbop.core.each(ecore.annotations(),
 		   function(ann){
-		       if( ann['comment'] ){
-			   anns += '<dd>' + ann['comment'] + '</dd>';
+		       if( ann.property('comment') ){
+			   anns += '<dd>' + ann.property('comment') + '</dd>';
 		       }
 		   });
     if( anns == '' ){

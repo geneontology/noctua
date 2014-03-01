@@ -220,7 +220,7 @@ var MMEnvLauncher = function() {
 			 var base_tmpl =
 			     self.cache_get('index_base.tmpl').toString();
 			 var base_tmpl_args = {
-			     'title': 'go-mme',
+			     'title': 'Barista: Order',
 			     'content': ind_cont,
 			     'js_variables': [
 				 {
@@ -247,7 +247,7 @@ var MMEnvLauncher = function() {
 			 var base_tmpl =
 			     self.cache_get('basic_base.tmpl').toString();
 			 var base_tmpl_args = {
-			     'title': 'go-mme',
+			     'title': 'Barista: Simple',
 			     'content': ind_cont,
 			     'js_variables': [
 				 {
@@ -385,7 +385,7 @@ var MMEnvLauncher = function() {
 				     var base_tmpl =
 					 self.cache_get('app_base.tmpl').toString();
 				     var base_tmpl_args = {
-					 'title': 'go-mme: editor',
+					 'title': 'Barista: Editor',
 					 'messaging_server_location': msgloc,
 					 'js_variables': [
 					     {

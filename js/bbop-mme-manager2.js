@@ -243,13 +243,12 @@ var bbop_mme_manager2 = function(user_id, server_base){
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
-    anchor.add_individual_annotation = function(model_id, indv_id, key, value){
+    anchor.add_model_annotation = function(model_id, key, value){
 
 	// 
 	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
-	var req = new bbop_mmm_request('individual', 'add-annotation');
+	var req = new bbop_mmm_request('model', 'add-annotation');
 	req.model_id(model_id);
-	req.individual(indv_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
 	var args = reqs.callable();
