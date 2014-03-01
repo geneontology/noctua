@@ -384,6 +384,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
     	var new_conn = instance.connect(new_conn_args);
 
+	// Add activity listener to the new edge.
+	new_conn.bind('click',
+		      function(connection, event){
+			  //alert('edge click: ' + eedge.id());
+			  var ann_edit_modal = widgets.edit_annotations_modal;
+			  var eam = ann_edit_modal(ecore, manager, eedge.id());
+			  eam.show();
+		      });
+
 	// NOTE: This is necessary since these connectors are created
 	// under the covers of jsPlumb--I don't have access during
 	// creation like I do with the nodes.

@@ -303,9 +303,22 @@ bbop_mme_edit.core.prototype.add_edge_from_fact = function(fact, aid){
     var sid = fact['subject'];
     var oid = fact['object'];
     var pid = fact['property'];
+    var anns = fact['annotations'] || [];
     if( sid && oid && pid ){
 
-	var en = new bbop_mme_edit.edge(sid, pid, oid);
+	var en = new bbop_mme_edit.edge(sid, pid, oid, anns);
+	if( bbop.core.what_is(anns) != 'array' ){
+	    throw new Error('annotations is wrong');
+	}else{
+	    // Add the annotations individually.
+	    bbop.core.each(anns,
+			   function(ann_kv_set){
+			       var na = new bbop_mme_edit.annotation(ann_kv_set);
+			       en.add_annotation(na);
+			   });
+	}
+
+	// Add and ready to return edge.
 	anchor.add_edge(en);
 	ret_fact = en;
     }
@@ -543,9 +556,8 @@ bbop_mme_edit.core.prototype.get_annotation_by_id =
  * Parameters:
  *  in_id - *[optional]* generated if not given
  *  in_types - *[serially optional]*
- *  in_annotations - *[serially optional]* empty list if no list given
  */
-bbop_mme_edit.node = function(in_id, in_types, in_annotations){
+bbop_mme_edit.node = function(in_id, in_types){
 
     this._types = [];
     this._annotations = [];
@@ -606,9 +618,8 @@ bbop_mme_edit.node.prototype.get_annotation_by_id =
  *  src_id - source id
  *  rel_id - relation id
  *  tgt_id - target/object id
- *  in_annotations - *[serially optional]* empty list if no list given
  */
-bbop_mme_edit.edge = function(src_id, rel_id, tgt_id, in_annotations){
+bbop_mme_edit.edge = function(src_id, rel_id, tgt_id){
     this._id = bbop.core.uuid();
     // this._source_id = src_id;
     // this._relation_id = rel_id;
@@ -618,9 +629,6 @@ bbop_mme_edit.edge = function(src_id, rel_id, tgt_id, in_annotations){
     this._target_id = bme_clean(tgt_id);
 
     this._annotations = [];
-    if( typeof(in_annotations) !== 'undefined' ){
-	this._annotations = in_annotations;
-    }
 };
 bbop_mme_edit.edge.prototype.id = function(){ // ID is RO
     return this._id; };

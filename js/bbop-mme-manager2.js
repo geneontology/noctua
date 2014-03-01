@@ -224,13 +224,84 @@ var bbop_mme_manager2 = function(user_id, server_base){
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
-    anchor.delete_individual_annotation =function(model_id, indv_id, key, value){
+    anchor.add_fact_annotation = function(model_id,
+					  source_id, target_id, rel_id,
+					  key, value){
+
+	//
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('edge', 'add-annotation');
+	req.model_id(model_id);
+	req.fact(source_id, target_id, rel_id);
+	req.annotation_values(key, value);
+	reqs.add(req);
+	var args = reqs.callable();
+
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.add_individual_annotation = function(model_id, indv_id, key, value){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'add-annotation');
+	req.model_id(model_id);
+	req.individual(indv_id);
+	req.annotation_values(key, value);
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
 	// 
 	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
 	var req = new bbop_mmm_request('individual', 'remove-annotation');
 	req.model_id(model_id);
 	req.individual(indv_id);
+	req.annotation_values(key, value);
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.remove_fact_annotation = function(model_id,
+					     source_id, target_id, rel_id,
+					     key, value){
+
+	//
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('edge', 'remove-annotation');
+	req.model_id(model_id);
+	req.fact(source_id, target_id, rel_id);
+	req.annotation_values(key, value);
+	reqs.add(req);
+	var args = reqs.callable();
+	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.remove_model_annotation =function(model_id, key, value){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('model', 'remove-annotation');
+	req.model_id(model_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
 	var args = reqs.callable();
