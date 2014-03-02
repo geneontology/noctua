@@ -758,7 +758,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
 			 
 			 // Mark it for refreshing.
-			 refresh_node_id = unode.id();
+			 refresh_node_id = dyn_node.id();
 		     }
 		 }
 
@@ -1402,7 +1402,6 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
     );
 
-    // BUG/TODO:
     // Toggle the visibility of the part_of connectors. 
     var viz_p = true;
     jQuery(toggle_part_of_elt).click(
@@ -1418,8 +1417,6 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 var conn_id =
 			     ecore.get_connector_id_by_edge_id(edge.id());
 			 poc[conn_id] = true;
-			 // //jQuery('#' + conn_id).hide();
-			 // instance.hide(conn_id, true);
 		     }
 		 });	    
 

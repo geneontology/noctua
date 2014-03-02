@@ -720,8 +720,8 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 };
 
 /*
- * Contained shield for editing the annotations of an identifier
- * entity.
+ * Contained shield for generically editing the annotations of an
+ * identifier entity.
  * 
  * Function that returns object.
  * 

@@ -63,12 +63,41 @@ var bbop_mmm_request = function(entity, operation){
 	anchor.add('individual', ind_id);
     };
 
+    anchor.subject_class = function(class_id){
+	anchor.add('subject', class_id);
+    };
+
     anchor.annotation_values = function(key, val){
 	// Our list of values must be defined if we go this way.
 	if( ! anchor._arguments['values'] ){
 	    anchor._arguments['values'] = [];
 	}
 	anchor._arguments['values'].push({'key': key, 'value': val});
+    };
+
+    anchor.class_expressions = function(class_id){
+	// Our list of expressions must be defined if we go this way.
+	if( ! anchor._arguments['expressions'] ){
+	    anchor._arguments['expressions'] = [];
+	}
+	var expression = {
+	    'type': 'class',
+	    'literal': class_id
+	};
+	anchor._arguments['expressions'].push(expression);
+    };
+
+    anchor.svf_expressions = function(class_id, property_id){
+	// Our list of expressions must be defined if we go this way.
+	if( ! anchor._arguments['expressions'] ){
+	    anchor._arguments['expressions'] = [];
+	}
+	var expression = {
+	    'type': 'svf',
+	    'literal': class_id,
+	    'onProp': property_id
+	};
+	anchor._arguments['expressions'].push(expression);
     };
 };
 

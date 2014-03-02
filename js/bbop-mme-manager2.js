@@ -134,20 +134,30 @@ var bbop_mme_manager2 = function(user_id, server_base){
     	jqm.action(url, args, 'GET');
     };
     
-    // // Intent: "action".
-    // // Expect: "success" and "merge".
-    // anchor.add_simple_composite = function(model_id, class_id,
-    // 					   enabled_by_id, occurs_in_id){
-    // 	var url = server_base + '/m3CreateSimpleCompositeIndividual';
-    // 	var args = {
-    // 	    'modelId': model_id,
-    // 	    'classId': class_id,
-    // 	    'enabledById': enabled_by_id,
-    // 	    'occursInId': occurs_in_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.add_simple_composite = function(model_id, class_id,
+    					   enabled_by_id, occurs_in_id){
+
+	// Minimal requirements.
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'create');
+	req.model_id(model_id);
+	req.subject_class(class_id);
+
+	// Optional set expressions.
+	if( enabled_by_id ){
+	    req.svf_expressions(enabled_by_id, 'enabled_by');
+	}
+	if( occurs_in_id ){
+	    req.svf_expressions(occurs_in_id, 'occurs_in');	    
+	}
+	reqs.add(req);
+
+	var args = reqs.callable();
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
