@@ -88,6 +88,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // Other contact points.
     var model_ann_id = 'menu-model-annotations';
     var model_ann_elt = '#' + model_ann_id;
+    var toggle_part_of_id = 'toggle_part_of';
+    var toggle_part_of_elt = '#' + toggle_part_of_id;
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -1399,6 +1401,52 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	    }
 	}
     );
+
+    // BUG/TODO:
+    // Toggle the visibility of the part_of connectors. 
+    var viz_p = true;
+    jQuery(toggle_part_of_elt).click(
+	function(){
+
+	    // First, collect all of the part_of connections.
+	    var poc = {};
+	    each(ecore.get_edges(),
+		 function(edge_id){
+		     var edge = ecore.get_edge(edge_id);
+		     //if( edge && edge.relation() == 'part_of' ){
+		     if( edge && edge.relation() == 'BFO:0000050' ){
+			 var conn_id =
+			     ecore.get_connector_id_by_edge_id(edge.id());
+			 poc[conn_id] = true;
+			 // //jQuery('#' + conn_id).hide();
+			 // instance.hide(conn_id, true);
+		     }
+		 });	    
+
+	    // Switch viz.
+	    if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
+
+	    // Toggle viz on and off.
+	    each(instance.getConnections(),
+		 function(conn){
+		     if( poc[conn.id] ){
+			 conn.setVisible(viz_p);
+			 conn.endpoints[0].setVisible(viz_p);
+			 conn.endpoints[1].setVisible(viz_p);
+
+			 // Disappearing is easy, making visiable
+			 // leads to artifacts.
+			 if( viz_p ){
+			     // _shields_up();
+			     // instance.doWhileSuspended(
+    			     // 	 function(){
+			     instance.repaintEverything();
+			     // });
+			     // _shields_down();
+			 }
+		     }
+		 });
+	});
 
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
