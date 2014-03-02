@@ -707,8 +707,6 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
     jQuery('#' + del_btn.get_id()).click(
 	function(evt){
 	    evt.stopPropagation();
-	    // ll('deleteing node: ' + tid);
-	    //alert('node deletion not yet supported on the server');
 
 	    // Trigger the delete--hopefully inconsistent.
 	    manager.remove_individual(ecore.get_id(), tid);
@@ -729,7 +727,8 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
  * 
  * TODO: make subclass?
  */
-bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
+bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
+						   gserv, gconf){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
 
@@ -756,31 +755,79 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 	// Apparently a bum ID.
     }
 
+    // Create a "generic" enity-based dispatch to control all the
+    // possible combinations of our "generic" interface in this case.
+    function _ann_dispatch(entity, entity_type, entity_op, model_id,
+			   ann_key, ann_val){
+
+	// Prepare args for ye olde dispatch.
+	var args = {};
+	if( entity_type == 'individual' ){
+	    args['id'] = entity_id;
+	}else if( entity_type == 'fact' ){
+	    args['source'] = entity.source();
+	    args['target'] = entity.target();
+	    args['relation'] = entity.relation();
+	}else{
+	    // Model.
+	}
+
+	// First, select function.
+	if( entity_type == 'individual' ){
+	    var delfun = manager.add_individual_annotation;
+	    if( entity_op == 'remove' ){
+		delfun = manager.remove_individual_annotation;
+	    }
+	    // All add/remove operations run with the same argument:
+	    // now run operation.
+	    delfun(model_id, args['id'], ann_key, ann_val);
+	}else if( entity_type == 'fact' ){
+	    var delfun = manager.add_fact_annotation;
+	    if( entity_op == 'remove' ){
+		delfun = manager.remove_fact_annotation;
+	    }
+	    delfun(model_id, args['source'], args['target'], args['relation'],
+		   ann_key, ann_val);
+	}else{
+	    // Model.
+	    var delfun = manager.add_model_annotation;
+	    if( entity_op == 'remove' ){
+		delfun = manager.remove_model_annotation;
+	    }
+	    delfun(model_id, ann_key, ann_val);
+	}
+    }	
+	    
     var mdl = null;
     if( ! entity ){
 	alert('unknown id:' + entity_id);
     }else{
 	
-    // // Create delete button.
-    // var add_evi_btn_args = {
-    // 	'generate_id': true,
-    // 	'type': 'button',
-    // 	'class': 'btn btn-success'
-    // };
-    // var add_evi_btn = new tag('button', add_evi_btn_args, 'Add');
+	// Create delete button.
+	var add_evi_btn_args = {
+    	    'generate_id': true,
+    	    'type': 'button',
+    	    'class': 'btn btn-success'
+	};
+	var add_evi_btn = new tag('button', add_evi_btn_args, 'Add');
 
-    // var ev_str = 'none';
-    // //if( cache['comment'].length > 0 ){ ev_str = cache['comment'].join(' '); }
+	var evi_text_args = {
+    	    'generate_id': true,
+    	    'type': 'text',
+    	    'class': 'form-control',
+    	    'placeholder': 'Enter evidence'
+	};
+	var evi_text = new tag('input', evi_text_args);
 
-    // var ev_frm = [
-    // 	'<div class="form-inline">',
-    // 	'<div class="form-group">',
-    // 	'<input type="text" class="form-control" id="bar" placeholder="Enter evidence" />',
-    // 	'</div>',
-    // 	'<button class="btn btn-success">Add</button>',
-    // 	'</div>'
-    // ];
-
+	var ev_form = [
+    	    '<div class="form-inline">',
+    	    '<div class="form-group">',
+	    evi_text.to_string(),
+    	    '</div>',
+    	    add_evi_btn.to_string(),
+    	    '</div>'
+	];
+	
 	// Buttons need to be generated first.
 	// Create delete button.
 	var add_cmm_btn_args = {
@@ -810,8 +857,19 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 		
 	// See what annotation information is around. Start with just
 	// comments and evidence.
-	var elt2ann = {};
-	var cache = {'comment': [], 'evidence': []};
+	// var elt2ann = {};
+	var cache = {
+	    'comment': {
+		elt2ann: {},
+		list: [],
+		string: '???'
+	    },
+	    'evidence': {
+		elt2ann: {},
+		list: [],
+		string: '???'
+	    }
+	};
 	each(bbop.core.get_keys(cache),
 	     function(key){
 		 each(entity.get_annotations_by_filter(
@@ -822,38 +880,35 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 			  }),
 		      function(ann){
 			  var kval = ann.property(key);
-			  var acache = [];
 			  var kid = bbop.core.uuid();
-			  elt2ann[kid] = ann.id();
+			  cache[key]['elt2ann'][kid] = ann.id();
+			  var acache = [];
 			  acache.push('<li class="list-group-item">');
 			  acache.push(kval);
 			  acache.push('<span id="'+ kid +'" class="badge app-delete-mark">X</span>');
 			  acache.push('</li>');
-			  cache[key].push(acache.join(''));
+			  cache[key]['list'].push(acache.join(''));
 		      });    
+		 var str = '<li class="list-group-item">none</li>';
+		 if( cache[key]['list'].length > 0 ){
+		     str = cache[key]['list'].join('');
+		 }
+		 cache[key]['string'] = str;
 	     });
-	var cms_str = '<li class="list-group-item">none</li>';
-	if( cache['comment'].length > 0 ){
-	    cms_str = cache['comment'].join('');
-	}
-	// var ev_str = 'none';
-	// //if( cache['comment'].length > 0 ){ ev_str = cache['comment'].join(' '); }
-	
-	// var ev_frm = [
-	// 	'<div class="form-inline">',
-	// 	'<div class="form-group">',
-	// 	'<input type="text" class="form-control" id="bar" placeholder="Enter evidence" />',
-	// 	'</div>',
-	// 	'<button class="btn btn-success">Add</button>',
-	// 	'</div>'
-	// ];
-	
+
 	//
 	var tcache = [
+	    '<h4>Evidence</h4>',
+	    '<p>',
+	    '<ul class="list-group">',
+	    cache['evidence']['string'],
+	    '</ul>',
+	    '</p>',
+	    ev_form.join(''),
 	    '<h4>Comments</h4>',
 	    '<p>',
 	    '<ul class="list-group">',
-	    cms_str,
+	    cache['comment']['string'],
 	    '</ul>',
 	    '</p>',
 	    cmm_form.join('')
@@ -864,69 +919,55 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 						   entity_title);
 	mdl.add_to_body(tcache.join(''));
 	
-	// Add delete comment actions.
-	each(elt2ann,
-	     function(elt_id){
-		 jQuery('#' + elt_id).click(
-		     function(evt){
-			 evt.stopPropagation();
+	// Add delete annotation actions. These are completely generic--
+	// all annotations can be deleted in the same fashion.
+	each(bbop.core.get_keys(cache),
+	     function(ann_key){
+		 each(cache[ann_key]['elt2ann'],
+		      function(elt_id, ann_id){
+			  jQuery('#' + elt_id).click(
+			      function(evt){
+				  evt.stopPropagation();
 			 
-			 var annid = elt2ann[elt_id];
-			 //alert('blow away: ' + annid);
-			 var ann = entity.get_annotation_by_id(annid);
-			 var ann_cmm = ann.property('comment');
-
-			 // Ye olde dispatch.
-			 if( entity_type == 'individual' ){
-			     var delfun = manager.remove_individual_annotation;
-			     delfun(ecore.get_id(),entity_id,'comment',ann_cmm);
-			 }else if( entity_type == 'fact' ){
-
-			     // Need to get SOP.
-			     var delfun = manager.remove_fact_annotation;
-			     delfun(ecore.get_id(), entity.source(),
-				    entity.target(), entity.relation(),
-				    'comment', ann_cmm);
-			 }else{
-			     // Model.
-			     var delfun = manager.remove_model_annotation;
-			     delfun(ecore.get_id(), 'comment', ann_cmm);
-			 }
+				  //var annid = elt2ann[elt_id];
+				  //alert('blow away: ' + annid);
+				  var ann = entity.get_annotation_by_id(ann_id);
+				  var ann_val = ann.property(ann_key);
+				  _ann_dispatch(entity, entity_type, 'remove',
+						ecore.get_id(),ann_key, ann_val);
 			 
-			 // Wipe out modal.
-			 mdl.destroy();
-		     });
+				  // Wipe out modal.
+				  mdl.destroy();
+			      });
+		      });
 	     });
 	
+	// Add add evidence action.
+	jQuery('#' + add_evi_btn.get_id()).click(
+	    function(evt){
+		evt.stopPropagation();
+		
+		var val = jQuery('#' + evi_text.get_id()).val();
+		if( val && val != '' ){
+		    _ann_dispatch(entity, entity_type, 'add',
+				  ecore.get_id(), 'evidence', val);
+		}else{
+		    alert('no evidence added for' + entity_id);
+		}
+		
+		// Wipe out modal.
+		mdl.destroy();
+	    });	
+
 	// Add add comment action.
 	jQuery('#' + add_cmm_btn.get_id()).click(
 	    function(evt){
 		evt.stopPropagation();
 		
-		var cmm = jQuery('#' + cmm_text.get_id()).val();
-		if( cmm && cmm != '' ){
-		    // Trigger the addition.
-		    //alert('add to ' + tid + ' comment: ' + cmm);
-		    // manager.add_individual_annotation(ecore.get_id(), tid,
-		    // 				      'comment', cmm);
-
-		    // Ye olde dispatch.
-		    if( entity_type == 'individual' ){
-			var delfun = manager.add_individual_annotation;
-			delfun(ecore.get_id(), entity_id, 'comment', cmm);
-		    }else if( entity_type == 'fact' ){
-			
-			// Need to get SOP.
-			var delfun = manager.add_fact_annotation;
-			delfun(ecore.get_id(), entity.source(),
-			       entity.target(), entity.relation(),
-			       'comment', cmm);
-		    }else{
-			// Model.
-			var delfun = manager.add_model_annotation;
-			delfun(ecore.get_id(), 'comment', cmm);
-		    }
-		    
+		var val = jQuery('#' + cmm_text.get_id()).val();
+		if( val && val != '' ){
+		    _ann_dispatch(entity, entity_type, 'add',
+				  ecore.get_id(), 'comment', val);
 		}else{
 		    alert('no comment added for' + entity_id);
 		}
@@ -934,6 +975,20 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 		// Wipe out modal.
 		mdl.destroy();	    
 	    });	
+
+	// Add autocomplete box for ECO to evidence box.
+	var eco_auto_args = {
+    	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
+    	    'value_template': '{{annotation_class}}',
+    	    'list_select_callback': function(doc){}
+	};
+	var eco_auto =
+	    new bbop.widget.search_box(gserv, gconf, evi_text.get_id(),
+				       eco_auto_args);
+	eco_auto.add_query_filter('document_category', 'ontology_class');
+	eco_auto.add_query_filter('source', 'eco', ['+']);
+	eco_auto.set_personality('ontology');
+
     }
 
     // Return our final product.

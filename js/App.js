@@ -289,7 +289,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		var enode = ecore.get_node_by_elt_id(target_id);
 		if( enode ){		    
 		    var ann_edit_modal = widgets.edit_annotations_modal;
-		    var eam = ann_edit_modal(ecore, manager, enode.id());
+		    var eam = ann_edit_modal(ecore, manager, enode.id(),
+					     gserv, gconf);
 		    eam.show();
 		}else{
 		    alert('Could not find related test element.');
@@ -428,7 +429,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		      function(connection, event){
 			  //alert('edge click: ' + eedge.id());
 			  var ann_edit_modal = widgets.edit_annotations_modal;
-			  var eam = ann_edit_modal(ecore, manager, eedge.id());
+			  var eam = ann_edit_modal(ecore, manager, eedge.id(),
+						   gserv, gconf);
 			  eam.show();
 		      });
 
@@ -1364,7 +1366,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     jQuery(model_ann_elt).click(
 	function(){
 	    var ann_edit_modal = widgets.edit_annotations_modal;
-	    var eam = ann_edit_modal(ecore, manager, ecore.get_id());
+	    var eam = ann_edit_modal(ecore, manager, ecore.get_id(),
+				     gserv, gconf);
 	    eam.show();
 	}
     );

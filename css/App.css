@@ -398,6 +398,17 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     color:#7AB02C !important;
 }
 
+/*
+ * jQuery overrides.
+ */
+
+/* Make sure that autocomplete can be seen in shields. */
+.ui-autocomplete {
+    /* position: absolute; */
+    /* cursor: default; */
+    z-index: 1040 !important;
+}
+
 /** Z-INDEX **/
 
 ._jsPlumb_connector { z-index:18; }
