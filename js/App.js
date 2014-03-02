@@ -348,6 +348,20 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	rn = aid.readable(rn);
 	var clr = aid.color(rn);
 
+	// Append if there are comments, etc.
+	var eanns = eedge.annotations();
+	if( eanns.length != 0 ){
+	    // Meta counts.
+	    var n_ev = 0;
+	    var n_other = 0;
+	    each(eanns,
+		 function(ann){
+		     if( ann.property('evidence') ){ n_ev++;
+		     }else{ n_other++; }
+		 });
+	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
+	}
+
 	// Try and detect the proper edge type.
 	var rglyph = aid.glyph(rn);
 	var glyph = null;

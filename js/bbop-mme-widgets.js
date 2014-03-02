@@ -16,7 +16,10 @@ bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
     bbop.core.each(ecore.annotations(),
 		   function(ann){
 		       if( ann.property('comment') ){
-			   anns += '<dd>' + ann.property('comment') + '</dd>';
+			   anns += '<dd>' +
+			       '<small><strong>comment</strong></small> ' +
+			       ann.property('comment') +
+			       '</dd>';
 		       }
 		   });
     if( anns == '' ){
@@ -251,6 +254,8 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
     // Create a colorful label stack into an individual table.
     var enode_stack_table = new bbop.html.tag('table',
 					      {'class':'bbop-mme-stack-table'});
+
+    // Add type/color information.
     each(_enode_to_stack(enode),
 	 function(item){
 	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
@@ -260,6 +265,27 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
 		 + bme_type_to_text(item['type'], aid) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });
+
+    // Inject meta-information if extant.
+    var anns = enode.annotations();
+    if( anns.length != 0 ){
+
+	// Meta counts.
+	var n_ev = 0;
+	var n_other = 0;
+	each(anns,
+	     function(ann){
+		 if( ann.property('evidence') ){ n_ev++;
+		 }else{ n_other++; }
+	     });
+
+	// Add to top.
+	var trstr = '<tr class="bbop-mme-stack-tr">' +
+	    '<td class="bbop-mme-stack-td"><small style="color: grey;">' 
+	    + 'evidence: ' + n_ev + '; other: ' + n_other + 
+	    '</small></td></tr>';
+	enode_stack_table.add_to(trstr);
+    }
 
     return enode_stack_table;
 };
@@ -647,41 +673,6 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
     // Start with ID.
     var tid = enode.id();
 
-    // Buttons need to be generated first.
-    // Create delete button.
-    var add_cmm_btn_args = {
-    	'generate_id': true,
-    	'type': 'button',
-    	'class': 'btn btn-success'
-    };
-    var add_cmm_btn = new tag('button', add_cmm_btn_args, 'Add');
-
-    var cmm_text_args = {
-    	'generate_id': true,
-    	'type': 'button',
-    	'class': 'form-control',
-    	'placeholder': 'Add comment...',
-    	'rows': '2'
-    };
-    var cmm_text = new tag('textarea', cmm_text_args);
-
-    var cmm_form = [
-	'<div>',
-	'<div class="form-group">',
-	cmm_text.to_string(),
-	'</div>',
-	add_cmm_btn.to_string(),
-	'</div>'
-    ];
-
-    // // Create delete button.
-    // var add_evi_btn_args = {
-    // 	'generate_id': true,
-    // 	'type': 'button',
-    // 	'class': 'btn btn-success'
-    // };
-    // var add_evi_btn = new tag('button', add_evi_btn_args, 'Add');
-
     // Create delete button.
     var del_btn_args = {
     	'generate_id': true,
@@ -690,60 +681,15 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
     };
     var del_btn = new tag('button', del_btn_args, 'Delete');
 
-    // See what annotation information is around. Start with just
-    // comments and evidence.
-    var elt2ann = {};
-    var cache = {'comment': [], 'evidence': []};
-    each(bbop.core.get_keys(cache),
-	 function(key){
-	     each(enode.get_annotations_by_filter(
-		      function(ann){
-			  var ret = false;
-			  if( ann.property(key) ){ ret = true; }
-			  return ret;
-		      }),
-		  function(ann){
-		      var kval = ann.property(key);
-		      var acache = [];
-		      var kid = bbop.core.uuid();
-		      elt2ann[kid] = ann.id();
-		      acache.push('<li class="list-group-item">');
-		      acache.push(kval);
-		      acache.push('<span id="'+ kid +'" class="badge app-delete-mark">X</span>');
-		      acache.push('</li>');
-		      cache[key].push(acache.join(''));
-		  });    
-	 });
-    var cms_str = '<li class="list-group-item">none</li>';
-    if( cache['comment'].length > 0 ){
-	cms_str = cache['comment'].join('');
-    }
-    // var ev_str = 'none';
-    // //if( cache['comment'].length > 0 ){ ev_str = cache['comment'].join(' '); }
-
-    // var ev_frm = [
-    // 	'<div class="form-inline">',
-    // 	'<div class="form-group">',
-    // 	'<input type="text" class="form-control" id="bar" placeholder="Enter evidence" />',
-    // 	'</div>',
-    // 	'<button class="btn btn-success">Add</button>',
-    // 	'</div>'
-    // ];
-
     //
     var tcache = [
-	'<h4>Comments</h4>',
-	'<p>',
-	'<ul class="list-group">',
-	cms_str,
-	'</ul>',
-	'</p>',
-	cmm_form.join(''),
-	'<hr />',
-	// '<h4>Evidence</h4>',
+	// '<h4>Comments</h4>',
 	// '<p>',
-	// ev_frm.join(''),
+	// '<ul class="list-group">',
+	// cms_str,
+	// '</ul>',
 	// '</p>',
+	// cmm_form.join(''),
 	// '<hr />',
 	'<h4>Operations</h4>',
 	'<p>',
@@ -757,44 +703,6 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 						   'Edit Instance: ' + tid);
     mdl.add_to_body(tcache.join(''));
 
-    // Add delete comment actions.
-    each(elt2ann,
-	 function(elt_id){
-	     jQuery('#' + elt_id).click(
-		 function(evt){
-		     evt.stopPropagation();
-		     
-		     var annid = elt2ann[elt_id];
-		     //alert('blow away: ' + annid);
-		     var ann = enode.get_annotation_by_id(annid);
-		     var ann_cmm = ann.property('comment');
-		     manager.remove_individual_annotation(ecore.get_id(), tid,
-							  'comment', ann_cmm);
-		     
-		     // Wipe out modal.
-		     mdl.destroy();
-		 });
-	 });
-
-    // Add add comment action.
-    jQuery('#' + add_cmm_btn.get_id()).click(
-	function(evt){
-	    evt.stopPropagation();
-	    
-	    var cmm = jQuery('#' + cmm_text.get_id()).val();
-	    if( cmm && cmm != '' ){
-		// Trigger the addition.
-		//alert('add to ' + tid + ' comment: ' + cmm);
-		manager.add_individual_annotation(ecore.get_id(), tid,
-						  'comment', cmm);
-	    }else{
-		alert('no comment added for' + tid);
-	    }
-
-	    // Wipe out modal.
-	    mdl.destroy();	    
-	});
-    
     // Add delete action.
     jQuery('#' + del_btn.get_id()).click(
 	function(evt){
@@ -853,6 +761,26 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id){
 	alert('unknown id:' + entity_id);
     }else{
 	
+    // // Create delete button.
+    // var add_evi_btn_args = {
+    // 	'generate_id': true,
+    // 	'type': 'button',
+    // 	'class': 'btn btn-success'
+    // };
+    // var add_evi_btn = new tag('button', add_evi_btn_args, 'Add');
+
+    // var ev_str = 'none';
+    // //if( cache['comment'].length > 0 ){ ev_str = cache['comment'].join(' '); }
+
+    // var ev_frm = [
+    // 	'<div class="form-inline">',
+    // 	'<div class="form-group">',
+    // 	'<input type="text" class="form-control" id="bar" placeholder="Enter evidence" />',
+    // 	'</div>',
+    // 	'<button class="btn btn-success">Add</button>',
+    // 	'</div>'
+    // ];
+
 	// Buttons need to be generated first.
 	// Create delete button.
 	var add_cmm_btn_args = {
