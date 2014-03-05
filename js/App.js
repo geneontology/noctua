@@ -413,6 +413,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			      'curviness': 75,
 			      'waypoints': usable_waypoints
 			  } ],
+            // Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    'paintStyle': {
 		strokeStyle: clr,
 		lineWidth: 5

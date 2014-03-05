@@ -71,6 +71,7 @@
      refresh the model
    - Sometimes, when editing an instance, the relations will fall out
      of sync; either move nearby instances or refresh the model
+   - The endpoint scheme is reversed between creation instantiation
    - TODO, etc.
 
 ** Deployment
