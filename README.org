@@ -29,7 +29,7 @@
      relation between the two
    - A complex expression can be added by opening the instance type
      editor and
-    - Selecting enabled_by
+    - Selecting: enabled_by
     - Entering an expression of the form: "GO:0043234 and ('has part'
       some UniProtKB:P0002) and ('has part' some UniProtKB:P0003)"
    
