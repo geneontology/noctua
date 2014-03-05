@@ -160,6 +160,78 @@ var bbop_mme_manager2 = function(user_id, server_base){
     };
     
     // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.add_class = function(model_id, individual_id, class_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'add-type');
+	req.model_id(model_id);
+	req.individual(individual_id);
+	req.class_expressions(class_id);
+
+	reqs.add(req);
+
+	var args = reqs.callable();
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.add_svf = function(model_id, individual_id, class_id, property_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'add-type');
+	req.model_id(model_id);
+	req.individual(individual_id);
+	req.svf_expressions(class_id, property_id);
+
+	reqs.add(req);
+
+	var args = reqs.callable();
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.remove_class = function(model_id, individual_id, class_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'remove-type');
+	req.model_id(model_id);
+	req.individual(individual_id);
+	req.class_expressions(class_id);
+
+	reqs.add(req);
+
+	var args = reqs.callable();
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "merge".
+    anchor.remove_svf = function(model_id, individual_id, class_id, property_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
+	var req = new bbop_mmm_request('individual', 'remove-type');
+	req.model_id(model_id);
+	req.individual(individual_id);
+	req.svf_expressions(class_id, property_id);
+
+	reqs.add(req);
+
+	var args = reqs.callable();
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
+    // Intent: "action".
     // Expect: "success" and "rebuild".
     anchor.remove_individual = function(model_id, indv_id){
 

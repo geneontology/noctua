@@ -314,7 +314,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
 		if( enode ){		    
-		    var nedit = widgets.edit_node_modal(ecore, manager, enode);
+		    var nedit = widgets.edit_node_modal(ecore, manager, enode,
+							in_relations, aid,
+							gserv, gconf);
 		    nedit.show();
 		}else{
 		    alert('Could not find related element.');

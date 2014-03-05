@@ -545,8 +545,218 @@ bbop_mme_edit.core.prototype.get_annotations_by_filter =
 bbop_mme_edit.core.prototype.get_annotation_by_id =
     bbop_mme_edit._get_annotation_by_id;
 
-/*
- *  Edit nodes.
+/**
+ * Edit types.
+ * 
+ * A *very* simplified version of types, with just enough so that we
+ * aren't constantly trying to work with them endlessly elsewhere in
+ * the code.
+ * 
+ * Parameters:
+ *  in_types - the raw type blob from the server
+ */
+bbop_mme_edit.type = function(in_type){
+
+    var anchor = this;
+    var each = bbop.core.each;
+
+    // Initialize.
+    this._raw_type = in_type;
+    this._id = bbop.core.uuid();
+
+    // Derived property defaults.
+    this._type = null;
+    this._category = 'unknown';
+    this._class_id = null;
+    this._class_label = null;
+    this._property_id = null;
+    this._property_label = null;
+    // For recursive elements.
+    this._frame_type = null;
+    this._frame = [];
+
+    // Define the category, and build up an instant picture of what we
+    // need to know about the property.
+    var t = in_type['type'];
+    if( t == 'Class' ){
+
+	this._type = t;
+	this._category = 'instance_of';
+	this._class_id = in_type['id'];
+	this._class_label = in_type['label'] || this._class_id;
+	// this._property_id = 
+	// this._property_label = 
+	
+    }else if( t == 'Restriction' ){
+
+	this._type = t;
+	this._category = in_type['onProperty']['id'];
+	this._property_id = in_type['onProperty']['id'];
+	this._property_label =
+	    in_type['onProperty']['label'] || this._property_id;	    
+	this._class_id = in_type['someValuesFrom']['id'];
+
+	// If we have a class id, we're good.
+	if( this._class_id ){
+	    // Finish off the rest.
+	    this._class_label = in_type['someValuesFrom']['label']
+		|| this._class_id;
+	}else{
+	    // Otherwise, likely a recursive element, so down we go.
+	    var io_set = in_type['someValuesFrom']['intersectionOf'];
+	    if( io_set ){
+		this._frame_type = 'intersectionOf';
+		this._frame = [];
+		each(io_set,
+		     function(io_type){
+			 anchor._frame.push(new bbop_mme_edit.type(io_type));
+		     });
+	    }else{
+		// TODO: Others?
+		throw new Error('unknown svf compound');
+	    }
+	}
+    }
+};
+
+/**
+ * Function: id
+ * 
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string
+ */
+bbop_mme_edit.type.prototype.id = function(){
+    return this._id;
+};
+
+/** 
+ * Function: category
+ *
+ * Try to put an instance type into some kind of rendering
+ * category.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string (default 'unknown')
+ */
+bbop_mme_edit.type.prototype.category = function(){
+    return this._category;
+};
+
+/** 
+ * Function: type
+ *
+ * The "type" of the type.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.type = function(){
+    return this._type;
+};
+
+/** 
+ * Function: frame_type
+ *
+ * If the type has a recursive frame, the "type" of said frame.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.frame_type = function(){
+    return this._frame_type;
+};
+
+/** 
+ * Function: frame
+ *
+ * If the type has a recursive frame, a list of the types is contains.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  list
+ */
+bbop_mme_edit.type.prototype.frame = function(){
+    return this._frame;
+};
+
+/** 
+ * Function: class_id
+ *
+ * The considered class id.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.class_id = function(){
+    return this._class_id;
+};
+
+/** 
+ * Function: class_label
+ *
+ * The considered class label, defaults to ID if not found.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.class_label = function(){
+    return this._class_label;
+};
+
+/** 
+ * Function: property_id
+ *
+ * The considered class property id.
+ * Not defined for 'Class' types.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.property_id = function(){
+    return this._property_id;
+};
+
+/** 
+ * Function: property_label
+ *
+ * The considered class property label.
+ * Not defined for 'Class' types.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbop_mme_edit.type.prototype.property_label = function(){
+    return this._property_label;
+};
+
+/**
+ * Edit nodes.
  * 
  * Parameters:
  *  in_id - *[optional]* generated if not given
@@ -554,7 +764,10 @@ bbop_mme_edit.core.prototype.get_annotation_by_id =
  */
 bbop_mme_edit.node = function(in_id, in_types){
 
+    var anchor = this;
+
     this._types = [];
+    this._id2type = {};
     this._annotations = [];
 
     if( typeof(in_id) === 'undefined' ){
@@ -564,14 +777,13 @@ bbop_mme_edit.node = function(in_id, in_types){
 	this._id = bme_clean(in_id);
     }
     if( typeof(in_types) !== 'undefined' ){
-	this._types = in_types;
+	bbop.core.each(in_types,
+		       function(in_type){
+			   var new_type = new bbop_mme_edit.type(in_type);
+			   anchor._id2type[new_type.id()] = new_type;
+			   anchor._types.push(new bbop_mme_edit.type(in_type));
+		       });
     }
-    // if( typeof(in_annotations) !== 'undefined' ){
-    // 	bbop.core.each(in_annotations,
-    // 		      function(ann_kv_set){
-    // 			  this._annotations = in_annotations;
-    // 		      });
-    // }
     
     // Optional layout hints.
     this._x_init = null; // initial layout hint
@@ -580,14 +792,56 @@ bbop_mme_edit.node = function(in_id, in_types){
     // this.ylast = null;
 };
 
-bbop_mme_edit.node.prototype.id = function(value){ // (possibly generated) ID is RO
+// (possibly generated) ID is RO
+bbop_mme_edit.node.prototype.id = function(value){
     return this._id; };
 
+/**
+ * Function: types
+ * 
+ * Get current types; replace current types.
+ * 
+ * Parameters:
+ *  in_types - *[optional]* raw JSON type objects
+ * 
+ * Returns:
+ *  array
+ */
 bbop_mme_edit.node.prototype.types = function(in_types){
+    var anchor = this;    
+
     if( in_types && bbop.core.what_is(in_types) == 'array' ){
-	this._types = in_types;
+	anchor._id2type = {};
+	anchor._types = [];
+
+	bbop.core.each(in_types,
+		       function(in_type){
+			   var new_type = new bbop_mme_edit.type(in_type);
+			   anchor._id2type[new_type.id()] = new_type;
+			   anchor._types.push(new_type);
+		       });
     }
     return this._types;
+};
+
+/**
+ * Function: get_type_by_id
+ * 
+ * Get the 
+ * 
+ * Parameters:
+ *  type_id - type id
+ * 
+ * Returns:
+ *  type or null
+ */
+bbop_mme_edit.node.prototype.get_type_by_id = function(type_id){
+    var anchor = this;
+
+    var ret = null;
+    ret = anchor._id2type[type_id];
+
+    return ret;
 };
 
 bbop_mme_edit.node.prototype.x_init = function(value){

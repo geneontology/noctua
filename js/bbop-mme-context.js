@@ -393,33 +393,33 @@ var bbop_mme_context = function(){
 	return rls;
     };
 
-    /* 
-     * Function: categorize
-     *
-     * Try to put an intstance type into some kind of rendering
-     * category.
-     *
-     * Parameters: 
-     *  in_type - instance type as returned by JSON-LD service
-     *
-     * Returns:
-     *  string (default 'unknown')
-     */
-    this.categorize = function(in_type){
+    // /* 
+    //  * Function: categorize
+    //  *
+    //  * Try to put an intstance type into some kind of rendering
+    //  * category.
+    //  *
+    //  * Parameters: 
+    //  *  in_type - instance type as returned by JSON-LD service
+    //  *
+    //  * Returns:
+    //  *  string (default 'unknown')
+    //  */
+    // this.categorize = function(in_type){
 
-	var ret = 'unknown';
+    // 	var ret = 'unknown';
 
-	var t = in_type['type'];
-	if( t == 'Class' ){
-	    ret = 'instance_of';
-	}else if( t == 'Restriction' ){
-	    ret = in_type['onProperty']['id'];
-	}else{
-	    // use default
-	}
+    // 	var t = in_type['type'];
+    // 	if( t == 'Class' ){
+    // 	    ret = 'instance_of';
+    // 	}else if( t == 'Restriction' ){
+    // 	    ret = in_type['onProperty']['id'];
+    // 	}else{
+    // 	    // use default
+    // 	}
 
-	return ret;
-    };
+    // 	return ret;
+    // };
 
     /* 
      * Function: cleanse
@@ -456,77 +456,196 @@ var bbop_mme_context = function(){
     };
 };
 
-var bme_categorize = function(in_type){
+// var bme_categorize = function(in_type){
 
-    var ret = {
-	category: 'unknown',
-	text: '???'
-    };
+//     var ret = {
+// 	category: 'unknown',
+// 	text: '???'
+//     };
 
-    var t = in_type['type'];
-    if( t == 'Class' ){
-	var i = in_type['id'];
-	var l = in_type['label'];
-	ret['category'] = 'instance_of';
-	ret['text'] = l + ' (' + i + ')';
-    }else if( t == 'Restriction' ){
-	var thing = in_type['someValuesFrom']['id'];
-	var thing_rel = in_type['onProperty']['id'];
-	ret['category'] = thing_rel;
-	ret['text'] = thing_rel + ' (' + thing + ')';
+//     var t = in_type['type'];
+//     if( t == 'Class' ){
+// 	var i = in_type['id'];
+// 	var l = in_type['label'];
+// 	ret['category'] = 'instance_of';
+// 	ret['text'] = l + ' (' + i + ')';
+//     }else if( t == 'Restriction' ){
+// 	var thing = in_type['someValuesFrom']['id'];
+// 	var thing_rel = in_type['onProperty']['id'];
+// 	ret['category'] = thing_rel;
+// 	ret['text'] = thing_rel + ' (' + thing + ')';
+//     }
+
+//     return ret;
+// };
+
+/*
+ * 
+ */
+var bme_type_to_minimal = function(in_type, aid){
+    var lbl = in_type.class_label();
+    if( ! lbl ){
+	// Maybe a frame then?
+	var ft = in_type.frame_type();
+	var f = in_type.frame();
+	if( ft && f ){
+	    lbl = ft + '[' + f.length + ']';
+	}else{
+	    lbl = '[???]';
+	}
     }
-
-    return ret;
+    return lbl;
 };
 
 /*
  * 
  */
-var bme_type_to_text = function(in_type, aid){
+var bme_type_to_expanded = function(in_type, aid){
 
-    var text = '???';
+    var text = '[???]';
 
-    var t = in_type['type'];
-    if( t == 'Class' ){
-	var i = in_type['id'];
-	var l = in_type['label'] || i;
-	text = '<span alt="' +
-	    l + '(' +
-	    i + ')' + '" title="' +
-	    l + ' (' +
-	    i + ')' + '">' +
-	    l + '</span>';
-    }else if( t == 'Restriction' ){
-	var thing = in_type['someValuesFrom']['label'] ||
-	    in_type['someValuesFrom']['id'];
-	var thing_rel = in_type['onProperty']['label'] ||
-	    in_type['onProperty']['id'];
-	//text = thing_rel + '(' + thing + ')';
-	text = '<span alt="' +
-	    aid.readable(thing_rel) + '(' +
-	    thing + ')' + '" title="' +
-	    aid.readable(thing_rel) + '(' +
-	    thing + ')' + '">' +
-	    thing + '</span>';
+    var t = in_type.type();
+    var ft = in_type.frame_type();
+    var f = in_type.frame();
+    if( t == 'Class' && ft == null ){
+	text = in_type.class_label() + ' (' + in_type.class_id() + ')';
+    }else if( t == 'Restriction' && ft == null ){
+	var thing = in_type.class_label();
+	var thing_prop = in_type.property_label();
+	text = aid.readable(thing_prop) + '(' + thing + ')';
+    }else if( ft ){
+	var thing_prop = in_type.property_label();
+	text = aid.readable(thing_prop) + '(' + ft + '[' + f.length + '])';
     }
 
     return text;
 };
-          // {
-          //   "type": "Class",
-          //   "label": "phosphatase activity",
-          //   "id": "GO_0016791"
-          // },
-          // {
-          //   "someValuesFrom": {
-          //     "type": "Class",
-          //     "id": "WB_WBGene00000913"
-          //   },
-          //   "type": "Restriction",
-          //   "onProperty": {
-          //     "type": "ObjectProperty",
-          //     "id": "enabled_by"
-          //   }
+
+/*
+ * 
+ */
+var bme_type_to_span = function(in_type, aid, color_p){
+
+    var min = bme_type_to_minimal(in_type, aid);
+    var exp = bme_type_to_expanded(in_type, aid);
+
+    var text = null;
+    if( color_p ){
+	text = '<span ' +
+	    'style="background-color: ' + aid.color(in_type.category()) + ';" ' +
+	    'alt="' + exp + '" ' +
+	    'title="' + exp +'">' +
+	    min + '</span>';
+    }else{
+	text = '<span alt="' + exp + '" title="' + exp +'">' + min + '</span>';
+    }
+
+    return text;
+};
+
+/**
+ * A recursive writer for when we no longer care.
+ */
+var bme_type_to_embed = function(in_type, aid){
+    var anchor = this;
+    var each = bbop.core.each;
+
+    var text = '[???]';
+
+    var ft = in_type.frame_type();
+    var frame = in_type.frame();	
+    if( ! ft ){ // if no frame, the usual
+	//text = bme_type_to_span(in_type, aid);
+	text = bme_type_to_expanded(in_type, aid);
+    }else{
+	// Now for some real fun.
+	var pid = in_type.property_id();
+	var plabel = in_type.property_label();
+	var cache = [
+	    '<table width="80%" class="table table-bordered table-hover">',
+	    '<thead style="background-color: ' + aid.color(pid) + ';">',
+	    plabel,
+	    '</thead>',
+	    '<tbody>'
+	];
+	each(frame,
+	    function(ftype){
+		cache.push('<tr style="background-color: ' +
+			   aid.color(ftype.category()) + ';"><td>'),
+		cache.push(bme_type_to_embed(ftype, aid));
+		cache.push('</td></tr>');
+	    });	
+	cache.push('</tbody>');
+	cache.push('</table>');
+
+	text = cache.join('');
+    }
+
+    // var min = bme_type_to_minimal(in_type, aid);
+    // var exp = bme_type_to_expanded(in_type, aid);
+    // var text = '<span alt="' + exp + '" title="' + exp +'">' + min + '</span>';
+
+    return text;
+};
+
+// {
+//   "type": "Class",
+//   "label": "phosphatase activity",
+//   "id": "GO_0016791"
+// }
+///// 
+// {
+//   "someValuesFrom": {
+//     "type": "Class",
+//     "id": "WB_WBGene00000913"
+//   },
+//   "type": "Restriction",
+//   "onProperty": {
+//     "type": "ObjectProperty",
+//     "id": "enabled_by"
+//   }
+/////
+// {
+//   "onProperty": {
+//     "id": "RO:0002333",
+//     "type": "ObjectProperty",
+//     "label": "enabled_by"
+//   },
+//   "type": "Restriction",
+//   "someValuesFrom": {
+//     "intersectionOf": [
+//       {
+//         "id": "GO:0043234",
+//         "type": "Class",
+//         "label": "protein complex"
+//       },
+//       {
+//         "onProperty": {
+//           "id": "BFO:0000051",
+//           "type": "ObjectProperty",
+//           "label": "has part"
+//         },
+//         "type": "Restriction",
+//         "someValuesFrom": {
+//           "id": "UniProtKB:P0002",
+//           "type": "Class"
+//         }
+//       },
+//       {
+//         "onProperty": {
+//           "id": "BFO:0000051",
+//           "type": "ObjectProperty",
+//           "label": "has part"
+//         },
+//         "type": "Restriction",
+//         "someValuesFrom": {
+//           "id": "UniProtKB:P0003",
+//           "type": "Class"
+//         }
+//       }
+//     ]
+//   }
+// }
 
 // Support CommonJS if it looks like that's how we're rolling.
 if( typeof(exports) != 'undefined' ){

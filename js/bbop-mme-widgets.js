@@ -64,7 +64,7 @@ bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 	 function(enode_id, enode){
 	     each(enode.types(),
 		  function(in_type){
-		      cat_list.push(aid.categorize(in_type));
+		      cat_list.push(in_type.category());
 		  });
 	 });
     // Dedupe list.
@@ -81,7 +81,7 @@ bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 
     }else{
 	
-	// Sort list according to known priorities.
+	// Sort header list according to known priorities.
 	cat_list = cat_list.sort(
 	    function(a, b){
 		return aid.priority(b) - aid.priority(a);
@@ -116,7 +116,7 @@ bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 		 var bin = {};
 		 each(enode.types(),
 		      function(in_type){
-			  var cat = aid.categorize(in_type);
+			  var cat = in_type.category();
 			  if( ! bin[cat] ){ bin[cat] = []; }
 			  bin[cat].push(in_type);
 		      });
@@ -130,7 +130,7 @@ bbop_mme_widgets.repaint_exp_table = function(ecore, aid, table_div){
 			  var cell_cache = [];
 			  each(accumulated_types,
 			       function(atype){
-				   var tt = bme_type_to_text(atype, aid);
+				   var tt = bme_type_to_span(atype, aid);
 				   cell_cache.push(tt);
 			       });
 			  table_row.push(cell_cache.join('<br />'));
@@ -212,57 +212,47 @@ bbop_mme_widgets.wipe = function(div){
     jQuery(div).empty();
 };
 
-// bbop_mme_widgets.add_virtual_node = function(ecore, enode, aid, graph_div){
+/*
+ *  Takes a core edit node as the argument, categorize the
+ *  contained types, order them.
+ */
+bbop_mme_widgets.enode_to_stack = function(enode, aid){
+	
+    var each = bbop.core.each;
 
-//     var div_id = ecore.get_node_elt_id(enode.id());
-//     var style_str =
-// 	'top: ' + enode.y_init() + 'px; ' +
-// 	'left: ' + enode.x_init() + 'px;';
-//     var v = new bbop.html.tag('div',
-//     			      {'id': div_id,
-//     			       'class': 'waypoint',
-//     			       'style': style_str});
-//     jQuery(graph_div).append(v.to_string());
-// };
-
+    // Sort the types within the stack according to the known
+    // type priorities.
+    var bin_stack = enode.types() || [];
+    bin_stack = bin_stack.sort(
+	function(a, b){
+	    var bpri = aid.priority(b.property_id());
+	    var apri = aid.priority(a.property_id());
+	    return apri - bpri;
+	});
+    
+    return bin_stack;
+};
+    
+/*
+ * 
+ */
 bbop_mme_widgets.render_node_stack = function(enode, aid){
 
     var each = bbop.core.each;
 
-    // Takes a core edit node as the argument, categorize the
-    // contained types, order them.
-    function _enode_to_stack(enode){
-	
-	// Attach a category to each type.
-	var bin_stack = [];
-	each(enode.types(),
-	     function(in_type){
-		 var bin = aid.categorize(in_type);
-		 bin_stack.push({'category': bin, 'type': in_type});
-	     });
-	
-	// Sort the types within the stack according to the known
-	// type priorities.
-	bin_stack = bin_stack.sort(
-	    function(a, b){
-		return aid.priority(b) - aid.priority(a);
-	    });
-	
-	return bin_stack;
-    }
-    
     // Create a colorful label stack into an individual table.
     var enode_stack_table = new bbop.html.tag('table',
 					      {'class':'bbop-mme-stack-table'});
 
     // Add type/color information.
-    each(_enode_to_stack(enode),
+    var ordered_types = bbop_mme_widgets.enode_to_stack(enode, aid);
+    each(ordered_types,
 	 function(item){
 	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
 		 'style="background-color: ' +
-		 aid.color(item['category']) +
+		 aid.color(item.category()) +
 		 ';"><td class="bbop-mme-stack-td">' 
-		 + bme_type_to_text(item['type'], aid) + '</td></tr>';   
+		 + bme_type_to_span(item, aid) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });
 
@@ -544,17 +534,13 @@ bbop_mme_widgets.compute_shield = function(){
 };
 
 /*
- * Contained shield for creating new edges between nodes.
- * 
- * Function that returns object.
+ * Function that returns a sorted relation list of the form [[id, label], ...]
  * 
  * TODO: make subclass?
  */
-bbop_mme_widgets.add_edge_modal = function(ecore, manager,
-					   relations, aid,
-					   source_id, target_id){
+bbop_mme_widgets.sorted_relation_list = function(relations, aid){
+    
     var each = bbop.core.each;
-    var tag = bbop.html.tag;
 
     // Get a sorted list of known rels.
     //var rels = aid.all_entities();
@@ -576,6 +562,25 @@ bbop_mme_widgets.add_edge_modal = function(ecore, manager,
 	     }
 	     rellist.push(r);
 	 });
+
+    return rellist;
+};
+
+/*
+ * Contained shield for creating new edges between nodes.
+ * 
+ * Function that returns object.
+ * 
+ * TODO: make subclass?
+ */
+bbop_mme_widgets.add_edge_modal = function(ecore, manager,
+					   relations, aid,
+					   source_id, target_id){
+    var each = bbop.core.each;
+    var tag = bbop.html.tag;
+
+    // Get a sorted list of known rels.
+    var rellist = bbop_mme_widgets.sorted_relation_list(relations, aid);
     
     // Preamble.
     var mebe = [
@@ -666,12 +671,79 @@ bbop_mme_widgets.add_edge_modal = function(ecore, manager,
  * 
  * TODO: make subclass?
  */
-bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
+bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode,
+					    relations, aid,
+					    gserv, gconf){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
 
     // Start with ID.
     var tid = enode.id();
+
+    // Create a list of types associated with the instance, as well as
+    // capture their information for further editing.
+    var elt2type = {};
+    var type_list = [];
+    each(bbop_mme_widgets.enode_to_stack(enode, aid),
+	 function(item){
+	     //var type_str = bme_type_to_expanded(item, aid);
+	     var type_str = bme_type_to_embed(item, aid);
+	     var eid = bbop.core.uuid();
+	     elt2type[eid] = item;		 
+	     var acache = [];
+	     acache.push('<li class="list-group-item" style="background-color: '
+			 + aid.color(item.category()) + ';">');
+	     acache.push(type_str);
+	     acache.push('<span id="'+ eid +
+			 '" class="badge app-delete-mark">X</span>');
+	     acache.push('</li>');
+	     type_list.push(acache.join(''));
+	 });
+
+    // Generate the dropdown for the 
+    var rellist = bbop_mme_widgets.sorted_relation_list(relations, aid);
+    var opts = [new tag('option',{'value': ''},'Select property')];
+    each(rellist,
+	 function(rel){
+	     var opt = new tag('option',
+			       {'value': rel[0]}, rel[1] +' ('+ rel[0] +')');
+	     opts.push(opt);
+	 });
+    var svf_prop_select_args = {
+    	'generate_id': true,
+    	'type': 'text',
+    	'class': 'form-control'
+    	//'placeholder': 'Enter property'
+    };
+    var svf_prop_select = new tag('select', svf_prop_select_args, opts);
+
+    var svf_class_text_args = {
+    	'generate_id': true,
+    	'type': 'text',
+    	'class': 'form-control',
+    	'placeholder': 'Enter ID or complex expression (enabled_by only)'
+    };
+    var svf_class_text = new tag('input', svf_class_text_args);
+
+    // Create delete button.
+    var add_svf_btn_args = {
+    	'generate_id': true,
+    	'type': 'button',
+    	'class': 'btn btn-success'
+    };
+    var add_svf_btn = new tag('button', add_svf_btn_args, 'Add');
+
+    var svf_form = [
+    	'<div class="form">',
+    	'<div class="form-group">',
+	svf_prop_select.to_string(),
+    	'</div>',
+    	'<div class="form-group">',
+	svf_class_text.to_string(),
+    	'</div>',
+    	add_svf_btn.to_string(),
+    	'</div>'
+    ];
 
     // Create delete button.
     var del_btn_args = {
@@ -683,19 +755,23 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 
     //
     var tcache = [
-	// '<h4>Comments</h4>',
-	// '<p>',
-	// '<ul class="list-group">',
-	// cms_str,
-	// '</ul>',
-	// '</p>',
-	// cmm_form.join(''),
-	// '<hr />',
-	'<h4>Operations</h4>',
+	'<h4>Types</h4>',
 	'<p>',
+	'<ul class="list-group">',
+	type_list.join('') || '<li class="list-group-item">none</li>',
+	'</ul>',
+	'<hr />',
+	'</p>',
+	'<h4>Add type</h4>',
+	'<p>',
+	svf_form.join(''),
+	'</p>',
+	'<hr />',
+	'<h4>Other ops</h4>',
+	// '<p>',
 	del_btn.to_string(),
-	'&nbsp;this individual',
-	'</p>'
+	'&nbsp;this individual'//,
+	// '</p>'
     ];
 
     // Setup base modal.
@@ -703,6 +779,53 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 						   'Edit Instance: ' + tid);
     mdl.add_to_body(tcache.join(''));
 
+    // Attach deletes to all of the listed types.
+    each(elt2type,
+	 function(elt_id, type){
+	     jQuery('#' + elt_id).click(
+		 function(evt){
+		     evt.stopPropagation();
+		     var target_id = evt.target.id;
+		     var target_type = elt2type[target_id];
+		     var cid = target_type.class_id();
+
+		     // Trigger the delete.
+		     if( target_type.type() == 'Class' ){
+			 manager.remove_class(ecore.get_id(), tid, cid);
+		     }else{
+			 var pid = target_type.property_id();
+			 manager.remove_svf(ecore.get_id(), tid, cid, pid);
+		     }
+		     // Wipe out modal.
+		     mdl.destroy();
+		 });
+	 });
+
+    // Add add expression action.
+    jQuery('#' + add_svf_btn.get_id()).click(
+	function(evt){
+	    evt.stopPropagation();
+
+	    var cls = jQuery('#' + svf_class_text.get_id()).val();
+	    var prp = jQuery('#' + svf_prop_select.get_id()).val();
+	    if( cls && prp ){
+		// Trigger the delete--hopefully inconsistent.
+		manager.add_svf(ecore.get_id(), tid, cls, prp);
+
+		// Wipe out modal.
+		mdl.destroy();	    
+	    }else if( cls ){
+		// Trigger the delete--hopefully inconsistent.
+		manager.add_class(ecore.get_id(), tid, cls);
+
+		// Wipe out modal.
+		mdl.destroy();	    
+	    }else{
+		// Allow modal to remain for retry.
+		alert('At least class must be defined');
+	    }
+	});
+    
     // Add delete action.
     jQuery('#' + del_btn.get_id()).click(
 	function(evt){
@@ -715,6 +838,26 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode){
 	    mdl.destroy();	    
 	});
     
+	// Add autocomplete box for ECO to evidence box.
+	var eco_auto_args = {
+    	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
+    	    'value_template': '{{annotation_class}}',
+    	    'list_select_callback': function(doc){}
+	};
+
+    // Add general autocomplete to the input.
+    var gen_auto_args = {
+    	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
+    	'value_template': '{{entity}}',
+    	'list_select_callback': function(doc){}
+    };
+    var gen_auto =
+	new bbop.widget.search_box(gserv, gconf, svf_class_text.get_id(),
+				   gen_auto_args);
+    gen_auto.add_query_filter('document_category', 'general');
+    //gen_auto.add_query_filter('source', 'eco', ['+']);
+    gen_auto.set_personality('general');
+
     // Return our final product.
     return mdl;
 };
