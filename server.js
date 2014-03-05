@@ -26,6 +26,9 @@ var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
+// The name we're using this week.
+var notw = 'Artemis|Barista|Bast|Gato|Mao|Minerva|Neko';
+
 ///
 /// Define the sample application.
 ///
@@ -220,7 +223,7 @@ var MMEnvLauncher = function() {
 			 var base_tmpl =
 			     self.cache_get('index_base.tmpl').toString();
 			 var base_tmpl_args = {
-			     'title': 'Barista: Order',
+			     'title': notw + ': Order',
 			     'content': ind_cont,
 			     'js_variables': [
 				 {
@@ -247,7 +250,7 @@ var MMEnvLauncher = function() {
 			 var base_tmpl =
 			     self.cache_get('basic_base.tmpl').toString();
 			 var base_tmpl_args = {
-			     'title': 'Barista: Simple',
+			     'title': notw + ': Simple',
 			     'content': ind_cont,
 			     'js_variables': [
 				 {
@@ -385,7 +388,7 @@ var MMEnvLauncher = function() {
 				     var base_tmpl =
 					 self.cache_get('app_base.tmpl').toString();
 				     var base_tmpl_args = {
-					 'title': 'Barista: Editor',
+					 'title': notw + ': Editor',
 					 'messaging_server_location': msgloc,
 					 'js_variables': [
 					     {
