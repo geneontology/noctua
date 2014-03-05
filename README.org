@@ -36,8 +36,8 @@
 
 *** Models
 
-    - Model information can be edited by selecting [Model] > [Edit
-      annotations] from the top menu
+    - Model meta information can be edited by selecting [Model] >
+      [Edit annotations] from the top menu
     - [Model] > [Soft refresh] gets a fully updated model from the
       server; this is what you'll use for the time being when another
       user makes a change to the model

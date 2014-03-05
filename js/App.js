@@ -1238,11 +1238,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	    alert('This functionality has been temporarily suspended.');
     	});
 
-    // Help button.
-    jQuery(help_btn_elt).click(
-    	function(){
-	    alert('In alphas, nobody can hear you scream.');
-    	});
+    // // Help button.
+    // jQuery(help_btn_elt).click(
+    // 	function(){
+    // 	    alert('In alphas, nobody can hear you scream.');
+    // 	});
 
     ///
     /// Load the incoming graph into something useable for population
