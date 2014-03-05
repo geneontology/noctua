@@ -264,9 +264,15 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     bottom: 37%;
     top: 5px;
     right: 5px;
+
+    -moz-border-radius: 10px/10px;
+    -webkit-border-radius: 10px 10px;
+    border-radius: 10px/10px;;
+    /* border:solid 7px #FF0000; */
+
     width: 1em;
     height: 1em;
-    background-color: #558822;
+    background-color: #0d78bc;
     cursor: pointer;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
@@ -285,7 +291,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     left: 5px;
     width: 1em;
     height: 1em;
-    background-color: #0066cc;
+    background-color: #5CB85C;
     cursor: pointer;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;

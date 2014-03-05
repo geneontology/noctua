@@ -164,21 +164,23 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	{
 	    // All connections have these properties.
 	    DragOptions: {ccursor: 'pointer', zIndex:2000 },
-	    PaintStyle: { strokeStyle:'#666' },
+	    PaintStyle: { strokeStyle:'#0d78bc' },
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
+            //Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    EndpointStyles : [
 		{ 
 		    width: 15,
 		    height: 15,
-		    strokeStyle: '#666',
-		    fillStyle: "#333"
+		    //strokeStyle: '#000000',
+		    fillStyle: "#666666"  // subject endpoint color
 		},
 		{
-		    fillStyle: "#0d78bc"
+		    fillStyle: "#0d78bc" // object endpoint
+		    //fillStyle: "#006"
 		}
 	    ],
 	    PaintStyle : {
-		strokeStyle:"#558822",
+		strokeStyle:"#666666", // color when creating new edge
 		lineWidth: 5
 	    },
 
