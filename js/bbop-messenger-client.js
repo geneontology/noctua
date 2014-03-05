@@ -57,7 +57,8 @@ var bbop_messenger_client = function(msgloc,
 		// Emit general packet.
 		var connect_packet = {
 		    'model_id': anchor.model_id,
-		    'text': 'new client connected'
+		    'message': 'new client connected',
+		    'message_type': 'success'
 		};
 		anchor.socket.emit('info', connect_packet);
 		
@@ -74,17 +75,20 @@ var bbop_messenger_client = function(msgloc,
 		var mid = data['model_id'] || null;
 		var uid = data['user_id'] || '???';
 		var ucolor = data['user_color'] || '???';
-		var str = data['text'] || '???';
+		var signal = data['signal'] || '???';
+		var intention = data['intention'] || '???';
+		var message = data['message'] || '???';
+		var message_type = data['message_type'] || '???';
 
 		// Check to make sure it interestes us.
 		if( ! mid || mid != anchor.model_id ){
 		    ll('skip info packet--not for us');
 		}else{
-		    ll('received info: ' + str);
+		    ll('received info');
 		
 		    // Trigger whatever function we were given.
 		    if(typeof(on_info_event) !== 'undefined' && on_info_event){
-			on_info_event(uid, ucolor, str);
+			on_info_event(data, uid, ucolor);
 		    }
 		}
 	    }
@@ -133,22 +137,20 @@ var bbop_messenger_client = function(msgloc,
 		}		
 	    }
 	    anchor.socket.on('telekinesis', _got_telekinesis);
-
 	}
     };
 
     // 
-    anchor.info = function(str){
+    anchor.info = function(data){
 	if( ! anchor.okay() ){
 	    ll('no good socket on info; did you connect()?');
 	}else{
-	    ll('send info: (' + anchor.model_id + ') "' + str + '"');
+	    //ll('send info: (' + anchor.model_id + ') "' + str + '"');
+	    ll('send info: (' + anchor.model_id + ')');
 
-	    var msg_packet = {
-		model_id: anchor.model_id,
-		text: str
-	    };
-	    anchor.socket.emit('info', msg_packet);
+	    // Add in model ID.
+	    data['model_id'] = anchor.model_id;
+	    anchor.socket.emit('info', data);
 	}
     };
 

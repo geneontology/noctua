@@ -865,18 +865,23 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			     // adding a term. Papered over for the
 			     // time being by adding the additional
 			     // "instantiate" message type.
-			     var mtype = resp.message_type();
-			     var msg = [
-				 'completed op ',
-				 '<span class="bbop-mme-message-op">',
-				 mtype,
-				 '</span>'
-			     ];
-			     if( mtype == 'inconsistent' || 
-				 mtype == 'merge' ){
-				 msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
-				 }
-			     msngr.info(msg.join(''));
+			     // var mtype = resp.message_type();
+			     // var msg = [
+			     // 	 'completed op ',
+			     // 	 '<span class="bbop-mme-message-op">',
+			     // 	 mtype,
+			     // 	 '</span>'
+			     // ];
+			     // if( mtype == 'inconsistent' || 
+			     // 	 mtype == 'merge' ){
+			     // 	 msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
+			     // 	 }
+			     //msngr.info(msg.join(''));
+			     msngr.info({'message_type': resp.message_type(),
+					 'message': resp.message(),
+					 'intention': resp.intention(),
+					 'signal': resp.signal()
+					});
 			 }
 		     }, 7);
     manager.register('manager_error', 'foo',
@@ -1272,13 +1277,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // Allow the message board to be cleared.
     function _on_connect(){
 	reporter.reset();
-	reporter.comment('you are connected');
+	reporter.comment({'message': 'you are connected',
+			  'message_type': 'success'
+			 });
     }
 
-    function _on_info_update(uid, ucolor, message){
+    function _on_info_update(data, uid, ucolor){
 
 	// Add to the top of the message list.
-	reporter.comment(message, uid, ucolor);
+	reporter.comment(data, uid, ucolor);
 		
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
@@ -1362,9 +1369,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     jQuery(ping_btn_elt).click(
 	function(){
 	    if( msngr ){
-		msngr.info('Please contact me for discussion about ' +
-			   '<span class="bbop-mme-message-op">'+
-			   ecore.get_id() + '</span>');
+		// msngr.info('Please contact me for discussion about ' +
+		// 	   '<span class="bbop-mme-message-op">'+
+		// 	   ecore.get_id() + '</span>');
+		msngr.info({'message':
+			    '<strong>please contact me for discussion</strong>',
+			    'message_type': 'success'}
+			  );
 	    }
 	}
     );

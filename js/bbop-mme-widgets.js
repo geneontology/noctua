@@ -1176,8 +1176,12 @@ bbop_mme_widgets.reporter = function(output_id){
 	jQuery(output_elt).append('<ul id="' + new_list_id + '"></ul>');
     };
 
-    this.comment = function(str, uid, color){
+    this.comment = function(message, uid, color){
+
+	// Start.
 	var out = '<li>';
+
+	// Add color if defined.
 	out += _date_str() + ': ';
 	if( uid && color ){
 	    out += '<span class="bbop-mme-message-uid" style="color:' +
@@ -1185,33 +1189,37 @@ bbop_mme_widgets.reporter = function(output_id){
 	}else if( uid ){
 	    out += '<span class="bbop-mme-message-uid">'+ uid + '</span>: ';
 	}
-	out += str;
+
+	// Complicated datagram.
+	var intent = message['intention'] || '???';
+	var sig = message['signal'] || '???';
+	var mess = message['message'] || '???';
+	var mess_type = message['message_type'] || '???';
+
+	// make a sensible message.
+	if( mess_type == 'error' ){
+	    out += mess_type + ': there was a problem: ' + mess; 
+	}else{
+	    if( sig == 'merge' || sig == 'rebuild' ){
+		if( intent == 'query' ){
+		    out += mess_type + ': they likely refreshed';		
+		}else{		    
+		    out += 'performed  <span class="bbop-mme-message-op">' +
+			intent + '</span> (' + mess + '), ' +
+			'<span class="bbop-mme-message-req">' +
+			'you should refresh' + '</span>';
+		}
+	    }else{
+		out += mess_type + ': ' + mess;		
+	    }
+	}
+
+	// End.
 	out += '</li>';
 
 	// Actually do it.
 	jQuery(list_elt).prepend(out);
     };
-
-    // this.heard_op = function(op, uid, color){
-    // 	var out = '<li>';
-    // 	out += _date_str() + ': ';
-
-    // 	var msg = [
-    // 	    'completed op ',
-    // 	    '<span class="bbop-mme-message-op">',
-    // 	    op,
-    // 	    '</span>'
-    // 	];
-    // 	if( op == 'inconsistent' || op == 'merge' ){
-    // 	    msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
-    // 	}
-
-    // 	out += msg.join('');
-    // 	out += '</li>';
-
-    // 	// Actually do it.
-    // 	jQuery(list_elt).prepend(out);
-    // };
 
     // Initialize.
     this.reset();

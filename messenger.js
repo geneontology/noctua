@@ -65,11 +65,13 @@ sio.sockets.on('connection',
 		   socket.on('info',
 			     function(data){
 				 //console.log('srv info: %j', data);
+
 				 // Inject user data.
 				 data['user_id'] = user_id;
 				 data['user_color'] = user_color;
 				 socket.broadcast.emit('info', data);
 			     });
+
 		   socket.on('clairvoyance',
 			     function(data){
 				 //console.log('srv remove: ' + data);
@@ -77,6 +79,7 @@ sio.sockets.on('connection',
 				 data['user_color'] = user_color;
 				 socket.broadcast.emit('clairvoyance', data);
 			     });
+
 		   socket.on('telekinesis',
 			     function(data){
 				 //console.log('srv remove: ' + data);
