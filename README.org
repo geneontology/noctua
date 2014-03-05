@@ -53,6 +53,8 @@
     - Dragging on the background of the model allows you to pan around
       without using the scrollbars
     - Under [Views], there are various zooming options
+    - To reduce clutter, the "part of" relation can be hidden by
+      selecting [View] > [Show/hide "part of"]
 
 ** Known Issues
 
