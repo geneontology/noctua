@@ -27,7 +27,7 @@ var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
 // The name we're using this week.
-var notw = 'Artemis|Barista|Bast|Gato|Mao|Minerva|Neko';
+var notw = 'Artemis|Barista|Bast|EWAN|Gato|Mao|Minerva|Neko';
 
 ///
 /// Define the sample application.
