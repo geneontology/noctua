@@ -5,6 +5,9 @@
   It is based on BBOP JS (using the AmiGO 2 environment) and
   jsPlumb. The backend is the OWLTools Molecular Model Manager.
   
+  While the editor is generally developed with Firefox, the experience
+  using Chrome/Chromium is quite a bit smoother.
+
   A test instance is available at: http://go-genkisugi.rhcloud.com/
 
 ** How to use demo
