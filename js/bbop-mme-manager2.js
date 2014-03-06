@@ -147,7 +147,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 
 	// Optional set expressions.
 	if( enabled_by_id ){
-	    req.svf_expressions(enabled_by_id, 'enabled_by');
+	    //req.svf_expressions(enabled_by_id, 'enabled_by');
+	    req.svf_expressions(enabled_by_id, 'RO:0002333');
 	}
 	if( occurs_in_id ){
 	    req.svf_expressions(occurs_in_id, 'occurs_in');	    
