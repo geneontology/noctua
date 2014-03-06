@@ -14,7 +14,15 @@
 
 *** Generating/selecting a model
 
-    - TODO
+    - Models that are currently known (either in memory or file) are
+      found under [Current State] > select "Usable" > [Jump]
+    - To create a new model from a class and a DB, use [Wizard] >
+      (fill out first sections) > [Generate]; this operation could
+      take tens of minutes depending on the complexity
+    - To create a new model from just a DB, use [Wizard] > (fill out
+      second section) > [Generate]; this operation may take minutes
+      depending on the size of the GAF to be loaded
+    - Directly loading by copy-and-paste is not currently tested
 
 *** Instances and edges
 
@@ -33,7 +41,6 @@
     - Entering an expression of the form: "GO:0043234 and ('has part'
       some UniProtKB:P0002) and ('has part' some UniProtKB:P0003)"
    
-
 *** Models
 
     - Model meta information can be edited by selecting [Model] >
