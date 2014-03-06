@@ -231,7 +231,6 @@ var MMEnvBootstrappingInit = function(in_server_base){
     	    if( ! spdb || spdb == '' ){
     		alert('necessary field empty');
     	    }else{
-		// BUG: For Chris.
 		manager.generate_blank_model(spdb);
     	    }
     	}

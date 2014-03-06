@@ -958,7 +958,7 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
     	    'generate_id': true,
     	    'type': 'text',
     	    'class': 'form-control',
-    	    'placeholder': 'Enter evidence'
+    	    'placeholder': 'Enter evidence type'
 	};
 	var evi_text = new tag('input', evi_text_args);
 
