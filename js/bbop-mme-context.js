@@ -35,7 +35,7 @@ var bbop_mme_context = function(){
 	'BFO:0000050':
 	{
 	    readable: 'part of',
-	    priority: 5,
+	    priority: 15,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
@@ -56,10 +56,20 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#6495ED' // cornflower blue
 	},
+	'RO:0002233':
+	{
+	    readable: 'has input',
+	    priority: 14,
+	    aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000051',
+		'has_input'
+	    ],
+	    color: '#6495ED' // cornflower blue
+	},
 	'BFO:0000066':
 	{
 	    readable: 'occurs in',
-	    priority: 2,
+	    priority: 12,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000066',
 		//'BFO_0000066',
@@ -81,7 +91,7 @@ var bbop_mme_context = function(){
 	'RO:0002211':
 	{
 	    readable: 'regulates',
-	    priority: 0,
+	    priority: 16,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002211'
 		'regulates'
@@ -91,7 +101,7 @@ var bbop_mme_context = function(){
 	'RO:0002212':
 	{
 	    readable: 'negatively regulates',
-	    priority: 0,
+	    priority: 17,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002212'
 		'negatively regulates',
@@ -103,7 +113,7 @@ var bbop_mme_context = function(){
 	'RO:0002213':
 	{
 	    readable: 'positively regulates',
-	    priority: 0,
+	    priority: 18,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002213'
 		'positively regulates',
@@ -145,7 +155,7 @@ var bbop_mme_context = function(){
 	'RO:0002333':
 	{
 	    readable: 'enabled by',
-	    priority: 9,
+	    priority: 13,
 	    aliases: [
 		'RO_0002333',
 		'enabled by',
@@ -166,10 +176,10 @@ var bbop_mme_context = function(){
 	    //glyph: 'bar',
 	    color: '#8FBC8F' // darkseagreen
 	},
-	'directly_activates':
+	'RO:0002406':
 	{
 	    readable: 'directly activates',
-	    priority: 3,
+	    priority: 20,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_activates',
 		'directly activates',
@@ -189,10 +199,10 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#FF1493' // deeppink
 	},
-	'directly_inhibits':
+	'RO:0002408':
 	{
 	    readable: 'directly inhibits',
-	    priority: 2,
+	    priority: 19,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_inhibits'
 		'directly inhibits',
@@ -246,14 +256,6 @@ var bbop_mme_context = function(){
 					  entity_aliases[alias] = ekey;
 				      });
 		   });
-
-    // The 
-    var suggested_stack_order = [
-	'RO:0002333', // enabled by
-	'instance_of', // activity
-	'',	
-	'BFO:0000066' // occurs in
-    ];
 
     // Helper fuction to go from unknown id -> alias -> data structure.
     this._dealias_data = function(id){
