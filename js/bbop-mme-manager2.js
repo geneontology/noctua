@@ -385,8 +385,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.model_id(model_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -402,6 +402,7 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.add('subject', class_id);
 	reqs.add(req);
 
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -415,7 +416,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	var req = new bbop_mmm_request('model', 'generate-blank');
 	req.add('db', db_id);
 	reqs.add(req);
-
+	
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
