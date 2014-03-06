@@ -1241,9 +1241,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     jQuery(save_btn_elt).click(
     	function(){
 	    // Run it off in a new tab.
-	    // TODO/BUG: Not extant in batch?
-	    //manager.store_model(ecore.get_id());
-	    alert('This functionality has been temporarily suspended.');
+	    manager.store_model(ecore.get_id());
+	    //alert('This functionality has been temporarily suspended.');
     	});
 
     // // Help button.
