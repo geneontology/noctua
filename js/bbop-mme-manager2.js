@@ -84,8 +84,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	var req = new bbop_mmm_request('model', 'get');
 	req.model_id(model_id);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
 	anchor.apply_callbacks('prerun', [anchor]);
 	jqm.action(url, args, 'GET');
     };
@@ -98,8 +98,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	var reqs = new bbop_mmm_request_set(anchor._user_id, 'query');
 	var req = new bbop_mmm_request('model', 'all-model-ids');
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -113,8 +113,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
 	reqs.add(req);
-	var args = reqs.callable();
 
+	var args = reqs.callable();
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -128,8 +128,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
 	reqs.add(req);
-	var args = reqs.callable();
 
+	var args = reqs.callable();
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -240,8 +240,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.model_id(model_id);
 	req.individual(indv_id);
 	reqs.add(req);
-	var args = reqs.callable();
 
+	var args = reqs.callable();
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -255,8 +255,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	var req = new bbop_mmm_request('model', 'export');
 	req.model_id(model_id);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -276,16 +276,20 @@ var bbop_mme_manager2 = function(user_id, server_base){
     	jqm.action(url, args, 'GET');
     };
     
-    // // TODO
-    // // Likely triggers "success", "error", etc.
-    // anchor.store_model = function(model_id){
-    // 	var url = server_base + '/m3StoreModel';
-    // 	var args = {
-    // 	    'modelId': model_id
-    // 	};
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(url, args, 'GET');
-    // };
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.store_model = function(model_id){
+
+	// 
+	var reqs = new bbop_mmm_request_set(anchor._user_id, 'query');
+	var req = new bbop_mmm_request('model', 'store');
+	req.model_id(model_id);
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
@@ -298,8 +302,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.individual(indv_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -317,8 +321,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.fact(source_id, target_id, rel_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
 
+	var args = reqs.callable();
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -333,8 +337,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.model_id(model_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -350,8 +354,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.individual(indv_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
@@ -369,8 +373,8 @@ var bbop_mme_manager2 = function(user_id, server_base){
 	req.fact(source_id, target_id, rel_id);
 	req.annotation_values(key, value);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
