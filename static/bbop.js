@@ -19761,11 +19761,20 @@ renderer.prototype._update_layout = function() {
     });
     this._leaves = visible_leaves;
 
+    var roots = this.tree.roots();
+    var root_distances = [];
+    for (var i = 0; i < roots.length; i++) {
+        root_distances.push(roots[i].parent_distance);
+    }
+    // if we're only showing a subtree, position the leftmost subtree
+    // root all the way to the left
+    this.x_offset = -min(root_distances);
+
     this._max_distance = max(this.tree.traverse(
         function(node, down_data) {
             return down_data + node.parent_distance;
         },
-        0,
+        this.x_offset,
         function(node, child_results, down_data) {
             if (self.node_hidden[node.id]) return 0;
 
@@ -19785,7 +19794,7 @@ renderer.prototype._do_layout = function() {
         function(node, down_data) {
             return down_data + node.parent_distance;
         },
-        0,
+        this.x_offset,
         function(node, child_results, down_data) {
             // don't lay out the node if it's hidden
             if (self.node_hidden[node.id]) return [];
@@ -19810,10 +19819,12 @@ renderer.prototype._do_layout = function() {
                 x: down_data,
                 y: ( ( node.is_leaf() || self.children_hidden[node.id] )
                      // The traverse method goes depth-first, so we'll
-                     // encounter the leaves in leaf-order.  So the y-coord
-                     // is just the number of leaves we've seen so far.
+                     // encounter the leaves in leaf-order.  So the
+                     // y-coord for leaves is just the number of
+                     // leaves we've seen so far.
                      ? leaf_counter++
-                     // internal node y-coord is the mean of its child y-coords
+                     // The internal node y-coord is the mean of its
+                     // child y-coords
                      : ( immediate_child_y_sum / child_results.length ) )
             }];
             // flatten child result arrays and append the result to my_pos
@@ -19890,7 +19901,7 @@ renderer.prototype.show_subtree = function(node_id) {
     // remove this node from children_hidden
     delete self.children_hidden[to_show_under.id];
     to_show_under.iterate_preorder(function(node) {
-        if (node == to_show_under) return;
+        if (node === to_show_under) return;
 
         delete self.node_hidden[node.id];
         self._phynodes[node.id].show();
@@ -19902,6 +19913,63 @@ renderer.prototype.show_subtree = function(node_id) {
         if (self.children_hidden[node.id]) return true;
     });
     self._phynodes[to_show_under.id].set_children_visible();
+
+    this._layout_dirty = true;
+    this.position_nodes();
+    this.width_changed(this.parent.clientWidth);
+};
+
+// hide everything except the subtree rooted at the given node
+renderer.prototype.show_only_subtree = function(node_id) {
+    var to_show = this.tree.nodes[node_id];
+    if (to_show === undefined) {
+        throw "asked to show non-existent node " + node_id;
+    }
+
+    // hide all nodes except those under the given node
+    var self = this;
+    this.tree.iterate_preorder(function(node) {
+        // returning true stops the iteration: we don't want to hide
+        // any nodes under this node, so we'll stop the iteration here
+        // for the subtree rooted at the current node
+        if (node === to_show) return true;
+
+        self.node_hidden[node.id] = true;
+        self._phynodes[node.id].hide();
+    });
+    this.tree.set_roots([to_show.id]);
+    this._phynodes[node_id].hide_connector();
+
+    this._layout_dirty = true;
+    this.position_nodes();
+
+    this.width_changed(this.parent.clientWidth);
+};
+
+// returns true if we're showing only a subtree rooted at the node
+// with the given id, false otherwise
+renderer.prototype.only_subtree_shown = function(node_id) {
+    var node = this.tree.nodes[node_id];
+    return contains(this.tree.roots(), node) && node.has_parent();
+};
+
+// undo show_only_subtree
+renderer.prototype.show_global_root = function() {
+    this.tree.clear_roots();
+    
+    var self = this;
+    this.tree.iterate_preorder(function(node) {
+        delete self.node_hidden[node.id];
+        var phynode = self._phynodes[node.id];
+        phynode.show();
+        if (! phynode.connector_shown) phynode.show_connector();
+        
+        // returning true stops the iteration: if we encounter a
+        // previously-hidden subtree under the node that we're
+        // showing, we'll leave its children hidden unless it's
+        // specifically shown
+        if (self.children_hidden[node.id]) return true;
+    });
 
     this._layout_dirty = true;
     this.position_nodes();
@@ -19976,6 +20044,7 @@ function graph_pnode(node, node_class, leaf_class, height){
     this.node = node;
     this.height = height;
     this.leaf_class = leaf_class;
+    this.connector_shown = false;
 
     var node_elem = document.createElement("div");
     if (node.is_leaf()) {
@@ -20011,14 +20080,25 @@ graph_pnode.prototype.set_children_visible = function() {
     this._width = this.node_elem.offsetWidth;
     this.node_elem.removeChild(this.subtree_box);
 };
+
 graph_pnode.prototype.hide = function() {
     this.node_elem.style.display = "none";
     if (this.parent) this.conn_elem.style.display = "none";
 };
 
+graph_pnode.prototype.hide_connector = function() {
+    if (this.parent) this.conn_elem.style.display = "none";
+    this.connector_shown = false;
+};
+
 graph_pnode.prototype.show = function() {
     this.node_elem.style.display = "";
     if (this.parent) this.conn_elem.style.display = "";
+};
+
+graph_pnode.prototype.show_connector = function() {
+    if (this.parent) this.conn_elem.style.display = "";
+    this.connector_shown = true;
 };
 
 graph_pnode.prototype.set_position = function(x, y) {
@@ -20028,7 +20108,7 @@ graph_pnode.prototype.set_position = function(x, y) {
     this.node_elem.style.left = x + "%";
     this.node_elem.style.top = y + "px";
 
-    if (this.parent) {
+    if (this.parent && this.connector_shown) {
         var conn_style =
             "top: " + Math.min(this.parent.py, this.py) + "px;"
             + "left: " + this.parent.px + "%;"
@@ -20050,6 +20130,8 @@ graph_pnode.prototype.set_parent = function(parent, conn_class) {
     this.parent = parent;
     this.conn_elem = document.createElement("div");
     this.conn_elem.className = conn_class;
+    this.conn_elem.id=parent.node.id + "-" + this.node.id;
+    this.connector_shown = true;
 };
 
 graph_pnode.prototype.width = function() {
@@ -20092,9 +20174,6 @@ tree.prototype.sort_children = function(compare_fun) {
     for (var i = 0; i < roots.length; i++) {
         roots[i].sort_children(compare_fun);
     }
-    // this can change the leaf ordering, so we'll want to
-    // recompute the leaf list.
-    this._dirty = true;
 };
 
 tree.prototype.iterate_preorder = function(fun) {
@@ -20113,21 +20192,35 @@ tree.prototype.iterate_edges = function(fun) {
     }
 };
 
-// computes and stores a list of leaves, list of roots, max distance, etc.
 tree.prototype._summarize = function() {
-    var roots = [];
-    for (var id in this.nodes) {
-        var node = this.nodes[id];
-        if( ! node.has_parent() ) roots.push(node);
-    }
-    this._roots = roots;
-    
+    if (this._dirty) this.clear_roots();
     this._dirty = false;
 };
 
 tree.prototype.roots = function() {
     if (this._dirty) this._summarize();
     return this._roots;
+};
+
+// set the roots to be specific nodes
+// i.e. to only show a subtree, set_roots(subtree_node_id)
+tree.prototype.set_roots = function(root_ids) {
+    var roots = [];
+    for (var i = 0; i < root_ids.length; i++) {
+        roots.push(this.nodes[root_ids[i]]);
+    }
+    this._roots = roots;
+};
+
+// set the list of roots back to the "natural" list of nodes without
+// parents
+tree.prototype.clear_roots = function() {
+    var roots = [];
+    for (var id in this.nodes) {
+        var node = this.nodes[id];
+        if( ! node.has_parent() ) roots.push(node);
+    }
+    this._roots = roots;
 };
 
 // see node.traverse for description
@@ -20220,6 +20313,13 @@ function css_string(css_object) {
         }
     }
     return result;
+}
+
+function contains(arr, elem) {
+    for (var i = 0; i < arr.length; i++) {
+        if (elem == arr[i]) return true;
+    }
+    return false;
 }
 
 function max(list) {
@@ -20435,6 +20535,7 @@ renderer.prototype.show_pgraph = function(pgraph) {
         transition_time: this.config.transition_time
     });
     tree_renderer.leaf_style.background = "none";
+    tree_renderer.leaf_style.cursor = "pointer";
     tree_renderer.node_style.cursor = "pointer";
 
     var nodes = pgraph.nodes;
@@ -20480,21 +20581,7 @@ renderer.prototype.show_pgraph = function(pgraph) {
     });
 
     tree_renderer.node_clicked = function(node, node_elem) {
-        if (tree_renderer.subtree_hidden(node.id)) {
-            tree_renderer.show_subtree(node.id);
-            var leaf_id_list = tree_renderer.leaves().map(
-                function(x) { return x.id }
-            );
-            mat_renderer.show_rows(leaf_id_list);
-            self.update_heights();
-        } else {
-            tree_renderer.hide_subtree(node.id);
-            var leaf_id_list = tree_renderer.leaves().map(
-                function(x) { return x.id }
-            );
-            mat_renderer.show_rows(leaf_id_list);
-            self.update_heights();
-        }
+        self.show_node_menu(node, node_elem);
     };
 
     var node_colors = {};
@@ -20582,8 +20669,85 @@ renderer.prototype.show_pgraph = function(pgraph) {
     this.mat_renderer = mat_renderer;
 };
 
+renderer.prototype.toggle_subtree_shown = function(node_id) {
+    if (this.tree_renderer.subtree_hidden(node_id)) {
+        this.tree_renderer.show_subtree(node_id);
+    } else {
+        this.tree_renderer.hide_subtree(node_id);
+    }
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_global_root = function(node_id) {
+    this.tree_renderer.show_global_root();
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_only_subtree = function(node_id) {
+    this.tree_renderer.show_only_subtree(node_id);
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_mat_rows_for_tree_leaves = function() {
+    var leaf_id_list = jQuery.map( this.tree_renderer.leaves(),
+                                   function(x) { return x.id; } );
+    this.mat_renderer.show_rows(leaf_id_list);
+    this.update_heights();
+};
+
 renderer.prototype.update_heights = function() {
     this.parent.style.height = this.tree_renderer.tree_height + "px";
+};
+
+renderer.prototype.show_node_menu = function(node, node_elem) {
+    var buttons = [];
+    var jqElem = jQuery(node_elem);
+    var self = this;
+
+    var podata = jqElem.data("bs.popover");
+    if (podata) {
+        jqElem.popover("destroy");
+        return;
+    }
+
+    jqElem.popover({
+        html: true,
+        placement: "auto top",
+        container: "body",
+        title: node.label
+    });
+    var podata = jqElem.data("bs.popover");
+
+    if (! node.is_leaf()) {
+        podata.tip().append("&nbsp;");
+
+        var hideButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
+        hideButton.click(function() {
+            jqElem.popover("destroy");
+            self.toggle_subtree_shown(node.id);
+        });
+
+        hideButton.text( self.tree_renderer.subtree_hidden(node.id)
+                         ? "Show subtree" : "Hide subtree" );
+        podata.tip().append(hideButton);
+    }
+
+    podata.tip().append("&nbsp;");
+    var rootButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
+    rootButton.click(function() {
+        jqElem.popover("destroy");
+        if (self.tree_renderer.only_subtree_shown(node.id)) {
+            self.show_global_root();
+        } else {
+            self.show_only_subtree(node.id);
+        }
+    });
+    rootButton.text( self.tree_renderer.only_subtree_shown(node.id)
+                     ? "Show global root" : "Show only subtree" );
+    podata.tip().append(rootButton);
+    podata.tip().append("&nbsp;");
+
+    jqElem.popover("show");
 };
 
 renderer.prototype.render_tree = function() {
@@ -20639,7 +20803,6 @@ renderer.prototype.render_tree = function() {
             }
         }
     );
-
 };
 
 function getStyle(el, styleProp) {
