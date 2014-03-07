@@ -946,7 +946,7 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
 	alert('unknown id:' + entity_id);
     }else{
 	
-	// Create delete button.
+	// Create add button.
 	var add_evi_btn_args = {
     	    'generate_id': true,
     	    'type': 'button',
@@ -968,6 +968,31 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
 	    evi_text.to_string(),
     	    '</div>',
     	    add_evi_btn.to_string(),
+    	    '</div>'
+	];
+	
+	// Create add button.
+	var add_src_btn_args = {
+    	    'generate_id': true,
+    	    'type': 'button',
+    	    'class': 'btn btn-success'
+	};
+	var add_src_btn = new tag('button', add_src_btn_args, 'Add');
+
+	var src_text_args = {
+    	    'generate_id': true,
+    	    'type': 'text',
+    	    'class': 'form-control',
+    	    'placeholder': 'Enter reference type'
+	};
+	var src_text = new tag('input', src_text_args);
+
+	var src_form = [
+    	    '<div class="form-inline">',
+    	    '<div class="form-group">',
+	    src_text.to_string(),
+    	    '</div>',
+    	    add_src_btn.to_string(),
     	    '</div>'
 	];
 	
@@ -1003,6 +1028,11 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
 	// var elt2ann = {};
 	var cache = {
 	    'comment': {
+		elt2ann: {},
+		list: [],
+		string: '???'
+	    },
+	    'source': {
 		elt2ann: {},
 		list: [],
 		string: '???'
@@ -1048,6 +1078,13 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
 	    '</ul>',
 	    '</p>',
 	    ev_form.join(''),
+	    '<h4>Source</h4>',
+	    '<p>',
+	    '<ul class="list-group">',
+	    cache['source']['string'],
+	    '</ul>',
+	    '</p>',
+	    src_form.join(''),
 	    '<h4>Comments</h4>',
 	    '<p>',
 	    '<ul class="list-group">',
@@ -1096,6 +1133,23 @@ bbop_mme_widgets.edit_annotations_modal = function(ecore, manager, entity_id,
 				  ecore.get_id(), 'evidence', val);
 		}else{
 		    alert('no evidence added for' + entity_id);
+		}
+		
+		// Wipe out modal.
+		mdl.destroy();
+	    });	
+
+	// Add add source action.
+	jQuery('#' + add_src_btn.get_id()).click(
+	    function(evt){
+		evt.stopPropagation();
+		
+		var val = jQuery('#' + src_text.get_id()).val();
+		if( val && val != '' ){
+		    _ann_dispatch(entity, entity_type, 'add',
+				  ecore.get_id(), 'source', val);
+		}else{
+		    alert('no source added for' + entity_id);
 		}
 		
 		// Wipe out modal.
