@@ -195,6 +195,28 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#86B80B' // ??? - random
 	},
+	'RO:0002335':
+	{
+	    readable: 'negatively regulated by',
+	    priority: 0,
+	    aliases: [
+		'RO_0002335',
+		'negatively regulated by',
+		'negatively_regulated_by'
+	    ],
+	    color: '#0B86BB' // ??? - random
+	},
+	'RO:0002336':
+	{
+	    readable: 'positively regulated by',
+	    priority: 0,
+	    aliases: [
+		'RO_0002336',
+		'positively regulated by',
+		'positively_regulated_by'
+	    ],
+	    color: '#BB0B86' // ??? - random
+	},
 	'activates':
 	{
 	    readable: 'activates',
