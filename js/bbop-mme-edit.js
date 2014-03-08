@@ -552,8 +552,8 @@ bbop_mme_edit.core.prototype.get_annotation_by_id =
  * aren't constantly trying to work with them endlessly elsewhere in
  * the code.
  * 
- * Types can be: Class and the class expressions: SVF, unionOf, and
- * intersectionOf.
+ * Types can be: Class and the class expressions: SVF, union, and
+ * intersection.
  * 
  * Categories is more a graphical distinction. They can be:
  * instance_of, <relation id>, union, and intersection.
@@ -588,18 +588,18 @@ bbop_mme_edit.type = function(in_type){
 	// Easiest case.
 	var t = type['type'] || null;
 	if( t == 'Class' ){
-	    rettype = 'Class';
+	    rettype = 'class';
 	}else{
 	    // Okay, we're dealing with a class expression...but which
 	    // one? Talking to Heiko, these can be only one--they are
 	    // not going to be mixed.
 	    if( type['unionOf'] ){
-		rettype = 'unionOf';
+		rettype = 'union';
 	    }else if( type['intersectionOf'] ){
-		rettype = 'intersectionOf';
+		rettype = 'intersection';
 	    }else{
 		// Leaving us with SVF.
-		rettype = 'SVF';
+		rettype = 'svf';
 	    }
 	}
 
@@ -609,7 +609,7 @@ bbop_mme_edit.type = function(in_type){
     // Define the category, and build up an instant picture of what we
     // need to know about the property.
     var t = _decide_type(in_type);
-    if( t == 'Class' ){
+    if( t == 'class' ){
 
 	// Easiest to extract.
 	this._type = t;
@@ -618,7 +618,7 @@ bbop_mme_edit.type = function(in_type){
 	this._class_label = in_type['label'] || this._class_id;
 	// No related properties.
 	
-    }else if( t == 'unionOf' || t == 'intersectionOf' ){
+    }else if( t == 'union' || t == 'intersection' ){
 
 	// These are simply recursive.
 	this._type = t;
@@ -626,7 +626,8 @@ bbop_mme_edit.type = function(in_type){
 
 	// Load stuff into the frame.
 	this._frame = [];
-	var f_set = in_type[t] || [];
+	// TODO: argh! hardcody
+	var f_set = in_type[t + 'Of'] || [];
 	each(f_set,
 	     function(f_type){
 		 anchor._frame.push(new bbop_mme_edit.type(f_type));

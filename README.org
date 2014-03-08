@@ -69,8 +69,6 @@
    tracker (https://github.com/kltm/go-mme/issues). If something is
    not mentioned here or in the tracker, please contact Seth or Chris.
 
-   - There is no way to erase nested expressions (short of erasing the
-     instance)
    - Complex expression delete button has a serious offset
    - When starting a new model, or editing a current one, there is an
      invisible boundary around the instances that you cannot leave; to

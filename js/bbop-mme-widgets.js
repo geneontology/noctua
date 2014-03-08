@@ -789,11 +789,12 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode,
 		     var cid = target_type.class_id();
 
 		     // Trigger the delete.
-		     if( target_type.type() == 'Class' ){
+		     if( target_type.type() == 'class' ){
 			 manager.remove_class(ecore.get_id(), tid, cid);
 		     }else{
 			 var pid = target_type.property_id();
-			 manager.remove_svf(ecore.get_id(), tid, cid, pid);
+			 manager.remove_class_expression(ecore.get_id(), tid,
+							 cid, target_type);
 		     }
 		     // Wipe out modal.
 		     mdl.destroy();

@@ -216,14 +216,15 @@ var bbop_mme_manager2 = function(user_id, server_base){
     
     // Intent: "action".
     // Expect: "success" and "merge".
-    anchor.remove_svf = function(model_id, individual_id, class_id, property_id){
+    anchor.remove_class_expression = function(model_id, individual_id,
+					      class_id, type){
 
 	// 
 	var reqs = new bbop_mmm_request_set(anchor._user_id, 'action');
 	var req = new bbop_mmm_request('individual', 'remove-type');
 	req.model_id(model_id);
 	req.individual(individual_id);
-	req.svf_expressions(class_id, property_id);
+	req.complex_class_expressions(class_id, type);
 
 	reqs.add(req);
 

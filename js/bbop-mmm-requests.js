@@ -75,6 +75,27 @@ var bbop_mmm_request = function(entity, operation){
 	anchor._arguments['values'].push({'key': key, 'value': val});
     };
 
+    /**
+     * Special use.
+     * A short form for "addition" requests that can overload the
+     * literal (on the server side) with Manchester syntax.
+     */
+    anchor.svf_expressions = function(class_id, property_id){
+	// Our list of expressions must be defined if we go this way.
+        if( ! anchor._arguments['expressions'] ){
+            anchor._arguments['expressions'] = [];
+        }
+	var expression = {
+            'type': 'svf',
+            'literal': class_id,
+            'onProp': property_id
+	};
+	anchor._arguments['expressions'].push(expression);
+    };
+
+    /**
+     * General use for simple ops.
+     */
     anchor.class_expressions = function(class_id){
 	// Our list of expressions must be defined if we go this way.
 	if( ! anchor._arguments['expressions'] ){
@@ -87,16 +108,65 @@ var bbop_mmm_request = function(entity, operation){
 	anchor._arguments['expressions'].push(expression);
     };
 
-    anchor.svf_expressions = function(class_id, property_id){
+    // Create a usable argument bundle from a type.
+    function _gen_class_exp(type){
+
+	var each = bbop.core.each;
+	
+	// We'll return this.
+	var expression = {};
+	
+	// Extract type.
+	var t = type.type(); 
+	if( t == 'class' ){ // trivial
+	    expression['type'] = 'class';
+	    expression['literal'] = type.class_id();
+	}else if( t == 'union' || t == 'intersection' ){
+
+	    expression['type'] = t;
+
+	    // Recursively add all of the types in the frame.
+	    var ecache = [];
+	    var frame = type.frame();
+	    each(frame,
+		 function(ftype){
+		     ecache.push(_gen_class_exp(ftype));
+		 });
+	    expression['expressions'] = ecache;
+	    
+	}else if( t == 'svf' ){
+
+	    // Easy part of SVF.
+	    expression['type'] = 'svf';
+	    expression['onProp'] = type.property_id();
+	    
+	    // The hard part: grab or recur.
+	    var svfce = type.svf_class_expression();
+	    var st = svfce.type();
+	    if( st == 'class' ){
+		expression['literal'] = svfce.class_id();
+	    }else if( t == 'union' || t == 'intersection' || t == 'svf' ){
+		expression['expressions'] = [_gen_class_exp(svfce)];
+	    }else{
+		throw new Error('unknown type in sub-request prcessing: ' + st);
+	    }
+	    
+	}else{
+	    throw new Error('unknown type in request prcessing: ' + t);
+	}
+
+	return expression;
+    }
+
+    anchor.complex_class_expressions = function(class_id, type){
 	// Our list of expressions must be defined if we go this way.
 	if( ! anchor._arguments['expressions'] ){
 	    anchor._arguments['expressions'] = [];
 	}
-	var expression = {
-	    'type': 'svf',
-	    'literal': class_id,
-	    'onProp': property_id
-	};
+
+	// May be very complicated--recursively assemble.
+	var expression = _gen_class_exp(type);
+
 	anchor._arguments['expressions'].push(expression);
     };
 };

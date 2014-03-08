@@ -491,9 +491,9 @@ var bme_type_to_minimal = function(in_type, aid){
     var t = in_type.type();
     var f = in_type.frame();
 
-    if( t == 'Class' ){
+    if( t == 'class' ){
 	ret = in_type.class_label();
-    }else if( t == 'unionOf' || t == 'intersectionOf' ){
+    }else if( t == 'union' || t == 'intersection' ){
 	ret = t + '[' + f.length + ']';
     }else{
 	// SVF a little harder.
@@ -505,9 +505,9 @@ var bme_type_to_minimal = function(in_type, aid){
 	var cetype = ce.type();
 
 	var inner_lbl = '???';
-	if( cetype == 'Class' ){
+	if( cetype == 'class' ){
 	    inner_lbl = ce.class_label();
-	}else if( cetype == 'unionOf' || cetype == 'intersectionOf' ){
+	}else if( cetype == 'union' || cetype == 'intersection' ){
 	    var cef = ce.frame();
 	    inner_lbl = cetype + '[' + cef.length + ']';
 	}else{
@@ -582,12 +582,12 @@ var bme_type_to_full = function(in_type, aid){
     var text = '[???]';
 
     var t = in_type.type();
-    if( t == 'Class' ){ // if simple, the easy way out
+    if( t == 'class' ){ // if simple, the easy way out
 	text = bme_type_to_minimal(in_type, aid);
     }else{
 	// For everything else, we're gunna hafta do a little
 	// lifting...
-	if( t == 'unionOf' || t == 'intersectionOf' ){
+	if( t == 'union' || t == 'intersection' ){
 	    
 	    // Some kind of recursion on a frame then.
 	    var cache = [
