@@ -533,14 +533,19 @@ bbop_mme_widgets.compute_shield = function(){
     return mdl;
 };
 
-/*
+/**
  * Function that returns a sorted relation list of the form [[id, label], ...]
+ * 
+ * Optional boost when we don't care using the boolean "relevant" field.
+ * The boost is 10.
  * 
  * TODO: make subclass?
  */
 bbop_mme_widgets.sorted_relation_list = function(relations, aid){
     
     var each = bbop.core.each;
+
+    var boost = 10;
 
     // Get a sorted list of known rels.
     //var rels = aid.all_entities();
@@ -555,8 +560,8 @@ bbop_mme_widgets.sorted_relation_list = function(relations, aid){
 	    // Looking at the optional boolean "relevant" field, if we
 	    // showed no preference in our context, give these a
 	    // boost.
-	    if( pr_a == 0 && a['relevant'] ){ pr_a = 10; }
-	    if( pr_b == 0 && b['relevant'] ){ pr_b = 10; }
+	    if( pr_a == 0 && a['relevant'] ){ pr_a = boost; }
+	    if( pr_b == 0 && b['relevant'] ){ pr_b = boost; }
 
 	    return pr_b - pr_a;
 	});
