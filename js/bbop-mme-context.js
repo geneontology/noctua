@@ -40,6 +40,7 @@ var bbop_mme_context = function(){
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
 		'BFO_0000050',
+		'part:of',
 		'part of',
 		'part_of'
 	    ],
@@ -51,6 +52,7 @@ var bbop_mme_context = function(){
 	    priority: 4,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
+		'has:part',
 		'has part',
 		'has_part'
 	    ],
@@ -63,6 +65,7 @@ var bbop_mme_context = function(){
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000066',
 		//'BFO_0000066',
+		'occurs:in',
 		'occurs in',
 		'occurs_in'
 	    ],
@@ -73,6 +76,7 @@ var bbop_mme_context = function(){
 	    readable: 'develops from',
 	    priority: 0,
 	    aliases: [
+		'develops:from',
 		'develops from',
 		'develops_from'
 	    ],
@@ -94,6 +98,7 @@ var bbop_mme_context = function(){
 	    priority: 17,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002212'
+		'negatively:regulates',
 		'negatively regulates',
 		'negatively_regulates'
 	    ],
@@ -106,6 +111,7 @@ var bbop_mme_context = function(){
 	    priority: 18,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002213'
+		'positively:regulates',
 		'positively regulates',
 		'positively_regulates'
 	    ],
@@ -118,6 +124,8 @@ var bbop_mme_context = function(){
 	    priority: 14,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
+		'has:input',
+		'has input',
 		'has_input'
 	    ],
 	    color: '#6495ED' // cornflower blue
@@ -127,6 +135,8 @@ var bbop_mme_context = function(){
 	    readable: 'has output',
 	    priority: 0,
 	    aliases: [
+		'has:output',
+		'has output',
 		'has_output'
 	    ],
 	    color: '#ED6495' // ??? - random
@@ -146,6 +156,7 @@ var bbop_mme_context = function(){
 	    readable: 'involved in',
 	    priority: 3,
 	    aliases: [
+		'involved:in',
 		'involved in',
 		'involved_in'
 	    ],
@@ -167,6 +178,7 @@ var bbop_mme_context = function(){
 	    priority: 13,
 	    aliases: [
 		'RO_0002333',
+		'enabled:by',
 		'enabled by',
 		'enabled_by'
 	    ],
@@ -202,6 +214,7 @@ var bbop_mme_context = function(){
 	    priority: 20,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_activates',
+		'directly:activates',
 		'directly activates',
 		'directly_activates'
 	    ],
@@ -214,6 +227,7 @@ var bbop_mme_context = function(){
 	    priority: 2,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/upstream_of'
+		'upstream:of',
 		'upstream of',
 		'upstream_of'
 	    ],
@@ -225,6 +239,7 @@ var bbop_mme_context = function(){
 	    priority: 19,
 	    aliases: [
 		//'http://purl.obolibrary.org/obo/directly_inhibits'
+		'directly:inhibits',
 		'directly inhibits',
 		'directly_inhibits'
 	    ],
