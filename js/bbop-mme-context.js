@@ -56,16 +56,6 @@ var bbop_mme_context = function(){
 	    ],
 	    color: '#6495ED' // cornflower blue
 	},
-	'RO:0002233':
-	{
-	    readable: 'has input',
-	    priority: 14,
-	    aliases: [
-		//'http://purl.obolibrary.org/obo/BFO_0000051',
-		'has_input'
-	    ],
-	    color: '#6495ED' // cornflower blue
-	},
 	'BFO:0000066':
 	{
 	    readable: 'occurs in',
@@ -122,6 +112,25 @@ var bbop_mme_context = function(){
 	    glyph: 'arrow',
 	    color: '#008000' //green
 	},
+	'RO:0002233':
+	{
+	    readable: 'has input',
+	    priority: 14,
+	    aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000051',
+		'has_input'
+	    ],
+	    color: '#6495ED' // cornflower blue
+	},
+	'RO:0002234':
+	{
+	    readable: 'has output',
+	    priority: 0,
+	    aliases: [
+		'has_output'
+	    ],
+	    color: '#ED6495' // ??? - random
+	},
 	'RO:0002330':
 	{
 	    readable: 'genomically related to',
@@ -162,6 +171,17 @@ var bbop_mme_context = function(){
 		'enabled_by'
 	    ],
 	    color: '#B8860B' // darkgoldenrod
+	},
+	'RO:0002334':
+	{
+	    readable: 'regulated by',
+	    priority: 0,
+	    aliases: [
+		'RO_0002334',
+		'regulated by',
+		'regulated_by'
+	    ],
+	    color: '#86B80B' // ??? - random
 	},
 	'activates':
 	{
