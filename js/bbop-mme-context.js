@@ -481,107 +481,168 @@ var bbop_mme_context = function(){
 //     return ret;
 // };
 
-/*
- * 
+/**
+ * Return a single-line text-only one-level representation of a type.
  */
 var bme_type_to_minimal = function(in_type, aid){
-    var lbl = in_type.class_label();
-    if( ! lbl ){
-	// Maybe a frame then?
-	var ft = in_type.frame_type();
-	var f = in_type.frame();
-	if( ft && f ){
-	    lbl = ft + '[' + f.length + ']';
-	}else{
-	    lbl = '[???]';
-	}
-    }
-    return lbl;
-};
 
-/*
- * 
- */
-var bme_type_to_expanded = function(in_type, aid){
-
-    var text = '[???]';
-
+    var ret = '[???]';
+    
     var t = in_type.type();
-    var ft = in_type.frame_type();
     var f = in_type.frame();
-    if( t == 'Class' && ft == null ){
-	text = in_type.class_label() + ' (' + in_type.class_id() + ')';
-    }else if( t == 'Restriction' && ft == null ){
-	var thing = in_type.class_label();
-	var thing_prop = in_type.property_label();
-	text = aid.readable(thing_prop) + '(' + thing + ')';
-    }else if( ft ){
-	var thing_prop = in_type.property_label();
-	text = aid.readable(thing_prop) + '(' + ft + '[' + f.length + '])';
+
+    if( t == 'Class' ){
+	ret = in_type.class_label();
+    }else if( t == 'unionOf' || t == 'intersectionOf' ){
+	ret = t + '[' + f.length + ']';
+    }else{
+	// SVF a little harder.
+	var ctype = in_type.category();
+	var ctype_r = aid.readable(ctype);
+
+	// Probe it a bit.
+	var ce = in_type.svf_class_expression();
+	var cetype = ce.type();
+
+	var inner_lbl = '???';
+	if( cetype == 'Class' ){
+	    inner_lbl = ce.class_label();
+	}else if( cetype == 'unionOf' || cetype == 'intersectionOf' ){
+	    var cef = ce.frame();
+	    inner_lbl = cetype + '[' + cef.length + ']';
+	}else{
+	    inner_lbl = '[SVF]';
+	}
+
+	//var cr = aid.readable(cat);
+	ret = ctype_r + '(' + inner_lbl + ')';
     }
 
-    return text;
+    return ret;
 };
 
-/*
- * 
+// /*
+//  * 
+//  */
+// var bme_type_to_expanded = function(in_type, aid){
+
+//     var text = '[???]';
+
+//     var t = in_type.type();
+//     //var ft = in_type.frame_type();
+//     var ft = null;
+//     var f = in_type.frame();
+//     if( t == 'Class' && ft == null ){
+// 	text = in_type.class_label() + ' (' + in_type.class_id() + ')';
+//     }else if( t == 'Restriction' && ft == null ){
+// 	var thing = in_type.class_label();
+// 	var thing_prop = in_type.property_label();
+// 	text = aid.readable(thing_prop) + '(' + thing + ')';
+//     }else if( ft == 'intersectionOf' ){
+// 	var thing_prop = in_type.property_label();
+// 	text = aid.readable(thing_prop) + '(' + ft + '[' + f.length + '])';
+//     }else if( ft == 'unionOf' ){
+// 	text = ft + '[' + f.length + ']';
+//     }
+
+//     return text;
+// };
+
+/**
+ * Essentially, minimal rendered as a usable span, with a color
+ * option.
  */
 var bme_type_to_span = function(in_type, aid, color_p){
 
     var min = bme_type_to_minimal(in_type, aid);
-    var exp = bme_type_to_expanded(in_type, aid);
+    //var exp = bme_type_to_expanded(in_type, aid);
 
     var text = null;
     if( color_p ){
 	text = '<span ' +
 	    'style="background-color: ' + aid.color(in_type.category()) + ';" ' +
-	    'alt="' + exp + '" ' +
-	    'title="' + exp +'">' +
+	    'alt="' + min + '" ' +
+	    'title="' + min +'">' +
 	    min + '</span>';
     }else{
-	text = '<span alt="' + exp + '" title="' + exp +'">' + min + '</span>';
+	text = '<span alt="' + min + '" title="' + min +'">' + min + '</span>';
     }
 
     return text;
 };
 
 /**
- * A recursive writer for when we no longer care.
+ * A recursive writer for when we no longer care--a table that goes on
+ * and on...
  */
-var bme_type_to_embed = function(in_type, aid){
+var bme_type_to_full = function(in_type, aid){
     var anchor = this;
     var each = bbop.core.each;
 
     var text = '[???]';
 
-    var ft = in_type.frame_type();
-    var frame = in_type.frame();	
-    if( ! ft ){ // if no frame, the usual
-	//text = bme_type_to_span(in_type, aid);
-	text = bme_type_to_expanded(in_type, aid);
+    var t = in_type.type();
+    if( t == 'Class' ){ // if simple, the easy way out
+	text = bme_type_to_minimal(in_type, aid);
     }else{
-	// Now for some real fun.
-	var pid = in_type.property_id();
-	var plabel = in_type.property_label();
-	var cache = [
-	    '<table width="80%" class="table table-bordered table-hover">',
-	    '<thead style="background-color: ' + aid.color(pid) + ';">',
-	    plabel,
-	    '</thead>',
-	    '<tbody>'
-	];
-	each(frame,
-	    function(ftype){
-		cache.push('<tr style="background-color: ' +
-			   aid.color(ftype.category()) + ';"><td>'),
-		cache.push(bme_type_to_embed(ftype, aid));
-		cache.push('</td></tr>');
-	    });	
-	cache.push('</tbody>');
-	cache.push('</table>');
+	// For everything else, we're gunna hafta do a little
+	// lifting...
+	if( t == 'unionOf' || t == 'intersectionOf' ){
+	    
+	    // Some kind of recursion on a frame then.
+	    var cache = [
+		'<table width="80%" class="table table-bordered table-hover" ' +
+		    'style="background-color: ' +
+	     	    aid.color(in_type.category()) + ';">',
+		'<caption>' + t + '</caption>',
+		//'<thead style="background-color: white;">',
+		'<thead style="">',
+		'</thead>',
+		'<tbody>'
+	    ];
+	    // cache.push('<tr>'),
+	    var frame = in_type.frame();
+	    each(frame,
+		 function(ftype){
+		     cache.push('<tr style="background-color: ' +
+		     		aid.color(ftype.category()) + ';">'),
+		     cache.push('<td>');
+		     // cache.push('<td style="background-color: ' +
+	     	     // 		aid.color(ftype.category()) + ';">'),
+		     cache.push(bme_type_to_full(ftype, aid));
+		     cache.push('</td>');
+		     cache.push('</tr>');
+		 });	
+	    // cache.push('</tr>');
+	    cache.push('</tbody>');
+	    cache.push('</table>');
+	    
+	    text = cache.join('');	    
 
-	text = cache.join('');
+	}else{
+
+	    // A little harder: need to a an SVF wrap before I recur.
+	    var pid = in_type.property_id();
+	    var plabel = in_type.property_label();
+	    var svfce = in_type.svf_class_expression();
+	    var cache = [
+		'<table width="80%" class="table table-bordered table-hover">',
+		'<thead style="background-color: ' + aid.color(pid) + ';">',
+		plabel,
+		'</thead>',
+		'<tbody>'
+	    ];
+	    cache.push('<tr style="background-color: ' +
+		       aid.color(svfce.category()) + ';"><td>'),
+	    cache.push(bme_type_to_full(svfce, aid));
+	    cache.push('</td></tr>');
+	    cache.push('</tbody>');
+	    cache.push('</table>');
+	    
+	    text = cache.join('');
+	}
     }
+
 
     // var min = bme_type_to_minimal(in_type, aid);
     // var exp = bme_type_to_expanded(in_type, aid);

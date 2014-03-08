@@ -552,6 +552,12 @@ bbop_mme_edit.core.prototype.get_annotation_by_id =
  * aren't constantly trying to work with them endlessly elsewhere in
  * the code.
  * 
+ * Types can be: Class and the class expressions: SVF, unionOf, and
+ * intersectionOf.
+ * 
+ * Categories is more a graphical distinction. They can be:
+ * instance_of, <relation id>, union, and intersection.
+ * 
  * Parameters:
  *  in_types - the raw type blob from the server
  */
@@ -572,50 +578,77 @@ bbop_mme_edit.type = function(in_type){
     this._property_id = null;
     this._property_label = null;
     // For recursive elements.
-    this._frame_type = null;
+    //this._frame_type = null;
     this._frame = [];
+
+    // Helpers.
+    function _decide_type(type){
+	var rettype = null;
+
+	// Easiest case.
+	var t = type['type'] || null;
+	if( t == 'Class' ){
+	    rettype = 'Class';
+	}else{
+	    // Okay, we're dealing with a class expression...but which
+	    // one? Talking to Heiko, these can be only one--they are
+	    // not going to be mixed.
+	    if( type['unionOf'] ){
+		rettype = 'unionOf';
+	    }else if( type['intersectionOf'] ){
+		rettype = 'intersectionOf';
+	    }else{
+		// Leaving us with SVF.
+		rettype = 'SVF';
+	    }
+	}
+
+	return rettype;
+    }
 
     // Define the category, and build up an instant picture of what we
     // need to know about the property.
-    var t = in_type['type'];
+    var t = _decide_type(in_type);
     if( t == 'Class' ){
 
+	// Easiest to extract.
 	this._type = t;
 	this._category = 'instance_of';
 	this._class_id = in_type['id'];
 	this._class_label = in_type['label'] || this._class_id;
-	// this._property_id = 
-	// this._property_label = 
+	// No related properties.
 	
-    }else if( t == 'Restriction' ){
+    }else if( t == 'unionOf' || t == 'intersectionOf' ){
 
+	// These are simply recursive.
 	this._type = t;
+	this._category = t;
+
+	// Load stuff into the frame.
+	this._frame = [];
+	var f_set = in_type[t] || [];
+	each(f_set,
+	     function(f_type){
+		 anchor._frame.push(new bbop_mme_edit.type(f_type));
+	     });
+    }else{
+	    
+	// We're then dealing with an SVF: a property plus a class
+	// expression. In the future there may be many things, but
+	// for now we are expecting a "Restriction", although we don't
+	// really do anything with that information (maybe later).
+	this._type = t;
+	// Extract the property information
 	this._category = in_type['onProperty']['id'];
 	this._property_id = in_type['onProperty']['id'];
 	this._property_label =
 	    in_type['onProperty']['label'] || this._property_id;	    
-	this._class_id = in_type['someValuesFrom']['id'];
 
-	// If we have a class id, we're good.
-	if( this._class_id ){
-	    // Finish off the rest.
-	    this._class_label = in_type['someValuesFrom']['label']
-		|| this._class_id;
-	}else{
-	    // Otherwise, likely a recursive element, so down we go.
-	    var io_set = in_type['someValuesFrom']['intersectionOf'];
-	    if( io_set ){
-		this._frame_type = 'intersectionOf';
-		this._frame = [];
-		each(io_set,
-		     function(io_type){
-			 anchor._frame.push(new bbop_mme_edit.type(io_type));
-		     });
-	    }else{
-		// TODO: Others?
-		throw new Error('unknown svf compound');
-	    }
-	}
+	// Okay, let's recur down the class expression. It should be
+	// one, but we'll use the frame. Access should be though
+	// svf_class_expression().
+	var f_type = in_type['someValuesFrom'];
+	this._frame = [new bbop_mme_edit.type(f_type)];
     }
 };
 
@@ -664,19 +697,35 @@ bbop_mme_edit.type.prototype.type = function(){
 };
 
 /** 
- * Function: frame_type
+ * Function: svf_class_expression
  *
- * If the type has a recursive frame, the "type" of said frame.
+ * The class expression when we are dealing with SVF.
  *
  * Parameters: 
  *  n/a
  *
  * Returns:
- *  string or null
+ *  type or null
  */
-bbop_mme_edit.type.prototype.frame_type = function(){
-    return this._frame_type;
+bbop_mme_edit.type.prototype.svf_class_expression = function(){
+    // Yes, a reuse of _frame.
+    return this._frame[0] || null;
 };
+
+// /** 
+//  * Function: frame_type
+//  *
+//  * If the type has a recursive frame, the "type" of said frame.
+//  *
+//  * Parameters: 
+//  *  n/a
+//  *
+//  * Returns:
+//  *  string or null
+//  */
+// bbop_mme_edit.type.prototype.frame_type = function(){
+//     return this._frame_type;
+// };
 
 /** 
  * Function: frame

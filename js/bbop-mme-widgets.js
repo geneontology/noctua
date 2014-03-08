@@ -686,8 +686,7 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode,
     var type_list = [];
     each(bbop_mme_widgets.enode_to_stack(enode, aid),
 	 function(item){
-	     //var type_str = bme_type_to_expanded(item, aid);
-	     var type_str = bme_type_to_embed(item, aid);
+	     var type_str = bme_type_to_full(item, aid);
 	     var eid = bbop.core.uuid();
 	     elt2type[eid] = item;		 
 	     var acache = [];
