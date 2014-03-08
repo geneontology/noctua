@@ -65,7 +65,7 @@
 
 ** Known Issues
 
-   The bulk of major issues and feature requests is handled by the
+   The bulk of major issues and feature requests are handled by the
    tracker (https://github.com/kltm/go-mme/issues). If something is
    not mentioned here or in the tracker, please contact Seth or Chris.
 
