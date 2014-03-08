@@ -546,9 +546,19 @@ bbop_mme_widgets.sorted_relation_list = function(relations, aid){
     //var rels = aid.all_entities();
     var rels = relations.sort(
 	function(a,b){ 
-	    var rid_a = a['id'];
-	    var rid_b = b['id'];
-	    return aid.priority(rid_b) - aid.priority(rid_a);
+	    var id_a = a['id'];
+	    var id_b = b['id'];
+
+	    var pr_a = aid.priority(id_a);
+	    var pr_b = aid.priority(id_b);
+
+	    // Looking at the optional boolean "relevant" field, if we
+	    // showed no preference in our context, give these a
+	    // boost.
+	    if( pr_a == 0 && a['relevant'] ){ pr_a = 10; }
+	    if( pr_b == 0 && b['relevant'] ){ pr_b = 10; }
+
+	    return pr_b - pr_a;
 	});
     var rellist = [];
     each(rels,
