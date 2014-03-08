@@ -591,7 +591,7 @@ var bme_type_to_full = function(in_type, aid){
 	    
 	    // Some kind of recursion on a frame then.
 	    var cache = [
-		'<table width="80%" class="table table-bordered table-hover" ' +
+		'<table width="80%" class="table table-bordered table-hover table-condensed mme-type-table" ' +
 		    'style="background-color: ' +
 	     	    aid.color(in_type.category()) + ';">',
 		'<caption>' + t + '</caption>',
@@ -626,7 +626,7 @@ var bme_type_to_full = function(in_type, aid){
 	    var plabel = in_type.property_label();
 	    var svfce = in_type.svf_class_expression();
 	    var cache = [
-		'<table width="80%" class="table table-bordered table-hover">',
+		'<table width="80%" class="table table-bordered table-hover table-condensed mme-type-table">',
 		'<thead style="background-color: ' + aid.color(pid) + ';">',
 		plabel,
 		'</thead>',

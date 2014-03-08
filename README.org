@@ -69,7 +69,6 @@
    tracker (https://github.com/kltm/go-mme/issues). If something is
    not mentioned here or in the tracker, please contact Seth or Chris.
 
-   - Complex expression delete button has a serious offset
    - When starting a new model, or editing a current one, there is an
      invisible boundary around the instances that you cannot leave; to
      increase the bounds, refresh the model
