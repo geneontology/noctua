@@ -62,6 +62,9 @@
     - Under [Views], there are various zooming options
     - To reduce clutter, the "part of" relation can be hidden by
       selecting [View] > [Show/hide "part of"]
+    - The minimum space you start with is 800x600px. If you need more,
+      try reseting your model--the space you can use will grow with
+      it.
 
 ** Known Issues
 
@@ -69,14 +72,12 @@
    tracker (https://github.com/kltm/go-mme/issues). If something is
    not mentioned here or in the tracker, please contact Seth or Chris.
 
-   - When starting a new model, or editing a current one, there is an
-     invisible boundary around the instances that you cannot leave; to
-     increase the bounds, refresh the model
    - Sometimes, when moving instance or relations near a boundary, the
      relations will fall out of sync; either move nearby instances or
      refresh the model
-   - Sometimes, when editing an instance, the relations will fall out
-     of sync; either move nearby instances or refresh the model
+   - Sometimes, when editing an instance, the relations (edges) will
+     fall out of sync; either move nearby instances or refresh the
+     model
    - The endpoint scheme is reversed between creation and instantiation
    - TODO, etc.
 
