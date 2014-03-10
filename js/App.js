@@ -918,8 +918,39 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     			 alert('Meta operation successful: ' + resp.message());
     		     }, 10);
 
+    // Only run the internal function when the filters are passed.
+    function _update_filter(resp, man, run_fun){
+	
+	// Need to extract our own ID from the manager.
+	var my_uid = man.user_id();
+
+	// Let's do some checking.
+	var r_uid = resp.user_id();
+	var r_sig = resp.signal();
+	var r_int = resp.intention();
+	ll(['uid: ', r_uid, ', sig: ', r_sig, ', int: ', r_int].join(''));
+	if( r_uid == my_uid ){
+	    // Always run things I requiested.
+	    ll('TODO: running own request');
+	    //run_fun(resp, man);
+	}else if( r_int != 'query' ){
+	    // Run other people's requests as long as they are not
+	    // queries.
+	    ll("TODO: running other's non-query request");
+	    //run_fun(resp, man);
+	}else{
+	    // Otherwise, ignore it.
+	    ll("ignoring other's query request");
+	}
+    }
+
     manager.register('rebuild', 'foo',
 		     function(resp, man){
+			 // TODO: This function should have the rest
+			 // of the function as an argument once the
+			 // moderator is on.
+			 _update_filter(resp, man);
+
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
 			 var mfacts = resp.facts();
@@ -936,6 +967,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 
     manager.register('merge', 'foo',
 		     function(resp, man){
+			 // TODO: This function should have the rest
+			 // of the function as an argument once the
+			 // moderator is on.
+			 _update_filter(resp, man);
+
 			 var individuals = resp.individuals();
 			 var facts = resp.facts();
 			 var annotations = resp.annotations();
@@ -1274,13 +1310,31 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     ///
 
     // Allow the message board to be cleared.
-    function _on_connect(){
+    // Also, just as the socket.io implementation, this cannot do an
+    // awful lot--it's just a report that the TCP connection was
+    // established.
+    function _on_connect(a, b){
 	reporter.reset();
 	reporter.comment({'message': 'you are connected',
 			  'message_type': 'success'
 			 });
     }
 
+    function _on_initialization(data){
+	var uid = data['user_id'];
+	var ucolor = data['user_color'];
+
+	ll('we have a name: ' + uid);
+
+	// Add to the top of the message list.
+	reporter.comment({'message_type': 'success',
+			  'message': 'logged in as: ' + uid}, uid, ucolor);
+
+	// Change our user id.
+	manager.user_id(uid);
+    }
+
+    // Catch both the regular back-and-forth, as well as the 
     function _on_info_update(data, uid, ucolor){
 
 	// Add to the top of the message list.
@@ -1303,7 +1357,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		});
 	}
     }
-
+    
     function _on_clairvoyance_update(id, color, top, left){
 
 	// Ensure there is a div for the user.
@@ -1358,6 +1412,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	ll('try setup for messaging at: ' + global_message_server);
 	msngr = new bbop_messenger_client(global_message_server,
 					  _on_connect,
+					  _on_initialization,
 					  _on_info_update,
 					  _on_clairvoyance_update,
 					  _on_telekinesis_update);

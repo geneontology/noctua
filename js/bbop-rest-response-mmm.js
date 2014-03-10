@@ -173,7 +173,7 @@ bbop_rest_response_mmm.prototype.user_id = function(){
 /*
  * Function: intention
  * 
- * Returns the user intention (uid) for a call.
+ * Returns the user intention for a call.
  * 
  * Arguments:
  *  n/a

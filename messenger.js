@@ -61,6 +61,15 @@ sio.sockets.on('connection',
 		   var user_id = client_sockets[socket_id]['uid'];
 		   var user_color = client_sockets[socket_id]['ucolor'];
 
+		   // Immediately emit user meta-information to the
+		   // just-connected user.
+		   var init_data = {
+		       'user_metadata': true,
+		       'user_id': user_id,
+		       'user_color': user_color
+		   };
+		   socket.emit('intialization', init_data);
+
 		   // Relays.
 		   socket.on('info',
 			     function(data){

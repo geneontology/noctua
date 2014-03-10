@@ -7,6 +7,7 @@
 
 var bbop_messenger_client = function(msgloc,
 				     on_connect,
+				     on_initialization,
 				     on_info_event,
 				     on_clairvoyance_event,
 				     on_telekinesis_event){
@@ -69,6 +70,21 @@ var bbop_messenger_client = function(msgloc,
 	    }
 	    anchor.socket.on('connect', _internal_on_connect);
 
+	    // Our initialization data from the server.
+	    function _got_initialization(data){
+		var uid = data['user_id'] || '???';
+		var ucolor = data['user_color'] || '???';
+
+		ll('received initialization info: ' + uid);
+		
+		// Trigger whatever function we were given.
+		if( typeof(on_initialization) !== 'undefined' &&
+		    on_initialization ){
+		    on_initialization(data);
+		}
+	    }
+	    anchor.socket.on('intialization', _got_initialization);
+
 	    // Setup to catch info events from the clients and pass them
 	    // on if they were meant for us.
 	    function _got_info(data){
@@ -80,7 +96,7 @@ var bbop_messenger_client = function(msgloc,
 		var message = data['message'] || '???';
 		var message_type = data['message_type'] || '???';
 
-		// Check to make sure it interestes us.
+		// Check to make sure it interests us.
 		if( ! mid || mid != anchor.model_id ){
 		    ll('skip info packet--not for us');
 		}else{

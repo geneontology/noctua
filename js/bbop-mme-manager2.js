@@ -72,6 +72,21 @@ var bbop_mme_manager2 = function(user_id, server_base){
     jqm.register('success', 'bar', _on_nominal_success);
 
     ///
+    /// Control our identity.
+    ///
+
+    /**
+     * 
+     */
+    anchor.user_id = function(user_id){
+	if( user_id ){
+	    anchor._user_id = user_id;
+	}
+	return anchor._user_id;
+    };
+
+
+    ///
     /// Actual mechanism.
     ///
 
