@@ -1880,7 +1880,7 @@ bbop.version.revision = "2.0.2";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140306";
+bbop.version.release = "20140311";
 /*
  * Package: logger.js
  * 
@@ -19496,7 +19496,7 @@ function renderer(parent, config){
         var node_elem =
             (event.currentTarget) ? event.currentTarget : event.srcElement;
         var node = self.tree.nodes[node_elem.node_id];
-        if (node) self.node_clicked(node, node_elem);
+        if (node) return self.node_clicked(node, node_elem, event);
     };
 
     var default_config = {
@@ -20367,8 +20367,10 @@ function renderer(parent, golr_loc, golr_conf, config) {
         // vertical space between the contents of adjacent rows
         row_spacing: 2,
         font: "Helvetica, Arial, sans-serif",
-        mat_cell_width: 15,
-        transition_time: "0.8s"
+        mat_cell_width: 20,
+        mat_cell_border: 1,
+        transition_time: "0.8s",
+        header_height: 100
     };
 
     this.config = ("object" == typeof config
@@ -20484,8 +20486,17 @@ renderer.prototype.show_pgraph = function(pgraph) {
         this.parent.style.position = "relative";
     }
 
+    this.parent_top_border =
+        parseInt(getStyle(this.parent, "border-top-width"));
+    this.parent_bot_border =
+        parseInt(getStyle(this.parent, "border-bottom-width"));
+
     this.tree_container = document.createElement("div");
-    this.tree_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; left: 0px;";
+    this.tree_container.style.position = "absolute";
+    this.tree_container.style.top =
+        (this.config.header_height + this.config.mat_cell_border) + "px";
+    //this.tree_container.style.bottom = "100%";
+    this.tree_container.style.left = "0px";
     
     this.mat_container = document.createElement("div");
     this.mat_container.style.cssText = "position: absolute; top: 0px; bottom: 100%;";
@@ -20513,10 +20524,10 @@ renderer.prototype.show_pgraph = function(pgraph) {
     }
 
     go_term_list.sort( function(a, b) { return b.count - a.count; } );
-    var coldescs = go_term_list.map( function(x) { return x.id; } );
+    //var coldescs = go_term_list.map( function(x) { return x.id; } );
     //console.log(coldescs);
 
-    var mat_width = coldescs.length * this.config.mat_cell_width;
+    var mat_width = go_term_list.length * this.config.mat_cell_width;
     var tree_width = 500;
     this.tree_container.style.width = tree_width + "px";
     this.mat_container.style.width = mat_width + "px";
@@ -20580,8 +20591,8 @@ renderer.prototype.show_pgraph = function(pgraph) {
         return parseInt(a.meta.layout_index) - parseInt(b.meta.layout_index);
     });
 
-    tree_renderer.node_clicked = function(node, node_elem) {
-        self.show_node_menu(node, node_elem);
+    tree_renderer.node_clicked = function(node, node_elem, event) {
+        return self.node_clicked(node, node_elem, event);
     };
 
     var node_colors = {};
@@ -20629,6 +20640,13 @@ renderer.prototype.show_pgraph = function(pgraph) {
     this.tree_renderer = tree_renderer;
     this.render_tree();
 
+    // dismiss popovers by clicking outside them
+    jQuery(this.tree_container).on("click", function (e) {
+        if (self.popover_elem === undefined) return;
+        self.popover_elem.popover("destroy");
+        self.popover_elem = undefined;
+    });
+
     var node_id_list = tree_renderer.leaves().map(function(x) { return x.id });
     var node_id_map = {};
     for (var i = 0; i < nodes.length; i++) {
@@ -20649,24 +20667,26 @@ renderer.prototype.show_pgraph = function(pgraph) {
     
     var mat_config = {
         cell_width: this.config.mat_cell_width,
+        cell_border: this.config.mat_cell_border,
         cell_height: this.config.row_height + 2,
-        header_height: 0,
-        show_headers: false,
+        header_height: this.config.header_height,
+        show_headers: true,
         transition_time: this.config.transition_time
     };
-    var mat_renderer =
+    this.mat_renderer =
         new bbop.widget.matrix.renderer(this.mat_container, node_id_list,
-                                        coldescs, cell_renderer, mat_config);
+                                        go_term_list, cell_renderer,
+                                        mat_config);
+
 
     var leaf_id_list = tree_renderer.leaves().map(
         function(x) { return x.id }
     );
-    mat_renderer.show_rows(leaf_id_list);
+    this.mat_renderer.show_rows(leaf_id_list);
     this.parent.style.transition =
         "height " + this.config.transition_time + " ease-in-out";
     this.update_heights();
     
-    this.mat_renderer = mat_renderer;
 };
 
 renderer.prototype.toggle_subtree_shown = function(node_id) {
@@ -20696,19 +20716,36 @@ renderer.prototype.show_mat_rows_for_tree_leaves = function() {
 };
 
 renderer.prototype.update_heights = function() {
-    this.parent.style.height = this.tree_renderer.tree_height + "px";
+    this.parent.style.height =
+        ( this.tree_renderer.tree_height
+          + this.config.header_height
+          + this.config.mat_cell_border
+          + this.parent_top_border
+          + this.parent_bot_border ) + "px";
 };
 
-renderer.prototype.show_node_menu = function(node, node_elem) {
+renderer.prototype.node_clicked = function(node, node_elem, event) {
     var buttons = [];
     var jqElem = jQuery(node_elem);
     var self = this;
 
-    var podata = jqElem.data("bs.popover");
-    if (podata) {
-        jqElem.popover("destroy");
-        return;
+    // if there's an existing popover,
+    if (this.popover_elem !== undefined) {
+        // destroy it
+        this.popover_elem.popover("destroy");
+        // if this click is on the same node that the popover was on,
+        // then return
+        if (this.popover_elem[0] === jqElem[0]) {
+            this.popover_elem = undefined;
+            return;
+        }
+        // otherwise this.popover_elem becomes the new popover element
+        // (below)
     }
+    this.popover_elem = jqElem;
+    jQuery.Event(event).stopPropagation();
+
+    var podata = jqElem.data("bs.popover");
 
     jqElem.popover({
         html: true,
@@ -20724,6 +20761,7 @@ renderer.prototype.show_node_menu = function(node, node_elem) {
         var hideButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
         hideButton.click(function() {
             jqElem.popover("destroy");
+            self.popover_elem = undefined;
             self.toggle_subtree_shown(node.id);
         });
 
@@ -20736,6 +20774,7 @@ renderer.prototype.show_node_menu = function(node, node_elem) {
     var rootButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
     rootButton.click(function() {
         jqElem.popover("destroy");
+        self.popover_elem = undefined;
         if (self.tree_renderer.only_subtree_shown(node.id)) {
             self.show_global_root();
         } else {
@@ -20835,7 +20874,7 @@ function renderer(parent, row_descriptors, col_descriptors,
         cell_width: null,
         cell_height: 24,
 	cell_border: 1,
-        cell_padding: 6,
+        cell_padding: 4,
         cell_font: "Helvetica, Arial, sans-serif",
 
         header_height: 30,
@@ -20868,13 +20907,20 @@ function renderer(parent, row_descriptors, col_descriptors,
     var cell_font_size = ( ( this.config.cell_height
                              - this.offset_size_delta )
                            / 0.7 );
-    var header_font_size = ( ( this.config.header_height
+    var header_font_size;
+    if (null == this.config.cell_width) {
+        header_font_size = ( ( this.config.header_height
                                - this.offset_size_delta )
-                           / 0.7 );
-    
+                             / 0.7 );
+    } else {
+        header_font_size = ( ( this.config.cell_width
+                               - this.offset_size_delta )
+                             / 0.7 );
+    }
 
     var css_prefix = "matrix_" + this_id++;
     var header_class = css_prefix + "_header";
+    var inner_header_class = css_prefix + "_inner";
     var cell_class = css_prefix + "_cell";
     this.fixed_width = (null != this.config.cell_width);
 
@@ -20952,14 +20998,23 @@ function renderer(parent, row_descriptors, col_descriptors,
             //create the header cells
             var cell = document.createElement("div");
             cell.className = header_class;
-            cell.title = col_descriptors[i];
-            cell.appendChild(document.createTextNode(col_descriptors[i]));
             cell.style.top = "0px";
+            if (null == this.config.cell_width) {
+                cell.title = col_descriptors[i].name;
+                cell.appendChild(document.createTextNode(col_descriptors[i].name));
+            } else {
+                // create inner rotated element
+                var inner = document.createElement("div");
+                inner.className = inner_header_class;
+                inner.title = col_descriptors[i].name;
+                inner.appendChild(document.createTextNode(col_descriptors[i].name));
+                cell.appendChild(inner);
+            }
             this.parent.appendChild(cell);
             this.headers.push(cell);
         }
         this.colindex_map[i] = i;
-        this.coldesc_map[col_descriptors[i]] = i;
+        this.coldesc_map[col_descriptors[i].id] = i;
     }
 
     for( var ri = 0; ri < row_descriptors.length; ri++ ){
@@ -20967,7 +21022,7 @@ function renderer(parent, row_descriptors, col_descriptors,
 
         for (var ci = 0; ci < col_descriptors.length; ci++) {
             var cell = cell_renderer(cell, row_descriptors[ri],
-                                     col_descriptors[ci]);
+                                     col_descriptors[ci].id);
             if (null != cell) {
                 cell.className += " " + cell_class;
                 cell.style.top = ( (this.config.show_headers ?
@@ -21040,6 +21095,17 @@ function renderer(parent, row_descriptors, col_descriptors,
         "  -moz-box-sizing: content-box;"
     ].join("\n");
 
+    var inner_offset = -(this.config.header_height
+                         - header_font_size
+                         - this.config.cell_padding);
+    this.inner_header_style = [
+        "-webkit-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "-ms-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "-o-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);"
+    ].join("\n");
+
     this.transition_style = [
         "  transition-property: top, left;",
         "  transition-duration:" +  this.config.transition_time + ";",
@@ -21051,6 +21117,9 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.set_styles([
         "div." + header_class + " { ",
         this.header_style,
+        "}",
+        "div." + inner_header_class + " { ",
+        this.inner_header_style,
         "}",
         "div." + cell_class + " { ",
         this.cell_style,
@@ -21070,6 +21139,10 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.set_styles([
         "div." + header_class + " { ",
         this.header_style,
+        this.transition_style,
+        "}",
+        "div." + inner_header_class + " { ",
+        this.inner_header_style,
         this.transition_style,
         "}",
         "div." + cell_class + " { ",
@@ -21297,8 +21370,8 @@ renderer.prototype.show_cols = function(col_list) {
     // hide non-shown cols
     for(var i = 0; i < this.col_descriptors.length; i++) {
         var coldesc = this.col_descriptors[i];
-        if (! (coldesc in new_col_map)) {
-            matrix_col_index = this.coldesc_map[coldesc];
+        if (! (coldesc.id in new_col_map)) {
+            matrix_col_index = this.coldesc_map[coldesc.id];
             for (var j = 0; j < this.matrix.length; j++) {
                 var cell = this.matrix[j][matrix_col_index];
                 if (cell) cell.style.display = "none";

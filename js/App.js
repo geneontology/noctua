@@ -90,6 +90,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var model_ann_elt = '#' + model_ann_id;
     var toggle_part_of_id = 'toggle_part_of';
     var toggle_part_of_elt = '#' + toggle_part_of_id;
+    var toggle_screen_id = 'toggle_screen_of';
+    var toggle_screen_elt = '#' + toggle_screen_id;
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -1513,6 +1515,31 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 }
 		     }
 		 });
+	});
+
+    // Toggle the screenshot mode.
+    var screen_p = false;
+    jQuery(toggle_screen_elt).click(
+	function(){
+
+	    // Toggle switch.
+	    if( screen_p ){ screen_p = false; }else{ screen_p = true; }
+
+	    // Change the styles.
+	    if( screen_p ){
+		// Remove the side.
+		jQuery('.app-graph-container').css('margin-left', '0em');
+		jQuery('.app-editor-bounds').css('height', '100%');
+		jQuery('.app-table-bounds').css('height', '0%');
+		jQuery('.app-controls').css('width', '0em');		
+	    }else{
+		// Re-establish the sides.
+		jQuery('.app-graph-container').css('margin-left', '15em');
+		jQuery('.app-editor-bounds').css('height', '70%');
+		jQuery('.app-table-bounds').css('height', '30%');
+		jQuery('.app-controls').css('width', '15em');
+	    }
+
 	});
 
     // Let the canvas (div) underneath be dragged around in an
