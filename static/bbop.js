@@ -688,84 +688,88 @@ bbop.core.get_assemble = function(qargs){
     for( var qname in qargs ){
 	var qval = qargs[qname];
 
-	if( typeof qval == 'string' || typeof qval == 'number' ){
-	    // Is standard name/value pair.
-	    var nano_buffer = [];
-	    nano_buffer.push(qname);
-	    nano_buffer.push('=');
-	    nano_buffer.push(qval);
-	    mbuff.push(nano_buffer.join(''));
-	}else if( typeof qval == 'object' ){
-	    if( typeof qval.length != 'undefined' ){
-		// Is array (probably).
-		// Iterate through and double on.
-		for(var qval_i = 0; qval_i < qval.length ; qval_i++){
-		    var nano_buff = [];
-		    nano_buff.push(qname);
-		    nano_buff.push('=');
-		    nano_buff.push(qval[qval_i]);
-		    mbuff.push(nano_buff.join(''));
-		}
-	    }else{
-		// // TODO: The "and" case is pretty much like
-		// // the array, the "or" case needs to be
-		// // handled carefully. In both cases, care will
-		// // be needed to show which filters are marked.
-		// Is object (probably).
-		// Special "Solr-esque" handling.
-		for( var sub_name in qval ){
-		    var sub_vals = qval[sub_name];
-
-		    // Since there might be an array down there,
-		    // ensure that there is an iterate over it.
-		    if( bbop.core.what_is(sub_vals) != 'array' ){
-			sub_vals = [sub_vals];
+	// null is technically an object, but we don't want to render
+	// it.
+	if( qval != null ){
+	    if( typeof qval == 'string' || typeof qval == 'number' ){
+		// Is standard name/value pair.
+		var nano_buffer = [];
+		nano_buffer.push(qname);
+		nano_buffer.push('=');
+		nano_buffer.push(qval);
+		mbuff.push(nano_buffer.join(''));
+	    }else if( typeof qval == 'object' ){
+		if( typeof qval.length != 'undefined' ){
+		    // Is array (probably).
+		    // Iterate through and double on.
+		    for(var qval_i = 0; qval_i < qval.length ; qval_i++){
+			var nano_buff = [];
+			nano_buff.push(qname);
+			nano_buff.push('=');
+			nano_buff.push(qval[qval_i]);
+			mbuff.push(nano_buff.join(''));
 		    }
-
-		    var loop = bbop.core.each;
-		    loop(sub_vals,
-			 function(sub_val){
-			     var nano_buff = [];
-			     nano_buff.push(qname);
-			     nano_buff.push('=');
-			     nano_buff.push(sub_name);
-			     nano_buff.push(':');
-			     if( typeof sub_val !== 'undefined' && sub_val ){
-				 // Do not double quote strings.
-				 // Also, do not requote if we already
-				 // have parens in place--that
-				 // indicates a complicated
-				 // expression. See the unit tests.
-				 var val_is_a = bbop.core.what_is(sub_val);
-				 if( val_is_a == 'string' &&
-				     sub_val.charAt(0) == '"' &&
-				     sub_val.charAt(sub_val.length -1) == '"' ){
-				     nano_buff.push(sub_val);
-				 }else if( val_is_a == 'string' &&
-				     sub_val.charAt(0) == '(' &&
-				     sub_val.charAt(sub_val.length -1) == ')' ){
-				     nano_buff.push(sub_val);
+		}else{
+		    // // TODO: The "and" case is pretty much like
+		    // // the array, the "or" case needs to be
+		    // // handled carefully. In both cases, care will
+		    // // be needed to show which filters are marked.
+		    // Is object (probably).
+		    // Special "Solr-esque" handling.
+		    for( var sub_name in qval ){
+			var sub_vals = qval[sub_name];
+			
+			// Since there might be an array down there,
+			// ensure that there is an iterate over it.
+			if( bbop.core.what_is(sub_vals) != 'array' ){
+			    sub_vals = [sub_vals];
+			}
+			
+			var loop = bbop.core.each;
+			loop(sub_vals,
+			     function(sub_val){
+				 var nano_buff = [];
+				 nano_buff.push(qname);
+				 nano_buff.push('=');
+				 nano_buff.push(sub_name);
+				 nano_buff.push(':');
+				 if( typeof sub_val !== 'undefined' && sub_val ){
+				     // Do not double quote strings.
+				     // Also, do not requote if we already
+				     // have parens in place--that
+				     // indicates a complicated
+				     // expression. See the unit tests.
+				     var val_is_a = bbop.core.what_is(sub_val);
+				     if( val_is_a == 'string' &&
+					 sub_val.charAt(0) == '"' &&
+					 sub_val.charAt(sub_val.length -1) == '"' ){
+					     nano_buff.push(sub_val);
+					 }else if( val_is_a == 'string' &&
+						   sub_val.charAt(0) == '(' &&
+						   sub_val.charAt(sub_val.length -1) == ')' ){
+						       nano_buff.push(sub_val);
+						   }else{
+						       nano_buff.push('"' + sub_val + '"');
+						   }
 				 }else{
-				     nano_buff.push('"' + sub_val + '"');
+				     nano_buff.push('""');
 				 }
-			     }else{
-				 nano_buff.push('""');
-			     }
-			     mbuff.push(nano_buff.join(''));
-			 });
+				 mbuff.push(nano_buff.join(''));
+			     });
+		    }
 		}
+	    }else if( typeof qval == 'undefined' ){
+		// This happens in some cases where a key is tried, but no
+		// value is found--likely equivalent to q="", but we'll
+		// let it drop.
+		// var nano_buff = [];
+		// nano_buff.push(qname);
+		// nano_buff.push('=');
+		// mbuff.push(nano_buff.join(''));	    
+	    }else{
+		throw new Error("bbop.core.get_assemble: unknown type: " + 
+				typeof(qval));
 	    }
-	}else if( typeof qval == 'undefined' ){
-	    // This happens in some cases where a key is tried, but no
-	    // value is found--likely equivalent to q="", but we'll
-	    // let it drop.
-	    // var nano_buff = [];
-	    // nano_buff.push(qname);
-	    // nano_buff.push('=');
-	    // mbuff.push(nano_buff.join(''));	    
-	}else{
-	    throw new Error("bbop.core.get_assemble: unknown type: " + 
-			    typeof(qval));
 	}
     }
     
@@ -1873,14 +1877,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.0.2";
+bbop.version.revision = "2.0.3";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140311";
+bbop.version.release = "20140430";
 /*
  * Package: logger.js
  * 
@@ -5258,6 +5262,42 @@ bbop.model.graph.prototype.get_ancestor_subgraph = function(nb_id_or_list, pid){
 };
 
 /*
+ * Function: merge_in
+ * 
+ * Add a graph to the current graph, without sharing any of the merged
+ * in graph's structure.
+ * 
+ * TODO: a work in progress 'type' not currently imported (just as
+ * not exported)
+ * 
+ * Parameters:
+ *  bbop.model.graph
+ * 
+ * Returns:
+ *  true; side-effects: more graph
+ */
+bbop.model.graph.prototype.merge_in = function(in_graph){
+
+    var anchor = this;
+
+    // First, load nodes; scrape out what we can.
+    bbop.core.each(in_graph.all_nodes(),
+		   function(in_node){
+		       var new_node = in_node.clone();
+		       anchor.add_node(new_node);
+		   });
+
+    // Now try to load edges; scrape out what we can.
+    bbop.core.each(in_graph.all_edges(),
+		   function(in_edge){
+		       var new_edge = in_edge.clone();
+		       anchor.add_edge(new_edge);
+		   });
+
+    return true;
+};
+
+/*
  * Function: load_json
  * 
  * Load the graph from the specified JSON object (not string).
@@ -7274,7 +7314,8 @@ bbop.rest.response.json = function(json_data){
 		this._okay = false;
 	    }
 
-	}else if( bbop.core.what_is(json_data) == 'object' ){
+	}else if( bbop.core.what_is(json_data) == 'object' ||
+		  bbop.core.what_is(json_data) == 'array' ){
 
 	    // Looks like somebody else got here first.
 	    this._raw = json_data;
@@ -8287,6 +8328,7 @@ bbop.rest.manager.jquery = function(response_handler){
     this._is_a = 'bbop.rest.manager.jquery';
 
     this._use_jsonp = false;
+    this._jsonp_callback = 'json.wrf';
     this._headers = null;
 
     // Before anything else, if we cannot find a viable jQuery library
@@ -8332,6 +8374,26 @@ bbop.rest.manager.jquery.prototype.use_jsonp = function(use_p){
 	}
     }
     return anchor._use_jsonp;
+};
+
+/*
+ * Function: jsonp_callback
+ *
+ * Get/set the jQuery jsonp callback string to something other than
+ * "json.wrf".
+ * 
+ * Parameters: 
+ *  cstring - *[optional]* setter string
+ *
+ * Returns:
+ *  string
+ */
+bbop.rest.manager.jquery.prototype.jsonp_callback = function(cstring){
+    var anchor = this;
+    if( bbop.core.is_defined(cstring) ){
+	anchor._jsonp_callback = cstring;
+    }
+    return anchor._jsonp_callback;
 };
 
 /*
@@ -8391,7 +8453,7 @@ bbop.rest.manager.jquery.prototype.update = function(callback_type){
     // If we're going to use JSONP instead of the defaults, set that now.
     if( anchor.use_jsonp() ){
 	jq_vars['dataType'] = 'jsonp';
-	jq_vars['jsonp'] = 'json.wrf';
+	jq_vars['jsonp'] = anchor._jsonp_callback;
     }
     if( anchor.headers() ){
     	jq_vars['headers'] = anchor.headers();
@@ -16738,6 +16800,7 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  * there are probably some fields that you'll want to fill out to make
  * things work decently. The options for the argument hash are:
  * 
+ *  fill_p - whether or not to fill the input with the val on select(default true)
  *  label_template - string template for dropdown, can use any document field
  *  value_template - string template for selected, can use any document field
  *  minimum_length - wait for this many characters to start (default 3)
@@ -16775,6 +16838,7 @@ bbop.widget.search_box = function(golr_loc,
     // Our argument default hash.
     var default_hash =
 	{
+	    'fill_p': true,
 	    'label_template': '{{id}}',
 	    'value_template': '{{id}}',
 	    'minimum_length': 3, // wait for three characters or more
@@ -16785,6 +16849,7 @@ bbop.widget.search_box = function(golr_loc,
 
     // There should be a string interface_id argument.
     this._interface_id = interface_id;
+    this._fill_p = arg_hash['fill_p'];
     this._list_select_callback = arg_hash['list_select_callback'];
     var label_tt = new bbop.template(arg_hash['label_template']);
     var value_tt = new bbop.template(arg_hash['value_template']);
@@ -16832,6 +16897,13 @@ bbop.widget.search_box = function(golr_loc,
 	},
 	// What to do when an element is selected.
 	select: function(event, ui){
+
+	    // Prevent default selection input filling action (from
+	    // jQuery UI) when non-default marked.
+	    if( ! anchor._fill_p ){
+		event.preventDefault();		
+	    }
+
 	    var doc_to_apply = null;
 	    if( ui.item ){
 		doc_to_apply = ui.item.document;
