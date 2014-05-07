@@ -7086,10 +7086,10 @@ bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
     function ll(str){ logger.kvetch(str); }
 
     var relation_matrix = {};
-    // var object_vector = object_vertex_partition || [];
-    // var subject_vector = subject_vertex_partition || [];
-    var object_vector = object_vertex_partition;
-    var subject_vector = subject_vertex_partition;
+    var object_vector = object_vertex_partition || [];
+    var subject_vector = subject_vertex_partition || [];
+    // var object_vector = object_vertex_partition;
+    // var subject_vector = subject_vertex_partition;
 
     for( var i = 0; i < edge_partition.length; i++ ){
 
