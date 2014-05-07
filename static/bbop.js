@@ -6619,8 +6619,8 @@ if ( typeof bbop.layout == "undefined" ){ bbop.layout = {}; }
 if ( typeof bbop.layout.sugiyama == "undefined" ){ bbop.layout.sugiyama = {}; }
 
 // Speciality variables in the namespace.
-//bbop.layout.sugiyama.DEBUG = true;
-bbop.layout.sugiyama.DEBUG = false;
+bbop.layout.sugiyama.DEBUG = true;
+//bbop.layout.sugiyama.DEBUG = false;
 bbop.layout.sugiyama.iterations = 10;
 
 ///
@@ -6927,7 +6927,9 @@ bbop.layout.sugiyama.partitioner = function(graph){
 		    
 		}else{
 		    
-		    ll('update ' + cnode.id() + ' level to ' + next_level);
+		    // ll('to update ' + cnode.id() + ' level to ' + next_level +
+		    //    '; fsr: '+ first_seen_reference[ cnode.id() ] +
+		    //    '; lsr: '+ last_seen_reference[ cnode.id() ]);
 		    
 		    // Otherwise, just update the levels that we've seen
 		    // the child at--do not descend.
@@ -6936,7 +6938,15 @@ bbop.layout.sugiyama.partitioner = function(graph){
 		    }
 		    if( last_seen_reference[ cnode.id() ] < next_level ){
 			last_seen_reference[ cnode.id() ] = next_level;
+			// LSR is also the level that things will
+			// appear at, so update.
+			// I believe node and simple node IDs are the same?
+			vertex_set[ cnode.id() ].level = next_level;
 		    }
+
+		    // ll('updated ' + cnode.id() + ' level to ' + next_level +
+		    //    '; fsr: '+ first_seen_reference[ cnode.id() ] +
+		    //    '; lsr: '+ last_seen_reference[ cnode.id() ]);
 		}
 	    }
 	}
@@ -6977,6 +6987,9 @@ bbop.layout.sugiyama.partitioner = function(graph){
 
 	var difference = vertex_set[ edge.subject() ].level -
 	    vertex_set[ edge.object() ].level;
+	// ll('diff for '+edge.subject()+' -> '+edge.object()+' = '+ difference);
+	// ll('   ' + vertex_set[ edge.subject() ].level + '-' +
+	//    vertex_set[ edge.object() ].level);
 
 	// If there is a difference, create virtual nodes and
 	// paths. Deleted used edges.
@@ -7064,8 +7077,8 @@ bbop.layout.sugiyama.partitioner = function(graph){
 // the methods '.object()' and '.subject()' and Vertices must have
 // method '.id()'.
 bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
-				       subject_vertex_partition,
-				       edge_partition){
+					subject_vertex_partition,
+					edge_partition){
     
     // Internal logger.
     var logger = new bbop.logger("BMatrix");
@@ -7073,8 +7086,10 @@ bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
     function ll(str){ logger.kvetch(str); }
 
     var relation_matrix = {};
-    var object_vector = object_vertex_partition || [];
-    var subject_vector = subject_vertex_partition || [];
+    // var object_vector = object_vertex_partition || [];
+    // var subject_vector = subject_vertex_partition || [];
+    var object_vector = object_vertex_partition;
+    var subject_vector = subject_vertex_partition;
 
     for( var i = 0; i < edge_partition.length; i++ ){
 
