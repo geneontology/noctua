@@ -1877,14 +1877,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.0.3";
+bbop.version.revision = "2.1.0";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140430";
+bbop.version.release = "20140507";
 /*
  * Package: logger.js
  * 
@@ -4109,6 +4109,236 @@ bbop.html.span.prototype.empty = function(){
  */
 bbop.html.span.prototype.get_id = function(){
     return this._span_stack.get_id();
+};
+/* 
+ * Package: collapsible.js
+ * 
+ * Namespace: bbop.html.collapsible
+ * 
+ * Implement the Bootstrap 3 collapse JS widget.
+ * http://getbootstrap.com/javascript/#collapse
+ * 
+ * See also:
+ *  <bbop.html>
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.html == "undefined" ){ bbop.html = {}; }
+
+/*
+ * Namespace: bbop.html.collapsible
+ * 
+ * Constructor: collapsible
+ * 
+ * Create the a frame for the functional part of a jQuery collapsible
+ * structure.
+ * 
+ * :Input:
+ * : [[title, string/*.to_string()], ...]
+ * :
+ * :Output:
+ * :<div class="panel-group" id="accordion">
+ * : <div class="panel panel-default">
+ * :  <div class="panel-heading">
+ * :   <h4 class="panel-title">
+ * :    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+ * :     ...
+ * :    </a>
+ * :   </h4>
+ * :  </div>
+ * :  <div id="collapseOne" class="panel-collapse collapse in">
+ * :   <div class="panel-body">
+ * :    ...
+ * :   </div>
+ * :  </div>
+ * : </div>
+ * : ...
+ * 
+ * Parameters:
+ *  in_list - collapsible frame headers: [[title, string/*.to_string()], ...]
+ *  attrs - *[serially optional]* attributes to apply to the new top-level div
+ * 
+ * Returns:
+ *  bbop.html.collapsible object
+ * 
+ * Also see: <tag>
+ */
+bbop.html.collapsible = function(in_list, attrs){
+    this._is_a = 'bbop.html.collapsible';
+
+    // Arg check--attrs should be defined as something.
+    this._attrs = attrs || {};
+
+    // We must add 'panel-group' to the class list.
+    if( this._attrs['class'] ){
+	this._attrs['class'] = this._attrs['class'] + ' panel-group';
+    }else{
+	this._attrs['class'] = 'panel-group';
+    }
+
+    // An id is necessary, and needs to be generated up front for
+    // reference.
+    this._cid = null;
+    if( ! this._attrs['id'] ){
+	this._attrs['id'] = 'gen_id-bbop-html-clps-' + bbop.core.randomness(20);
+    }
+    this._cid = this._attrs['id'];
+
+    // Internal stack always starts with a div.
+    this._div_stack = new bbop.html.tag('div', this._attrs);
+
+    this._section_id_to_content_id = {};
+
+    // Iterate over the incoming argument list.
+    var collapsible_this = this;
+    bbop.core.each(in_list, function(item){
+		       var sect_title = item[0];
+		       var content = item[1];
+		       collapsible_this.add_to(sect_title, content);
+		   });
+};
+
+/*
+ * Function: to_string
+ * 
+ * Convert the collapsible object into a html-ized string.
+ * 
+ * Parameters: n/a
+ * 
+ * Returns:
+ *  string
+ */
+bbop.html.collapsible.prototype.to_string = function(){
+    return this._div_stack.to_string();
+};
+
+/*
+ * Function: add_to
+ * 
+ * Add a contect section to the collapsible.
+ * 
+ * Parameters:
+ *  section_info - a string or a hash with 'id', 'label', and 'description'
+ *  content_blob - string or bbop.html object to put in a section
+ * 
+ * Returns: n/a
+ */
+bbop.html.collapsible.prototype.add_to = function(section_info,
+						  content_blob){
+	
+    // If section_info isn't an object, assume it is a string and
+    // use it for everything.
+    var section_id = null;
+    var section_label = null;
+    var section_desc = null;
+    if(typeof section_info != 'object' ){ // is a string
+	section_id = section_info;
+	section_label = section_info;
+    }else{
+	if( section_info['id'] ){ section_id = section_info['id']; }
+	if( section_info['label'] ){ section_label = section_info['label']; }
+	if( section_info['description'] ){
+	    section_desc = section_info['description'];
+	}
+    }
+
+    // Section ID and bookkeeping.
+    var coll_id = 'collapsible-' + section_id + '-' + bbop.core.randomness(20);
+    var cont_id = 'content-' + section_id + '-' + bbop.core.randomness(20);
+    this._section_id_to_content_id[section_id] = cont_id;    
+
+    // Inner-most header structure: label.
+    //    <a data-toggle="collapse" data-parent="#this._cid" href="#cont_id">
+    var title_a_attrs = {
+    	'data-toggle': 'collapse',
+    	'data-parent': '#' + this._cid,
+    	'href': '#' + coll_id
+    };
+    // Cannot be null in assembly.
+    if( section_desc ){	title_a_attrs['title'] = section_desc; }
+    var title_a = new bbop.html.tag('a', title_a_attrs, section_label);
+    
+    //   <h4 class="panel-title">
+    var h4_attrs = {
+    	'class': 'panel-title'
+    };
+    var h4 = new bbop.html.tag('h4', h4_attrs, title_a);
+
+    // Complete the panel heading.
+    //  <div class="panel-heading">
+    var divh_attrs = {
+    	'class': 'panel-heading'
+    };
+    var divh = new bbop.html.tag('div', divh_attrs, h4);
+    
+    // Add the panel body.
+    //    <div class="panel-body">
+    var body_attrs = {
+    	'class': 'panel-body',
+	'style': 'overflow-x: auto;', // emergency overflow scrolling
+    	'id': cont_id
+    };
+    var body = new bbop.html.tag('div', body_attrs, content_blob);
+
+    // Add the collapsing frame around the panel body.
+    //  <div id="collapseOne" class="panel-collapse collapse in">
+    var divb_attrs = {
+    	'class': 'panel-collapse collapse',
+    	'id': coll_id
+    };
+    var divb = new bbop.html.tag('div', divb_attrs, body);
+
+    // Add both to the local panel container.
+    // <div class="panel panel-default">
+    var divp_attrs = {
+    	'class': 'panel panel-default'
+    };
+    var divp = new bbop.html.tag('div', divp_attrs, [divh, divb]);
+    
+    //
+    this._div_stack.add_to(divp);
+};
+
+/*
+ * Function: empty
+ * 
+ * Empty all sections from the collapsible.
+ * 
+ * Parameters: n/a
+ * 
+ * Returns: n/a
+ */
+bbop.html.collapsible.prototype.empty = function(){
+    this._div_stack = new bbop.html.tag('div', this._attrs);
+    this._section_id_to_content_id = {};
+};
+
+/*
+ * Function: get_id
+ * 
+ * Return the id if extant, null otherwise.
+ * 
+ * Parameters: n/a
+ * 
+ * Returns: string or null
+ */
+bbop.html.collapsible.prototype.get_id = function(){
+    return this._div_stack.get_id();
+};
+
+/*
+ * Function: get_section_id
+ * 
+ * Get the "real" section id by way of the "convenience" section id?
+ * 
+ * Parameters:
+ *  sect_id - TODO ???
+ * 
+ * Returns: TODO ???
+ */
+bbop.html.collapsible.prototype.get_section_id = function(sect_id){
+	return this._section_id_to_content_id[sect_id];    
 };
 /* 
  * Package: handler.js
@@ -6843,8 +7073,8 @@ bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
     function ll(str){ logger.kvetch(str); }
 
     var relation_matrix = {};
-    var object_vector = object_vertex_partition;
-    var subject_vector = subject_vertex_partition;
+    var object_vector = object_vertex_partition || [];
+    var subject_vector = subject_vertex_partition || [];
 
     for( var i = 0; i < edge_partition.length; i++ ){
 
@@ -14677,6 +14907,7 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
 	// The text area.
 	var ta_args = {
 	    'id': ui_query_input_id,
+	    'rows': '1',
 	    'class': 'bbop-js-search-pane-textarea'
 	};
 	var query_area = new bbop.html.tag('textarea', ta_args);
@@ -16374,27 +16605,39 @@ bbop.widget.filter_table = function(elt_id, table_id, img_src,
     // Create a label, input field, and a clear button.
     var input_attrs = {
 	'type': 'text',
-	'class': 'textBox',
-	'value': "",
+	'class': 'form-control bbop-js-filter-table-input',
+	'value': '',
 	'generate_id': true
     };
     var input = new bbop.html.input(input_attrs);
+
     var lbl_attrs = {
 	'for': input.get_id(),
 	'generate_id': true
     };
-    var lbl = new bbop.html.tag('label', lbl_attrs);
-    lbl.add_to(anchor.label);
+    var lbl = new bbop.html.tag('label', lbl_attrs, anchor.label);
+
+    var clear_button_attrs ={
+	'type': 'button',
+	'class': 'btn btn-danger',
+	'title': 'Clear filter',
+	'generate_id': true
+    };
     var clear_button =
-	new bbop.widget.display.text_button_sim('X', 'Clear filter');
+	//new bbop.widget.display.text_button_sim('&times;', 'Clear filter');
+	new bbop.html.button('&times;', clear_button_attrs);
+
+    var cont_attrs = {
+	'class': 'form-inline'
+    };
+    var cont = new bbop.html.tag('div', cont_attrs, [lbl, input,
+						     clear_button]);
 
     ll('widget gen done');
 
     // And add them to the DOM at the location.
     jQuery('#' + elt_id).empty();
-    jQuery('#' + elt_id).append(lbl.to_string());
-    jQuery('#' + elt_id).append(input.to_string());
-    jQuery('#' + elt_id).append(clear_button.to_string());
+    jQuery('#' + elt_id).append(cont.to_string());
 
     // Also, attach a spinner.
     var spinner = null;
@@ -18070,6 +18313,1289 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
     // anchor.establish_display();
 };
 bbop.core.extend(bbop.widget.search_pane, bbop.golr.manager.jquery);
+/*
+ * Package: live_filters.js
+ * 
+ * Namespace: bbop.widget.live_filters
+ * 
+ * BBOP JS object to allow the live probing of a GOlr personality.
+ * 
+ * Very much like a separated accordion and filter from the search
+ * pane.
+ * 
+ * This is a Bootstrap 3 widget.
+ * 
+ * TODO/BUG: Needs a wait spinner to something.
+ * 
+ * See Also:
+ *  <search_pane.js>
+ *  <live_search.js>
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+
+/*
+ * Constructor: live_filters
+ * 
+ * Contructor for the bbop.widget.live_filters object.
+ * 
+ * Interactively explore a search personality with no direct side
+ * effects.
+ *
+ * This is a specialized (and widgetized) subclass of
+ * <bbop.golr.manager.jquery>.
+ * 
+ * Arguments:
+ *  golr_loc - string url to GOlr server;
+ *  golr_conf_obj - a <bbop.golr.conf> object
+ *  interface_id - string id of the element to build on
+ *  in_argument_hash - *[optional]* optional hash of optional arguments
+ * 
+ * Returns:
+ *  this object
+ */
+bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
+				    interface_id, in_argument_hash){
+    bbop.golr.manager.jquery.call(this, golr_loc, golr_conf_obj);
+    this._is_a = 'bbop.widget.live_filters';
+
+    var anchor = this;
+    var each = bbop.core.each;
+    
+    // TODO/BUG: Remove the need for these.
+    var ui_icon_positive_label = '&plus;';
+    var ui_icon_positive_source = null;
+    var ui_icon_negative_label = '&minus;';
+    var ui_icon_negative_source = null;
+    var ui_icon_remove_label = '&minus;';
+    var ui_icon_remove_source = null;
+    var ui_spinner_shield_source = null;
+    var ui_spinner_shield_message = '';
+
+    // Per-UI logger.
+    var logger = new bbop.logger();
+    logger.DEBUG = false;
+    //logger.DEBUG = true;
+    function ll(str){ logger.kvetch('LF: ' + str); }
+
+    ///
+    /// Deal with incoming arguments.
+    ///
+
+    this._class_conf = golr_conf_obj;
+
+    // Our argument default hash.
+    var default_hash =
+	{
+	    'meta_label': 'Documents:&nbsp;',
+	    'display_meta_p': true,
+	    'display_free_text_p': true,
+	    'free_text_placeholder': 'Free-text filter',
+	    'display_accordion_p': true,
+	    'minimum_free_text_length': 3, // wait for three characters or more
+	    'on_update_callback': function(){}
+	};
+    var folding_hash = in_argument_hash || {};
+    var arg_hash = bbop.core.fold(default_hash, folding_hash);
+    // 
+    this._interface_id = interface_id;
+    this._display_meta_p = arg_hash['display_meta_p'];
+    this._meta_label = arg_hash['meta_label'];
+    this._display_free_text_p = arg_hash['display_free_text_p'];
+    this._free_text_placeholder = arg_hash['free_text_placeholder'];
+    this._display_accordion_p = arg_hash['display_accordion_p'];
+    this._minimum_free_text_length = arg_hash['minimum_free_text_length'];
+    this._on_update_callback = arg_hash['on_update_callback'];
+
+    ///
+    /// Prepare the interface and setup the div hooks.
+    ///
+
+    anchor._established_p = false;
+
+    // Mangle everything around this unique id so we don't collide
+    // with other instances on the same page.
+    var ui_div_id = this._interface_id;
+    var mangle = ui_div_id + '_ui_element_' + bbop.core.uuid() + '_';
+
+    // Main div id hooks to the easily changable areas of the display.
+    var container_div_id = mangle + 'container-id';
+    // Meta hooks.
+    var meta_div_id = mangle + 'meta-id';
+    var meta_count_id = mangle + 'meta-count-id';
+    var meta_wait_id = mangle + 'meta-wait-id';
+    // Query hooks
+    var query_input_div_id = mangle + 'query-id';
+    // Sticky hooks.
+    var sticky_filters_div_id = mangle + 'sticky_filters-id';
+    var sticky_title_id = mangle + 'sticky_filters-title-id';
+    var sticky_content_id = mangle + 'sticky_filters-content-id';
+    // Current hooks.
+    var current_filters_div_id = mangle + 'current_filters-id';
+    var current_title_id = mangle + 'current_filters-title-id';
+    var current_content_id = mangle + 'current_filters-content-id';
+    var clear_user_filter_span_id = mangle + 'clear-user-filter-id';
+    // Accordion hooks.
+    var filters_div_id = mangle + 'ui-filters-wrapper';
+    var clear_query_span_id = mangle + 'clear-query-id';
+    // var ui_user_button_div_id = mangle + 'user-button-id';
+    // var ui_results_table_div_id = mangle + 'results-table-id';
+    // var ui_count_control_div_id = mangle + 'count_control-id';
+
+    // Blow away whatever was there completely.
+    // Render a control section into HTML. This includes the accordion
+    // and current filter sections.
+    // Get the user interface hook and remove anything that was there.
+    var container_div = new bbop.html.tag('div', {'id': container_div_id});
+    jQuery('#' + ui_div_id).empty();
+    jQuery('#' + ui_div_id).append(container_div.to_string());
+
+    // // Globally declared (or not) icons.
+    // var ui_spinner_search_source = '';
+    // var ui_spinner_shield_source = '';
+    // var ui_spinner_shield_message = null;
+    // var ui_icon_positive_label = '';
+    // var ui_icon_positive_source = '';
+    // var ui_icon_negative_label = '';
+    // var ui_icon_negative_source = '';
+    // var ui_icon_remove_label = '';
+    // var ui_icon_remove_source = '';
+
+    // // The spinner, if it exists, needs to be accessible by everybody
+    // // and safe to use.
+    // var spinner = null;
+    // function _spinner_gen(elt_id){
+    // 	var spinner_args = {
+    // 	    //timeout: 5,
+    // 	    //timeout: 500,
+    // 	    timeout: 10,
+    // 	    //classes: 'bbop-widget-search_pane-spinner',
+    // 	    visible_p: false
+    // 	};
+    // 	spinner = new bbop.widget.spinner(elt_id,
+    // 					  ui_spinner_search_source,
+    // 					  spinner_args);
+    // }
+
+    // // Additional id hooks for easy callbacks. While these are not as
+    // // easily changable as the above, we use them often enough and
+    // // across functions to have a hook.
+    // var accordion_div_id = mangle + 'filter-accordion-id';
+    
+    // // These pointers are used in multiple functions (e.g. both
+    // // *_setup and *_draw).
+    var filter_accordion_widget = null;
+    var spinner_div = null;
+    // //var current_filters_div = null;
+
+    function _spin_up(){
+    	if( spinner_div ){
+	    jQuery('#' + spinner_div.get_id()).removeClass('hidden');
+	    jQuery('#' + spinner_div.get_id()).addClass('active');
+    	}
+    }
+    function _spin_down(){
+    	if( spinner_div ){
+	    jQuery('#' + spinner_div.get_id()).addClass('hidden');
+	    jQuery('#' + spinner_div.get_id()).removeClass('active');
+    	}
+    }
+
+    /*
+     * Function: establish_display
+     * 
+     * Completely redraw the display.
+     * 
+     * Required to display after setting up the manager.
+     * 
+     * Also may be useful after a major change to the manager to reset
+     * it.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns
+     *  n/a
+     */
+    this.establish_display = function(){
+	
+    	// Can only make a display if there is a set
+    	// personality--there is no general default and it is an
+    	// error.
+    	var personality = anchor.get_personality();
+    	var cclass = golr_conf_obj.get_class(personality);
+    	if( ! personality || ! cclass ){
+    	    ll('ERROR: no usable personality set');
+    	    throw new Error('ERROR: no useable personality set');
+    	}
+
+    	///
+    	/// Setup the UI base.
+    	///
+	
+	// Holder for things like spinner and current number of
+	// results.
+	this.setup_meta = function(){
+	    ll('setup_meta for: ' + meta_div_id);
+	    
+	    // Count area.
+	    var ms_attrs = {
+		id: meta_count_id,
+		//'class': 'label label-default pull-right'
+		//'class': 'label label-default'
+		'class': 'badge'
+	    };
+	    var ms = new bbop.html.tag('span', ms_attrs, 'n/a');
+
+	    // Get a progress bar assembled.
+	    var inspan = new bbop.html.tag('span', {'class': 'sr-only'}, '...');
+	    var indiv = new bbop.html.tag('div', {'class': 'progress-bar',
+						  'role': 'progressbar',
+						  'aria-valuenow': '100',
+						  'aria-valuemin': '0',
+						  'aria-valuemax': '100',
+						  'style': 'width: 100%;'},
+					  inspan);
+	    spinner_div =
+		new bbop.html.tag('div',
+				  {'generate_id': true,
+				   'class':
+				   'progress progress-striped active pull-right',
+				   'style': 'width: 3em;'},
+				  indiv);
+
+	    // The container area; add in the label and count.
+	    var mdiv_args = {
+		'class': 'well well-sm',
+		'id': meta_div_id
+	    };
+	    var mdiv = new bbop.html.tag('div', mdiv_args,
+					 [this._meta_label, ms, spinner_div]);
+	    
+	    jQuery('#' + container_div.get_id()).append(mdiv.to_string());
+	};
+	if( this._display_meta_p ){
+	    this.setup_meta();
+	}
+
+	// Setup the free text query display under contructed tags for
+	// later population.
+	// 
+	// If no icon_clear_source is defined, icon_clear_label will be
+	// used as the defining text.
+	this.setup_query = function(){
+	    ll('setup_query for: ' + query_input_div_id);
+	    
+	    // // Some defaults.
+	    // if( ! label_str ){ label_str = ''; }
+	    // // if( ! icon_clear_label ){ icon_clear_label = ''; }
+	    // // if( ! icon_clear_source ){ icon_clear_source = ''; }
+	    
+	    // The incoming label.
+	    var query_label_attrs = {
+		//'class': 'bbop-js-search-pane-query-label'
+	    };
+	    var query_label_div = new bbop.html.tag('div', query_label_attrs);
+	    
+	    // The text area.
+	    var ta_args = {
+		//'class': 'bbop-js-search-pane-textarea',
+		'placeholder': this._free_text_placeholder,
+		'class': 'form-control bbop-js-live-filters-textarea',
+		//'style': 'height: 1em;',
+		'rows': '1',
+		'id': query_input_div_id
+	    };
+	    var query_area = new bbop.html.tag('textarea', ta_args);
+	    
+	    // Figure out an icon or a label.
+	    var clear_query_obj =
+		//bbop.widget.display.clickable_object(icon_clear_label);
+		bbop.widget.display.clickable_object(null);
+	    
+	    // And a div to put it in.
+	    var clear_div_attrs = {
+		//'class': 'bbop-js-search-pane-clear-button',
+		'generate_id': true
+	    };
+	    var clear_div =
+		new bbop.html.tag('div', clear_div_attrs, clear_query_obj);	
+	    
+	    // General container div.
+	    // NOTE/TODO: this is just a half panel--just wanted spacing.
+	    var gen_div_attrs = {
+		'class': 'panel panel-default',
+		'generate_id': true
+	    };
+	    var gen_div = new bbop.html.tag('div', gen_div_attrs);
+	    
+	    // Add to display.
+	    query_label_div.add_to(clear_div.to_string());
+	    gen_div.add_to(query_label_div.to_string());
+	    gen_div.add_to(query_area.to_string());
+	    
+	    jQuery('#' + container_div.get_id()).append(gen_div.to_string());
+	};
+	if( this._display_free_text_p ){
+	    this.setup_query();
+	}
+
+	// Setup sticky filters display under contructed tags for later
+	// population. The seeding information is coming in through the
+	// GOlr conf class.
+	this.setup_sticky_filters = function(){    
+    	    ll('setup_sticky_filters UI for class configuration: ' +
+	       cclass.id());
+	    
+    	    // var stitle_attrs = {
+    	    // 	'class': 'panel panel-heading',
+    	    // 	'id': sticky_title_id
+    	    // };
+    	    // var stitle =
+    	    // 	new bbop.html.tag('div', stitle_attrs,
+	    // 			  'No applied sticky filters');
+
+    	    var scont_attrs = {
+    		'class': 'panel-body',
+    		'id': sticky_content_id
+    	    };
+    	    var scont =
+    		new bbop.html.tag('div', scont_attrs,
+				  'No applied sticky filters');
+
+    	    var sticky_filters_attrs = {
+    		'class': 'panel panel-default',
+    		'id': sticky_filters_div_id
+    	    };
+    	    var sticky_filters_div =
+    		//new bbop.html.tag('div', sticky_filters_attrs, [stitle, scont]);
+    		new bbop.html.tag('div', sticky_filters_attrs, scont);
+	    
+    	    // Add the output to the page.
+    	    var sticky_filters_str = sticky_filters_div.to_string();
+	    jQuery('#' + container_div.get_id()).append(sticky_filters_str);
+	};	
+	// Setup current filters display under contructed tags for later
+	// population. The seeding information is coming in through the
+	// GOlr conf class.
+	// 
+	// Add in the filter state up here.
+	// 
+	// If no icon_reset_source is defined, icon_reset_label will be
+	// used as the defining text.
+	this.setup_current_filters = function(){
+    	    ll('setup_current_filters UI for class configuration: ' +
+	       cclass.id());
+	    
+    	    var ccont_attrs = {
+    		'class': 'panel-body',
+    		'id': current_content_id
+    	    };
+    	    var ccont =
+    		new bbop.html.tag('div', ccont_attrs,
+				  'No applied user filters');
+
+    	    var current_filters_attrs = {
+    		'class': 'panel panel-default',
+    		'id': current_filters_div_id
+    	    };
+    	    var current_filters_div =
+    		//new bbop.html.tag('div', current_filters_attrs, [stitle, scont]);
+    		new bbop.html.tag('div', current_filters_attrs, ccont);
+	    
+    	    // Add the output to the page.
+    	    var current_filters_str = current_filters_div.to_string();
+	    jQuery('#' + container_div.get_id()).append(current_filters_str);
+	};
+	// Setup the accordion skeleton under contructed tags for later
+	// population. The seeding information is coming in through the
+	// GOlr conf class.
+	// Start building the accordion here. Not an updatable part.
+	// 
+	// If no icon_*_source is defined, icon_*_label will be
+	// used as the defining text.
+	this.setup_accordion = function(){
+    	    ll('setup_accordion UI for class configuration: ' +
+    	       cclass.id());
+	    
+    	    var filter_accordion_attrs = {
+    		id: filters_div_id
+    	    };
+    	    filter_accordion_widget = // heavy lifting by special widget
+    	    new bbop.html.collapsible([], filter_accordion_attrs);
+	    
+    	    // Add the sections with no contents as a skeleton to be
+    	    // filled by draw_accordion.
+    	    var field_list = cclass.field_order_by_weight('filter');
+    	    each(field_list,
+    		 function(in_field){
+    		     ll('saw field: ' + in_field);
+    		     var ifield = cclass.get_field(in_field);
+    		     var in_attrs = {
+    			 id: in_field,
+    			 label: ifield.display_name(),
+    			 description: ifield.description()
+    		     };
+    		     filter_accordion_widget.add_to(in_attrs, '', true);
+    		 });
+	
+    	    // Add the output from the accordion to the page.
+    	    var accordion_str = filter_accordion_widget.to_string();
+    	    jQuery('#' + container_div_id).append(accordion_str);
+	};
+	if( this._display_accordion_p ){
+	    this.setup_current_filters();
+	    this.setup_sticky_filters();
+	    this.setup_accordion();
+	}
+
+    	///
+    	/// Define the drawing callbacks, as well as the action hooks.
+    	///
+	
+	/*
+	 * Function: draw_meta
+	 *
+	 * Draw meta results. Includes selector for drop down.
+	 * 
+	 * (Re)draw the count control with the current information in the
+	 * manager. This also tries to set the selector to the response
+	 * number (to keep things in sync), unbinds any current "change"
+	 * event, and adds a new change event.
+	 * 
+	 * Parameters:
+	 *  response - the <bbop.golr.response> returned from the server
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_meta = function(response, manager){
+	    
+    	    ll('draw_meta for: ' + meta_div_id);
+
+    	    // Collect numbers for display.
+    	    var total_c = response.total_documents();
+
+    	    // Draw meta; the current numbers and page--the same for
+    	    // every type of return.
+	    // var ms_attrs = {
+	    // 	//'class': 'label label-default pull-right'
+	    // 	'class': 'label label-default'
+	    // };
+	    // var ms = new bbop.html.tag('div', ms_attrs, total_c);
+    	    jQuery('#' + meta_count_id).empty();
+    	    jQuery('#' + meta_count_id).append(total_c);
+    	    // if( total_c == 0 ){
+    	    // 	jQuery('#' + meta_div_id).append('No results found.');
+    	    // }else{
+	    // }
+    	    // jQuery('#' + meta_div_id).append(ms.to_string());
+	};
+	if( this._display_meta_p ){
+    	    anchor.register('search', 'meta_first', this.draw_meta, -1);
+	}
+
+	// Detect whether or not a keyboard event is ignorable.
+	function _ignorable_event(event){
+
+    	    var retval = false;
+
+    	    if( event ){
+    		var kc = event.keyCode;
+    		if( kc ){
+    		    if( kc == 39 || // right
+			kc == 37 || // left
+			kc == 32 || // space
+			kc == 20 || // ctl?
+			kc == 17 || // ctl?
+			kc == 16 || // shift
+			//kc ==  8 || // delete
+			kc ==  0 ){ // super
+    			    ll('ignorable key event: ' + kc);
+    			    retval = true;
+    			}
+		}
+    	    }
+    	    return retval;
+	}
+
+	/*
+	 * Function: draw_query
+	 *
+	 * Draw the query widget. This function makes it active
+	 * as well.
+	 * 
+	 * Clicking the reset button will reset the query to ''.
+	 * 
+	 * NOTE: Since this is part of the "persistant" interface (i.e. it
+	 * does not get wiped after every call), we make sure to clear the
+	 * event listeners when we redraw the function to prevent them from
+	 * building up.
+	 * 
+	 * Parameters:
+	 *  response - the <bbop.golr.response> returned from the server
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_query = function(response, manager){
+    	    ll('draw_query for: ' + query_input_div_id);
+
+    	    // Add a smartish listener.
+    	    jQuery('#' + query_input_div_id).unbind('keyup');
+    	    jQuery('#' + query_input_div_id).keyup(
+    		function(event){
+
+    		    // If we're left with a legitimate event, handle it.
+    		    if( ! _ignorable_event(event) ){
+
+    			// Can't ignore it anymore, so it goes into the
+    			// manager for testing.
+    			var tmp_q = manager.get_query();
+    			var input_text = jQuery(this).val();
+    			manager.set_query(input_text);
+
+    			// If the manager feels like it's right, trigger.
+    			if( manager.sensible_query_p() ){
+    			    ll('keeping set query: ' + input_text);
+    			    // Set the query to be more "usable" just
+    			    // before triggering (so the tests can't be
+    			    // confused by our switch).
+    			    manager.set_comfy_query(input_text);
+    			    manager.search();
+
+    			    // We are now searching--show it.
+    			    _spin_up();
+    			}else{
+    			    ll('rolling back query: ' + tmp_q);		    
+    			    manager.set_query(tmp_q);
+    			}
+    		    }
+    		});
+
+    	    // Now reset the clear button and immediately set the event.
+    	    jQuery('#' + clear_query_span_id).unbind('click');
+    	    jQuery('#' + clear_query_span_id).click(
+    		function(){
+    		    manager.reset_query();
+    		    //anchor.set_query_field(manager.get_query());
+    		    anchor.set_query_field('');
+    		    manager.search();
+    		    // We are now searching--show it.
+    		    _spin_up();
+    		});
+	};
+	if( this._display_free_text_p ){
+    	    anchor.register('search', 'query_first', this.draw_query, 0);
+	}
+	
+	/*
+	 * Function: draw_accordion
+	 *
+	 * (Re)draw the information in the accordion controls/filters.
+	 * This function makes them active as well.
+	 * 
+	 * Parameters:
+	 *  response - the <bbop.golr.response> returned from the server
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_accordion = function(response, manager){	    
+    	    ll('draw_accordion for: ' + filters_div_id);
+
+	    //
+    	    // Make sure that accordion has already been inited.
+    	    if( typeof(filter_accordion_widget) == 'undefined' ){
+    		throw new Error('Need to init accordion widget to use it.');
+    	    }
+
+    	    // We'll need this in a little bit for calculating when to
+    	    // display the "more" option for the field filters.
+    	    var real_facet_limit = manager.get_facet_limit();
+    	    var curr_facet_limit = real_facet_limit -1; // the facets we'll show
+
+    	    // We want this so we can filter out any facets that have the
+    	    // same count as the current response total--these facets are
+    	    // pretty much information free.
+    	    var total_docs = response.total_documents();
+
+    	    // A helper function for when no filters are
+    	    // displayed.
+    	    function _nothing_to_see_here(in_field){
+    		var section_id =
+		    filter_accordion_widget.get_section_id(in_field);
+    		jQuery('#' + section_id).empty();
+    		jQuery('#' + section_id).append('Nothing to filter.');
+    	    }
+
+    	    // Hash where we collect our button information.
+    	    // button_id -> [source, filter, count, polarity];
+    	    var button_hash = {};
+
+    	    // And a hash to store information to be able to generate the
+    	    // complete filter shields.
+    	    // span_id -> filter_id
+    	    var overflow_hash = {};
+
+    	    // Cycle through each facet field; all the items in each,
+    	    // create the lists and buttons (while collectong data useful
+    	    // in creating the callbacks) and put them into the accordion.
+    	    each(response.facet_field_list(),
+    		 function(in_field){
+
+    		     var facet_bd = response.facet_field(in_field);
+    		     if( bbop.core.is_empty(facet_bd) ){
+			 
+    			 // No filters means nothing in the box.
+    			 _nothing_to_see_here(in_field);
+
+    		     }else{
+			 
+    			 // Create ul lists of the facet contents.
+    			 var tbl_id = mangle + 'filter-list-' + in_field;
+    			 var facet_list_tbl_attrs = {
+			     'class': 'table table-hover table-striped table-condensed',
+    			     'id': tbl_id
+    			 };
+
+    			 var facet_list_tbl =
+    			     new bbop.html.table([], [], facet_list_tbl_attrs);
+			 
+    			 ll("consider:" + in_field + ": " +
+    			    response.facet_field(in_field).length);
+
+    			 // BUG/TODO:
+    			 // Count the number of redundant (not shown)
+    			 // facets so we can at least give a face to this
+    			 // bug/problem.
+    			 // Also filter out "empty filters".
+    			 var redundant_count = 0;
+    			 // Now go through and get filters and counts.
+    			 var good_count = 0; // only count when good
+    			 var overflow_p = false; // true when at 24 -> 25
+    			 each(response.facet_field(in_field),
+    			      function(ff_field, ff_index){
+
+    				  // Pull out info early so we can test it
+    				  // for information content.
+    				  var f_name = ff_field[0];
+    				  var f_count = ff_field[1];
+				  
+    				  // ll(in_field + ": " + f_name + ": " +
+    				  // 	 [f_count,
+    				  // 	  total_docs,
+    				  // 	  ff_index,
+    				  // 	  good_count,
+    				  // 	  redundant_count,
+    				  // 	  real_facet_limit].join(', '));
+			      	  
+    				  // TODO: The field is likely redundant
+    				  // (BUG: not always true in closures),
+    				  // so eliminate it.
+    				  if( f_count == total_docs ){
+    				      //ll("\tnothing here");
+    				      redundant_count++;
+    				  }else if( ! f_name || f_name == "" ){
+    				      // Straight out skip if it is an
+    				      // "empty" facet field.
+    				  }else if( ff_index < real_facet_limit -1 ){
+    				      //ll("\tgood row");
+    				      good_count++;
+
+    				      // Create buttons and store them for later
+    				      // activation with callbacks to
+    				      // the manager.
+    				      var b_plus =
+    					  new bbop.html.button(
+    					      ui_icon_positive_label,
+					      {
+						  'generate_id': true,
+						  'type': 'button',
+						  'class':
+						  'btn btn-success btn-xs'
+					      });
+    				      var b_minus =
+    					  new bbop.html.button(
+    					      ui_icon_negative_label,
+					      {
+						  'generate_id': true,
+						  'type': 'button',
+						  'class':
+						  'btn btn-danger btn-xs'
+					      });
+				      
+    				      // Store in hash for later keying to
+    				      // event.
+    				      button_hash[b_plus.get_id()] =
+    					  [in_field, f_name, f_count, '+'];
+    				      button_hash[b_minus.get_id()] =
+    					  [in_field, f_name, f_count, '-'];
+				      
+    				      // // Add the label and buttons to the
+    				      // // appropriate ul list.
+    				      //facet_list_ul.add_to(
+    				      // fstr,b_plus.to_string(),
+    				      //   b_minus.to_string());
+    				      // Add the label and buttons to the table.
+    				      facet_list_tbl.add_to([f_name,
+    							     '('+ f_count+ ')',
+    							     b_plus.to_string(),
+    							     b_minus.to_string()
+    							    ]);
+    				  }
+				  
+    				  // This must be logically separated from
+    				  // the above since we still want to show
+    				  // more even if all of the top 25 are
+    				  // redundant.
+    				  if( ff_index == real_facet_limit -1 ){
+    				      // Add the more button if we get up to
+    				      // this many facet rows. This should
+    				      // only happen on the last possible
+    				      // iteration.
+				      
+    				      overflow_p = true;
+    				      //ll( "\tadd [more]");
+				      
+    				      // Since this is the overflow item,
+    				      // add a span that can be clicked on
+    				      // to get the full filter list.
+    				      //ll("Overflow for " + in_field);
+    				      var b_over = new bbop.html.button(
+    					  'more...',
+					  {
+					      'generate_id': true,
+					      'type': 'button',
+					      'title':
+					      'Display the complete list',
+					      'class':
+					      'btn btn-primary btn-xs'
+					  });
+    				      facet_list_tbl.add_to([b_over.to_string(),
+    				  			     '', '']);
+    				      overflow_hash[b_over.get_id()] = in_field;
+    				  }
+    			      });
+
+    			 // There is a case when we have filtered out all
+    			 // avilable filters (think db source).
+    			 if( good_count == 0 && ! overflow_p ){
+    			     _nothing_to_see_here(in_field);
+    			 }else{
+    			     // Otherwise, now add the ul to the
+    			     // appropriate section of the accordion in
+    			     // the DOM.
+    			     var sect_id =
+    				 filter_accordion_widget.get_section_id(in_field);
+    			     jQuery('#' + sect_id).empty();
+
+    			     // TODO/BUG:
+    			     // Give warning to the redundant facets.
+    			     var warn_txt = null;
+    			     if( redundant_count == 1 ){
+    				 warn_txt = "field is";
+    			     }else if( redundant_count > 1 ){
+    				 warn_txt = "fields are";
+    			     }
+    			     if( warn_txt ){
+    				 jQuery('#' + sect_id).append(
+    				     "<small> The top (" + redundant_count +
+    					 ") redundant " + warn_txt + " not shown" +
+    					 "</small>");
+				 
+    			     }
+
+    			     // Add facet table.
+    			     var final_tbl_str = facet_list_tbl.to_string();
+    			     jQuery('#' + sect_id).append(final_tbl_str);
+    			 }
+    		     }
+    		 });
+
+    	    // Okay, now introducing a function that we'll be using a
+    	    // couple of times in our callbacks. Given a button id (from
+    	    // a button hash) and the [field, filter, count, polarity]
+    	    // values from the props, make a button-y thing an active
+    	    // filter.
+    	    function filter_select_live(button_id, create_time_button_props){
+    		//var bid = button_id;
+    		//var in_field = create_time_button_props[0];	 
+    		//var in_filter = create_time_button_props[1];
+    		//var in_count = create_time_button_props[2];
+    		var in_polarity = create_time_button_props[3];
+
+    		// Decide on the button graphical elements.
+    		var b_ui_icon = 'ui-icon-plus';
+    		if( in_polarity == '-' ){
+    		    b_ui_icon = 'ui-icon-minus';
+    		}
+    		var b_ui_props = {
+    		    icons: { primary: b_ui_icon},
+    		    text: false
+    		};
+
+    		// Create the button and immediately add the event.
+    		//jQuery('#' + button_id).button(b_ui_props).click(
+    		jQuery('#' + button_id).click(
+    		    function(){
+    			var tid = jQuery(this).attr('id');
+    			var call_time_button_props = button_hash[tid];
+    			var call_field = call_time_button_props[0];	 
+    			var call_filter = call_time_button_props[1];
+    			//var in_count = button_props[2];
+    			var call_polarity = call_time_button_props[3];
+			
+    			// Change manager and fire.
+    			// var bstr =call_field+' '+call_filter+' '+call_polarity;
+    			// alert(bstr);
+    			manager.add_query_filter(call_field, call_filter,
+    			  			 [call_polarity]);
+    			manager.search();
+    			// We are now searching--show it.
+    			_spin_up();
+    		    });
+    	    }
+
+    	    // Now let's go back and add the buttons, styles,
+    	    // events, etc. in the main accordion section.
+    	    each(button_hash, filter_select_live);
+
+    	    // Next, tie the events to the "more" spans.
+    	    each(overflow_hash,
+    		 function(button_id, filter_name){
+    		     jQuery('#' + button_id).click(
+
+    			 // On click, set that one field to limitless in
+    			 // the manager, setup a shield, and wait for the
+    			 // callback.
+    			 function(){
+
+    			     // Recover the field name.
+    			     var tid = jQuery(this).attr('id');
+    			     var call_time_field_name = overflow_hash[tid];
+    			     //alert(call_time_field_name);
+
+    			     // Set the manager to no limit on that field and
+    			     // only rturn the information that we want.
+    			     manager.set_facet_limit(0);
+    			     manager.set_facet_limit(call_time_field_name, -1);
+    			     var curr_row = manager.get('rows');
+    			     manager.set('rows', 0);
+
+    			     // Create the shield and pop-up the
+    			     // placeholder.
+    			     var fs = bbop.widget.display.filter_shield;
+    			     var filter_shield = new fs(ui_spinner_shield_source,
+    							ui_spinner_shield_message); 
+    			     filter_shield.start_wait();
+
+    			     // Open the populated shield.
+    			     function draw_shield(resp){
+
+    				 // ll("shield what: " + bbop.core.what_is(resp));
+    				 // ll("shield resp: " + bbop.core.dump(resp));
+
+    				 // First, extract the fields from the
+    				 // minimal response.
+    				 var fina = call_time_field_name;
+    				 var flist = resp.facet_field(call_time_field_name);
+
+    				 // Draw the proper contents of the shield.
+    				 filter_shield.draw(fina, flist, manager);
+    			     }
+    			     manager.fetch(draw_shield);
+
+    			     // Reset the manager to more sane settings.
+    			     manager.reset_facet_limit();
+    			     manager.set('rows', curr_row);
+    			 });
+    		 });
+
+    	    ll('Done current accordion for: ' + filters_div_id);
+	};
+
+	/*
+	 * Function: draw_current_filters
+	 *
+	 * (Re)draw the information on the current filter set.
+	 * This function makes them active as well.
+	 * 
+	 * Parameters:
+	 *  response - the <bbop.golr.response> returned from the server
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_current_filters = function(response, manager){	
+		ll('draw_current_filters for: ' + current_filters_div_id);
+
+		///
+		/// Add in the actual HTML for the filters and buttons. While
+		/// doing so, tie a unique id to the filter--we'll use that
+		/// later on to add buttons and events to them.
+		///
+
+		// First, we need to make the filter clear button for the top
+		// of the table.
+		var b_cf = new bbop.html.button('&times;',
+						{
+		     				    'type': 'button',
+						    'id':
+						    clear_user_filter_span_id,
+						    'class':
+						    'btn btn-danger btn-xs',
+						    'title':
+						    'Clear all user filters'
+						});
+
+		var in_query_filters = response.query_filters();
+		//var sticky_query_filters = manager.get_sticky_query_filters();
+		ll('filters: ' + bbop.core.dump(in_query_filters));
+		var fq_list_tbl =
+		    new bbop.html.table(['', 'User filters', b_cf.to_string()],
+					[],
+//				       	{'class': 'bbop-js-search-pane-filter-table'});
+				       	{'class': 'table table-hover table-striped table-condensed'});
+		var has_fq_p = false; // assume there are no filters to begin with
+		var button_hash = {};
+		each(in_query_filters,
+		     function(field, field_vals){
+			 each(field_vals,
+			      function(field_val, polarity){
+
+				  // Make note of stickiness, skip adding if sticky.
+				  var qfp =
+				      manager.get_query_filter_properties(field,
+									  field_val);
+				  if( ! qfp || qfp['sticky_p'] == false ){
+	
+				      // Note the fact that we actually have a
+				      // query filter to work with and display.
+				      has_fq_p = true;
+
+				      // Boolean value to a character.
+				      var polstr = '&minus;';
+				      if( polarity ){ polstr = '&plus;'; }
+
+
+				      // Argh! Real jQuery buttons are way too slow!
+				      // var b = new bbop.html.button('remove filter',
+				      // 		  {'generate_id': true});
+
+				      // Generate a button with a unique id.
+				      var b = new bbop.html.button(
+					  ui_icon_remove_label,
+					  {
+					      'generate_id': true,
+					      'type': 'button',
+					      'title': 'Remove filter',
+					      'class':
+					      'btn btn-danger btn-xs'
+					  });
+
+				      // Tie the button it to the filter for
+				      // jQuery and events attachment later on.
+				      var bid = b.get_id();
+				      button_hash[bid] = [polstr, field, field_val];
+	
+				      //ll(label_str +' '+ bid);
+				      //fq_list_tbl.add_to(label_str +' '+ b.to_string());
+				      fq_list_tbl.add_to(['<strong>'+ polstr +'</strong>',
+							  field + ': ' + field_val,
+							  b.to_string()]);
+				      //label_str +' '+ b.to_string());
+				  }
+			      });
+		     });
+
+		// Either add to the display, or display the "empty" message.
+		var cfid = '#' + current_content_id;
+		jQuery(cfid).empty();
+		if( ! has_fq_p ){
+		    jQuery(cfid).append("No current user filters.");
+		}else{
+
+		    // With this, the buttons will be attached to the
+		    // DOM...
+		    jQuery(cfid).append(fq_list_tbl.to_string());
+	
+		    // First, lets add the reset for all of the filters.
+		    jQuery('#' + b_cf.get_id()).click(
+			function(){
+	   		    manager.reset_query_filters();
+	   		    manager.search();
+			    // We are now searching--show it.
+			    _spin_up();
+			}		
+		    );
+
+		    // Now let's go back and add the buttons, styles,
+		    // events, etc. to the filters.
+		    each(button_hash,
+			 function(button_id){
+			     var bid = button_id;
+
+			     // // Get the button.
+			     // var bprops = {
+			     // 	 icons: { primary: "ui-icon-close"},
+			     // 	 text: false
+			     // };
+			     // Create the button and immediately add the event.
+			     //jQuery('#' + bid).button(bprops).click(
+			     jQuery('#' + bid).click(
+				 function(){
+				     var tid = jQuery(this).attr('id');
+				     var button_props = button_hash[tid];
+				     var polstr = button_props[0];
+				     var field = button_props[1];
+				     var value = button_props[2];
+
+				     // Change manager and fire.
+				     // var lstr = polstr +' '+ field +' '+ value;
+				     // alert(lstr);
+				     // manager.remove_query_filter(field,value,
+				     // 				 [polstr, '*']);
+				     manager.remove_query_filter(field, value);
+				     manager.search();
+				     // We are now searching--show it.
+				     _spin_up();
+				 });
+			 });
+		}
+	};
+
+	/*
+	 * Function: draw_sticky_filters
+	 *
+	 * (Re)draw the information on the sticky filter set.
+	 * 
+	 * Parameters:
+	 *  response - the <bbop.golr.response> returned from the server
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_sticky_filters = function(response, manager){	    
+    	    ll('draw_sticky_filters for: ' + sticky_filters_div_id);
+
+    	    // Add in the actual HTML for the pinned filters and buttons.
+    	    var sticky_query_filters = manager.get_sticky_query_filters();
+    	    ll('sticky filters: ' + bbop.core.dump(sticky_query_filters));
+    	    var fq_list_tbl =
+    		new bbop.html.table(['', 'Your search is pinned to these filters'],
+    				    [],
+    			       	    {'class': 'table table-hover table-striped table-condensed'});
+    	    // [{'filter': A, 'value': B, 'negative_p': C, 'sticky_p': D}, ...]
+    	    each(sticky_query_filters,
+    		 function(fset){
+
+    		     //
+    		     var sfield = fset['filter'];
+    		     var sfield_val = fset['value'];
+
+    		     // Boolean value to a character.
+    		     var polarity = fset['negative_p'];
+    		     var polstr = '&minus;';
+    		     if( polarity ){ polstr = '&plus;'; }
+
+    		     // Generate a button with a unique id.
+    		     var label_str = polstr + ' ' + sfield + ':' + sfield_val;
+    		     fq_list_tbl.add_to(['<b>'+ polstr +'</b>',
+    					 sfield + ': ' + sfield_val]);
+    		 });
+	    
+    	    // Either add to the display, or display the "empty" message.
+    	    //var sfid = '#' + sticky_filters_div_id;
+    	    var sfid = '#' + sticky_content_id;
+    	    jQuery(sfid).empty();
+    	    if( sticky_query_filters.length == 0 ){
+    		jQuery(sfid).append("No sticky filters.");
+    	    }else{
+    		// Attach to the DOM...
+    		jQuery(sfid).append(fq_list_tbl.to_string());
+    	    }
+	};
+
+	if( this._display_accordion_p ){
+    	    anchor.register('search', 'accrdn_first', this.draw_accordion, 1);
+    	    anchor.register('search', 'current_first',
+			    this.draw_current_filters, 2);
+    	    anchor.register('search', 'sticky_first',
+			    this.draw_sticky_filters, 3);
+	}
+
+	/*
+	 * Function: draw_error
+	 *
+	 * Somehow report an error to the user.
+	 * 
+	 * Parameters:
+	 *  error_message - a string(?) describing the error
+	 *  manager - <bbop.golr.manager> that we initially registered with
+	 *
+	 * Returns:
+	 *  n/a
+	 */
+	this.draw_error = function(error_message, manager){
+    	    ll("draw_error: " + error_message);
+    	    alert("Runtime error: " + error_message);
+    	    _spin_down();
+	};
+    	anchor.register('error', 'error_first', this.draw_error, 0);
+
+	// 
+	function spin_down_wait(){
+	    _spin_down();
+	}
+    	anchor.register('search', 'donedonedone', spin_down_wait, -100);
+
+	///
+    	// /// Things to do on every reset event. Essentially re-draw
+    	// /// everything.
+	// ///
+
+    	// if( show_searchbox_p ){ // conditionally display search box stuff
+    	//     anchor.register('reset', 'reset_query', anchor.ui.reset_query, -1);
+	// }
+    	// if( show_filterbox_p ){ // conditionally display filter stuff
+    	//     anchor.register('reset', 'sticky_first',
+    	// 		    anchor.ui.draw_sticky_filters, -1);
+    	//     anchor.register('reset', 'curr_first',
+    	// 		    anchor.ui.draw_current_filters, -1);
+    	//     anchor.register('reset', 'accordion_first',
+    	// 		    anchor.ui.draw_accordion, -1);
+    	// }
+    	// // We're always showing meta and results.
+    	// anchor.register('reset', 'meta_first', anchor.ui.draw_meta, -1);
+    	// anchor.register('reset', 'results_first', anchor.ui.draw_results, -1);
+	
+	// // Finally, we're going to add a first run behavior here.
+	// // We'll wrap the user-defined function into a 
+	// function _initial_runner(response, manager){
+	//     // I can't just remove the callback from the register
+	//     // after the first run because it would be reconstituted
+	//     // every time it was reset (established).
+	//     if( anchor.initial_reset_p ){
+	// 	anchor.initial_reset_p = false;
+	// 	anchor.initial_reset_callback(response, manager);
+	// 	//ll('unregister: ' + anchor.unregister('reset', 'first_run'));
+	//     }
+	// }
+    	// anchor.register('reset', 'initial_reset', _initial_runner, -100);
+
+	// ///
+    	// /// Things to do on every search event.
+	// ///
+
+    	// if( show_searchbox_p ){ // conditionally display search box stuff
+	//     // TODO: I worry a little about this being rebound after
+	//     // every keyboard event, but rationally, considering the
+	//     // rebinds and redraws that are happening down in the
+	//     // accordion, that seems a little silly.
+    	//     anchor.register('search', 'draw_query', anchor.ui.draw_query, -1);
+	// }
+    	// if( show_filterbox_p ){ // conditionally display filter stuff
+    	//     anchor.register('search','sticky_filters_std',
+    	// 		    anchor.ui.draw_sticky_filters);
+    	//     anchor.register('search','curr_filters_std',
+    	// 		    anchor.ui.draw_current_filters);
+    	//     anchor.register('search', 'accordion_std',
+	// 		    anchor.ui.draw_accordion);
+    	// }
+    	// // These will always be updated after a search.
+    	// anchor.register('search', 'meta_usual', anchor.ui.draw_meta);
+    	// anchor.register('search', 'results_usual', anchor.ui.draw_results);
+	
+    	// // Things to do on an error.
+    	// anchor.register('error', 'results_unusual', anchor.ui.draw_error);	
+	
+    	// // Setup the gross frames for the filters and results.
+    	// if( show_searchbox_p ){ // conditionally display search box stuff
+    	//     anchor.ui.setup_query('Free-text filtering',
+	// 			  icon_clear_label,
+	// 			  icon_clear_source);
+	// }
+    	// if( show_filterbox_p ){ // conditionally display filter stuff
+    	//     anchor.ui.setup_sticky_filters();
+    	//     anchor.ui.setup_current_filters(icon_remove_label,
+	// 				    icon_remove_source);
+    	//     anchor.ui.setup_accordion(icon_positive_label,
+	// 			      icon_positive_source,
+	// 			      icon_negative_label,
+	// 			      icon_negative_source,
+	// 			      spinner_shield_source,
+	// 			      spinner_shield_message);
+	// }
+    	// anchor.ui.setup_results({'meta': show_pager_p,
+	// 			 'spinner_source': spinner_search_source});
+	
+    	// Start the ball with a reset event.
+    	anchor.search();
+
+	// The display has been established.
+	anchor._established_p = true;
+    };
+
+    // /*
+    //  * Function: reset_query
+    //  *
+    //  * Simply reset the query and then redraw (rebind) the query.
+    //  * 
+    //  * Parameters:
+    //  *  response - the <bbop.golr.response> returned from the server
+    //  *  manager - <bbop.golr.manager> that we initially registered with
+    //  *
+    //  * Returns:
+    //  *  n/a
+    //  * 
+    //  * See:
+    //  *  <draw_query>
+    //  */
+    // this.reset_query = function(response, manager){
+
+    // 	ll('reset_query for: ' + ui_query_input_id);
+
+    // 	// Reset manager back to the default.
+    // 	manager.reset_query();
+
+    // 	anchor.draw_query(response, manager);
+    // };
+
+    // /*
+    //  * Function: set_query_field
+    //  *
+    //  * Set the text in the search query field box.
+    //  * 
+    //  * If no query is set, the field is cleared.
+    //  * 
+    //  * Parameters:
+    //  *  query - *[optional]* string
+    //  *
+    //  * Returns:
+    //  *  true or false on whether the task was accomplished
+    //  */
+    // this.set_query_field = function(query){
+    // 	var retval = false;
+    // 	if( ! query ){
+    // 	    query = '';
+    // 	}
+    // 	if( jQuery('#' + ui_query_input_id) ){
+    // 	    ll("changing query search field: to " + query);
+    // 	    jQuery('#' + ui_query_input_id).val(query);
+    // 	    //jQuery('#' + ui_query_input_id).keyup();
+    // 	    retval = true;
+    // 	}
+    // 	return retval;
+    // };
+};
+bbop.core.extend(bbop.widget.live_filters, bbop.golr.manager.jquery);
 /*
  * Package: repl.js
  * 
