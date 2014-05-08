@@ -6619,8 +6619,8 @@ if ( typeof bbop.layout == "undefined" ){ bbop.layout = {}; }
 if ( typeof bbop.layout.sugiyama == "undefined" ){ bbop.layout.sugiyama = {}; }
 
 // Speciality variables in the namespace.
-bbop.layout.sugiyama.DEBUG = true;
-//bbop.layout.sugiyama.DEBUG = false;
+//bbop.layout.sugiyama.DEBUG = true;
+bbop.layout.sugiyama.DEBUG = false;
 bbop.layout.sugiyama.iterations = 10;
 
 ///
@@ -6689,6 +6689,10 @@ bbop.layout.sugiyama.partitioner = function(graph){
     var logger = new bbop.logger("Partitioner");
     logger.DEBUG = bbop.layout.sugiyama.DEBUG;
     function ll(str){ logger.kvetch(str); }
+    // Warning logger.
+    var yikes = new bbop.logger("Partitioner WARNING");
+    function warn_me(str){ yikes.kvetch(str); }
+
 
     // Aliases.
     var each = bbop.core.each;
@@ -6905,17 +6909,8 @@ bbop.layout.sugiyama.partitioner = function(graph){
 		// they're what we're using for traversal.
 		if( ! vertex_set[ cnode.id() ] ){
 		
+		    // Create new vertex and add to set.
 		    _new_node_at(cnode, next_level);
-		    
-		    // // Create new vertex and add to set.
-		    // var new_vertex =
-		    //     new bbop.layout.sugiyama.simple_vertex(cnode.id());
-		    // new_vertex.level = next_level;
-		    // vertex_set[ new_vertex.id() ] = new_vertex;
-		    
-		    // // Check the node in to the 'seen' references.
-		    // first_seen_reference[ new_vertex.id() ] = next_level;
-		    // last_seen_reference[ new_vertex.id() ] = next_level;
 		    
 		    // Since it is a new node, we traverse it.
 		    ll('cs (a): ' + call_stack);
@@ -6927,9 +6922,9 @@ bbop.layout.sugiyama.partitioner = function(graph){
 		    
 		}else{
 		    
-		    // ll('to update ' + cnode.id() + ' level to ' + next_level +
-		    //    '; fsr: '+ first_seen_reference[ cnode.id() ] +
-		    //    '; lsr: '+ last_seen_reference[ cnode.id() ]);
+		    ll('to update ' + cnode.id() + ' level to ' + next_level +
+		       '; fsr: '+ first_seen_reference[ cnode.id() ] +
+		       '; lsr: '+ last_seen_reference[ cnode.id() ]);
 		    
 		    // Otherwise, just update the levels that we've seen
 		    // the child at--do not descend.
@@ -6942,6 +6937,15 @@ bbop.layout.sugiyama.partitioner = function(graph){
 			// appear at, so update.
 			// I believe node and simple node IDs are the same?
 			vertex_set[ cnode.id() ].level = next_level;
+
+			// Recur if the LSR has change--we need to
+			// update all of the nodes below.
+			ll('cs (a): ' + call_stack);
+			var new_cs = bbop.core.clone(call_stack);
+			ll('cs (b): ' + new_cs);
+			new_cs.push(cnode.id());
+			ll('cs (c): ' + new_cs);
+			recursivePartitioner(graph, cnode, new_cs);
 		    }
 
 		    // ll('updated ' + cnode.id() + ' level to ' + next_level +
@@ -6987,9 +6991,9 @@ bbop.layout.sugiyama.partitioner = function(graph){
 
 	var difference = vertex_set[ edge.subject() ].level -
 	    vertex_set[ edge.object() ].level;
-	// ll('diff for '+edge.subject()+' -> '+edge.object()+' = '+ difference);
-	// ll('   ' + vertex_set[ edge.subject() ].level + '-' +
-	//    vertex_set[ edge.object() ].level);
+	ll('diff for '+edge.subject()+' -> '+edge.object()+' = '+ difference);
+	ll('   ' + vertex_set[ edge.subject() ].level + '-' +
+	   vertex_set[ edge.object() ].level);
 
 	// If there is a difference, create virtual nodes and
 	// paths. Deleted used edges.
@@ -7084,12 +7088,19 @@ bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
     var logger = new bbop.logger("BMatrix");
     logger.DEBUG = bbop.layout.sugiyama.DEBUG;
     function ll(str){ logger.kvetch(str); }
+    // Warning logger.
+    var yikes = new bbop.logger("BMatrix WARNING");
+    function warn_me(str){ yikes.kvetch(str); }
 
     var relation_matrix = {};
-    var object_vector = object_vertex_partition || [];
-    var subject_vector = subject_vertex_partition || [];
     // var object_vector = object_vertex_partition;
     // var subject_vector = subject_vertex_partition;
+    var object_vector = object_vertex_partition || [];
+    var subject_vector = subject_vertex_partition || [];
+    // Still warn that there is an issue.
+    if( ! object_vector || ! subject_vector ){
+	warn_me('WARNING: We found an instance of: https://github.com/kltm/bbop-js/issues/23; using a workaround.');
+    }
 
     for( var i = 0; i < edge_partition.length; i++ ){
 
@@ -7222,6 +7233,9 @@ bbop.layout.sugiyama.render = function(){
     var logger = new bbop.logger("SuGR");
     logger.DEBUG = bbop.layout.sugiyama.DEBUG;
     function ll(str){ logger.kvetch(str); }
+    // Warning logger.
+    var yikes = new bbop.logger("SuGR WARNING");
+    function warn_me(str){ yikes.kvetch(str); }
 
     //
     //this.layout = function(graph_in, rel){
