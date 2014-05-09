@@ -230,6 +230,15 @@ var bbop_mme_context = function(){
 	    //glyph: 'bar',
 	    color: '#8FBC8F' // darkseagreen
 	},
+	'RO:0002404':
+	{
+	    readable: 'causally downstream of',
+	    priority: 2,
+	    aliases: [
+		'causally_downstream_of'
+	    ],
+	    color: '#FF1493' // deeppink
+	},
 	'RO:0002406':
 	{
 	    readable: 'directly activates',
@@ -267,6 +276,15 @@ var bbop_mme_context = function(){
 	    ],
 	    glyph: 'bar',
 	    color: '#7FFF00' // chartreuse
+	},
+	'RO:0002411':
+	{
+	    readable: 'causally upstream of',
+	    priority: 2,
+	    aliases: [
+		'causally_upstream_of'
+	    ],
+	    color: '#483D8B' // darkslateblue
 	},
 	'indirectly_disables_action_of':
 	{
