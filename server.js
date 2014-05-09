@@ -599,7 +599,7 @@ imngr.register('success', 's1',
 imngr.register('error', 'e1',
 	       function(resp, man){
 		   //console.log('erred out: %j', resp); 
-		   console.log('okay: %j', resp.okay());
+		   console.log('not okay: %j', resp.okay());
 	       });
 var t = mmees.m3loc + '/getRelations';
 var t_args = {};
