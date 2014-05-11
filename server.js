@@ -593,6 +593,7 @@ imngr.register('success', 's1',
 	       function(resp, man){
 		   console.log("got getRelations, starting initializing seq");
 		   console.log(bbop.core.what_is(resp));
+		   console.log('rel count: ' + resp.relations().length);
 		   mmees.initialize(resp.relations());
 		   mmees.start();
 	       });

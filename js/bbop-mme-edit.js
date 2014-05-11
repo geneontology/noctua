@@ -14,9 +14,10 @@
 
 // BUG/TODO:
 // Temporary cleansing until 
-var bme_context = new bbop_mme_context();
+var bme_context = new bbop.context(bbop_mme_context);
 var bme_clean = function(str){
-  return bme_context.cleanse(str);  
+    //return bme_context.cleanse(str);  
+    return str;
 };
 
 var bbop_mme_edit = {};

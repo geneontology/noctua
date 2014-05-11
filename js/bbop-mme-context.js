@@ -18,252 +18,250 @@
  * Returns:
  *  aiding object
  */
-var bbop_mme_context = function(){
-
-    // Relations.
-    // Colors are X11: http://cng.seas.rochester.edu/CNG/docs/x11color.html
-    var entities = {
-	'instance_of':
-	{
-	    readable: 'activity',
-	    priority: 8,
-	    aliases: [
-		'activity'
-	    ],
-	    color: '#FFFAFA' // snow
-	},
-	'BFO:0000050':
-	{
-	    readable: 'part of',
-	    priority: 15,
-	    aliases: [
+// Relations.
+// Colors are X11: http://cng.seas.rochester.edu/CNG/docs/x11color.html
+var bbop_mme_context = {
+    'instance_of':
+    {
+	readable: 'activity',
+	priority: 8,
+	aliases: [
+	    'activity'
+	],
+	color: '#FFFAFA' // snow
+    },
+    'BFO:0000050':
+    {
+	readable: 'part of',
+	priority: 15,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000050',
 		//'http://purl.obolibrary.org/obo/part_of',
-		'BFO_0000050',
-		'part:of',
-		'part of',
-		'part_of'
-	    ],
-	    color: '#add8e6' // light blue
-	},
-	'BFO:0000051':
-	{
-	    readable: 'has part',
-	    priority: 4,
-	    aliases: [
+	    'BFO_0000050',
+	    'part:of',
+	    'part of',
+	    'part_of'
+	],
+	color: '#add8e6' // light blue
+    },
+    'BFO:0000051':
+    {
+	readable: 'has part',
+	priority: 4,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
-		'has:part',
-		'has part',
-		'has_part'
-	    ],
-	    color: '#6495ED' // cornflower blue
-	},
-	'BFO:0000066':
-	{
-	    readable: 'occurs in',
-	    priority: 12,
-	    aliases: [
+	    'has:part',
+	    'has part',
+	    'has_part'
+	],
+	color: '#6495ED' // cornflower blue
+    },
+    'BFO:0000066':
+    {
+	readable: 'occurs in',
+	priority: 12,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000066',
 		//'BFO_0000066',
-		'occurs:in',
-		'occurs in',
-		'occurs_in'
-	    ],
-	    color: '#66CDAA' // medium aquamarine
-	},
-	'RO:0002202':
-	{
-	    readable: 'develops from',
-	    priority: 0,
-	    aliases: [
-		'develops:from',
-		'develops from',
+	    'occurs:in',
+	    'occurs in',
+	    'occurs_in'
+	],
+	color: '#66CDAA' // medium aquamarine
+    },
+    'RO:0002202':
+    {
+	readable: 'develops from',
+	priority: 0,
+	aliases: [
+	    'develops:from',
+	    'develops from',
 		'develops_from'
-	    ],
-	    color: '#A52A2A' // brown
-	},
-	'RO:0002211':
-	{
-	    readable: 'regulates',
-	    priority: 16,
-	    aliases: [
+	],
+	color: '#A52A2A' // brown
+    },
+    'RO:0002211':
+    {
+	readable: 'regulates',
+	priority: 16,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002211'
-		'regulates'
-	    ],
-	    color: '#2F4F4F' // dark slate grey
-	},
-	'RO:0002212':
-	{
-	    readable: 'negatively regulates',
-	    priority: 17,
-	    aliases: [
+	    'regulates'
+	],
+	color: '#2F4F4F' // dark slate grey
+    },
+    'RO:0002212':
+    {
+	readable: 'negatively regulates',
+	priority: 17,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002212'
-		'negatively:regulates',
-		'negatively regulates',
-		'negatively_regulates'
-	    ],
-	    glyph: 'bar',
-	    color: '#FF0000' // red
-	},
-	'RO:0002213':
-	{
-	    readable: 'positively regulates',
-	    priority: 18,
-	    aliases: [
+	    'negatively:regulates',
+	    'negatively regulates',
+	    'negatively_regulates'
+	],
+	glyph: 'bar',
+	color: '#FF0000' // red
+    },
+    'RO:0002213':
+    {
+	readable: 'positively regulates',
+	priority: 18,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/RO_0002213'
-		'positively:regulates',
-		'positively regulates',
-		'positively_regulates'
-	    ],
-	    glyph: 'arrow',
-	    color: '#008000' //green
-	},
-	'RO:0002233':
-	{
-	    readable: 'has input',
-	    priority: 14,
-	    aliases: [
+	    'positively:regulates',
+	    'positively regulates',
+	    'positively_regulates'
+	],
+	glyph: 'arrow',
+	color: '#008000' //green
+    },
+    'RO:0002233':
+    {
+	readable: 'has input',
+	priority: 14,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/BFO_0000051',
-		'has:input',
-		'has input',
-		'has_input'
-	    ],
-	    color: '#6495ED' // cornflower blue
-	},
-	'RO:0002234':
-	{
-	    readable: 'has output',
-	    priority: 0,
-	    aliases: [
-		'has:output',
-		'has output',
-		'has_output'
-	    ],
-	    color: '#ED6495' // ??? - random
-	},
-	'RO:0002330':
-	{
-	    readable: 'genomically related to',
-	    priority: 0,
-	    aliases: [
-		'genomically related to',
-		'genomically_related_to'
-	    ],
-	    color: '#9932CC' // darkorchid
-	},
-	'RO:0002331':
-	{
-	    readable: 'involved in',
-	    priority: 3,
-	    aliases: [
-		'involved:in',
-		'involved in',
-		'involved_in'
-	    ],
-	    color: '#E9967A' // darksalmon
-	},
-	'RO:0002332':
-	{
-	    readable: 'regulates level of',
-	    priority: 0,
-	    aliases: [
-		'regulates level of',
-		'regulates_level_of'
-	    ],
-	    color: '#556B2F' // darkolivegreen
-	},
-	'RO:0002333':
-	{
-	    readable: 'enabled by',
-	    priority: 13,
-	    aliases: [
-		'RO_0002333',
-		'enabled:by',
-		'enabled by',
-		'enabled_by'
-	    ],
-	    color: '#B8860B' // darkgoldenrod
-	},
-	'RO:0002334':
-	{
-	    readable: 'regulated by',
-	    priority: 0,
-	    aliases: [
-		'RO_0002334',
-		'regulated by',
-		'regulated_by'
-	    ],
-	    color: '#86B80B' // ??? - random
-	},
-	'RO:0002335':
-	{
-	    readable: 'negatively regulated by',
-	    priority: 0,
-	    aliases: [
-		'RO_0002335',
-		'negatively regulated by',
-		'negatively_regulated_by'
-	    ],
-	    color: '#0B86BB' // ??? - random
-	},
-	'RO:0002336':
-	{
-	    readable: 'positively regulated by',
-	    priority: 0,
-	    aliases: [
-		'RO_0002336',
-		'positively regulated by',
-		'positively_regulated_by'
-	    ],
-	    color: '#BB0B86' // ??? - random
-	},
-	'activates':
-	{
-	    readable: 'activates',
-	    priority: 0,
-	    aliases: [
-		'http://purl.obolibrary.org/obo/activates'
-	    ],
-	    //glyph: 'arrow',
-	    //glyph: 'diamond',
-	    //glyph: 'wedge',
-	    //glyph: 'bar',
-	    color: '#8FBC8F' // darkseagreen
-	},
-	'RO:0002404':
-	{
-	    readable: 'causally downstream of',
-	    priority: 2,
-	    aliases: [
-		'causally_downstream_of'
-	    ],
-	    color: '#FF1493' // deeppink
-	},
-	'RO:0002406':
-	{
-	    readable: 'directly activates',
-	    priority: 20,
-	    aliases: [
+	    'has:input',
+	    'has input',
+	    'has_input'
+	],
+	color: '#6495ED' // cornflower blue
+    },
+    'RO:0002234':
+    {
+	readable: 'has output',
+	priority: 0,
+	aliases: [
+	    'has:output',
+	    'has output',
+	    'has_output'
+	],
+	color: '#ED6495' // ??? - random
+    },
+    'RO:0002330':
+    {
+	readable: 'genomically related to',
+	priority: 0,
+	aliases: [
+	    'genomically related to',
+	    'genomically_related_to'
+	],
+	color: '#9932CC' // darkorchid
+    },
+    'RO:0002331':
+    {
+	readable: 'involved in',
+	priority: 3,
+	aliases: [
+	    'involved:in',
+	    'involved in',
+	    'involved_in'
+	],
+	color: '#E9967A' // darksalmon
+    },
+    'RO:0002332':
+    {
+	readable: 'regulates level of',
+	priority: 0,
+	aliases: [
+	    'regulates level of',
+	    'regulates_level_of'
+	],
+	color: '#556B2F' // darkolivegreen
+    },
+    'RO:0002333':
+    {
+	readable: 'enabled by',
+	priority: 13,
+	aliases: [
+	    'RO_0002333',
+	    'enabled:by',
+	    'enabled by',
+	    'enabled_by'
+	],
+	color: '#B8860B' // darkgoldenrod
+    },
+    'RO:0002334':
+    {
+	readable: 'regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002334',
+	    'regulated by',
+	    'regulated_by'
+	],
+	color: '#86B80B' // ??? - random
+    },
+    'RO:0002335':
+    {
+	readable: 'negatively regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002335',
+	    'negatively regulated by',
+	    'negatively_regulated_by'
+	],
+	color: '#0B86BB' // ??? - random
+    },
+    'RO:0002336':
+    {
+	readable: 'positively regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002336',
+	    'positively regulated by',
+	    'positively_regulated_by'
+	],
+	color: '#BB0B86' // ??? - random
+    },
+    'activates':
+    {
+	readable: 'activates',
+	priority: 0,
+	aliases: [
+	    'http://purl.obolibrary.org/obo/activates'
+	],
+	//glyph: 'arrow',
+	//glyph: 'diamond',
+	//glyph: 'wedge',
+	//glyph: 'bar',
+	color: '#8FBC8F' // darkseagreen
+    },
+    'RO:0002404':
+    {
+	readable: 'causally downstream of',
+	priority: 2,
+	aliases: [
+	    'causally_downstream_of'
+	],
+	color: '#FF1493' // deeppink
+    },
+    'RO:0002406':
+    {
+	readable: 'directly activates',
+	priority: 20,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/directly_activates',
-		'directly:activates',
-		'directly activates',
-		'directly_activates'
-	    ],
-	    glyph: 'arrow',
-	    color: '#2F4F4F' // darkslategray
-	},
-	'upstream_of':
-	{
-	    readable: 'upstream of',
-	    priority: 2,
-	    aliases: [
+	    'directly:activates',
+	    'directly activates',
+	    'directly_activates'
+	],
+	glyph: 'arrow',
+	color: '#2F4F4F' // darkslategray
+    },
+    'upstream_of':
+    {
+	readable: 'upstream of',
+	priority: 2,
+	aliases: [
 		//'http://purl.obolibrary.org/obo/upstream_of'
-		'upstream:of',
-		'upstream of',
-		'upstream_of'
-	    ],
-	    color: '#FF1493' // deeppink
-	},
+	    'upstream:of',
+	    'upstream of',
+	    'upstream_of'
+	],
+	color: '#FF1493' // deeppink
+    },
 	'RO:0002408':
 	{
 	    readable: 'directly inhibits',
@@ -319,218 +317,6 @@ var bbop_mme_context = function(){
 	    glyph: 'diamond',
 	    color: '#483D8B' // darkslateblue
 	}
-    };
-
-    // Compile entity aliases.
-    var entity_aliases = {};
-    bbop.core.each(entities,
-		   function(ekey, eobj){
-		       entity_aliases[ekey] = ekey; // identity
-		       bbop.core.each(eobj['aliases'],
-				      function(alias){
-					  entity_aliases[alias] = ekey;
-				      });
-		   });
-
-    // Helper fuction to go from unknown id -> alias -> data structure.
-    this._dealias_data = function(id){
-	
-	var ret = null;
-	if( id ){
-	    if( entity_aliases[id] ){ // directly pull
-		var tru_id = entity_aliases[id];
-		ret = entities[tru_id];
-	    }
-	}
-
-	return ret;
-    };
-
-    /* 
-     * Function: readable
-     *
-     * Returns a human readable form of the inputted string.
-     *
-     * Parameters: 
-     *  ind - incoming data id
-     *
-     * Returns:
-     *  readable string or original string
-     */
-    this.readable = function(ind){
-	var ret = ind;
-
-	var data = this._dealias_data(ind);
-	if( data && data['readable'] ){
-	    ret = data['readable'];
-	}
-	
-	return ret;
-    };
-
-    /* 
-     * Function: color
-     *
-     * Return the string of a color of a rel.
-     *
-     * Parameters: 
-     *  ind - incoming data id
-     *
-     * Returns:
-     *  appropriate color string or 'grey'
-     */
-    this.color = function(ind){
-	
-	var ret = '#808080'; // grey
-
-	var data = this._dealias_data(ind);
-	if( data && data['color'] ){
-	    ret = data['color'];
-	}
-	
-	return ret;
-    };
-
-    /* 
-     * Function: relation_glyph
-     *
-     * Return the string indicating the glyph to use for the edge marking.
-     *
-     * Parameters: 
-     *  ind - incoming data id
-     *
-     * Returns:
-     *  appropriate color string or null
-     */
-    this.glyph = function(ind){
-	
-	var ret = null; // default
-
-	var data = this._dealias_data(ind);
-	if( data && data['glyph'] ){
-	    ret = data['glyph'];
-	}
-	
-	return ret;
-    };
-
-    /* 
-     * Function: priority
-     *
-     * Return a number representing the relative priority of the
-     * entity under consideration.
-     *
-     * Parameters: 
-     *  ind - incoming data id
-     *
-     * Returns:
-     *  appropriate integer or 0
-     */
-    this.priority = function(ind){
-	
-	var ret = 0;
-
-	var data = this._dealias_data(ind);
-	if( data && data['priority'] ){
-	    ret = data['priority'];
-	}
-	
-	return ret;
-    };
-
-    /* 
-     * Function: all_entities
-     *
-     * Return a list of the currently known entities.
-     *
-     * Parameters: 
-     *  n/a
-     *
-     * Returns:
-     *  list
-     */
-    this.all_entities = function(){	
-	var rls = bbop.core.get_keys(entities);
-	return rls;
-    };
-
-    /* 
-     * Function: all_known
-     *
-     * Return a list of the currently known entities and their aliases.
-     *
-     * Parameters: 
-     *  n/a
-     *
-     * Returns:
-     *  list
-     */
-    this.all_known = function(){	
-	var rls = bbop.core.get_keys(entity_aliases);
-	return rls;
-    };
-
-    // /* 
-    //  * Function: categorize
-    //  *
-    //  * Try to put an intstance type into some kind of rendering
-    //  * category.
-    //  *
-    //  * Parameters: 
-    //  *  in_type - instance type as returned by JSON-LD service
-    //  *
-    //  * Returns:
-    //  *  string (default 'unknown')
-    //  */
-    // this.categorize = function(in_type){
-
-    // 	var ret = 'unknown';
-
-    // 	var t = in_type['type'];
-    // 	if( t == 'Class' ){
-    // 	    ret = 'instance_of';
-    // 	}else if( t == 'Restriction' ){
-    // 	    ret = in_type['onProperty']['id'];
-    // 	}else{
-    // 	    // use default
-    // 	}
-
-    // 	return ret;
-    // };
-
-    /* 
-     * Function: cleanse
-     *
-     * Turn ID strings into something standard:
-     *  ':' -> '_' and 'http://foo/bar' -> 'bar'.
-     * 
-     * NOTE: Cleanse currently does nothing.
-     *
-     * Parameters: 
-     *  id_string - the string to cleanse
-     *
-     * Returns:
-     *  string
-     */
-    this.cleanse = function(id_string){
-
-    	var retstr = id_string;
-
-    	// // 'http://foo/bar' -> 'bar'
-    	// retstr = retstr.substring(retstr.lastIndexOf("/") + 1, retstr.length);
-
-    	// // ':' -> '_'
-    	// retstr = retstr.replace(':', '_');
-
-    	// // 
-    	// if( ! retstr || retstr == '' ){
-    	//     throw new Error('cleanse: entered with: ' +
-    	// 		    retstr + ' ; nothing left');
-    	//     retstr = id_string;
-    	// }
-
-    	return retstr;
-    };
 };
 
 // var bme_categorize = function(in_type){
