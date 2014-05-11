@@ -32,7 +32,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var widgets = bbop_mme_widgets;
     
     // Help with strings and colors--configured separately.
-    var aid = new bbop.context(bbop_mme_context);
+    var aid = new bbop.context(amigo.data.context);
 
     // Create the core model.
     //var bbop_mme_edit = require('./js/bbop-mme-edit');

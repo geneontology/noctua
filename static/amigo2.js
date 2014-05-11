@@ -24,14 +24,14 @@ if ( typeof amigo.version == "undefined" ){ amigo.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-amigo.version.revision = "2.0.0-rc1";
+amigo.version.revision = "2.1.0";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-amigo.version.release = "20131217";
+amigo.version.release = "20140511";
 /*
  * Package: api.js
  * 
@@ -2130,11 +2130,11 @@ amigo.data.golr = {
       "display_name" : "Ontology",
       "description" : "Ontology classes for GO.",
       "schema_generating" : "true",
-      "boost_weights" : "annotation_class^3.0 annotation_class_label^5.5 description^1.0 comment^0.5 synonym^1.0 alternate_id^1.0",
+      "boost_weights" : "annotation_class^3.0 annotation_class_label^5.5 description^1.0 comment^0.5 synonym^1.0 alternate_id^1.0 regulates_closure^1.0 regulates_closure_label^1.0",
       "fields" : [
          {
             "transform" : [],
-            "description" : "Term acc/ID.",
+            "description" : "Term identifier.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -2148,7 +2148,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Term acc/ID.",
+            "description" : "Term identifier.",
             "display_name" : "Term",
             "indexed" : "true",
             "searchable" : "false",
@@ -2162,7 +2162,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Common term name.",
+            "description" : "Identifier.",
             "display_name" : "Term",
             "indexed" : "true",
             "searchable" : "true",
@@ -2246,7 +2246,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Alternate term id.",
+            "description" : "Alternate term identifier.",
             "display_name" : "Alt ID",
             "indexed" : "true",
             "searchable" : "false",
@@ -2291,7 +2291,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Term subset.",
+            "description" : "Special use collections of terms.",
             "display_name" : "Subset",
             "indexed" : "true",
             "searchable" : "false",
@@ -2333,7 +2333,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of ids/accs over isa and partof.",
+            "description" : "Ancestral terms (is_a/part_of).",
             "display_name" : "Is-a/part-of",
             "indexed" : "true",
             "searchable" : "false",
@@ -2348,7 +2348,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of labels over isa and partof.",
+            "description" : "Ancestral terms (is_a/part_of).",
             "display_name" : "Is-a/part-of",
             "indexed" : "true",
             "searchable" : "true",
@@ -2363,7 +2363,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of ids/accs over various relations (including regulates, occurs in, capable_of).",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
             "display_name" : "Ancestor",
             "indexed" : "true",
             "searchable" : "false",
@@ -2384,7 +2384,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of labels over various relations (including regulates, occurs in, capable_of).",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
             "display_name" : "Ancestor",
             "indexed" : "true",
             "searchable" : "true",
@@ -2585,7 +2585,7 @@ amigo.data.golr = {
          },
          "alternate_id" : {
             "transform" : [],
-            "description" : "Alternate term id.",
+            "description" : "Alternate term identifier.",
             "display_name" : "Alt ID",
             "indexed" : "true",
             "searchable" : "false",
@@ -2651,7 +2651,7 @@ amigo.data.golr = {
          },
          "subset" : {
             "transform" : [],
-            "description" : "Term subset.",
+            "description" : "Special use collections of terms.",
             "display_name" : "Subset",
             "indexed" : "true",
             "searchable" : "false",
@@ -2693,7 +2693,7 @@ amigo.data.golr = {
          },
          "id" : {
             "transform" : [],
-            "description" : "Term acc/ID.",
+            "description" : "Term identifier.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -2721,7 +2721,7 @@ amigo.data.golr = {
          },
          "isa_partof_closure_label" : {
             "transform" : [],
-            "description" : "Closure of labels over isa and partof.",
+            "description" : "Ancestral terms (is_a/part_of).",
             "display_name" : "Is-a/part-of",
             "indexed" : "true",
             "searchable" : "true",
@@ -2751,7 +2751,7 @@ amigo.data.golr = {
          },
          "annotation_class" : {
             "transform" : [],
-            "description" : "Term acc/ID.",
+            "description" : "Term identifier.",
             "display_name" : "Term",
             "indexed" : "true",
             "searchable" : "false",
@@ -2765,7 +2765,7 @@ amigo.data.golr = {
          },
          "regulates_closure_label" : {
             "transform" : [],
-            "description" : "Closure of labels over various relations (including regulates, occurs in, capable_of).",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
             "display_name" : "Ancestor",
             "indexed" : "true",
             "searchable" : "true",
@@ -2800,7 +2800,7 @@ amigo.data.golr = {
          },
          "regulates_closure" : {
             "transform" : [],
-            "description" : "Closure of ids/accs over various relations (including regulates, occurs in, capable_of).",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
             "display_name" : "Ancestor",
             "indexed" : "true",
             "searchable" : "false",
@@ -2821,7 +2821,7 @@ amigo.data.golr = {
          },
          "isa_partof_closure" : {
             "transform" : [],
-            "description" : "Closure of ids/accs over isa and partof.",
+            "description" : "Ancestral terms (is_a/part_of).",
             "display_name" : "Is-a/part-of",
             "indexed" : "true",
             "searchable" : "false",
@@ -2864,7 +2864,7 @@ amigo.data.golr = {
          },
          "annotation_class_label" : {
             "transform" : [],
-            "description" : "Common term name.",
+            "description" : "Identifier.",
             "display_name" : "Term",
             "indexed" : "true",
             "searchable" : "true",
@@ -3216,17 +3216,17 @@ amigo.data.golr = {
    },
    "bioentity" : {
       "searchable_extension" : "_searchable",
-      "result_weights" : "bioentity^8.0 bioentity_name^7.0 taxon^6.0 panther_family^5.0 type^4.0 source^3.0 annotation_class_list^2.0",
+      "result_weights" : "bioentity^8.0 bioentity_name^7.0 taxon^6.0 panther_family^5.0 type^4.0 source^3.0 annotation_class_list^2.0 synonym^1.0",
       "filter_weights" : "source^7.0 type^6.0 panther_family_label^5.0 annotation_class_list_label^3.5 taxon_closure_label^4.0 regulates_closure_label^2.0",
       "_infile" : "/home/sjcarbon/local/src/git/amigo/metadata//bio-config.yaml",
-      "display_name" : "Gene/products",
-      "description" : "A description of bioentities file for GOlr.",
+      "display_name" : "Genes and gene products",
+      "description" : "Genes and gene products associated with GO terms.",
       "schema_generating" : "true",
-      "boost_weights" : "bioentity^2.0 bioentity_label^2.0 bioentity_name^1.0 bioentity_internal_id^1.0 isa_partof_closure_label^1.0 regulates_closure_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_closure_label^1.0",
+      "boost_weights" : "bioentity^2.0 bioentity_label^2.0 bioentity_name^1.0 bioentity_internal_id^1.0 synonym^1.0 isa_partof_closure_label^1.0 regulates_closure^1.0 regulates_closure_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_closure_label^1.0",
       "fields" : [
          {
             "transform" : [],
-            "description" : "Gene/product ID.",
+            "description" : "Gene of gene product ID.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -3238,7 +3238,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Gene/product ID.",
+            "description" : "Gene or gene product ID.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -3286,7 +3286,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Type class (GAF column 12).",
+            "description" : "Type class.",
             "display_name" : "Type",
             "indexed" : "true",
             "searchable" : "false",
@@ -3298,7 +3298,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 13 (taxon).",
+            "description" : "Taxonomic group",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -3310,7 +3310,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -3322,7 +3322,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -3334,7 +3334,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -3370,8 +3370,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of ids/accs over regulates.",
-            "display_name" : "Inferred annotation (IDs)",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -3382,7 +3382,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of labels over regulates.",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
             "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -3394,7 +3394,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 1 (database source).",
+            "description" : "Database source.",
             "display_name" : "Source",
             "indexed" : "true",
             "searchable" : "false",
@@ -3406,7 +3406,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -3418,7 +3418,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -3442,7 +3442,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "PANTHER family IDs that are associated with this entity.",
+            "description" : "PANTHER families that are associated with this entity.",
             "display_name" : "PANTHER family",
             "indexed" : "true",
             "searchable" : "true",
@@ -3492,7 +3492,7 @@ amigo.data.golr = {
       "fields_hash" : {
          "source" : {
             "transform" : [],
-            "description" : "GAF column 1 (database source).",
+            "description" : "Database source.",
             "display_name" : "Source",
             "indexed" : "true",
             "searchable" : "false",
@@ -3528,7 +3528,7 @@ amigo.data.golr = {
          },
          "panther_family" : {
             "transform" : [],
-            "description" : "PANTHER family IDs that are associated with this entity.",
+            "description" : "PANTHER families that are associated with this entity.",
             "display_name" : "PANTHER family",
             "indexed" : "true",
             "searchable" : "true",
@@ -3564,7 +3564,7 @@ amigo.data.golr = {
          },
          "taxon_closure_label" : {
             "transform" : [],
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -3576,7 +3576,7 @@ amigo.data.golr = {
          },
          "annotation_class_list_label" : {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -3612,7 +3612,7 @@ amigo.data.golr = {
          },
          "id" : {
             "transform" : [],
-            "description" : "Gene/product ID.",
+            "description" : "Gene of gene product ID.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -3624,7 +3624,7 @@ amigo.data.golr = {
          },
          "taxon_closure" : {
             "transform" : [],
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -3648,7 +3648,7 @@ amigo.data.golr = {
          },
          "annotation_class_list" : {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -3660,7 +3660,7 @@ amigo.data.golr = {
          },
          "taxon" : {
             "transform" : [],
-            "description" : "GAF column 13 (taxon).",
+            "description" : "Taxonomic group",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -3672,7 +3672,7 @@ amigo.data.golr = {
          },
          "regulates_closure_label" : {
             "transform" : [],
-            "description" : "Closure of labels over regulates.",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
             "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -3684,8 +3684,8 @@ amigo.data.golr = {
          },
          "regulates_closure" : {
             "transform" : [],
-            "description" : "Closure of ids/accs over regulates.",
-            "display_name" : "Inferred annotation (IDs)",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -3696,7 +3696,7 @@ amigo.data.golr = {
          },
          "bioentity" : {
             "transform" : [],
-            "description" : "Gene/product ID.",
+            "description" : "Gene or gene product ID.",
             "display_name" : "Acc",
             "indexed" : "true",
             "searchable" : "false",
@@ -3732,7 +3732,7 @@ amigo.data.golr = {
          },
          "taxon_label" : {
             "transform" : [],
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -3744,7 +3744,7 @@ amigo.data.golr = {
          },
          "type" : {
             "transform" : [],
-            "description" : "Type class (GAF column 12).",
+            "description" : "Type class.",
             "display_name" : "Type",
             "indexed" : "true",
             "searchable" : "false",
@@ -3906,9 +3906,9 @@ amigo.data.golr = {
       "filter_weights" : "source^7.0 assigned_by^6.5 aspect^6.25 evidence_type_closure^6.0 panther_family_label^5.5 qualifier^5.25 taxon_closure_label^5.0 annotation_class_label^4.5 regulates_closure_label^3.0 annotation_extension_class_closure_label^2.0",
       "_infile" : "/home/sjcarbon/local/src/git/amigo/metadata//ann-config.yaml",
       "display_name" : "Annotations",
-      "description" : "A description of annotations for GOlr and AmiGO.",
+      "description" : "Associations between GO terms and genes or gene products.",
       "schema_generating" : "true",
-      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 bioentity_name^1.0 annotation_extension_class^2.0 annotation_extension_class_label^1.0 reference^1.0 panther_family^1.0 panther_family_label^1.0 bioentity_isoform^1.0",
+      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 bioentity_name^1.0 annotation_extension_class^2.0 annotation_extension_class_label^1.0 reference^1.0 panther_family^1.0 panther_family_label^1.0 bioentity_isoform^1.0 regulates_closure^1.0 regulates_closure_label^1.0",
       "fields" : [
          {
             "transform" : [],
@@ -3924,7 +3924,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 1 (database source).",
+            "description" : "Database source.",
             "display_name" : "Source",
             "indexed" : "true",
             "searchable" : "false",
@@ -3936,7 +3936,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 12 (type class id).",
+            "description" : "Type class.",
             "display_name" : "Type class id",
             "indexed" : "true",
             "searchable" : "false",
@@ -3948,7 +3948,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 14 (date of assignment).",
+            "description" : "Date of assignment.",
             "display_name" : "Date",
             "indexed" : "true",
             "searchable" : "false",
@@ -3960,7 +3960,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 15 (assigned by).",
+            "description" : "Annotations assigned by group.",
             "display_name" : "Assigned by",
             "indexed" : "true",
             "searchable" : "false",
@@ -3984,7 +3984,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 13 (taxon).",
+            "description" : "Taxonomic group.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -3996,7 +3996,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -4008,8 +4008,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
-            "display_name" : "Taxon (IDs)",
+            "description" : "Taxonomic group and ancestral groups.",
+            "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4020,7 +4020,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -4057,7 +4057,7 @@ amigo.data.golr = {
          {
             "transform" : [],
             "description" : "Secondary taxon closure.",
-            "display_name" : "Secondary taxon (IDs)",
+            "display_name" : "Secondary taxon",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4080,8 +4080,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of ids/accs over isa and partof.",
-            "display_name" : "Involved in (IDs)",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "display_name" : "Involved in",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4092,7 +4092,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of labels over isa and partof.",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
             "display_name" : "Involved in",
             "indexed" : "true",
             "searchable" : "true",
@@ -4104,8 +4104,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of ids/accs over regulates.",
-            "display_name" : "Inferred annotation (IDs)",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4116,7 +4116,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Closure of labels over regulates.",
+            "description" : "Annotations for this term or its children (over regulates).",
             "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -4152,7 +4152,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 11: gene product synonyms.",
+            "description" : "Gene or gene product synonyms.",
             "display_name" : "Synonym",
             "indexed" : "true",
             "searchable" : "false",
@@ -4164,8 +4164,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 1 + columns 2.",
-            "display_name" : "Gene/Product",
+            "description" : "Gene or gene product identifiers.",
+            "display_name" : "Gene/product",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4176,8 +4176,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 3: bioentity label.",
-            "display_name" : "Gene/product label",
+            "description" : "Gene or gene product identifiers.",
+            "display_name" : "Gene/product",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4188,8 +4188,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "The full name of the gene product.",
-            "display_name" : "Gene/Product name",
+            "description" : "The full name of the gene or gene product.",
+            "display_name" : "Gene/product name",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4212,7 +4212,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Annotation qualifier (GAF column 4).",
+            "description" : "Annotation qualifier.",
             "display_name" : "Qualifier",
             "indexed" : "true",
             "searchable" : "false",
@@ -4224,7 +4224,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -4236,7 +4236,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -4248,7 +4248,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 9: Ontology aspect.",
+            "description" : "Ontology aspect.",
             "display_name" : "Ontology (aspect)",
             "indexed" : "true",
             "searchable" : "false",
@@ -4260,7 +4260,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 17: Bioentity isoform.",
+            "description" : "Biological isoform.",
             "display_name" : "Isoform",
             "indexed" : "true",
             "searchable" : "false",
@@ -4272,7 +4272,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 7: evidence type.",
+            "description" : "Evidence type.",
             "display_name" : "Evidence",
             "indexed" : "true",
             "searchable" : "false",
@@ -4296,7 +4296,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 8: with/from.",
+            "description" : "Evidence with/from.",
             "display_name" : "Evidence with",
             "indexed" : "true",
             "searchable" : "false",
@@ -4308,7 +4308,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 6: database reference.",
+            "description" : "Database reference.",
             "display_name" : "Reference",
             "indexed" : "true",
             "searchable" : "false",
@@ -4320,7 +4320,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "GAF column 16: extension class for the annotation.",
+            "description" : "Extension class for the annotation.",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
@@ -4332,8 +4332,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Annotation extension.",
-            "display_name" : "Annotation extension (labels)",
+            "description" : "Extension class for the annotation.",
+            "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4344,8 +4344,8 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Annotation extension.",
-            "display_name" : "Annotation extension (IDs)",
+            "description" : "Extension class for the annotation.",
+            "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4356,7 +4356,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "Annotation extension.",
+            "description" : "Extension class for the annotation.",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "true",
@@ -4368,7 +4368,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "A special JSON blob for GAF column 16.",
+            "description" : "Extension class for the annotation (JSON).",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
@@ -4380,7 +4380,7 @@ amigo.data.golr = {
          },
          {
             "transform" : [],
-            "description" : "PANTHER family IDs that are associated with this entity.",
+            "description" : "PANTHER families that are associated with this entity.",
             "display_name" : "PANTHER family",
             "indexed" : "true",
             "searchable" : "true",
@@ -4418,7 +4418,7 @@ amigo.data.golr = {
          },
          "annotation_extension_class_closure_label" : {
             "transform" : [],
-            "description" : "Annotation extension.",
+            "description" : "Extension class for the annotation.",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "true",
@@ -4430,8 +4430,8 @@ amigo.data.golr = {
          },
          "bioentity_label" : {
             "transform" : [],
-            "description" : "GAF column 3: bioentity label.",
-            "display_name" : "Gene/product label",
+            "description" : "Gene or gene product identifiers.",
+            "display_name" : "Gene/product",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4442,7 +4442,7 @@ amigo.data.golr = {
          },
          "date" : {
             "transform" : [],
-            "description" : "GAF column 14 (date of assignment).",
+            "description" : "Date of assignment.",
             "display_name" : "Date",
             "indexed" : "true",
             "searchable" : "false",
@@ -4490,8 +4490,8 @@ amigo.data.golr = {
          },
          "bioentity_name" : {
             "transform" : [],
-            "description" : "The full name of the gene product.",
-            "display_name" : "Gene/Product name",
+            "description" : "The full name of the gene or gene product.",
+            "display_name" : "Gene/product name",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4502,7 +4502,7 @@ amigo.data.golr = {
          },
          "evidence_type" : {
             "transform" : [],
-            "description" : "GAF column 7: evidence type.",
+            "description" : "Evidence type.",
             "display_name" : "Evidence",
             "indexed" : "true",
             "searchable" : "false",
@@ -4526,8 +4526,8 @@ amigo.data.golr = {
          },
          "annotation_extension_class_label" : {
             "transform" : [],
-            "description" : "Annotation extension.",
-            "display_name" : "Annotation extension (labels)",
+            "description" : "Extension class for the annotation.",
+            "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "true",
             "required" : "false",
@@ -4538,7 +4538,7 @@ amigo.data.golr = {
          },
          "isa_partof_closure_label" : {
             "transform" : [],
-            "description" : "Closure of labels over isa and partof.",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
             "display_name" : "Involved in",
             "indexed" : "true",
             "searchable" : "true",
@@ -4550,7 +4550,7 @@ amigo.data.golr = {
          },
          "annotation_class" : {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "false",
@@ -4562,7 +4562,7 @@ amigo.data.golr = {
          },
          "annotation_extension_json" : {
             "transform" : [],
-            "description" : "A special JSON blob for GAF column 16.",
+            "description" : "Extension class for the annotation (JSON).",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
@@ -4586,7 +4586,7 @@ amigo.data.golr = {
          },
          "synonym" : {
             "transform" : [],
-            "description" : "GAF column 11: gene product synonyms.",
+            "description" : "Gene or gene product synonyms.",
             "display_name" : "Synonym",
             "indexed" : "true",
             "searchable" : "false",
@@ -4598,7 +4598,7 @@ amigo.data.golr = {
          },
          "assigned_by" : {
             "transform" : [],
-            "description" : "GAF column 15 (assigned by).",
+            "description" : "Annotations assigned by group.",
             "display_name" : "Assigned by",
             "indexed" : "true",
             "searchable" : "false",
@@ -4610,7 +4610,7 @@ amigo.data.golr = {
          },
          "type" : {
             "transform" : [],
-            "description" : "GAF column 12 (type class id).",
+            "description" : "Type class.",
             "display_name" : "Type class id",
             "indexed" : "true",
             "searchable" : "false",
@@ -4622,7 +4622,7 @@ amigo.data.golr = {
          },
          "annotation_extension_class" : {
             "transform" : [],
-            "description" : "GAF column 16: extension class for the annotation.",
+            "description" : "Extension class for the annotation.",
             "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
@@ -4634,7 +4634,7 @@ amigo.data.golr = {
          },
          "source" : {
             "transform" : [],
-            "description" : "GAF column 1 (database source).",
+            "description" : "Database source.",
             "display_name" : "Source",
             "indexed" : "true",
             "searchable" : "false",
@@ -4646,7 +4646,7 @@ amigo.data.golr = {
          },
          "panther_family" : {
             "transform" : [],
-            "description" : "PANTHER family IDs that are associated with this entity.",
+            "description" : "PANTHER families that are associated with this entity.",
             "display_name" : "PANTHER family",
             "indexed" : "true",
             "searchable" : "true",
@@ -4658,7 +4658,7 @@ amigo.data.golr = {
          },
          "taxon_closure_label" : {
             "transform" : [],
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -4670,7 +4670,7 @@ amigo.data.golr = {
          },
          "qualifier" : {
             "transform" : [],
-            "description" : "Annotation qualifier (GAF column 4).",
+            "description" : "Annotation qualifier.",
             "display_name" : "Qualifier",
             "indexed" : "true",
             "searchable" : "false",
@@ -4682,7 +4682,7 @@ amigo.data.golr = {
          },
          "reference" : {
             "transform" : [],
-            "description" : "GAF column 6: database reference.",
+            "description" : "Database reference.",
             "display_name" : "Reference",
             "indexed" : "true",
             "searchable" : "false",
@@ -4706,8 +4706,8 @@ amigo.data.golr = {
          },
          "taxon_closure" : {
             "transform" : [],
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
-            "display_name" : "Taxon (IDs)",
+            "description" : "Taxonomic group and ancestral groups.",
+            "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4718,7 +4718,7 @@ amigo.data.golr = {
          },
          "bioentity_isoform" : {
             "transform" : [],
-            "description" : "GAF column 17: Bioentity isoform.",
+            "description" : "Biological isoform.",
             "display_name" : "Isoform",
             "indexed" : "true",
             "searchable" : "false",
@@ -4731,7 +4731,7 @@ amigo.data.golr = {
          "secondary_taxon_closure" : {
             "transform" : [],
             "description" : "Secondary taxon closure.",
-            "display_name" : "Secondary taxon (IDs)",
+            "display_name" : "Secondary taxon",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4742,7 +4742,7 @@ amigo.data.golr = {
          },
          "aspect" : {
             "transform" : [],
-            "description" : "GAF column 9: Ontology aspect.",
+            "description" : "Ontology aspect.",
             "display_name" : "Ontology (aspect)",
             "indexed" : "true",
             "searchable" : "false",
@@ -4754,7 +4754,7 @@ amigo.data.golr = {
          },
          "taxon" : {
             "transform" : [],
-            "description" : "GAF column 13 (taxon).",
+            "description" : "Taxonomic group.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "false",
@@ -4766,7 +4766,7 @@ amigo.data.golr = {
          },
          "regulates_closure_label" : {
             "transform" : [],
-            "description" : "Closure of labels over regulates.",
+            "description" : "Annotations for this term or its children (over regulates).",
             "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -4778,8 +4778,8 @@ amigo.data.golr = {
          },
          "regulates_closure" : {
             "transform" : [],
-            "description" : "Closure of ids/accs over regulates.",
-            "display_name" : "Inferred annotation (IDs)",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "display_name" : "Inferred annotation",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4802,8 +4802,8 @@ amigo.data.golr = {
          },
          "isa_partof_closure" : {
             "transform" : [],
-            "description" : "Closure of ids/accs over isa and partof.",
-            "display_name" : "Involved in (IDs)",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "display_name" : "Involved in",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4814,8 +4814,8 @@ amigo.data.golr = {
          },
          "bioentity" : {
             "transform" : [],
-            "description" : "GAF column 1 + columns 2.",
-            "display_name" : "Gene/Product",
+            "description" : "Gene or gene product identifiers.",
+            "display_name" : "Gene/product",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -4826,7 +4826,7 @@ amigo.data.golr = {
          },
          "taxon_label" : {
             "transform" : [],
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "description" : "Taxonomic group and ancestral groups.",
             "display_name" : "Taxon",
             "indexed" : "true",
             "searchable" : "true",
@@ -4838,7 +4838,7 @@ amigo.data.golr = {
          },
          "annotation_class_label" : {
             "transform" : [],
-            "description" : "Direct annotations (GAF column 5).",
+            "description" : "Direct annotations.",
             "display_name" : "Direct annotation",
             "indexed" : "true",
             "searchable" : "true",
@@ -4862,7 +4862,7 @@ amigo.data.golr = {
          },
          "evidence_with" : {
             "transform" : [],
-            "description" : "GAF column 8: with/from.",
+            "description" : "Evidence with/from.",
             "display_name" : "Evidence with",
             "indexed" : "true",
             "searchable" : "false",
@@ -4886,8 +4886,8 @@ amigo.data.golr = {
          },
          "annotation_extension_class_closure" : {
             "transform" : [],
-            "description" : "Annotation extension.",
-            "display_name" : "Annotation extension (IDs)",
+            "description" : "Extension class for the annotation.",
+            "display_name" : "Annotation extension",
             "indexed" : "true",
             "searchable" : "false",
             "required" : "false",
@@ -5099,7 +5099,7 @@ if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
 amigo.data.server = function(){
 
     // All of the server/instance-specific meta-data.
-    var meta_data = {"html_base":"http://localhost/amigo2","galaxy_base":"http://galaxy.berkeleybop.org/","app_base":"http://localhost/cgi-bin/amigo2","term_regexp":"^all$|^GO:[0-9]{7}$","species":[],"ontologies":[],"gp_types":[],"sources":[],"species_map":{},"bbop_img_star":"http://localhost/amigo2/images/star.png","image_base":"http://localhost/amigo2/images","evidence_codes":{},"golr_base":"http://localhost:8080/solr/"};
+    var meta_data = {"html_base":"http://localhost/amigo2","galaxy_base":"http://galaxy.berkeleybop.org/","app_base":"http://localhost/cgi-bin/amigo2","beta":"1","term_regexp":"^all$|^GO:[0-9]{7}$","species":[],"ontologies":[],"gp_types":[],"sources":[],"species_map":{},"bbop_img_star":"http://localhost/amigo2/images/star.png","image_base":"http://localhost/amigo2/images","evidence_codes":{},"golr_base":"http://localhost:8080/solr/"};
 
     ///
     /// Break out the data and various functions to access them...
@@ -5146,6 +5146,20 @@ amigo.data.server = function(){
      */
     var app_base = meta_data.app_base;
     this.app_base = function(){ return app_base; };
+
+    /*
+     * Function: beta
+     * 
+     * Access to AmiGO variable beta.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    var beta = meta_data.beta;
+    this.beta = function(){ return beta; };
 
     /*
      * Function: term_regexp
@@ -5333,6 +5347,79 @@ amigo.data.server = function(){
        return retval;
     };
 };
+/*
+ * Package: definitions.js
+ * 
+ * Namespace: amigo.data.definitions
+ * 
+ * Purpose: Useful information about common GO datatypes and
+ * structures, as well as some constants.
+ */
+
+// Module and namespace checking.
+if ( typeof amigo == "undefined" ){ var amigo = {}; }
+if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
+
+/*
+ * Constructor: definitions
+ * 
+ * Encapsulate common structures and constants.
+ * 
+ * Arguments:
+ *  n/a
+ */
+amigo.data.definitions = function(){
+
+    /*
+     * Function: gaf_from_golr_fields
+     * 
+     * A list of fields to generate a GAF from using golr fields.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  list of strings
+     */
+    this.gaf_from_golr_fields = function(){
+	return [
+	    'source', // c1
+	    'bioentity_internal_id', // c2; not bioentity
+	    'bioentity_label', // c3
+	    'qualifier', // c4
+	    'annotation_class', // c5
+	    'reference', // c6
+	    'evidence_type', // c7
+	    'evidence_with', // c8
+	    'aspect', // c9
+	    'bioentity_name', // c10
+	    'synonym', // c11
+	    'type', // c12
+	    'taxon', // c13
+	    'date', // c14
+	    'assigned_by', // c15
+	    'annotation_extension_class', // c16
+	    'bioentity_isoform' // c17
+	];
+    };
+
+    /*
+     * Function: download_limit
+     * 
+     * The maximum allowed number of items to download for out server.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  integer
+     */
+    this.download_limit = function(){
+	//return 7500;
+	return 10000;
+    };
+
+};
 /* 
  * Package: xrefs.js
  * 
@@ -5357,11 +5444,13 @@ if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
  */
 amigo.data.xrefs = {
    "bhf-ucl" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "The Cardiovascular Gene Ontology Annotation Initiative is supported by the British Heart Foundation (BHF) and located at University College London (UCL).",
       "database" : "Cardiovascular Gene Ontology Annotation Initiative",
+      "example_id" : null,
       "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology/",
       "fullname" : null,
       "id" : null,
@@ -5378,6 +5467,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[A-Z]{1}[0-9]{5}$",
       "example_id" : "PIR:I49499",
       "generic_url" : "http://pir.georgetown.edu/",
+      "entity_type" : "PR:000000001 ! protein",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "PIR",
@@ -5458,7 +5548,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "patric" : {
-      "object" : "Feature identifieer",
+      "object" : "Feature identifier",
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://patric.vbi.vt.edu/gene/overview.php?fid=cds.000002.436951",
@@ -5473,6 +5563,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ro" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://purl.obolibrary.org/obo/RO_0002211",
@@ -5524,6 +5615,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[0-9]{4,7}$",
       "example_id" : "RGD:2004",
       "generic_url" : "http://rgd.mcw.edu/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "RGD",
@@ -5553,6 +5645,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[0-9]{6,}$",
       "example_id" : "NCBI_gi:113194944",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "NCBI_gi",
@@ -5560,6 +5653,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "geo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS2223",
@@ -5646,14 +5740,16 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ri" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "Roslin Institute",
+      "example_id" : null,
       "generic_url" : "http://www.roslin.ac.uk/",
       "fullname" : null,
-      "id" : null,
       "abbreviation" : "RI",
+      "id" : null,
       "url_syntax" : null,
       "datatype" : null
    },
@@ -5687,11 +5783,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "locsvmpsi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "Subcellular localization for eukayotic proteins based on SVM and PSI-BLAST",
       "database" : "LOCSVMPSI",
+      "example_id" : null,
       "generic_url" : "http://bioinformatics.ustc.edu.cn/locsvmpsi/locsvmpsi.php",
       "fullname" : null,
       "id" : null,
@@ -5753,6 +5851,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "Catalog of Fishes species database",
+      "example_id" : null,
       "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
       "fullname" : null,
       "id" : null,
@@ -5780,6 +5879,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "Catalog of Fishes species database",
+      "example_id" : null,
       "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
       "fullname" : null,
       "abbreviation" : "CAS_SPC",
@@ -5788,11 +5888,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pinc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "represents GO annotations created in 2001 for NCBI and extracted into UniProtKB-GOA from EntrezGene",
       "database" : "Proteome Inc.",
+      "example_id" : null,
       "generic_url" : "http://www.proteome.com/",
       "fullname" : null,
       "id" : null,
@@ -5815,10 +5917,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "yeastfunc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Yeast Function",
+      "example_id" : null,
       "generic_url" : "http://func.med.harvard.edu/yeast/",
       "fullname" : null,
       "id" : null,
@@ -5832,6 +5936,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797",
       "database" : "PubMed",
+      "local_id_syntax" : "^[0-9]+$",
       "example_id" : "PMID:4208797",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
       "fullname" : null,
@@ -5867,6 +5972,21 @@ amigo.data.xrefs = {
       "id" : null,
       "abbreviation" : "Prosite",
       "url_syntax" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?[example_id]",
+      "datatype" : null
+   },
+   "reac" : {
+      "object" : "Identifier",
+      "name" : null,
+      "uri_prefix" : null,
+      "url_example" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604",
+      "database" : "Reactome - a curated knowledgebase of biological pathways",
+      "local_id_syntax" : "^REACT_[0-9]+$",
+      "example_id" : "Reactome:REACT_604",
+      "generic_url" : "http://www.reactome.org/",
+      "fullname" : null,
+      "abbreviation" : "REAC",
+      "id" : null,
+      "url_syntax" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=[example_id]",
       "datatype" : null
    },
    "pfamb" : {
@@ -5949,6 +6069,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^(NC|AC|NG|NT|NW|NZ|NM|NR|XM|XR|NP|AP|XP|ZP)_\\d+$",
       "example_id" : "RefSeq:XP_001068954",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/RefSeq/",
+      "entity_type" : "PR:000000001 ! protein",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "RefSeq",
@@ -6104,10 +6225,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "smd" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Stanford Microarray Database",
+      "example_id" : null,
       "generic_url" : "http://genome-www.stanford.edu/microarray",
       "fullname" : null,
       "id" : null,
@@ -6143,6 +6266,21 @@ amigo.data.xrefs = {
       "url_syntax" : "http://vega.sanger.ac.uk/perl/searchview?species=all&idx=All&q=[example_id]",
       "datatype" : null
    },
+   "gorel" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "description" : "Additional relations pending addition into RO",
+      "database" : "GO Extensions to OBO Relation Ontology Ontology",
+      "example_id" : null,
+      "generic_url" : "http://purl.obolibrary.org/obo/ro",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "GOREL",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "ddb_ref" : {
       "object" : "Literature Reference Identifier",
       "name" : null,
@@ -6163,6 +6301,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/literature/pub_search?ref_id=659",
+      "database" : null,
       "example_id" : "GR_REF:659",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -6172,6 +6311,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "imgt_ligm" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -6205,6 +6345,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
+      "example_id" : null,
       "generic_url" : "http://umbbd.msi.umn.edu/",
       "fullname" : null,
       "id" : null,
@@ -6251,6 +6392,7 @@ amigo.data.xrefs = {
       "database" : "Pfam database of protein families",
       "example_id" : "Pfam:PF00046",
       "generic_url" : "http://www.sanger.ac.uk/Software/Pfam/",
+      "entity_type" : "SO:0000110 ! sequence feature",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "Pfam",
@@ -6277,6 +6419,7 @@ amigo.data.xrefs = {
       "name" : null,
       "uri_prefix" : null,
       "url_example" : "http://www.gramene.org/db/genes/search_gene?acc=GR:0060198",
+      "database" : null,
       "example_id" : "GR_GENE:GR:0060198",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -6286,8 +6429,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_spombe" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Spombe",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^SP[A-Z0-9]+\\.[A-Za-z0-9]+$",
       "example_id" : "GeneDB_Spombe:SPAC890.04C",
@@ -6320,10 +6463,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "poc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Plant Ontology Consortium",
+      "example_id" : null,
       "generic_url" : "http://www.plantontology.org/",
       "fullname" : null,
       "id" : null,
@@ -6349,14 +6494,14 @@ amigo.data.xrefs = {
       "object" : "Protein family tree identifier",
       "uri_prefix" : null,
       "name" : null,
-      "url_example" : "http://pantree.org/node/annotationNode.jsp?id=PTN000000084",
+      "url_example" : "http://www.pantherdb.org/panther/lookupId.jsp?id=PTHR10000",
       "database" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
-      "example_id" : "PANTHER:PTN000000084",
+      "example_id" : "PANTHER:PTHR11455",
       "generic_url" : "http://www.pantherdb.org/",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "PANTHER",
-      "url_syntax" : "http://pantree.org/node/annotationNode.jsp?id=[example_id]",
+      "url_syntax" : "http://www.pantherdb.org/panther/lookupId.jsp?id=[example_id]",
       "datatype" : null
    },
    "jcvi_tba1" : {
@@ -6419,10 +6564,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "sanger" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Wellcome Trust Sanger Institute",
+      "example_id" : null,
       "generic_url" : "http://www.sanger.ac.uk/",
       "fullname" : null,
       "id" : null,
@@ -6431,8 +6578,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_lmajor" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Lmajor",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^LmjF\\.\\d+\\.\\d+$",
       "example_id" : "GeneDB_Lmajor:LM5.32",
@@ -6478,10 +6625,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mitre" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "The MITRE Corporation",
+      "example_id" : null,
       "generic_url" : "http://www.mitre.org/",
       "fullname" : null,
       "id" : null,
@@ -6490,10 +6639,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "phenoscape" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "PhenoScape Knowledgebase",
+      "example_id" : null,
       "generic_url" : "http://phenoscape.org/",
       "fullname" : null,
       "id" : null,
@@ -6513,6 +6664,21 @@ amigo.data.xrefs = {
       "abbreviation" : "ECOCYC_REF",
       "id" : null,
       "url_syntax" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=[example_id]",
+      "datatype" : null
+   },
+   "syscilia_ccnet" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "description" : "A systems biology approach to dissect cilia function and its disruption in human genetic disease",
+      "database" : "Syscilia",
+      "example_id" : null,
+      "generic_url" : "http://syscilia.org/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "SYSCILIA_CCNET",
+      "url_syntax" : null,
       "datatype" : null
    },
    "metacyc" : {
@@ -6545,10 +6711,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "omssa" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Open Mass Spectrometry Search Algorithm",
+      "example_id" : null,
       "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/omssa/",
       "fullname" : null,
       "id" : null,
@@ -6667,16 +6835,19 @@ amigo.data.xrefs = {
       "example_id" : "dictyBase:DDB_G0277859",
       "generic_url" : "http://dictybase.org",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "DDB",
       "id" : null,
       "url_syntax" : "http://dictybase.org/gene/[example_id]",
       "datatype" : null
    },
    "germonline" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GermOnline",
+      "example_id" : null,
       "generic_url" : "http://www.germonline.org/",
       "fullname" : null,
       "id" : null,
@@ -6701,10 +6872,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mengo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Microbial ENergy processes Gene Ontology Project",
+      "example_id" : null,
       "generic_url" : "http://mengo.vbi.vt.edu/",
       "fullname" : null,
       "id" : null,
@@ -6756,10 +6929,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "eurofung" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Eurofungbase community annotation",
+      "example_id" : null,
       "generic_url" : "http://www.eurofung.net/option=com_content&task=section&id=3&Itemid=4",
       "fullname" : null,
       "id" : null,
@@ -6892,6 +7067,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^EG[0-9]{5}$",
       "example_id" : "ECOGENE:EG10818",
       "generic_url" : "http://www.ecogene.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "ECOGENE",
@@ -6913,6 +7089,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "imgt_hla" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -6969,12 +7146,27 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
       "datatype" : null
    },
+   "alzheimers_university_of_toronto" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "database" : "Alzheimers Project at University of Toronto",
+      "example_id" : null,
+      "generic_url" : "http://www.ims.utoronto.ca/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "Alzheimers_University_of_Toronto",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "pmid" : {
       "object" : "Identifier",
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797",
       "database" : "PubMed",
+      "local_id_syntax" : "^[0-9]+$",
       "example_id" : "PMID:4208797",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
       "fullname" : null,
@@ -6998,12 +7190,14 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ecoliwiki" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "EcoliHub's subsystem for community annotation of E. coli K-12",
       "database" : "EcoliWiki from EcoliHub",
       "local_id_syntax" : "^[A-Za-z]{3,4}$",
+      "example_id" : null,
       "generic_url" : "http://ecoliwiki.net/",
       "fullname" : null,
       "id" : null,
@@ -7061,7 +7255,7 @@ amigo.data.xrefs = {
       "url_example" : "http://www.uniprot.org/uniprot/P51587",
       "description" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
       "database" : "Universal Protein Knowledgebase",
-      "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]((-([0-9]+)|:PRO_[0-9]{10}))?$",
+      "local_id_syntax" : "^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z]([0-9][A-Z][A-Z0-9]{2}){1,2}[0-9])((-[0-9]+)|:PRO_[0-9]{10}|:VAR_[0-9]{6}){0,1}$",
       "example_id" : "UniProtKB:P51587",
       "generic_url" : "http://www.uniprot.org",
       "fullname" : null,
@@ -7072,6 +7266,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pharmgkb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.pharmgkb.org/do/serve?objId=PA267",
@@ -7099,6 +7294,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "phi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -7131,8 +7327,10 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
       "database" : "Aspergillus Genome Database",
+      "local_id_syntax" : "^ASPL[0-9]{10}$",
       "example_id" : "AspGD:ASPL0000067538",
       "generic_url" : "http://www.aspergillusgenome.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "AspGD",
@@ -7205,6 +7403,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^ZDB-(GENE|GENO|MRPHLNO)-[0-9]{6}-[0-9]+$",
       "example_id" : "ZFIN:ZDB-GENE-990415-103",
       "generic_url" : "http://zfin.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "ZFIN",
@@ -7221,6 +7420,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[A-Z]{3}[0-9]{5}(\\.[0-9]+)?$",
       "example_id" : "protein_id:CAA71991",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
+      "entity_type" : "PR:000000001 ! protein",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "protein_id",
@@ -7302,10 +7502,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "jcvi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "J. Craig Venter Institute",
+      "example_id" : null,
       "generic_url" : "http://www.jcvi.org/",
       "fullname" : null,
       "id" : null,
@@ -7338,6 +7540,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^EB[0-9]{4}$",
       "example_id" : "EchoBASE:EB0231",
       "generic_url" : "http://www.ecoli-york.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "EchoBASE",
@@ -7390,10 +7593,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "biopixie_mefit" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
+      "example_id" : null,
       "generic_url" : "http://pixie.princeton.edu/pixie/",
       "fullname" : null,
       "id" : null,
@@ -7459,11 +7664,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "trait" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "an integrated database of transcripts expressed in human skeletal muscle",
       "database" : "TRAnscript Integrated Table",
+      "example_id" : null,
       "generic_url" : "http://muscle.cribi.unipd.it/",
       "fullname" : null,
       "id" : null,
@@ -7488,10 +7695,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "transfac" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "TRANSFAC database of eukaryotic transcription factors",
+      "example_id" : null,
       "generic_url" : "http://www.gene-regulation.com/pub/databases.html#transfac",
       "fullname" : null,
       "id" : null,
@@ -7520,6 +7729,7 @@ amigo.data.xrefs = {
       "url_example" : null,
       "! url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=",
       "database" : "National Center for Biotechnology Information",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
       "fullname" : null,
       "id" : null,
@@ -7533,6 +7743,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://cgsc.biology.yale.edu/Site.php?ID=315",
+      "database" : null,
       "example_id" : "CGSC:rbsK",
       "database: CGSC" : "E.coli Genetic Stock Center",
       "generic_url" : "http://cgsc.biology.yale.edu/",
@@ -7558,8 +7769,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_tbrucei" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Tbrucei",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^Tb\\d+\\.\\d+\\.\\d+$",
       "example_id" : "GeneDB_Tbrucei:Tb927.1.5250",
@@ -7611,10 +7822,12 @@ amigo.data.xrefs = {
       "name" : null,
       "uri_prefix" : null,
       "url_example" : "http://www.gramene.org/db/protein/protein_search?acc=Q6VSV0",
+      "database" : null,
       "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]$",
       "example_id" : "GR_PROTEIN:Q6VSV0",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
+      "entity_type" : "PR:000000001 ! protein",
       "abbreviation" : "GR_protein",
       "id" : null,
       "url_syntax" : "http://www.gramene.org/db/protein/protein_search?acc=[example_id]",
@@ -7664,6 +7877,20 @@ amigo.data.xrefs = {
       "url_syntax" : "http://sabio.villa-bosch.de/reacdetails.jsp?reactid=[example_id]",
       "datatype" : null
    },
+   "parkinsonsuk-ucl" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "database" : "Parkinsons Disease Gene Ontology Initiative",
+      "example_id" : null,
+      "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "ParkinsonsUK-UCL",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "cog_function" : {
       "object" : "Identifier",
       "uri_prefix" : null,
@@ -7687,6 +7914,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[A-Z]{3}[0-9]{5}(\\.[0-9]+)?$",
       "example_id" : "NCBI_GP:EAL72968",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "entity_type" : "PR:000000001 ! protein",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "NCBI_GP",
@@ -7710,10 +7938,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "vida" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Virus Database at University College London",
+      "example_id" : null,
       "generic_url" : "http://www.biochem.ucl.ac.uk/bsm/virus_database/VIDA.html",
       "fullname" : null,
       "id" : null,
@@ -7727,6 +7957,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : "http://dx.doi.org/DOI:10.1016/S0963-9969(99)00021-6",
       "database" : "Digital Object Identifier",
+      "local_id_syntax" : "^10\\.[0-9]+\\/.*$",
       "example_id" : "DOI:10.1016/S0963-9969(99)00021-6",
       "generic_url" : "http://dx.doi.org/",
       "fullname" : null,
@@ -7798,6 +8029,7 @@ amigo.data.xrefs = {
       "example_id" : "AGI_LocusCode:At2g17950",
       "!url_syntax" : "http://www.tigr.org/tigr-scripts/euk_manatee/shared/ORF_infopage.cgi?db=ath1&orf=[example_id]",
       "generic_url" : "http://www.arabidopsis.org",
+      "entity_type" : "SO:0000704 ! gene",
       "id" : null,
       "url_syntax" : "http://arabidopsis.org/servlets/TairObject?type=locus&name=[example_id]",
       "name" : null,
@@ -7882,10 +8114,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pamgo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Plant-Associated Microbe Gene Ontology Interest Group",
+      "example_id" : null,
       "generic_url" : "http://pamgo.vbi.vt.edu/",
       "fullname" : null,
       "id" : null,
@@ -7899,8 +8133,11 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=sd1",
+      "database" : null,
+      "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]$",
       "example_id" : "GR:sd1",
       "generic_url" : "http://www.gramene.org/",
+      "entity_type" : "PR:000000001 ! protein",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "GR",
@@ -7908,10 +8145,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "tgd" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Tetrahymena Genome Database",
+      "example_id" : null,
       "generic_url" : "http://www.ciliate.org/",
       "fullname" : null,
       "id" : null,
@@ -7920,10 +8159,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "roslin_institute" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Roslin Institute",
+      "example_id" : null,
       "generic_url" : "http://www.roslin.ac.uk/",
       "fullname" : null,
       "id" : null,
@@ -7988,6 +8229,7 @@ amigo.data.xrefs = {
       "example_id" : "GB:AA816246",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
       "fullname" : null,
+      "entity_type" : "PR:000000001 ! protein ",
       "abbreviation" : "GB",
       "id" : null,
       "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]",
@@ -8022,10 +8264,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "hugo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Human Genome Organisation",
+      "example_id" : null,
       "generic_url" : "http://www.hugo-international.org/",
       "fullname" : null,
       "id" : null,
@@ -8057,6 +8301,7 @@ amigo.data.xrefs = {
       "example_id" : "dictyBase:DDB_G0277859",
       "generic_url" : "http://dictybase.org",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "DictyBase",
       "id" : null,
       "url_syntax" : "http://dictybase.org/gene/[example_id]",
@@ -8106,10 +8351,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "agbase" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "AgBase resource for functional analysis of agricultural plant and animal gene products",
+      "example_id" : null,
       "generic_url" : "http://www.agbase.msstate.edu/",
       "fullname" : null,
       "id" : null,
@@ -8127,6 +8374,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^([A-Z]{1}[0-9]{5})|([A-Z]{2}[0-9]{6})|([A-Z]{4}[0-9]{8,9})$",
       "example_id" : "EMBL:AA816246",
       "generic_url" : "http://www.ebi.ac.uk/embl/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "EMBL",
@@ -8173,6 +8421,7 @@ amigo.data.xrefs = {
       "example_id" : "CGD:CAL0005516",
       "generic_url" : "http://www.candidagenome.org/",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "CGDID",
       "id" : null,
       "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]",
@@ -8184,6 +8433,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=CQU7",
+      "database" : null,
       "example_id" : "GR_QTL:CQU7",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -8222,10 +8472,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ptarget" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "pTARGET Prediction server for protein subcellular localization",
+      "example_id" : null,
       "generic_url" : "http://bioinformatics.albany.edu/~ptarget/",
       "fullname" : null,
       "id" : null,
@@ -8248,14 +8500,16 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "tigr" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "J. Craig Venter Institute",
+      "example_id" : null,
       "generic_url" : "http://www.jcvi.org/",
       "fullname" : null,
-      "id" : null,
       "abbreviation" : "TIGR",
+      "id" : null,
       "url_syntax" : null,
       "datatype" : null
    },
@@ -8347,11 +8601,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "muscletrait" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "description" : "an integrated database of transcripts expressed in human skeletal muscle",
       "database" : "TRAnscript Integrated Table",
+      "example_id" : null,
       "generic_url" : "http://muscle.cribi.unipd.it/",
       "fullname" : null,
       "abbreviation" : "MuscleTRAIT",
@@ -8374,8 +8630,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_pfalciparum" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Pfalciparum",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^SP[A-Z0-9]+\\.[A-Za-z0-9]+$",
       "example_id" : "GeneDB_Pfalciparum:PFD0755c",
@@ -8436,10 +8692,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "h-invdb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "H-invitational Database",
+      "example_id" : null,
       "generic_url" : "http://www.h-invitational.jp/",
       "fullname" : null,
       "id" : null,
@@ -8453,6 +8711,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "Kyoto Encyclopedia of Genes and Genomes",
+      "example_id" : null,
       "generic_url" : "http://www.genome.ad.jp/kegg/",
       "fullname" : null,
       "id" : null,
@@ -8528,6 +8787,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^locus:[0-9]{7}$",
       "example_id" : "TAIR:locus:2146653",
       "generic_url" : "http://www.arabidopsis.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "TAIR",
@@ -8549,10 +8809,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "psort" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "PSORT protein subcellular localization databases and prediction tools for bacteria",
+      "example_id" : null,
       "generic_url" : "http://www.psort.org/",
       "fullname" : null,
       "id" : null,
@@ -8584,6 +8846,7 @@ amigo.data.xrefs = {
       "example_id" : "NCBI_Gene:4771",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "GeneID",
       "id" : null,
       "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
@@ -8595,9 +8858,11 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
       "database" : "Aspergillus Genome Database",
+      "local_id_syntax" : "^ASPL[0-9]{10}$",
       "example_id" : "AspGD:ASPL0000067538",
       "generic_url" : "http://www.aspergillusgenome.org/",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "AspGDID",
       "id" : null,
       "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
@@ -8677,20 +8942,6 @@ amigo.data.xrefs = {
       "url_syntax" : "http://db.yeastgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
       "datatype" : null
    },
-   "pato" : {
-      "object" : "Identifier",
-      "uri_prefix" : null,
-      "name" : null,
-      "url_example" : null,
-      "database" : "Phenotypic quality ontology",
-      "example_id" : "PATO:0001420",
-      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
-      "fullname" : null,
-      "id" : null,
-      "abbreviation" : "PATO",
-      "url_syntax" : null,
-      "datatype" : null
-   },
    "sgn" : {
       "object" : "Gene identifier",
       "uri_prefix" : null,
@@ -8705,11 +8956,27 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]",
       "datatype" : null
    },
+   "pato" : {
+      "object" : "Identifier",
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "database" : "Phenotypic quality ontology",
+      "example_id" : "PATO:0001420",
+      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "PATO",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "goc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Gene Ontology Consortium",
+      "example_id" : null,
       "generic_url" : "http://www.geneontology.org/",
       "fullname" : null,
       "id" : null,
@@ -8718,10 +8985,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genprotec" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GenProtEC E. coli genome and proteome database",
+      "example_id" : null,
       "generic_url" : "http://genprotec.mbl.edu/",
       "fullname" : null,
       "id" : null,
@@ -8730,10 +8999,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "nc-iubmb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
+      "example_id" : null,
       "generic_url" : "http://www.chem.qmw.ac.uk/iubmb/",
       "fullname" : null,
       "id" : null,
@@ -8756,6 +9027,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ec" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.expasy.org/enzyme/1.4.3.6",
@@ -8823,6 +9095,7 @@ amigo.data.xrefs = {
       "example_id" : "RGD:2004",
       "generic_url" : "http://rgd.mcw.edu/",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "RGDID",
       "id" : null,
       "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
@@ -8837,6 +9110,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^(CAL|CAF)[0-9]{7}$",
       "example_id" : "CGD:CAL0005516",
       "generic_url" : "http://www.candidagenome.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "CGD",
@@ -8872,10 +9146,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "cog" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "NCBI Clusters of Orthologous Groups",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
       "fullname" : null,
       "id" : null,
@@ -8884,10 +9160,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "dflat" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Developmental FunctionaL Annotation at Tufts",
+      "example_id" : null,
       "generic_url" : "http://bcb.cs.tufts.edu/dflat/",
       "fullname" : null,
       "id" : null,
@@ -8978,6 +9256,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^MGI:[0-9]{5,}$",
       "example_id" : "MGI:MGI:80863",
       "generic_url" : "http://www.informatics.jax.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "MGI",
@@ -9027,6 +9306,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "bfo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://purl.obolibrary.org/obo/BFO_0000066",
@@ -9041,10 +9321,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "refgenome" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GO Reference Genomes",
+      "example_id" : null,
       "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
       "fullname" : null,
       "id" : null,
@@ -9096,10 +9378,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "iuphar" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "International Union of Pharmacology",
+      "example_id" : null,
       "generic_url" : "http://www.iuphar.org/",
       "fullname" : null,
       "id" : null,
@@ -9129,7 +9413,7 @@ amigo.data.xrefs = {
       "url_example" : "http://www.uniprot.org/uniprot/P51587",
       "description" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
       "database" : "Universal Protein Knowledgebase",
-      "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]((-([0-9]+)|:PRO_[0-9]{10}))?$",
+      "local_id_syntax" : "^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z]([0-9][A-Z][A-Z0-9]{2}){1,2}[0-9])((-[0-9]+)|:PRO_[0-9]{10}|:VAR_[0-9]{6}){0,1}$",
       "example_id" : "UniProtKB:P51587",
       "generic_url" : "http://www.uniprot.org",
       "entity_type" : "PR:000000001 ! protein ",
@@ -9168,10 +9452,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "prow" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Protein Reviews on the Web",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/prow/",
       "fullname" : null,
       "id" : null,
@@ -9196,10 +9482,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mtbbase" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
+      "example_id" : null,
       "generic_url" : "http://www.ark.in-berlin.de/Site/MTBbase.html",
       "fullname" : null,
       "id" : null,
@@ -9246,6 +9534,7 @@ amigo.data.xrefs = {
       "example_id" : "NCBI_Gene:4771",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
       "fullname" : null,
+      "entity_type" : "SO:0000704 ! gene",
       "abbreviation" : "LocusID",
       "id" : null,
       "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
@@ -9261,6 +9550,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^[A-Z]{2}[0-9]{6}$",
       "example_id" : "GB:AA816246",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
+      "entity_type" : "PR:000000001 ! protein ",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "GenBank",
@@ -9296,6 +9586,20 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.ensembl.org/id/[example_id]",
       "datatype" : null
    },
+   "sgd_ref" : {
+      "object" : "Literature Reference Identifier",
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=S000049602",
+      "database" : "Saccharomyces Genome Database",
+      "example_id" : "SGD_REF:S000049602",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "SGD_REF",
+      "url_syntax" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
+      "datatype" : null
+   },
    "tigr_pfa1" : {
       "object" : "Accession",
       "name" : null,
@@ -9309,20 +9613,6 @@ amigo.data.xrefs = {
       "id" : null,
       "url_syntax" : null,
       "is_obsolete" : "true",
-      "datatype" : null
-   },
-   "sgd_ref" : {
-      "object" : "Literature Reference Identifier",
-      "uri_prefix" : null,
-      "name" : null,
-      "url_example" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=S000049602",
-      "database" : "Saccharomyces Genome Database",
-      "example_id" : "SGD_REF:S000049602",
-      "generic_url" : "http://www.yeastgenome.org/",
-      "fullname" : null,
-      "id" : null,
-      "abbreviation" : "SGD_REF",
-      "url_syntax" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
       "datatype" : null
    },
    "vmd" : {
@@ -9363,6 +9653,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^ECK[0-9]{4}$",
       "example_id" : "ECK:ECK3746",
       "generic_url" : "http://www.ecogene.org/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "ECK",
@@ -9407,7 +9698,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^\\d{7}$",
       "example_id" : "SO:0000195",
       "generic_url" : "http://sequenceontology.org/",
-      "entity_type" : "SO:0000400 ! sequence attribute ",
+      "entity_type" : "SO:0000110 ! sequence feature",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "SO",
@@ -9444,8 +9735,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_gmorsitans" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Tsetse",
+      "object" : "Gene identifier",
       "replaced_by" : "GeneDB",
       "uri_prefix" : null,
       "name" : null,
@@ -9505,10 +9796,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ppi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Pseudomonas syringae community annotation project",
+      "example_id" : null,
       "generic_url" : "http://genome.pseudomonas-syringae.org/",
       "fullname" : null,
       "id" : null,
@@ -9522,6 +9815,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604",
       "database" : "Reactome - a curated knowledgebase of biological pathways",
+      "local_id_syntax" : "^REACT_[0-9]+$",
       "example_id" : "Reactome:REACT_604",
       "generic_url" : "http://www.reactome.org/",
       "fullname" : null,
@@ -9568,6 +9862,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^Tb\\d+\\.[A-Za-z0-9]+\\.\\d+$",
       "example_id" : "PF3D7_1467300",
       "generic_url" : "http://www.genedb.org/gene/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "GeneDB",
@@ -9591,10 +9886,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ntnu_sb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Norwegian University of Science and Technology, Systems Biology team",
+      "example_id" : null,
       "generic_url" : "http://www.ntnu.edu/nt/systemsbiology",
       "fullname" : null,
       "id" : null,
@@ -9664,10 +9961,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "multifun" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "MultiFun cell function assignment schema",
+      "example_id" : null,
       "generic_url" : "http://genprotec.mbl.edu/files/MultiFun.html",
       "fullname" : null,
       "id" : null,
@@ -9728,6 +10027,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^\\d+$",
       "example_id" : "NCBI_Gene:4771",
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "entity_type" : "SO:0000704 ! gene",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "NCBI_Gene",
@@ -9738,14 +10038,14 @@ amigo.data.xrefs = {
       "object" : "Identifier",
       "uri_prefix" : null,
       "name" : null,
-      "url_example" : "http://us.expasy.org/unirules/MF_00031",
+      "url_example" : "http://hamap.expasy.org/unirule/MF_00131",
       "database" : "High-quality Automated and Manual Annotation of microbial Proteomes",
       "example_id" : "HAMAP:MF_00031",
-      "generic_url" : "http://us.expasy.org/sprot/hamap/",
+      "generic_url" : "http://hamap.expasy.org/",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "HAMAP",
-      "url_syntax" : "http://us.expasy.org/unirules/[example_id]",
+      "url_syntax" : "http://hamap.expasy.org/unirule/[example_id]",
       "datatype" : null
    },
    "aracyc" : {
@@ -9763,10 +10063,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "broad" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Broad Institute",
+      "example_id" : null,
       "generic_url" : "http://www.broad.mit.edu/",
       "fullname" : null,
       "id" : null,
@@ -9827,6 +10129,352 @@ amigo.data.dispatch = {
          "bbop.widgets.search_pane" : "amigo.handlers.owl_class_expression"
       }
    }
+};
+/*
+ * Package: context.js
+ * 
+ * Namespace: amigo.data.context
+ * 
+ * Another context.
+ */
+
+// Module and namespace checking.
+if ( typeof amigo == "undefined" ){ var amigo = {}; }
+if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
+
+/*
+ * Variable: context
+ * 
+ * Colors are X11: http://cng.seas.rochester.edu/CNG/docs/x11color.html
+ */
+amigo.data.context = {
+    'instance_of':
+    {
+	readable: 'activity',
+	priority: 8,
+	aliases: [
+	    'activity'
+	],
+	color: '#FFFAFA' // snow
+    },
+    'BFO:0000050':
+    {
+	readable: 'part of',
+	priority: 15,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000050',
+		//'http://purl.obolibrary.org/obo/part_of',
+	    'BFO_0000050',
+	    'part:of',
+	    'part of',
+	    'part_of'
+	],
+	color: '#add8e6' // light blue
+    },
+    'BFO:0000051':
+    {
+	readable: 'has part',
+	priority: 4,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000051',
+	    'has:part',
+	    'has part',
+	    'has_part'
+	],
+	color: '#6495ED' // cornflower blue
+    },
+    'BFO:0000066':
+    {
+	readable: 'occurs in',
+	priority: 12,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000066',
+		//'BFO_0000066',
+	    'occurs:in',
+	    'occurs in',
+	    'occurs_in'
+	],
+	color: '#66CDAA' // medium aquamarine
+    },
+    'RO:0002202':
+    {
+	readable: 'develops from',
+	priority: 0,
+	aliases: [
+	    'develops:from',
+	    'develops from',
+	    'develops_from'
+	],
+	color: '#A52A2A' // brown
+    },
+    'RO:0002211':
+    {
+	readable: 'regulates',
+	priority: 16,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/RO_0002211'
+	    'regulates'
+	],
+	color: '#2F4F4F' // dark slate grey
+    },
+    'RO:0002212':
+    {
+	readable: 'negatively regulates',
+	priority: 17,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/RO_0002212'
+	    'negatively:regulates',
+	    'negatively regulates',
+	    'negatively_regulates'
+	],
+	glyph: 'bar',
+	color: '#FF0000' // red
+    },
+    'RO:0002213':
+    {
+	readable: 'positively regulates',
+	priority: 18,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/RO_0002213'
+	    'positively:regulates',
+	    'positively regulates',
+	    'positively_regulates'
+	],
+	glyph: 'arrow',
+	color: '#008000' //green
+    },
+    'RO:0002233':
+    {
+	readable: 'has input',
+	priority: 14,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/BFO_0000051',
+	    'has:input',
+	    'has input',
+	    'has_input'
+	],
+	color: '#6495ED' // cornflower blue
+    },
+    'RO:0002234':
+    {
+	readable: 'has output',
+	priority: 0,
+	aliases: [
+	    'has:output',
+	    'has output',
+	    'has_output'
+	],
+	color: '#ED6495' // ??? - random
+    },
+    'RO:0002330':
+    {
+	readable: 'genomically related to',
+	priority: 0,
+	aliases: [
+	    'genomically related to',
+	    'genomically_related_to'
+	],
+	color: '#9932CC' // darkorchid
+    },
+    'RO:0002331':
+    {
+	readable: 'involved in',
+	priority: 3,
+	aliases: [
+	    'involved:in',
+	    'involved in',
+	    'involved_in'
+	],
+	color: '#E9967A' // darksalmon
+    },
+    'RO:0002332':
+    {
+	readable: 'regulates level of',
+	priority: 0,
+	aliases: [
+	    'regulates level of',
+	    'regulates_level_of'
+	],
+	color: '#556B2F' // darkolivegreen
+    },
+    'RO:0002333':
+    {
+	readable: 'enabled by',
+	priority: 13,
+	aliases: [
+	    'RO_0002333',
+	    'enabled:by',
+	    'enabled by',
+	    'enabled_by'
+	],
+	color: '#B8860B' // darkgoldenrod
+    },
+    'RO:0002334':
+    {
+	readable: 'regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002334',
+	    'regulated by',
+	    'regulated_by'
+	],
+	color: '#86B80B' // ??? - random
+    },
+    'RO:0002335':
+    {
+	readable: 'negatively regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002335',
+	    'negatively regulated by',
+	    'negatively_regulated_by'
+	],
+	color: '#0B86BB' // ??? - random
+    },
+    'RO:0002336':
+    {
+	readable: 'positively regulated by',
+	priority: 0,
+	aliases: [
+	    'RO_0002336',
+	    'positively regulated by',
+	    'positively_regulated_by'
+	],
+	color: '#BB0B86' // ??? - random
+    },
+    'activates':
+    {
+	readable: 'activates',
+	priority: 0,
+	aliases: [
+	    'http://purl.obolibrary.org/obo/activates'
+	],
+	//glyph: 'arrow',
+	//glyph: 'diamond',
+	//glyph: 'wedge',
+	//glyph: 'bar',
+	color: '#8FBC8F' // darkseagreen
+    },
+    'RO:0002404':
+    {
+	readable: 'causally downstream of',
+	priority: 2,
+	aliases: [
+	    'causally_downstream_of'
+	],
+	color: '#FF1493' // deeppink
+    },
+    'RO:0002406':
+    {
+	readable: 'directly activates',
+	priority: 20,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/directly_activates',
+	    'directly:activates',
+	    'directly activates',
+	    'directly_activates'
+	],
+	glyph: 'arrow',
+	color: '#2F4F4F' // darkslategray
+    },
+    'upstream_of':
+    {
+	readable: 'upstream of',
+	priority: 2,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/upstream_of'
+	    'upstream:of',
+	    'upstream of',
+	    'upstream_of'
+	],
+	color: '#FF1493' // deeppink
+    },
+    'RO:0002408':
+    {
+	readable: 'directly inhibits',
+	priority: 19,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/directly_inhibits'
+	    'directly:inhibits',
+	    'directly inhibits',
+	    'directly_inhibits'
+	],
+	glyph: 'bar',
+	color: '#7FFF00' // chartreuse
+    },
+    'RO:0002411':
+    {
+	readable: 'causally upstream of',
+	priority: 2,
+	aliases: [
+	    'causally_upstream_of'
+	],
+	color: '#483D8B' // darkslateblue
+    },
+    'indirectly_disables_action_of':
+    {
+	readable: 'indirectly disables action of',
+	priority: 0,
+	aliases: [
+		//'http://purl.obolibrary.org/obo/indirectly_disables_action_of'
+	    'indirectly disables action of',
+	    'indirectly_disables_action_of'
+	],
+	color: '#483D8B' // darkslateblue
+    },
+    'provides_input_for':
+    {
+	readable: 'provides input for',
+	priority: 0,
+	aliases: [
+	    'GOREL_provides_input_for',
+	    'http://purl.obolibrary.org/obo/GOREL_provides_input_for'
+	],
+	color: '#483D8B' // darkslateblue
+    },
+    'RO:0002413':
+    {
+	readable: 'directly provides input for',
+	priority: 1,
+	aliases: [
+	    'directly_provides_input_for',
+	    'GOREL_directly_provides_input_for',
+	    'http://purl.obolibrary.org/obo/GOREL_directly_provides_input_for'
+	],
+	glyph: 'diamond',
+	color: '#483D8B' // darkslateblue
+    },
+    // New ones for monarch.
+    'subclass_of':
+    {
+	readable: 'subclass of',
+	priority: 100,
+	aliases: [
+	    'SUBCLASS_OF'
+	],
+	glyph: 'diamond',
+	color: '#E9967A' // darksalmon
+    },
+    'superclass_of':
+    {
+	readable: 'superclass of',
+	priority: 100,
+	aliases: [
+	    'SUPERCLASS_OF'
+	],
+	glyph: 'diamond',
+	color: '#556B2F' // darkolivegreen
+    },
+    'annotation':
+    {
+	readable: 'annotation',
+	priority: 100,
+	aliases: [
+	    'ANNOTATION'
+	],
+	glyph: 'diamond',
+	color: '#483D8B' // darkslateblue
+    }
 };
 /*
  * Package: statistics.js
