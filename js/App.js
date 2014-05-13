@@ -48,7 +48,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     //var manager = new bbop_mme_manager(in_server_base);
     // BUG/TODO: Right now, just hardwiring the uid, but this needs to
     // be distributed by the moderator after authenication.
-    var manager = new bbop_mme_manager2('amigo', in_server_base);
+    var manager = new bbop_mme_manager2(in_server_base, 'mmm', 'amigo');
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';

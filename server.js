@@ -5,7 +5,9 @@
  * 
  * A server that will render GO graphs into jsPlumb.
  * 
- * M3LOC=http://localhost:6800 MSGLOC=http://localhost:3400 make start-app
+ * : MSGLOC=http://localhost:3400 make start-app
+ * 
+ * TODO: Rename "noctua".
  */
 
 // Required shareable Node libs.
@@ -27,7 +29,7 @@ var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
 // The name we're using this week.
-var notw = 'Barista|Bast|EWAN|Gato|Mao|Minerva|Neko|Orion';
+var notw = 'Noctua';
 
 ///
 /// Define the sample application.
@@ -36,25 +38,16 @@ var notw = 'Barista|Bast|EWAN|Gato|Mao|Minerva|Neko|Orion';
 var MMEnvLauncher = function() {
     var self = this;
 
-    var laucher_app = require('express');
-
-    // Deal with location of MMM server.
-    var m3loc = 'http://toaster.lbl.gov:6800'; // default val
-    if( process.env.M3LOC ){
-	m3loc = process.env.M3LOC;
-	console.log('server location taken from environment: ' + m3loc);
-    }else{
-	console.log('server location taken from default: ' + m3loc);
-    }
-    self.m3loc = m3loc;
+    var launcher_app = require('express');
 
     var msgloc = 'http://toaster.lbl.gov:3400'; // default val
     if( process.env.MSGLOC ){
 	msgloc = process.env.MSGLOC;
-	console.log('messenger location taken from environment: ' + msgloc);
+	console.log('Barista location taken from environment: ' + msgloc);
     }else{
-	console.log('messenger location taken from default: ' + msgloc);
+	console.log('Barista location taken from default: ' + msgloc);
     }
+    self.msgloc = msgloc;
 
     ///
     /// Environment helpers.
@@ -202,13 +195,13 @@ var MMEnvLauncher = function() {
     /// App server functions (main app logic here).
     ///
 
-    // Initialize the server (laucher_app) and create the routes and register
+    // Initialize the server (launcher_app) and create the routes and register
     // the handlers.
     self.initializeServer = function(known_relations) {
         //self.createRoutes();
-        self.app = laucher_app();
+        self.app = launcher_app();
 	// Middleware needed for POST and browserid
-        self.app.use(laucher_app.bodyParser());
+        self.app.use(launcher_app.bodyParser());
 
 	///
 	/// Static routes.
@@ -223,12 +216,12 @@ var MMEnvLauncher = function() {
 			 var base_tmpl =
 			     self.cache_get('index_base.tmpl').toString();
 			 var base_tmpl_args = {
-			     'title': notw + ': Order',
+			     'title': notw + ': Selection',
 			     'content': ind_cont,
 			     'js_variables': [
 				 {
 				     'name': 'global_server_base',
-				     'value': '"' + m3loc + '"'
+				     'value': '"' + msgloc + '"'
 				 },
 				 {
 				     'name': 'global_known_relations',
@@ -255,7 +248,7 @@ var MMEnvLauncher = function() {
 			     'js_variables': [
 				 {
 				     'name': 'global_server_base',
-				     'value': '"' + m3loc+ '"'
+				     'value': '"' + msgloc+ '"'
 				 },
 				 {
 				     'name': 'global_known_relations',
@@ -338,7 +331,7 @@ var MMEnvLauncher = function() {
 	// 			    },
 	// 			    {
 	// 				'name': 'global_server_base',
-	// 				'value': '"' + m3loc+ '"'
+	// 				'value': '"' + msgloc+ '"'
 	// 			    },
 	// 			    {
 	// 				'name': 'global_model',
@@ -397,7 +390,7 @@ var MMEnvLauncher = function() {
 					     },
 					     {
 						 'name': 'global_server_base',
-						 'value':  '"' + m3loc+ '"'
+						 'value':  '"' + msgloc+ '"'
 					     },
 					     {
 						 'name':'global_message_server',
@@ -432,7 +425,7 @@ var MMEnvLauncher = function() {
 						     resp.message_type() +'): '+
 						     resp.message());
 					});
-			     var t = m3loc + '/m3GetModel';
+			     var t = msgloc + '/api/mmm/m3GetModel';
 			     var t_args = {
 				 'modelId': query
 			     };
@@ -468,7 +461,7 @@ var MMEnvLauncher = function() {
 	// 			    },
 	// 			    {
 	// 				'name': 'global_server_base',
-	// 				'value':  '"' + m3loc+ '"'
+	// 				'value':  '"' + msgloc+ '"'
 	// 			    },
 	// 			    {
 	// 				'name':'global_message_server',
@@ -494,7 +487,7 @@ var MMEnvLauncher = function() {
 			     req.body['model_id'] || '???';
 
 			 // // Assemble return doc.
-			 // res.redirect(m3loc + '/m3ExportModel?modelId=' + mid); 
+			 // res.redirect(msgloc + '/api/mmm/m3ExportModel?modelId=' + mid); 
 			 // //res.setHeader('Content-Type', 'text/plain');
 			 // //res.send(data);
 
@@ -530,7 +523,7 @@ var MMEnvLauncher = function() {
 						 resp.message_type() +'): '+
 						 resp.message());
 				    });
-			 var t = m3loc + '/m3ExportModel';
+			 var t = msgloc + '/api/mmm/m3ExportModel';
 			 var t_args = {
 			     'modelId': mid
 			 };
@@ -602,7 +595,8 @@ imngr.register('error', 'e1',
 		   //console.log('erred out: %j', resp); 
 		   console.log('not okay: %j', resp.okay());
 	       });
-var t = mmees.m3loc + '/getRelations';
+var t = mmees.msgloc + '/api/mmm/getRelations';
 var t_args = {};
 var astr = imngr.action(t, t_args);
+console.log("base ctarget " + t);
 console.log("action to: " + astr);

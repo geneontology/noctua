@@ -18,7 +18,7 @@ var MMEnvBootstrappingInit = function(in_server_base){
     var what_is = bbop.core.what_is;
 
     // Events registry.
-    var manager = new bbop_mme_manager(in_server_base);
+    var manager = new bbop_mme_manager2(in_server_base, 'mmm', 'amigo');
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';

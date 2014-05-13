@@ -5,13 +5,15 @@
  * Initial take from bbop.golr.manager.
  * 
  * Arguments:
+ *  server_base - string for invariant part of API
+ *  namespace - string for namespace of API to use
  *  user_id - identifying string for the user of the manager
- *  server_base - string for invariant part of URL.
  * 
  * Returns:
  *  a classic manager
  */
-var bbop_mme_manager2 = function(user_id, server_base){
+var bbop_mme_manager2 = function(server_base, namespace, user_id){
+    //var bbop_mme_manager2 = function(user_id, server_base){
     bbop.registry.call(this, ['prerun', // internal
 			      'postrun', // internal
 			      'manager_error', // internal
@@ -24,7 +26,7 @@ var bbop_mme_manager2 = function(user_id, server_base){
 			     ]);
     this._is_a = 'bbop_mme_manager2';
     var anchor = this;
-    var url = server_base + '/m3Batch';
+    var url = server_base + '/api/' + namespace + '/m3Batch';
 
     // Kinda needs this for all calls.
     anchor._user_id = user_id;
