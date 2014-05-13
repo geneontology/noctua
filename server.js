@@ -35,7 +35,7 @@ var notw = 'Noctua';
 /// Define the sample application.
 ///
 
-var MMEnvLauncher = function() {
+var NoctuaLauncher = function() {
     var self = this;
 
     var launcher_app = require('express');
@@ -575,7 +575,7 @@ var MMEnvLauncher = function() {
 ///
 
 // Deliver the prototype JS MME application to the client.
-var mmees = new MMEnvLauncher();
+var noctua = new NoctuaLauncher();
 
 // Setup calls: don't finalize the startup until we pull the rest of
 // the interesting things we need from the web.
@@ -587,15 +587,15 @@ imngr.register('success', 's1',
 		   console.log("got getRelations, starting initializing seq");
 		   console.log(bbop.core.what_is(resp));
 		   console.log('rel count: ' + resp.relations().length);
-		   mmees.initialize(resp.relations());
-		   mmees.start();
+		   noctua.initialize(resp.relations());
+		   noctua.start();
 	       });
 imngr.register('error', 'e1',
 	       function(resp, man){
 		   //console.log('erred out: %j', resp); 
 		   console.log('not okay: %j', resp.okay());
 	       });
-var t = mmees.msgloc + '/api/mmm/getRelations';
+var t = noctua.msgloc + '/api/mmm/getRelations';
 var t_args = {};
 var astr = imngr.action(t, t_args);
 console.log("base ctarget " + t);
