@@ -9,7 +9,9 @@
     "gene ontology",
     "GO",
     "amigo",
-    "bbop"
+    "bbop",
+    "noctua",
+    "barista"
   ],
   "author": {
     "name": "SJC",

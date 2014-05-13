@@ -1,6 +1,6 @@
-* GO MME Editor
-  Prototype editor frontend for the Molecular Modal Environment for
-  the Gene Ontology.
+* GO MME
+  Prototype editor frontend (Noctua) and messenger server (Barista)
+  for the Gene Ontology Molecular Modal Environment.
 
   It is based on BBOP JS (using the AmiGO 2 environment) and
   jsPlumb. The backend is the OWLTools Molecular Model Manager.
