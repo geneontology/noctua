@@ -50,6 +50,7 @@ var bbop_messenger_client = function(msgloc,
 	}else{
 
 	    // Set internal variables.
+	    //anchor.socket = io.connect(msgloc + '/messenger');
 	    anchor.socket = io.connect(msgloc);
 	    anchor.model_id = model_id;
 	    

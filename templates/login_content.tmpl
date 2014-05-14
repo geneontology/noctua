@@ -1,18 +1,78 @@
 <div class="container">
   
   <div class="header text-center">
-    <h2>User</h2>
+    <h2>Login</h2>
   </div>
 
   <div class="panel panel-default">
     <div class="panel-heading">
-      <h3 class="panel-title">User Information</h3>
+      <h3 class="panel-title">Current status</h3>
     </div>
 
     <div class="panel-body">
       
-      <button id="persona-login" class="btn btn-primary">Login</button>
-      <button id="persona-logout" class="btn btn-warning">Logout</button>
+      {{^return}}
+      <p>
+	You have come here without a path back. Logging in will
+	server little purpose. You can do this for debugging
+	purposes.
+      </p>
+      {{/return}}
+
+      <div id="current-status">	
+
+	<div class="progress progress-striped active" id="verify-process">
+	  <div class="progress-bar"  role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%">
+	    <span class="sr-only">Working...</span>
+	  </div>
+	</div>
+	<div id="logged-out-success" class="hidden">
+	  <p>
+	    You may generate a new working token by clicking the [Login]
+	    button below. As it stand now, the token will be good until
+	    the next Barista restart.
+	  </p>
+	  <p>
+	    <button id="persona-login" class="btn btn-primary">Login</button>
+	    <!-- <button id="persona-logout" class="btn btn-warning">Logout</button> -->
+	  </p>
+	</div>
+
+      </div>
+
+      <div id="logged-in-well" class="hidden">
+	<p>
+	  <dl class="dl-horizontal">
+	    <dt>
+	      email
+	    </dt>
+	    <dd id="logged-in-email">
+	    </dd>
+	    <dt>
+	      color
+	    </dt>
+	    <dd id="logged-in-color">
+	    </dd>
+	    <dt>
+	      token
+	    </dt>
+	    <dd id="logged-in-token">
+	    </dd>
+	  </dl>
+	</p>
+	{{#return}}
+	<p id="return-trip">
+	</p>
+	{{/return}}
+	<p id="logout-trip">
+	</p>
+      </div>
+
+      <p class="show">
+      </p>
+
+      <!-- <div id="logged-in-bad" class="hidden"> -->
+      <!-- </div> -->
 
     </div>
   </div>

@@ -27,6 +27,27 @@ var is_defined = bbop.core.is_defined;
 var notw = 'Barista';
 
 ///
+/// User information/sessions/login.
+///
+
+// Bring in metadata.
+var ud_str = fs.readFileSync('./config/permissions.json');
+var user_metadata = JSON.parse(ud_str);
+
+// Colors.
+var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
+
+// BUG/TODO: Currently, Barista tokens do not expire. Need to
+// implement either: a new token every response or a a rolling time
+// window which is searched.
+// {day1: {SET2}, day2: {SET2}}
+var user_info_by_token = {};
+// BUG: this actuall needs to be a hash to list since a user may have
+// more than one sessions per email address.
+// Punting until I have the full structure figured out.
+var user_info_by_email = {};
+
+///
 /// Response helper.
 ///
 
@@ -52,7 +73,12 @@ var zcache = {
     'jquery.tablesorter.min.js': '',
     'bbop.js': '',
     'amigo2.js': '',
+    'Logout.js': '',
     'Login.js': '',
+    'status_base.tmpl': '',
+    'status_content.tmpl': '',
+    'logout_base.tmpl': '',
+    'logout_content.tmpl': '',
     'login_base.tmpl': '',
     'login_content.tmpl': ''
 };
@@ -103,14 +129,65 @@ if( process.env.MSGDEBUG ){
 var express = require('express');
 var messaging_app = express();
 // 
+//messaging_app.use(express.logger());
+//messaging_app.use(express.static(__dirname));
 messaging_app.use(express.json());
 messaging_app.use(express.urlencoded());
 messaging_app.use(express.cookieParser());
-messaging_app.use(express.session({secret: 'test'}));
+messaging_app.use(express.session({secret: 'notverysecret'}));
 // Must match client browser's address bar.
-require("express-persona")(messaging_app,
-			   {audience: 'http://localhost:' + msgport});
-// BUG/TODO: get that off of localhost--do detection like...the search?
+var persona_opts = {
+    // BUG/TODO: get that off of localhost--do detection like...the
+    // search?
+    audience: 'http://localhost:' + msgport,
+    verifyResponse: function(err, req, res, email){
+	if( user_metadata[email] ){
+
+	    // Adjust this client/server session.
+	    req.session.authorized = true;
+
+	    // Add to internal session system--generate the token and
+	    // attach it to user information.
+	    var token = bbop.core.randomness(20);
+	    var rci = Math.floor(Math.random() * ucolor_list.length);
+	    var color = ucolor_list[rci];
+	    var user_data = {
+		'email': email,
+		'color': color,
+		'token': token
+	    };
+	    user_info_by_token[token] = user_data;
+	    user_info_by_email[email] = user_data;
+
+	    console.log('login success (' + email + '): ' + token);
+	    //console.log('session: ', req.session);
+
+	    res.json({status: "okay", email: email,
+		      token: token, color: color});
+	    return;
+	}
+	console.log('login fail');
+	res.json({status: "failure", reason: "not in permissions.json"});
+    },
+    logoutResponse: function(err, req, res) {
+	if (req.session.authorized) {
+
+	    // Adjust this client/server session.
+	    req.session.authorized = null;
+
+	    // Remove from internal session system.
+	    var email = req.session.email;
+	    var token = user_info_by_email[email];
+	    console.log('logging out (' + email + '): ' + token, ' ',
+			req.session);
+	    // delete user_info_by_email[email];
+	    // delete user_info_by_token[token];
+	}
+	console.log('logout success');
+	res.json({status: "okay"});
+    }
+};
+require("express-persona")(messaging_app, persona_opts);
 
 // Server creation and socket.io addition.
 var messaging_server = require('http').createServer(messaging_app);
@@ -157,28 +234,121 @@ each(zcache,
 
 ///
 /// Authenitcation and Authorization.
-/// TODO: This needs to tie into the sockets.
 ///
 
+// TODO: Gross overview and your specifics if you provide a token.
 messaging_app.get(
-    '/login',
+    '/status',
     function(req, res) {
-	var lp_tmpl = _cache_get('login_content.tmpl').toString();
-	var lp_cont = mustache.render(lp_tmpl);
-	var base_tmpl = _cache_get('login_base.tmpl').toString();
+
+	// .
+	var sessions = [];
+	each(user_info_by_token, function(k,v){ sessions.push(v); });
+	var lp_tmpl_args = {
+	    'barista_sessions': sessions
+	};
+	var lp_tmpl = _cache_get('status_content.tmpl').toString();
+	var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
+	var base_tmpl = _cache_get('status_base.tmpl').toString();
 	var base_tmpl_args = {
-	    'title': notw + ': User',
+	    'js_variables': [
+		// {
+		//     'name': 'global_barista_token',
+		//     'value': '"' + barista_token + '"'
+		// }
+	    ],
+	    'title': notw + ': Status',
 	    'content': lp_cont
 	};
 	var lp = mustache.render(base_tmpl, base_tmpl_args);
 	_standard_response(res, 200, 'text/html', lp);
     });
 
-//messaging_app.get('/login', function (req, res) {
-//messaging_app.get('/logout', function (req, res) {
+messaging_app.get(
+    '/logout',
+    function(req, res) {
+
+	//console.log(req);
+	var in_token = null;
+	var barista_token = null;
+	if( req.query && req.query['barista_token'] ){
+	    in_token = req.query['barista_token'];
+	
+	    // Try are retreive the barista token.
+	    if( user_info_by_token[in_token] ){
+		barista_token = user_info_by_token[in_token];
+	    }
+	}else{	    
+	}
+	
+	// If we have the barista token, destroy it.
+	if( barista_token ){
+	    delete user_info_by_token[in_token];
+	}
+
+	// Render what we did, and launch Logout.js to purge the
+	// cookie session (that is frankly unrelated to what we're
+	// doing).
+	var lp_tmpl_args = {
+	    'in_token': in_token,
+	    'barista_token': barista_token  
+	};
+	var lp_tmpl = _cache_get('logout_content.tmpl').toString();
+	var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
+	var base_tmpl = _cache_get('logout_base.tmpl').toString();
+	var base_tmpl_args = {
+	    'js_variables': [
+		{
+		    'name': 'global_barista_token',
+		    'value': '"' + barista_token + '"'
+		}
+	    ],
+	    'title': notw + ': Logout',
+	    'content': lp_cont
+	};
+	var lp = mustache.render(base_tmpl, base_tmpl_args);
+	_standard_response(res, 200, 'text/html', lp);
+    });
+
+messaging_app.get(
+    '/login',
+    function(req, res) {
+
+	// Get return argument if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+
+	    // // 
+	    // if( tmpret && tmpret !== '' ){
+	    // 	var uo = url.parse(tmpret);
+	    // 	uo.query['barista_token'] = 
+	    // 	ret = 
+	    // }
+	}
+
+	var lp_tmpl_args = {
+	    'return': ret
+	};
+	var lp_tmpl = _cache_get('login_content.tmpl').toString();
+	var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
+	var base_tmpl = _cache_get('login_base.tmpl').toString();
+	var base_tmpl_args = {
+	    'js_variables': [
+		{
+		    'name': 'global_barista_return',
+		    'value': '"' + ret + '"'
+		}
+	    ],
+	    'title': notw + ': Login',
+	    'content': lp_cont
+	};
+	var lp = mustache.render(base_tmpl, base_tmpl_args);
+	_standard_response(res, 200, 'text/html', lp);
+    });
 
 ///
-/// TODO: API proxy.
+/// API proxy.
 ///
 
 var http_proxy = require('http-proxy');
@@ -217,6 +387,7 @@ messaging_app.get("/api/:namespace/:call", function(req, res){
 ///
 
 // This is the main socket.io hook.
+//messaging_app.get('/messenger', function (req, res) {
 messaging_app.get('/', function (req, res) {
 		      res.sendfile(__dirname + '/static/messenger.html');
 		  });
@@ -231,11 +402,10 @@ sio.set('log level', msgdebug);
 // This would eventually be information delivered by the
 // authentication system.
 // TODO: This would disappear in a merged moderator system.
-var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
 var client_sockets = {}; // essentially users
 // TODO: The initial stash that a client gets for a channel when first
 // connecting--essentially the recorded history to date.
-var channel_stash = {};
+//var channel_stash = {};
 
 sio.sockets.on('connection',
 	       function(socket){

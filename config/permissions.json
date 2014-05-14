@@ -1,0 +1,215 @@
+{
+	"sjcarbon@lbl.gov": {
+		"noctua-go": ""
+	},
+	"hdietze@lbl.gov": {
+		"termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+	},
+	"cjmungall@lbl.gov": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+        "sjcarbon@lbl.gov": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (termgenie-go, allowManagement, true)"
+        },
+        "david.hill@jax.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+        "tberardini@arabidopsis.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+        "paola@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+        "rebecca.foulger@ucl.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+	"harold.drabkin@jax.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "jane@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+	},
+        "dosumis@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowCommitReview, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true), (GeneOntology, allowFreeFormLitXrefOptional, true), (termgenie-go, allowManagement, true)"
+        },
+        "vanauken@caltech.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "donghui@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "karen.christie@jax.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "stacia@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "mah79@cam.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "yalam@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "huntley@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "a.lock@ucl.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "pporras@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "prudence@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "cynthia.smith@jax.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "vasilevs@ohsu.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+	"r.lovering@ucl.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "sart2@gen.cam.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "sjwang@mcw.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "dianeoinglis@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "maria.costanzo@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "slaulederkind@mcw.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "shyamala.sundaram@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "vw253@cam.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "gtorto@vt.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "jodih@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "dianna.fisk@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "robert-dodson@northwestern.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "lionel.breuza@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "ramab@stanford.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "brenleymcintosh@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "cdasilva@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "alan.bridge@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true)"
+        },
+        "ranjana@caltech.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "dfashena@uoneuro.uoregon.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "helen.parkinson@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "cooperl@science.oregonstate.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "andre.stutz@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "michel.schneider@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "deustp01@med.nyu.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "pascale.gaudet@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+	"pgaudet1@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "magrane@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "dhowe@zfin.org": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "sylvain.poux@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "schaefferm@missouri.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "bmeldal@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "plwhetzel@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "Anne.Estreicher@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "Guillaume.Keller@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "ecibrian@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "ursula.hinz@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "ml16@cornell.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+        "Nevila.Nouspikel@isb-sib.ch": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+	"monica.cecilia@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "dani.welter@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "a.melidoni@ucl.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "aleks@ebi.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "p.denny@ucl.ac.uk": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "mrice@email.arizona.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "pfey@northwestern.edu": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+        "sejalpatel.r@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true), (GeneOntology, allowFreeForm, true), (GeneOntology, allowFreeFormWrite, true)"
+        },
+       "annethessen@gmail.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        },
+	"keseler@ai.sri.com": {
+                "termgenie-go": "(GeneOntology, allowWrite, true)"
+        }
+}

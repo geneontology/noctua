@@ -1,0 +1,35 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Status</h2>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Current status</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- Status of barista. -->
+      <p>
+	<dl class="dl-horizontal">
+	  {{#barista_sessions}}
+	  <dt>email</dt>
+	  <dd>{{email}}</dd>
+	  <dt>color</dt>
+	  <dd>{{color}}</dd>
+	  <dt>token</dt>
+	  <dd>{{token}}</dd>
+	  {{/barista_sessions}}
+	  {{^barista_sessions}}
+	  <dt>Sessions</dt>
+	  <dd>none found</dd>
+	  {{/barista_sessions}}
+	</dl>
+      </p>
+
+    </div>
+  </div>
+
+</div>
