@@ -358,6 +358,12 @@ var NoctuaLauncher = function() {
 		    
 			     //console.log('make attempt');
 
+			     // Try and see if we have an API token.
+			     var barista_token = null;
+			     if( req.query && req.query['barista_token'] ){
+				 barista_token = req.query['barista_token'];
+			     }
+			     
 			     // 
 			     function mme_callback_action(resp, man){
 
@@ -374,9 +380,21 @@ var NoctuaLauncher = function() {
 				     // Assemble return doc.
 				     res.setHeader('Content-Type', 'text/html');
 				     
+				     var barista_login = msgloc + '/login' +
+					 '?return=' + self.hostport +
+					 '/seed/model/' + query;
+				     var barista_logout = msgloc + '/logout' +
+					 '?return=' + self.hostport +
+					 '/seed/model/' + query +
+					 '&barista_token=' + barista_token;
+				     var frame_tmpl_args = {
+					 barista_token: barista_token,
+					 barista_login: barista_login,
+					 barista_logout: barista_logout
+				     };
 				     var frame_tmpl =
 					 self.cache_get('app_content.tmpl').toString();
-				     var frame_cont = mustache.render(frame_tmpl);
+				     var frame_cont = mustache.render(frame_tmpl, frame_tmpl_args);
 				     
 				     var base_tmpl =
 					 self.cache_get('app_base.tmpl').toString();
@@ -390,11 +408,11 @@ var NoctuaLauncher = function() {
 					     },
 					     {
 						 'name': 'global_server_base',
-						 'value':  '"' + msgloc+ '"'
+						 'value':  '"' + msgloc + '"'
 					     },
 					     {
 						 'name':'global_message_server',
-						 'value':  '"' + msgloc+ '"'
+						 'value':  '"' + msgloc + '"'
 					     },
 					     {
 						 'name': 'global_model',

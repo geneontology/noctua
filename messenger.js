@@ -279,11 +279,22 @@ messaging_app.get(
 		barista_token = user_info_by_token[in_token];
 	    }
 	}else{	    
-	}
-	
+	}	
 	// If we have the barista token, destroy it.
 	if( barista_token ){
 	    delete user_info_by_token[in_token];
+	}
+
+	// Get return argument if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	    // // 
+	    // if( tmpret && tmpret !== '' ){
+	    // 	var uo = url.parse(tmpret);
+	    // 	uo.query['barista_token'] = 
+	    // 	ret = 
+	    // }
 	}
 
 	// Render what we did, and launch Logout.js to purge the
@@ -291,7 +302,8 @@ messaging_app.get(
 	// doing).
 	var lp_tmpl_args = {
 	    'in_token': in_token,
-	    'barista_token': barista_token  
+	    'barista_token': barista_token,
+	    'return': ret
 	};
 	var lp_tmpl = _cache_get('logout_content.tmpl').toString();
 	var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
@@ -301,6 +313,10 @@ messaging_app.get(
 		{
 		    'name': 'global_barista_token',
 		    'value': '"' + barista_token + '"'
+		},
+		{
+		    'name': 'global_barista_return',
+		    'value': '"' + ret + '"'
 		}
 	    ],
 	    'title': notw + ': Logout',
@@ -318,7 +334,6 @@ messaging_app.get(
 	var ret = null;
 	if( req.query && req.query['return'] ){
 	    ret = req.query['return'];
-
 	    // // 
 	    // if( tmpret && tmpret !== '' ){
 	    // 	var uo = url.parse(tmpret);

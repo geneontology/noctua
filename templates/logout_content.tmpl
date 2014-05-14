@@ -15,12 +15,11 @@
 	This page/service does two things:
 	<ol>
 	  <li>
-	    If you have a token argument, it will remove that token
-	    from Barista if it exists (proxy key).
+	    If you have a barista_token argument, it will remove that token
+	    from Barista if it exists (token).
 	  </li>
 	  <li>
-	    It will end your Persona login session (cookie) if you
-	    proved a valid Barista key.
+	    It will end your Persona login session (cookie).
 	  </li>
 	</ol>
       </p>
@@ -47,8 +46,14 @@
 	  </div>
 	</div>
 	<div id="logged-out-success" class="hidden">
-	  Your Persona cookie is now gone, or you never had one. You
-	  can get a <a href="/login">fresh token here</a>.
+	  <p>
+	    Your Persona cookie is now gone, or you never had one. You
+	    can get a <a href="/login">fresh token here</a>.
+	  </p>
+	  {{#return}}
+	  <p id="return-trip">
+	  </p>
+	  {{/return}}
 	</div>
       </p>
 

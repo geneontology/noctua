@@ -78,17 +78,35 @@
 
       </ul>
 
-      <ul class="nav navbar-nav navbar-right">
+      <div class="nav navbar-right">
 
 	<!-- Help. -->
-        <li>
+	<p class="navbar-text">
 	  <a id="action_help"
+	     class="navbar-link"
 	     href="https://github.com/kltm/go-mme#go-mme-editor"
 	     title="">Help</a>
-	</li>
-      </ul>
+	</p>
 	
+	{{^barista_token}}
+	<!-- Login. -->
+	<a id="action_barista_login"
+	   class="btn btn-default navbar-btn"
+	   href="{{barista_login}}"
+	   title="">Login</a>
+	{{/barista_token}}
+	{{#barista_token}}
+	<!-- Logout. -->
+	<a id="action_barista_logout"
+	   class="btn btn-default navbar-btn"
+	   href="{{barista_logout}}"
+	   title="">Logout</a>
+	{{/barista_token}}
+	
+      </div>
+      
     </div>
+
   </div>
 </div>
 

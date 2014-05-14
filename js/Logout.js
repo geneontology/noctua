@@ -56,8 +56,17 @@ var LogoutInit = function(){
 		    "loadend",
 		    function(e) {
 			ll("You have been logged out of Persona");
+
+			// 
 			jQuery('#verify-process').hide();
 			jQuery('#logged-out-success').removeClass('hidden');
+
+			// Add the return button on success.
+			if( jQuery('#return-trip').length ){
+			    jQuery('#return-trip').append(
+				'<strong><a href="'+ global_barista_return+
+				    '">Return to application</a></strong>');
+			}
 		    });
 		xhr.send();
 	    }
