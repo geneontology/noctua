@@ -1,13 +1,11 @@
 /*  
- * Package: server.js
+ * Package: noctua.js
  * 
  * This is a Heroku/NodeJS/local script, using the require environment.
  * 
  * A server that will render GO graphs into jsPlumb.
  * 
- * : MSGLOC=http://localhost:3400 make start-app
- * 
- * TODO: Rename "noctua".
+ * : MSGLOC=http://localhost:3400 make start-noctua
  */
 
 // Required shareable Node libs.
@@ -104,70 +102,70 @@ var NoctuaLauncher = function(){
     };
 
     ///
-    /// Cache helpers.
+    /// Cache and template rendering.
     ///
 
-    //  Populate the cache.
-    self.populateCache = function() {
-        if( typeof self.zcache === "undefined" ){
-            self.zcache = {
-		'bootstrap.min.css': '',
-		'jquery-ui-1.10.3.custom.min.css': '',
-		'bbop.css': '',
-		'amigo.css': '',
-		'App.css': '',
-		'jquery-1.9.1.min.js': '',
-		'bootstrap.min.js': '',
-		'jquery-ui-1.10.3.custom.min.js': '',
-		'jquery.jsPlumb-1.5.5.js': '',
-		'connectors-sugiyama.js': '',
-		'jquery.tablesorter.min.js': '',
-		'bbop.js': '',
-		'amigo2.js': '',
-		'bbop-rest-response-mmm.js': '',
-		'bbop-mmm-requests.js': '',
-		'bbop-mme-context.js': '',
-		'bbop-mme-edit.js': '',
-		'bbop-mme-manager.js': '',
-		'bbop-mme-manager2.js': '',
-		'bbop-mme-widgets.js': '',
-		'bbop-draggable-canvas.js': '',
-		'bbop-location-store.js': '',
-		'bbop-messenger-client.js': '',
-		'Landing.js': '',
-		'Basic.js': '',
-		'App.js': '',
-		'waiting_ac.gif': '',
-		'index_base.tmpl': '',
-		'index_content.tmpl': '',
-		'basic_base.tmpl': '',
-		'basic_content.tmpl': '',
-		'app_base.tmpl': '',
-		'app_content.tmpl': ''
-	    };
-        }
-	
-        // Local cache for static content.
-	each(self.zcache,
-	     function(cache_item){
-		 // Try to read from static and js.
-		 each(['static', 'js', 'css', 'templates'],
-		      function(loc){
-			  var path = './' + loc + '/' + cache_item;
-			  //console.log('l@: ' + path);
-			  if( fs.existsSync(path) ){
-			      //console.log('found: ' + path);
-			      self.zcache[cache_item] = fs.readFileSync(path);
-			  }
-		      });
-	     });
-    };
+    var pt = require('./js/pup-tent.js');
+    var pup_tent = pt(
+	[   // Req CSS.
+	    'bootstrap.min.css',
+	    'jquery-ui-1.10.3.custom.min.css',
+	    'bbop.css',
+	    'amigo.css',
+	    'NoctuaEditor.css',
+	    // 'App.css',
+	    'jquery-1.9.1.min.js',
+	    'bootstrap.min.js',
+	    'jquery-ui-1.10.3.custom.min.js',
+	    'jquery.jsPlumb-1.5.5.js',
+	    'connectors-sugiyama.js',
+	    'jquery.tablesorter.min.js',
+	    'bbop.js',
+	    'amigo2.js',
+	    'bbop-rest-response-mmm.js',
+	    'bbop-mmm-requests.js',
+	    'bbop-mme-context.js',
+	    'bbop-mme-edit.js',
+	    'bbop-mme-manager2.js',
+	    'bbop-mme-widgets.js',
+	    'bbop-draggable-canvas.js',
+	    'bbop-location-store.js',
+	    'bbop-messenger-client.js',
+	    'NoctuaEditor.js',
+	    'NoctuaLanding.js',
+	    'NoctuaBasic.js',
+	    // 'Basic.js',
+	    // 'App.js',
+	    'waiting_ac.gif',
+	    'noctua_base.tmpl',
+	    'noctua_base_landing.tmpl',
+	    'noctua_landing.tmpl',
+	    'noctua_editor.tmpl',
+	    // 'index_base.tmpl',
+	    // 'index_content.tmpl',
+	    'noctua_basic.tmpl'
+	    // 'basic_base.tmpl',
+	    // 'basic_content.tmpl'
+	    // 'app_base.tmpl',
+	    // 'app_content.tmpl'
+	], ['static', 'js', 'css', 'templates']);
+    pup_tent.set_common('css_libs', [
+			    '/bootstrap.min.css',
+			    '/jquery-ui-1.10.3.custom.min.css',
+			    '/bbop.css',
+			    '/amigo.css']);
+    pup_tent.set_common('js_libs', [
+			    '/jquery-1.9.1.min.js',
+			    '/bootstrap.min.js',
+			    '/jquery-ui-1.10.3.custom.min.js',
+			    '/jquery.jsPlumb-1.5.5.js',
+			    '/jquery.tablesorter.min.js',
+			    '/bbop.js',
+			    '/amigo2.js']);
 
-    // Retrieve entry (content) from cache.
-    // @param {string} key  Key identifying content to retrieve from cache.
-    self.cache_get = function(key) {
-	return self.zcache[key];
-    };
+    ///
+    /// Termination functions.
+    ///
 
     // terminator === the termination handler
     // Terminate server on receipt of the specified signal.
@@ -213,55 +211,55 @@ var NoctuaLauncher = function(){
 
 	self.app.get('/',
 		     function(req, res) {
-			 //var ind = self.cache_get('index.html').toString();
-			 var index_tmpl =
-			     self.cache_get('index_content.tmpl').toString();
-			 var ind_cont = mustache.render(index_tmpl);
-			 var base_tmpl =
-			     self.cache_get('index_base.tmpl').toString();
-			 var base_tmpl_args = {
-			     'title': notw + ': Selection',
-			     'content': ind_cont,
-			     'js_variables': [
-				 {
-				     'name': 'global_server_base',
-				     'value': '"' + msgloc + '"'
-				 },
-				 {
-				     'name': 'global_known_relations',
-				     'value': bbop.core.dump(known_relations)
-				 }
-			     ]
-			 };
-			 var ind = mustache.render(base_tmpl, base_tmpl_args);
 
-			 self.standard_response(res, 200, 'text/html', ind);
+			 // Libs and render.
+			 var tmpl_args = {
+			     'pup_tent_js_libraries': [
+				 '/bbop-rest-response-mmm.js',
+				 '/bbop-mmm-requests.js',
+				 '/bbop-mme-context.js',
+				 '/bbop-mme-edit.js',
+				 '/bbop-mme-manager2.js',
+				 '/bbop-mme-widgets.js',
+				 '/NoctuaLanding.js'
+			     ],
+			     'pup_tent_js_variables': [
+				 {name: 'global_server_base', value: msgloc },
+				 {name: 'global_known_relations',
+				  value: bbop.core.dump(known_relations) }
+			     ],
+			     'title': notw + ': Selection'
+			 };
+			 var o = pup_tent.render_io('noctua_base_landing.tmpl',
+						    'noctua_landing.tmpl',
+						    tmpl_args);
+			 self.standard_response(res, 200, 'text/html', o);
 		     });
 
 	self.app.get('/basic',
 		     function(req, res) {
-			 //var ind = self.cache_get('index.html').toString();
-			 var index_tmpl =
-			     self.cache_get('basic_content.tmpl').toString();
-			 var ind_cont = mustache.render(index_tmpl);
-			 var base_tmpl =
-			     self.cache_get('basic_base.tmpl').toString();
-			 var base_tmpl_args = {
+			 
+			 //
+			 var tmpl_args = {
 			     'title': notw + ': Simple',
-			     'content': ind_cont,
-			     'js_variables': [
-				 {
-				     'name': 'global_server_base',
-				     'value': '"' + msgloc+ '"'
-				 },
-				 {
-				     'name': 'global_known_relations',
-				     'value': bbop.core.dump(known_relations)
-				 }
+			     'pup_tent_js_variables': [
+				 {name: 'global_server_base',
+				  value: msgloc },
+				 {name: 'global_known_relations',
+				  value: known_relations}
+			     ],
+			     'pup_tent_js_libraries': [
+				 '/bbop-mme-context.js',
+				 '/bbop-mme-edit.js',
+				 '/bbop-mme-manager2.js',
+				 '/bbop-mme-widgets.js',
+				 '/NoctuaBasic.js'
 			     ]
 			 };
-			 var ind = mustache.render(base_tmpl, base_tmpl_args);
-
+			 var ind =
+			     pup_tent.render_io('noctua_base_landing.tmpl',
+						'noctua_basic.tmpl',
+						tmpl_args);
 			 self.standard_response(res, 200, 'text/html', ind);
 		     });
 
@@ -270,7 +268,7 @@ var NoctuaLauncher = function(){
 	var css_re = /\.css$/;
 	var html_re = /\.html$/;
 	// Routes for all static cache items.
-	each(self.zcache,
+	each(pup_tent.cached_list(),
 	     function(thing){
 		 var ctype = null;
 		 if( js_re.test(thing) ){
@@ -286,7 +284,7 @@ var NoctuaLauncher = function(){
 		     self.app.get('/' + thing, 
 				  function(req, res) {
 				      res.setHeader('Content-Type', ctype);
-				      res.send(self.cache_get(thing) );
+				      res.send(pup_tent.get(thing) );
 				  });
 		 }
 	     });
@@ -295,7 +293,7 @@ var NoctuaLauncher = function(){
 	self.app.get('/images/waiting_ac.gif',
 		     function(req, res){
 			 res.setHeader('Content-Type', 'image/gif');
-			 res.send(self.cache_get('waiting_ac.gif'));
+			 res.send(pup_tent.get('waiting_ac.gif'));
 		     });
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
@@ -379,7 +377,6 @@ var NoctuaLauncher = function(){
 				     //console.log('in success callback');
 
 				     var obj = resp.data();
-				     var obj_str = JSON.stringify(obj);
 
 				     // Assemble return doc.
 				     res.setHeader('Content-Type', 'text/html');
@@ -391,48 +388,49 @@ var NoctuaLauncher = function(){
 					 '?return=' + self.hostport +
 					 '/seed/model/' + query +
 					 '&barista_token=' + barista_token;
-				     var frame_tmpl_args = {
+				     var tmpl_args = {
+					 'pup_tent_css_libraries': [
+					     '/NoctuaEditor.css'
+					 ],
+					 'pup_tent_js_variables': [
+					     {name: 'global_id',
+					      value: query },
+					     {name: 'global_server_base',
+					      value: msgloc },
+					     {name:'global_message_server',
+					      value: msgloc },
+					     {name: 'global_model',
+					      value: obj },
+					     {name: 'global_known_relations',
+					      value: known_relations }
+					 ],
+					 'pup_tent_js_libraries': [
+					     msgloc + '/socket.io/socket.io.js',
+					     '/jquery.jsPlumb-1.5.5.js',
+					     '/connectors-sugiyama.js',
+					     '/bbop-rest-response-mmm.js',
+					     '/bbop-mmm-requests.js',
+					     '/bbop-mme-context.js',
+					     '/bbop-mme-edit.js',
+					     '/bbop-mme-manager2.js',
+					     '/bbop-mme-widgets.js',
+					     '/bbop-draggable-canvas.js',
+					     '/bbop-location-store.js',
+					     '/bbop-messenger-client.js',
+					     '/NoctuaEditor.js'
+					 ],
+					 'title': notw + ': Editor',
+					 'messaging_server_location': msgloc,
 					 barista_token: barista_token,
 					 barista_login: barista_login,
 					 barista_logout: barista_logout
 				     };
-				     var frame_tmpl =
-					 self.cache_get('app_content.tmpl').toString();
-				     var frame_cont = mustache.render(frame_tmpl, frame_tmpl_args);
-				     
-				     var base_tmpl =
-					 self.cache_get('app_base.tmpl').toString();
-				     var base_tmpl_args = {
-					 'title': notw + ': Editor',
-					 'messaging_server_location': msgloc,
-					 'js_variables': [
-					     {
-						 'name': 'global_id',
-						 'value': '"' + query + '"'
-					     },
-					     {
-						 'name': 'global_server_base',
-						 'value':  '"' + msgloc + '"'
-					     },
-					     {
-						 'name':'global_message_server',
-						 'value':  '"' + msgloc + '"'
-					     },
-					     {
-						 'name': 'global_model',
-						 'value': obj_str
-					     },
-					     {
-						 'name':
-						 'global_known_relations',
-						 'value':
-						 bbop.core.dump(known_relations)
-					     }
-					 ],
-					 'content': frame_cont
-				     };
-				     var ret = mustache.render(base_tmpl,base_tmpl_args);
-				     res.send(ret);
+				     var ret = pup_tent.render_io(
+					 'noctua_base.tmpl',
+					 'noctua_editor.tmpl',
+					 tmpl_args);
+				     self.standard_response(res, 200,
+							    'text/html', ret);
 				 }
 			     }
 			  
@@ -560,7 +558,6 @@ var NoctuaLauncher = function(){
 	var knw_rel = known_relations || [];
 
         self.setupVariables();
-        self.populateCache();
         self.setupTerminationHandlers();
 
         // Create the express server and routes.

@@ -89,7 +89,10 @@ var BaristaLauncher = function(){
 	return res;
     };
 
-    // Ready a cache.
+    ///
+    /// Cache and template rendering.
+    ///
+
     var pt = require('./js/pup-tent.js');
     var pup_tent = pt(
 	[   // Req CSS.

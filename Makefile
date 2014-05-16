@@ -1,6 +1,6 @@
 ####
 #### Example of running locally:
-####  M3LOC=http://localhost:6800 make start-app
+####  M3LOC=http://localhost:6800 make start-noctua
 ####
 
 ## Variable to pass the location of the MMM server to the deploying
@@ -50,14 +50,14 @@ pass:
 ###
 
 ##
-.PHONY: start-app-dev
-start-app-dev: assemble-app
-	MSGLOC=$(MSGLOC) node server.js
+.PHONY: start-noctua-dev
+start-noctua-dev: assemble-app
+	MSGLOC=$(MSGLOC) node noctua.js
 
 ## Start without copying bbop-js over.
-.PHONY: start-app
-start-app:
-	MSGLOC=$(MSGLOC) node server.js
+.PHONY: start-noctua
+start-noctua:
+	MSGLOC=$(MSGLOC) node noctua.js
 
 ###
 ### Commands/environment for messaging server.

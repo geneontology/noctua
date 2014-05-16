@@ -36,5 +36,5 @@
   "devDependencies": {},
   "bundleDependencies": [],
   "private": true,
-  "main": "server.js"
+  "main": "noctua.js"
 }

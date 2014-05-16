@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" class="app-full-height">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{title}}</title>
+
+    <!-- CSS. -->
+    {{#pup_tent_css_libraries}}
+    <link rel="stylesheet" type="text/css" href="{{{.}}}">
+    {{/pup_tent_css_libraries}}
+    
+    <!-- JS variables. -->
+    {{#pup_tent_js_variables}}
+    <script type="text/javascript">var {{name}} = {{{value}}};</script>
+    {{/pup_tent_js_variables}}
+    
+    <!-- JS libraries. -->
+    {{#pup_tent_js_libraries}}
+    <script type="text/javascript" src="{{{.}}}"></script>
+    {{/pup_tent_js_libraries}}
+    
+  </head>
+  <!-- <body> -->
+  <!-- <body style="padding-top: 70px; padding-bottom: 70px;"> -->
+  <body class="app-full-height app-no-margin app-menu-buffer">
+    
+    {{&pup_tent_content}}
+
+  </body>
+</html>

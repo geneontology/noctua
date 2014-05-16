@@ -1,0 +1,322 @@
+<!-- Nav. -->
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container bbop-bs3-override-nav-scale">
+
+    <!-- Button on collapse. -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      
+      <!-- <span class="navbar-brand">MME Editor</span> -->
+      <a href="/" class="navbar-brand">Noctua</a>
+    </div>
+
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+	
+	<!-- Model stuff. -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">Model <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a id="menu-model-annotations"
+		   href="#">Edit annotations</a></li>
+            <li class="divider"></li>
+            <li><a id="action_refresh"
+		   href="#">Soft refresh</a></li>
+            <li><a id="action_reset"
+		   href="">Reset</a></li>
+            <li class="divider"></li>
+            <li><a id="action_export"
+		   href="#">Export</a></li>
+            <li><a id="action_save"
+		   href="#">Save</a></li>
+          </ul>
+	</li>
+
+	<!-- Zoom/view controls. -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">View <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a id="toggle_part_of"
+		   href="#">Show/hide "part of"</a></li>
+            <li><a id="toggle_screen_of"
+		   href="#">Toggle screenshot</a></li>
+            <li class="divider"></li>
+            <li><a id="zoomout"
+		   href="#">Zoom out (-25%)</a></li>
+            <li><a id="zoomin"
+		   href="#">Zoom in (+25%)</a></li>
+            <li class="divider"></li>
+            <li><a id="zoomret"
+		   href="#">Reset zoom (100%)</a></li>
+          </ul>
+	</li>
+
+	<!-- Should I work on plugins? -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">Plugins <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <!-- <li><a href="#">Does nothing</a></li> -->
+          </ul>
+	</li>
+
+	<!-- Experimental stuff ?! -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">Skunkworks <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a id="action_ping" href="#">Request contact</a></li>
+            <li><a id="action_test" href="#">Test thing</a></li>
+          </ul>
+	</li>
+
+      </ul>
+
+      <div class="nav navbar-right">
+
+	<!-- Help. -->
+	<p class="navbar-text">
+	  <a id="action_help"
+	     class="navbar-link"
+	     href="https://github.com/kltm/go-mme#go-mme-editor"
+	     title="">Help</a>
+	</p>
+	
+	{{^barista_token}}
+	<!-- Login. -->
+	<a id="action_barista_login"
+	   class="btn btn-default navbar-btn"
+	   href="{{barista_login}}"
+	   title="">Login</a>
+	{{/barista_token}}
+	{{#barista_token}}
+	<!-- Logout. -->
+	<a id="action_barista_logout"
+	   class="btn btn-default navbar-btn"
+	   href="{{barista_logout}}"
+	   title="">Logout</a>
+	{{/barista_token}}
+	
+      </div>
+      
+    </div>
+
+  </div>
+</div>
+
+<!-- Main app framing. -->
+<div id="main_exp" class="app-wrapper">
+  
+  <div class="app-editor-bounds">
+    
+    <div class="app-controls">
+
+      <div class="panel-group" id="control_accordion">
+
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse"
+		 data-parent="#control_accordion" href="#collapse_two">
+		Add function
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapse_two" class="panel-collapse collapse in">
+	    <div class="panel-body">
+	      
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_mf_enb_auto"
+		       placeholder="enabled by">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_mf_act_auto"
+		       placeholder="molecular function">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_mf_occ_auto"
+		       placeholder="occurs in">
+	      </p>
+	      <p>
+		<button id="simple_mf_adder_button"
+			type="button"
+			class="btn btn-primary">Add</button>
+	      </p>
+
+	    </div>
+	    
+	  </div>
+	</div>
+
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse"
+		 data-parent="#control_accordion" href="#collapse_one">
+		Add process
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapse_one" class="panel-collapse collapse">
+	    <div class="panel-body">
+	      
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_enb_auto"
+		       placeholder="enabled by">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_act_auto"
+		       placeholder="biological process">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_occ_auto"
+		       placeholder="occurs in">
+	      </p>
+	      <p>
+		<button id="simple_bp_adder_button"
+			type="button"
+			class="btn btn-primary">Add</button>
+	      </p>
+
+	    </div>
+	    
+	  </div>
+	</div>
+
+      </div>
+    </div>
+    
+    <div id="main_exp_graph_container" class="app-graph-container">
+      <div id="main_exp_graph" class="app-graph"></div>
+    </div>
+    
+  </div>
+  
+  <div style="clear: both;"></div> <!-- Clear the float. -->
+  
+  <div class="app-table-bounds">
+
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#main_info_table" data-toggle="tab">Info</a></li>
+      <li><a href="#main_exp_table" data-toggle="tab">Individuals</a></li>
+      <li><a href="#main_edge_table" data-toggle="tab">Indv. Rels.</a></li>
+      <li><a id="message_area_tab"
+	     href="#message_area" data-toggle="tab">Remote Activity</a></li>
+      <!-- <li><a href="#remote_area" data-toggle="tab">Remote</a></li> -->
+    </ul>
+
+    <div class="tab-content">
+      <div id="main_info_table"
+	   class="app-table-container tab-pane active"></div>
+      <div id="main_exp_table"
+	   class="app-table-container tab-pane"></div>
+      <div id="main_edge_table"
+	   class="app-table-container tab-pane"></div>
+      <div id="message_area"
+	   class="app-table-container tab-pane">
+	<p>
+	  no connection
+	</p>
+      </div>
+      <!-- <div id="remote_area" class="tab-pane"> -->
+      <!-- 	<p> -->
+      <!-- 	  no connection -->
+      <!-- 	</p> -->
+      <!-- </div> -->
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Node modal: invisible until it's not modal dialog. -->
+<div id="modal_node_dialog"
+     class="modal fade"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modal_node_dialog_title"
+     aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button"
+		class="close"
+		data-dismiss="modal"
+		aria-hidden="true">&times;</button>
+        <h4 id="modal_node_dialog_title"
+	    class="modal-title">???</h4>
+      </div>
+      <div id="modal_node_dialog_body" 
+	   class="modal-body">
+        ???
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+		class="btn btn-default"
+		data-dismiss="modal">Close</button>
+        <button id=""
+	   type="button"
+		class="btn btn-primary">Do nothing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edge modal: invisible until it's not modal dialog. -->
+<div id="modal_edge_dialog"
+     class="modal fade"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modal_edge_dialog_title"
+     aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button"
+		class="close"
+		data-dismiss="modal"
+		aria-hidden="true">&times;</button>
+        <h4 id="modal_edge_dialog_title"
+	    class="modal-title">???</h4>
+      </div>
+      <div id="modal_edge_dialog_body" 
+	   class="modal-body">
+        ???
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+		class="btn btn-default"
+		data-dismiss="modal">Close</button>
+        <button id="modal_edge_dialog_save"
+		type="button"
+		class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Invisible submission/action form. -->
+<form id="invisible_action"
+      action="/action/export"
+      target="_blank"
+      method="post">
+  <input type="hidden" id="invisible_action_data" name="model_id" value="?" />
+</form>
