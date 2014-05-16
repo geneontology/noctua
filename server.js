@@ -35,10 +35,12 @@ var notw = 'Noctua';
 /// Define the sample application.
 ///
 
-var NoctuaLauncher = function() {
+var NoctuaLauncher = function(){
     var self = this;
 
-    var launcher_app = require('express');
+    ///
+    /// Process CLI environmental variables.
+    ///
 
     var msgloc = 'http://toaster.lbl.gov:3400'; // default val
     if( process.env.MSGLOC ){
@@ -50,11 +52,12 @@ var NoctuaLauncher = function() {
     self.msgloc = msgloc;
 
     ///
-    /// Environment helpers.
+    /// Environment helpers for deployment.
     ///
 
     // Set up server IP address and port # using env variables/defaults.
-    // WARNING: Port stuff gets weird: https://www.openshift.com/forums/openshift/nodejs-websockets-sockjs-and-other-client-hostings
+    // WARNING: Port stuff gets weird:
+    // https://www.openshift.com/forums/openshift/nodejs-websockets-sockjs-and-other-client-hostings
     self.setupVariables = function() {
 
 	var non_std_local_port = 8910;
@@ -197,8 +200,9 @@ var NoctuaLauncher = function() {
 
     // Initialize the server (launcher_app) and create the routes and register
     // the handlers.
-    self.initializeServer = function(known_relations) {
-        //self.createRoutes();
+    self.initializeServer = function(known_relations){
+
+	var launcher_app = require('express');
         self.app = launcher_app();
 	// Middleware needed for POST and browserid
         self.app.use(launcher_app.bodyParser());
@@ -498,61 +502,61 @@ var NoctuaLauncher = function() {
 
 	// Test export handler.
 	self.app.post('/action/export',
-		     function(req, res) {
+		      function(req, res) {
 
-			 // Deal with incoming parameters.
-			 var mid = req.route.params['model_id'] ||
-			     req.body['model_id'] || '???';
-
-			 // // Assemble return doc.
-			 // res.redirect(msgloc + '/api/mmm/m3ExportModel?modelId=' + mid); 
-			 // //res.setHeader('Content-Type', 'text/plain');
-			 // //res.send(data);
-
-			 // 
-			 function export_callback_action(resp, man){
-
-			     if( ! resp.okay() ){
-				 res.setHeader('Content-Type', 'text/html');
-				 res.send('bad doc from: ' + mid);
-			     }else{				   
-
-				 //console.log('in success callback');
-
-				 var obj = resp.data();
-				 var obj_str = obj['export'];
-
-				 // Assemble return doc.
-				 //res.setHeader('Content-Type', 'text/owl');
-				 res.setHeader('Content-Type', 'text/plain');
-				 res.send(obj_str);
-			     }
-			 }
+			  // Deal with incoming parameters.
+			  var mid = req.route.params['model_id'] ||
+			      req.body['model_id'] || '???';
 			  
-			 // Assemble query to get the desired MM.
-			 var m =
-			     new bbop.rest.manager.node(bbop.rest.response.mmm);
-			 m.register('success', 'foo', export_callback_action);
-			 m.register('error', 'bar',
-				    function(resp, man){
-					res.setHeader('Content-Type',
-						      'text/html');
-					res.send('failure ('+
-						 resp.message_type() +'): '+
-						 resp.message());
-				    });
-			 var t = msgloc + '/api/mmm/m3ExportModel';
-			 var t_args = {
-			     'modelId': mid
-			 };
-			 var astr = m.action(t, t_args);
-			 console.log("action to: " + astr);
-		     });
+			  // // Assemble return doc.
+			  // res.redirect(msgloc + '/api/mmm/m3ExportModel?modelId=' + mid); 
+			  // //res.setHeader('Content-Type', 'text/plain');
+			  // //res.send(data);
+			  
+			  // 
+			  function export_callback_action(resp, man){
+			      
+			      if( ! resp.okay() ){
+				  res.setHeader('Content-Type', 'text/html');
+				  res.send('bad doc from: ' + mid);
+			      }else{				   
+				  
+				  //console.log('in success callback');
+				  
+				  var obj = resp.data();
+				  var obj_str = obj['export'];
+				  
+				  // Assemble return doc.
+				  //res.setHeader('Content-Type', 'text/owl');
+				  res.setHeader('Content-Type', 'text/plain');
+				  res.send(obj_str);
+			      }
+			  }
+			  
+			  // Assemble query to get the desired MM.
+			  var m =
+			      new bbop.rest.manager.node(bbop.rest.response.mmm);
+			  m.register('success', 'foo', export_callback_action);
+			  m.register('error', 'bar',
+				     function(resp, man){
+					 res.setHeader('Content-Type',
+						       'text/html');
+					 res.send('failure ('+
+						  resp.message_type() +'): '+
+						  resp.message());
+				     });
+			  var t = msgloc + '/api/mmm/m3ExportModel';
+			  var t_args = {
+			      'modelId': mid
+			  };
+			  var astr = m.action(t, t_args);
+			  console.log("action to: " + astr);
+		      });
     };
-
+    
     // Initializes the sample application.
     self.initialize = function(known_relations){
-
+	
 	var knw_rel = known_relations || [];
 
         self.setupVariables();
