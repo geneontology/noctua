@@ -2,13 +2,11 @@
 //// If I spin the server out into a different project, what's added
 //// above the MME laucher/base and messenger client code is:
 ////
-////  messenger.js
+////  barista.js
 ////  static/messenger.html
 ////  node_modules/socket.io/
 ////
-//// MSGPORT=3400 make start-messenger
-////
-//// TODO: Rename "barista".
+//// MSGPORT=3400 make start-barista
 ////
 
 // Required shareable Node libs.
@@ -94,27 +92,27 @@ var BaristaLauncher = function(){
     // Ready a cache.
     var pt = require('./js/pup-tent.js');
     var pup_tent = pt(
-	[
+	[   // Req CSS.
 	    'bootstrap.min.css',
 	    'jquery-ui-1.10.3.custom.min.css',
 	    'bbop.css',
 	    'amigo.css',
+	    // Req JS.
 	    'jquery-1.9.1.min.js',
 	    'bootstrap.min.js',
 	    'jquery-ui-1.10.3.custom.min.js',
 	    'jquery.tablesorter.min.js',
 	    'bbop.js',
 	    'amigo2.js',
-	    'Logout.js',
-	    'Login.js',
+	    // Page apps.
+	    'BaristaLogout.js',
+	    'BaristaLogin.js',
+	    // Base.
 	    'barista_base.tmpl',
+	    // Pages.
 	    'barista_status.tmpl',
-	    //'status_base.tmpl',
-	    //'status_content.tmpl',
-	    'logout_base.tmpl',
-	    'logout_content.tmpl',
-	    'login_base.tmpl',
-	    'login_content.tmpl'
+	    'barista_logout.tmpl',
+	    'barista_login.tmpl'
 	], ['static', 'js', 'css', 'templates']);
 
     // Ready the common libs (the actually mapping is taken care of
@@ -239,7 +237,7 @@ var BaristaLauncher = function(){
 	 });
 
     ///
-    /// Authenitcation and Authorization.
+    /// Authentication and Authorization.
     ///
 
     // TODO: Gross overview and your specifics if you provide a token.
@@ -298,30 +296,24 @@ var BaristaLauncher = function(){
 	    // Render what we did, and launch Logout.js to purge the
 	    // cookie session (that is frankly unrelated to what we're
 	    // doing).
-	    var lp_tmpl_args = {
+	    var tmpl_args = {
+		'pup_tent_js_variables': [
+		    {name: 'global_barista_token', value: barista_token},
+		    {name: 'global_barista_return', value: ret}
+		],
+		'pup_tent_js_libraries': [
+		    'https://login.persona.org/include.js',
+		    '/BaristaLogout.js'
+		],
 		'in_token': in_token,
 		'barista_token': barista_token,
-		'return': ret
+		'return': ret,
+		'title': notw + ': Logout'
 	    };
-	    var lp_tmpl = pup_tent.get('logout_content.tmpl').toString();
-	    var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
-	    var base_tmpl = pup_tent.get('logout_base.tmpl').toString();
-	    var base_tmpl_args = {
-		'js_variables': [
-		    {
-			'name': 'global_barista_token',
-			'value': '"' + barista_token + '"'
-		    },
-		    {
-			'name': 'global_barista_return',
-			'value': '"' + ret + '"'
-		    }
-		],
-		'title': notw + ': Logout',
-		'content': lp_cont
-	    };
-	    var lp = mustache.render(base_tmpl, base_tmpl_args);
-	    _standard_response(res, 200, 'text/html', lp);
+	    var out = pup_tent.render_io('barista_base.tmpl',
+					 'barista_logout.tmpl',
+					 tmpl_args);
+	    _standard_response(res, 200, 'text/html', out);
 	});
 
     messaging_app.get(
@@ -339,25 +331,22 @@ var BaristaLauncher = function(){
 	    // 	ret = 
 	    // }
 	}
-
-	var lp_tmpl_args = {
-	    'return': ret
-	};
-	var lp_tmpl = pup_tent.get('login_content.tmpl').toString();
-	var lp_cont = mustache.render(lp_tmpl, lp_tmpl_args);
-	var base_tmpl = pup_tent.get('login_base.tmpl').toString();
-	var base_tmpl_args = {
-	    'js_variables': [
-		{
-		    'name': 'global_barista_return',
-		    'value': '"' + ret + '"'
-		}
+	
+	var tmpl_args = {
+	    'pup_tent_js_variables': [
+		{'name': 'global_barista_return', 'value': ret }
+	    ],
+	    'pup_tent_js_libraries': [
+		'https://login.persona.org/include.js',
+		'/BaristaLogin.js'
 	    ],
 	    'title': notw + ': Login',
-	    'content': lp_cont
+	    'return': ret
 	};
-	var lp = mustache.render(base_tmpl, base_tmpl_args);
-	_standard_response(res, 200, 'text/html', lp);
+	var out = pup_tent.render_io('barista_base.tmpl',
+				     'barista_login.tmpl',
+				     tmpl_args);
+	_standard_response(res, 200, 'text/html', out);
     });
 
 ///
@@ -495,5 +484,3 @@ sio.sockets.on('connection',
 
 // 
 var barista = new BaristaLauncher();
-//barista.initialize();
-//barista.start();

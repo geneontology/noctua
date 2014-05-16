@@ -63,10 +63,10 @@ start-app:
 ### Commands/environment for messaging server.
 ###
 
-.PHONY: start-messenger-dev
-start-messenger-dev: assemble-app
-	MSGPORT=$(MSGPORT) node messenger.js
+.PHONY: start-barista-dev
+start-barista-dev: assemble-app
+	MSGPORT=$(MSGPORT) node barista.js
 
-.PHONY: start-messenger
-start-messenger:
-	MSGPORT=$(MSGPORT) node messenger.js
+.PHONY: start-barista
+start-barista:
+	MSGPORT=$(MSGPORT) node barista.js
