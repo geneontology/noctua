@@ -65,8 +65,8 @@ start-noctua:
 
 .PHONY: start-barista-dev
 start-barista-dev: assemble-app
-	MSGPORT=$(MSGPORT) node barista.js
+	MSGPORT=$(MSGPORT) MSGLOC=$(MSGLOC) node barista.js
 
 .PHONY: start-barista
 start-barista:
-	MSGPORT=$(MSGPORT) node barista.js
+	MSGPORT=$(MSGPORT) MSGLOC=$(MSGLOC) node barista.js

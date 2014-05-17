@@ -38,19 +38,28 @@ var BaristaLauncher = function(){
     ///
 
     var msgport = 3400; // default val
-    var msgdebug = 0; // default val
+    // This, while seemingly redundant, is necessary to get absolutely
+    // the correct audience for Persona.
+    var msgloc = 'http://localhost:' + msgport; // default val
     var m3loc = 'http://toaster.lbl.gov:6800'; // default val
-    if( process.env.M3LOC ){
-	m3loc = process.env.M3LOC;
-	console.log('MMM server location taken from environment: ' + m3loc);
-    }else{
-	console.log('MMM server location taken from default: ' + m3loc);
-    }
+    var msgdebug = 0; // default val
     if( process.env.MSGPORT ){
 	msgport = process.env.MSGPORT;
 	console.log('Barista server port taken from environment: ' + msgport);
     }else{
 	console.log('Barista server port taken from default: ' + msgport);
+    }
+    if( process.env.MSGLOC ){
+	msgloc = process.env.MSGLOC;
+	console.log("Barista's Persona audience will be: " + msgloc);
+    }else{
+	console.log("Barista's Persona audience will default to: " + msgloc);
+    }
+    if( process.env.M3LOC ){
+	m3loc = process.env.M3LOC;
+	console.log('MMM server location taken from environment: ' + m3loc);
+    }else{
+	console.log('MMM server location taken from default: ' + m3loc);
     }
     if( process.env.MSGDEBUG ){
 	msgdebug = process.env.MSGDEBUG;
@@ -148,7 +157,7 @@ var BaristaLauncher = function(){
     var persona_opts = {
 	// BUG/TODO: get that off of localhost--do detection like...the
 	// search?
-	audience: 'http://localhost:' + msgport,
+	audience: msgloc,
 	verifyResponse: function(err, req, res, email){
 	    if( user_metadata[email] ){
 
@@ -189,6 +198,10 @@ var BaristaLauncher = function(){
 		var token = user_info_by_email[email];
 		console.log('logging out (' + email + '): ' + token, ' ',
 			    req.session);
+
+		// BUG/TODO: There two need to be replaced by an
+		// object that can destroy all tokens related to an
+		// email address.
 		// delete user_info_by_email[email];
 		// delete user_info_by_token[token];
 	    }
