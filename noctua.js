@@ -94,6 +94,14 @@ var NoctuaLauncher = function(){
     /// Response helper.
     ///
     
+    self.get_token = function(req){
+	var ret = null;
+	if( req && req.query && req.query['barista_token'] ){
+	   ret = req.query['barista_token'];
+	}
+	return ret;
+    };
+
     self.standard_response = function(res, code, type, body){
 	res.setHeader('Content-Type', type);
 	res.setHeader('Content-Length', body.length);
@@ -361,10 +369,7 @@ var NoctuaLauncher = function(){
 			     //console.log('make attempt');
 
 			     // Try and see if we have an API token.
-			     var barista_token = null;
-			     if( req.query && req.query['barista_token'] ){
-				 barista_token = req.query['barista_token'];
-			     }
+			     var barista_token = self.get_token(req);
 			     
 			     // 
 			     function mme_callback_action(resp, man){
@@ -402,7 +407,9 @@ var NoctuaLauncher = function(){
 					     {name: 'global_model',
 					      value: obj },
 					     {name: 'global_known_relations',
-					      value: known_relations }
+					      value: known_relations },
+					     {name: 'global_barista_token',
+					      value: barista_token }
 					 ],
 					 'pup_tent_js_libraries': [
 					     msgloc + '/socket.io/socket.io.js',

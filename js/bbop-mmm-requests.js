@@ -183,12 +183,12 @@ var bbop_mmm_request = function(entity, operation){
  * Returns:
  *  request object
  */
-var bbop_mmm_request_set = function(user_id, intention){
+var bbop_mmm_request_set = function(user_token, intention){
     var anchor = this;
 
     var each = bbop.core.each;
 
-    anchor._user_id = user_id;
+    anchor._user_token = user_token;
     anchor._intention = intention;
     anchor._requests = [];
     
@@ -200,7 +200,7 @@ var bbop_mmm_request_set = function(user_id, intention){
 
 	// Ready the base return.
 	var rset = {
-	    'uid': anchor._user_id,
+	    'token': anchor._user_token,
 	    'intention': anchor._intention
 	};
 

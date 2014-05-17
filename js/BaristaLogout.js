@@ -43,7 +43,7 @@ var LogoutInit = function(){
 		    "loadend", function(e) {
 			var data = JSON.parse(this.responseText);
 			if (data && data.status === "okay") {
-			    ll("You have been logged in as: " + data.email);
+			    ll("You are logged in as: " + data.email);
 			}
 		    }, false);
 		

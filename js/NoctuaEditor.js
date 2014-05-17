@@ -42,13 +42,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var msngr = null;
 
     // Where we move the nodes during this session.
+    // BUG/TODO: Should be the domain of Barista.
     var historical_store = new bbop_location_store();
 
     // Events registry.
-    //var manager = new bbop_mme_manager(in_server_base);
-    // BUG/TODO: Right now, just hardwiring the uid, but this needs to
-    // be distributed by the moderator after authenication.
-    var manager = new bbop_mme_manager2(in_server_base, 'mmm', 'amigo');
+    var ticket_to_ride = '_anonymous_token_';
+    if( global_barista_token ){
+	ticket_to_ride = global_barista_token;
+    }
+    var manager = new bbop_mme_manager2(in_server_base, 'mmm', ticket_to_ride);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -924,7 +926,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     function _update_filter(resp, man, run_fun){
 	
 	// Need to extract our own ID from the manager.
-	var my_uid = man.user_id();
+	var my_uid = man.user_token();
 
 	// Let's do some checking.
 	var r_uid = resp.user_id();
@@ -1332,8 +1334,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	reporter.comment({'message_type': 'success',
 			  'message': 'logged in as: ' + uid}, uid, ucolor);
 
-	// Change our user id.
-	manager.user_id(uid);
+	// // Change our user id.
+	// manager.user_token(uid);
+	// 
+	// TODO: Actually, this call could be used to paint or display with
+	// our user info beyond the token.
     }
 
     // Catch both the regular back-and-forth, as well as the 

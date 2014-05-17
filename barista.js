@@ -12,6 +12,8 @@
 // Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
+var url = require('url');
+var querystring = require('querystring');
 
 // Required add-on libs.
 var bbop = require('bbop').bbop;
@@ -273,16 +275,19 @@ var BaristaLauncher = function(){
 	    if( req.query && req.query['barista_token'] ){
 		in_token = req.query['barista_token'];
 		
-		// Try are retreive the barista token.
+		// Try and retrieve the barista token.
 		if( user_info_by_token[in_token] ){
 		    barista_token = user_info_by_token[in_token];
+		    
+		    // If we have the barista token, destroy it.
+		    delete user_info_by_token[in_token];
+		    console.log('barista token destroyed: ' + barista_token);
+		}else{
+		    console.log('non-session token: ' + in_token);
 		}
-	    }else{	    
+	    }else{
+		console.log('no token');
 	    }	
-	    // If we have the barista token, destroy it.
-	    if( barista_token ){
-		delete user_info_by_token[in_token];
-	    }
 	    
 	    // Get return argument if there.
 	    var ret = null;
@@ -359,8 +364,56 @@ var BaristaLauncher = function(){
 var http_proxy = require('http-proxy');
 var api_proxy = http_proxy.createProxyServer({});
 messaging_app.get("/api/:namespace/:call", function(req, res){ 
+
 		      // TODO: Request logging hooks could be placed in here.
-		      console.log('api req: ' + req.url);
+		      //console.log('pre api req: ' + req.url);
+
+		      // TODO: A lot of authorization will happen
+		      // around here.
+		      // Try and get the barista_key out for use.
+		      var uid = 'anonymous';
+		      if( req && req['query'] && req['query']['token'] ){
+
+			  // Best attempt at extracting a UID.
+			  var btok = req['query']['token'];
+			  var uinfo = user_info_by_token[btok];
+			  if( uinfo ){
+			      var email_bits =
+				  bbop.core.first_split('@', uinfo['email']);
+			      uid = email_bits[0] || 'anonymous';
+			  }
+		      }
+		      
+		      // // TODO: Create a doctored request.
+		      // // Either way, no token goes back.
+		      // each(['query', 'body', 'params'],
+		      // 	   function(field){
+		      // 	       if( req[field] && req[field]['token'] ){
+		      // 		   delete req[field]['token'];
+		      // 		   req[field]['uid'] = uid;
+		      // 	       }
+		      // 	   });
+		      // //req.url = req.url + '&uid=' + uid;
+
+		      // Extract token=??? from the request URL safely
+		      // and add the uid.
+		      var url_obj = url.parse(req.url);
+		      var q_obj = querystring.parse(url_obj['query']);
+		      delete q_obj['token'];
+		      q_obj['uid'] = uid;
+		      // The first works according to the docs, the
+		      // second according to real life.
+		      url_obj['query'] = querystring.encode(q_obj);
+		      url_obj['search'] = '?' + querystring.encode(q_obj);
+		      //console.log('q_obj: ', q_obj);
+		      // Eliminate confounding fields to make sure it
+		      // parses out the one we modified.
+		      //delete url_obj['search'];
+		      req.url = url.format(url_obj);
+
+		      //console.log('req.url: ', req.url);
+		      //console.log('post api req: ', req);
+		      //console.log('uid: ' + uid);
 
 		      // TODO: These two will eventually have to check
 		      // in registries created at startup (from config
