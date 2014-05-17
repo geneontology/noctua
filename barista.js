@@ -175,7 +175,7 @@ var BaristaLauncher = function(){
 			  token: token, color: color});
 		return;
 	    }
-	    console.log('login fail');
+	    console.log('login fail; unknown email: ' + email);
 	    res.json({status: "failure", reason: "not in permissions.json"});
 	},
 	logoutResponse: function(err, req, res) {
