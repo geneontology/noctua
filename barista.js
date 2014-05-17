@@ -196,8 +196,9 @@ var BaristaLauncher = function(){
 		// Remove from internal session system.
 		var email = req.session.email;
 		var token = user_info_by_email[email];
-		console.log('logging out (' + email + '): ' + token, ' ',
-			    req.session);
+		console.log('logging out (' + email + '): ' + token);
+		// console.log('logging out (' + email + '): ' + token, ' ',
+		// 	    req.session);
 
 		// BUG/TODO: There two need to be replaced by an
 		// object that can destroy all tokens related to an
