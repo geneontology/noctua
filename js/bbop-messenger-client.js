@@ -6,6 +6,7 @@
 ////
 
 var bbop_messenger_client = function(msgloc,
+				     token,
 				     on_connect,
 				     on_initialization,
 				     on_info_event,
@@ -13,13 +14,14 @@ var bbop_messenger_client = function(msgloc,
 				     on_telekinesis_event){
 
     var anchor = this;
+    anchor._token = token;
     anchor.socket = null;
     anchor.model_id = null;
     anchor.okay_p = null;
 
     var logger = new bbop.logger('msg client');
-    //logger.DEBUG = true;
-    logger.DEBUG = false;
+    logger.DEBUG = true;
+    //logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
 
     // Check to make sure that the optional library was correctly
@@ -42,6 +44,16 @@ var bbop_messenger_client = function(msgloc,
 	return ret;
     };
 
+    /*
+     * Operate on your identifying token.
+     */
+    anchor.token = function(in_token){
+	if( in_token ){
+	    anchor._token = in_token;
+	}
+	return anchor._token;
+    };
+
     // TODO: Specify the channel over and above the general server.
     // For the time being, just using the model id in the message.
     anchor.connect = function(model_id){
@@ -60,7 +72,8 @@ var bbop_messenger_client = function(msgloc,
 		var connect_packet = {
 		    'model_id': anchor.model_id,
 		    'message': 'new client connected',
-		    'message_type': 'success'
+		    'message_type': 'success',
+		    'token': anchor.token()
 		};
 		anchor.socket.emit('info', connect_packet);
 		
@@ -73,10 +86,10 @@ var bbop_messenger_client = function(msgloc,
 
 	    // Our initialization data from the server.
 	    function _got_initialization(data){
-		var uid = data['user_id'] || '???';
+		var sid = data['socket_id'] || '???';
 		var ucolor = data['user_color'] || '???';
 
-		ll('received initialization info: ' + uid);
+		ll('received initialization info from socket: ' + sid);
 		
 		// Trigger whatever function we were given.
 		if( typeof(on_initialization) !== 'undefined' &&
@@ -84,13 +97,14 @@ var bbop_messenger_client = function(msgloc,
 		    on_initialization(data);
 		}
 	    }
-	    anchor.socket.on('intialization', _got_initialization);
+	    anchor.socket.on('initialization', _got_initialization);
 
 	    // Setup to catch info events from the clients and pass them
 	    // on if they were meant for us.
 	    function _got_info(data){
 		var mid = data['model_id'] || null;
-		var uid = data['user_id'] || '???';
+		//var uid = data['user_id'] || '???';
+		var uid = data['user_email'] || '???';
 		var ucolor = data['user_color'] || '???';
 		var signal = data['signal'] || '???';
 		var intention = data['intention'] || '???';
@@ -115,7 +129,7 @@ var bbop_messenger_client = function(msgloc,
 		var mid = data['model_id'] || null;
 		var top = data['top'] || null;
 		var left = data['left'] || null;
-		var uid = data['user_id'] || '???';
+		var uid = data['user_email'] || '???';
 		var ucolor = data['user_color'] || '#ffffff';
 
 		// Check to make sure it interestes us.
@@ -123,7 +137,7 @@ var bbop_messenger_client = function(msgloc,
 		    ll('skip info packet--not for us');
 		}else{
 		    //ll('received clairvoyance: ' + str);
-		
+		    
 		    // Trigger whatever function we were given.
 		    if(typeof(on_clairvoyance_event) !== 'undefined' &&
 		       on_clairvoyance_event){
@@ -137,7 +151,7 @@ var bbop_messenger_client = function(msgloc,
 		var mid = data['model_id'] || null;
 		var top = data['top'] || null;
 		var left = data['left'] || null;
-		var uid = data['user_id'] || '???';
+		var uid = data['user_email'] || '???';
 		var iid = data['item_id'] || null;
 
 		// Check to make sure it interestes us.
@@ -163,10 +177,11 @@ var bbop_messenger_client = function(msgloc,
 	    ll('no good socket on info; did you connect()?');
 	}else{
 	    //ll('send info: (' + anchor.model_id + ') "' + str + '"');
-	    ll('send info: (' + anchor.model_id + ')');
+	    ll('send info: (' + anchor.model_id + ', ' + anchor.token() + ')');
 
 	    // Add in model ID.
 	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
 	    anchor.socket.emit('info', data);
 	}
     };

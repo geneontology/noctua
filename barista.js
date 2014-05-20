@@ -88,6 +88,7 @@ var BaristaLauncher = function(){
     // more than one sessions per email address.
     // Punting until I have the full structure figured out.
     var user_info_by_email = {};
+    var user_info_by_socket = {};
 
     ///
     /// Response helper.
@@ -200,7 +201,7 @@ var BaristaLauncher = function(){
 		// console.log('logging out (' + email + '): ' + token, ' ',
 		// 	    req.session);
 
-		// BUG/TODO: There two need to be replaced by an
+		// BUG/TODO: These two need to be replaced by an
 		// object that can destroy all tokens related to an
 		// email address.
 		// delete user_info_by_email[email];
@@ -490,25 +491,39 @@ sio.sockets.on('connection',
 		       'uid': socket_id,
 		       'ucolor': ucolor_list[rci]
 		   };
-		   var user_id = client_sockets[socket_id]['uid'];
+		   //var user_id = client_sockets[socket_id]['uid'];
+		   var user_email = 'TBD';
 		   var user_color = client_sockets[socket_id]['ucolor'];
 
 		   // Immediately emit user meta-information to the
 		   // just-connected user.
 		   var init_data = {
 		       'user_metadata': true,
-		       'user_id': user_id,
+		       'socket_id': socket_id,
+		       //'user_id': user_id,
 		       'user_color': user_color
 		   };
-		   socket.emit('intialization', init_data);
+		   socket.emit('initialization', init_data);
 
-		   // Relays.
+		   // Relays to others that new user is on and ties
+		   // socket and token.
 		   socket.on('info',
 			     function(data){
 				 //console.log('srv info: %j', data);
 
+				 // The info packet can tie us to the
+				 // token.
+				 var token = data['token'];
+				 if( token ){
+				     user_info_by_socket[socket_id] =
+					 user_info_by_token[token];
+				     user_email =
+					 user_info_by_token[token]['email'];
+				 }
+
 				 // Inject user data.
-				 data['user_id'] = user_id;
+				 //data['user_id'] = user_id;
+				 data['user_email'] = user_email;
 				 data['user_color'] = user_color;
 				 socket.broadcast.emit('info', data);
 			     });
@@ -516,7 +531,8 @@ sio.sockets.on('connection',
 		   socket.on('clairvoyance',
 			     function(data){
 				 //console.log('srv remove: ' + data);
-				 data['user_id'] = user_id;
+				 //data['user_id'] = user_id;
+				 data['user_email'] = user_email;
 				 data['user_color'] = user_color;
 				 socket.broadcast.emit('clairvoyance', data);
 			     });
@@ -524,7 +540,8 @@ sio.sockets.on('connection',
 		   socket.on('telekinesis',
 			     function(data){
 				 //console.log('srv remove: ' + data);
-				 data['user_id'] = user_id;
+				 //data['user_id'] = user_id;
+				 data['user_email'] = user_email;
 				 data['user_color'] = user_color;
 				 socket.broadcast.emit('telekinesis', data);
 			     });

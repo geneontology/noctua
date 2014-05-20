@@ -933,6 +933,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	var r_sig = resp.signal();
 	var r_int = resp.intention();
 	ll(['uid: ', r_uid, ', sig: ', r_sig, ', int: ', r_int].join(''));
+	// BUG/TODO: This will always be wrong since we cannot compare
+	// tokens to ids.
 	if( r_uid == my_uid ){
 	    // Always run things I requiested.
 	    ll('TODO: running own request');
@@ -1324,15 +1326,17 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 });
     }
 
+    // ...
     function _on_initialization(data){
-	var uid = data['user_id'];
+	//var uid = data['user_id'];
 	var ucolor = data['user_color'];
+	var sockid = data['socket_id'];
 
-	ll('we have a name: ' + uid);
+	ll('we are on socket: ' + sockid);
 
 	// Add to the top of the message list.
 	reporter.comment({'message_type': 'success',
-			  'message': 'logged in as: ' + uid}, uid, ucolor);
+			  'message': 'on socket: ' + sockid}, sockid, ucolor);
 
 	// // Change our user id.
 	// manager.user_token(uid);
@@ -1413,11 +1417,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     }
 
     if( typeof(global_message_server) === 'undefined'  ){
-	ll('no setup for messaging--passing');
+	alert('no setup for messaging--not gunna happen');
     }else{
-	//var msgloc_srv = 'http://localhost:3400';
+	// TODO: Eventually we'll
 	ll('try setup for messaging at: ' + global_message_server);
 	msngr = new bbop_messenger_client(global_message_server,
+					  ticket_to_ride,
 					  _on_connect,
 					  _on_initialization,
 					  _on_info_update,
