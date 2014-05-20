@@ -515,12 +515,24 @@ sio.sockets.on('connection',
 				 // token.
 				 var token = data['token'];
 				 if( token ){
-				     user_info_by_socket[socket_id] =
-					 user_info_by_token[token];
-				     user_email =
-					 user_info_by_token[token]['email'];
+				     // TODO/BUG: The may be cases
+				     // where we're coming in not by
+				     // main noctua, so this type of
+				     // info may not be filled at
+				     // all. Hopefully to be fixed by
+				     // union of interfaces. Until
+				     // then, check that the
+				     // structures exist first.
+				     if( user_info_by_token[token] ){
+					 user_email =
+					     user_info_by_token[token]['email'];
+					 user_info_by_socket[socket_id] =
+					     user_info_by_token[token];
+					 user_email =
+					     user_info_by_token[token]['email'];
+				     }
 				 }
-
+				 
 				 // Inject user data.
 				 //data['user_id'] = user_id;
 				 data['user_email'] = user_email;
