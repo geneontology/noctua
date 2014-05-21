@@ -202,12 +202,14 @@ var NoctuaLauncher = function(){
 	    'NoctuaEditor.js',
 	    'NoctuaLanding.js',
 	    'NoctuaBasic.js',
+	    'NoctuaCapella.js',
 	    // 'Basic.js',
 	    // 'App.js',
 	    'waiting_ac.gif',
 	    'noctua_base.tmpl',
 	    'noctua_base_landing.tmpl',
 	    'noctua_landing.tmpl',
+	    'noctua_capella.tmpl',
 	    'noctua_editor.tmpl',
 	    // 'index_base.tmpl',
 	    // 'index_content.tmpl',
@@ -463,6 +465,8 @@ var NoctuaLauncher = function(){
 	    });
 	
 	// Try to bootstrap coming in from Capella.
+	// This is just a label resolver, that then boots a web client that
+	// tries to find a way in to /model/seed.
 	self.app.get(
 	    '/capella',
 	    function(req, res) {
@@ -497,9 +501,9 @@ var NoctuaLauncher = function(){
 		    function term_resolution_action(resp, man){			
 			console.log('in success callback');
 			if( ! resp.success() ){
-			    console.log('bad resp: ', resp);
+			    //console.log('bad resp: ', resp);
 			    res.setHeader('Content-Type', 'text/html');
-			    res.send('bad doc: ' + payload_str);
+			    res.send('bad docs: ' + payload_str);
 			}else{				   
 			    // console.log('in success callback else');
 
@@ -511,39 +515,37 @@ var NoctuaLauncher = function(){
 				     var s = d['source'];
 				     if( ac && s ){ t2a[ac] = s; }
 				 });
-			    console.log('t2a: ', t2a);
-
-			    // Now that we have our best effort to
-			    // resolve IDs, we need to get the new
-			    // model going.
-			    var m3 = new bbop_mme_manager2(in_server_base,
-							   'mmm', 'amigo');
-			    m3.register('manager_error', 'foo',
-					function(message_type, message){
-					    console.log('manager error (' +
-							message_type + '): ' +
-							message);
-					}, 10);
-			    m3.register('warning', 'foo',
-					function(resp, man){
-					    console.log('warning: ' +
-							resp.message());
-					}, 10);
-			    m3.register('error', 'foo',
-					function(resp, man){
-					    console.log('error (' +
-							resp.message_type() +
-							'): ' +	resp.message());
-					}, 10);
-			    m3.register('rebuild', 'foo',
-					function(resp, man){
-					    var id = resp.data()['id'];	
-					    //window.location.replace("/seed/model/" + id);
-					    console.log('forward to: ', id);
-					}, 10);
-			    // Go!
-			    m3.bootstrap_model(payload);
+			    //console.log('t2a: ', t2a);
 			    
+			    var tmpl_args = {
+				// 'pup_tent_css_libraries': [
+				//     '/NoctuaCapella.css'
+				// ],
+				'pup_tent_js_variables': [
+				    {name:'global_message_server',
+				     value: msgloc },
+				    {name: 'global_barista_token',
+				     value: null },
+				    {name: 'global_payload', value: payload },
+				    {name: 'global_resolution', value: t2a }
+				],
+				'pup_tent_js_libraries': [
+				    '/bbop-rest-response-mmm.js',
+				    '/bbop-mmm-requests.js',
+				    '/bbop-mme-context.js',
+				    '/bbop-mme-manager2.js',
+				    '/bbop-mme-widgets.js',
+				    '/bbop-messenger-client.js',
+				    '/NoctuaCapella.js'
+				],
+				'title': notw + ': Capella'
+				//'messaging_server_location': barista_loc
+			    };
+			    var ret = pup_tent.render_io(
+				'noctua_base.tmpl',
+				'noctua_capella.tmpl',
+				tmpl_args);
+			    self.standard_response(res, 200, 'text/html', ret);
 			}
 		    }
 		    

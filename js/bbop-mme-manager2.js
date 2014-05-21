@@ -455,13 +455,58 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     // Expect: "success" and "rebuild".
     anchor.bootstrap_model = function(bootstrap_obj){
 
-	// BUG/TODO: work with heiko to get this correct
 	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
-	var req = new bbop_mmm_request('model', 'generate');
-	req.add('db', db_id);
-	req.add('subject', class_id);
+
+	// Just get a new model going.
+	var req = new bbop_mmm_request('model', 'generate-blank');
+	//req.add('db', db_id); // unecessary
 	reqs.add(req);
 
+	each(bootstrap_obj,
+	     function(ob){
+
+		 // Now, for each of these, we are going to be adding
+		 // stuff to MF instances. If there is no MF coming
+		 // in, we are just going to use GO:0003674.
+		 var mfs = [];
+		 var bps = [];
+		 var ccs = [];
+		 each(bo['terms'],
+		      function(tid){
+			  if( t2a[tid] == 'molecular_function' ){
+			      mfs.push(tid);
+			  }else if( t2a[tid] == 'biological_process' ){
+			      bps.push(tid);
+			  }else if( t2a[tid] == 'cellular_component' ){
+			      ccs.push(tid);
+			  }
+		      });
+		 // There must be this no matter what.
+		 if( bbop.core.is_empty(mfs) ){
+ 		     mfs.push('GO:0003674');
+		 }
+
+		 // We are going to be creating instances off of the
+		 // MFs.
+		 each(mfs,
+		      function(mf){
+			  var req = new bbop_mmm_request('individual','create');
+			  
+			  // Add in the occurs_in from CC.
+			  each(ccs,
+			       function(cc){
+				   req.svf_expressions(cc, 'occurs_in');
+			       });
+
+			  // Add in the enabled_by from entities.
+			  each(bo['entities'],
+			       function(ent){
+				   req.svf_expressions(ent, 'RO:0002333');
+			       });
+		      });		 
+	     });
+
+	// Final send-off.
 	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
