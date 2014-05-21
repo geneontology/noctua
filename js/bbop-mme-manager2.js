@@ -451,5 +451,21 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     	jqm.action(url, args, 'GET');
     };
     
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.bootstrap_model = function(bootstrap_obj){
+
+	// BUG/TODO: work with heiko to get this correct
+	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var req = new bbop_mmm_request('model', 'generate');
+	req.add('db', db_id);
+	req.add('subject', class_id);
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(url, args, 'GET');
+    };
+    
 };
 bbop.core.extend(bbop_mme_manager2, bbop.registry);

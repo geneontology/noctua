@@ -109,6 +109,66 @@ var NoctuaLauncher = function(){
 	return res;
     };
 
+    // Assemble return doc.
+    self.bootstrap_editor = function(res, name_of_the_week,
+				     model_id, model_obj, known_relations,
+				     barista_loc, barista_token){
+
+	// Assemble return doc.
+	res.setHeader('Content-Type', 'text/html');
+	
+	var barista_login = barista_loc + '/login' + '?return=' +
+	    self.hostport + '/seed/model/' + model_id;
+	var barista_logout = barista_loc + '/logout' + '?return=' +
+	    self.hostport + '/seed/model/' +
+	    model_id + '&barista_token=' + barista_token;
+	var tmpl_args = {
+	    'pup_tent_css_libraries': [
+		'/NoctuaEditor.css'
+	    ],
+	    'pup_tent_js_variables': [
+		{name: 'global_id', value: model_id },
+		{name: 'global_server_base', value: barista_loc },
+		{name:'global_message_server', value: barista_loc },
+		{name: 'global_model', value: model_obj },
+		{name: 'global_known_relations', value: known_relations },
+		{name: 'global_barista_token', value: barista_token }
+	    ],
+	    'pup_tent_js_libraries': [
+		barista_loc + '/socket.io/socket.io.js',
+		'/jquery.jsPlumb-1.5.5.js',
+		'/connectors-sugiyama.js',
+		'/bbop-rest-response-mmm.js',
+		'/bbop-mmm-requests.js',
+		'/bbop-mme-context.js',
+		'/bbop-mme-edit.js',
+		'/bbop-mme-manager2.js',
+		'/bbop-mme-widgets.js',
+		'/bbop-draggable-canvas.js',
+		'/bbop-location-store.js',
+		'/bbop-messenger-client.js',
+		'/NoctuaEditor.js'
+	    ],
+	    'title': name_of_the_week + ': Editor',
+	    'messaging_server_location': barista_loc,
+	    barista_token: barista_token,
+	    barista_login: barista_login,
+	    barista_logout: barista_logout
+	};
+	var ret = pup_tent.render_io(
+	    'noctua_base.tmpl',
+	    'noctua_editor.tmpl',
+	    tmpl_args);
+	self.standard_response(res, 200,
+			       'text/html', ret);
+    };
+
+    // Generic error return.
+    function _generic_error_resp(resp, man){
+	res.setHeader('Content-Type', 'text/html');
+	res.send('failure ('+ resp.message_type() +'): '+ resp.message());
+    }
+
     ///
     /// Cache and template rendering.
     ///
@@ -354,113 +414,154 @@ var NoctuaLauncher = function(){
 	// 		 res.send(ret);
 	// 	     });
 
-	self.app.get('/seed/model/:query',
-		     function(req, res) {
+	self.app.get(
+	    '/seed/model/:query',
+	    function(req, res) {
 
-			 //console.log(req.route);
-			 //console.log(req.route.params['query']);
-			 var query = req.route.params['query'] || '';
-			 if( ! query || query == '' ){
-			     // Catch error here if no proper ID.
-			     res.setHeader('Content-Type', 'text/html');
-			     res.send('no identifier');
-			 }else{
+		//console.log(req.route);
+		//console.log(req.route.params['query']);
+		var query = req.route.params['query'] || '';
+		if( ! query || query == '' ){
+		    // Catch error here if no proper ID.
+		    res.setHeader('Content-Type', 'text/html');
+		    res.send('no identifier');
+		}else{
 		    
-			     //console.log('make attempt');
+		    //console.log('make attempt');
+		    
+		    // Try and see if we have an API token.
+		    var barista_token = self.get_token(req);
+		    
+		    // 
+		    function mme_callback_action(resp, man){
+			
+			if( ! resp.okay() ){
+			    res.setHeader('Content-Type', 'text/html');
+			    res.send('bad doc:' + query);
+			}else{				   
+			    
+			    //console.log('in success callback');
+			    var obj = resp.data();
+			    
+			    self.bootstrap_editor(res, notw, query, obj,
+						  known_relations, msgloc,
+						  barista_token);
+			}
+		    }
+		    
+		    // Assemble query to get the desired MM.
+		    var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
+		    m.register('success', 'foo', mme_callback_action);
+		    m.register('error', 'bar', _generic_error_resp);
+		    var t = msgloc + '/api/mmm/m3GetModel';
+		    var t_args = {
+			'modelId': query
+		    };
+		    var astr = m.action(t, t_args);
+		    console.log("action to: " + astr);
+		}
+	    });
+	
+	// Try to bootstrap coming in from Capella.
+	self.app.get(
+	    '/capella',
+	    function(req, res) {
 
-			     // Try and see if we have an API token.
-			     var barista_token = self.get_token(req);
-			     
-			     // 
-			     function mme_callback_action(resp, man){
-
-				 if( ! resp.okay() ){
-				     res.setHeader('Content-Type', 'text/html');
-				     res.send('bad doc:' + query);
-				 }else{				   
-
-				     //console.log('in success callback');
-
-				     var obj = resp.data();
-
-				     // Assemble return doc.
-				     res.setHeader('Content-Type', 'text/html');
-				     
-				     var barista_login = msgloc + '/login' +
-					 '?return=' + self.hostport +
-					 '/seed/model/' + query;
-				     var barista_logout = msgloc + '/logout' +
-					 '?return=' + self.hostport +
-					 '/seed/model/' + query +
-					 '&barista_token=' + barista_token;
-				     var tmpl_args = {
-					 'pup_tent_css_libraries': [
-					     '/NoctuaEditor.css'
-					 ],
-					 'pup_tent_js_variables': [
-					     {name: 'global_id',
-					      value: query },
-					     {name: 'global_server_base',
-					      value: msgloc },
-					     {name:'global_message_server',
-					      value: msgloc },
-					     {name: 'global_model',
-					      value: obj },
-					     {name: 'global_known_relations',
-					      value: known_relations },
-					     {name: 'global_barista_token',
-					      value: barista_token }
-					 ],
-					 'pup_tent_js_libraries': [
-					     msgloc + '/socket.io/socket.io.js',
-					     '/jquery.jsPlumb-1.5.5.js',
-					     '/connectors-sugiyama.js',
-					     '/bbop-rest-response-mmm.js',
-					     '/bbop-mmm-requests.js',
-					     '/bbop-mme-context.js',
-					     '/bbop-mme-edit.js',
-					     '/bbop-mme-manager2.js',
-					     '/bbop-mme-widgets.js',
-					     '/bbop-draggable-canvas.js',
-					     '/bbop-location-store.js',
-					     '/bbop-messenger-client.js',
-					     '/NoctuaEditor.js'
-					 ],
-					 'title': notw + ': Editor',
-					 'messaging_server_location': msgloc,
-					 barista_token: barista_token,
-					 barista_login: barista_login,
-					 barista_logout: barista_logout
-				     };
-				     var ret = pup_tent.render_io(
-					 'noctua_base.tmpl',
-					 'noctua_editor.tmpl',
-					 tmpl_args);
-				     self.standard_response(res, 200,
-							    'text/html', ret);
-				 }
+		var payload_str = req.query['bootstrap'] || null;
+		console.log('payload_str: ', payload_str);
+		var payload = JSON.parse(payload_str);
+		if( ! payload ){
+		    // Catch error here if no proper ID.
+		    res.setHeader('Content-Type', 'text/html');
+		    res.send('no proper bootstrap');
+		}else{
+		    
+		    console.log('payload: ', payload);
+		    
+		    // Collect the terms to resolve--need the aspects.
+		    var terms_to_resolve = [];
+		    each(payload,
+			 function(pi){
+			     if( pi['terms'] ){
+				 terms_to_resolve = 
+				     terms_to_resolve.concat(pi['terms']);
 			     }
-			  
-			     // Assemble query to get the desired MM.
-			     var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
-			     m.register('success', 'foo', mme_callback_action);
-			     m.register('error', 'bar',
-					function(resp, man){
-					    res.setHeader('Content-Type',
-							  'text/html');
-					    res.send('failure ('+
-						     resp.message_type() +'): '+
-						     resp.message());
-					});
-			     var t = msgloc + '/api/mmm/m3GetModel';
-			     var t_args = {
-				 'modelId': query
-			     };
-			     var astr = m.action(t, t_args);
-			     console.log("action to: " + astr);
-			 }
-		     });
+			 });
+		    var qf_to_add = [];
+		    each(terms_to_resolve,
+			 function(ttr){
+			     qf_to_add.push('annotation_class:"' + ttr + '"');
+			 });
 
+		    // 
+		    function term_resolution_action(resp, man){			
+			console.log('in success callback');
+			if( ! resp.success() ){
+			    console.log('bad resp: ', resp);
+			    res.setHeader('Content-Type', 'text/html');
+			    res.send('bad doc: ' + payload_str);
+			}else{				   
+			    // console.log('in success callback else');
+
+			    // Map terms to aspect.
+			    var t2a = {};
+			    each(resp.documents(),
+				 function(d){
+				     var ac = d['annotation_class'];
+				     var s = d['source'];
+				     if( ac && s ){ t2a[ac] = s; }
+				 });
+			    console.log('t2a: ', t2a);
+
+			    // Now that we have our best effort to
+			    // resolve IDs, we need to get the new
+			    // model going.
+			    var m3 = new bbop_mme_manager2(in_server_base,
+							   'mmm', 'amigo');
+			    m3.register('manager_error', 'foo',
+					function(message_type, message){
+					    console.log('manager error (' +
+							message_type + '): ' +
+							message);
+					}, 10);
+			    m3.register('warning', 'foo',
+					function(resp, man){
+					    console.log('warning: ' +
+							resp.message());
+					}, 10);
+			    m3.register('error', 'foo',
+					function(resp, man){
+					    console.log('error (' +
+							resp.message_type() +
+							'): ' +	resp.message());
+					}, 10);
+			    m3.register('rebuild', 'foo',
+					function(resp, man){
+					    var id = resp.data()['id'];	
+					    //window.location.replace("/seed/model/" + id);
+					    console.log('forward to: ', id);
+					}, 10);
+			    // Go!
+			    m3.bootstrap_model(payload);
+			    
+			}
+		    }
+		    
+		    // Assemble query to get the desired minimal term
+		    // information.
+		    var m = new bbop.golr.manager.nodejs(server_loc, gconf);
+		    m.add_query_filter('document_category', 'ontology_class');
+		    m.set_personality('ontology');
+		    m.register('search', 'foo', term_resolution_action);
+		    m.register('error', 'bar', _generic_error_resp);
+		    m.set('fq', qf_to_add.join(' OR '));
+		    // Apparently need score to make it "success".
+		    m.set('fl', 'id,annotation_class,source,score');
+		    m.search();
+		    console.log('resolve query: ', m.get_query_url());
+		}
+	    });
+	
 	// self.app.post('/action/load',
 	// 	     function(req, res) {
 
@@ -506,57 +607,56 @@ var NoctuaLauncher = function(){
 	// 	     });
 
 	// Test export handler.
-	self.app.post('/action/export',
-		      function(req, res) {
-
-			  // Deal with incoming parameters.
-			  var mid = req.route.params['model_id'] ||
-			      req.body['model_id'] || '???';
-			  
-			  // // Assemble return doc.
-			  // res.redirect(msgloc + '/api/mmm/m3ExportModel?modelId=' + mid); 
-			  // //res.setHeader('Content-Type', 'text/plain');
-			  // //res.send(data);
-			  
-			  // 
-			  function export_callback_action(resp, man){
-			      
-			      if( ! resp.okay() ){
-				  res.setHeader('Content-Type', 'text/html');
-				  res.send('bad doc from: ' + mid);
-			      }else{				   
-				  
-				  //console.log('in success callback');
-				  
-				  var obj = resp.data();
-				  var obj_str = obj['export'];
-				  
-				  // Assemble return doc.
-				  //res.setHeader('Content-Type', 'text/owl');
-				  res.setHeader('Content-Type', 'text/plain');
-				  res.send(obj_str);
-			      }
-			  }
-			  
-			  // Assemble query to get the desired MM.
-			  var m =
-			      new bbop.rest.manager.node(bbop.rest.response.mmm);
-			  m.register('success', 'foo', export_callback_action);
-			  m.register('error', 'bar',
-				     function(resp, man){
-					 res.setHeader('Content-Type',
-						       'text/html');
-					 res.send('failure ('+
-						  resp.message_type() +'): '+
-						  resp.message());
-				     });
-			  var t = msgloc + '/api/mmm/m3ExportModel';
-			  var t_args = {
-			      'modelId': mid
-			  };
-			  var astr = m.action(t, t_args);
-			  console.log("action to: " + astr);
-		      });
+	self.app.post(
+	    '/action/export',
+	    function(req, res) {
+		
+		// Deal with incoming parameters.
+		var mid = req.route.params['model_id'] ||
+		    req.body['model_id'] || '???';
+		
+		// // Assemble return doc.
+		// res.redirect(msgloc + '/api/mmm/m3ExportModel?modelId=' + mid); 
+		// //res.setHeader('Content-Type', 'text/plain');
+		// //res.send(data);
+		
+		// 
+		function export_callback_action(resp, man){
+		    
+		    if( ! resp.okay() ){
+			res.setHeader('Content-Type', 'text/html');
+			res.send('bad doc from: ' + mid);
+		    }else{				   
+			
+			//console.log('in success callback');
+			
+			var obj = resp.data();
+			var obj_str = obj['export'];
+			
+			// Assemble return doc.
+			//res.setHeader('Content-Type', 'text/owl');
+			res.setHeader('Content-Type', 'text/plain');
+			res.send(obj_str);
+		    }
+		}
+		
+		// Assemble query to get the desired MM.
+		var m =
+		    new bbop.rest.manager.node(bbop.rest.response.mmm);
+		m.register('success', 'foo', export_callback_action);
+		m.register('error', 'bar',
+			   function(resp, man){
+			       res.setHeader('Content-Type', 'text/html');
+			       res.send('failure ('+ resp.message_type() +'): '+
+					resp.message());
+			   });
+		var t = msgloc + '/api/mmm/m3ExportModel';
+		var t_args = {
+		    'modelId': mid
+		};
+		var astr = m.action(t, t_args);
+		console.log("action to: " + astr);
+	    });
     };
     
     // Initializes the sample application.

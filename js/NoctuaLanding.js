@@ -2,10 +2,6 @@
 //// ...
 ////
 
-///
-/// ...
-///
-
 var MMEnvBootstrappingInit = function(in_server_base){
     
     var logger = new bbop.logger('mme bsi');
