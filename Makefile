@@ -70,3 +70,11 @@ start-barista-dev: assemble-app
 .PHONY: start-barista
 start-barista:
 	MSGPORT=$(MSGPORT) MSGLOC=$(MSGLOC) node barista.js
+
+###
+### Documentation for JavaScript.
+###
+
+.PHONY: docs
+docs:
+	naturaldocs --rebuild-output --input ./js --project docs/.naturaldocs_project/ --output html docs/
