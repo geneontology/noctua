@@ -1,4 +1,7 @@
 * GO MME
+  
+  More docs/API to be found [[http://kltm.github.io/go-mme][here]].
+  
   Prototype editor frontend (Noctua) and messenger server (Barista)
   for the Gene Ontology Molecular Modal Environment.
 
