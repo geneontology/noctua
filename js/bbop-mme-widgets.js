@@ -734,8 +734,10 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode,
 	     acache.push('<li class="list-group-item" style="background-color: '
 			 + aid.color(item.category()) + ';">');
 	     acache.push(type_str);
-	     acache.push('<span id="'+ eid +
-			 '" class="badge app-delete-mark">X</span>');
+	     if( ! item.inferred_p() ){
+		 acache.push('<span id="'+ eid +
+			     '" class="badge app-delete-mark">X</span>');
+	     }
 	     acache.push('<div class="clearfix"></div>');
 	     acache.push('</li>');
 	     type_list.push(acache.join(''));
