@@ -532,6 +532,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	
     // The core initial layout function.
     function _rebuild_model_and_display(model_id, individuals,
+					inferred_individuals,
 					facts, annotations){
 
 	ll('rebuilding from scratch');
@@ -551,11 +552,28 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	_rebuild_meta(model_id, annotations);
 
 	// Starting fresh, add everything coming in to the edit model.
-	each(individuals,
+	each(individuals, // add nodes
 	     function(indv){
 		 ecore.add_node_from_individual(indv);
 	     });
-	each(facts,
+	each(inferred_individuals, // fold in inferred type information
+	     function(indv){
+		 // TODO/BUG: Too much internal exposure--this section
+		 // should be folded into a ecore function like
+		 // "merge_inferred_types" once stablized.
+		 // Get ID.
+		 var inf_iid = indv['id'] || null;
+		 if( inf_iid ){
+		     // If we have a node pointer in our hands--modify
+		     // it by adding the inferred types.
+		     var rnode = ecore.get_node(inf_iid);
+		     if( rnode ){
+			 var inf_types = indv['type'] || [];
+			 rnode.add_types(inf_types, true);
+		     }
+		 }
+	     });
+	each(facts, // add facts
 	     function(fact){
 		 ecore.add_edge_from_fact(fact, aid);
 	     });
@@ -721,9 +739,10 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // This is a very important core function. It's purpose is to
     // update the local model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_new_data(individuals, facts, raw_annotations){
+    function _merge_from_new_data(individuals, inferred_individuals,
+				  facts, raw_annotations){
 
-	// First look at individuals/nodes for addition or updating.
+	// Next, look at individuals/nodes for addition or updating.
 	each(individuals,
 	     function(ind){
 		 // Update node. This is preferred since
@@ -959,6 +978,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
+			 var mindividuals_i = resp.inferred_individuals();
 			 var mfacts = resp.facts();
 			 var mannotations = resp.annotations();
 
@@ -966,7 +986,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 if( ! mid || is_empty(mindividuals) ){
 			     alert('no data/individuals in inconsistent');
 			 }else{
-			     _rebuild_model_and_display(mid, mindividuals,
+			     _rebuild_model_and_display(mid,
+							mindividuals,
+							mindividuals_i,
 							mfacts, mannotations);
 			 }
 		     }, 10);
@@ -979,13 +1001,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 _update_filter(resp, man);
 
 			 var individuals = resp.individuals();
+			 var individuals_i = resp.inferred_individuals();
 			 var facts = resp.facts();
 			 var annotations = resp.annotations();
 			 if( ! individuals ){
 			     alert('no data/individuals in merge--unable to do');
 			 }else{
-			     _merge_from_new_data(individuals, facts,
-						  annotations);
+			     _merge_from_new_data(individuals,
+						  individuals_i,
+						  facts, annotations);
 			 }
 		     }, 10);
 
@@ -1305,9 +1329,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     _shields_up();
     var init_mid = model_json['id'];
     var init_indvs = model_json['individuals'];
+    var init_indvs_i = model_json['individuals_i'] || [];
     var init_facts = model_json['facts'];
     var init_anns = model_json['annotations'] || [];
-    _rebuild_model_and_display(init_mid, init_indvs, init_facts, init_anns);
+    _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
+			       init_facts, init_anns);
     _refresh_tables();
     _shields_down();
 

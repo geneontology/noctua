@@ -225,6 +225,19 @@ bbop_mme_widgets.enode_to_stack = function(enode, aid){
     var bin_stack = enode.types() || [];
     bin_stack = bin_stack.sort(
 	function(a, b){
+
+	    // Inferred nodes always have ??? priority.
+	    var ainf = a.inferred_p();
+	    var binf = b.inferred_p();
+	    if( ainf != binf ){
+		if( bind ){
+		    return 1;
+		}else{
+		    return -1;
+		}
+	    }
+	
+	    // Otherwise, use aid property priority.
 	    var bpri = aid.priority(b.property_id());
 	    var apri = aid.priority(a.property_id());
 	    return apri - bpri;
@@ -245,9 +258,14 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
 					      {'class':'bbop-mme-stack-table'});
 
     // Add type/color information.
+    var inferred_type_count = 0;
     var ordered_types = bbop_mme_widgets.enode_to_stack(enode, aid);
     each(ordered_types,
 	 function(item){
+
+	     // Special visual handling of inferred types.
+	     if( item.inferred_p() ){ inferred_type_count++; }
+
 	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
 		 'style="background-color: ' +
 		 aid.color(item.category()) +
@@ -275,6 +293,14 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
 	    + 'evidence: ' + n_ev + '; other: ' + n_other + 
 	    '</small></td></tr>';
 	enode_stack_table.add_to(trstr);
+    }
+
+    // Add external visual cue if there were inferred types.
+    if( inferred_type_count > 0 ){
+	var itcstr = '<tr class="bbop-mme-stack-tr">' +
+		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+		'inferred types: ' + inferred_type_count + '</small></td></tr>';
+	enode_stack_table.add_to(itcstr);
     }
 
     return enode_stack_table;

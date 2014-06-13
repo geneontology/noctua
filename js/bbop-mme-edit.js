@@ -559,16 +559,22 @@ bbop_mme_edit.core.prototype.get_annotation_by_id =
  * Categories is more a graphical distinction. They can be:
  * instance_of, <relation id>, union, and intersection.
  * 
+ * This model also incorporates whether or not the type is inferred. At this
+ * level they are treated the say, but higher level may (must) treat them
+ * as display decorations.
+ *
  * Parameters:
  *  in_types - the raw type blob from the server
+ *  inferred_p - whether or not the type is inferred (default false)
  */
-bbop_mme_edit.type = function(in_type){
+bbop_mme_edit.type = function(in_type, inferred_p){
 
     var anchor = this;
     var each = bbop.core.each;
 
     // Initialize.
     this._raw_type = in_type;
+    this._inferred_p = inferred_p || false;
     this._id = bbop.core.uuid();
 
     // Derived property defaults.
@@ -665,6 +671,19 @@ bbop_mme_edit.type = function(in_type){
  */
 bbop_mme_edit.type.prototype.id = function(){
     return this._id;
+};
+
+/**
+ * Function: inferred_p
+ * 
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  boolean
+ */
+bbop_mme_edit.type.prototype.inferred_p = function(){
+    return this._inferred_p;
 };
 
 /** 
@@ -862,6 +881,8 @@ bbop_mme_edit.node.prototype.types = function(in_types){
     var anchor = this;    
 
     if( in_types && bbop.core.what_is(in_types) == 'array' ){
+
+	// Wipe previous type set.
 	anchor._id2type = {};
 	anchor._types = [];
 
@@ -873,6 +894,37 @@ bbop_mme_edit.node.prototype.types = function(in_types){
 		       });
     }
     return this._types;
+};
+
+/**
+ * Function: add_types
+ * 
+ * Add types to current types.
+ * 
+ * Parameters:
+ *  in_types - raw JSON type objects
+ *  inferred_p - whether or not the argument types are inferred
+ * 
+ * Returns:
+ *  boolean
+ */
+bbop_mme_edit.node.prototype.add_types = function(in_types, inferred_p){
+    var anchor = this;    
+    var inf_p = inferred_p || false;
+
+    var ret = false;
+
+    if( in_types && bbop.core.what_is(in_types) == 'array' ){
+	bbop.core.each(in_types,
+		       function(in_type){
+			   var new_type = new bbop_mme_edit.type(in_type, inf_p);
+			   anchor._id2type[new_type.id()] = new_type;
+			   anchor._types.push(new_type);
+
+			   ret = true; // return true if did something
+		       });
+    }
+    return ret;
 };
 
 /**

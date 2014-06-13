@@ -62,6 +62,11 @@ var bme_type_to_minimal = function(in_type, aid){
 	ret = ctype_r + '(' + inner_lbl + ')';
     }
 
+    // A little special "hi" for inferred types.
+    if( in_type.inferred_p() ){
+	ret = '^' + ret;
+    }
+
     return ret;
 };
 

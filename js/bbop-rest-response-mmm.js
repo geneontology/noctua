@@ -353,6 +353,28 @@ bbop_rest_response_mmm.prototype.individuals = function(){
 };
 
 /*
+ * Function: inferred_individuals
+ * 
+ * Returns a list of the inferred_individuals in the response. Empty
+ * list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+//bbop.rest.response.mmm.prototype.individuals = function(){
+bbop_rest_response_mmm.prototype.inferred_individuals = function(){
+    var ret = [];
+    if( this._data && this._data['individuals_i'] && 
+	bbop.core.is_array(this._data['individuals_i']) ){
+	ret = this._data['individuals'];
+    }
+    return ret;
+};
+
+/*
  * Function: relations
  * 
  * Returns a list of the relations found in the response. Sometimes not
