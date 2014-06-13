@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_model, in_relations, in_server_base){
+var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -46,11 +46,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var historical_store = new bbop_location_store();
 
     // Events registry.
-    var ticket_to_ride = '_anonymous_token_';
-    if( global_barista_token ){
-	ticket_to_ride = global_barista_token;
-    }
-    var manager = new bbop_mme_manager2(in_server_base, 'mmm', ticket_to_ride);
+    var manager = new bbop_mme_manager2(in_server_base, 'mmm', in_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -564,6 +560,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		 // Get ID.
 		 var inf_iid = indv['id'] || null;
 		 if( inf_iid ){
+		     ll('inf: ' + inf_iid);
+		     
 		     // If we have a node pointer in our hands--modify
 		     // it by adding the inferred types.
 		     var rnode = ecore.get_node(inf_iid);
@@ -1448,7 +1446,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	// TODO: Eventually we'll
 	ll('try setup for messaging at: ' + global_message_server);
 	msngr = new bbop_messenger_client(global_message_server,
-					  ticket_to_ride,
+					  in_token,
 					  _on_connect,
 					  _on_initialization,
 					  _on_info_update,
@@ -1635,23 +1633,62 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 ///
 /// Startup.
 ///
+/// TODO: It would be good to have a general standard registry set so
+/// that the bits here and above share the same registry code. Or
+/// maybe I can just apss the manager in?
+///
 
 // Start the day the jsPlumb way.
 jsPlumb.ready(function(){
-		  // Only roll if the env is correct.
-		  if( typeof(global_id) !== 'undefined' &&
-		      typeof(global_server_base) !== 'undefined' ){
-			  if( typeof(global_model) !== 'undefined' &&
-				    global_model ){
-				  MMEnvInit(global_model,
-					    global_known_relations,
-					    global_server_base);
-			  }else{
-			      alert('nothing loadable found');
-			      //throw new Error('nothing loadable found');
-			  }
-		      }else{
-			  alert('environment not ready');
-			  //throw new Error('environment not ready');
-		      }
-	      });
+
+    // Get token well defined.
+    var ticket_to_ride = '_anonymous_token_';
+    if( global_barista_token ){
+	ticket_to_ride = global_barista_token;
+    }
+
+    // Next we need a manager to try and pull in the model.
+    if( typeof(global_id) === 'undefined' ||
+	typeof(global_server_base) === 'undefined' ){
+	    alert('environment not ready');
+	}else{
+	    var manager =
+		new bbop_mme_manager2(global_server_base, 'mmm', ticket_to_ride);
+
+	    // Have a manager and model id, defined a success callback
+	    // and try and get the full model to start the bootstrap.
+	    manager.register('manager_error', 'foo',
+			     function(message_type, message){
+				 alert('There was an early connection error (' +
+				       message_type + '): ' + message);
+			     }, 10);
+	    manager.register('error', 'foo',
+			     function(resp, man){
+				 
+				 var ex_msg = '';
+				 if( resp.commentary() &&
+				     resp.commentary().exceptionMsg ){
+					 ex_msg = ' ['+
+					     resp.commentary().exceptionMsg +']';
+				     }
+				 alert('Error (' +
+				       resp.message_type() + '): ' +
+				       resp.message() + '; ' +
+				       'your early operation was likely not performed'+
+				       ex_msg);
+			     }, 10);
+	    manager.register('rebuild', 'foo',
+			     function(resp, man){
+				 //alert('in');
+				 // Replace placeholder at top level for debug.
+				 global_model = resp.data();
+				 // Bootstrap rest of session.
+				 MMEnvInit(resp.data(),
+					   global_known_relations,
+					   global_server_base,
+					   ticket_to_ride);
+			     });
+	    manager.get_model(global_id);
+	}	
+
+});

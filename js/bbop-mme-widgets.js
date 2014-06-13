@@ -230,7 +230,7 @@ bbop_mme_widgets.enode_to_stack = function(enode, aid){
 	    var ainf = a.inferred_p();
 	    var binf = b.inferred_p();
 	    if( ainf != binf ){
-		if( bind ){
+		if( binf ){
 		    return 1;
 		}else{
 		    return -1;
