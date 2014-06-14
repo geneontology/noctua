@@ -560,8 +560,6 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 		 // Get ID.
 		 var inf_iid = indv['id'] || null;
 		 if( inf_iid ){
-		     ll('inf: ' + inf_iid);
-		     
 		     // If we have a node pointer in our hands--modify
 		     // it by adding the inferred types.
 		     var rnode = ecore.get_node(inf_iid);

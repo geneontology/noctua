@@ -686,6 +686,42 @@ bbop_mme_edit.type.prototype.inferred_p = function(){
     return this._inferred_p;
 };
 
+/**
+ * Function: signature
+ * 
+ * A cheap way of identifying if two types are the same.
+ * This essentially returns a string of the main attributes of a type.
+ * It is meant to be semi-unique and collide with dupe inferences.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string
+ */
+bbop_mme_edit.type.prototype.signature = function(){
+    var anchor = this;
+    var each = bbop.core.each;
+
+    var sig = [];
+
+    // The easy ones.
+    sig.push(anchor.category() || '');
+    sig.push(anchor.type() || '');
+    sig.push(anchor.class_id() || '');
+    sig.push(anchor.property_id() || '');
+
+    // And now recursively on frames.
+    if( anchor.frame() ){
+	each(anchor.frame(),
+	     function(f){
+		 sig.push(f.signature() || '');
+	     });
+    }
+
+    return sig.join('_');
+};
+
 /** 
  * Function: category
  *
@@ -751,7 +787,7 @@ bbop_mme_edit.type.prototype.svf_class_expression = function(){
 /** 
  * Function: frame
  *
- * If the type has a recursive frame, a list of the types is contains.
+ * If the type has a recursive frame, a list of the types it contains.
  *
  * Parameters: 
  *  n/a

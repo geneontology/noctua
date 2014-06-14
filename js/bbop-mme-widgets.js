@@ -213,36 +213,63 @@ bbop_mme_widgets.wipe = function(div){
 };
 
 /*
- *  Takes a core edit node as the argument, categorize the
- *  contained types, order them.
+ * Takes a core edit node as the argument, categorize the
+ * contained types, order them.
+ *
+ * As a secondary function, remove overly "dupe-y" inferred types.
  */
 bbop_mme_widgets.enode_to_stack = function(enode, aid){
 	
     var each = bbop.core.each;
+    var pare = bbop.core.pare;
+
+    // 
+    var sig_lookup = {};
+    var bin_stack = enode.types() || [];
+
+    // Get ready to remove "dupes", first by collecting the signatures
+    // of the non-inferred individual types.
+    each(bin_stack,
+	 function(t){
+	     if( ! t.inferred_p() ){
+		 sig_lookup[t.signature()] = true;
+	     }
+	 });
 
     // Sort the types within the stack according to the known
     // type priorities.
-    var bin_stack = enode.types() || [];
-    bin_stack = bin_stack.sort(
-	function(a, b){
+    function _sorter(a, b){
 
-	    // Inferred nodes always have ??? priority.
-	    var ainf = a.inferred_p();
-	    var binf = b.inferred_p();
-	    if( ainf != binf ){
-		if( binf ){
-		    return 1;
-		}else{
-		    return -1;
-		}
+	// Inferred nodes always have ??? priority.
+	var ainf = a.inferred_p();
+	var binf = b.inferred_p();
+	if( ainf != binf ){
+	    if( binf ){
+		return 1;
+	    }else{
+		return -1;
 	    }
+	}
 	
-	    // Otherwise, use aid property priority.
-	    var bpri = aid.priority(b.property_id());
-	    var apri = aid.priority(a.property_id());
-	    return apri - bpri;
-	});
-    
+	// Otherwise, use aid property priority.
+	var bpri = aid.priority(b.property_id());
+	var apri = aid.priority(a.property_id());
+	return apri - bpri;
+    };
+
+    // Filter anything out that has a matching signature.
+    function _filterer(item){
+	var ret = false;
+	if( item.inferred_p() ){
+	    if( sig_lookup[item.signature()] ){
+		ret = true;
+	    }
+	}
+	return ret;
+    }
+
+    bin_stack = pare(bin_stack, _filterer, _sorter);
+
     return bin_stack;
 };
     
