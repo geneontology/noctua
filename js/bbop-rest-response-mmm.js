@@ -369,7 +369,7 @@ bbop_rest_response_mmm.prototype.inferred_individuals = function(){
     var ret = [];
     if( this._data && this._data['individuals_i'] && 
 	bbop.core.is_array(this._data['individuals_i']) ){
-	ret = this._data['individuals'];
+	ret = this._data['individuals_i'];
     }
     return ret;
 };

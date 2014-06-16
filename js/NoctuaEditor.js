@@ -526,6 +526,20 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	}
     }
 	
+    // squeeze the inferred individual info out to id -> types
+    function _squeezed_inferred(inferred_individuals){
+	var inf_indv_lookup = {}; // ids to types
+	each(inferred_individuals, // fold in inferred type information
+		 function(indv){
+		     // Get ID.
+		     var inf_iid = indv['id'] || null;
+		     if( inf_iid ){
+			 inf_indv_lookup[inf_iid] = indv['type'] || [];
+		     }
+		 });
+	return inf_indv_lookup;
+    }
+
     // The core initial layout function.
     function _rebuild_model_and_display(model_id, individuals,
 					inferred_individuals,
@@ -547,27 +561,16 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	// Reconstruct ecore meta.
 	_rebuild_meta(model_id, annotations);
 
+	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+
 	// Starting fresh, add everything coming in to the edit model.
 	each(individuals, // add nodes
 	     function(indv){
-		 ecore.add_node_from_individual(indv);
-	     });
-	each(inferred_individuals, // fold in inferred type information
-	     function(indv){
-		 // TODO/BUG: Too much internal exposure--this section
-		 // should be folded into a ecore function like
-		 // "merge_inferred_types" once stablized.
-		 // Get ID.
-		 var inf_iid = indv['id'] || null;
-		 if( inf_iid ){
-		     // If we have a node pointer in our hands--modify
-		     // it by adding the inferred types.
-		     var rnode = ecore.get_node(inf_iid);
-		     if( rnode ){
-			 var inf_types = indv['type'] || [];
-			 rnode.add_types(inf_types, true);
-		     }
-		 }
+		 var unode = ecore.add_node_from_individual(indv);
+
+		 // Add inferred info.
+		 var inftypes = inf_indv_lookup[unode.id()];
+		 if( inftypes ){ unode.add_types(inftypes, true); }
 	     });
 	each(facts, // add facts
 	     function(fact){
@@ -738,6 +741,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     function _merge_from_new_data(individuals, inferred_individuals,
 				  facts, raw_annotations){
 
+	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+
 	// Next, look at individuals/nodes for addition or updating.
 	each(individuals,
 	     function(ind){
@@ -751,6 +756,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 
 		     // "Update" the edit node in core by clobbering it.
 		     var unode = ecore.add_node_from_individual(ind);
+
+		     // Add inferred info.
+		     var inftypes = inf_indv_lookup[unode.id()];
+		     if( inftypes ){
+			 ll('add inftypes: ' + inftypes.length);
+			 ll('...and? ' + unode.add_types(inftypes, true));
+		     }
 
 		     // Wipe node contents; redraw node contents.
 		     widgets.update_enode(ecore, unode, aid);
@@ -766,6 +778,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 		     // some work.
 		     ecore.add_node_from_individual(ind);
 		     var dyn_node = ecore.get_node_by_individual(ind);
+
+		     // Add inferred info.
+		     var dinftypes = inf_indv_lookup[dyn_node.id()];
+		     if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
+
 		     if( ! dyn_node ){
 			 alert('id issue somewhere--refresh to see state');
 		     }else{
@@ -786,7 +803,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 		     }
 		 }
 
-		 // Refresh any node created or updated.
+		 // Refresh any node created or updated in the jsPlumb
+		 // physical view.
 		 if( refresh_node_id ){
 		     
 		     // Make node active in display.
