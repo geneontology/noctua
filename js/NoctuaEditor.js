@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_model, in_relations, in_server_base){
+var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -46,11 +46,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     var historical_store = new bbop_location_store();
 
     // Events registry.
-    var ticket_to_ride = '_anonymous_token_';
-    if( global_barista_token ){
-	ticket_to_ride = global_barista_token;
-    }
-    var manager = new bbop_mme_manager2(in_server_base, 'mmm', ticket_to_ride);
+    var manager = new bbop_mme_manager2(in_server_base, 'mmm', in_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -530,8 +526,23 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	}
     }
 	
+    // squeeze the inferred individual info out to id -> types
+    function _squeezed_inferred(inferred_individuals){
+	var inf_indv_lookup = {}; // ids to types
+	each(inferred_individuals, // fold in inferred type information
+		 function(indv){
+		     // Get ID.
+		     var inf_iid = indv['id'] || null;
+		     if( inf_iid ){
+			 inf_indv_lookup[inf_iid] = indv['type'] || [];
+		     }
+		 });
+	return inf_indv_lookup;
+    }
+
     // The core initial layout function.
     function _rebuild_model_and_display(model_id, individuals,
+					inferred_individuals,
 					facts, annotations){
 
 	ll('rebuilding from scratch');
@@ -550,12 +561,18 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	// Reconstruct ecore meta.
 	_rebuild_meta(model_id, annotations);
 
+	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+
 	// Starting fresh, add everything coming in to the edit model.
-	each(individuals,
+	each(individuals, // add nodes
 	     function(indv){
-		 ecore.add_node_from_individual(indv);
+		 var unode = ecore.add_node_from_individual(indv);
+
+		 // Add inferred info.
+		 var inftypes = inf_indv_lookup[unode.id()];
+		 if( inftypes ){ unode.add_types(inftypes, true); }
 	     });
-	each(facts,
+	each(facts, // add facts
 	     function(fact){
 		 ecore.add_edge_from_fact(fact, aid);
 	     });
@@ -721,9 +738,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     // This is a very important core function. It's purpose is to
     // update the local model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_new_data(individuals, facts, raw_annotations){
+    function _merge_from_new_data(individuals, inferred_individuals,
+				  facts, raw_annotations){
 
-	// First look at individuals/nodes for addition or updating.
+	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+
+	// Next, look at individuals/nodes for addition or updating.
 	each(individuals,
 	     function(ind){
 		 // Update node. This is preferred since
@@ -736,6 +756,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 
 		     // "Update" the edit node in core by clobbering it.
 		     var unode = ecore.add_node_from_individual(ind);
+
+		     // Add inferred info.
+		     var inftypes = inf_indv_lookup[unode.id()];
+		     if( inftypes ){
+			 ll('add inftypes: ' + inftypes.length);
+			 ll('...and? ' + unode.add_types(inftypes, true));
+		     }
 
 		     // Wipe node contents; redraw node contents.
 		     widgets.update_enode(ecore, unode, aid);
@@ -751,6 +778,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     // some work.
 		     ecore.add_node_from_individual(ind);
 		     var dyn_node = ecore.get_node_by_individual(ind);
+
+		     // Add inferred info.
+		     var dinftypes = inf_indv_lookup[dyn_node.id()];
+		     if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
+
 		     if( ! dyn_node ){
 			 alert('id issue somewhere--refresh to see state');
 		     }else{
@@ -771,7 +803,8 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 		     }
 		 }
 
-		 // Refresh any node created or updated.
+		 // Refresh any node created or updated in the jsPlumb
+		 // physical view.
 		 if( refresh_node_id ){
 		     
 		     // Make node active in display.
@@ -959,6 +992,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 
 			 var mid = resp.model_id();
 			 var mindividuals = resp.individuals();
+			 var mindividuals_i = resp.inferred_individuals();
 			 var mfacts = resp.facts();
 			 var mannotations = resp.annotations();
 
@@ -966,7 +1000,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 if( ! mid || is_empty(mindividuals) ){
 			     alert('no data/individuals in inconsistent');
 			 }else{
-			     _rebuild_model_and_display(mid, mindividuals,
+			     _rebuild_model_and_display(mid,
+							mindividuals,
+							mindividuals_i,
 							mfacts, mannotations);
 			 }
 		     }, 10);
@@ -979,13 +1015,15 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 			 _update_filter(resp, man);
 
 			 var individuals = resp.individuals();
+			 var individuals_i = resp.inferred_individuals();
 			 var facts = resp.facts();
 			 var annotations = resp.annotations();
 			 if( ! individuals ){
 			     alert('no data/individuals in merge--unable to do');
 			 }else{
-			     _merge_from_new_data(individuals, facts,
-						  annotations);
+			     _merge_from_new_data(individuals,
+						  individuals_i,
+						  facts, annotations);
 			 }
 		     }, 10);
 
@@ -1305,9 +1343,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
     _shields_up();
     var init_mid = model_json['id'];
     var init_indvs = model_json['individuals'];
+    var init_indvs_i = model_json['individuals_i'] || [];
     var init_facts = model_json['facts'];
     var init_anns = model_json['annotations'] || [];
-    _rebuild_model_and_display(init_mid, init_indvs, init_facts, init_anns);
+    _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
+			       init_facts, init_anns);
     _refresh_tables();
     _shields_down();
 
@@ -1422,7 +1462,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 	// TODO: Eventually we'll
 	ll('try setup for messaging at: ' + global_message_server);
 	msngr = new bbop_messenger_client(global_message_server,
-					  ticket_to_ride,
+					  in_token,
 					  _on_connect,
 					  _on_initialization,
 					  _on_info_update,
@@ -1609,23 +1649,62 @@ var MMEnvInit = function(in_model, in_relations, in_server_base){
 ///
 /// Startup.
 ///
+/// TODO: It would be good to have a general standard registry set so
+/// that the bits here and above share the same registry code. Or
+/// maybe I can just apss the manager in?
+///
 
 // Start the day the jsPlumb way.
 jsPlumb.ready(function(){
-		  // Only roll if the env is correct.
-		  if( typeof(global_id) !== 'undefined' &&
-		      typeof(global_server_base) !== 'undefined' ){
-			  if( typeof(global_model) !== 'undefined' &&
-				    global_model ){
-				  MMEnvInit(global_model,
-					    global_known_relations,
-					    global_server_base);
-			  }else{
-			      alert('nothing loadable found');
-			      //throw new Error('nothing loadable found');
-			  }
-		      }else{
-			  alert('environment not ready');
-			  //throw new Error('environment not ready');
-		      }
-	      });
+
+    // Get token well defined.
+    var ticket_to_ride = '_anonymous_token_';
+    if( global_barista_token ){
+	ticket_to_ride = global_barista_token;
+    }
+
+    // Next we need a manager to try and pull in the model.
+    if( typeof(global_id) === 'undefined' ||
+	typeof(global_server_base) === 'undefined' ){
+	    alert('environment not ready');
+	}else{
+	    var manager =
+		new bbop_mme_manager2(global_server_base, 'mmm', ticket_to_ride);
+
+	    // Have a manager and model id, defined a success callback
+	    // and try and get the full model to start the bootstrap.
+	    manager.register('manager_error', 'foo',
+			     function(message_type, message){
+				 alert('There was an early connection error (' +
+				       message_type + '): ' + message);
+			     }, 10);
+	    manager.register('error', 'foo',
+			     function(resp, man){
+				 
+				 var ex_msg = '';
+				 if( resp.commentary() &&
+				     resp.commentary().exceptionMsg ){
+					 ex_msg = ' ['+
+					     resp.commentary().exceptionMsg +']';
+				     }
+				 alert('Error (' +
+				       resp.message_type() + '): ' +
+				       resp.message() + '; ' +
+				       'your early operation was likely not performed'+
+				       ex_msg);
+			     }, 10);
+	    manager.register('rebuild', 'foo',
+			     function(resp, man){
+				 //alert('in');
+				 // Replace placeholder at top level for debug.
+				 global_model = resp.data();
+				 // Bootstrap rest of session.
+				 MMEnvInit(resp.data(),
+					   global_known_relations,
+					   global_server_base,
+					   ticket_to_ride);
+			     });
+	    manager.get_model(global_id);
+	}	
+
+});

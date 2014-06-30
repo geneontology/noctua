@@ -434,33 +434,33 @@ var NoctuaLauncher = function(){
 		    // Try and see if we have an API token.
 		    var barista_token = self.get_token(req);
 		    
-		    // 
-		    function mme_callback_action(resp, man){
+		    // // 
+		    // function mme_callback_action(resp, man){
 			
-			if( ! resp.okay() ){
-			    res.setHeader('Content-Type', 'text/html');
-			    res.send('bad doc:' + query);
-			}else{				   
+		    // 	if( ! resp.okay() ){
+		    // 	    res.setHeader('Content-Type', 'text/html');
+		    // 	    res.send('bad doc:' + query);
+		    // 	}else{				   
 			    
-			    //console.log('in success callback');
-			    var obj = resp.data();
+		    // 	    //console.log('in success callback');
+		    // 	    var obj = resp.data();
 			    
-			    self.bootstrap_editor(res, notw, query, obj,
+			    self.bootstrap_editor(res, notw, query, null,
 						  known_relations, msgloc,
 						  barista_token);
-			}
-		    }
+		    // 	}
+		    // }
 		    
-		    // Assemble query to get the desired MM.
-		    var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
-		    m.register('success', 'foo', mme_callback_action);
-		    m.register('error', 'bar', _generic_error_resp);
-		    var t = msgloc + '/api/mmm/m3GetModel';
-		    var t_args = {
-			'modelId': query
-		    };
-		    var astr = m.action(t, t_args);
-		    console.log("action to: " + astr);
+		    // // Assemble query to get the desired MM.
+		    // var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
+		    // m.register('success', 'foo', mme_callback_action);
+		    // m.register('error', 'bar', _generic_error_resp);
+		    // var t = msgloc + '/api/mmm/m3GetModel';
+		    // var t_args = {
+		    // 	'modelId': query
+		    // };
+		    // var astr = m.action(t, t_args);
+		    // console.log("action to: " + astr);
 		}
 	    });
 	

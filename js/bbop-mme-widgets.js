@@ -213,23 +213,63 @@ bbop_mme_widgets.wipe = function(div){
 };
 
 /*
- *  Takes a core edit node as the argument, categorize the
- *  contained types, order them.
+ * Takes a core edit node as the argument, categorize the
+ * contained types, order them.
+ *
+ * As a secondary function, remove overly "dupe-y" inferred types.
  */
 bbop_mme_widgets.enode_to_stack = function(enode, aid){
 	
     var each = bbop.core.each;
+    var pare = bbop.core.pare;
+
+    // 
+    var sig_lookup = {};
+    var bin_stack = enode.types() || [];
+
+    // Get ready to remove "dupes", first by collecting the signatures
+    // of the non-inferred individual types.
+    each(bin_stack,
+	 function(t){
+	     if( ! t.inferred_p() ){
+		 sig_lookup[t.signature()] = true;
+	     }
+	 });
 
     // Sort the types within the stack according to the known
     // type priorities.
-    var bin_stack = enode.types() || [];
-    bin_stack = bin_stack.sort(
-	function(a, b){
-	    var bpri = aid.priority(b.property_id());
-	    var apri = aid.priority(a.property_id());
-	    return apri - bpri;
-	});
-    
+    function _sorter(a, b){
+
+	// Inferred nodes always have ??? priority.
+	var ainf = a.inferred_p();
+	var binf = b.inferred_p();
+	if( ainf != binf ){
+	    if( binf ){
+		return 1;
+	    }else{
+		return -1;
+	    }
+	}
+	
+	// Otherwise, use aid property priority.
+	var bpri = aid.priority(b.property_id());
+	var apri = aid.priority(a.property_id());
+	return apri - bpri;
+    };
+
+    // Filter anything out that has a matching signature.
+    function _filterer(item){
+	var ret = false;
+	if( item.inferred_p() ){
+	    if( sig_lookup[item.signature()] ){
+		ret = true;
+	    }
+	}
+	return ret;
+    }
+
+    bin_stack = pare(bin_stack, _filterer, _sorter);
+
     return bin_stack;
 };
     
@@ -245,9 +285,14 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
 					      {'class':'bbop-mme-stack-table'});
 
     // Add type/color information.
+    var inferred_type_count = 0;
     var ordered_types = bbop_mme_widgets.enode_to_stack(enode, aid);
     each(ordered_types,
 	 function(item){
+
+	     // Special visual handling of inferred types.
+	     if( item.inferred_p() ){ inferred_type_count++; }
+
 	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
 		 'style="background-color: ' +
 		 aid.color(item.category()) +
@@ -275,6 +320,14 @@ bbop_mme_widgets.render_node_stack = function(enode, aid){
 	    + 'evidence: ' + n_ev + '; other: ' + n_other + 
 	    '</small></td></tr>';
 	enode_stack_table.add_to(trstr);
+    }
+
+    // Add external visual cue if there were inferred types.
+    if( inferred_type_count > 0 ){
+	var itcstr = '<tr class="bbop-mme-stack-tr">' +
+		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+		'inferred types: ' + inferred_type_count + '</small></td></tr>';
+	enode_stack_table.add_to(itcstr);
     }
 
     return enode_stack_table;
@@ -708,8 +761,10 @@ bbop_mme_widgets.edit_node_modal = function(ecore, manager, enode,
 	     acache.push('<li class="list-group-item" style="background-color: '
 			 + aid.color(item.category()) + ';">');
 	     acache.push(type_str);
-	     acache.push('<span id="'+ eid +
-			 '" class="badge app-delete-mark">X</span>');
+	     if( ! item.inferred_p() ){
+		 acache.push('<span id="'+ eid +
+			     '" class="badge app-delete-mark">X</span>');
+	     }
 	     acache.push('<div class="clearfix"></div>');
 	     acache.push('</li>');
 	     type_list.push(acache.join(''));
