@@ -1,8 +1,13 @@
 ////
+//// List the "saved" files that GO-MME is producing. Do this by 1)
+//// get a listing of the files uploaded to the S3 bucket and 2) munge
+//// them into what the CDN contains.
+////
 //// http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjects-property
 ////
+//// A JSON file of credentials is required like:
+////
 //// { "accessKeyId": "XXX", "secretAccessKey": "YYY", "region": "us-east-1" }
-
 ////
 
 var AWS = require('aws-sdk');
