@@ -1884,7 +1884,7 @@ bbop.version.revision = "2.1.1";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140515";
+bbop.version.release = "20140616";
 /*
  * Package: logger.js
  * 
@@ -13802,7 +13802,7 @@ bbop.widget.display.button_templates.field_download = function(label,
 			    }
 			}
 		    };
-		    new bbop.widget.dialog('<h4>Download (up to ' + count + ')</h4><p>By clicking "Download", you may download up to ' + count + ' lines in your browser in a new window. If your request is large or if the the server busy, this may take a while to complete--please be patient.</p>',
+		    new bbop.widget.dialog('<h4>Download (up to ' + count + ')</h4><p>You may download up to ' + count + ' lines in a new window. If your request is large or if the the server busy, this may take a while to complete--please be patient.</p>',
 					   dialog_props);
 		    //window.open(raw_gdl, '_blank');
 		};
@@ -14162,7 +14162,8 @@ bbop.widget.display.button_templates.flexible_download = function(label, count,
 			// Stub sender.
 			var dss_args = {
 			    title: 'Select the fields to download (up to ' + count + ')',
-			    blurb: 'By clicking "Download" at the bottom, you may download up to ' + count + ' lines in your browser in a new window. If your request is large or if the the server busy, this may take a while to complete--please be patient.',
+			    blurb: '<p><strong>Drag and drop</strong> the desired fields <strong>from the left</strong> column (available pool) <strong>to the right</strong> (selected fields). You may also reorder them.</p><p>Download up to ' + count + ' lines in a new window by clicking <strong>Download</strong>. If your request is large or if the the server busy, this may take a while to complete--please be patient.</p>',
+			    //blurb: 'By clicking "Download" at the bottom, you may download up to ' + count + ' lines in your browser in a new window. If your request is large or if the the server busy, this may take a while to complete--please be patient.',
 			    pool_list: pool_list,
 			    selected_list: start_list,
 			    action_label: 'Download',
