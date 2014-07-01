@@ -14,6 +14,7 @@ var mustache = require('mustache');
 var fs = require('fs');
 var url = require('url');
 var querystring = require('querystring');
+var crypto = require('crypto');
 
 // Required add-on libs.
 var bbop = require('bbop').bbop;
@@ -25,6 +26,18 @@ var what_is = bbop.core.what_is;
 var is_defined = bbop.core.is_defined;
 
 var notw = 'Barista';
+
+///
+/// Helpers.
+///
+
+// Strings to md5.
+function str2md5(str){
+    var shasum = crypto.createHash('md5');
+    shasum.update(str);
+    var ret = shasum.digest('hex');
+    return ret;
+}
 
 ///
 /// User information/sessions/login.
@@ -73,8 +86,13 @@ var BaristaLauncher = function(){
     ///
 
     // Bring in metadata that will be used for 
-    var ud_str = fs.readFileSync('./config/permissions.json');
-    var user_metadata = JSON.parse(ud_str);
+    var auth_str = fs.readFileSync('./config/auth.json');
+    var auth_list = JSON.parse(auth_str);
+    var auth_metadata = {};
+    each(auth_list,
+	 function(a){
+	     auth_metadata[a['email-md5']] = a;
+	 });
 
     // Colors.
     var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
@@ -160,7 +178,13 @@ var BaristaLauncher = function(){
 	// search?
 	audience: msgloc,
 	verifyResponse: function(err, req, res, email){
-	    if( user_metadata[email] ){
+
+	    // Reduce to md5 for check.
+	    var email_md5 = str2md5(email);
+	    if( ! auth_metadata[email_md5] ){
+		console.log('login fail; unknown hashed email: ' + email);
+		res.json({status: "failure", reason: "not in auth.json"});
+	    }else{
 
 		// Adjust this client/server session.
 		req.session.authorized = true;
@@ -185,8 +209,6 @@ var BaristaLauncher = function(){
 			  token: token, color: color});
 		return;
 	    }
-	    console.log('login fail; unknown email: ' + email);
-	    res.json({status: "failure", reason: "not in permissions.json"});
 	},
 	logoutResponse: function(err, req, res) {
 	    if (req.session.authorized) {

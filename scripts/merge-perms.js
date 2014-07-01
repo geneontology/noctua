@@ -22,12 +22,9 @@ var each = bbop.core.each;
 
 // Strings to md5.
 function str2md5(str){
-    var ret = null;
-
     var shasum = crypto.createHash('md5');
     shasum.update(str);
     var ret = shasum.digest('hex');
-
     return ret;
 }
 
