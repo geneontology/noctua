@@ -24,6 +24,7 @@ var amigo = require('amigo2').amigo;
 var each = bbop.core.each;
 var what_is = bbop.core.what_is;
 var is_defined = bbop.core.is_defined;
+var clone =  bbop.core.clone;
 
 var notw = 'Barista';
 
@@ -31,18 +32,170 @@ var notw = 'Barista';
 /// Helpers.
 ///
 
-// Strings to md5.
-function str2md5(str){
-    var shasum = crypto.createHash('md5');
-    shasum.update(str);
-    var ret = shasum.digest('hex');
-    return ret;
-}
-
 ///
 /// User information/sessions/login.
 ///
 
+var Sessioner = function(auth_list){
+    var self = this;
+
+    // Generate a new token.
+    function get_token(){
+	var token = bbop.core.randomness(20);
+	return token;
+    }
+
+    // Colors.
+    function get_color(){
+	var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
+	var rci = Math.floor(Math.random() * ucolor_list.length);
+	var color = ucolor_list[rci];
+	return color;
+    }
+
+    // Strings to md5.
+    function str2md5(str){
+	var shasum = crypto.createHash('md5');
+	shasum.update(str);
+	var ret = shasum.digest('hex');
+	return ret;
+    }
+
+    // User information is statically stored by various keys. To
+    // become a sessions, it is aggregated over in sessions_by_token.
+    var uinf_by_md5 = {};
+    //var uinf_by_email = {};
+    //var uinf_by_socket = {}; // will have to be built as we go
+    each(auth_list,
+	 function(a){
+	     //uinf_by_email[a['email']] = a;
+	     uinf_by_md5[a['email-md5']] = a;
+	     //uinf_by_socket[a['email-md5']] = a;
+	 });
+
+    // At the end, all sessions are keyed by the referring token.
+    var sessions_by_token = {};
+    // This is tied to the session.
+    var email2token = {};
+
+    /*
+     * Failure is an unknown, unauthorized, or ill-formed user.
+     */
+    self.authorize_by_email = function(email){
+	var ret = false;
+
+	// Our requirements are: email (by md5 proxy), xref, and
+	// "minerva-go" authorization (empty is fine).
+	var emd5 = str2md5(email);
+	var uinf = uinf_by_md5[emd5];
+	if( uinf ){
+	    if( uinf['xref'] &&
+		uinf['authorizations'] &&
+		uinf['authorizations']['minerva-go'] ){
+		    ret = true;
+		}
+	}
+
+	return ret;
+    };
+    
+    /*
+     * Will not clobber if a session exists--just return what's there.
+     * Cloned object or null.
+     */
+    // TODO: Session lifespan: every time a new session is created,
+    // clear out old sessions.
+    self.create_session_by_email = function(email){
+	var ret = null;
+
+	if( ! self.authorize_by_email(email) ){
+	    // Cannot.
+	}else{
+	    
+	    // Get info ready to create new session.
+	    var emd5 = str2md5(email);
+	    var uinf = uinf_by_md5[emd5];
+	    var color = get_color();
+
+	    // Create new session.
+	    var new_token = get_token();
+	    sessions_by_token[new_token] = {
+		'nickname': uinf['nickname'] || '???',
+		'email': email,
+		'token': new_token,
+		'color': color
+	    };
+	    email2token[email] = new_token;
+
+	    // Clone for return.
+	    ret = clone(sessions_by_token[new_token]);
+	}
+
+	return ret;
+    };
+
+    /*
+     * Cloned object or null.
+     */
+    self.get_session_by_email = function(email){
+	var token = email2token[email];
+	var ret = self.get_session_by_token(token);
+	return ret;
+    };
+
+    /*
+     * Cloned object or null.
+     */
+    self.get_session_by_token = function(token){
+	var ret = null;
+
+	if( token ){
+	    var sess =  sessions_by_token[token];
+	    if( sess ){
+		ret = clone(sess);
+	    }
+	}
+
+	return ret;
+    };
+
+    /*
+     * True or false.
+     */
+    self.delete_session_by_email = function(email){
+	var ret = null;
+	
+	var token = email2token[email];
+	if( token ){
+	    delete sessions_by_token[token];
+	    delete email2token[email];
+	    ret = true;
+	}
+
+	return ret;
+    };
+
+    /*
+     * True or false.
+     */
+    self.delete_session_by_token = function(token){
+	var ret = false;
+
+	if( sessions_by_token[token] ){
+	    var email = sessions_by_token[token]['email'];
+	    delete email2token[email];
+	    delete sessions_by_token[token];
+	    ret = true;
+	}
+	
+	return ret;
+    };
+
+};
+
+///
+/// Main.
+///
 var BaristaLauncher = function(){
     var self = this;
 
@@ -186,28 +339,44 @@ var BaristaLauncher = function(){
 		res.json({status: "failure", reason: "not in auth.json"});
 	    }else{
 
-		// Adjust this client/server session.
-		req.session.authorized = true;
-
 		// Add to internal session system--generate the token and
 		// attach it to user information.
 		var token = bbop.core.randomness(20);
+
+		// Randomly generate a color for this user.
 		var rci = Math.floor(Math.random() * ucolor_list.length);
 		var color = ucolor_list[rci];
-		var user_data = {
-		    'email': email,
-		    'color': color,
-		    'token': token
-		};
-		user_info_by_token[token] = user_data;
-		user_info_by_email[email] = user_data;
 
-		console.log('login success (' + email + '): ' + token);
-		//console.log('session: ', req.session);
+		var nick = auth_metadata[email_md5]['nickname'] || '???';
 
-		res.json({status: "okay", email: email,
-			  token: token, color: color});
-		return;
+		var xref = auth_metadata[email_md5]['xref'] || null;
+		if( ! xref ){ // cannot continue--no xref for id
+		    console.log('xref FAIL for (' + email + '): ' + token);
+		    res.json({status: "failure", reason: "no xref for user"});
+		}else{
+
+		    // Adjust this client/server session.
+		    req.session.authorized = true;
+
+		    // Apply the user data.
+		    var user_data = {
+			'email': email,
+			'email-md5': email_md5,
+			'color': color,
+			'token': token,
+			'name': auth_metadata[email_md5]['nickname'] || email,
+			'xref': xref
+		    };
+		    user_info_by_token[token] = user_data;
+		    user_info_by_email[email] = user_data;
+		    
+		    console.log('login success (' + email + '): ' + token);
+		    //console.log('session: ', req.session);
+
+		    res.json({status: "okay", email: email, name: nick,
+			      token: token, color: color});
+		    return; // return success
+		}
 	    }
 	},
 	logoutResponse: function(err, req, res) {
@@ -571,6 +740,7 @@ sio.sockets.on('connection',
 				 socket.broadcast.emit('clairvoyance', data);
 			     });
 
+		   // TODO: This needs to be blocked on auth issues.
 		   socket.on('telekinesis',
 			     function(data){
 				 //console.log('srv remove: ' + data);
