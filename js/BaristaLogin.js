@@ -51,6 +51,7 @@ var LoginInit = function(){
 
 			    // Build up interface.
 			    jQuery('#current-status').hide();
+			    jQuery('#logged-in-name').append(data.name);
 			    jQuery('#logged-in-email').append(data.email);
 			    jQuery('#logged-in-color').append(data.color);
 			    jQuery('#logged-in-token').append(data.token);
