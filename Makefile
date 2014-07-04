@@ -1,19 +1,17 @@
 ####
 #### Example of running locally:
-####  M3LOC=http://localhost:6800 make start-noctua
+####   make start-noctua
 ####
 
-## Variable to pass the location of the MMM server to the deploying
-## app.
-M3LOC ?= http://localhost:6800
+# ## Variable to pass the location definition Minerva server server to the deploying
+# ## app.
+# MINERVA ?= minerva_local
 
-## Variable to pass the location of the (optional) messaging server to
-## the deploying app.
-MSGLOC ?= http://localhost:3400
+## Variable to define where Noctua looks for Barista.
+BARISTA_LOCATION ?= http://localhost:3400
 
-## Variable to pass the desired port to use to the messaging server at
-## startup.
-MSGPORT ?= 3400
+## Variable to define the port that Barista starts on.
+BARISTA_PORT ?= 3400
 
 ## Testing.
 TESTS = \
@@ -52,12 +50,12 @@ pass:
 ##
 .PHONY: start-noctua-dev
 start-noctua-dev: assemble-app
-	MSGLOC=$(MSGLOC) node noctua.js
+	BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
-	MSGLOC=$(MSGLOC) node noctua.js
+	BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
 
 ###
 ### Commands/environment for messaging server.
@@ -65,11 +63,11 @@ start-noctua:
 
 .PHONY: start-barista-dev
 start-barista-dev: assemble-app
-	MSGPORT=$(MSGPORT) MSGLOC=$(MSGLOC) node barista.js
+	BARISTA_PORT=$(BARISTA_PORT) node barista.js
 
 .PHONY: start-barista
 start-barista:
-	MSGPORT=$(MSGPORT) MSGLOC=$(MSGLOC) node barista.js
+	BARISTA_PORT=$(BARISTA_PORT) node barista.js
 
 ###
 ### Documentation for JavaScript.
