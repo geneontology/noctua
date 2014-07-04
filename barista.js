@@ -6,7 +6,7 @@
 ////  static/messenger.html
 ////  node_modules/socket.io/
 ////
-//// MSGPORT=3400 make start-barista
+//// BARISTA_PORT=3400 make start-barista
 ////
 
 // Required shareable Node libs.
@@ -29,13 +29,81 @@ var clone =  bbop.core.clone;
 var notw = 'Barista';
 
 ///
-/// Helpers.
+/// Backend application authorization monitor.
 ///
+
+var AppGuard = function(app_list){
+    var self = this;
+
+    // Assemble easy-to-access information for all of the apps behind
+    // Barista.
+    var app_by_namespace = {};
+    each(app_list,
+	 function(a){
+	     
+	     var aid = a['id'];
+	     app_by_namespace[aid] = {
+		 "target": a['target'],
+		 "public": a['public']
+	     };
+	     
+	     each(a['public'],
+		  function(p){
+		      app_by_namespace[aid]['public'][p] = true;
+		  });
+	 });
+    
+    /*
+     * true or false.
+     */
+    self.has_app = function(namespace){
+	var ret = false;
+
+	if( app_by_namespace[namespace] ){
+	    ret = true;
+	}
+	
+	return ret;
+    };
+
+    /*
+     * string or null.
+     */
+    self.app_target = function(namespace){
+	var ret = null;
+
+	if( app_by_namespace[namespace] ){
+	    ret = app_by_namespace[namespace]['target'];
+	}
+	
+	return ret;
+    };
+
+    /*
+     * true or false.
+     */
+    self.is_public = function(namespace, path){
+	var ret = false;
+
+	if( self.has_app(namespace) ){
+	    if( app_by_namespace[namespace]['public'][path] ){
+		ret = true;
+	    }
+	}
+
+	return ret;
+    };
+
+};
 
 ///
 /// User information/sessions/login.
 ///
 
+// BUG/TODO: Currently, Barista tokens do not expire. Need to
+// implement either: a new token every response or a a rolling time
+// window which is searched.
+// {day1: {SET2}, day2: {SET2}}
 var Sessioner = function(auth_list){
     var self = this;
 
@@ -121,6 +189,7 @@ var Sessioner = function(auth_list){
 	    var new_token = get_token();
 	    sessions_by_token[new_token] = {
 		'nickname': uinf['nickname'] || '???',
+		'xref': uinf['xref'],
 		'email': email,
 		'token': new_token,
 		'color': color
@@ -140,6 +209,21 @@ var Sessioner = function(auth_list){
     self.get_session_by_email = function(email){
 	var token = email2token[email];
 	var ret = self.get_session_by_token(token);
+	return ret;
+    };
+
+    /*
+     * Cloned objects or empty list.
+     */
+    self.get_sessions = function(){
+
+	var ret = [];
+	
+	each(sessions_by_token,
+	     function(token, session){
+		 ret.push(clone(session));
+	     });
+
 	return ret;
     };
 
@@ -194,6 +278,22 @@ var Sessioner = function(auth_list){
 };
 
 ///
+/// Session/authorization handling.
+///
+
+// Bring in metadata that will be used for identifying
+// user. Spin-up session manager.
+var auth_str = fs.readFileSync('./config/auth.json');
+var auth_list = JSON.parse(auth_str);
+var sessioner = new Sessioner(auth_list);
+
+// Bring in metadata that will be used for identifying
+// application protections. Spin-up app manager.
+var app_str = fs.readFileSync('./config/app.json');
+var app_list = JSON.parse(app_str);
+var app_guard = new AppGuard(app_list);
+
+///
 /// Main.
 ///
 var BaristaLauncher = function(){
@@ -203,63 +303,29 @@ var BaristaLauncher = function(){
     /// Process CLI environmental variables.
     ///
 
-    var msgport = 3400; // default val
+    var runport = 3400; // default val
     // This, while seemingly redundant, is necessary to get absolutely
     // the correct audience for Persona.
-    var msgloc = 'http://localhost:' + msgport; // default val
-    var m3loc = 'http://toaster.lbl.gov:6800'; // default val
-    var msgdebug = 0; // default val
-    if( process.env.MSGPORT ){
-	msgport = process.env.MSGPORT;
-	console.log('Barista server port taken from environment: ' + msgport);
+    var runloc = 'http://localhost:' + runport; // default val
+    var barista_debug = 0; // default val
+    if( process.env.BARISTA_PORT ){
+	runport = process.env.BARISTA_PORT;
+	console.log('Barista server port taken from environment: ' + runport);
     }else{
-	console.log('Barista server port taken from default: ' + msgport);
+	console.log('Barista server port taken from default: ' + runport);
     }
-    if( process.env.MSGLOC ){
-	msgloc = process.env.MSGLOC;
-	console.log("Barista's Persona audience will be: " + msgloc);
+    if( process.env.BARISTA_LOCATION ){
+	runloc = process.env.BARISTA_LOCATION;
+	console.log("Barista's Persona audience will be: " + runloc);
     }else{
-	console.log("Barista's Persona audience will default to: " + msgloc);
+	console.log("Barista's Persona audience will default to: " + runloc);
     }
-    if( process.env.M3LOC ){
-	m3loc = process.env.M3LOC;
-	console.log('MMM server location taken from environment: ' + m3loc);
+    if( process.env.BARISTA_DEBUG ){
+	barista_debug = process.env.BARISTA_DEBUG;
+	console.log('Barista debug level taken from env: ' + barista_debug);
     }else{
-	console.log('MMM server location taken from default: ' + m3loc);
+	console.log('Barista debug level taken from default: ' + barista_debug);
     }
-    if( process.env.MSGDEBUG ){
-	msgdebug = process.env.MSGDEBUG;
-	console.log('Barista debug level taken from environment: ' + msgdebug);
-    }else{
-	console.log('Barista debug level taken from default: ' + msgdebug);
-    }
-
-    ///
-    /// Session/authorization handling.
-    ///
-
-    // Bring in metadata that will be used for 
-    var auth_str = fs.readFileSync('./config/auth.json');
-    var auth_list = JSON.parse(auth_str);
-    var auth_metadata = {};
-    each(auth_list,
-	 function(a){
-	     auth_metadata[a['email-md5']] = a;
-	 });
-
-    // Colors.
-    var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
-
-    // BUG/TODO: Currently, Barista tokens do not expire. Need to
-    // implement either: a new token every response or a a rolling time
-    // window which is searched.
-    // {day1: {SET2}, day2: {SET2}}
-    var user_info_by_token = {};
-    // BUG: this actuall needs to be a hash to list since a user may have
-    // more than one sessions per email address.
-    // Punting until I have the full structure figured out.
-    var user_info_by_email = {};
-    var user_info_by_socket = {};
 
     ///
     /// Response helper.
@@ -304,16 +370,16 @@ var BaristaLauncher = function(){
     // Ready the common libs (the actually mapping is taken care of
     // later on).
     pup_tent.set_common('css_libs', [
-			    '/bootstrap.min.css',
-			    '/jquery-ui-1.10.3.custom.min.css',
-			    '/bbop.css',
-			    '/amigo.css']);
+	'/bootstrap.min.css',
+	'/jquery-ui-1.10.3.custom.min.css',
+	'/bbop.css',
+	'/amigo.css']);
     pup_tent.set_common('js_libs', [
-			    '/jquery-1.9.1.min.js',
-			    '/bootstrap.min.js',
-			    '/jquery-ui-1.10.3.custom.min.js',
-			    '/bbop.js',
-			    '/amigo2.js']);
+	'/jquery-1.9.1.min.js',
+	'/bootstrap.min.js',
+	'/jquery-ui-1.10.3.custom.min.js',
+	'/bbop.js',
+	'/amigo2.js']);
 
     // Spin up the main messenging server.
     var express = require('express');
@@ -329,54 +395,30 @@ var BaristaLauncher = function(){
     var persona_opts = {
 	// BUG/TODO: get that off of localhost--do detection like...the
 	// search?
-	audience: msgloc,
+	audience: runloc,
 	verifyResponse: function(err, req, res, email){
 
-	    // Reduce to md5 for check.
-	    var email_md5 = str2md5(email);
-	    if( ! auth_metadata[email_md5] ){
-		console.log('login fail; unknown hashed email: ' + email);
-		res.json({status: "failure", reason: "not in auth.json"});
+	    // Can get session?
+	    var sess = sessioner.create_session_by_email(email);
+	    if( sess ){
+		console.log('login fail; unknown/ill-formed user: ' + email);
+		res.json({status: "failure", reason: "not in/bad auth.json?"});
 	    }else{
 
-		// Add to internal session system--generate the token and
-		// attach it to user information.
-		var token = bbop.core.randomness(20);
+		// Adjust this client/server session.
+		req.session.authorized = true;
+		
+		console.log('login success (' + email + '): ' + token);
+		//console.log('session: ', req.session);
 
-		// Randomly generate a color for this user.
-		var rci = Math.floor(Math.random() * ucolor_list.length);
-		var color = ucolor_list[rci];
-
-		var nick = auth_metadata[email_md5]['nickname'] || '???';
-
-		var xref = auth_metadata[email_md5]['xref'] || null;
-		if( ! xref ){ // cannot continue--no xref for id
-		    console.log('xref FAIL for (' + email + '): ' + token);
-		    res.json({status: "failure", reason: "no xref for user"});
-		}else{
-
-		    // Adjust this client/server session.
-		    req.session.authorized = true;
-
-		    // Apply the user data.
-		    var user_data = {
-			'email': email,
-			'email-md5': email_md5,
-			'color': color,
-			'token': token,
-			'name': auth_metadata[email_md5]['nickname'] || email,
-			'xref': xref
-		    };
-		    user_info_by_token[token] = user_data;
-		    user_info_by_email[email] = user_data;
-		    
-		    console.log('login success (' + email + '): ' + token);
-		    //console.log('session: ', req.session);
-
-		    res.json({status: "okay", email: email, name: nick,
-			      token: token, color: color});
-		    return; // return success
-		}
+		// Pass back the interesting bits.
+		res.json({status: "okay",
+			  email: sess.email,
+			  nickname: sess.nickname,
+			  xref: sess.xref,
+			  token: sess.token,
+			  color: sess.color});
+		return; // return success
 	    }
 	},
 	logoutResponse: function(err, req, res) {
@@ -387,16 +429,13 @@ var BaristaLauncher = function(){
 
 		// Remove from internal session system.
 		var email = req.session.email;
-		var token = user_info_by_email[email];
+		var sess = sessioner.get_session_by_email(email);
+		var token = sess.token;
 		console.log('logging out (' + email + '): ' + token);
 		// console.log('logging out (' + email + '): ' + token, ' ',
 		// 	    req.session);
 
-		// BUG/TODO: These two need to be replaced by an
-		// object that can destroy all tokens related to an
-		// email address.
-		// delete user_info_by_email[email];
-		// delete user_info_by_token[token];
+		sessioner.delete_session_by_email(email);
 	    }
 	    console.log('logout success');
 	    res.json({status: "okay"});
@@ -407,7 +446,7 @@ var BaristaLauncher = function(){
     // Server creation and socket.io addition.
     var messaging_server = require('http').createServer(messaging_app);
     var sio = require('socket.io').listen(messaging_server);
-    messaging_server.listen(msgport);
+    messaging_server.listen(runport);
 
     ///
     /// TODO: High-level status overview and hearbeat
@@ -457,8 +496,7 @@ var BaristaLauncher = function(){
 	function(req, res) {
 
 	    // Gather session info.
-	    var sessions = [];
-	    each(user_info_by_token, function(k,v){ sessions.push(v); });
+	    var sessions = sessioner.get_sessions();
 
 	    // Variables, render, and output.
 	    var tmpl_args = {
@@ -479,14 +517,14 @@ var BaristaLauncher = function(){
 	    var in_token = null;
 	    var barista_token = null;
 	    if( req.query && req.query['barista_token'] ){
+		// Capture token.
 		in_token = req.query['barista_token'];
 		
-		// Try and retrieve the barista token.
-		if( user_info_by_token[in_token] ){
-		    barista_token = user_info_by_token[in_token];
-		    
-		    // If we have the barista token, destroy it.
-		    delete user_info_by_token[in_token];
+		// Try and retrieve by the barista token.
+		var sess = sessioner.get_session_by_token(in_token);
+		if( sess ){
+		    // If we have it, destroy it.
+		    sessioner.delete_session_by_token(in_token);
 		    console.log('barista token destroyed: ' + barista_token);
 		}else{
 		    console.log('non-session token: ' + in_token);
@@ -531,246 +569,221 @@ var BaristaLauncher = function(){
 	});
 
     messaging_app.get(
-    '/login',
-    function(req, res) {
+	'/login',
+	function(req, res) {
 
-	// Get return argument if there.
-	var ret = null;
-	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
-	    // // 
-	    // if( tmpret && tmpret !== '' ){
-	    // 	var uo = url.parse(tmpret);
-	    // 	uo.query['barista_token'] = 
-	    // 	ret = 
-	    // }
+	    // Get return argument if there.
+	    var ret = null;
+	    if( req.query && req.query['return'] ){
+		ret = req.query['return'];
+		// // 
+		// if( tmpret && tmpret !== '' ){
+		// 	var uo = url.parse(tmpret);
+		// 	uo.query['barista_token'] = 
+		// 	ret = 
+		// }
+	    }
+	    
+	    var tmpl_args = {
+		'pup_tent_js_variables': [
+		    {'name': 'global_barista_return', 'value': ret }
+		],
+		'pup_tent_js_libraries': [
+		    'https://login.persona.org/include.js',
+		    '/BaristaLogin.js'
+		],
+		'title': notw + ': Login',
+		'return': ret
+	    };
+	    var out = pup_tent.render_io('barista_base.tmpl',
+					 'barista_login.tmpl',
+					 tmpl_args);
+	    _standard_response(res, 200, 'text/html', out);
+	});
+
+    ///
+    /// API proxy.
+    ///
+
+    var http_proxy = require('http-proxy');
+    var api_proxy = http_proxy.createProxyServer({});
+    messaging_app.get("/api/:namespace/:call", function(req, res){ 
+
+	// TODO: Request logging hooks could be placed in here.
+	//console.log('pre api req: ' + req.url);
+
+	// Try and get a session out for use. The important thing we
+	// need here is the xref to pass back to the API if session
+	// and possible.
+	var uxref = null;
+	if( req && req['query'] && req['query']['token'] ){
+	    // Best attempt at extracting a UID.
+	    var btok = req['query']['token'];
+	    var sess = sessioner.get_session_by_token(btok);
+	    uxref = sess.xref;
 	}
-	
-	var tmpl_args = {
-	    'pup_tent_js_variables': [
-		{'name': 'global_barista_return', 'value': ret }
-	    ],
-	    'pup_tent_js_libraries': [
-		'https://login.persona.org/include.js',
-		'/BaristaLogin.js'
-	    ],
-	    'title': notw + ': Login',
-	    'return': ret
-	};
-	var out = pup_tent.render_io('barista_base.tmpl',
-				     'barista_login.tmpl',
-				     tmpl_args);
-	_standard_response(res, 200, 'text/html', out);
+
+	// // TODO: Create a doctored request.
+	// // Either way, no token goes back.
+	// each(['query', 'body', 'params'],
+	// 	   function(field){
+	// 	       if( req[field] && req[field]['token'] ){
+	// 		   delete req[field]['token'];
+	// 		   req[field]['uid'] = uid;
+	// 	       }
+	// 	   });
+	// //req.url = req.url + '&uid=' + uid;
+
+	// Extract token=??? from the request URL safely
+	// and add the xref as uid.
+	var url_obj = url.parse(req.url);
+	var q_obj = querystring.parse(url_obj['query']);
+	delete q_obj['token'];
+	q_obj['uid'] = uxref; // may be null
+	// The first works according to the docs, the
+	// second according to real life.
+	url_obj['query'] = querystring.encode(q_obj);
+	url_obj['search'] = '?' + querystring.encode(q_obj);
+	//console.log('q_obj: ', q_obj);
+	// Eliminate confounding fields to make sure it
+	// parses out the one we modified.
+	//delete url_obj['search'];
+	req.url = url.format(url_obj);
+
+	// Do we have permissions to make the call?
+	var ns = req.route.params['namespace'] || '';
+	var call = req.route.params['call'] || '';
+	if( ! app_guard.is_public(ns, call) && ! uxref ){
+	    // Catch error here if no proper ID on non-public.
+	    res.setHeader('Content-Type', 'text/json');
+	    // TODO/BUG: Send better fail.
+	    res.send('{}');
+	}else{
+	    // Not public or user is privileged.
+	    // Route the simple call to the right place.
+	    //console.log('req: ', req);
+	    // Clip "/api/" and the namespace.
+	    var api_loc = app_guard.app_target(ns);
+	    req.url = req.url.substr(ns.length + 5);
+	    api_proxy.web(req, res, {
+		'target': api_loc
+	    });
+	    console.log('api run: ' + api_loc + req.url);
+	}
     });
 
-///
-/// API proxy.
-///
+    ///
+    /// Everything here on down is Socket.IO messaging works.
+    ///
 
-var http_proxy = require('http-proxy');
-var api_proxy = http_proxy.createProxyServer({});
-messaging_app.get("/api/:namespace/:call", function(req, res){ 
+    // This is the main socket.io hook.
+    //messaging_app.get('/messenger', function (req, res) {
+    messaging_app.get('/', function (req, res) {
+	res.sendfile(__dirname + '/static/messenger.html');
+    });
 
-		      // TODO: Request logging hooks could be placed in here.
-		      //console.log('pre api req: ' + req.url);
+    // TODO: Turn on recommended production settings when in production.
+    // https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO#wiki-recommended-production-settings
+    sio.enable('browser client minification');
+    sio.enable('browser client etag');
+    sio.enable('browser client gzip');
+    sio.set('log level', barista_debug);
 
-		      // TODO: A lot of authorization will happen
-		      // around here.
-		      // Try and get the barista_key out for use.
-		      var uid = 'anonymous';
-		      if( req && req['query'] && req['query']['token'] ){
+    // This would eventually be information delivered by the
+    // authentication system.
+    // TODO: This would disappear in a merged moderator system.
+//    var client_sockets = {}; // essentially users
+    // TODO: The initial stash that a client gets for a channel when first
+    // connecting--essentially the recorded history to date.
+    //var channel_stash = {};
 
-			  // Best attempt at extracting a UID.
-			  var btok = req['query']['token'];
-			  var uinfo = user_info_by_token[btok];
-			  if( uinfo ){
-			      var email_bits =
-				  bbop.core.first_split('@', uinfo['email']);
-			      uid = email_bits[0] || 'anonymous';
-			  }
-		      }
-		      
-		      // // TODO: Create a doctored request.
-		      // // Either way, no token goes back.
-		      // each(['query', 'body', 'params'],
-		      // 	   function(field){
-		      // 	       if( req[field] && req[field]['token'] ){
-		      // 		   delete req[field]['token'];
-		      // 		   req[field]['uid'] = uid;
-		      // 	       }
-		      // 	   });
-		      // //req.url = req.url + '&uid=' + uid;
+    var socket_id_to_session = {};
+    var token_to_socket_id = {};
 
-		      // Extract token=??? from the request URL safely
-		      // and add the uid.
-		      var url_obj = url.parse(req.url);
-		      var q_obj = querystring.parse(url_obj['query']);
-		      delete q_obj['token'];
-		      q_obj['uid'] = uid;
-		      // The first works according to the docs, the
-		      // second according to real life.
-		      url_obj['query'] = querystring.encode(q_obj);
-		      url_obj['search'] = '?' + querystring.encode(q_obj);
-		      //console.log('q_obj: ', q_obj);
-		      // Eliminate confounding fields to make sure it
-		      // parses out the one we modified.
-		      //delete url_obj['search'];
-		      req.url = url.format(url_obj);
+    sio.sockets.on('connection', function(socket){
 
-		      //console.log('req.url: ', req.url);
-		      //console.log('post api req: ', req);
-		      //console.log('uid: ' + uid);
+	// Add this client to the socket list.
+	// Store for injection.
+	var socket_id = socket.id;
+// 	//var rci = Math.floor(Math.random() * ucolor_list.length);
+// 	client_sockets[socket_id] = {
+// 	    'uid': socket_id//,
+// //	    'ucolor': ucolor_list[rci]
+// 	};
+// 	//var user_id = client_sockets[socket_id]['uid'];
+// 	var user_email = 'TBD';
+// //	var user_color = client_sockets[socket_id]['ucolor'];
 
-		      // TODO: These two will eventually have to check
-		      // in registries created at startup (from config
-		      // file?).
-		      var ns = req.route.params['namespace'] || '';
-		      var call = req.route.params['call'] || '';
-		      var ns_to_target ={
-			'mmm': m3loc
-		      };
-		      var api_loc = ns_to_target[ns];
-		      if( ! api_loc || ! call ){
-			  // Catch error here if no proper ID.
-			  res.setHeader('Content-Type', 'text/json');
-			  res.send('{}');
-		      }else{
-			  // Route the simple call to the right place.
-			  //console.log('req: ', req);
-			  // Clip "/api/" and the namespace.
-			  req.url = req.url.substr(ns.length + 5);
-			  api_proxy.web(req, res, {
-					    target: api_loc
-					});
-			  console.log('api run: ' + api_loc + req.url);
-		      }
-		  });
+	// Immediately emit user meta-information to the
+	// just-connected user. This is very very minimal since we
+	// don't know anything without a session.
+	var init_data = {
+//	    'user_metadata': true,
+	    'socket_id': socket_id//,
+	    //'user_id': user_id,
+//	    'user_color': user_color
+	};
+	socket.emit('initialization', init_data);
 
-///
-/// Everything here on down is Socket.IO messaging works.
-///
+	function _mod_data_with_session_info(data){
+	    
+	    var user_email = '???';
+	    var user_color = 'white';
+	    
+	    // The info packet can tie us to the information via the
+	    // passed token.
+	    var in_token = data['token'];
+	    var sess = sessioner.get_session_by_token(in_token);
+	    if( sess ){
+		user_email = sess['email'];
+		user_color = sess['color'];
+	    }
+	    
+	    // Inject user data.
+	    //data['user_id'] = user_id;
+	    data['user_email'] = user_email;
+	    data['user_color'] = user_color;
+	    
+	    return data;
+	}
 
-// This is the main socket.io hook.
-//messaging_app.get('/messenger', function (req, res) {
-messaging_app.get('/', function (req, res) {
-		      res.sendfile(__dirname + '/static/messenger.html');
-		  });
+	// Relays to others that new user is on and ties
+	// socket and token.
+	socket.on('info', function(data){
+	    //console.log('srv info: %j', data);
+	    data = _mod_data_with_session_info(data);
+	    socket.broadcast.emit('info', data);
+	});
+	
+	socket.on('clairvoyance', function(data){
+	    //console.log('srv clair: ' + data);
+	    data = _mod_data_with_session_info(data);
+	    socket.broadcast.emit('clairvoyance', data);
+	});
 
-// TODO: Turn on recommended production settings when in production.
-// https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO#wiki-recommended-production-settings
-sio.enable('browser client minification');
-sio.enable('browser client etag');
-sio.enable('browser client gzip');
-sio.set('log level', msgdebug);
-
-// This would eventually be information delivered by the
-// authentication system.
-// TODO: This would disappear in a merged moderator system.
-var client_sockets = {}; // essentially users
-// TODO: The initial stash that a client gets for a channel when first
-// connecting--essentially the recorded history to date.
-//var channel_stash = {};
-
-sio.sockets.on('connection',
-	       function(socket){
-
-		   // Add this client to the socket list.
-		   // Store for injection.
-		   var socket_id = socket.id;
-		   var rci = Math.floor(Math.random() * ucolor_list.length);
-		   client_sockets[socket_id] = {
-		       'uid': socket_id,
-		       'ucolor': ucolor_list[rci]
-		   };
-		   //var user_id = client_sockets[socket_id]['uid'];
-		   var user_email = 'TBD';
-		   var user_color = client_sockets[socket_id]['ucolor'];
-
-		   // Immediately emit user meta-information to the
-		   // just-connected user.
-		   var init_data = {
-		       'user_metadata': true,
-		       'socket_id': socket_id,
-		       //'user_id': user_id,
-		       'user_color': user_color
-		   };
-		   socket.emit('initialization', init_data);
-
-		   // Relays to others that new user is on and ties
-		   // socket and token.
-		   socket.on('info',
-			     function(data){
-				 //console.log('srv info: %j', data);
-
-				 // The info packet can tie us to the
-				 // token.
-				 var token = data['token'];
-				 if( token ){
-				     // TODO/BUG: The may be cases
-				     // where we're coming in not by
-				     // main noctua, so this type of
-				     // info may not be filled at
-				     // all. Hopefully to be fixed by
-				     // union of interfaces. Until
-				     // then, check that the
-				     // structures exist first.
-				     if( user_info_by_token[token] ){
-					 user_email =
-					     user_info_by_token[token]['email'];
-					 user_info_by_socket[socket_id] =
-					     user_info_by_token[token];
-					 user_email =
-					     user_info_by_token[token]['email'];
-				     }
-				 }
-				 
-				 // Inject user data.
-				 //data['user_id'] = user_id;
-				 data['user_email'] = user_email;
-				 data['user_color'] = user_color;
-				 socket.broadcast.emit('info', data);
-			     });
-
-		   socket.on('clairvoyance',
-			     function(data){
-				 //console.log('srv remove: ' + data);
-				 //data['user_id'] = user_id;
-				 data['user_email'] = user_email;
-				 data['user_color'] = user_color;
-				 socket.broadcast.emit('clairvoyance', data);
-			     });
-
-		   // TODO: This needs to be blocked on auth issues.
-		   socket.on('telekinesis',
-			     function(data){
-				 //console.log('srv remove: ' + data);
-				 //data['user_id'] = user_id;
-				 data['user_email'] = user_email;
-				 data['user_color'] = user_color;
-				 socket.broadcast.emit('telekinesis', data);
-			     });
-
-		   // Disconnect info.
-		   socket.on('disconnect',
-			     function(){
-				 console.log('srv disconnect');
-
-				 // TODO: find a way to report disconnecting
-				 // from a specific model--might have to wait
-				 // for using channels.
-				 // // Broadcast the disconnection.
-				 // var data = {
-				 //     type: 'disconnect',
-				 //     message: 'disconnect from server'
-				 // };
-				 // data['user_id'] = user_id;
-				 // data['user_color'] = user_color;
-				 // socket.broadcast.emit('info', data);
-				 
-				 // Remove from the pack.
-				 delete client_sockets[socket_id];
-			     });
-	       });
+	// TODO: This needs to be blocked on auth issues.
+	socket.on('telekinesis', function(data){
+	    //console.log('srv tele: ' + data);
+	    data = _mod_data_with_session_info(data);
+	    socket.broadcast.emit('telekinesis', data);
+	});
+	
+	// Disconnect info.
+	socket.on('disconnect', function(){
+	    console.log('srv disconnect');
+	    // TODO: find a way to report disconnecting from a
+	    // specific model or user--might have to wait for using
+	    // channels.
+	    // // Broadcast the disconnection.
+	    // var data = {
+	    //     type: 'disconnect',
+	    //     message: 'disconnect from server'
+	    // };
+	    // data['user_id'] = user_id;
+	    // data['user_color'] = user_color;
+	    // socket.broadcast.emit('info', data);
+	});
+    });
 };
 
 // 
