@@ -4,7 +4,7 @@
 	"target": "http://localhost:6800",
 	"public": [
 	    "getRelations",
-	    "m3Batch"
+	    "m3BatchGet"
 	]
     },
     {
@@ -12,7 +12,7 @@
 	"target": "http://toaster.lbl.gov:6800",
 	"public": [
 	    "getRelations",
-	    "m3Batch"
+	    "m3BatchGet"
 	]
     }
 ]
