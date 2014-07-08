@@ -620,7 +620,10 @@ var BaristaLauncher = function(){
 	    // Best attempt at extracting a UID.
 	    var btok = req['query']['token'];
 	    var sess = sessioner.get_session_by_token(btok);
-	    uxref = sess.xref;
+	    if( sess ){
+		console.log('sess: ', sess);
+		uxref = sess.xref;
+	    }
 	}
 
 	// // TODO: Create a doctored request.
@@ -697,8 +700,8 @@ var BaristaLauncher = function(){
     // connecting--essentially the recorded history to date.
     //var channel_stash = {};
 
-    var socket_id_to_session = {};
-    var token_to_socket_id = {};
+    // var socket_id_to_session = {};
+    // var token_to_socket_id = {};
 
     sio.sockets.on('connection', function(socket){
 
