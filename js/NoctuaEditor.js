@@ -1361,22 +1361,22 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     // established.
     function _on_connect(a, b){
 	reporter.reset();
-	reporter.comment({'message': 'you are connected',
-			  'message_type': 'success'
+	reporter.comment({'message_type': 'success',
+			  'message': 'you are connected'
 			 });
     }
 
     // ...
     function _on_initialization(data){
 	//var uid = data['user_id'];
-	var ucolor = data['user_color'];
+	//var ucolor = data['user_color'];
 	var sockid = data['socket_id'];
 
 	ll('we are on socket: ' + sockid);
 
 	// Add to the top of the message list.
 	reporter.comment({'message_type': 'success',
-			  'message': 'on socket: ' + sockid}, sockid, ucolor);
+			  'message': 'on socket: '+ sockid}, sockid);//,ucolor);
 
 	// // Change our user id.
 	// manager.user_token(uid);
@@ -1456,12 +1456,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	}
     }
 
-    if( typeof(global_message_server) === 'undefined'  ){
+    if( typeof(global_barista_location) === 'undefined'  ){
 	alert('no setup for messaging--not gunna happen');
     }else{
 	// TODO: Eventually we'll
-	ll('try setup for messaging at: ' + global_message_server);
-	msngr = new bbop_messenger_client(global_message_server,
+	ll('try setup for messaging at: ' + global_barista_location);
+	msngr = new bbop_messenger_client(global_barista_location,
 					  in_token,
 					  _on_connect,
 					  _on_initialization,
@@ -1657,19 +1657,21 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 // Start the day the jsPlumb way.
 jsPlumb.ready(function(){
 
-    // Get token well defined.
-    var ticket_to_ride = '_anonymous_token_';
+    // Try to define token.
+    var start_token = null;
     if( global_barista_token ){
-	ticket_to_ride = global_barista_token;
+	start_token = global_barista_token;
     }
 
     // Next we need a manager to try and pull in the model.
     if( typeof(global_id) === 'undefined' ||
-	typeof(global_server_base) === 'undefined' ){
+	typeof(global_minerva_definition_name) === 'undefined' ||
+	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
-	    var manager =
-		new bbop_mme_manager2(global_server_base, 'mmm', ticket_to_ride);
+	    var manager = new bbop_mme_manager2(global_barista_location,
+						global_minerva_definition_name,
+						start_token);
 
 	    // Have a manager and model id, defined a success callback
 	    // and try and get the full model to start the bootstrap.
@@ -1701,10 +1703,12 @@ jsPlumb.ready(function(){
 				 // Bootstrap rest of session.
 				 MMEnvInit(resp.data(),
 					   global_known_relations,
-					   global_server_base,
-					   ticket_to_ride);
+					   global_minerva_definition_name,
+					   start_token);
 			     });
 	    manager.get_model(global_id);
+	    // var rr = manager.get_model(global_id);
+	    // console.log('rr: ' + rr);
 	}	
 
 });
