@@ -3,9 +3,9 @@
 ####   make start-noctua
 ####
 
-# ## Variable to pass the location definition Minerva server server to the deploying
-# ## app.
-# MINERVA ?= minerva_local
+## Variable to pass the location definition Minerva server server to
+## the deploying app.
+MINERVA_DEFINITION ?= minerva_local
 
 ## Variable to define where Noctua looks for Barista.
 BARISTA_LOCATION ?= http://localhost:3400
@@ -50,12 +50,12 @@ pass:
 ##
 .PHONY: start-noctua-dev
 start-noctua-dev: assemble-app
-	BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
+	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
-	BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
+	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
 
 ###
 ### Commands/environment for messaging server.

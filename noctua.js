@@ -5,7 +5,7 @@
  * 
  * A server that will render GO graphs into jsPlumb.
  * 
- * : MSGLOC=http://localhost:3400 make start-noctua
+ * : BARISTA_LOCATION=http://localhost:3400 make start-noctua
  */
 
 // Required shareable Node libs.
@@ -40,14 +40,25 @@ var NoctuaLauncher = function(){
     /// Process CLI environmental variables.
     ///
 
-    var msgloc = 'http://toaster.lbl.gov:3400'; // default val
-    if( process.env.MSGLOC ){
-	msgloc = process.env.MSGLOC;
-	console.log('Barista location taken from environment: ' + msgloc);
+    var min_def_name = 'minerva_localhost';
+    if( process.env.MINERVA_DEFINITION ){
+	min_def_name = process.env.MINERVA_DEFINITION;
+	console.log('Minerva definition name from environment: ' + min_def_name);
     }else{
-	console.log('Barista location taken from default: ' + msgloc);
+	console.log('Minerva definition name from default: ' + min_def_name);
     }
-    self.msgloc = msgloc;
+    self.minerva_definition_name = min_def_name;
+
+    //self.min_def_name = min_def_name;
+
+    var barloc = 'http://localhost:3400';
+    if( process.env.BARISTA_LOCATION ){
+	barlov = process.env.BARISTA_LOCATION;
+	console.log('Barista location taken from environment: ' + barloc);
+    }else{
+	console.log('Barista location taken from default: ' + barloc);
+    }
+    self.barista_location = barloc;
 
     ///
     /// Environment helpers for deployment.
@@ -128,8 +139,8 @@ var NoctuaLauncher = function(){
 	    ],
 	    'pup_tent_js_variables': [
 		{name: 'global_id', value: model_id },
-		{name: 'global_server_base', value: barista_loc },
-		{name:'global_message_server', value: barista_loc },
+		{name: 'global_minerva_definition', value: self.minerva_target },
+		{name: 'global_barista_location', value: barista_loc },
 		{name: 'global_model', value: model_obj },
 		{name: 'global_known_relations', value: known_relations },
 		{name: 'global_barista_token', value: barista_token }
@@ -242,7 +253,7 @@ var NoctuaLauncher = function(){
     // @param {string} sig  Signal to terminate on.
     self.terminator = function(sig){
         if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
+           console.log('%s: Received %s - terminating noctua...',
                        Date(Date.now()), sig);
            process.exit(1);
         }
@@ -294,7 +305,8 @@ var NoctuaLauncher = function(){
 				 '/NoctuaLanding.js'
 			     ],
 			     'pup_tent_js_variables': [
-				 {name: 'global_server_base', value: msgloc },
+				 {name: 'global_minerva_definition',
+				  value: self.minerva_target },
 				 {name: 'global_known_relations',
 				  value: bbop.core.dump(known_relations) }
 			     ],
@@ -313,8 +325,8 @@ var NoctuaLauncher = function(){
 			 var tmpl_args = {
 			     'title': notw + ': Simple',
 			     'pup_tent_js_variables': [
-				 {name: 'global_server_base',
-				  value: msgloc },
+				 {name: 'global_minerva_definition',
+				  value: self.minerva_target },
 				 {name: 'global_known_relations',
 				  value: known_relations}
 			     ],
@@ -402,7 +414,7 @@ var NoctuaLauncher = function(){
 	// 				'value': '"unknown"'
 	// 			    },
 	// 			    {
-	// 				'name': 'global_server_base',
+	// 				'name': 'global_minerva_definition',
 	// 				'value': '"' + msgloc+ '"'
 	// 			    },
 	// 			    {
@@ -446,7 +458,8 @@ var NoctuaLauncher = function(){
 		    // 	    var obj = resp.data();
 			    
 			    self.bootstrap_editor(res, notw, query, null,
-						  known_relations, msgloc,
+						  known_relations,
+						  self.minerva_target,
 						  barista_token);
 		    // 	}
 		    // }
@@ -522,8 +535,8 @@ var NoctuaLauncher = function(){
 				//     '/NoctuaCapella.css'
 				// ],
 				'pup_tent_js_variables': [
-				    {name:'global_message_server',
-				     value: msgloc },
+				    {name:'global_barista_location',
+				     value: self.minerva_target },
 				    {name: 'global_barista_token',
 				     value: null },
 				    {name: 'global_payload', value: payload },
@@ -590,11 +603,11 @@ var NoctuaLauncher = function(){
 	// 				'value': '"unknown"'
 	// 			    },
 	// 			    {
-	// 				'name': 'global_server_base',
+	// 				'name': 'global_minerva_definition',
 	// 				'value':  '"' + msgloc+ '"'
 	// 			    },
 	// 			    {
-	// 				'name':'global_message_server',
+	// 				'name':'global_barista_location',
 	// 				'value':  '"' + msgloc+ '"'
 	// 			    },
 	// 			    {
@@ -652,7 +665,7 @@ var NoctuaLauncher = function(){
 			       res.send('failure ('+ resp.message_type() +'): '+
 					resp.message());
 			   });
-		var t = msgloc + '/api/mmm/m3ExportModel';
+		var t = self.minerva_target + '/api/mmm/m3ExportModel';
 		var t_args = {
 		    'modelId': mid
 		};
@@ -723,8 +736,10 @@ imngr.register('error', 'e1',
 		   //console.log('erred out: %j', resp); 
 		   console.log('not okay: %j', resp.okay());
 	       });
-var t = noctua.msgloc + '/api/mmm/getRelations';
+//var t = noctua.minerva_definition_name + '/api/mmm/getRelations';
+var t = noctua.barista_location + '/api/' +
+	noctua.minerva_definition_name + '/getRelations';
 var t_args = {};
 var astr = imngr.action(t, t_args);
-console.log("base ctarget " + t);
-console.log("action to: " + astr);
+//console.log("base ctarget " + t);
+console.log("Minerva request to: " + astr);
