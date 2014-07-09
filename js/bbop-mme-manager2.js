@@ -7,6 +7,7 @@
  * Arguments:
  *  server_base - string for invariant part of API
  *  namespace - string for namespace of API to use
+ *  app_blob - JSON object that defines targets
  *  user_token - identifying string for the user of the manager (Barista token)
  * 
  * Returns:
@@ -25,12 +26,18 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 			     ]);
     this._is_a = 'bbop_mme_manager2';
     var anchor = this;
-    var url = server_base + '/api/' + namespace + '/m3Batch';
+    //var url = server_base + '/api/' + namespace + '/m3Batch';
+    var url = null;
+    if( user_token ){
+	url = server_base + '/api/' + namespace + '/m3BatchPrivileged';
+    }else{
+	url = server_base + '/api/' + namespace + '/m3Batch';
+    }
 
     // Kinda needs this for all calls.
     anchor._user_token = user_token;
     if( ! anchor._user_token ){
-	throw new Error('user_token must be an argument');
+    	throw new Error('user_token must be an argument');
     }
 
     // An internal manager for handling the unhappiness of AJAX callbacks.
@@ -87,9 +94,20 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
      * Get/set the user token
      */
     anchor.user_token = function(user_token){
+
+	// Adjust the internal token.
 	if( user_token ){
 	    anchor._user_token = user_token;
 	}
+
+	// Make sure we're using the right URL considereing how we're
+	// identified.
+	if( anchor._user_token ){
+	    url = server_base + '/api/' + namespace + '/m3BatchPrivileged';
+	}else{
+	    url = server_base + '/api/' + namespace + '/m3Batch';
+	}
+
 	return anchor._user_token;
     };
 
@@ -103,7 +121,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.get_model = function(model_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'query');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'query');
 	var req = new bbop_mmm_request('model', 'get');
 	req.model_id(model_id);
 	reqs.add(req);
@@ -118,7 +136,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.get_model_ids = function(){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'query');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'query');
 	var req = new bbop_mmm_request('model', 'all-model-ids');
 	reqs.add(req);
 
@@ -131,7 +149,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     // Expect: "success" and "merge".
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('edge', 'add');
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -146,7 +164,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     // Expect: "success" and "merge".
     anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('edge', 'remove');
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -163,7 +181,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     					   enabled_by_id, occurs_in_id){
 
 	// Minimal requirements.
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'create');
 	req.model_id(model_id);
 	req.subject_class(class_id);
@@ -188,7 +206,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.add_class = function(model_id, individual_id, class_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'add-type');
 	req.model_id(model_id);
 	req.individual(individual_id);
@@ -206,7 +224,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.add_svf = function(model_id, individual_id, class_id, property_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'add-type');
 	req.model_id(model_id);
 	req.individual(individual_id);
@@ -224,7 +242,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.remove_class = function(model_id, individual_id, class_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'remove-type');
 	req.model_id(model_id);
 	req.individual(individual_id);
@@ -243,7 +261,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 					      class_id, type){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'remove-type');
 	req.model_id(model_id);
 	req.individual(individual_id);
@@ -260,7 +278,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     // Expect: "success" and "rebuild".
     anchor.remove_individual = function(model_id, indv_id){
 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'remove');
 	req.model_id(model_id);
 	req.individual(indv_id);
@@ -276,7 +294,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.export_model = function(model_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'query');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'query');
 	var req = new bbop_mmm_request('model', 'export');
 	req.model_id(model_id);
 	reqs.add(req);
@@ -291,7 +309,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.import_model = function(model_string){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('model', 'import');
 	req.add('importModel', model_string);
 	reqs.add(req);
@@ -306,7 +324,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.store_model = function(model_id){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'query');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'query');
 	var req = new bbop_mmm_request('model', 'store');
 	req.model_id(model_id);
 	reqs.add(req);
@@ -321,7 +339,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'add-annotation');
 	req.model_id(model_id);
 	req.individual(indv_id);
@@ -340,7 +358,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 					  key, value){
 
 	//
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('edge', 'add-annotation');
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -357,7 +375,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.add_model_annotation = function(model_id, key, value){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('model', 'add-annotation');
 	req.model_id(model_id);
 	req.annotation_values(key, value);
@@ -373,7 +391,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('individual', 'remove-annotation');
 	req.model_id(model_id);
 	req.individual(indv_id);
@@ -392,7 +410,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 					     key, value){
 
 	//
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('edge', 'remove-annotation');
 	req.model_id(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -409,7 +427,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.remove_model_annotation =function(model_id, key, value){
 
 	// 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('model', 'remove-annotation');
 	req.model_id(model_id);
 	req.annotation_values(key, value);
@@ -425,7 +443,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.generate_model = function(class_id, db_id){
 
 	//
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('model', 'generate');
 	req.add('db', db_id);
 	req.add('subject', class_id);
@@ -441,7 +459,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     anchor.generate_blank_model = function(db_id){
 
 	//
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 	var req = new bbop_mmm_request('model', 'generate-blank');
 	req.add('db', db_id);
 	reqs.add(req);
@@ -455,7 +473,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     // Expect: "success" and "rebuild".
     anchor.bootstrap_model = function(bootstrap_obj){
 
-	var reqs = new bbop_mmm_request_set(anchor._user_token, 'action');
+	var reqs = new bbop_mmm_request_set(anchor.user_token(), 'action');
 
 	// Just get a new model going.
 	var req = new bbop_mmm_request('model', 'generate-blank');
