@@ -122,8 +122,9 @@ var NoctuaLauncher = function(){
 
     // Assemble return doc.
     self.bootstrap_editor = function(res, name_of_the_week,
-				     model_id, model_obj, known_relations,
-				     barista_loc, barista_token){
+				     model_id,
+				     //model_obj,
+				     known_relations, barista_loc, barista_token){
 
 	// Assemble return doc.
 	res.setHeader('Content-Type', 'text/html');
@@ -139,14 +140,16 @@ var NoctuaLauncher = function(){
 	    ],
 	    'pup_tent_js_variables': [
 		{name: 'global_id', value: model_id },
-		{name: 'global_minerva_definition', value: self.minerva_target },
-		{name: 'global_barista_location', value: barista_loc },
-		{name: 'global_model', value: model_obj },
+		{name: 'global_minerva_definition_name',
+		 value: self.minerva_definition_name },
+		{name: 'global_barista_location', value: self.barista_location },
+		//{name: 'global_model', value: model_obj },
+		{name: 'global_model', value: null },
 		{name: 'global_known_relations', value: known_relations },
 		{name: 'global_barista_token', value: barista_token }
 	    ],
 	    'pup_tent_js_libraries': [
-		barista_loc + '/socket.io/socket.io.js',
+		self.barista_location + '/socket.io/socket.io.js',
 		'/jquery.jsPlumb-1.5.5.js',
 		'/connectors-sugiyama.js',
 		'/bbop-rest-response-mmm.js',
@@ -161,7 +164,7 @@ var NoctuaLauncher = function(){
 		'/NoctuaEditor.js'
 	    ],
 	    'title': name_of_the_week + ': Editor',
-	    'messaging_server_location': barista_loc,
+	    'messaging_server_location': self.barista_location,
 	    barista_token: barista_token,
 	    barista_login: barista_login,
 	    barista_logout: barista_logout
@@ -305,8 +308,8 @@ var NoctuaLauncher = function(){
 				 '/NoctuaLanding.js'
 			     ],
 			     'pup_tent_js_variables': [
-				 {name: 'global_minerva_definition',
-				  value: self.minerva_target },
+				 {name: 'global_minerva_definition_name',
+				  value: self.minerva_definition_name },
 				 {name: 'global_known_relations',
 				  value: bbop.core.dump(known_relations) }
 			     ],
@@ -325,8 +328,8 @@ var NoctuaLauncher = function(){
 			 var tmpl_args = {
 			     'title': notw + ': Simple',
 			     'pup_tent_js_variables': [
-				 {name: 'global_minerva_definition',
-				  value: self.minerva_target },
+				 {name: 'global_minerva_definition_name',
+				  value: self.minerva_definition_name },
 				 {name: 'global_known_relations',
 				  value: known_relations}
 			     ],
@@ -457,10 +460,11 @@ var NoctuaLauncher = function(){
 		    // 	    //console.log('in success callback');
 		    // 	    var obj = resp.data();
 			    
-			    self.bootstrap_editor(res, notw, query, null,
-						  known_relations,
-						  self.minerva_target,
-						  barista_token);
+		    self.bootstrap_editor(res, notw, query,
+					  //null,
+					  known_relations,
+					  self.minerva_target,
+					  barista_token);
 		    // 	}
 		    // }
 		    
@@ -536,7 +540,7 @@ var NoctuaLauncher = function(){
 				// ],
 				'pup_tent_js_variables': [
 				    {name:'global_barista_location',
-				     value: self.minerva_target },
+				     value: self.barista_location },
 				    {name: 'global_barista_token',
 				     value: null },
 				    {name: 'global_payload', value: payload },
