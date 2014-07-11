@@ -293,38 +293,40 @@ var NoctuaLauncher = function(){
 	/// Static routes.
 	///
 
-	self.app.get('/',
-		     function(req, res) {
-
-			 // Libs and render.
-			 var tmpl_args = {
-			     'pup_tent_js_libraries': [
-				 '/bbop-rest-response-mmm.js',
-				 '/bbop-mmm-requests.js',
-				 '/bbop-mme-context.js',
-				 '/bbop-mme-edit.js',
-				 '/bbop-mme-manager2.js',
-				 '/bbop-mme-widgets.js',
-				 '/NoctuaLanding.js'
-			     ],
-			     'pup_tent_js_variables': [
-				 {name:'global_barista_location',
-				  value: self.barista_location },
-				 {name: 'global_barista_token',
-				  value: null },
-				 {name: 'global_minerva_definition_name',
-				  value: self.minerva_definition_name },
-				 {name: 'global_known_relations',
-				  value: bbop.core.dump(known_relations) }
-			     ],
-			     'title': notw + ': Selection'
-			 };
-			 var o = pup_tent.render_io('noctua_base_landing.tmpl',
-						    'noctua_landing.tmpl',
-						    tmpl_args);
-			 self.standard_response(res, 200, 'text/html', o);
-		     });
-
+	self.app.get('/', function(req, res) {
+	    
+	    // Try and see if we have an API token.
+	    var barista_token = self.get_token(req);
+	    
+	    // Libs and render.
+	    var tmpl_args = {
+		'pup_tent_js_libraries': [
+		    '/bbop-rest-response-mmm.js',
+		    '/bbop-mmm-requests.js',
+		    '/bbop-mme-context.js',
+		    '/bbop-mme-edit.js',
+		    '/bbop-mme-manager2.js',
+		    '/bbop-mme-widgets.js',
+		    '/NoctuaLanding.js'
+		],
+		'pup_tent_js_variables': [
+		    {name:'global_barista_location',
+		     value: self.barista_location },
+		    {name: 'global_barista_token',
+		     value: barista_token},
+		    {name: 'global_minerva_definition_name',
+		     value: self.minerva_definition_name },
+		    {name: 'global_known_relations',
+		     value: bbop.core.dump(known_relations) }
+		],
+		'title': notw + ': Selection'
+	    };
+	    var o = pup_tent.render_io('noctua_base_landing.tmpl',
+				       'noctua_landing.tmpl',
+				       tmpl_args);
+	    self.standard_response(res, 200, 'text/html', o);
+	});
+	
 	self.app.get('/basic',
 		     function(req, res) {
 			 

@@ -2,7 +2,7 @@
 //// ...
 ////
 
-var MMEnvBootstrappingInit = function(){
+var MMEnvBootstrappingInit = function(user_token){
     
     var logger = new bbop.logger('mme bsi');
     logger.DEBUG = true;
@@ -19,7 +19,7 @@ var MMEnvBootstrappingInit = function(){
     // be distributed by the moderator after authenication.
     var manager = new bbop_mme_manager2(global_barista_location,
 					global_minerva_definition_name,
-					global_barista_token);
+					user_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -89,7 +89,9 @@ var MMEnvBootstrappingInit = function(){
     // var wizard_jump_db = null;
     function _generated_model(resp, man){
 	var id = resp.data()['id'];	
-	window.location.replace("/seed/model/" + id);
+	var jump_token = user_token || '';
+	window.location.replace('/seed/model/' + id +
+				'?barista_token=' + jump_token);
     }
 
     // Internal registrations.
@@ -267,6 +269,6 @@ jsPlumb.ready(function(){
 	}else{
 	    // Only roll if the env is correct.
 	    // Will use the above variables internally (sorry).
-	    MMEnvBootstrappingInit();
+	    MMEnvBootstrappingInit(start_token);
 	}
     });
