@@ -467,7 +467,7 @@ var NoctuaLauncher = function(){
 		    self.bootstrap_editor(res, notw, query,
 					  //null,
 					  known_relations,
-					  self.minerva_target,
+					  self.barista_location,
 					  barista_token);
 		    // 	}
 		    // }
@@ -673,7 +673,7 @@ var NoctuaLauncher = function(){
 			       res.send('failure ('+ resp.message_type() +'): '+
 					resp.message());
 			   });
-		var t = self.minerva_target + '/api/mmm/m3ExportModel';
+		var t = self.barista_location + '/api/mmm/m3ExportModel';
 		var t_args = {
 		    'modelId': mid
 		};

@@ -400,7 +400,8 @@ var BaristaLauncher = function(){
 
 	    // Can get session?
 	    var sess = sessioner.create_session_by_email(email);
-	    if( sess ){
+	    console.log('sess: ', sess);
+	    if( ! sess ){
 		console.log('login fail; unknown/ill-formed user: ' + email);
 		res.json({status: "failure", reason: "not in/bad auth.json?"});
 	    }else{
@@ -408,7 +409,7 @@ var BaristaLauncher = function(){
 		// Adjust this client/server session.
 		req.session.authorized = true;
 		
-		console.log('login success (' + email + '): ' + token);
+		console.log('login success (' + sess.email + '): ' + sess.token);
 		//console.log('session: ', req.session);
 
 		// Pass back the interesting bits.
