@@ -1706,9 +1706,9 @@ jsPlumb.ready(function(){
 					   global_minerva_definition_name,
 					   start_token);
 			     });
-	    manager.get_model(global_id);
-	    // var rr = manager.get_model(global_id);
-	    // console.log('rr: ' + rr);
+	    //manager.get_model(global_id);
+	    var rr = manager.get_model(global_id);
+	    console.log('rr: ' + rr);
 	}	
 
 });

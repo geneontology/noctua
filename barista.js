@@ -657,6 +657,8 @@ var BaristaLauncher = function(){
 	var ns = req.route.params['namespace'] || '';
 	var call = req.route.params['call'] || '';
 	if( ! app_guard.is_public(ns, call) && ! uxref ){
+	    console.log('blocking call: ' + req.url);
+
 	    // Catch error here if no proper ID on non-public.
 	    res.setHeader('Content-Type', 'text/json');
 	    // TODO/BUG: Send better fail.
@@ -671,7 +673,7 @@ var BaristaLauncher = function(){
 	    api_proxy.web(req, res, {
 		'target': api_loc
 	    });
-	    console.log('api run: ' + api_loc + req.url);
+	    console.log('api xlate: ' + api_loc + req.url);
 	}
     });
 
