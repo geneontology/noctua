@@ -36,9 +36,9 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 
     // Kinda needs this for all calls.
     anchor._user_token = user_token;
-    if( ! anchor._user_token ){
-    	throw new Error('user_token must be an argument');
-    }
+    // if( ! anchor._user_token ){
+    // 	throw new Error('user_token must be an argument');
+    // }
 
     // An internal manager for handling the unhappiness of AJAX callbacks.
     //var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
@@ -313,8 +313,8 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
 	var req = new bbop_mmm_request('model', 'import');
 	req.add('importModel', model_string);
 	reqs.add(req);
-	var args = reqs.callable();
-	
+
+	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(url, args, 'GET');
     };
