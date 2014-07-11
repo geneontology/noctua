@@ -2,7 +2,7 @@
 //// ...
 ////
 
-var MMEnvBootstrappingInit = function(in_server_base){
+var MMEnvBootstrappingInit = function(){
     
     var logger = new bbop.logger('mme bsi');
     logger.DEBUG = true;
@@ -17,7 +17,9 @@ var MMEnvBootstrappingInit = function(in_server_base){
     //var manager = new bbop_mme_manager(in_server_base);
     // BUG/TODO: Right now, just hardwiring the uid, but this needs to
     // be distributed by the moderator after authenication.
-    var manager = new bbop_mme_manager2(in_server_base, 'mmm', 'amigo');
+    var manager = new bbop_mme_manager2(global_barista_location,
+					global_minerva_definition_name,
+					global_barista_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -250,12 +252,21 @@ var MMEnvBootstrappingInit = function(in_server_base){
 };
 
 // Start the day the jsPlumb way.
-jQuery(document).ready(
-    function(){
-	// Only roll if the env is correct.
-	if( typeof(global_server_base) !== 'undefined' ){
-	    MMEnvBootstrappingInit(global_server_base);
+jsPlumb.ready(function(){
+
+    // Try to define token.
+    var start_token = null;
+    if( global_barista_token ){
+	start_token = global_barista_token;
+    }
+
+    // Next we need a manager to try and pull in the model.
+    if( typeof(global_minerva_definition_name) === 'undefined' ||
+	typeof(global_barista_location) === 'undefined' ){
+	    alert('environment not ready');
 	}else{
-	    throw new Error('not base to contact');
+	    // Only roll if the env is correct.
+	    // Will use the above variables internally (sorry).
+	    MMEnvBootstrappingInit();
 	}
     });

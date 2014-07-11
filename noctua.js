@@ -308,6 +308,10 @@ var NoctuaLauncher = function(){
 				 '/NoctuaLanding.js'
 			     ],
 			     'pup_tent_js_variables': [
+				 {name:'global_barista_location',
+				  value: self.barista_location },
+				 {name: 'global_barista_token',
+				  value: null },
 				 {name: 'global_minerva_definition_name',
 				  value: self.minerva_definition_name },
 				 {name: 'global_known_relations',
