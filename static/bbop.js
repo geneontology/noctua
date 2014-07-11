@@ -509,8 +509,10 @@ bbop.core.clone = function(thing){
 	//print("cloning atom: " + thing);
 	clone = thing;
     }else if( typeof(thing) === 'object' ){
-	// Is it a hash or an array?
-	if( typeof(thing.length) === 'undefined' ){
+	// Is it a null, hash, or an array?
+	if( thing == null ){
+	    clone = null;
+	}else if( typeof(thing.length) === 'undefined' ){
 	    // Looks like a hash!
 	    //print("looks like a hash");
 	    clone = {};
@@ -1877,14 +1879,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.1.1";
+bbop.version.revision = "2.2.0";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140616";
+bbop.version.release = "20140710";
 /*
  * Package: logger.js
  * 
