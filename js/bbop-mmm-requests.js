@@ -188,7 +188,7 @@ var bbop_mmm_request_set = function(user_token, intention){
 
     var each = bbop.core.each;
 
-    anchor._user_token = user_token;
+    anchor._user_token = user_token || null;
     anchor._intention = intention;
     anchor._requests = [];
     
