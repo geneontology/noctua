@@ -731,6 +731,20 @@ var BaristaLauncher = function(){
 	};
 	socket.emit('initialization', init_data);
 
+	// Add session identification information where available.
+	function _is_logged_in_p(data){
+	    var ret = false;
+
+	    var in_token = data['token'];
+	    var sess = sessioner.get_session_by_token(in_token);
+	    if( sess ){
+		ret = true;
+	    }
+	    
+	    return ret;
+	}
+
+	// Add session identification information where available.
 	function _mod_data_with_session_info(data){
 	    
 	    var user_email = '???';
@@ -757,21 +771,27 @@ var BaristaLauncher = function(){
 	// socket and token.
 	socket.on('info', function(data){
 	    //console.log('srv info: %j', data);
-	    data = _mod_data_with_session_info(data);
-	    socket.broadcast.emit('info', data);
+	    if( _is_logged_in_p(data) ){
+		data = _mod_data_with_session_info(data);
+		socket.broadcast.emit('info', data);
+	    }
 	});
 	
 	socket.on('clairvoyance', function(data){
 	    //console.log('srv clair: ' + data);
-	    data = _mod_data_with_session_info(data);
-	    socket.broadcast.emit('clairvoyance', data);
+	    if( _is_logged_in_p(data) ){
+		data = _mod_data_with_session_info(data);
+		socket.broadcast.emit('clairvoyance', data);
+	    }
 	});
 
 	// TODO: This needs to be blocked on auth issues.
 	socket.on('telekinesis', function(data){
 	    //console.log('srv tele: ' + data);
-	    data = _mod_data_with_session_info(data);
-	    socket.broadcast.emit('telekinesis', data);
+	    if( _is_logged_in_p(data) ){
+		data = _mod_data_with_session_info(data);
+		socket.broadcast.emit('telekinesis', data);
+	    }
 	});
 	
 	// Disconnect info.
