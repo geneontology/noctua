@@ -889,71 +889,42 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     manager.register('postrun', 'foo1', _inconsistency_check, 10);
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
-    manager.register('postrun', 'foo4',
-		     function(resp, man){ // experimental
-			 if( msngr ){	
-			     // TODO/BUG: Get into a refresh war pretty
-			     // easy since you trigger an inconsistent
-			     // on refresh--need a better measure.
-			     // TODO: Would this be fixed by also
-			     // passing an "intent" argument? An intention
-			     // of refreshing and getting an inconsistent
-			     // is different than getting inconsistent on
-			     // adding a term. Papered over for the
-			     // time being by adding the additional
-			     // "instantiate" message type.
-			     // var mtype = resp.message_type();
-			     // var msg = [
-			     // 	 'completed op ',
-			     // 	 '<span class="bbop-mme-message-op">',
-			     // 	 mtype,
-			     // 	 '</span>'
-			     // ];
-			     // if( mtype == 'inconsistent' || 
-			     // 	 mtype == 'merge' ){
-			     // 	 msg.push(', <span class="bbop-mme-message-req">you should refresh</span>'); 
-			     // 	 }
-			     //msngr.info(msg.join(''));
-			     msngr.info({'message_type': resp.message_type(),
-					 'message': resp.message(),
-					 'intention': resp.intention(),
-					 'signal': resp.signal()
-					});
-			 }
-		     }, 7);
-    manager.register('manager_error', 'foo',
-		     function(message_type, message){
-			 alert('There was a connection error (' +
-			       message_type + '): ' + message);
-		     }, 10);
+    manager.register('postrun', 'foo4', function(resp, man){ // experimental
+	msngr.info({'message_type': resp.message_type(),
+		    'message': resp.message(),
+		    'intention': resp.intention(),
+		    'signal': resp.signal()
+		   });
+    }, 7);
+    manager.register('manager_error', 'foo', function(message_type, message){
+	alert('There was a connection error (' +
+	      message_type + '): ' + message);
+    }, 10);
+    
+    manager.register('warning', 'foo', function(resp, man){
+	alert('Warning: ' + resp.message() + '; ' +
+	      'your operation was likely not performed');
+    }, 10);
+    
+    manager.register('error', 'foo', function(resp, man){
 
-    manager.register('warning', 'foo',
-		     function(resp, man){
-			 alert('Warning: ' + resp.message() + '; ' +
-			       'your operation was likely not performed');
-		     }, 10);
-
-    manager.register('error', 'foo',
-		     function(resp, man){
-
-			 var ex_msg = '';
-			 if( resp.commentary() &&
-			     resp.commentary().exceptionMsg ){
-			     ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
-			 }
-
-			 alert('Error (' +
-			       resp.message_type() + '): ' +
-			       resp.message() + '; ' +
-			       'your operation was likely not performed' +
-			       ex_msg);
-		     }, 10);
-
+	var ex_msg = '';
+	if( resp.commentary() &&
+	    resp.commentary().exceptionMsg ){
+	    ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
+	}
+	
+	alert('Error (' +
+	      resp.message_type() + '): ' +
+	      resp.message() + '; ' +
+	      'your operation was likely not performed' +
+	      ex_msg);
+    }, 10);
+    
     // Remote action registrations.
-    manager.register('meta', 'foo',
-    		     function(resp, man){
-    			 alert('Meta operation successful: ' + resp.message());
-    		     }, 10);
+    manager.register('meta', 'foo', function(resp, man){
+    	alert('Meta operation successful: ' + resp.message());
+    }, 10);
 
     // Only run the internal function when the filters are passed.
     function _update_filter(resp, man, run_fun){
@@ -1472,142 +1443,128 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     }
 
     //
-    jQuery(ping_btn_elt).click(
-	function(){
-	    if( msngr ){
-		// msngr.info('Please contact me for discussion about ' +
-		// 	   '<span class="bbop-mme-message-op">'+
-		// 	   ecore.get_id() + '</span>');
-		msngr.info({'message':
-			    '<strong>please contact me for discussion</strong>',
-			    'message_type': 'success'}
-			  );
-	    }
-	}
-    );
+    jQuery(ping_btn_elt).click(function(){
+	msngr.info({'message':
+		    '<strong>please contact me for discussion</strong>',
+		    'message_type': 'success'}
+		  );
+    });
 
     //
-    jQuery(model_ann_elt).click(
-	function(){
-	    var ann_edit_modal = widgets.edit_annotations_modal;
-	    var eam = ann_edit_modal(ecore, manager, ecore.get_id(),
-				     gserv, gconf);
-	    eam.show();
-	}
-    );
+    jQuery(model_ann_elt).click(function(){
+	var ann_edit_modal = widgets.edit_annotations_modal;
+	var eam = ann_edit_modal(ecore, manager, ecore.get_id(),
+				 gserv, gconf);
+	eam.show();
+    });
 
     // 
-    jQuery(test_btn_elt).click(
-	function(){
-	    //alert('in progress');
-
-	    // Grab node.
-	    var nset = ecore.get_nodes();
-	    var nkeys = bbop.core.get_keys(nset);
-	    var node = nset[nkeys[0]];
-	    if( node ){
-		// 
-		//alert('in progress: + ' + node.id());
-		//bbop_mme_widgets.contained_modal('shield');
-		//var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
-		var mdl = bbop_mme_widgets.compute_shield();
-		mdl.show();
-
-		// Works.
- 		// Test that destroy works.
-		window.setTimeout(
-		    function(){
-			mdl.destroy();
-			alert('I did nothing. You wasted two seconds.');
-		    }, 2000);
-	    }
+    jQuery(test_btn_elt).click(function(){
+	//alert('in progress');
+	
+	// Grab node.
+	var nset = ecore.get_nodes();
+	var nkeys = bbop.core.get_keys(nset);
+	var node = nset[nkeys[0]];
+	if( node ){
+	    // 
+	    //alert('in progress: + ' + node.id());
+	    //bbop_mme_widgets.contained_modal('shield');
+	    //var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
+	    var mdl = bbop_mme_widgets.compute_shield();
+	    mdl.show();
+	    
+	    // Works.
+ 	    // Test that destroy works.
+	    window.setTimeout(
+		function(){
+		    mdl.destroy();
+		    alert('I did nothing. You wasted two seconds.');
+		}, 2000);
 	}
-    );
+    });
 
     // Toggle the visibility of the part_of connectors. 
     var viz_p = true;
-    jQuery(toggle_part_of_elt).click(
-	function(){
-
-	    // First, collect all of the part_of connections.
-	    var poc = {};
-	    each(ecore.get_edges(),
-		 function(edge_id){
-		     var edge = ecore.get_edge(edge_id);
-		     //if( edge && edge.relation() == 'part_of' ){
-		     if( edge && edge.relation() == 'BFO:0000050' ){
-			 var conn_id =
-			     ecore.get_connector_id_by_edge_id(edge.id());
-			 poc[conn_id] = true;
+    jQuery(toggle_part_of_elt).click(function(){
+	
+	// First, collect all of the part_of connections.
+	var poc = {};
+	each(ecore.get_edges(),
+	     function(edge_id){
+		 var edge = ecore.get_edge(edge_id);
+		 //if( edge && edge.relation() == 'part_of' ){
+		 if( edge && edge.relation() == 'BFO:0000050' ){
+		     var conn_id =
+			 ecore.get_connector_id_by_edge_id(edge.id());
+		     poc[conn_id] = true;
+		 }
+	     });	    
+	
+	// Switch viz.
+	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
+	
+	// Toggle viz on and off.
+	each(instance.getConnections(),
+	     function(conn){
+		 if( poc[conn.id] ){
+		     conn.setVisible(viz_p);
+		     conn.endpoints[0].setVisible(viz_p);
+		     conn.endpoints[1].setVisible(viz_p);
+		     
+		     // Disappearing is easy, making visiable
+		     // leads to artifacts.
+		     if( viz_p ){
+			 // _shields_up();
+			 // instance.doWhileSuspended(
+    			 // 	 function(){
+			 instance.repaintEverything();
+			 // });
+			 // _shields_down();
 		     }
-		 });	    
-
-	    // Switch viz.
-	    if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
-
-	    // Toggle viz on and off.
-	    each(instance.getConnections(),
-		 function(conn){
-		     if( poc[conn.id] ){
-			 conn.setVisible(viz_p);
-			 conn.endpoints[0].setVisible(viz_p);
-			 conn.endpoints[1].setVisible(viz_p);
-
-			 // Disappearing is easy, making visiable
-			 // leads to artifacts.
-			 if( viz_p ){
-			     // _shields_up();
-			     // instance.doWhileSuspended(
-    			     // 	 function(){
-			     instance.repaintEverything();
-			     // });
-			     // _shields_down();
-			 }
-		     }
-		 });
-	});
-
+		 }
+	     });
+    });
+    
     // Toggle the screenshot mode.
     var screen_p = false;
-    jQuery(toggle_screen_elt).click(
-	function(){
+    jQuery(toggle_screen_elt).click(function(){
 
-	    // Toggle switch.
-	    if( screen_p ){ screen_p = false; }else{ screen_p = true; }
-
-	    // Change the styles.
-	    if( screen_p ){
-		// Remove the side.
-		jQuery('.app-graph-container').css('margin-left', '0em');
-		jQuery('.app-editor-bounds').css('height', '100%');
-		jQuery('.app-table-bounds').css('height', '0%');
-		jQuery('.app-controls').css('width', '0em');		
-	    }else{
-		// Re-establish the sides.
-		jQuery('.app-graph-container').css('margin-left', '15em');
-		jQuery('.app-editor-bounds').css('height', '70%');
-		jQuery('.app-table-bounds').css('height', '30%');
-		jQuery('.app-controls').css('width', '15em');
-	    }
-
-	});
-
+	// Toggle switch.
+	if( screen_p ){ screen_p = false; }else{ screen_p = true; }
+	
+	// Change the styles.
+	if( screen_p ){
+	    // Remove the side.
+	    jQuery('.app-graph-container').css('margin-left', '0em');
+	    jQuery('.app-editor-bounds').css('height', '100%');
+	    jQuery('.app-table-bounds').css('height', '0%');
+	    jQuery('.app-controls').css('width', '0em');		
+	}else{
+	    // Re-establish the sides.
+	    jQuery('.app-graph-container').css('margin-left', '15em');
+	    jQuery('.app-editor-bounds').css('height', '70%');
+	    jQuery('.app-table-bounds').css('height', '30%');
+	    jQuery('.app-controls').css('width', '15em');
+	}
+	
+    });
+    
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
     bbop_draggable_canvas(graph_container_id);
 
-    jQuery(graph_container_div).on( // conflict with draggable canvas
-	'mousemove',
-	function(evt){
-	    if( msngr ){
-		var top = evt.pageY;
-		var left = evt.pageX;
-		var scroll_left = jQuery(graph_container_div).scrollLeft();
-		var scroll_top = jQuery(graph_container_div).scrollTop();
-		msngr.clairvoyance(top + scroll_top, left + scroll_left);
-	    }
-	});
-
+    // conflict with draggable canvas
+    jQuery(graph_container_div).on('mousemove', function(evt){
+	if( msngr ){
+	    var top = evt.pageY;
+	    var left = evt.pageX;
+	    var scroll_left = jQuery(graph_container_div).scrollLeft();
+	    var scroll_top = jQuery(graph_container_div).scrollTop();
+	    msngr.clairvoyance(top + scroll_top, left + scroll_left);
+	}
+    });
+    
     // Finally, we're going to put up a giant warning for people to
     // remind them that this is alpha software.
     var wrn_txt = [

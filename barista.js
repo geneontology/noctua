@@ -736,6 +736,7 @@ var BaristaLauncher = function(){
 	    var ret = false;
 
 	    var in_token = data['token'];
+	    //console.log('messenger data: ', data);
 	    var sess = sessioner.get_session_by_token(in_token);
 	    if( sess ){
 		ret = true;

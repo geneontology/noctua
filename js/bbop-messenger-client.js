@@ -182,6 +182,7 @@ var bbop_messenger_client = function(msgloc,
 	    // Add in model ID.
 	    data['model_id'] = anchor.model_id;
 	    data['token'] = anchor.token();
+	    data['token'] = anchor.token();
 	    anchor.socket.emit('info', data);
 	}
     };
@@ -196,7 +197,8 @@ var bbop_messenger_client = function(msgloc,
 	    var loc_packet = {
 		model_id: anchor.model_id,
 		top: top,
-		left: left
+		left: left,
+		token: anchor.token()
 	    };
 	    anchor.socket.emit('clairvoyance', loc_packet);
 	}
@@ -213,7 +215,8 @@ var bbop_messenger_client = function(msgloc,
 		model_id: anchor.model_id,
 		top: top,
 		left: left,
-		item_id: item_id
+		item_id: item_id,
+		token: anchor.token()
 	    };
 	    anchor.socket.emit('telekinesis', tkn_packet);
 	}
