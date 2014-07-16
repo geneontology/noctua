@@ -1301,7 +1301,17 @@ bbop_mme_widgets.reporter = function(output_id){
 	jQuery(output_elt).append('<ul id="' + new_list_id + '"></ul>');
     };
 
-    this.comment = function(message, uid, color){
+    this.comment = function(message){
+	
+	// Try and set some defaults.
+	var uid = null;
+	var color = null;
+	if( message ){
+	    uid = message['user_name']
+		|| message['user_email']
+		|| message['socket_id'];
+	    color = message['user_color'];
+	}
 
 	// Start.
 	var out = '<li>';
