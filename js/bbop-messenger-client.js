@@ -1,17 +1,17 @@
 ////
 //// Let's try and communicate with the socket.io server for
-//// messages and the like. For the time being, this is a brittle
-//// and optional test. If it goes any where, it will be factored
-//// out.
+//// messages and the like.
 ////
 
-var bbop_messenger_client = function(msgloc,
-				     token,
-				     on_connect,
-				     on_initialization,
-				     on_info_event,
-				     on_clairvoyance_event,
-				     on_telekinesis_event){
+var bbop_messenger_client = function(barista_location, token){
+    bbop.registry.call(this, ['connect',
+			      'initialization',
+			      //'disconnect',
+			      'message', 
+			      'clairvoyance',
+			      'telekinesis',
+			      'relay']); // catch-all
+    this._is_a = 'bbop_messenger_client';
 
     var anchor = this;
     anchor._token = token;
@@ -19,7 +19,15 @@ var bbop_messenger_client = function(msgloc,
     anchor.model_id = null;
     anchor.okay_p = null;
 
-    var logger = new bbop.logger('msg client');
+    // These are the non-internal ones that we know about.
+    var known_relay_classes = {
+	'message': true,
+	'clairvoyance': true,
+	'telekinesis': true,
+	'relay': true
+    };
+
+    var logger = new bbop.logger('barista client');
     logger.DEBUG = true;
     //logger.DEBUG = false;
     function ll(str){ logger.kvetch(str); }
@@ -34,7 +42,9 @@ var bbop_messenger_client = function(msgloc,
 	anchor.okay_p = true;
     }	
 
-    // 
+    /*
+     *
+     */
     anchor.okay = function(){
 	var ret = false;
 	//if( anchor.okay_p && anchor.socket && anchor.model_id ){
@@ -54,6 +64,29 @@ var bbop_messenger_client = function(msgloc,
 	return anchor._token;
     };
 
+    /*
+     * General structure for relaying information between clients.
+     * Always check that the comm is on.
+     * Always inject 'token' and 'model_id'.
+     */
+    anchor.relay = function(relay_class, data){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
+
+	    // Inject our data.
+	    data['class'] = relay_class;
+	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
+
+	    anchor.socket.emit('relay', data);
+	}
+    };
+
+    /*
+     * Required call before using messenger.
+     */
     // TODO: Specify the channel over and above the general server.
     // For the time being, just using the model id in the message.
     anchor.connect = function(model_id){
@@ -61,164 +94,130 @@ var bbop_messenger_client = function(msgloc,
 	    ll('no good socket on connect; did you connect()?');
 	}else{
 
-	    // Set internal variables.
-	    //anchor.socket = io.connect(msgloc + '/messenger');
-	    anchor.socket = io.connect(msgloc);
+	    // Set internal variables and make actual connection.
+	    //anchor.socket = io.connect(barista_location + '/messenger');
+	    anchor.socket = io.connect(barista_location);
 	    anchor.model_id = model_id;
+	    anchor.socket_id = anchor.socket.id;
 	    
-	    function _internal_on_connect(){
-		
-		// Emit general packet.
-		var connect_packet = {
-		    'model_id': anchor.model_id,
-		    'message': 'new client connected',
-		    'message_type': 'success',
-		    'token': anchor.token()
-		};
-		anchor.socket.emit('info', connect_packet);
-		
-		// Run our external callback.
-		if( typeof(on_connect) !== 'undefined' && on_connect ){
-		    on_connect();
+	    function _inject_data_with_client_info(data){
+		if( ! data ){
+		    data = {};
+		    //}else{
 		}
+
+		// // Standard.
+		// data['model_id'] = anchor.model_id;
+		// data['socket_id'] = anchor.socket_id;
+		// data['token'] = anchor.token();
+
+		// // Optional.
+		// data['message_type'] = null;
+		// data['message'] = null;
+		// data['signal'] = null;
+		// data['intention'] = null;
+		// data['top'] = null;
+		// data['left'] = null;
+		// data['data'] = null;
+		// data['state'] = null;
+		
+		return data;
 	    }
-	    anchor.socket.on('connect', _internal_on_connect);
+
+	    // Check whether ot not we should ignore the incoming
+	    // data.
+	    function _applys_to_us_p(data){
+		var ret = false;
+
+		var mid = data['model_id'] || null;
+		if( ! mid || mid != anchor.model_id ){
+		    ll('skip packet--not for us');
+		}else{
+		    ret = true;
+		}
+
+		return ret;
+	    }
+
+	    // This internal connect is special since no data is
+	    // actually coming from the outsice world.
+	    anchor.socket.on('connect', function (empty_placeholder){
+		var data = _inject_data_with_client_info(empty_placeholder);
+
+		// Let others know that I have connected using the 
+		data['message_type'] = 'success';
+		data['message'] = 'new client connected';
+		//anchor.socket.emit('relay', data);
+		anchor.relay('message', data);
+
+		// Run appropriate callbacks.
+		ll('apply "connect" callbacks');
+		anchor.apply_callbacks('connect', [data]);
+	    });
 
 	    // Our initialization data from the server.
-	    function _got_initialization(data){
-		var sid = data['socket_id'] || '???';
-		var ucolor = data['user_color'] || '???';
-
-		ll('received initialization info from socket: ' + sid);
+	    anchor.socket.on('initialization', function (data){
+		data = _inject_data_with_client_info(data);
+		//ll('received initialization info from socket: ' + sid);
 		
-		// Trigger whatever function we were given.
-		if( typeof(on_initialization) !== 'undefined' &&
-		    on_initialization ){
-		    on_initialization(data);
-		}
-	    }
-	    anchor.socket.on('initialization', _got_initialization);
+		// Run appropriate callbacks.
+		ll('apply "initialization" callbacks');
+		anchor.apply_callbacks('initialization', [data]);
+	    });
 
-	    // Setup to catch info events from the clients and pass them
-	    // on if they were meant for us.
-	    function _got_info(data){
-		var mid = data['model_id'] || null;
-		//var uid = data['user_id'] || '???';
-		var uid = data['user_email'] || '???';
-		var ucolor = data['user_color'] || '???';
-		var signal = data['signal'] || '???';
-		var intention = data['intention'] || '???';
-		var message = data['message'] || '???';
-		var message_type = data['message_type'] || '???';
+	    // Setup to catch info events from the clients and pass
+	    // them on if they were meant for us. 
+	    anchor.socket.on('relay', function(data){
+		data = _inject_data_with_client_info(data);
 
 		// Check to make sure it interests us.
-		if( ! mid || mid != anchor.model_id ){
-		    ll('skip info packet--not for us');
-		}else{
-		    ll('received info');
-		
-		    // Trigger whatever function we were given.
-		    if(typeof(on_info_event) !== 'undefined' && on_info_event){
-			on_info_event(data, uid, ucolor);
+		if( _applys_to_us_p(data) ){
+
+		    var dclass = data['class'];
+		    if( ! dclass ){
+			ll('no relay class found');
+		    }else if( ! known_relay_classes[dclass] ){
+			ll('unknown relay class: ' + dclass);
+		    }else{
+			// Run appropriate callbacks.
+			ll('apply "'+ dclass +'" callbacks');
+			anchor.apply_callbacks(dclass, [data]);
 		    }
 		}
-	    }
-	    anchor.socket.on('info', _got_info);
-
-	    function _got_clairvoyance(data){
-		var mid = data['model_id'] || null;
-		var top = data['top'] || null;
-		var left = data['left'] || null;
-		var uid = data['user_email'] || '???';
-		var ucolor = data['user_color'] || '#ffffff';
-
-		// Check to make sure it interestes us.
-		if( ! mid || mid != anchor.model_id ){
-		    ll('skip info packet--not for us');
-		}else{
-		    //ll('received clairvoyance: ' + str);
-		    
-		    // Trigger whatever function we were given.
-		    if(typeof(on_clairvoyance_event) !== 'undefined' &&
-		       on_clairvoyance_event){
-			on_clairvoyance_event(uid, ucolor, top, left);
-		    }
-		}		
-	    }
-	    anchor.socket.on('clairvoyance', _got_clairvoyance);
-
-	    function _got_telekinesis(data){
-		var mid = data['model_id'] || null;
-		var top = data['top'] || null;
-		var left = data['left'] || null;
-		var uid = data['user_email'] || '???';
-		var iid = data['item_id'] || null;
-
-		// Check to make sure it interestes us.
-		if( ! mid || mid != anchor.model_id ){
-		    ll('skip info packet--not for us');
-		}else{
-		    //ll('received telekinesis: ' + str);
-		
-		    // Trigger whatever function we were given.
-		    if(typeof(on_telekinesis_event) !== 'undefined' &&
-		       on_telekinesis_event){
-			on_telekinesis_event(uid, iid, top, left);
-		    }
-		}		
-	    }
-	    anchor.socket.on('telekinesis', _got_telekinesis);
-	}
+	    });
+     	}
     };
 
     // 
-    anchor.info = function(data){
-	if( ! anchor.okay() ){
-	    ll('no good socket on info; did you connect()?');
-	}else{
-	    //ll('send info: (' + anchor.model_id + ') "' + str + '"');
-	    ll('send info: (' + anchor.model_id + ', ' + anchor.token() + ')');
-
-	    // Add in model ID.
-	    data['model_id'] = anchor.model_id;
-	    data['token'] = anchor.token();
-	    data['token'] = anchor.token();
-	    anchor.socket.emit('info', data);
-	}
+    anchor.message = function(mtype, m){
+	var packet = {
+	    'class': 'message',
+	    'message_type': mtype,
+	    'message': m
+	};
+	anchor.relay('message', packet);
     };
 
-    // Remote awareness of location.
+    // Remote awareness of our location.
     anchor.clairvoyance = function(top, left){
-	if( ! anchor.okay() ){
-	    ll('no good socket on location; did you connect()?');
-	}else{
-	    ll('send location: (' + anchor.model_id + ')');
-
-	    var loc_packet = {
-		model_id: anchor.model_id,
-		top: top,
-		left: left,
-		token: anchor.token()
-	    };
-	    anchor.socket.emit('clairvoyance', loc_packet);
-	}
+	var packet = {
+	    'class': 'clairvoyance',
+	    'top': top,
+	    'left': left
+	};
+	anchor.relay('clairvoyance', packet);
     };
 
     // Move objects at a distance.
     anchor.telekinesis = function(item_id, top, left){
-	if( ! anchor.okay() ){
-	    ll('no good socket on location; did you connect()?');
-	}else{
-	    ll('send location (tkn): (' + anchor.model_id + ')');
-
-	    var tkn_packet = {
-		model_id: anchor.model_id,
-		top: top,
-		left: left,
-		item_id: item_id,
-		token: anchor.token()
-	    };
-	    anchor.socket.emit('telekinesis', tkn_packet);
-	}
+	var packet = {
+	    'class': 'telekinesis',
+	    'item_id': item_id,
+	    'top': top,
+	    'left': left
+	};
+	anchor.relay('telekinesis', packet);
     };
+
 };
+bbop.core.extend(bbop_messenger_client, bbop.registry);
