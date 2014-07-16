@@ -17,7 +17,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     // Where 1 is the initial node and n is the terminal node.
     var waypoints = {};
     
-    var logger = new bbop.logger('app');
+    var logger = new bbop.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
@@ -39,7 +39,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     var ecore = new bme_core();
 
     // Optionally use the messaging server as an experiment.
-    var msngr = null;
+    var barclient = null;
 
     // Where we move the nodes during this session.
     // BUG/TODO: Should be the domain of Barista.
@@ -246,7 +246,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 		var l = ui.position.left;
 
 		//ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
-		msngr.telekinesis(en.id(), t, l);
+		barclient.telekinesis(en.id(), t, l);
 	    }
 	}
 
@@ -890,11 +890,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
     manager.register('postrun', 'foo4', function(resp, man){ // experimental
-	msngr.info({'message_type': resp.message_type(),
-		    'message': resp.message(),
-		    'intention': resp.intention(),
-		    'signal': resp.signal()
-		   });
+	barclient.message({'message_type': resp.message_type(),
+			   'message': resp.message(),
+			   'intention': resp.intention(),
+			   'signal': resp.signal()
+			  });
     }, 7);
     manager.register('manager_error', 'foo', function(message_type, message){
 	alert('There was a connection error (' +
@@ -1330,11 +1330,11 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     // Also, just as the socket.io implementation, this cannot do an
     // awful lot--it's just a report that the TCP connection was
     // established.
-    function _on_connect(a, b){
+    function _on_connect(nothingness){
 	reporter.reset();
-	reporter.comment({'message_type': 'success',
-			  'message': 'you are connected'
-			 });
+	nothingness['message_type'] = 'success';
+	nothingness['message'] = 'you are connected';
+	reporter.comment(nothingness);
     }
 
     // ...
@@ -1346,8 +1346,9 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	ll('we are on socket: ' + sockid);
 
 	// Add to the top of the message list.
-	reporter.comment({'message_type': 'success',
-			  'message': 'on socket: '+ sockid}, sockid);//,ucolor);
+	data['message_type'] = 'success';
+	data['message'] = 'on socket: '+ sockid;
+	reporter.comment(data);
 
 	// // Change our user id.
 	// manager.user_token(uid);
@@ -1357,10 +1358,16 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     }
 
     // Catch both the regular back-and-forth, as well as the 
-    function _on_info_update(data, uid, ucolor){
+    function _on_message_update(data){
+	//function _on_message_update(data, uid, ucolor){
+
+	var id = 'cursor_for_' + data['token'];
+	var color = data['user_color'];
+	var top = data['top'];
+	var left = data['left'];
 
 	// Add to the top of the message list.
-	reporter.comment(data, uid, ucolor);
+	reporter.comment(data);
 		
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
@@ -1380,7 +1387,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	}
     }
     
-    function _on_clairvoyance_update(id, color, top, left){
+    function _on_clairvoyance_update(data){
+	//function _on_clairvoyance_update(id, color, top, left){
+
+	var id = 'cursor_for_' + data['token'];
+	var color = data['user_color'];
+	var top = data['top'];
+	var left = data['left'];
 
 	// Ensure there is a div for the user.
 	var jelt = '#' + id;
@@ -1409,7 +1422,13 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 	jQuery(jelt).css('left', left - scroll_left);
     }
 
-    function _on_telekinesis_update(uid, iid, top, left){
+    function _on_telekinesis_update(data){
+	//function _on_telekinesis_update(uid, iid, top, left){
+
+	var iid = data['item_id'];
+	var top = data['top'];
+	var left = data['left'];	
+
 	//var en = ecore.get_node(iid);
 	var enelt = ecore.get_node_elt_id(iid);
 	if( enelt ){
@@ -1432,22 +1451,21 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     }else{
 	// TODO: Eventually we'll
 	ll('try setup for messaging at: ' + global_barista_location);
-	msngr = new bbop_messenger_client(global_barista_location,
-					  in_token,
-					  _on_connect,
-					  _on_initialization,
-					  _on_info_update,
-					  _on_clairvoyance_update,
-					  _on_telekinesis_update);
-	msngr.connect(ecore.get_id());
+	barclient = new bbop_messenger_client(global_barista_location, in_token);
+	barclient.register('connect', 'a', _on_connect);
+	barclient.register('initialization', 'b', _on_initialization);
+	barclient.register('message', 'c', _on_message_update);
+	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
+	barclient.register('telekinesis', 'e', _on_telekinesis_update);
+	barclient.connect(ecore.get_id());
     }
 
     //
     jQuery(ping_btn_elt).click(function(){
-	msngr.info({'message':
-		    '<strong>please contact me for discussion</strong>',
-		    'message_type': 'success'}
-		  );
+	barclient.message({'message':
+			   '<strong>please contact me for discussion</strong>',
+			   'message_type': 'success'}
+			 );
     });
 
     //
@@ -1556,12 +1574,12 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 
     // conflict with draggable canvas
     jQuery(graph_container_div).on('mousemove', function(evt){
-	if( msngr ){
+	if( barclient ){
 	    var top = evt.pageY;
 	    var left = evt.pageX;
 	    var scroll_left = jQuery(graph_container_div).scrollLeft();
 	    var scroll_top = jQuery(graph_container_div).scrollTop();
-	    msngr.clairvoyance(top + scroll_top, left + scroll_left);
+	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
     

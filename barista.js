@@ -703,33 +703,10 @@ var BaristaLauncher = function(){
     // connecting--essentially the recorded history to date.
     //var channel_stash = {};
 
-    // var socket_id_to_session = {};
-    // var token_to_socket_id = {};
-
     sio.sockets.on('connection', function(socket){
 
-	// Add this client to the socket list.
 	// Store for injection.
 	var socket_id = socket.id;
-// 	//var rci = Math.floor(Math.random() * ucolor_list.length);
-// 	client_sockets[socket_id] = {
-// 	    'uid': socket_id//,
-// //	    'ucolor': ucolor_list[rci]
-// 	};
-// 	//var user_id = client_sockets[socket_id]['uid'];
-// 	var user_email = 'TBD';
-// //	var user_color = client_sockets[socket_id]['ucolor'];
-
-	// Immediately emit user meta-information to the
-	// just-connected user. This is very very minimal since we
-	// don't know anything without a session.
-	var init_data = {
-//	    'user_metadata': true,
-	    'socket_id': socket_id//,
-	    //'user_id': user_id,
-//	    'user_color': user_color
-	};
-	socket.emit('initialization', init_data);
 
 	// Add session identification information where available.
 	function _is_logged_in_p(data){
@@ -748,50 +725,81 @@ var BaristaLauncher = function(){
 	// Add session identification information where available.
 	function _mod_data_with_session_info(data){
 	    
+	    var user_name = '???';
 	    var user_email = '???';
 	    var user_color = 'white';
 	    
-	    // The info packet can tie us to the information via the
-	    // passed token.
-	    var in_token = data['token'];
-	    var sess = sessioner.get_session_by_token(in_token);
-	    if( sess ){
-		user_email = sess['email'];
-		user_color = sess['color'];
+	    // If possibles, the info packet can tie us to the
+	    // information via the passed token.
+	    if( ! data ){
+		data = {};
+	    }else{
+
+		// Try and jimmy the info out of the data stream and
+		// connect it to the session.
+		var in_token = data['token'];
+		var sess = sessioner.get_session_by_token(in_token);
+		if( sess ){
+		    user_name = sess['nickname'];
+		    user_email = sess['email'];
+		    user_color = sess['color'];
+		}
+	    
+		// Inject user data into data.
+		//data['user_id'] = user_id;
+		data['user_name'] = user_name;
+		data['user_email'] = user_email;
+		data['user_color'] = user_color;
 	    }
 	    
-	    // Inject user data.
-	    //data['user_id'] = user_id;
-	    data['user_email'] = user_email;
-	    data['user_color'] = user_color;
-	    
+	    // Can always add socket id.
+	    data['socket_id'] = socket_id;
+
 	    return data;
 	}
 
-	// Relays to others that new user is on and ties
-	// socket and token.
-	socket.on('info', function(data){
-	    //console.log('srv info: %j', data);
-	    if( _is_logged_in_p(data) ){
-		data = _mod_data_with_session_info(data);
-		socket.broadcast.emit('info', data);
-	    }
-	});
-	
-	socket.on('clairvoyance', function(data){
-	    //console.log('srv clair: ' + data);
-	    if( _is_logged_in_p(data) ){
-		data = _mod_data_with_session_info(data);
-		socket.broadcast.emit('clairvoyance', data);
-	    }
-	});
+	// Initial data--just-connected user. This is very very
+	// minimal since we don't know anything without a session.
+	var init_data = _mod_data_with_session_info(null);
+	socket.emit('initialization', init_data);
 
-	// TODO: This needs to be blocked on auth issues.
-	socket.on('telekinesis', function(data){
+	// // Relays to others that new user is on and ties
+	// // socket and token.
+	// socket.on('info', function(data){
+	//     //console.log('srv info: %j', data);
+	//     if( _is_logged_in_p(data) ){
+	// 	data = _mod_data_with_session_info(data);
+	// 	socket.broadcast.emit('info', data);
+	//     }
+	// });
+	
+	// socket.on('clairvoyance', function(data){
+	//     //console.log('srv clair: ' + data);
+	//     if( _is_logged_in_p(data) ){
+	// 	data = _mod_data_with_session_info(data);
+	// 	socket.broadcast.emit('clairvoyance', data);
+	//     }
+	// });
+
+	// // TODO: This needs to be blocked on auth issues.
+	// socket.on('telekinesis', function(data){
+	//     //console.log('srv tele: ' + data);
+	//     if( _is_logged_in_p(data) ){
+	// 	data = _mod_data_with_session_info(data);
+	// 	socket.broadcast.emit('telekinesis', data);
+	//     }
+	// });
+	
+	//
+	socket.on('relay', function(data){
 	    //console.log('srv tele: ' + data);
+
+	    // Only really get involved if the user is logged in.
 	    if( _is_logged_in_p(data) ){
 		data = _mod_data_with_session_info(data);
-		socket.broadcast.emit('telekinesis', data);
+		socket.broadcast.emit('relay', data);
+		
+		// TODO: Update board.
 	    }
 	});
 	
