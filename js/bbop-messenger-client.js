@@ -189,13 +189,17 @@ var bbop_messenger_client = function(barista_location, token){
     };
 
     // 
-    anchor.message = function(mtype, m){
-	var packet = {
-	    'class': 'message',
-	    'message_type': mtype,
-	    'message': m
-	};
-	anchor.relay('message', packet);
+    anchor.message = function(m){
+	m['class'] = 'message';
+	// var packet = {
+	//     'class': 'message',
+	//     'message_type': m['message_type'],
+	//     'message': m['message'],
+	//     'me': m['message_type'],
+	//     'message_type': m['message_type']
+	// };
+	// anchor.relay('message', packet);
+	anchor.relay('message', m);
     };
 
     // Remote awareness of our location.
