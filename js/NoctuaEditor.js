@@ -8,7 +8,7 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
+var MMEnvInit = function(in_model, in_relations, in_token){
     
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
@@ -46,7 +46,10 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
     var historical_store = new bbop_location_store();
 
     // Events registry.
-    var manager = new bbop_mme_manager2(in_server_base, 'mmm', in_token);
+    var manager = new bbop_mme_manager2(global_barista_location,
+					global_minerva_definition_name,
+					in_token);
+    //var manager = new bbop_mme_manager2(in_server_base, 'mmm', in_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -1368,7 +1371,7 @@ var MMEnvInit = function(in_model, in_relations, in_server_base, in_token){
 
 	// Add to the top of the message list.
 	reporter.comment(data);
-		
+	
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
 	//alert('someone did something');
@@ -1678,7 +1681,6 @@ jsPlumb.ready(function(){
 				 // Bootstrap rest of session.
 				 MMEnvInit(resp.data(),
 					   global_known_relations,
-					   global_minerva_definition_name,
 					   start_token);
 			     });
 	    manager.get_model(global_id);

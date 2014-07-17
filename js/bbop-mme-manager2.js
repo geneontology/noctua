@@ -5,7 +5,7 @@
  * Initial take from bbop.golr.manager.
  * 
  * Arguments:
- *  server_base - string for invariant part of API
+ *  barista_location - string for invariant part of API
  *  namespace - string for namespace of API to use
  *  app_blob - JSON object that defines targets
  *  user_token - identifying string for the user of the manager (Barista token)
@@ -13,7 +13,7 @@
  * Returns:
  *  a classic manager
  */
-var bbop_mme_manager2 = function(server_base, namespace, user_token){
+var bbop_mme_manager2 = function(barista_location, namespace, user_token){
     bbop.registry.call(this, ['prerun', // internal
 			      'postrun', // internal
 			      'manager_error', // internal
@@ -27,7 +27,7 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     this._is_a = 'bbop_mme_manager2';
     var anchor = this;
 
-    //var url = server_base + '/api/' + namespace + '/m3Batch';
+    //var url = barista_location + '/api/' + namespace + '/m3Batch';
     anchor._url = null;
     // 
     anchor._user_token = user_token;
@@ -37,9 +37,9 @@ var bbop_mme_manager2 = function(server_base, namespace, user_token){
     function _set_url_from_token(in_token){	
 	var url = null;
 	if( in_token ){
-	    url = server_base + '/api/' + namespace + '/m3BatchPrivileged';
+	    url = barista_location + '/api/' + namespace + '/m3BatchPrivileged';
 	}else{
-	    url = server_base + '/api/' + namespace + '/m3Batch';
+	    url = barista_location + '/api/' + namespace + '/m3Batch';
 	}
 	anchor._url = url;
 	return url;
