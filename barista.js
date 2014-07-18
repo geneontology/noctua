@@ -167,6 +167,29 @@ var Sessioner = function(auth_list){
 	return ret;
     };
     
+    // Internal function to actually create the used session
+    // structure.
+    function _gel_session(email, token, nickname, xref){
+
+	// Create new session.
+	var emd5 = str2md5(email);
+	var color = get_color(); // random color
+	sessions_by_token[token] = {
+	    'nickname': nickname,
+	    'xref': xref,
+	    'email': email,
+	    'email-md5': emd5,
+	    'token': token,
+	    'color': color
+	};
+	email2token[email] = token;
+	
+	// Clone for return.
+	var ret = clone(sessions_by_token[token]);
+	
+	return ret;
+    }
+
     /*
      * Will not clobber if a session exists--just return what's there.
      * Cloned object or null.
@@ -179,28 +202,29 @@ var Sessioner = function(auth_list){
 	if( ! self.authorize_by_email(email) ){
 	    // Cannot.
 	}else{
-	    
-	    // Get info ready to create new session.
+
+	    // Get available user information.
 	    var emd5 = str2md5(email);
 	    var uinf = uinf_by_md5[emd5];
-	    var color = get_color();
+	    var new_nick = uinf['nickname'] || '???';
+	    var new_xref = uinf['xref'];
 
-	    // Create new session.
+	    // Generate a new token.
 	    var new_token = get_token();
-	    sessions_by_token[new_token] = {
-		'nickname': uinf['nickname'] || '???',
-		'xref': uinf['xref'],
-		'email': email,
-		'token': new_token,
-		'color': color
-	    };
-	    email2token[email] = new_token;
 
-	    // Clone for return.
-	    ret = clone(sessions_by_token[new_token]);
+	    // Gel and clone for return.
+	    return _gel_session(email, new_token, new_nick, new_xref);
+	    // ret = clone(sessions_by_token[new_token]);
 	}
 
 	return ret;
+    };
+
+    /*
+     * Add a bogus session for testing--dangerous!
+     */
+    self.create_bogus_session = function(email, token, nickname, xref){
+	return _gel_session(email, token, nickname, xref);
     };
 
     /*
@@ -274,7 +298,6 @@ var Sessioner = function(auth_list){
 	
 	return ret;
     };
-
 };
 
 ///
@@ -286,6 +309,11 @@ var Sessioner = function(auth_list){
 var auth_str = fs.readFileSync('./config/auth.json');
 var auth_list = JSON.parse(auth_str);
 var sessioner = new Sessioner(auth_list);
+
+// BUG/TODO/DEBUG: create an always user so I don't go crazy when
+// reloading Barista during experiments..
+// Will need to go at some point, or be more subtle.
+sessioner.create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
@@ -491,116 +519,130 @@ var BaristaLauncher = function(){
     /// Authentication and Authorization.
     ///
 
-    // TODO: Gross overview and your specifics if you provide a token.
-    messaging_app.get(
-	'/status',
-	function(req, res) {
-
-	    // Gather session info.
-	    var sessions = sessioner.get_sessions();
-
-	    // Variables, render, and output.
-	    var tmpl_args = {
-		'barista_sessions': sessions,
-		'title': notw + ': Status'
-	    };
-	    var out = pup_tent.render_io('barista_base.tmpl',
-					 'barista_status.tmpl',
-					 tmpl_args);
-	    _standard_response(res, 200, 'text/html', out);
-	});
+    // Gross overview of current users.
+    messaging_app.get('/status', function(req, res) {
+	
+	// Gather session info.
+	var sessions = sessioner.get_sessions();
+	
+	// Variables, render, and output.
+	var tmpl_args = {
+	    'barista_sessions': sessions,
+	    'title': notw + ': Status'
+	};
+	var out = pup_tent.render_io('barista_base.tmpl',
+				     'barista_status.tmpl',
+				     tmpl_args);
+	_standard_response(res, 200, 'text/html', out);
+    });
     
-    messaging_app.get(
-	'/logout',
-	function(req, res) {
+    // REST service that 
+    messaging_app.get('/user_info_by_token/:token', function(req, res) {
+	
+	// Do we have permissions to make the call?
+	var token = req.route.params['token'] || null;
+	var sess = sessioner.get_session_by_token(token);
+
+	var ret_obj = {};
+	
+	// Gather session info.
+	if( sess && token ){
+	    ret_obj = sessioner.get_session_by_token(token);
+	}
+
+	// 
+	var fin = JSON.stringify(ret_obj);
+	console.log('user info: ', fin);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+    
+    messaging_app.get('/logout', function(req, res) {
 	    
-	    //console.log(req);
-	    var in_token = null;
-	    var barista_token = null;
-	    if( req.query && req.query['barista_token'] ){
-		// Capture token.
-		in_token = req.query['barista_token'];
-		
-		// Try and retrieve by the barista token.
-		var sess = sessioner.get_session_by_token(in_token);
-		if( sess ){
-		    // If we have it, destroy it.
-		    sessioner.delete_session_by_token(in_token);
-		    console.log('barista token destroyed: ' + barista_token);
-		}else{
-		    console.log('non-session token: ' + in_token);
-		}
+	//console.log(req);
+	var in_token = null;
+	var barista_token = null;
+	if( req.query && req.query['barista_token'] ){
+	    // Capture token.
+	    in_token = req.query['barista_token'];
+	    
+	    // Try and retrieve by the barista token.
+	    var sess = sessioner.get_session_by_token(in_token);
+	    if( sess ){
+		// If we have it, destroy it.
+		sessioner.delete_session_by_token(in_token);
+		console.log('barista token destroyed: ' + barista_token);
 	    }else{
-		console.log('no token');
-	    }	
-	    
-	    // Get return argument if there.
-	    var ret = null;
-	    if( req.query && req.query['return'] ){
-		ret = req.query['return'];
-		// // 
-		// if( tmpret && tmpret !== '' ){
-		// 	var uo = url.parse(tmpret);
-		// 	uo.query['barista_token'] = 
-		// 	ret = 
-		// }
+		console.log('non-session token: ' + in_token);
 	    }
-	    
-	    // Render what we did, and launch Logout.js to purge the
-	    // cookie session (that is frankly unrelated to what we're
-	    // doing).
-	    var tmpl_args = {
-		'pup_tent_js_variables': [
-		    {name: 'global_barista_token', value: barista_token},
-		    {name: 'global_barista_return', value: ret}
-		],
-		'pup_tent_js_libraries': [
-		    'https://login.persona.org/include.js',
-		    '/BaristaLogout.js'
-		],
-		'in_token': in_token,
-		'barista_token': barista_token,
-		'return': ret,
-		'title': notw + ': Logout'
-	    };
-	    var out = pup_tent.render_io('barista_base.tmpl',
-					 'barista_logout.tmpl',
-					 tmpl_args);
-	    _standard_response(res, 200, 'text/html', out);
-	});
+	}else{
+	    console.log('no token');
+	}	
+	
+	// Get return argument if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	    // // 
+	    // if( tmpret && tmpret !== '' ){
+	    // 	var uo = url.parse(tmpret);
+	    // 	uo.query['barista_token'] = 
+	    // 	ret = 
+	    // }
+	}
+	
+	// Render what we did, and launch Logout.js to purge the
+	// cookie session (that is frankly unrelated to what we're
+	// doing).
+	var tmpl_args = {
+	    'pup_tent_js_variables': [
+		{name: 'global_barista_token', value: barista_token},
+		{name: 'global_barista_return', value: ret}
+	    ],
+	    'pup_tent_js_libraries': [
+		'https://login.persona.org/include.js',
+		'/BaristaLogout.js'
+	    ],
+	    'in_token': in_token,
+	    'barista_token': barista_token,
+	    'return': ret,
+	    'title': notw + ': Logout'
+	};
+	var out = pup_tent.render_io('barista_base.tmpl',
+				     'barista_logout.tmpl',
+				     tmpl_args);
+	_standard_response(res, 200, 'text/html', out);
+    });
+    
+    messaging_app.get('/login',	function(req, res) {
 
-    messaging_app.get(
-	'/login',
-	function(req, res) {
-
-	    // Get return argument if there.
-	    var ret = null;
-	    if( req.query && req.query['return'] ){
-		ret = req.query['return'];
-		// // 
-		// if( tmpret && tmpret !== '' ){
-		// 	var uo = url.parse(tmpret);
-		// 	uo.query['barista_token'] = 
-		// 	ret = 
-		// }
-	    }
-	    
-	    var tmpl_args = {
-		'pup_tent_js_variables': [
-		    {'name': 'global_barista_return', 'value': ret }
-		],
-		'pup_tent_js_libraries': [
-		    'https://login.persona.org/include.js',
-		    '/BaristaLogin.js'
-		],
-		'title': notw + ': Login',
-		'return': ret
-	    };
-	    var out = pup_tent.render_io('barista_base.tmpl',
-					 'barista_login.tmpl',
-					 tmpl_args);
-	    _standard_response(res, 200, 'text/html', out);
-	});
+	// Get return argument if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	    // // 
+	    // if( tmpret && tmpret !== '' ){
+	    // 	var uo = url.parse(tmpret);
+	    // 	uo.query['barista_token'] = 
+	    // 	ret = 
+	    // }
+	}
+	
+	var tmpl_args = {
+	    'pup_tent_js_variables': [
+		{'name': 'global_barista_return', 'value': ret }
+	    ],
+	    'pup_tent_js_libraries': [
+		'https://login.persona.org/include.js',
+		'/BaristaLogin.js'
+	    ],
+	    'title': notw + ': Login',
+	    'return': ret
+	};
+	var out = pup_tent.render_io('barista_base.tmpl',
+				     'barista_login.tmpl',
+				     tmpl_args);
+	_standard_response(res, 200, 'text/html', out);
+    });
 
     ///
     /// API proxy.
