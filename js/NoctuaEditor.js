@@ -1647,6 +1647,9 @@ jsPlumb.ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
+
+	    // This manager bootstraps the editor by fetching the
+	    // model out of Minerva.
 	    var manager = new bbop_mme_manager2(global_barista_location,
 						global_minerva_definition_name,
 						start_token);
@@ -1686,6 +1689,23 @@ jsPlumb.ready(function(){
 	    manager.get_model(global_id);
 	    //var rr = manager.get_model(global_id);
 	    //console.log('rr: ' + rr);
-	}	
+
+	    // When all is said and done, let's also fillout the user
+	    // name just for niceness. This is also a test of CORS in
+	    // express.
+	    if( start_token ){
+	    	var user_info_loc = global_barista_location +
+	    	    "/user_info_by_token/" + start_token;
+	    	jQuery.ajax({
+	    	    'type': "GET",
+	    	    'url': user_info_loc,
+	    	    'dataType': "json",
+	    	    'error': function(){alert('had a user info error--oops!');},
+	    	    'success': function(data){
+			jQuery('#user_name_info').replaceWith(data['nickname']);
+		    }
+	    	});
+	    }
+	}
 
 });

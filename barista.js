@@ -15,6 +15,7 @@ var fs = require('fs');
 var url = require('url');
 var querystring = require('querystring');
 var crypto = require('crypto');
+var cors = require('cors');
 
 // Required add-on libs.
 var bbop = require('bbop').bbop;
@@ -418,6 +419,7 @@ var BaristaLauncher = function(){
     messaging_app.use(express.json());
     messaging_app.use(express.urlencoded());
     messaging_app.use(express.cookieParser());
+    messaging_app.use(cors());
     messaging_app.use(express.session({secret: 'notverysecret'}));
     // Must match client browser's address bar.
     var persona_opts = {
@@ -552,7 +554,7 @@ var BaristaLauncher = function(){
 
 	// 
 	var fin = JSON.stringify(ret_obj);
-	console.log('user info: ', fin);
+	console.log('got user info for: ', fin['xref']);
 	_standard_response(res, 200, 'application/json', fin);
     });
     
