@@ -270,5 +270,22 @@ jsPlumb.ready(function(){
 	    // Only roll if the env is correct.
 	    // Will use the above variables internally (sorry).
 	    MMEnvBootstrappingInit(start_token);
+
+	    // When all is said and done, let's also fillout the user
+	    // name just for niceness. This is also a test of CORS in
+	    // express.
+	    if( start_token ){
+	    	var user_info_loc = global_barista_location +
+	    	    "/user_info_by_token/" + start_token;
+	    	jQuery.ajax({
+	    	    'type': "GET",
+	    	    'url': user_info_loc,
+	    	    'dataType': "json",
+	    	    'error': function(){alert('had a user info error--oops!');},
+	    	    'success': function(data){
+			jQuery('#user_name_info').replaceWith(data['nickname']);
+		    }
+	    	});
+	    }
 	}
     });

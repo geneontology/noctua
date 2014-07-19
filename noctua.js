@@ -101,6 +101,21 @@ var NoctuaLauncher = function(){
 	}
     };
 
+    // Attempt to intelligently
+    function _build_token_link(url, token){
+	var new_url = url;
+	
+	if( token ){
+	    if( new_url.indexOf('?') == -1 ){
+		new_url = new_url + '?' + 'barista_token=' + token;
+	    }else{
+		new_url = new_url + '&' + 'barista_token=' + token;
+	    }
+	}
+	    
+	return new_url;
+    }
+
     ///
     /// Response helper.
     ///
@@ -129,11 +144,13 @@ var NoctuaLauncher = function(){
 	// Assemble return doc.
 	res.setHeader('Content-Type', 'text/html');
 	
+	var noctua_landing = _build_token_link(self.hostport, barista_token);
 	var barista_login = barista_loc + '/login' + '?return=' +
 	    self.hostport + '/seed/model/' + model_id;
-	var barista_logout = barista_loc + '/logout' + '?return=' +
-	    self.hostport + '/seed/model/' +
-	    model_id + '&barista_token=' + barista_token;
+	var barista_logout =
+		_build_token_link(barista_loc + '/logout' + '?return=' +
+				  self.hostport + '/seed/model/' + model_id,
+				  barista_token);
 	var tmpl_args = {
 	    'pup_tent_css_libraries': [
 		'/NoctuaEditor.css'
@@ -165,9 +182,10 @@ var NoctuaLauncher = function(){
 	    ],
 	    'title': name_of_the_week + ': Editor',
 	    'messaging_server_location': self.barista_location,
-	    barista_token: barista_token,
-	    barista_login: barista_login,
-	    barista_logout: barista_logout
+	    'barista_token': barista_token,
+	    'noctua_landing': noctua_landing,
+	    'barista_login': barista_login,
+	    'barista_logout': barista_logout
 	};
 	var ret = pup_tent.render_io(
 	    'noctua_base.tmpl',
@@ -298,6 +316,15 @@ var NoctuaLauncher = function(){
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
 	    
+	    var noctua_landing = _build_token_link(self.hostport, barista_token);
+	    var barista_login =
+		    self.barista_location + '/login' + '?return=' +
+		    self.hostport;
+	    var barista_logout =
+		_build_token_link(self.barista_location +'/logout' + '?return=' +
+				  self.hostport, barista_token);
+
+	    
 	    // Libs and render.
 	    var tmpl_args = {
 		'pup_tent_js_libraries': [
@@ -319,7 +346,12 @@ var NoctuaLauncher = function(){
 		    {name: 'global_known_relations',
 		     value: bbop.core.dump(known_relations) }
 		],
-		'title': notw + ': Selection'
+		'title': notw + ': Selection',
+		'messaging_server_location': self.barista_location,
+		'barista_token': barista_token,
+		'noctua_landing': noctua_landing,
+		'barista_login': barista_login,
+		'barista_logout': barista_logout
 	    };
 	    var o = pup_tent.render_io('noctua_base_landing.tmpl',
 				       'noctua_landing.tmpl',
