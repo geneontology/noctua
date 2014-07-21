@@ -4,6 +4,26 @@
 
 var bbop_mme_widgets = {};
 
+/*
+ * "Static" function.
+ *
+ * For the time being, the cannonical way of building a link with a
+ * token.
+ */
+bbop_mme_widgets.build_token_link = function(url, token){
+    var new_url = url;
+    
+    if( token ){
+	if( new_url.indexOf('?') == -1 ){
+	    new_url = new_url + '?' + 'barista_token=' + token;
+	}else{
+	    new_url = new_url + '&' + 'barista_token=' + token;
+	}
+    }
+    
+    return new_url;
+};
+
 // Add edit model node contents to a descriptive table.
 bbop_mme_widgets.repaint_info = function(ecore, aid, info_div){
 
