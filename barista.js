@@ -584,12 +584,6 @@ var BaristaLauncher = function(){
 	var ret = null;
 	if( req.query && req.query['return'] ){
 	    ret = req.query['return'];
-	    // // 
-	    // if( tmpret && tmpret !== '' ){
-	    // 	var uo = url.parse(tmpret);
-	    // 	uo.query['barista_token'] = 
-	    // 	ret = 
-	    // }
 	}
 	
 	// Render what we did, and launch Logout.js to purge the
