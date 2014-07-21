@@ -84,24 +84,27 @@ var MMEnvBootstrappingInit = function(user_token){
 	}
     }
 
+    function _jump_to_page(page_url){
+	var newrl = bbop_mme_widgets.build_token_link(page_url, user_token);
+	window.location.replace(newrl);
+    }
+
     // On any model build success, forward to the new page.
     // var wizard_jump_term = null;
     // var wizard_jump_db = null;
     function _generated_model(resp, man){
-	var id = resp.data()['id'];	
-	var jump_token = user_token || '';
-	window.location.replace('/seed/model/' + id +
-				'?barista_token=' + jump_token);
+	var id = resp.data()['id'];
+	var new_url = '/seed/model/' + id;
+	_jump_to_page(new_url);
     }
 
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'fooA', _shields_down, 9);
-    manager.register('manager_error', 'foo',
-		     function(message_type, message){
-			 alert('There was a connection error (' +
-			       message_type + '): ' + message);
-		     }, 10);
+    manager.register('manager_error', 'foo', function(message_type, message){
+	alert('There was a connection error (' +
+	      message_type + '): ' + message);
+    }, 10);
 
     // // Remote action registrations.
     // manager.register('meta', 'foo',
@@ -109,64 +112,69 @@ var MMEnvBootstrappingInit = function(user_token){
     // 			 alert('Meta operation successful: ' + resp.message());
     // 		     }, 10);
 
-    manager.register('warning', 'foo',
-		     function(resp, man){
-			 alert('Warning: ' + resp.message() + '; ' +
-			       'your operation was likely not performed');
-		     }, 10);
+    manager.register('warning', 'foo', function(resp, man){
+	alert('Warning: ' + resp.message() + '; ' +
+	      'your operation was likely not performed');
+    }, 10);
 
-    manager.register('error', 'foo',
-		     function(resp, man){
+    manager.register('error', 'foo', function(resp, man){
 
-			 var ex_msg = '';
-			 if( resp.commentary() &&
-			     resp.commentary().exceptionMsg ){
-			     ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
-			 }
+	var ex_msg = '';
+	if( resp.commentary() &&
+	    resp.commentary().exceptionMsg ){
+	    ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
+	}
 
-			 alert('Error (' +
-			       resp.message_type() + '): ' +
-			       resp.message() + '; ' +
-			       'your operation was likely not performed' +
-			       ex_msg);
-		     }, 10);
+	// Do something different if we think that this is a
+	// permissions issue.
+	var perm_flag = "InsufficientPermissionsException";
+	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
+	    alert('Error: it seems like you do not have permission to ' +
+		  'perform that operation.');
+	}else{
+	    // Generic error.
+	    alert('Error (' +
+		  resp.message_type() + '): ' +
+		  resp.message() + '; ' +
+		  'your operation was likely not performed' +
+		  ex_msg);
+	}
+    }, 10);
+    
+    manager.register('meta', 'foo', function(resp, man){
+	
+	// Clear interface.
+	jQuery(select_stored_jump_elt).empty();
 
-    manager.register('meta', 'foo',
-		     function(resp, man){
-			 
-			 // Clear interface.
-			 jQuery(select_stored_jump_elt).empty();
+	// Insert model IDs into interface.
+	var model_ids = resp.model_ids();
+	var rep_cache = [];
+	each(model_ids,
+	     function(model_id){
+		 rep_cache.push('<option>');
+		 rep_cache.push(model_id);
+		 rep_cache.push('</option>');
+	     });
+	var rep_str = rep_cache.join('');
+	jQuery(select_stored_jump_elt).append(rep_str);
+	
+	// Make interface jump on click.
+	jQuery(select_stored_jump_button_elt).click(
+	    function(evt){
+		var id = jQuery(select_stored_jump_elt).val();
+		//alert('val: '+ id);
+		var new_url = '/seed/model/' + id;
+		_jump_to_page(new_url);
+	    });
+    });
 
-			 // Insert model IDs into interface.
-			 var model_ids = resp.model_ids();
-			 var rep_cache = [];
-			 each(model_ids,
-			      function(model_id){
-				  rep_cache.push('<option>');
-				  rep_cache.push(model_id);
-				  rep_cache.push('</option>');
-			      });
-			 var rep_str = rep_cache.join('');
-			 jQuery(select_stored_jump_elt).append(rep_str);
-			 
-			 // Make interface jump on click.
-			 jQuery(select_stored_jump_button_elt).click(
-			     function(evt){
-				 var id = jQuery(select_stored_jump_elt).val();
-				 //alert('val: '+ id);
-				 var new_url = "/seed/model/" + id;
-				 window.location.replace(new_url);
-			     });
-		     });
-
-    manager.register('rebuild', 'foo',
-		     function(resp, man){
-			 _generated_model(resp, man);
-			 // alert('Not yet handled (' +
-			 //       resp.message_type() + '): ' +
-			 //       resp.message() + '; ' +
-			 //       'try refreshing your browser');
-		     }, 10);
+    manager.register('rebuild', 'foo', function(resp, man){
+	_generated_model(resp, man);
+	// alert('Not yet handled (' +
+	//       resp.message_type() + '): ' +
+	//       resp.message() + '; ' +
+	//       'try refreshing your browser');
+    }, 10);
 
     ///
     /// Activate autocomplete in input boxes.
@@ -205,46 +213,43 @@ var MMEnvBootstrappingInit = function(user_token){
     // auto_wizard_spdb.set_personality('annotation');
 
     // ...
-    jQuery(auto_wizard_button_generate_elt).click(
-    	function(){
-    	    var term = auto_wizard_term.content();
-    	    //var spdb = auto_wizard_spdb.content();
-    	    var spdb = jQuery(auto_wizard_spdb_elt).val();
+    jQuery(auto_wizard_button_generate_elt).click(function(){
+    	var term = auto_wizard_term.content();
+    	//var spdb = auto_wizard_spdb.content();
+    	var spdb = jQuery(auto_wizard_spdb_elt).val();
 
-    	    if( ! term || term == '' || ! spdb || spdb == '' ){
-    		alert('necessary field empty');
-    	    }else{
-		// BUG: For Chris.
-		// wizard_jump_term = term;
-		// wizard_jump_db = spdb;
-		// manager.generate_model(wizard_jump_term, wizard_jump_db);
-		manager.generate_model(term, spdb);
-    	    }
+    	if( ! term || term == '' || ! spdb || spdb == '' ){
+    	    alert('necessary field empty');
+    	}else{
+	    // BUG: For Chris.
+	    // wizard_jump_term = term;
+	    // wizard_jump_db = spdb;
+	    // manager.generate_model(wizard_jump_term, wizard_jump_db);
+	    manager.generate_model(term, spdb);
     	}
-    );
+    }
+						 );
 
     // ...
-    jQuery(auto_blank_button_generate_elt).click(
-    	function(){
-    	    var spdb = jQuery(auto_blank_spdb_elt).val();
+    jQuery(auto_blank_button_generate_elt).click(function(){
+    	var spdb = jQuery(auto_blank_spdb_elt).val();
 
-    	    if( ! spdb || spdb == '' ){
-    		alert('necessary field empty');
-    	    }else{
-		manager.generate_blank_model(spdb);
-    	    }
+    	if( ! spdb || spdb == '' ){
+    	    alert('necessary field empty');
+    	}else{
+	    manager.generate_blank_model(spdb);
     	}
-    );
+    }
+						);
 
     // 
-    jQuery(model_data_button_elt).click(
-    	function(evt){
-	    evt.stopPropagation();
-	    evt.preventDefault();
-	    //alert('not yet implemented');
-	    var in_str = jQuery(model_data_input_elt).val(); 
-	    manager.import_model(in_str);
-	});
+    jQuery(model_data_button_elt).click(function(evt){
+	evt.stopPropagation();
+	evt.preventDefault();
+	//alert('not yet implemented');
+	var in_str = jQuery(model_data_input_elt).val(); 
+	manager.import_model(in_str);
+    });
 
     ///
     /// Get info from server.
@@ -265,27 +270,27 @@ jsPlumb.ready(function(){
     // Next we need a manager to try and pull in the model.
     if( typeof(global_minerva_definition_name) === 'undefined' ||
 	typeof(global_barista_location) === 'undefined' ){
-	    alert('environment not ready');
-	}else{
-	    // Only roll if the env is correct.
-	    // Will use the above variables internally (sorry).
-	    MMEnvBootstrappingInit(start_token);
+	alert('environment not ready');
+    }else{
+	// Only roll if the env is correct.
+	// Will use the above variables internally (sorry).
+	MMEnvBootstrappingInit(start_token);
 
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
-	    if( start_token ){
-	    	var user_info_loc = global_barista_location +
-	    	    "/user_info_by_token/" + start_token;
-	    	jQuery.ajax({
-	    	    'type': "GET",
-	    	    'url': user_info_loc,
-	    	    'dataType': "json",
-	    	    'error': function(){alert('had a user info error--oops!');},
-	    	    'success': function(data){
-			jQuery('#user_name_info').replaceWith(data['nickname']);
-		    }
-	    	});
-	    }
+	// When all is said and done, let's also fillout the user
+	// name just for niceness. This is also a test of CORS in
+	// express.
+	if( start_token ){
+	    var user_info_loc = global_barista_location +
+	    	"/user_info_by_token/" + start_token;
+	    jQuery.ajax({
+	    	'type': "GET",
+	    	'url': user_info_loc,
+	    	'dataType': "json",
+	    	'error': function(){alert('had a user info error--oops!');},
+	    	'success': function(data){
+		    jQuery('#user_name_info').replaceWith(data['nickname']);
+		}
+	    });
 	}
-    });
+    }
+});

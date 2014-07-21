@@ -911,17 +911,20 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     
     manager.register('error', 'foo', function(resp, man){
 
-	var ex_msg = '';
-	if( resp.commentary() &&
-	    resp.commentary().exceptionMsg ){
-	    ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
-	}
+	var perm_flag = "InsufficientPermissionsException";
+	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
+	    alert('Error: it seems like you do not have permission to ' +
+		  'perform that operation.');
+	}else{
+
+	    var ex_msg = '';
+	    if( resp.commentary() && resp.commentary().exceptionMsg ){
+		ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
+	    }
 	
-	alert('Error (' +
-	      resp.message_type() + '): ' +
-	      resp.message() + '; ' +
-	      'your operation was likely not performed' +
-	      ex_msg);
+	    alert('Error (' + resp.message_type() +'): '+ resp.message() +'; '+
+		  'your operation was likely not performed'+ ex_msg);
+	}
     }, 10);
     
     // Remote action registrations.
@@ -971,14 +974,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			 var mannotations = resp.annotations();
 
 			 // Deal with model.
-			 if( ! mid || is_empty(mindividuals) ){
-			     alert('no data/individuals in inconsistent');
-			 }else{
-			     _rebuild_model_and_display(mid,
-							mindividuals,
-							mindividuals_i,
-							mfacts, mannotations);
-			 }
+			 // if( ! mid || is_empty(mindividuals) ){
+			 //     alert('no data/individuals in inconsistent');
+			 // }else{
+			 _rebuild_model_and_display(mid,
+						    mindividuals,
+						    mindividuals_i,
+						    mfacts, mannotations);
+			 // }
 		     }, 10);
 
     manager.register('merge', 'foo',
