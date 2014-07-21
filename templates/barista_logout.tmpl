@@ -15,12 +15,17 @@
 	This page/service does two things:
 	<ol>
 	  <li>
-	    If you have a barista_token argument, it will remove that token
-	    from Barista if it exists (token).
+	    If you have a <strong>barista_token</strong> argument, it
+	    will remove that token and end your Barista session
+	    (token).
 	  </li>
 	  <li>
-	    It will end your Persona login session (cookie).
+	    It will end your <strong>Persona</strong> login session (cookie).
 	  </li>
+	  <!-- <li> -->
+	  <!--   If you supplied a "returns" parameter, you will get the -->
+	  <!--   chance to navigate back to your origin. -->
+	  <!-- </li> -->
 	</ol>
       </p>
 
@@ -32,31 +37,35 @@
 	<strong>Destroyed</strong> confirmed session.
 	{{/barista_token}}
 	{{^barista_token}}
-	However, it is <strong>unknown</strong>. No action will be taken on it.
+	However, it is <strong>unknown</strong>.
+	No action will be taken in Barista.
 	{{/barista_token}}
 	{{/in_token}}
 	{{^in_token}}
 	You have no incoming token.
 	{{/in_token}}
       </p>
+
       <p class="show">
 	<div class="progress progress-striped active" id="verify-process">
-	  <div class="progress-bar"  role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%">
+	  <div class="progress-bar"  role="progressbar"
+	       aria-valuenow="50" aria-valuemin="0"
+	       aria-valuemax="100" style="width: 50%">
 	    <span class="sr-only">Working...</span>
 	  </div>
 	</div>
-	<div id="logged-out-success" class="hidden">
-	  <p>
-	    Your Persona cookie is now gone, or you never had one. You
-	    can get a <a href="/login">fresh token here</a>.
-	  </p>
-	  {{#return}}
-	  <p id="return-trip">
-	  </p>
-	  {{/return}}
-	</div>
       </p>
 
+      <p id="logged-out-success" class="hidden">
+	Your Persona cookie is now gone, or you never had one.
+	<!-- You can get a <a href="/login">fresh token here</a>. -->
+      </p>
+
+      {{#return}}
+      <p id="return-trip">
+      </p>
+      {{/return}}
+      
     </div>
   </div>
 

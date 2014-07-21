@@ -64,7 +64,7 @@ var LogoutInit = function(){
 			// Add the return button on success.
 			if( jQuery('#return-trip').length ){
 			    jQuery('#return-trip').append(
-				'<strong><a href="'+ global_barista_return+
+				'<strong><a href="'+ global_barista_return +
 				    '">Return to application</a></strong>');
 			}
 		    });
