@@ -265,21 +265,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     function _make_selector_target(sel){
 	instance.makeTarget(jsPlumb.getSelector(sel), {
-    				anchor:"Continuous",
-				isTarget: true,
-				//maxConnections: -1,
-				connector:[ "Sugiyama", { curviness: 25 } ]
-    			    });
+    	    anchor:"Continuous",
+	    isTarget: true,
+	    //maxConnections: -1,
+	    connector:[ "Sugiyama", { curviness: 25 } ]
+    	});
     }
 
     function _make_selector_source(sel, subsel){
         instance.makeSource(jsPlumb.getSelector(sel), {
-                                filter: subsel,
-                                anchor:"Continuous",
-				isSource: true,
-				//maxConnections: -1,
-                                connector:[ "Sugiyama", { curviness: 25 } ]
-                            });
+            filter: subsel,
+            anchor:"Continuous",
+	    isSource: true,
+	    //maxConnections: -1,
+            connector:[ "Sugiyama", { curviness: 25 } ]
+        });
     }
     
     function _attach_node_dblclick_ann(sel){
@@ -367,7 +367,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    each(eanns,
 		 function(ann){
 		     if( ann.property('evidence') ){ n_ev++;
-		     }else{ n_other++; }
+						   }else{ n_other++; }
 		 });
 	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
@@ -413,9 +413,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // TODO/BUG: Finish Sugiyama implementation.
 	    //'connector': ["Sugiyama", { curviness: 75 } ],
 	    'connector': ["Sugiyama", {
-			      'curviness': 75,
-			      'waypoints': usable_waypoints
-			  } ],
+		'curviness': 75,
+		'waypoints': usable_waypoints
+	    } ],
             // Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    'paintStyle': {
 		strokeStyle: clr,
@@ -528,18 +528,18 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    ecore.annotations(annotations);
 	}
     }
-	
+    
     // squeeze the inferred individual info out to id -> types
     function _squeezed_inferred(inferred_individuals){
 	var inf_indv_lookup = {}; // ids to types
 	each(inferred_individuals, // fold in inferred type information
-		 function(indv){
-		     // Get ID.
-		     var inf_iid = indv['id'] || null;
-		     if( inf_iid ){
-			 inf_indv_lookup[inf_iid] = indv['type'] || [];
-		     }
-		 });
+	     function(indv){
+		 // Get ID.
+		 var inf_iid = indv['id'] || null;
+		 if( inf_iid ){
+		     inf_indv_lookup[inf_iid] = indv['type'] || [];
+		 }
+	     });
 	return inf_indv_lookup;
     }
 
@@ -645,7 +645,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// 	 var vn = new bme_node(id, 'virtual');
 	// 	 vn.x_init(_vbox_left(raw_x));
 	// 	 vn.y_init(_vbox_top(raw_y));
-		 
+	
 	// 	 ecore.add_node(vn);
 	//      });	
 	
@@ -792,9 +792,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			 
 			 // Initial node layout settings.
     			 var dyn_x = _vari() +
-			     jQuery(graph_container_div).scrollLeft();
+				 jQuery(graph_container_div).scrollLeft();
     			 var dyn_y = _vari() +
-			     jQuery(graph_container_div).scrollTop();
+				 jQuery(graph_container_div).scrollTop();
 			 dyn_node.x_init(dyn_x);
 			 dyn_node.y_init(dyn_y);
 			 
@@ -850,7 +850,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		 // Now delete all edges for the node in the UI.
 		 var snid_elt = ecore.get_node_elt_id(snid);
 		 var src_conns =
-		     instance.getConnections({'source': snid_elt});
+			 instance.getConnections({'source': snid_elt});
 		 each(src_conns,
 		      function(src_conn){
 			  instance.detach(src_conn);
@@ -921,7 +921,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    if( resp.commentary() && resp.commentary().exceptionMsg ){
 		ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
 	    }
-	
+	    
 	    alert('Error (' + resp.message_type() +'): '+ resp.message() +'; '+
 		  'your operation was likely not performed'+ ex_msg);
 	}
@@ -1039,9 +1039,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 			  // Pop up the modal.
 			  var init_edge =
-			      widgets.add_edge_modal(ecore, manager,
-						     in_relations, aid,
-						     snode.id(), tnode.id());
+				  widgets.add_edge_modal(ecore, manager,
+							 in_relations, aid,
+							 snode.id(), tnode.id());
 			  init_edge.show();
 		      }
 		  });
@@ -1061,7 +1061,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			  ll('there was a connection detached: ' + cid);
 			  var eeid = ecore.get_edge_id_by_connector_id(cid);
 			  ll('looks like edge: ' + eeid);
-		      
+			  
 			  var edge = ecore.get_edge(eeid);
 			  manager.remove_fact(ecore.get_id(), edge.source(),
 					      edge.target(), edge.relation());
@@ -1073,10 +1073,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // decoding what is happening and possibly a race condition.
     // https://github.com/sporritt/jsPlumb/issues/157
     instance.bind("connectionMoved", function(info, original_evt) {
-    		      var cid = info.connection.id;
-    		      //ll('there was a connection moved: ' + cid);
-    		      alert('there was a "connectionMoved" event: ' + cid);
-    		  });
+    	var cid = info.connection.id;
+    	//ll('there was a connection moved: ' + cid);
+    	alert('there was a "connectionMoved" event: ' + cid);
+    });
     
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(
@@ -1126,22 +1126,22 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     };
 
     var simple_bp_enb_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_bp_enb_auto_id,
-				   simple_bp_enb_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_enb_auto_id,
+				       simple_bp_enb_auto_args);
     simple_bp_enb_auto.add_query_filter('document_category', 'bioentity');
     simple_bp_enb_auto.set_personality('bioentity');
 
     var simple_bp_act_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_bp_act_auto_id,
-				   simple_bp_act_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_act_auto_id,
+				       simple_bp_act_auto_args);
     simple_bp_act_auto.add_query_filter('document_category', 'ontology_class');
     simple_bp_act_auto.add_query_filter('regulates_closure_label',
     					'biological_process');
     simple_bp_act_auto.set_personality('ontology');
 
     var simple_bp_occ_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_bp_occ_auto_id,
-				   simple_bp_occ_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_occ_auto_id,
+				       simple_bp_occ_auto_args);
     simple_bp_occ_auto.add_query_filter('document_category', 'ontology_class');
     simple_bp_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
     simple_bp_occ_auto.add_query_filter('source', 'biological_process', ['-']);
@@ -1212,22 +1212,22 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     };
 
     var simple_mf_enb_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_mf_enb_auto_id,
-				   simple_mf_enb_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_enb_auto_id,
+				       simple_mf_enb_auto_args);
     simple_mf_enb_auto.add_query_filter('document_category', 'bioentity');
     simple_mf_enb_auto.set_personality('bioentity');
 
     var simple_mf_act_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_mf_act_auto_id,
-				   simple_mf_act_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_act_auto_id,
+				       simple_mf_act_auto_args);
     simple_mf_act_auto.add_query_filter('document_category', 'ontology_class');
     simple_mf_act_auto.add_query_filter('regulates_closure_label',
     					'molecular_function');
     simple_mf_act_auto.set_personality('ontology');
 
     var simple_mf_occ_auto =
-	new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
-				   simple_mf_occ_auto_args);
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
+				       simple_mf_occ_auto_args);
     simple_mf_occ_auto.add_query_filter('document_category', 'ontology_class');
     simple_mf_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
     simple_mf_occ_auto.add_query_filter('source', 'biological_process', ['-']);
@@ -1408,7 +1408,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 				  id + '" class="bbop-mme-cursor" alt="user: ' +
 				  id + '" title="user: ' +
 				  id + '"></div>');
-	     jQuery(jelt).css('border', 'solid 3px ' + color);
+	    jQuery(jelt).css('border', 'solid 3px ' + color);
 	}
 
 	// Update to the most recent location data, but trying to
@@ -1520,7 +1520,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		 //if( edge && edge.relation() == 'part_of' ){
 		 if( edge && edge.relation() == 'BFO:0000050' ){
 		     var conn_id =
-			 ecore.get_connector_id_by_edge_id(edge.id());
+			     ecore.get_connector_id_by_edge_id(edge.id());
 		     poc[conn_id] = true;
 		 }
 	     });	    
@@ -1620,7 +1620,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	'</p>',
 	'<p>',
 	'</p>'
-   ];
+    ];
     var wrn = new bbop_mme_widgets.contained_modal(null,
 						   '<strong>Read before using</strong>',
 						   wrn_txt.join(''));
@@ -1659,36 +1659,35 @@ jsPlumb.ready(function(){
 
 	    // Have a manager and model id, defined a success callback
 	    // and try and get the full model to start the bootstrap.
-	    manager.register('manager_error', 'foo',
-			     function(message_type, message){
-				 alert('There was an early connection error (' +
-				       message_type + '): ' + message);
-			     }, 10);
-	    manager.register('error', 'foo',
-			     function(resp, man){
-				 
-				 var ex_msg = '';
-				 if( resp.commentary() &&
-				     resp.commentary().exceptionMsg ){
-					 ex_msg = ' ['+
-					     resp.commentary().exceptionMsg +']';
-				     }
-				 alert('Error (' +
-				       resp.message_type() + '): ' +
-				       resp.message() + '; ' +
-				       'your early operation was likely not performed'+
-				       ex_msg);
-			     }, 10);
-	    manager.register('rebuild', 'foo',
-			     function(resp, man){
-				 //alert('in');
-				 // Replace placeholder at top level for debug.
-				 global_model = resp.data();
-				 // Bootstrap rest of session.
-				 MMEnvInit(resp.data(),
-					   global_known_relations,
-					   start_token);
-			     });
+	    manager.register('manager_error', 'foo', function(msg_type, msg){
+		// TODO: Bad/old tokens are
+		// communicated here.
+		alert('There was an early connection error (' +
+		      msg_type + '): ' + msg);
+	    }, 10);
+	    manager.register('error', 'foo', function(resp, man){
+		
+		var ex_msg = '';
+		if( resp.commentary() &&
+		    resp.commentary().exceptionMsg ){
+			ex_msg = ' ['+
+			    resp.commentary().exceptionMsg +']';
+		    }
+		alert('Error (' +
+		      resp.message_type() + '): ' +
+		      resp.message() + '; ' +
+		      'your early operation was likely not performed'+
+		      ex_msg);
+	    }, 10);
+	    manager.register('rebuild', 'foo', function(resp, man){
+		//alert('in');
+		// Replace placeholder at top level for debug.
+		global_model = resp.data();
+		// Bootstrap rest of session.
+		MMEnvInit(resp.data(),
+			  global_known_relations,
+			  start_token);
+	    });
 	    manager.get_model(global_id);
 	    //var rr = manager.get_model(global_id);
 	    //console.log('rr: ' + rr);
@@ -1698,7 +1697,7 @@ jsPlumb.ready(function(){
 	    // express.
 	    if( start_token ){
 	    	var user_info_loc = global_barista_location +
-	    	    "/user_info_by_token/" + start_token;
+	    		"/user_info_by_token/" + start_token;
 	    	jQuery.ajax({
 	    	    'type': "GET",
 	    	    'url': user_info_loc,
