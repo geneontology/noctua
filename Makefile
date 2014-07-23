@@ -17,7 +17,7 @@ BARISTA_PORT ?= 3400
 TESTS = \
  $(wildcard js/*.js.tests)
 TEST_JS = rhino
-TEST_JS_FLAGS = -modules static/bbop.js -opt -1
+TEST_JS_FLAGS = -modules static/bbop.js -modules static/bbopx.js -opt -1
 
 ###
 ### Building.
@@ -26,6 +26,7 @@ TEST_JS_FLAGS = -modules static/bbop.js -opt -1
 .PHONY: assemble-app
 assemble-app:
 	cp ../bbop-js/staging/bbop.js static/
+	cp ../bbopx-js/staging/bbopx.js static/
 
 ###
 ### Tests.

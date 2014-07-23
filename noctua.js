@@ -14,6 +14,7 @@ var fs = require('fs');
 
 // Required add-on libs.
 var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
 var amigo = require('amigo2').amigo;
 
 // Aliases.
@@ -171,15 +172,15 @@ var NoctuaLauncher = function(){
 		self.barista_location + '/socket.io/socket.io.js',
 		'/jquery.jsPlumb-1.5.5.js',
 		'/connectors-sugiyama.js',
-		'/bbop-rest-response-mmm.js',
-		'/bbop-mmm-requests.js',
-		'/bbop-mme-context.js',
-		'/bbop-mme-edit.js',
-		'/bbop-mme-manager2.js',
-		'/bbop-mme-widgets.js',
-		'/bbop-draggable-canvas.js',
-		'/bbop-location-store.js',
-		'/bbop-messenger-client.js',
+		// '/bbop-rest-response-mmm.js',
+		// '/bbop-mmm-requests.js',
+		// '/bbop-mme-context.js',
+		// '/bbop-mme-edit.js',
+		// '/bbop-mme-manager2.js',
+		// '/bbop-mme-widgets.js',
+		// '/bbop-draggable-canvas.js',
+		// '/bbop-location-store.js',
+		// '/bbop-messenger-client.js',
 		'/NoctuaEditor.js'
 	    ],
 	    'title': name_of_the_week + ': Editor',
@@ -223,16 +224,17 @@ var NoctuaLauncher = function(){
 	    'connectors-sugiyama.js',
 	    'jquery.tablesorter.min.js',
 	    'bbop.js',
+	    'bbopx.js',
 	    'amigo2.js',
-	    'bbop-rest-response-mmm.js',
-	    'bbop-mmm-requests.js',
-	    'bbop-mme-context.js',
-	    'bbop-mme-edit.js',
-	    'bbop-mme-manager2.js',
-	    'bbop-mme-widgets.js',
-	    'bbop-draggable-canvas.js',
-	    'bbop-location-store.js',
-	    'bbop-messenger-client.js',
+	    // 'bbop-rest-response-mmm.js',
+	    // 'bbop-mmm-requests.js',
+	    // 'bbop-mme-context.js',
+	    // 'bbop-mme-edit.js',
+	    // 'bbop-mme-manager2.js',
+	    // 'bbop-mme-widgets.js',
+	    // 'bbop-draggable-canvas.js',
+	    // 'bbop-location-store.js',
+	    // 'bbop-messenger-client.js',
 	    'NoctuaEditor.js',
 	    'NoctuaLanding.js',
 	    'NoctuaBasic.js',
@@ -265,6 +267,7 @@ var NoctuaLauncher = function(){
 			    '/jquery.jsPlumb-1.5.5.js',
 			    '/jquery.tablesorter.min.js',
 			    '/bbop.js',
+			    '/bbopx.js',
 			    '/amigo2.js']);
 
     ///
@@ -330,12 +333,12 @@ var NoctuaLauncher = function(){
 	    // Libs and render.
 	    var tmpl_args = {
 		'pup_tent_js_libraries': [
-		    '/bbop-rest-response-mmm.js',
-		    '/bbop-mmm-requests.js',
-		    '/bbop-mme-context.js',
-		    '/bbop-mme-edit.js',
-		    '/bbop-mme-manager2.js',
-		    '/bbop-mme-widgets.js',
+		    // '/bbop-rest-response-mmm.js',
+		    // '/bbop-mmm-requests.js',
+		    // '/bbop-mme-context.js',
+		    // '/bbop-mme-edit.js',
+		    // '/bbop-mme-manager2.js',
+		    // '/bbop-mme-widgets.js',
 		    '/NoctuaLanding.js'
 		],
 		'pup_tent_js_variables': [
@@ -374,10 +377,10 @@ var NoctuaLauncher = function(){
 				  value: known_relations}
 			     ],
 			     'pup_tent_js_libraries': [
-				 '/bbop-mme-context.js',
-				 '/bbop-mme-edit.js',
-				 '/bbop-mme-manager2.js',
-				 '/bbop-mme-widgets.js',
+				 // '/bbop-mme-context.js',
+				 // '/bbop-mme-edit.js',
+				 // '/bbop-mme-manager2.js',
+				 // '/bbop-mme-widgets.js',
 				 '/NoctuaBasic.js'
 			     ]
 			 };
@@ -587,12 +590,12 @@ var NoctuaLauncher = function(){
 				    {name: 'global_resolution', value: t2a }
 				],
 				'pup_tent_js_libraries': [
-				    '/bbop-rest-response-mmm.js',
-				    '/bbop-mmm-requests.js',
-				    '/bbop-mme-context.js',
-				    '/bbop-mme-manager2.js',
-				    '/bbop-mme-widgets.js',
-				    '/bbop-messenger-client.js',
+				    // '/bbop-rest-response-mmm.js',
+				    // '/bbop-mmm-requests.js',
+				    // '/bbop-mme-context.js',
+				    // '/bbop-mme-manager2.js',
+				    // '/bbop-mme-widgets.js',
+				    // '/bbop-messenger-client.js',
 				    '/NoctuaCapella.js'
 				],
 				'title': notw + ': Capella'

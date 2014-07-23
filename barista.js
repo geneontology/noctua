@@ -19,6 +19,7 @@ var cors = require('cors');
 
 // Required add-on libs.
 var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
 var amigo = require('amigo2').amigo;
 
 // Aliases.
@@ -384,6 +385,7 @@ var BaristaLauncher = function(){
 	    'jquery-ui-1.10.3.custom.min.js',
 	    'jquery.tablesorter.min.js',
 	    'bbop.js',
+	    'bbopx.js',
 	    'amigo2.js',
 	    // Page apps.
 	    'BaristaLogout.js',
@@ -408,6 +410,7 @@ var BaristaLauncher = function(){
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
 	'/bbop.js',
+	'/bbopx.js',
 	'/amigo2.js']);
 
     // Spin up the main messenging server.
