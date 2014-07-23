@@ -26,16 +26,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var is_defined = bbop.core.is_defined;
     var is_empty = bbop.core.is_empty;
     var what_is = bbop.core.what_is;
-    var bme_core = bbop_mme_edit.core;
-    var bme_edge = bbop_mme_edit.edge;
-    var bme_node = bbop_mme_edit.node;
-    var widgets = bbop_mme_widgets;
+    var bme_core = bbopx.noctua.edit.core;
+    var bme_edge = bbopx.noctua.edit.edge;
+    var bme_node = bbopx.noctua.edit.node;
+    var widgets = bbopx.noctua.widgets;
     
     // Help with strings and colors--configured separately.
     var aid = new bbop.context(amigo.data.context);
 
     // Create the core model.
-    //var bbop_mme_edit = require('./js/bbop-mme-edit');
+    //var bbopx.noctua.edit = require('./js/bbop-mme-edit');
     var ecore = new bme_core();
 
     // Optionally use the messaging server as an experiment.
@@ -43,13 +43,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // Where we move the nodes during this session.
     // BUG/TODO: Should be the domain of Barista.
-    var historical_store = new bbop_location_store();
+    var historical_store = new bbopx.noctua.location_store();
 
     // Events registry.
-    var manager = new bbop_mme_manager2(global_barista_location,
-					global_minerva_definition_name,
-					in_token);
-    //var manager = new bbop_mme_manager2(in_server_base, 'mmm', in_token);
+    var manager = new bbopx.minerva.manager(global_barista_location,
+					    global_minerva_definition_name,
+					    in_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -463,7 +462,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // Already have one.
 	}else{
 	    ll('shield up');
-	    compute_shield_modal = bbop_mme_widgets.compute_shield();
+	    compute_shield_modal = bbopx.noctua.widgets.compute_shield();
 	    compute_shield_modal.show();
 	}
     }
@@ -522,7 +521,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    var annotations = [];
 	    each(raw_annotations,
 		 function(ann_kv_set){
-		     var na = new bbop_mme_edit.annotation(ann_kv_set);
+		     var na = new bbopx.noctua.edit.annotation(ann_kv_set);
 		     annotations.push(na);
 		 });
 	    ecore.annotations(annotations);
@@ -594,7 +593,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Find the initial layout position of the layout. There might
 	// be some missing due to finding cycles in the graph, so we
 	// have this two-step process.
-	var layout_store = new bbop_location_store();
+	var layout_store = new bbopx.noctua.location_store();
 	each(layout['nodes'],
 	     function(litem, index){
 		 var id = litem['id'];
@@ -877,7 +876,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var replacement_annotations = [];
 	each(raw_annotations,
 	     function(ann_kv_set){
-		 var na = new bbop_mme_edit.annotation(ann_kv_set);
+		 var na = new bbopx.noctua.edit.annotation(ann_kv_set);
 		 replacement_annotations.push(na);
 	     });
 	ecore.annotations(replacement_annotations);
@@ -1457,7 +1456,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }else{
 	// TODO: Eventually we'll
 	ll('try setup for messaging at: ' + global_barista_location);
-	barclient = new bbop_messenger_client(global_barista_location, in_token);
+	barclient = new bbopx.barista.client(global_barista_location, in_token);
 	barclient.register('connect', 'a', _on_connect);
 	barclient.register('initialization', 'b', _on_initialization);
 	barclient.register('message', 'c', _on_message_update);
@@ -1495,7 +1494,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    //alert('in progress: + ' + node.id());
 	    //bbop_mme_widgets.contained_modal('shield');
 	    //var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
-	    var mdl = bbop_mme_widgets.compute_shield();
+	    var mdl = bbopx.noctua.widgets.compute_shield();
 	    mdl.show();
 	    
 	    // Works.
@@ -1576,7 +1575,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
-    bbop_draggable_canvas(graph_container_id);
+    bbopx.noctua.draggable_canvas(graph_container_id);
 
     // conflict with draggable canvas
     jQuery(graph_container_div).on('mousemove', function(evt){
@@ -1621,9 +1620,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	'<p>',
 	'</p>'
     ];
-    var wrn = new bbop_mme_widgets.contained_modal(null,
-						   '<strong>Read before using</strong>',
-						   wrn_txt.join(''));
+    var wrn = new bbopx.noctua.widgets.contained_modal(null,
+						       '<strong>Read before using</strong>',
+						       wrn_txt.join(''));
     wrn.show();
 };
 
@@ -1653,9 +1652,10 @@ jsPlumb.ready(function(){
 
 	    // This manager bootstraps the editor by fetching the
 	    // model out of Minerva.
-	    var manager = new bbop_mme_manager2(global_barista_location,
-						global_minerva_definition_name,
-						start_token);
+	    var manager =
+		    new bbopx.minerva.manager(global_barista_location,
+					      global_minerva_definition_name,
+					      start_token);
 
 	    // Have a manager and model id, defined a success callback
 	    // and try and get the full model to start the bootstrap.
