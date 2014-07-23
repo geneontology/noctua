@@ -17,9 +17,9 @@ var MMEnvBootstrappingInit = function(user_token){
     //var manager = new bbop_mme_manager(in_server_base);
     // BUG/TODO: Right now, just hardwiring the uid, but this needs to
     // be distributed by the moderator after authenication.
-    var manager = new bbop_mme_manager2(global_barista_location,
-					global_minerva_definition_name,
-					user_token);
+    var manager = new bbopx.minerva.manager(global_barista_location,
+					    global_minerva_definition_name,
+					    user_token);
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
@@ -69,7 +69,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    // Already have one.
 	}else{
 	    ll('shield up');
-	    compute_shield_modal = bbop_mme_widgets.compute_shield();
+	    compute_shield_modal = bbopx.noctua.widgets.compute_shield();
 	    compute_shield_modal.show();
 	}
     }    
@@ -85,7 +85,7 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     function _jump_to_page(page_url){
-	var newrl = bbop_mme_widgets.build_token_link(page_url, user_token);
+	var newrl = bbopx.noctua.widgets.build_token_link(page_url, user_token);
 	window.location.replace(newrl);
     }
 
