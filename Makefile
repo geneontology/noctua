@@ -13,6 +13,9 @@ BARISTA_LOCATION ?= http://localhost:3400
 ## Variable to define the port that Barista starts on.
 BARISTA_PORT ?= 3400
 
+BBOP_JS ?= ../bbop-js/
+BBOPX_JS ?= ../bbopx-js/
+
 ## Testing.
 TESTS = \
  $(wildcard js/*.js.tests)
@@ -25,8 +28,11 @@ TEST_JS_FLAGS = -modules static/bbop.js -modules static/bbopx.js -opt -1
 
 .PHONY: assemble-app
 assemble-app:
-	cp ../bbop-js/staging/bbop.js static/
-	cp ../bbopx-js/staging/bbopx.js static/
+	cd $(BBOP_JS) && make bundle
+	cd $(BBOPX_JS) && make bundle
+	cd
+	cp $(BBOP_JS)/staging/bbop.js static/
+	cp $(BBOPX_JS)/staging/bbopx.js static/
 
 ###
 ### Tests.
