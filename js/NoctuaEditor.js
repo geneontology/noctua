@@ -1696,17 +1696,8 @@ jsPlumb.ready(function(){
 	    // name just for niceness. This is also a test of CORS in
 	    // express.
 	    if( start_token ){
-	    	var user_info_loc = global_barista_location +
-	    		"/user_info_by_token/" + start_token;
-	    	jQuery.ajax({
-	    	    'type': "GET",
-	    	    'url': user_info_loc,
-	    	    'dataType': "json",
-	    	    'error': function(){alert('had a user info error--oops!');},
-	    	    'success': function(data){
-			jQuery('#user_name_info').replaceWith(data['nickname']);
-		    }
-	    	});
+		bbopx.noctua.widgets.user_check(global_barista_location,
+						start_token, 'user_name_info');
 	    }
 	}
 
