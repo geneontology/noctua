@@ -1886,7 +1886,7 @@ bbop.version.revision = "2.2.0";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140723";
+bbop.version.release = "20140725";
 /*
  * Package: logger.js
  * 
