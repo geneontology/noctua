@@ -4301,6 +4301,39 @@ bbopx.noctua.widgets.reporter = function(output_id){
     this.reset();
 };
 
+/*
+ * Function: user_check
+ *
+ * Given a token, either report a bad token ot
+ *
+ * Parameters: 
+ *  barista_loc - barista location
+ *  given_token - token
+ *  
+ * Returns: n/a
+ */
+bbopx.noctua.widgets.user_check = function(barista_loc, given_token, div_id){
+
+    var user_info_loc = barista_loc + "/user_info_by_token/" + given_token;
+    jQuery.ajax({
+	'type': "GET",
+	'url': user_info_loc,
+	'dataType': "json",
+	'error': function(){alert('had an error getting user info--oops!');},
+	'success': function(data){
+	    if( data && data['nickname'] ){
+		jQuery('#' + div_id).replaceWith(data['nickname']);
+	    }else{
+		alert('You seem to have a bad token; will try to clean...');
+		var to_remove = 'barista_token=' + given_token;
+		var new_url = window.location.toString().replace(to_remove, '');
+		//var new_url = window.location;
+		window.location.replace(new_url);
+	    }
+	}
+    });
+};
+
 // If it looks like we're in an environment that supports CommonJS
 // Modules 1.0, take the bbop namespace whole and iteratively export
 // it. Otherwise (browser environment, etc.), take no action and
