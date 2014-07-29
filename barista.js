@@ -372,31 +372,32 @@ var BaristaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    var pt = require('./js/pup-tent.js');
-    var pup_tent = pt(
-	[   // Req CSS.
-	    'bootstrap.min.css',
-	    'jquery-ui-1.10.3.custom.min.css',
-	    'bbop.css',
-	    'amigo.css',
-	    // Req JS.
-	    'jquery-1.9.1.min.js',
-	    'bootstrap.min.js',
-	    'jquery-ui-1.10.3.custom.min.js',
-	    'jquery.tablesorter.min.js',
-	    'bbop.js',
-	    'bbopx.js',
-	    'amigo2.js',
-	    // Page apps.
-	    'BaristaLogout.js',
-	    'BaristaLogin.js',
-	    // Base.
-	    'barista_base.tmpl',
-	    // Pages.
-	    'barista_status.tmpl',
-	    'barista_logout.tmpl',
-	    'barista_login.tmpl'
-	], ['static', 'js', 'css', 'templates']);
+    // var pt = require('./js/pup-tent.js');
+    // var pup_tent = pt(
+    // 	[   // Req CSS.
+    // 	    'bootstrap.min.css',
+    // 	    'jquery-ui-1.10.3.custom.min.css',
+    // 	    'bbop.css',
+    // 	    'amigo.css',
+    // 	    // Req JS.
+    // 	    'jquery-1.9.1.min.js',
+    // 	    'bootstrap.min.js',
+    // 	    'jquery-ui-1.10.3.custom.min.js',
+    // 	    'jquery.tablesorter.min.js',
+    // 	    'bbop.js',
+    // 	    'bbopx.js',
+    // 	    'amigo2.js',
+    // 	    // Page apps.
+    // 	    'BaristaLogout.js',
+    // 	    'BaristaLogin.js',
+    // 	    // Base.
+    // 	    'barista_base.tmpl',
+    // 	    // Pages.
+    // 	    'barista_status.tmpl',
+    // 	    'barista_logout.tmpl',
+    // 	    'barista_login.tmpl'
+    // 	], ['static', 'js', 'css', 'templates']);
+    var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
 
     // Ready the common libs (the actually mapping is taken care of
     // later on).
@@ -535,9 +536,9 @@ var BaristaLauncher = function(){
 	    'barista_sessions': sessions,
 	    'title': notw + ': Status'
 	};
-	var out = pup_tent.render_io('barista_base.tmpl',
-				     'barista_status.tmpl',
-				     tmpl_args);
+	var out = pup_tent.render('barista_status.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
     });
     
@@ -606,9 +607,9 @@ var BaristaLauncher = function(){
 	    'return': ret,
 	    'title': notw + ': Logout'
 	};
-	var out = pup_tent.render_io('barista_base.tmpl',
-				     'barista_logout.tmpl',
-				     tmpl_args);
+	var out = pup_tent.render('barista_logout.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
     });
     
@@ -637,9 +638,9 @@ var BaristaLauncher = function(){
 	    'title': notw + ': Login',
 	    'return': ret
 	};
-	var out = pup_tent.render_io('barista_base.tmpl',
-				     'barista_login.tmpl',
-				     tmpl_args);
+	var out = pup_tent.render('barista_login.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
     });
 

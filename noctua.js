@@ -190,10 +190,10 @@ var NoctuaLauncher = function(){
 	    'barista_login': barista_login,
 	    'barista_logout': barista_logout
 	};
-	var ret = pup_tent.render_io(
-	    'noctua_base.tmpl',
+	var ret = pup_tent.render(
 	    'noctua_editor.tmpl',
-	    tmpl_args);
+	    tmpl_args,
+	    'noctua_base.tmpl');
 	self.standard_response(res, 200,
 			       'text/html', ret);
     };
@@ -208,67 +208,68 @@ var NoctuaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    var pt = require('./js/pup-tent.js');
-    var pup_tent = pt(
-	[   // Req CSS.
-	    'bootstrap.min.css',
-	    'jquery-ui-1.10.3.custom.min.css',
-	    'bbop.css',
-	    'amigo.css',
-	    'NoctuaEditor.css',
-	    // 'App.css',
-	    'jquery-1.9.1.min.js',
-	    'bootstrap.min.js',
-	    'jquery-ui-1.10.3.custom.min.js',
-	    'jquery.jsPlumb-1.5.5.js',
-	    'connectors-sugiyama.js',
-	    'jquery.tablesorter.min.js',
-	    'bbop.js',
-	    'bbopx.js',
-	    'amigo2.js',
-	    // 'bbop-rest-response-mmm.js',
-	    // 'bbop-mmm-requests.js',
-	    // 'bbop-mme-context.js',
-	    // 'bbop-mme-edit.js',
-	    // 'bbop-mme-manager2.js',
-	    // 'bbop-mme-widgets.js',
-	    // 'bbop-draggable-canvas.js',
-	    // 'bbop-location-store.js',
-	    // 'bbop-messenger-client.js',
-	    'NoctuaEditor.js',
-	    'NoctuaLanding.js',
-	    'NoctuaBasic.js',
-	    'NoctuaCapella.js',
-	    // 'Basic.js',
-	    // 'App.js',
-	    'waiting_ac.gif',
-	    'noctua_base.tmpl',
-	    'noctua_base_landing.tmpl',
-	    'noctua_landing.tmpl',
-	    'noctua_capella.tmpl',
-	    'noctua_editor.tmpl',
-	    // 'index_base.tmpl',
-	    // 'index_content.tmpl',
-	    'noctua_basic.tmpl'
-	    // 'basic_base.tmpl',
-	    // 'basic_content.tmpl'
-	    // 'app_base.tmpl',
-	    // 'app_content.tmpl'
-	], ['static', 'js', 'css', 'templates']);
+    // var pt = require('./js/pup-tent.js');
+    // var pup_tent = pt(
+    // 	[   // Req CSS.
+    // 	    'bootstrap.min.css',
+    // 	    'jquery-ui-1.10.3.custom.min.css',
+    // 	    'bbop.css',
+    // 	    'amigo.css',
+    // 	    'NoctuaEditor.css',
+    // 	    // 'App.css',
+    // 	    'jquery-1.9.1.min.js',
+    // 	    'bootstrap.min.js',
+    // 	    'jquery-ui-1.10.3.custom.min.js',
+    // 	    'jquery.jsPlumb-1.5.5.js',
+    // 	    'connectors-sugiyama.js',
+    // 	    'jquery.tablesorter.min.js',
+    // 	    'bbop.js',
+    // 	    'bbopx.js',
+    // 	    'amigo2.js',
+    // 	    // 'bbop-rest-response-mmm.js',
+    // 	    // 'bbop-mmm-requests.js',
+    // 	    // 'bbop-mme-context.js',
+    // 	    // 'bbop-mme-edit.js',
+    // 	    // 'bbop-mme-manager2.js',
+    // 	    // 'bbop-mme-widgets.js',
+    // 	    // 'bbop-draggable-canvas.js',
+    // 	    // 'bbop-location-store.js',
+    // 	    // 'bbop-messenger-client.js',
+    // 	    'NoctuaEditor.js',
+    // 	    'NoctuaLanding.js',
+    // 	    'NoctuaBasic.js',
+    // 	    'NoctuaCapella.js',
+    // 	    // 'Basic.js',
+    // 	    // 'App.js',
+    // 	    'waiting_ac.gif',
+    // 	    'noctua_base.tmpl',
+    // 	    'noctua_base_landing.tmpl',
+    // 	    'noctua_landing.tmpl',
+    // 	    'noctua_capella.tmpl',
+    // 	    'noctua_editor.tmpl',
+    // 	    // 'index_base.tmpl',
+    // 	    // 'index_content.tmpl',
+    // 	    'noctua_basic.tmpl'
+    // 	    // 'basic_base.tmpl',
+    // 	    // 'basic_content.tmpl'
+    // 	    // 'app_base.tmpl',
+    // 	    // 'app_content.tmpl'
+    // 	], ['static', 'js', 'css', 'templates']);
+    var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
     pup_tent.set_common('css_libs', [
-			    '/bootstrap.min.css',
-			    '/jquery-ui-1.10.3.custom.min.css',
-			    '/bbop.css',
-			    '/amigo.css']);
+	'/bootstrap.min.css',
+	'/jquery-ui-1.10.3.custom.min.css',
+	'/bbop.css',
+	'/amigo.css']);
     pup_tent.set_common('js_libs', [
-			    '/jquery-1.9.1.min.js',
-			    '/bootstrap.min.js',
-			    '/jquery-ui-1.10.3.custom.min.js',
-			    '/jquery.jsPlumb-1.5.5.js',
-			    '/jquery.tablesorter.min.js',
-			    '/bbop.js',
-			    '/bbopx.js',
-			    '/amigo2.js']);
+	'/jquery-1.9.1.min.js',
+	'/bootstrap.min.js',
+	'/jquery-ui-1.10.3.custom.min.js',
+	'/jquery.jsPlumb-1.5.5.js',
+	'/jquery.tablesorter.min.js',
+	'/bbop.js',
+	'/bbopx.js',
+	'/amigo2.js']);
 
     ///
     /// Termination functions.
@@ -358,9 +359,9 @@ var NoctuaLauncher = function(){
 		'barista_login': barista_login,
 		'barista_logout': barista_logout
 	    };
-	    var o = pup_tent.render_io('noctua_base_landing.tmpl',
-				       'noctua_landing.tmpl',
-				       tmpl_args);
+	    var o = pup_tent.render('noctua_landing.tmpl',
+				    tmpl_args,
+				    'noctua_base_landing.tmpl');
 	    self.standard_response(res, 200, 'text/html', o);
 	});
 	
@@ -385,9 +386,9 @@ var NoctuaLauncher = function(){
 			     ]
 			 };
 			 var ind =
-			     pup_tent.render_io('noctua_base_landing.tmpl',
-						'noctua_basic.tmpl',
-						tmpl_args);
+				 pup_tent.render('noctua_basic.tmpl',
+						 tmpl_args,
+						 'noctua_base_landing.tmpl');
 			 self.standard_response(res, 200, 'text/html', ind);
 		     });
 
@@ -601,10 +602,10 @@ var NoctuaLauncher = function(){
 				'title': notw + ': Capella'
 				//'messaging_server_location': barista_loc
 			    };
-			    var ret = pup_tent.render_io(
-				'noctua_base.tmpl',
+			    var ret = pup_tent.render(
 				'noctua_capella.tmpl',
-				tmpl_args);
+				tmpl_args,
+				'noctua_base.tmpl');
 			    self.standard_response(res, 200, 'text/html', ret);
 			}
 		    }
