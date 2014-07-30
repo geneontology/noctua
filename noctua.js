@@ -13,9 +13,9 @@ var mustache = require('mustache');
 var fs = require('fs');
 
 // Required add-on libs.
-var bbop = require('bbop').bbop;
+var bbop = require('bbop');
 var bbopx = require('bbopx');
-var amigo = require('amigo2').amigo;
+var amigo = require('amigo2');
 
 // Aliases.
 var each = bbop.core.each;

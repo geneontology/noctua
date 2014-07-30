@@ -748,7 +748,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 
     // An internal manager for handling the unhappiness of AJAX callbacks.
     //var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
-    var jqm = new bbop.rest.manager.jquery(bbop.barista.response);
+    var jqm = new bbop.rest.manager.jquery(bbopx.barista.response);
     jqm.use_jsonp(true); // we are definitely doing this remotely
 
     function _on_fail(resp, man){
@@ -3071,7 +3071,7 @@ bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
 			  var cell_cache = [];
 			  each(accumulated_types,
 			       function(atype){
-				   var tt = bme_type_to_span(atype, aid);
+				   var tt = bbopx.noctua.type_to_span(atype, aid);
 				   cell_cache.push(tt);
 			       });
 			  table_row.push(cell_cache.join('<br />'));
@@ -3238,7 +3238,7 @@ bbopx.noctua.widgets.render_node_stack = function(enode, aid){
 		 'style="background-color: ' +
 		 aid.color(item.category()) +
 		 ';"><td class="bbop-mme-stack-td">' 
-		 + bme_type_to_span(item, aid) + '</td></tr>';   
+		 + bbopx.noctua.type_to_span(item, aid) + '</td></tr>';   
 	     enode_stack_table.add_to(trstr);
 	 });
 
@@ -3695,7 +3695,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     var type_list = [];
     each(bbopx.noctua.widgets.enode_to_stack(enode, aid),
 	 function(item){
-	     var type_str = bme_type_to_full(item, aid);
+	     var type_str = bbopx.noctua.type_to_full(item, aid);
 	     var eid = bbop.core.uuid();
 	     elt2type[eid] = item;		 
 	     var acache = [];

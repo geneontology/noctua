@@ -28,9 +28,12 @@
     "npm": ">= 1.0.0"
   },
   "dependencies": {
-      "bbop": "2.0.0-rc1",
-      "amigo2": "2.0.0-rc1",
-      "mustache": "0.8.0",
+      "underscore": "latest",
+      "mustache": "latest",
+      "pup-tent": "latest",
+      "bbopx": "latest",
+      "bbopx": "latest",
+      "amigo2": "latest",
       "express": "3.4.6"
   },
   "devDependencies": {},

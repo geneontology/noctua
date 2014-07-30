@@ -1879,14 +1879,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.2.0";
+bbop.version.revision = "2.2.2";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140729";
+bbop.version.release = "20140730";
 /*
  * Package: logger.js
  * 
@@ -23346,6 +23346,13 @@ bbop.widget.message = function(){
 // (browser environment, etc.), take no action and depend on the
 // global namespace.
 if( typeof(exports) != 'undefined' ){
-    exports.bbop = bbop;    
+
+    // Old style--exporting separate namespace.
+    exports.bbop = bbop;
+
+    // New, better, style--assemble; these should not collide.
+    bbop.core.each(bbop, function(k, v){
+	exports[k] = v;
+    });
 }
 
