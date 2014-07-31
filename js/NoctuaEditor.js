@@ -911,9 +911,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     manager.register('error', 'foo', function(resp, man){
 
 	var perm_flag = "InsufficientPermissionsException";
+	var token_flag = "token";
 	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
 	    alert('Error: it seems like you do not have permission to ' +
 		  'perform that operation.');
+	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
+	    alert("Error: it seems like you have a bad token...");
 	}else{
 	    alert('Error (' + resp.message_type() +'): '+ resp.message() +'; '+
 		  'your operation was likely not performed.');
@@ -1682,13 +1685,13 @@ jsPlumb.ready(function(){
 	    //var rr = manager.get_model(global_id);
 	    //console.log('rr: ' + rr);
 
-	    // // When all is said and done, let's also fillout the user
-	    // // name just for niceness. This is also a test of CORS in
-	    // // express.
-	    // if( start_token ){
-	    // 	bbopx.noctua.widgets.user_check(global_barista_location,
-	    // 					start_token, 'user_name_info');
-	    // }
+	    // When all is said and done, let's also fillout the user
+	    // name just for niceness. This is also a test of CORS in
+	    // express.
+	    if( start_token ){
+	    	bbopx.noctua.widgets.user_check(global_barista_location,
+	    					start_token, 'user_name_info');
+	    }
 	}
 
 });

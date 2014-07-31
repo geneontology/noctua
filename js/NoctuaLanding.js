@@ -122,9 +122,12 @@ var MMEnvBootstrappingInit = function(user_token){
 	// Do something different if we think that this is a
 	// permissions issue.
 	var perm_flag = "InsufficientPermissionsException";
+	var token_flag = "token";
 	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
 	    alert('Error: it seems like you do not have permission to ' +
 		  'perform that operation.');
+	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
+	    alert("Error: it seems like you have a bad token...");
 	}else{
 	    // Generic error.
 	    alert('Error (' +
@@ -269,12 +272,12 @@ jsPlumb.ready(function(){
 	// Will use the above variables internally (sorry).
 	MMEnvBootstrappingInit(start_token);
 
-	// // When all is said and done, let's also fillout the user
-	// // name just for niceness. This is also a test of CORS in
-	// // express.
-	// if( start_token ){
-	//     bbopx.noctua.widgets.user_check(global_barista_location,
-	// 				    start_token, 'user_name_info');
-	// }
+	// When all is said and done, let's also fillout the user
+	// name just for niceness. This is also a test of CORS in
+	// express.
+	if( start_token ){
+	    bbopx.noctua.widgets.user_check(global_barista_location,
+					    start_token, 'user_name_info');
+	}
     }
 });
