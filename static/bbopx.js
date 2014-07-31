@@ -714,9 +714,9 @@ if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
  *  a classic manager
  */
 bbopx.minerva.manager = function(barista_location, namespace, user_token){
-    bbop.registry.call(this, ['prerun', // internal
+    bbop.registry.call(this, ['prerun', // internal; anchor only
 			      'postrun', // internal
-			      'manager_error', // internal
+			      'manager_error', // internal/external...odd
 			      //'success', // uninformative
 			      'merge',
 			      'rebuild',
@@ -752,8 +752,18 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     jqm.use_jsonp(true); // we are definitely doing this remotely
 
     function _on_fail(resp, man){
-	var args = [resp.message_type(), resp.message()];
-	anchor.apply_callbacks('manager_error', args);
+	// See if we got any traction.
+	if( ! resp || ! resp.message_type() || ! resp.message() ){
+	    // Something dark has happened, try to put something
+	    // together.
+	    // console.log('bad resp!?: ', resp);
+	    var resp_seed = {
+		'message_type': 'error',
+		'message': 'deep manager error'
+	    }
+	    resp = new bbopx.barista.response(resp_seed);
+	}
+	anchor.apply_callbacks('manager_error', [resp, anchor]);
     }
     jqm.register('error', 'foo', _on_fail);
 
@@ -767,7 +777,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	    // Errors trump everything.
 	    anchor.apply_callbacks('error', [resp, anchor]);
 	}else if( m == 'warning' ){
-	    // Don't really have anything warning yet.
+	    // Don't really have anything for warning yet...remove?
 	    anchor.apply_callbacks('warning', [resp, anchor]);
 	}else if( m == 'success' ){
 	    var sig = resp.signal();

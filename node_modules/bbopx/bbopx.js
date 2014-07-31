@@ -714,9 +714,9 @@ if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
  *  a classic manager
  */
 bbopx.minerva.manager = function(barista_location, namespace, user_token){
-    bbop.registry.call(this, ['prerun', // internal
+    bbop.registry.call(this, ['prerun', // internal; anchor only
 			      'postrun', // internal
-			      'manager_error', // internal
+			      'manager_error', // internal/external...odd
 			      //'success', // uninformative
 			      'merge',
 			      'rebuild',
@@ -752,8 +752,18 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     jqm.use_jsonp(true); // we are definitely doing this remotely
 
     function _on_fail(resp, man){
-	var args = [resp.message_type(), resp.message()];
-	anchor.apply_callbacks('manager_error', args);
+	// See if we got any traction.
+	if( ! resp || ! resp.message_type() || ! resp.message() ){
+	    // Something dark has happened, try to put something
+	    // together.
+	    // console.log('bad resp!?: ', resp);
+	    var resp_seed = {
+		'message_type': 'error',
+		'message': 'deep manager error'
+	    }
+	    resp = new bbopx.barista.response(resp_seed);
+	}
+	anchor.apply_callbacks('manager_error', [resp, anchor]);
     }
     jqm.register('error', 'foo', _on_fail);
 
@@ -767,7 +777,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	    // Errors trump everything.
 	    anchor.apply_callbacks('error', [resp, anchor]);
 	}else if( m == 'warning' ){
-	    // Don't really have anything warning yet.
+	    // Don't really have anything for warning yet...remove?
 	    anchor.apply_callbacks('warning', [resp, anchor]);
 	}else if( m == 'success' ){
 	    var sig = resp.signal();
@@ -4299,6 +4309,39 @@ bbopx.noctua.widgets.reporter = function(output_id){
 
     // Initialize.
     this.reset();
+};
+
+/*
+ * Function: user_check
+ *
+ * Given a token, either report a bad token ot
+ *
+ * Parameters: 
+ *  barista_loc - barista location
+ *  given_token - token
+ *  
+ * Returns: n/a
+ */
+bbopx.noctua.widgets.user_check = function(barista_loc, given_token, div_id){
+
+    var user_info_loc = barista_loc + "/user_info_by_token/" + given_token;
+    jQuery.ajax({
+	'type': "GET",
+	'url': user_info_loc,
+	'dataType': "json",
+	'error': function(){alert('had an error getting user info--oops!');},
+	'success': function(data){
+	    if( data && data['nickname'] ){
+		jQuery('#' + div_id).replaceWith(data['nickname']);
+	    }else{
+		alert('You seem to have a bad token; will try to clean...');
+		var to_remove = 'barista_token=' + given_token;
+		var new_url = window.location.toString().replace(to_remove, '');
+		//var new_url = window.location;
+		window.location.replace(new_url);
+	    }
+	}
+    });
 };
 
 // If it looks like we're in an environment that supports CommonJS
