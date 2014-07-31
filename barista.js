@@ -659,13 +659,17 @@ var BaristaLauncher = function(){
 	// need here is the xref to pass back to the API if session
 	// and possible.
 	var uxref = null;
+	var has_token_p = false;
+	var has_sess_p = false;
 	if( req && req['query'] && req['query']['token'] ){
 	    // Best attempt at extracting a UID.
+	    has_token_p = true;
 	    var btok = req['query']['token'];
 	    var sess = sessioner.get_session_by_token(btok);
 	    if( sess ){
 		console.log('sess: ', sess);
 		uxref = sess.xref;
+		has_sess_p = true;
 	    }
 	}
 
@@ -701,11 +705,32 @@ var BaristaLauncher = function(){
 	var call = req.route.params['call'] || '';
 	if( ! app_guard.is_public(ns, call) && ! uxref ){
 	    console.log('blocking call: ' + req.url);
+	    
+	    var error_msg = 'sproing!';
+	    if( has_token_p && ! has_sess_p ){
+		error_msg = 'You are using a bad token; please remove it.';
+	    }else{
+		error_msg = 'You do not have permission for this operation.';
+	    }
 
 	    // Catch error here if no proper ID on non-public.
 	    res.setHeader('Content-Type', 'text/json');
-	    // TODO/BUG: Send better fail.
-	    res.send('{}');
+	    var eresp = {
+		message_type: 'error',
+		message: error_msg
+	    };
+	    var eresp_str = JSON.stringify(eresp);
+
+	    // This was requested as AJAX, not CORS, so need to
+	    // assemble it for the return.
+	    if( req && req['query'] && req['query']['json.wrf'] ){
+		var envelope = req['query']['json.wrf'];
+		eresp_str = envelope + '(' + eresp_str + ');';
+	    }
+
+	    //var eresp = new bbopx.barista.response(eresp_seed);
+	    console.log('inject response: ', eresp_str);
+	    res.send(eresp_str);
 	}else{
 	    // Not public or user is privileged.
 	    // Route the simple call to the right place.

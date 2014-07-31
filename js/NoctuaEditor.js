@@ -898,9 +898,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			   'signal': resp.signal()
 			  });
     }, 7);
-    manager.register('manager_error', 'foo', function(message_type, message){
-	alert('There was a connection error (' +
-	      message_type + '): ' + message);
+    manager.register('manager_error', 'foo', function(resp, man){
+	alert('There was a manager error (' +
+	      resp.message_type() + '): ' + resp.message());
     }, 10);
     
     manager.register('warning', 'foo', function(resp, man){
@@ -915,14 +915,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    alert('Error: it seems like you do not have permission to ' +
 		  'perform that operation.');
 	}else{
-
-	    var ex_msg = '';
-	    if( resp.commentary() && resp.commentary().exceptionMsg ){
-		ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
-	    }
-	    
 	    alert('Error (' + resp.message_type() +'): '+ resp.message() +'; '+
-		  'your operation was likely not performed'+ ex_msg);
+		  'your operation was likely not performed.');
 	}
     }, 10);
     
@@ -1659,25 +1653,21 @@ jsPlumb.ready(function(){
 
 	    // Have a manager and model id, defined a success callback
 	    // and try and get the full model to start the bootstrap.
-	    manager.register('manager_error', 'foo', function(msg_type, msg){
-		// TODO: Bad/old tokens are
-		// communicated here.
-		alert('There was an early connection error (' +
-		      msg_type + '): ' + msg);
+	    manager.register('manager_error', 'foo', function(resp, man){
+		alert('Early manager error (' +
+		      resp.message_type() + '): ' + resp.message());
 	    }, 10);
-	    manager.register('error', 'foo', function(resp, man){
-		
-		var ex_msg = '';
-		if( resp.commentary() &&
-		    resp.commentary().exceptionMsg ){
-			ex_msg = ' ['+
-			    resp.commentary().exceptionMsg +']';
-		    }
-		alert('Error (' +
-		      resp.message_type() + '): ' +
-		      resp.message() + '; ' +
-		      'your early operation was likely not performed'+
-		      ex_msg);
+	    manager.register('error', 'foo', function(resp, man){		
+		if( ! resp.commentary() ){
+		    alert('Early error (' +
+			  resp.message_type()+ '): ' + 
+			  resp.message());
+		}else{
+		    alert('Early error (' +
+			  resp.message_type() + '): ' +
+			  resp.message() + '; ' +
+			  resp.commentary());
+		}
 	    }, 10);
 	    manager.register('rebuild', 'foo', function(resp, man){
 		//alert('in');
@@ -1695,10 +1685,10 @@ jsPlumb.ready(function(){
 	    // When all is said and done, let's also fillout the user
 	    // name just for niceness. This is also a test of CORS in
 	    // express.
-	    if( start_token ){
-		bbopx.noctua.widgets.user_check(global_barista_location,
-						start_token, 'user_name_info');
-	    }
+	    // if( start_token ){
+	    // 	bbopx.noctua.widgets.user_check(global_barista_location,
+	    // 					start_token, 'user_name_info');
+	    // }
 	}
 
 });
