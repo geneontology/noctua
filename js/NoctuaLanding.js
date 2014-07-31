@@ -101,9 +101,9 @@ var MMEnvBootstrappingInit = function(user_token){
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'fooA', _shields_down, 9);
-    manager.register('manager_error', 'foo', function(message_type, message){
-	alert('There was a connection error (' +
-	      message_type + '): ' + message);
+    manager.register('manager_error', 'foo', function(resp, man){
+	alert('There was a manager error (' +
+	      resp.message_type() + '): ' + resp.message());
     }, 10);
 
     // // Remote action registrations.
@@ -119,12 +119,6 @@ var MMEnvBootstrappingInit = function(user_token){
 
     manager.register('error', 'foo', function(resp, man){
 
-	var ex_msg = '';
-	if( resp.commentary() &&
-	    resp.commentary().exceptionMsg ){
-	    ex_msg = ' ['+ resp.commentary().exceptionMsg +']';
-	}
-
 	// Do something different if we think that this is a
 	// permissions issue.
 	var perm_flag = "InsufficientPermissionsException";
@@ -136,8 +130,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    alert('Error (' +
 		  resp.message_type() + '): ' +
 		  resp.message() + '; ' +
-		  'your operation was likely not performed' +
-		  ex_msg);
+		  'your operation was likely not performed.');
 	}
     }, 10);
     
@@ -276,12 +269,12 @@ jsPlumb.ready(function(){
 	// Will use the above variables internally (sorry).
 	MMEnvBootstrappingInit(start_token);
 
-	// When all is said and done, let's also fillout the user
-	// name just for niceness. This is also a test of CORS in
-	// express.
-	if( start_token ){
-	    bbopx.noctua.widgets.user_check(global_barista_location,
-					    start_token, 'user_name_info');
-	}
+	// // When all is said and done, let's also fillout the user
+	// // name just for niceness. This is also a test of CORS in
+	// // express.
+	// if( start_token ){
+	//     bbopx.noctua.widgets.user_check(global_barista_location,
+	// 				    start_token, 'user_name_info');
+	// }
     }
 });

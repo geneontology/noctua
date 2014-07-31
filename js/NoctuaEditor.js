@@ -1682,9 +1682,9 @@ jsPlumb.ready(function(){
 	    //var rr = manager.get_model(global_id);
 	    //console.log('rr: ' + rr);
 
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
+	    // // When all is said and done, let's also fillout the user
+	    // // name just for niceness. This is also a test of CORS in
+	    // // express.
 	    // if( start_token ){
 	    // 	bbopx.noctua.widgets.user_check(global_barista_location,
 	    // 					start_token, 'user_name_info');
