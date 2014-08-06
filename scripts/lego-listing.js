@@ -11,7 +11,7 @@
 ////
 
 var AWS = require('aws-sdk');
-var bbop = require('bbop').bbop;
+var bbop = require('bbop');
 var opts = require('minimist');
 
 // Aliases.
