@@ -37,6 +37,10 @@ var notw = 'Noctua';
 var NoctuaLauncher = function(){
     var self = this;
 
+    // Monitor some stats.
+    var monitor_internal_kicks = 0;
+    var monitor_external_kicks = 0;
+
     ///
     /// Process CLI environmental variables.
     ///
@@ -366,6 +370,28 @@ var NoctuaLauncher = function(){
 	});
 
 	///
+	/// High-level status overview and hearbeat
+	///
+
+	self.app.get('/status', function(req, res) {
+
+	    console.log('process heartbeat request');
+
+	    var ret_obj = {
+		'okay': true,
+		'date': (new Date()).toJSON(),
+		'extras': {
+		    'ping': 'pong',
+		    'external_kicks': monitor_external_kicks,
+		    'internal_kicks': monitor_internal_kicks
+		}
+	    };
+	    var fin = JSON.stringify(ret_obj);
+
+	    self.standard_response(res, 200, 'application/json', fin);
+	});
+
+	///
 	/// Dynamic components/routes.
 	///
 
@@ -407,6 +433,8 @@ var NoctuaLauncher = function(){
 	// });
 
 	self.app.get('/seed/model/:query', function(req, res) {
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
 	    //console.log(req.route);
 	    //console.log(req.route.params['query']);
@@ -458,6 +486,8 @@ var NoctuaLauncher = function(){
 	// This is just a label resolver, that then boots a web client that
 	// tries to find a way in to /model/seed.
 	self.app.get('/capella', function(req, res) {
+
+	    monitor_external_kicks = monitor_external_kicks + 1;
 
 	    var payload_str = req.query['bootstrap'] || null;
 	    console.log('payload_str: ', payload_str);
@@ -595,7 +625,7 @@ var NoctuaLauncher = function(){
 	
 	// Test export handler.
 	self.app.post('/action/export', function(req, res) {
-		
+	    
 	    // Deal with incoming parameters.
 	    var mid = req.route.params['model_id'] ||
 		    req.body['model_id'] || '???';
