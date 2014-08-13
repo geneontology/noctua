@@ -329,6 +329,10 @@ var app_guard = new AppGuard(app_list);
 var BaristaLauncher = function(){
     var self = this;
 
+    // Monitor some stats.
+    var monitor_messages = 0;
+    var monitor_calls = 0;
+    
     ///
     /// Process CLI environmental variables.
     ///
@@ -372,31 +376,6 @@ var BaristaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    // var pt = require('./js/pup-tent.js');
-    // var pup_tent = pt(
-    // 	[   // Req CSS.
-    // 	    'bootstrap.min.css',
-    // 	    'jquery-ui-1.10.3.custom.min.css',
-    // 	    'bbop.css',
-    // 	    'amigo.css',
-    // 	    // Req JS.
-    // 	    'jquery-1.9.1.min.js',
-    // 	    'bootstrap.min.js',
-    // 	    'jquery-ui-1.10.3.custom.min.js',
-    // 	    'jquery.tablesorter.min.js',
-    // 	    'bbop.js',
-    // 	    'bbopx.js',
-    // 	    'amigo2.js',
-    // 	    // Page apps.
-    // 	    'BaristaLogout.js',
-    // 	    'BaristaLogin.js',
-    // 	    // Base.
-    // 	    'barista_base.tmpl',
-    // 	    // Pages.
-    // 	    'barista_status.tmpl',
-    // 	    'barista_logout.tmpl',
-    // 	    'barista_login.tmpl'
-    // 	], ['static', 'js', 'css', 'templates']);
     var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
 
     // Ready the common libs (the actually mapping is taken care of
@@ -484,14 +463,6 @@ var BaristaLauncher = function(){
     messaging_server.listen(runport);
 
     ///
-    /// TODO: High-level status overview and hearbeat
-    ///
-
-    // messaging_app.get(
-    //     '/status',
-    //     function(req, res) {
-
-    ///
     /// Cached static routes.
     ///
 
@@ -520,6 +491,31 @@ var BaristaLauncher = function(){
 				   });
 	     }
 	 });
+
+    ///
+    /// High-level status overview and hearbeat
+    ///
+
+    messaging_app.get('/status', function(req, res) {
+
+	console.log('process heartbeat request');
+
+	var monitor_sessions = sessioner.get_sessions().length;
+
+	var ret_obj = {
+	    'okay': true,
+	    'date': (new Date()).toJSON(),
+	    'extras': {
+		'ping': 'pong',
+		'sessions': monitor_sessions,
+		'calls': monitor_calls,
+		'messages': monitor_messages
+	    }
+	};
+	var fin = JSON.stringify(ret_obj);
+
+	_standard_response(res, 200, 'application/json', fin);
+    });
 
     ///
     /// Authentication and Authorization.
@@ -654,6 +650,7 @@ var BaristaLauncher = function(){
 
 	// TODO: Request logging hooks could be placed in here.
 	//console.log('pre api req: ' + req.url);
+	monitor_calls = monitor_calls +1;
 
 	// Try and get a session out for use. The important thing we
 	// need here is the xref to pass back to the API if session
@@ -860,6 +857,7 @@ var BaristaLauncher = function(){
 	//
 	socket.on('relay', function(data){
 	    //console.log('srv tele: ' + data);
+	    monitor_messages = monitor_messages +1;
 
 	    // Only really get involved if the user is logged in.
 	    if( _is_logged_in_p(data) ){
