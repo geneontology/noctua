@@ -1,9 +1,15 @@
 ////
 //// Merge permissions files into a single super form.
+//// This is meant to merge the two files from Heiko on oven:
+////  /srv/termgenie/permissions/GO.user_data.json
+////  /srv/termgenie/permissions/termgenie-user-permissions.json
+////
+//// This will also add "minerva-go": true permissions to everybody
+//// who has any kind of TermGenie perm.
 ////
 //// Run as:
 //// 
-////  node ./scripts/merge-perms.js -p config/permissions.json -u ~/Documents/GO.user_data.json
+////  node ./scripts/merge-perms.js -p config/termgenie-user-permissions.json -u config/GO.user_data.json
 ////
 //// CLI check: echo -n email@address.com | md5sum
 ////
@@ -70,15 +76,18 @@ each(user_list,
 	     var xref = u.xref || null;
 	     if( xref ){ struct.xref = xref; }
 
-	     var orid = u.orchid || null;
-	     if( orid ){ struct.orchid = orid; }
+	     var orid = u.orcid || null;
+	     if( orid ){ struct.orcid = orid; }
 
 	     if( perm_hash[email] ){
 		 var tg = perm_hash[email]['termgenie-go'] || null;
-		 if( tg ){ struct['authorizations']['termgenie-go'] = tg; }
+		 if( tg ){
+		     struct['authorizations']['termgenie-go'] = tg;
+		     struct['authorizations']['minerva-go'] = true;
+		 }
 	     
-		 var mme = perm_hash[email]['minerva-go'] || null;
-		 if( mme ){ struct['authorizations']['minerva-go'] = mme; }
+		 // var mme = perm_hash[email]['minerva-go'] || null;
+		 // if( mme ){ struct['authorizations']['minerva-go'] = mme; }
 	     }
 
 	     final_super.push(struct);
