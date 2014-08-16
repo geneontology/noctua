@@ -30,12 +30,12 @@
     "npm": ">= 1.0.0"
   },
   "dependencies": {
-      "underscore": "latest",
-      "mustache": "latest",
-      "pup-tent": "latest",
-      "bbop": "latest",
-      "bbopx": "latest",
-      "amigo2": "latest",
+      "underscore": "1.6.0",
+      "mustache": "0.8.2",
+      "pup-tent": "0.9.2",
+      "bbop": "2.2.1",
+      "bbopx": "0.9.3",
+      "amigo2": "2.2.1",
       "express": "3.4.6"
   },
   "devDependencies": {},
