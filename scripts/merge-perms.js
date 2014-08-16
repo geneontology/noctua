@@ -12,7 +12,7 @@
 ////  node ./scripts/merge-perms.js -p config/termgenie-user-permissions.json -u config/GO.user_data.json
 ////
 //// CLI check: echo -n email@address.com | md5sum
-////
+///
 
 var bbop = require('bbop').bbop;
 var opts = require('minimist');
