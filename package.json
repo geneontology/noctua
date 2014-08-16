@@ -10,6 +10,8 @@
     "GO",
     "amigo",
     "bbop",
+    "bbopx",
+    "pup-tent",
     "noctua",
     "barista"
   ],
@@ -31,7 +33,7 @@
       "underscore": "latest",
       "mustache": "latest",
       "pup-tent": "latest",
-      "bbopx": "latest",
+      "bbop": "latest",
       "bbopx": "latest",
       "amigo2": "latest",
       "express": "3.4.6"
