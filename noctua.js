@@ -98,7 +98,7 @@ var NoctuaLauncher = function(){
 	}else{
 	    self.IS_ENV_LOCAL = true;
 
-            self.ipaddress = '127.0.0.1';
+            self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
             self.port = non_std_local_port;
 	    self.hostport = 'http://'+ self.ipaddress +':'+ non_std_local_port;
 
