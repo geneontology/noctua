@@ -1,14 +1,191 @@
 /*
- * pup tent
+ * Pup Tent
  * 
  * File caching and template rendering femto-framework using mustache
  * and some assumptions.
  */
 
-//var bbop = require('bbop').bbop;
-var fs = require('fs');
 var us = require('underscore');
 var mustache = require('mustache');
+
+///
+/// The internal file abstraction necessary to run in both Node.js and
+/// Rhino environments.
+///
+
+/*
+ * Constructor: AbstractFS
+ * 
+ * Synchronous cross-platform filesystem abstraction for a few common
+ * operations. Not meant to a be full-blown fix for these issues
+ * (http://www.gigamonkeys.com/book/files-and-file-io.html#filenames).
+ * 
+ * Currently supports Node.js and RingoJS. Will hopefully be
+ * unnecessary when CommonJS and everybody get it together:
+ * http://wiki.commonjs.org/wiki/Filesystem
+ *
+ * Parameters:
+ *  n/a
+ *
+ * Returns:
+ *    An instance of the AbstractFS abstraction.
+ */
+function AbstractFS(){
+
+    var anchor = this;
+
+    // NOTE: We're leaning on the fact here that require('fs') is
+    // legitimate in both RingoJS and Node.js, and are available in
+    // them both automatically.
+    var fs = require('fs');
+    
+    // First things first: probe our environment and make a best
+    // guess.
+    anchor._env_type = null;
+    if( typeof(org) != 'undefined' && typeof(org.ringo) != 'undefined' ){
+	anchor._env_type = 'RingoJS';
+    }else if( typeof(org) != 'undefined' && typeof(org.rhino) != 'undefined' ){
+	// TODO
+	//anchor._env_type = 'Rhino';
+    }else if( typeof(global) != 'undefined' &&
+	      typeof(global.process) != 'undefined' ){
+	anchor._env_type = 'Node.js';
+    }else{
+	anchor._env_type = '???';
+    }
+
+    /*
+     * Function: environment
+     * 
+     * Return a string representation og the current running
+     * environment.
+     *
+     * Parameters:
+     *  n/a
+     *
+     * Returns:
+     *    string
+     */
+    anchor.environment = function(){
+	return anchor._env_type;
+    };
+
+    // Some internal mechanisms to make this process easier.
+    function _node_p(){
+	var ret = false;
+	if( anchor.environment() == 'Node.js' ){ ret = true; }
+	return ret;
+    }
+    function _ringo_p(){
+	var ret = false;
+	if( anchor.environment() == 'RingoJS' ){ ret = true; }
+	return ret;
+    }
+    function _unimplemented(funname){
+	throw new Error('The function "' + funname +
+			'" is not implemented for ' + anchor.environment());
+    }
+
+    /*
+     * Function: exists_p
+     * 
+     * Whether or not a path exists.
+     *
+     * Parameters:
+     *  path - the desired path as a string
+     *
+     * Returns:
+     *    boolean
+     */
+    anchor.exists_p = function(path){
+	var ret = null;
+	if( _node_p() ){
+	    ret = fs.existsSync(path);
+	}else if( _ringo_p() ){
+	    ret = fs.exists(path);
+	}else{
+	    _unimplemented('exists_p');
+	}
+	return ret;
+    };
+
+    /*
+     * Function: file_p
+     * 
+     * Returns whether or not a path is a file.
+     *
+     * Parameters:
+     *  path - the desired path as a string
+     *
+     * Returns:
+     *    boolean
+     */
+    anchor.file_p = function(path){
+	var ret = false;
+	if( _node_p() ){
+	    var stats = fs.statSync(path);
+	    if( stats && stats.isFile() ){ ret = true; }
+	}else if( _ringo_p() ){
+	    ret = fs.isFile(path);
+	}else{
+	    _unimplemented('file_p');
+	}
+	return ret;
+    };
+
+    /*
+     * Function: read_file
+     * 
+     * Read a file, returning it as a string.
+     *
+     * Parameters:
+     *  path - the desired path as a string
+     *
+     * Returns:
+     *    string or null
+     */
+    anchor.read_file = function(path){
+	var ret = null;
+	if( _node_p() ){
+	    var buf = fs.readFileSync(path)
+	    if( buf ){ ret = buf.toString(); }
+	}else if( _ringo_p() ){
+	    ret = fs.read(path);
+	}else{
+	    _unimplemented('read_file');
+	}
+	return ret;
+    };
+
+    /*
+     * Function: list_directory
+     * 
+     * Return a list of the files in a directory (names relative to
+     * the directory) as strings.
+     *
+     * Parameters:
+     *  path - the desired path as a string
+     *
+     * Returns:
+     *    list of strings
+     */
+    anchor.list_directory = function(path){
+	var ret = [];
+	if( _node_p() ){
+	    ret = fs.readdirSync(path);
+	}else if( _ringo_p() ){
+	    ret = fs.list(path);
+	}else{
+	    _unimplemented('list_dir');
+	}
+	return ret;
+    };
+
+}
+
+///
+/// External sections.
+///
 
 /*
  * Constructor: require('pup-tent')
@@ -25,6 +202,9 @@ var mustache = require('mustache');
 module.exports = function(search_path_list, filename_list){
 
     var each = us.each;
+
+    // Use our own abstraction.
+    var afs = new AbstractFS();
 
     var zcache = {}; // file cache
     var tcache = { // variant cache
@@ -46,9 +226,9 @@ module.exports = function(search_path_list, filename_list){
 		      function(loc){
 			  var path = './' + loc + '/' + filename;
 			  //console.log('l@: ' + path);
-			  if( fs.existsSync(path) ){
+			  if( afs.exists_p(path) ){
 			      //console.log('found: ' + path);
-			      zcache[filename] = fs.readFileSync(path);
+			      zcache[filename] = afs.read_file(path);
 			  }
 		      });
 	     });
@@ -59,16 +239,15 @@ module.exports = function(search_path_list, filename_list){
 	     function(loc){
 		 var path = './' + loc;
 		 //console.log('in loc: ' + loc);
-		 var files = fs.readdirSync(loc);
+		 var files = afs.list_directory(loc);
 		 each(files,
 		      function(file){
 			  // Get only files, not directories.
 			  //console.log('found file: ' + file);
 			  var full_file = loc + '/' + file;
-			  var stats = fs.statSync(full_file);
-			  if( stats.isFile() ){
-			      if( fs.existsSync(full_file) ){
-				  zcache[file] = fs.readFileSync(full_file);
+			  if( afs.exists_p(full_file) ){
+			      if( afs.file_p(full_file) ){
+				  zcache[file] = afs.read_file(full_file);
 			      }
 			  }
 		      });
@@ -136,8 +315,7 @@ module.exports = function(search_path_list, filename_list){
 	
 	var tmpl = _get(tmpl_name);
 	if( tmpl ){
-	    tmpl.toString();
-	    ret = mustache.render(tmpl.toString(), tmpl_args);
+	    ret = mustache.render(tmpl, tmpl_args);
 	}
 	// if( tmpl ){ console.log('rendered string length: ' + ret.length); }
 	
