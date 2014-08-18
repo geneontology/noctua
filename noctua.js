@@ -45,18 +45,9 @@ var NoctuaLauncher = function(){
     /// Process CLI environmental variables.
     ///
 
-    var min_def_name = 'minerva_localhost';
-    if( process.env.MINERVA_DEFINITION ){
-	min_def_name = process.env.MINERVA_DEFINITION;
-	console.log('Minerva definition name from environment: ' + min_def_name);
-    }else{
-	console.log('Minerva definition name from default: ' + min_def_name);
-    }
-    self.minerva_definition_name = min_def_name;
-
-    //self.min_def_name = min_def_name;
-
+    // 
     var barloc = 'http://localhost:3400';
+    var barloc_public = 'http://toaster.lbl.gov:3400';
     if( process.env.BARISTA_LOCATION ){
 	barlov = process.env.BARISTA_LOCATION;
 	console.log('Barista location taken from environment: ' + barloc);
@@ -65,8 +56,22 @@ var NoctuaLauncher = function(){
     }
     self.barista_location = barloc;
 
+    // Initial setup of which minerva definition to use (to pass to
+    // barista for translation).
+    var min_def_name = 'minerva_localhost';
+    var min_def_name_public = 'minerva_public'; // used in remote deployments
+    if( process.env.MINERVA_DEFINITION ){
+	min_def_name = process.env.MINERVA_DEFINITION;
+	console.log('Minerva definition name from environment: ' + min_def_name);
+    }else{
+	console.log('Minerva definition name from default: ' + min_def_name);
+    }
+    self.minerva_definition_name = min_def_name;
+
     ///
-    /// Environment helpers for deployment.
+    /// Environment helpers for deployment; also changing some of the
+    /// default values depending on the environment to help with
+    /// deployment.
     ///
 
     // Set up server IP address and port # using env variables/defaults.
@@ -83,21 +88,40 @@ var NoctuaLauncher = function(){
 	if( process.env.OPENSHIFT_APP_DNS ){
 	    self.IS_ENV_OPENSHIFT = true;	    
 
+	    // Try and setup hostname and port as best we can.
             self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
             self.port = process.env.OPENSHIFT_NODEJS_PORT;
 	    self.hostport = 'http://' + process.env.OPENSHIFT_APP_DNS;
+
+	    // Also, we need to use the public version or minerva or badness.
+	    self.barista_location = barloc_public;
+	    self.minerva_definition_name = min_def_name_public;
+	    console.log('Changing Barista location  to: ' +
+			self.barista_location + ' for openshift');
+	    console.log('Changing Minerva definition to: ' +
+			self.minerva_definition_name + ' for openshift');
 
             console.warn('OPENSHIFT_NODEJS');
 	}else if( process.env.PORT ){
 	    self.IS_ENV_HEROKU = true;
 
+	    // Try and setup port as best we can.
             self.port = process.env.PORT || non_std_local_port;
 	    self.hostport = '';
+
+	    // Also, we need to use the public version or minerva or badness.
+	    self.barista_location = barloc_public;
+	    self.minerva_definition_name = min_def_name_public;
+	    console.log('Changing Barista location  to: ' +
+			self.barista_location + ' for heroku');
+	    console.log('Changing Minerva definition to: ' +
+			self.minerva_definition_name + ' for heroku');
 
             console.warn('HEROKU_NODEJS');
 	}else{
 	    self.IS_ENV_LOCAL = true;
 
+	    // If Noctua host is env defined, use that, or sane default.
             self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
             self.port = non_std_local_port;
 	    self.hostport = 'http://'+ self.ipaddress +':'+ non_std_local_port;
