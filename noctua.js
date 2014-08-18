@@ -77,7 +77,7 @@ var NoctuaLauncher = function(){
     // Set up server IP address and port # using env variables/defaults.
     // WARNING: Port stuff gets weird:
     // https://www.openshift.com/forums/openshift/nodejs-websockets-sockjs-and-other-client-hostings
-    self.setupVariables = function() {
+    // self.setupVariables = function() {
 
 	var non_std_local_port = 8910;
 
@@ -128,7 +128,7 @@ var NoctuaLauncher = function(){
 
             console.warn('LOCAL_NODEJS');
 	}
-    };
+//    };
 
     // Attempt to intelligently add a token to an input URL.
     // BUG: This code is repeated in
@@ -701,7 +701,7 @@ var NoctuaLauncher = function(){
 	
 	var knw_rel = known_relations || [];
 
-        self.setupVariables();
+        // self.setupVariables();
         self.setupTerminationHandlers();
 
         // Create the express server and routes.
