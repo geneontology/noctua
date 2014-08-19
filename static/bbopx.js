@@ -3893,9 +3893,14 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
  * TODO: make subclass?
  */
 bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id,
-						   gserv, gconf){
+						       gserv, gconf){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
+
+    ///
+    /// This first section describes a semi-generic way of generating
+    /// callbacks to delete and add annotations to various enities.
+    ///
 
     // Try and determine what type of entity we are dealing with:
     // model, node, edge.
@@ -3922,6 +3927,7 @@ bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id
 
     // Create a "generic" enity-based dispatch to control all the
     // possible combinations of our "generic" interface in this case.
+    // Usage of model brought in through closure.
     function _ann_dispatch(entity, entity_type, entity_op, model_id,
 			   ann_key, ann_val){
 
@@ -3935,120 +3941,112 @@ bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id
 	    args['relation'] = entity.relation();
 	}else{
 	    // Model.
+	    // TODO: would like a debug msg here.
 	}
 
 	// First, select function.
+	var delegate_function = null;
 	if( entity_type == 'individual' ){
-	    var delfun = manager.add_individual_annotation;
+	    delegate_function = manager.add_individual_annotation;
 	    if( entity_op == 'remove' ){
-		delfun = manager.remove_individual_annotation;
+		delegate_function = manager.remove_individual_annotation;
 	    }
-	    // All add/remove operations run with the same argument:
+	    // All add/remove operations run with the same arguments:
 	    // now run operation.
-	    delfun(model_id, args['id'], ann_key, ann_val);
+	    delegate_function(model_id, args['id'], ann_key, ann_val);
 	}else if( entity_type == 'fact' ){
-	    var delfun = manager.add_fact_annotation;
+	    delegate_function = manager.add_fact_annotation;
 	    if( entity_op == 'remove' ){
-		delfun = manager.remove_fact_annotation;
+		delegate_function = manager.remove_fact_annotation;
 	    }
-	    delfun(model_id, args['source'], args['target'], args['relation'],
-		   ann_key, ann_val);
+	    delegate_function(model_id,
+			      args['source'], args['target'], args['relation'],
+			      ann_key, ann_val);
 	}else{
-	    // Model.
-	    var delfun = manager.add_model_annotation;
+	    // Model a wee bit different, and more simple.
+	    delegate_function = manager.add_model_annotation;
 	    if( entity_op == 'remove' ){
-		delfun = manager.remove_model_annotation;
+		delegate_function = manager.remove_model_annotation;
 	    }
-	    delfun(model_id, ann_key, ann_val);
+	    delegate_function(model_id, ann_key, ann_val);
 	}
     }	
-	    
+
+    ///
+    /// This next section is concerned with generating the UI
+    /// necessary and connecting it to the correct callbacks.
+    ///
+    
+    // Constructor: 
+    // A simple object to have a more object-like sub-widget for
+    // handling the addition calls.
+    //
+    // widget_type - "text_area" or "text"
+    function _abstract_annotation_widget(widget_type, placeholder){
+
+	var anchor = this;
+
+	// Create add button.
+	var add_btn_args = {
+    	    'generate_id': true,
+    	    'type': 'button',
+    	    'class': 'btn btn-success'
+	};
+	anchor.add_button = new tag('button', add_btn_args, 'Add');
+
+	// The form control for the input area.
+	var text_args = {
+    	    'generate_id': true,
+    	    //'type': 'text',
+    	    'class': 'form-control',
+    	    'placeholder': placeholder
+	};
+	if( widget_type == 'textarea' ){
+	    text_args['type'] = 'text';
+	    text_args['rows'] = '2';
+	    anchor.text_input = new tag('textarea', text_args);
+	}else{ // 'text'
+	    text_args['type'] = 'text';
+	    anchor.text_input = new tag('input', text_args);
+	}
+
+	// Both placed into the larger form string.
+	var form = [];
+	if( widget_type == 'textarea' ){
+	    form = [
+		'<div>',
+		'<div class="form-group">',
+		anchor.text_input.to_string(),
+		'</div>',
+    		anchor.add_button.to_string(),
+		'</div>'
+	    ];
+	}else{ // 'text'
+	    form = [
+    		'<div class="form-inline">',
+    		'<div class="form-group">',
+		anchor.text_input.to_string(),
+    		'</div>',
+    		anchor.add_button.to_string(),
+    		'</div>'
+	    ];
+	}
+	anchor.form_string = form.join('');
+    }
+
+
     var mdl = null;
     if( ! entity ){
 	alert('unknown id:' + entity_id);
     }else{
 	
-	// Create add button.
-	var add_evi_btn_args = {
-    	    'generate_id': true,
-    	    'type': 'button',
-    	    'class': 'btn btn-success'
-	};
-	var add_evi_btn = new tag('button', add_evi_btn_args, 'Add');
-
-	var evi_text_args = {
-    	    'generate_id': true,
-    	    'type': 'text',
-    	    'class': 'form-control',
-    	    'placeholder': 'Enter evidence type'
-	};
-	var evi_text = new tag('input', evi_text_args);
-
-	var ev_form = [
-    	    '<div class="form-inline">',
-    	    '<div class="form-group">',
-	    evi_text.to_string(),
-    	    '</div>',
-    	    add_evi_btn.to_string(),
-    	    '</div>'
-	];
-	
-	// Create add button.
-	var add_src_btn_args = {
-    	    'generate_id': true,
-    	    'type': 'button',
-    	    'class': 'btn btn-success'
-	};
-	var add_src_btn = new tag('button', add_src_btn_args, 'Add');
-
-	var src_text_args = {
-    	    'generate_id': true,
-    	    'type': 'text',
-    	    'class': 'form-control',
-    	    'placeholder': 'Enter reference type'
-	};
-	var src_text = new tag('input', src_text_args);
-
-	var src_form = [
-    	    '<div class="form-inline">',
-    	    '<div class="form-group">',
-	    src_text.to_string(),
-    	    '</div>',
-    	    add_src_btn.to_string(),
-    	    '</div>'
-	];
-	
-	// Buttons need to be generated first.
-	// Create delete button.
-	var add_cmm_btn_args = {
-    	    'generate_id': true,
-    	    'type': 'button',
-    	    'class': 'btn btn-success'
-	};
-	var add_cmm_btn = new tag('button', add_cmm_btn_args, 'Add');
-	
-	var cmm_text_args = {
-    	    'generate_id': true,
-    	    'type': 'button',
-    	    'class': 'form-control',
-    	    'placeholder': 'Add comment...',
-    	    'rows': '2'
-	};
-	var cmm_text = new tag('textarea', cmm_text_args);
-	
-	var cmm_form = [
-	    '<div>',
-	    '<div class="form-group">',
-	    cmm_text.to_string(),
-	    '</div>',
-	    add_cmm_btn.to_string(),
-	    '</div>'
-	];
-		
-	// See what annotation information is around. Start with just
-	// comments and evidence.
-	// var elt2ann = {};
-	var cache = {
+	// Annotation ordering and collection.
+	var ann_classes = {
+	    'contributor': {
+		elt2ann: {},
+		list: [],
+		string: '???'
+	    },
 	    'comment': {
 		elt2ann: {},
 		list: [],
@@ -4065,149 +4063,155 @@ bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id
 		string: '???'
 	    }
 	};
-	each(bbop.core.get_keys(cache),
-	     function(key){
-		 each(entity.get_annotations_by_filter(
-			  function(ann){
-			      var ret = false;
-			      if( ann.property(key) ){ ret = true; }
-			      return ret;
-			  }),
-		      function(ann){
-			  var kval = ann.property(key);
-			  var kid = bbop.core.uuid();
-			  cache[key]['elt2ann'][kid] = ann.id();
-			  var acache = [];
-			  acache.push('<li class="list-group-item">');
-			  acache.push(kval);
-			  acache.push('<span id="'+ kid +'" class="badge app-delete-mark">X</span>');
-			  acache.push('</li>');
-			  cache[key]['list'].push(acache.join(''));
-		      });    
-		 var str = '<li class="list-group-item">none</li>';
-		 if( cache[key]['list'].length > 0 ){
-		     str = cache[key]['list'].join('');
-		 }
-		 cache[key]['string'] = str;
-	     });
+	each(bbop.core.get_keys(ann_classes), function(key){
+	    each(entity.get_annotations_by_filter(function(ann){
+		var ret = false;
+		if( ann.property(key) ){ ret = true; }
+		return ret;
+	    }), function(ann){
+		var kval = ann.property(key);
+		var kid = bbop.core.uuid();
+		ann_classes[key]['elt2ann'][kid] = ann.id();
+		var acache = [];
+		acache.push('<li class="list-group-item">');
+		acache.push(kval);
+		acache.push('<span id="'+ kid +
+			    '" class="badge app-delete-mark">X</span>');
+		acache.push('</li>');
+		ann_classes[key]['list'].push(acache.join(''));
+	    });    
+	    var str = '<li class="list-group-item">none</li>';
+	    if( ann_classes[key]['list'].length > 0 ){
+		str = ann_classes[key]['list'].join('');
+	    }
+	    ann_classes[key]['string'] = str;
+	});
 
+	// var ev_form = new _abstract_annotation_widget('text',
+	// 					      'Enter evidence ty');
+	var ev_form = new _abstract_annotation_widget('text',
+						      'Enter evidence type');
+	var src_form = new _abstract_annotation_widget('text',
+						       'Enter reference type');
+	var cmm_form = new _abstract_annotation_widget('textarea',
+						       'Add comment...');
 	//
 	var tcache = [
+	    '<h4>Contributors</h4>',
+	    '<p>',
+	    '<ul class="list-group">',
+	    ann_classes['contributor']['string'],
+	    '</ul>',
+	    '</p>',
 	    '<h4>Evidence</h4>',
 	    '<p>',
 	    '<ul class="list-group">',
-	    cache['evidence']['string'],
+	    ann_classes['evidence']['string'],
 	    '</ul>',
 	    '</p>',
-	    ev_form.join(''),
+	    ev_form.form_string,
 	    '<h4>Source</h4>',
 	    '<p>',
 	    '<ul class="list-group">',
-	    cache['source']['string'],
+	    ann_classes['source']['string'],
 	    '</ul>',
 	    '</p>',
-	    src_form.join(''),
+	    src_form.form_string,
 	    '<h4>Comments</h4>',
 	    '<p>',
 	    '<ul class="list-group">',
-	    cache['comment']['string'],
+	    ann_classes['comment']['string'],
 	    '</ul>',
 	    '</p>',
-	    cmm_form.join('')
+	    cmm_form.form_string
 	];
 	
 	// Setup base modal.
-	mdl = new bbopx.noctua.widgets.contained_modal('dialog','Annotations for: ' +
-						   entity_title);
+	mdl = new bbopx.noctua.widgets.contained_modal('dialog',
+						       'Annotations for: ' +
+						       entity_title);
 	mdl.add_to_body(tcache.join(''));
 	
 	// Add delete annotation actions. These are completely generic--
 	// all annotations can be deleted in the same fashion.
-	each(bbop.core.get_keys(cache),
-	     function(ann_key){
-		 each(cache[ann_key]['elt2ann'],
-		      function(elt_id, ann_id){
-			  jQuery('#' + elt_id).click(
-			      function(evt){
-				  evt.stopPropagation();
-			 
-				  //var annid = elt2ann[elt_id];
-				  //alert('blow away: ' + annid);
-				  var ann = entity.get_annotation_by_id(ann_id);
-				  var ann_val = ann.property(ann_key);
-				  _ann_dispatch(entity, entity_type, 'remove',
-						ecore.get_id(),ann_key, ann_val);
-			 
-				  // Wipe out modal.
-				  mdl.destroy();
-			      });
-		      });
-	     });
+	each(bbop.core.get_keys(ann_classes), function(ann_key){
+	    each(ann_classes[ann_key]['elt2ann'], function(elt_id, ann_id){
+		jQuery('#' + elt_id).click( function(evt){
+		    evt.stopPropagation();
+		    
+		    //var annid = elt2ann[elt_id];
+		    //alert('blow away: ' + annid);
+		    var ann = entity.get_annotation_by_id(ann_id);
+		    var ann_val = ann.property(ann_key);
+		    _ann_dispatch(entity, entity_type, 'remove',
+				  ecore.get_id(),ann_key, ann_val);
+		    
+		    // Wipe out modal.
+		    mdl.destroy();
+		});
+	    });
+	});
 	
 	// Add add evidence action.
-	jQuery('#' + add_evi_btn.get_id()).click(
-	    function(evt){
-		evt.stopPropagation();
-		
-		var val = jQuery('#' + evi_text.get_id()).val();
-		if( val && val != '' ){
-		    _ann_dispatch(entity, entity_type, 'add',
-				  ecore.get_id(), 'evidence', val);
-		}else{
-		    alert('no evidence added for' + entity_id);
-		}
-		
-		// Wipe out modal.
-		mdl.destroy();
-	    });	
-
+	jQuery('#' + ev_form.add_button.get_id()).click(function(evt){
+	    evt.stopPropagation();
+	    
+	    var val = jQuery('#' + ev_form.text_input.get_id()).val();
+	    if( val && val != '' ){
+		_ann_dispatch(entity, entity_type, 'add',
+			      ecore.get_id(), 'evidence', val);
+	    }else{
+		alert('no evidence added for' + entity_id);
+	    }
+	    
+	    // Wipe out modal.
+	    mdl.destroy();
+	});	
+	
 	// Add add source action.
-	jQuery('#' + add_src_btn.get_id()).click(
-	    function(evt){
-		evt.stopPropagation();
-		
-		var val = jQuery('#' + src_text.get_id()).val();
-		if( val && val != '' ){
-		    _ann_dispatch(entity, entity_type, 'add',
-				  ecore.get_id(), 'source', val);
-		}else{
-		    alert('no source added for' + entity_id);
-		}
-		
-		// Wipe out modal.
-		mdl.destroy();
-	    });	
-
+	jQuery('#' + src_form.add_button.get_id()).click(function(evt){
+	    evt.stopPropagation();
+	    
+	    var val = jQuery('#' + src_form.text_input.get_id()).val();
+	    if( val && val != '' ){
+		_ann_dispatch(entity, entity_type, 'add',
+			      ecore.get_id(), 'source', val);
+	    }else{
+		alert('no source added for' + entity_id);
+	    }
+	    
+	    // Wipe out modal.
+	    mdl.destroy();
+	});	
+	
 	// Add add comment action.
-	jQuery('#' + add_cmm_btn.get_id()).click(
-	    function(evt){
-		evt.stopPropagation();
-		
-		var val = jQuery('#' + cmm_text.get_id()).val();
-		if( val && val != '' ){
-		    _ann_dispatch(entity, entity_type, 'add',
-				  ecore.get_id(), 'comment', val);
-		}else{
-		    alert('no comment added for' + entity_id);
-		}
-		
-		// Wipe out modal.
-		mdl.destroy();	    
-	    });	
-
+	jQuery('#' + cmm_form.add_button.get_id()).click(function(evt){
+	    evt.stopPropagation();
+	    
+	    var val = jQuery('#' + cmm_form.text_input.get_id()).val();
+	    if( val && val != '' ){
+		_ann_dispatch(entity, entity_type, 'add',
+			      ecore.get_id(), 'comment', val);
+	    }else{
+		alert('no comment added for' + entity_id);
+	    }
+	    
+	    // Wipe out modal.
+	    mdl.destroy();	    
+	});	
+	
 	// Add autocomplete box for ECO to evidence box.
 	var eco_auto_args = {
     	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
     	    'value_template': '{{annotation_class}}',
     	    'list_select_callback': function(doc){}
 	};
-	var eco_auto =
-	    new bbop.widget.search_box(gserv, gconf, evi_text.get_id(),
-				       eco_auto_args);
+	var eco_auto = new bbop.widget.search_box(gserv, gconf,
+						  ev_form.text_input.get_id(),
+						  eco_auto_args);
 	eco_auto.add_query_filter('document_category', 'ontology_class');
 	eco_auto.add_query_filter('source', 'eco', ['+']);
 	eco_auto.set_personality('ontology');
-
     }
 
     // Return our final product.
