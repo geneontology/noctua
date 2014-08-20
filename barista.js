@@ -522,7 +522,7 @@ var BaristaLauncher = function(){
     ///
 
     // Gross overview of current users.
-    messaging_app.get('/status', function(req, res) {
+    messaging_app.get('/user_info', function(req, res) {
 	
 	// Gather session info.
 	var sessions = sessioner.get_sessions();
