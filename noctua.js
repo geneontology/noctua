@@ -301,6 +301,9 @@ var NoctuaLauncher = function(){
 	    
 	    // Libs and render.
 	    var tmpl_args = {
+		'pup_tent_css_libraries': [
+		    '/noctua_landing.css'
+		],
 		'pup_tent_js_libraries': [
 		    // '/bbop-rest-response-mmm.js',
 		    // '/bbop-mmm-requests.js',

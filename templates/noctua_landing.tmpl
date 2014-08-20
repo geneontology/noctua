@@ -59,102 +59,190 @@
 <div class="container">
   
   <div class="header text-center">
-    <h2>Noctua Selection</h2>
+    <h2>Editor Entry</h2>
   </div>
 
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">Current State</h3>
-    </div>
-    <div class="panel-body">
-      
-      <div class="form-group">
-	<label for="select_stored_jump">Usable</label>
-	<select id="select_stored_jump" class="form-control">
-          <option>n/a</option>
-	</select>
+  <!-- Tab tabs. -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="active">
+      <a href="#select" role="tab" data-toggle="tab">Select</a>
+    </li>
+    <li><a href="#create" role="tab" data-toggle="tab">Create</a></li>
+    <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
+    <li><a href="#export" role="tab" data-toggle="tab">Export</a></li>
+    <li><a href="#danger" role="tab" data-toggle="tab"><small style="color:purple;">Danger Zone</small></a></li>
+  </ul>
+
+  <!-- Tab pages. -->
+  <div class="tab-content">
+
+    <!-- Select tab. -->
+    <div class="tab-pane active noctua_tab_wrapper" id="select">
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Select by ID</h3>
+	</div>
+	<div class="panel-body">
+
+	  <p>
+	    Edit or view a model by selecting from the list and
+	    clicking the button.
+	  </p>
+	  
+	  <div class="form-group">
+	    <!-- <label for="select_stored_jump">Select by ID</label> -->
+	    <select id="select_stored_jump" class="form-control">
+              <option>n/a</option>
+	    </select>
+	  </div>
+	  <button id="select_stored_jump_button"
+		  type="submit"
+		  class="btn btn-primary">Edit/View &raquo;</button>
+	  
+	</div>
       </div>
-      <button id="select_stored_jump_button"
-	      type="submit"
-	      class="btn btn-primary">Jump &raquo;</button>
       
     </div>
+
+    <!-- Create tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="create">
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Create new model from class and DB</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <!-- <h5>Generate from class and db</h5> -->
+
+	  <p>
+	    <input type="text" class="form-control" id="auto_wizard_term"
+		   placeholder="GO term">
+	  </p>
+	  <p>
+	    <input type="text" class="form-control" id="auto_wizard_spdb"
+		   placeholder="species database code">
+	  </p>
+	  <p>
+	    <button id="auto_wizard_button_generate"
+		    type="button"
+		    class="btn btn-primary">Generate &raquo;</button>
+	  </p>
+
+	</div>
+      </div>
+	  
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Create new model from DB</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <!-- <h5>Generate new from db</h5> -->
+
+	  <p>
+	    <input type="text" class="form-control" id="auto_blank_spdb"
+		   placeholder="species database code">
+	  </p>
+	  <p>
+	    <button id="auto_blank_button_generate"
+		    type="button"
+		    class="btn btn-primary">Generate &raquo;</button>
+	  </p>
+
+	</div>
+      </div>
+
+    </div>
+
+    <!-- Import tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="import">
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Load model using ??? format</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <!-- <form method="post" action="/action/load" role="form"> -->	
+	  <!-- name="model_data" -->
+	  <p>
+	    <textarea class="form-control"
+		      id="model_data_input"
+		      placeholder="???"
+		      rows="3"></textarea>
+	  </p>
+	  
+	  <p>
+	    <button id="model_data_button"
+		    type="submit"
+		    class="btn btn-primary">Load</button>
+	  </p>
+	  <!-- </form> -->
+	  
+	</div>
+      </div>
+
+    </div>
+
+    <!-- Export tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="export">
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Export bu ID</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <p>
+	    TODO: List select
+	  </p>
+	  
+	</div>
+      </div>
+
+    </div>
+
+    <!-- Danger Zone tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="danger">
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Other Interfaces</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <p>
+	    A basic interface can be found <a href="/basic">here</a>.
+	  </p>
+	  
+	</div>
+      </div>
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Barista Administration</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <p>
+	    <a href="http://toaster.lbl.gov:3400/user_info">Users</a>
+	  </p>
+	  <p>
+	    <a href="http://toaster.lbl.gov:3400/user_info_by_token/123">API</a>
+	  </p>
+	  <p>
+	    <a href="http://toaster.lbl.gov:3400/status">Stats</a>
+	  </p>
+	  
+	</div>
+      </div>
+
+    </div>
+
+  <!-- Tabs. -->
   </div>
 
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">Wizard</h3>
-    </div>
-    <div class="panel-body">
-      
-      <h5>Generate from class and db</h5>
-
-      <p>
-	<input type="text" class="form-control" id="auto_wizard_term"
-	       placeholder="GO term">
-      </p>
-      <p>
-	<input type="text" class="form-control" id="auto_wizard_spdb"
-	       placeholder="species database code">
-      </p>
-      <p>
-	<button id="auto_wizard_button_generate"
-		type="button"
-		class="btn btn-primary">Generate &raquo;</button>
-      </p>
-      
-      <hr />
-
-      <h5>Generate new from db</h5>
-      <p>
-	<input type="text" class="form-control" id="auto_blank_spdb"
-	       placeholder="species database code">
-      </p>
-      <p>
-	<button id="auto_blank_button_generate"
-		type="button"
-		class="btn btn-primary">Generate &raquo;</button>
-      </p>
-
-    </div>
-  </div>
-
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">Load ???</h3>
-    </div>
-    <div class="panel-body">
-      
-      <!-- <form method="post" action="/action/load" role="form"> -->	
-      <!-- name="model_data" -->
-      <p>
-	<textarea class="form-control"
-		  id="model_data_input"
-		  placeholder="???"
-		  rows="3"></textarea>
-      </p>
-      
-      <p>
-	<button id="model_data_button"
-		type="submit"
-		class="btn btn-primary">Load</button>
-      </p>
-      <!-- </form> -->
-      
-    </div>
-  </div>
-
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">Basic Interface</h3>
-    </div>
-    <div class="panel-body">
-      
-      <p>
-	A basic interface can be found <a href="/basic">here</a>.
-      </p>
-      
-    </div>
-  </div>
-
+<!-- Container. -->
 </div>
