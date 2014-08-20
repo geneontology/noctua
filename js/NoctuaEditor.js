@@ -54,6 +54,162 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var gserv = 'http://golr.berkeleybop.org/';
     var gconf = new bbop.golr.conf(amigo.data.golr);
 
+    // Define what annotations are allowed to be edited where.
+    // Looking eerily like GOlr config now.
+    var model_annotation_config = [
+	{
+	    'id': 'title',
+	    'label': 'Title',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'one',
+	    'placeholder': 'Add title'
+	},
+	{
+	    'id': 'contributor',
+	    'label': 'Contributor',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	{
+	    'id': 'date',
+	    'label': 'Date',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	// {
+	//     'id': 'evidence',
+	//     'label': 'Evidence',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter evidence type'
+	    
+	// },
+	// {
+	//     'id': 'source',
+	//     'label': 'Source',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter reference type'
+	// },
+	{
+	    'id': 'comment',
+	    'label': 'Comment',
+	    'widget_type': 'textarea',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Add comment...'		
+	}
+    ];
+    var instance_annotation_config = [
+	// {
+	//     'id': 'title',
+	//     'label': 'Title',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'one',
+	//     'placeholder': 'Add title'
+	// },
+	{
+	    'id': 'contributor',
+	    'label': 'Contributor',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	{
+	    'id': 'date',
+	    'label': 'Date',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	{
+	    'id': 'evidence',
+	    'label': 'Evidence',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Enter evidence type'
+	    
+	},
+	{
+	    'id': 'source',
+	    'label': 'Source',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Enter reference type'
+	},
+	{
+	    'id': 'comment',
+	    'label': 'Comment',
+	    'widget_type': 'textarea',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Add comment...'		
+	}
+    ];
+    var fact_annotation_config = [
+	// {
+	//     'id': 'title',
+	//     'label': 'Title',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'one',
+	//     'placeholder': 'Add title'
+	// },
+	{
+	    'id': 'contributor',
+	    'label': 'Contributor',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	{
+	    'id': 'date',
+	    'label': 'Date',
+	    'policy': 'read-only'
+	    //'cardinality': 'many'
+	    //'placeholder': 'n/a!',
+	    //'widget_type': 'text'
+	},
+	{
+	    'id': 'evidence',
+	    'label': 'Evidence',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Enter evidence type'
+	    
+	},
+	{
+	    'id': 'source',
+	    'label': 'Source',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Enter reference type'
+	},
+	{
+	    'id': 'comment',
+	    'label': 'Comment',
+	    'widget_type': 'textarea',
+	    'policy': 'mutable',
+	    'cardinality': 'many',
+	    'placeholder': 'Add comment...'		
+	}
+    ];
+
     // Div contact points.
     var graph_container_id = 'main_exp_graph_container';
     var graph_container_div = '#' + graph_container_id;
@@ -295,7 +451,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		var enode = ecore.get_node_by_elt_id(target_id);
 		if( enode ){		    
 		    var ann_edit_modal = widgets.edit_annotations_modal;
-		    var eam = ann_edit_modal(ecore, manager, enode.id(),
+		    var eam = ann_edit_modal(instance_annotation_config,
+					     ecore, manager, enode.id(),
 					     gserv, gconf);
 		    eam.show();
 		}else{
@@ -438,7 +595,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		      function(connection, event){
 			  //alert('edge click: ' + eedge.id());
 			  var ann_edit_modal = widgets.edit_annotations_modal;
-			  var eam = ann_edit_modal(ecore, manager, eedge.id(),
+			  var eam = ann_edit_modal(fact_annotation_config,
+						   ecore, manager, eedge.id(),
 						   gserv, gconf);
 			  eam.show();
 		      });
@@ -1473,7 +1631,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     //
     jQuery(model_ann_elt).click(function(){
 	var ann_edit_modal = widgets.edit_annotations_modal;
-	var eam = ann_edit_modal(ecore, manager, ecore.get_id(),
+	var eam = ann_edit_modal(model_annotation_config,
+				 ecore, manager, ecore.get_id(),
 				 gserv, gconf);
 	eam.show();
     });
