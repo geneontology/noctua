@@ -3892,7 +3892,8 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
  * 
  * TODO: make subclass?
  */
-bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id,
+bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
+						       ecore, manager, entity_id,
 						       gserv, gconf){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
@@ -4034,106 +4035,138 @@ bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id
 	anchor.form_string = form.join('');
     }
 
-
+    //
     var mdl = null;
     if( ! entity ){
 	alert('unknown id:' + entity_id);
     }else{
 	
-	// Annotation ordering and collection.
-	var ann_classes = {
-	    'contributor': {
-		elt2ann: {},
-		list: [],
-		string: '???'
-	    },
-	    'comment': {
-		elt2ann: {},
-		list: [],
-		string: '???'
-	    },
-	    'source': {
-		elt2ann: {},
-		list: [],
-		string: '???'
-	    },
-	    'evidence': {
-		elt2ann: {},
-		list: [],
-		string: '???'
-	    }
-	};
+	// Go through our input list and create a mutable data
+	// structure that we can then use to fill out the editor
+	// slots.
+
+	var ann_classes = {};
+	each(annotation_config, function(ann_class){
+	    var aid = ann_class['id'];
+
+	    // Clone.
+	    ann_classes[aid] = bbop.core.clone(ann_class);
+	    
+	    // Add our additions.
+	    ann_classes[aid]['elt2ann'] = {};
+	    ann_classes[aid]['list'] = [];
+	    ann_classes[aid]['string'] = '???';
+	    ann_classes[aid]['widget'] = null;
+	});
+
+	// Going through each of the annotation types, try and collect
+	// them from the model.
 	each(bbop.core.get_keys(ann_classes), function(key){
 	    each(entity.get_annotations_by_filter(function(ann){
 		var ret = false;
 		if( ann.property(key) ){ ret = true; }
 		return ret;
 	    }), function(ann){
+
+		// For every one found, assemble the actual display
+		// string while storing the ids for later use.
 		var kval = ann.property(key);
 		var kid = bbop.core.uuid();
-		ann_classes[key]['elt2ann'][kid] = ann.id();
+
+		// Only add to action set if mutable.
+		if( ann_classes[key]['policy'] == 'mutable' ){
+		    ann_classes[key]['elt2ann'][kid] = ann.id();
+		}
+
 		var acache = [];
 		acache.push('<li class="list-group-item">');
 		acache.push(kval);
-		acache.push('<span id="'+ kid +
-			    '" class="badge app-delete-mark">X</span>');
+
+		// Only add the delete UI bits if the policy says
+		// mutable.
+		if( ann_classes[key]['policy'] == 'mutable' ){
+		    acache.push('<span id="'+ kid +
+				'" class="badge app-delete-mark">X</span>');
+		}
+
 		acache.push('</li>');
 		ann_classes[key]['list'].push(acache.join(''));
-	    });    
-	    var str = '<li class="list-group-item">none</li>';
+	    });
+
+	    // Join whtaver is in the list together to get the display
+	    // string.
+	    // If we didn't collect anything, it's empty.
+	    var str = '';
 	    if( ann_classes[key]['list'].length > 0 ){
 		str = ann_classes[key]['list'].join('');
+		str = '<ul class="list-group">' + str + '</ul>';
 	    }
 	    ann_classes[key]['string'] = str;
 	});
 
-	// var ev_form = new _abstract_annotation_widget('text',
-	// 					      'Enter evidence ty');
-	var ev_form = new _abstract_annotation_widget('text',
-						      'Enter evidence type');
-	var src_form = new _abstract_annotation_widget('text',
-						       'Enter reference type');
-	var cmm_form = new _abstract_annotation_widget('textarea',
-						       'Add comment...');
-	//
-	var tcache = [
-	    '<h4>Contributors</h4>',
-	    '<p>',
-	    '<ul class="list-group">',
-	    ann_classes['contributor']['string'],
-	    '</ul>',
-	    '</p>',
-	    '<h4>Evidence</h4>',
-	    '<p>',
-	    '<ul class="list-group">',
-	    ann_classes['evidence']['string'],
-	    '</ul>',
-	    '</p>',
-	    ev_form.form_string,
-	    '<h4>Source</h4>',
-	    '<p>',
-	    '<ul class="list-group">',
-	    ann_classes['source']['string'],
-	    '</ul>',
-	    '</p>',
-	    src_form.form_string,
-	    '<h4>Comments</h4>',
-	    '<p>',
-	    '<ul class="list-group">',
-	    ann_classes['comment']['string'],
-	    '</ul>',
-	    '</p>',
-	    cmm_form.form_string
-	];
-	
+	// TODO: Generate the final code from the created structure.
+	// Use the original ordering of the argument list.
+	var out_cache = [];
+	each(annotation_config, function(list_entry){	
+    
+	    //
+	    var eid = list_entry['id'];
+	    var entry_info = ann_classes[eid];
+	    
+	    //
+	    var elbl =  entry_info['label'];
+	    var ewid =  entry_info['widget_type'];
+	    var epol =  entry_info['policy'];
+	    var ecrd =  entry_info['cardinality'];
+	    var eplc =  entry_info['placeholder'];
+	    // Has?
+	    var ehas = entry_info['list'].length || 0;
+	    // UI output string.
+	    var eout = entry_info['string'];
+
+	    // Add whatever annotations we have.
+	    out_cache.push('<div class="panel panel-default">');
+	    //out_cache.push('<h4>' + elbl + '</h4>');
+	    out_cache.push('<div class="panel-heading">' + elbl + '</div>');
+	    out_cache.push('<div class="panel-body">');
+	    //out_cache.push('<p>');
+	    out_cache.push('<ul class="list-group">' + eout + '</ul>');
+	    //out_cache.push('</p>');
+	    
+	    // And add an input widget if mutable...
+	    //console.log('epol: ' + epol);
+	    if( epol && epol == 'mutable' ){
+		// ...and cardinality not one or has no items in list.
+		//console.log(' ecrd: ' + ecrd);
+		//console.log(' ehas: ' + ehas);
+		if( ecrd != 'one' || ehas == 0 ){
+		    console.log(' widget for: ' + eid);
+		    var form_widget =
+			    new _abstract_annotation_widget(ewid, eplc);
+
+		    // Add to the literal output.
+		    out_cache.push(form_widget.form_string);
+
+		    // Add back to the collection for use after
+		    // connecting to the DOM.
+		    ann_classes[eid]['widget'] = form_widget;
+		}
+	    }
+
+	    // Close out BS3 panel.
+	    out_cache.push('</div>');
+	    out_cache.push('</div>');
+	});
+
 	// Setup base modal.
 	mdl = new bbopx.noctua.widgets.contained_modal('dialog',
 						       'Annotations for: ' +
 						       entity_title);
-	mdl.add_to_body(tcache.join(''));
+	mdl.add_to_body(out_cache.join(''));
 	
-	// Add delete annotation actions. These are completely generic--
-	// all annotations can be deleted in the same fashion.
+	// Now that they're all in the DOM, add any delete annotation
+	// actions. These are completely generic--all annotations can
+	// be deleted in the same fashion.
 	each(bbop.core.get_keys(ann_classes), function(ann_key){
 	    each(ann_classes[ann_key]['elt2ann'], function(elt_id, ann_id){
 		jQuery('#' + elt_id).click( function(evt){
@@ -4146,72 +4179,58 @@ bbopx.noctua.widgets.edit_annotations_modal = function(ecore, manager, entity_id
 		    _ann_dispatch(entity, entity_type, 'remove',
 				  ecore.get_id(),ann_key, ann_val);
 		    
-		    // Wipe out modal.
+		    // Wipe out modal on action.
 		    mdl.destroy();
 		});
 	    });
 	});
 	
-	// Add add evidence action.
-	jQuery('#' + ev_form.add_button.get_id()).click(function(evt){
-	    evt.stopPropagation();
+	// Walk through again, this time activating and annotation
+	// "add" buttons that we added.
+	each(bbop.core.get_keys(ann_classes), function(ann_key){
+	    var form = ann_classes[ann_key]['widget'];
+	    console.log('ann_key: ' + ann_key, form);
+	    if( form ){ // only act if we added/defined it earlier
+		
+		jQuery('#' + form.add_button.get_id()).click(function(evt){
+		    evt.stopPropagation();
 	    
-	    var val = jQuery('#' + ev_form.text_input.get_id()).val();
-	    if( val && val != '' ){
-		_ann_dispatch(entity, entity_type, 'add',
-			      ecore.get_id(), 'evidence', val);
-	    }else{
-		alert('no evidence added for' + entity_id);
+		    var val = jQuery('#' + form.text_input.get_id()).val();
+		    if( val && val != '' ){
+			_ann_dispatch(entity, entity_type, 'add',
+				      ecore.get_id(), ann_key, val);
+		    }else{
+			alert('no ' + ann_key + ' added for ' + entity_id);
+		    }
+	    
+		    // Wipe out modal.
+		    mdl.destroy();	    
+		});	
 	    }
-	    
-	    // Wipe out modal.
-	    mdl.destroy();
-	});	
-	
-	// Add add source action.
-	jQuery('#' + src_form.add_button.get_id()).click(function(evt){
-	    evt.stopPropagation();
-	    
-	    var val = jQuery('#' + src_form.text_input.get_id()).val();
-	    if( val && val != '' ){
-		_ann_dispatch(entity, entity_type, 'add',
-			      ecore.get_id(), 'source', val);
-	    }else{
-		alert('no source added for' + entity_id);
-	    }
-	    
-	    // Wipe out modal.
-	    mdl.destroy();
-	});	
-	
-	// Add add comment action.
-	jQuery('#' + cmm_form.add_button.get_id()).click(function(evt){
-	    evt.stopPropagation();
-	    
-	    var val = jQuery('#' + cmm_form.text_input.get_id()).val();
-	    if( val && val != '' ){
-		_ann_dispatch(entity, entity_type, 'add',
-			      ecore.get_id(), 'comment', val);
-	    }else{
-		alert('no comment added for' + entity_id);
-	    }
-	    
-	    // Wipe out modal.
-	    mdl.destroy();	    
-	});	
+	});
+
+	///
+	/// Special section for special additions (autocomplete, etc.).
+	/// TODO: Eventually, this should also be in the config.
+	///
 	
 	// Add autocomplete box for ECO to evidence box.
-	var eco_auto_args = {
-    	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
-    	    'value_template': '{{annotation_class}}',
-    	    'list_select_callback': function(doc){}
-	};
-	var eco_auto = new bbop.widget.search_box(gserv, gconf,
-						  ev_form.text_input.get_id(),
-						  eco_auto_args);
-	eco_auto.add_query_filter('document_category', 'ontology_class');
-	eco_auto.add_query_filter('source', 'eco', ['+']);
-	eco_auto.set_personality('ontology');
+	if( ann_classes['evidence'] && ann_classes['evidence']['widget'] ){
+	    var ev_form = ann_classes['evidence']['widget'];
+	    var eco_auto_args = {
+    		'label_template':
+		'{{annotation_class_label}} ({{annotation_class}})',
+    		'value_template': '{{annotation_class}}',
+    		'list_select_callback': function(doc){}
+	    };
+	    var eco_auto =
+		    new bbop.widget.search_box(gserv, gconf,
+					       ev_form.text_input.get_id(),
+					       eco_auto_args);
+	    eco_auto.add_query_filter('document_category', 'ontology_class');
+	    eco_auto.add_query_filter('source', 'eco', ['+']);
+	    eco_auto.set_personality('ontology');
+	}
     }
 
     // Return our final product.
