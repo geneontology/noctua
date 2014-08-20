@@ -465,6 +465,25 @@ bbopx.barista.response.prototype.model_ids = function(){
     }
     return ret;
 };
+
+/*
+ * Function: export
+ * 
+ * Returns the string of the export found in the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string
+ */
+bbopx.barista.response.prototype.export_model = function(){
+    var ret = '';
+    if( this._data && this._data['export'] ){
+	ret = this._data['export'];
+    }
+    return ret;
+};
 ////
 //// Let's try and communicate with the socket.io server for
 //// messages and the like.
@@ -1155,7 +1174,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
-    anchor.generate_model = function(class_id, db_id){
+    anchor.generate_model_by_class_and_db = function(class_id, db_id){
 
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
@@ -1171,12 +1190,41 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
-    anchor.generate_blank_model = function(db_id){
+    anchor.generate_model_by_db = function(db_id){
 
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate-blank');
 	req.add('db', db_id);
+	reqs.add(req);
+	
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.generate_model_by_taxon = function(taxon_id){
+
+	//
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var req = new bbopx.minerva.request('model', 'generate-blank');
+	req.add('taxonId', taxon_id);
+	reqs.add(req);
+	
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.generate_model = function(){
+
+	//
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var req = new bbopx.minerva.request('model', 'generate-blank');
 	reqs.add(req);
 	
 	var args = reqs.callable();	
