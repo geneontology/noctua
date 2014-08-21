@@ -651,51 +651,19 @@ var NoctuaLauncher = function(){
 	// });
 	
 	// Test export handler.
-	self.app.post('/action/export', function(req, res) {
+	self.app.post('/action/display', function(req, res) {
 	    
 	    // Deal with incoming parameters.
-	    var mid = req.route.params['model_id'] ||
-		    req.body['model_id'] || '???';
+	    var mstr = req.query['thing'] ||
+		    req.route.params['thing'] ||
+		    req.body['thing'] ||
+		    '???';
+	    //console.log('display thing: ' + mstr);
 	    
-	    // // Assemble return doc.
-	    // res.redirect(msgloc +'/api/mmm/m3ExportModel?modelId='+ mid); 
-	    // //res.setHeader('Content-Type', 'text/plain');
-	    // //res.send(data);
-	    
-	    // 
-	    function export_callback_action(resp, man){
-		
-		if( ! resp.okay() ){
-		    res.setHeader('Content-Type', 'text/html');
-		    res.send('bad doc from: ' + mid);
-		}else{				   
-		    
-		    //console.log('in success callback');
-		    
-		    var obj = resp.data();
-		    var obj_str = obj['export'];
-		    
-		    // Assemble return doc.
-		    //res.setHeader('Content-Type', 'text/owl');
-		    res.setHeader('Content-Type', 'text/plain');
-		    res.send(obj_str);
-		}
-	    }
-	    
-	    // Assemble query to get the desired MM.
-	    var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
-	    m.register('success', 'foo', export_callback_action);
-	    m.register('error', 'bar', function(resp, man){
-		res.setHeader('Content-Type', 'text/html');
-		res.send('failure ('+ resp.message_type() +'): '+
-			 resp.message());
-	    });
-	    var t = self.barista_location + '/api/mmm/m3ExportModel';
-	    var t_args = {
-		'modelId': mid
-	    };
-	    var astr = m.action(t, t_args);
-	    console.log("action to: " + astr);
+	    // Assemble return doc.
+	    //res.setHeader('Content-Type', 'text/owl');
+	    res.setHeader('Content-Type', 'text/plain');
+	    res.send(unescape(mstr));
 	});
     };
     
