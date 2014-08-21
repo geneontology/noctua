@@ -2,6 +2,27 @@
 //// ...
 ////
 
+var global_known_taxons = [
+    ['3702', 'Arabidopsis thaliana'],
+    ['9913', 'Bos taurus'],
+    ['6239', 'Caenorhabditis elegans'],
+    ['237561', 'Candida albicans (SC5314)'],
+    ['9615', 'Canis lupus familiaris'],
+    ['7955', 'Danio rerio'],
+    ['44689', 'Dictyostelium discoideum'],
+    ['7227', 'Drosophila melanogaster'],
+    ['83333', 'Escherichia coli (K-12)'],
+    ['9031', 'Gallus gallus'],
+    ['9606', 'Homo sapiens'],
+    ['10090', 'Mus musculus'],
+    ['39947', 'Oryza sativa (Japonica Group)'],
+    ['208964', 'Pseudomonas aeruginosa (PAO1)'],
+    ['10116', 'Rattus norvegicus'],
+    ['559292', 'Saccharomyces cerevisiae'],
+    ['284812', 'Schizosaccharomyces pombe'],
+    ['9823', 'Sus scrofa']
+];
+
 var MMEnvBootstrappingInit = function(user_token){
     
     var logger = new bbop.logger('mme bsi');
@@ -25,18 +46,18 @@ var MMEnvBootstrappingInit = function(user_token){
     var gserv = 'http://golr.berkeleybop.org/';
     var gconf = new bbop.golr.conf(amigo.data.golr);
 
-    // Contact point's for Chris's wizard.
+    // Contact points for Chris's wizard.
     var auto_wizard_term_id = 'auto_wizard_term';
     var auto_wizard_term_elt = '#' + auto_wizard_term_id;
     var auto_wizard_spdb_id = 'auto_wizard_spdb';
     var auto_wizard_spdb_elt = '#' + auto_wizard_spdb_id;
     var auto_wizard_button_generate_id = 'auto_wizard_button_generate';
     var auto_wizard_button_generate_elt = '#' + auto_wizard_button_generate_id;
-    // Contact point for the simpler blank generator.
-    var auto_blank_spdb_id = 'auto_blank_spdb';
-    var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
-    var auto_blank_button_generate_id = 'auto_blank_button_generate';
-    var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
+    // // Contact point for the simpler blank generator.
+    // var auto_blank_spdb_id = 'auto_blank_spdb';
+    // var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
+    // var auto_blank_button_generate_id = 'auto_blank_button_generate';
+    // var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
     //
     // var select_memory_jump_id = 'select_memory_jump';
     // var select_memory_jump_elt = '#' + select_memory_jump_id;
@@ -55,6 +76,19 @@ var MMEnvBootstrappingInit = function(user_token){
     var model_data_button_elt = '#' + model_data_button_id;
     var model_data_input_id = 'model_data_input';
     var model_data_input_elt = '#' + model_data_input_id;
+    // Create new model from taxon.
+    var model_create_by_taxon_button_id = 'button_taxon_for_create';
+    var model_create_by_taxon_button_elt = '#' + model_create_by_taxon_button_id;
+    var model_create_by_taxon_input_id = 'select_taxon_for_create';
+    var model_create_by_taxon_input_elt = '#' + model_create_by_taxon_input_id;
+    // Create new model from nothing.
+    var model_create_by_nothing_id = 'button_nothing_for_create';
+    var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
+    // Create new model from nothing.
+    var model_export_by_id_button_id = 'button_id_for_export';
+    var model_export_by_id_button_elt = '#' + model_export_by_id_button_id;
+    var model_export_by_id_input_id = 'select_id_for_export';
+    var model_export_by_id_input_elt = '#' + model_export_by_id_input_id;
 
     ///
     /// Helpers.
@@ -106,17 +140,13 @@ var MMEnvBootstrappingInit = function(user_token){
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
 
-    // // Remote action registrations.
-    // manager.register('meta', 'foo',
-    // 		     function(resp, man){
-    // 			 alert('Meta operation successful: ' + resp.message());
-    // 		     }, 10);
-
+    // Likely the result of unhappiness on Minerva.
     manager.register('warning', 'foo', function(resp, man){
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed');
     }, 10);
 
+    // Likely the result of serious unhappiness on Minerva.
     manager.register('error', 'foo', function(resp, man){
 
 	// Do something different if we think that this is a
@@ -136,40 +166,117 @@ var MMEnvBootstrappingInit = function(user_token){
 		  'your operation was likely not performed.');
 	}
     }, 10);
-    
+
+    // Likely the result of a meta operation performed against
+    // Minerva. Likely will be performing UI updates given the new
+    // data.
+    // However, export also comes through this way, so we check for
+    // that first.
     manager.register('meta', 'foo', function(resp, man){
 	
-	// Clear interface.
-	jQuery(select_stored_jump_elt).empty();
+	if( resp.export_model() ){
 
-	// Insert model IDs into interface.
-	var model_ids = resp.model_ids();
-	var rep_cache = [];
-	each(model_ids,
-	     function(model_id){
-		 rep_cache.push('<option>');
-		 rep_cache.push(model_id);
-		 rep_cache.push('</option>');
-	     });
-	var rep_str = rep_cache.join('');
-	jQuery(select_stored_jump_elt).append(rep_str);
-	
-	// Make interface jump on click.
-	jQuery(select_stored_jump_button_elt).click(
-	    function(evt){
+	    // 
+	    var exp = resp.export_model();
+	    var rand = bbop.core.uuid();
+	    //alert(exp);
+
+	    var enc_exp = encodeURIComponent(exp);
+	    var form_set = [
+		'<form id="'+ rand +'" method="POST" action="/action/display">',
+		'<input type="hidden" name="thing" value="'+ enc_exp +'">',
+		'</form>'
+	    ];
+	    jQuery('body').append(form_set.join(''));
+	    jQuery('#'+rand).submit();
+
+	    // var expdia = new bbopx.noctua.widgets.contained_modal(null, '<strong>Export</strong>', exp);
+	    // expdia.show();
+
+	}else{
+	    
+	    // Insert model IDs into "Select by ID" interface.
+	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
+	    var model_ids = resp.model_ids();
+	    var rep_cache = [];
+	    each(model_ids, function(model_id){
+		rep_cache.push('<option>');
+		rep_cache.push(model_id);
+		rep_cache.push('</option>');
+	    });
+	    var rep_str = rep_cache.join('');
+	    jQuery(select_stored_jump_elt).append(rep_str);
+	    
+	    // Also add this list to the export interface.
+	    jQuery(model_export_by_id_input_elt).empty();
+	    jQuery(model_export_by_id_input_elt).append(rep_str);
+	    
+	    // Make jump interface jump on click.
+	    jQuery(select_stored_jump_button_elt).click(function(evt){
 		var id = jQuery(select_stored_jump_elt).val();
 		//alert('val: '+ id);
 		var new_url = '/seed/model/' + id;
 		_jump_to_page(new_url);
 	    });
+	    
+	    // //
+	    
+	    // // Insert model IDs into "Select by ID" interface.
+	    // jQuery(model_export_by_id_input_elt).empty(); // Clear interfaces.
+	    // var exp_cache = [];
+	    // each(model_ids, function(model_id){
+	    //     ex_cache.push('<option>');
+	    //     rep_cache.push(model_id);
+	    //     rep_cache.push('</option>');
+	    // });
+	    // var rep_str = rep_cache.join('');
+	    // jQuery(select_stored_jump_elt).append(rep_str);
+	    
+	    // Make jump interface jump on click.
+	    jQuery(select_stored_jump_button_elt).click(function(evt){
+		var id = jQuery(select_stored_jump_elt).val();
+		//alert('val: '+ id);
+		var new_url = '/seed/model/' + id;
+		_jump_to_page(new_url);
+	    });
+	    
+	    // Make export interface trigger on click.
+	    jQuery(model_export_by_id_button_elt).click(function(evt){
+		var id = jQuery(model_export_by_id_input_elt).val();
+		manager.export_model(id);
+		//alert('val: '+ id);
+		// var new_url = '/action/export/' + id;
+		// _jump_to_page(new_url);
+	    });
+
+	    //
+	    
+	    // Insert taxon info into "Create new fmodel fron taxon"
+	    // interface.
+	    jQuery(model_create_by_taxon_input_elt).empty();
+	    var tax_cache = [];
+	    each(global_known_taxons, function(tax_pair){
+		var taxid = tax_pair[0];
+		var tname = tax_pair[1];
+		tax_cache.push('<option value="' + taxid + '">');
+		tax_cache.push(tname);
+		tax_cache.push('</option>');
+	    });
+	    var tax_str = tax_cache.join('');
+	    jQuery(model_create_by_taxon_input_elt).append(tax_str);
+	    
+	    // Get create-by-taxon ready to go.
+	    jQuery(model_create_by_taxon_button_elt).click(function(evt){
+		var id = jQuery(model_create_by_taxon_input_elt).val();
+		//alert('val: ' + id);
+		manager.generate_model_by_taxon(id);
+	    });
+	}
     });
 
+    // Likely result of a new model being built on Minerva.
     manager.register('rebuild', 'foo', function(resp, man){
 	_generated_model(resp, man);
-	// alert('Not yet handled (' +
-	//       resp.message_type() + '): ' +
-	//       resp.message() + '; ' +
-	//       'try refreshing your browser');
     }, 10);
 
     ///
@@ -208,7 +315,22 @@ var MMEnvBootstrappingInit = function(user_token){
     // auto_wizard_spdb.add_query_filter('document_category', 'annotation');
     // auto_wizard_spdb.set_personality('annotation');
 
-    // ...
+    ///
+    /// Activate UI buttons.
+    ///
+
+    // NOTE: Activate from taxon is done in the meta return handler
+    // because we want to model the (not yet) return of current
+    // species from Minerva.
+
+    // Active create-from-nothing.
+    jQuery(model_create_by_nothing_elt).click(function(evt){
+	evt.stopPropagation();
+	evt.preventDefault();
+	manager.generate_model();
+    });
+
+    // Activate create from class and db.
     jQuery(auto_wizard_button_generate_elt).click(function(){
     	var term = auto_wizard_term.content();
     	//var spdb = auto_wizard_spdb.content();
@@ -221,24 +343,22 @@ var MMEnvBootstrappingInit = function(user_token){
 	    // wizard_jump_term = term;
 	    // wizard_jump_db = spdb;
 	    // manager.generate_model(wizard_jump_term, wizard_jump_db);
-	    manager.generate_model(term, spdb);
+	    manager.generate_model_by_class_and_db(term, spdb);
     	}
     }
 						 );
+    // // ...
+    // jQuery(auto_blank_button_generate_elt).click(function(){
+    // 	var spdb = jQuery(auto_blank_spdb_elt).val();
 
-    // ...
-    jQuery(auto_blank_button_generate_elt).click(function(){
-    	var spdb = jQuery(auto_blank_spdb_elt).val();
+    // 	if( ! spdb || spdb == '' ){
+    // 	    alert('necessary field empty');
+    // 	}else{
+    // 	    manager.generate_model_by_db(spdb);
+    // 	}
+    // });
 
-    	if( ! spdb || spdb == '' ){
-    	    alert('necessary field empty');
-    	}else{
-	    manager.generate_blank_model(spdb);
-    	}
-    }
-						);
-
-    // 
+    // Activate importer.
     jQuery(model_data_button_elt).click(function(evt){
 	evt.stopPropagation();
 	evt.preventDefault();
