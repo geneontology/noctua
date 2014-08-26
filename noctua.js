@@ -203,8 +203,8 @@ var NoctuaLauncher = function(){
 		'/NoctuaEditor.js'
 	    ],
 	    'title': name_of_the_week + ': Editor',
-	    'messaging_server_location': self.barista_location,
 	    'barista_token': barista_token,
+	    'barista_location': self.barista_location,
 	    'noctua_landing': noctua_landing,
 	    'barista_login': barista_login,
 	    'barista_logout': barista_logout
@@ -324,7 +324,8 @@ var NoctuaLauncher = function(){
 		     value: bbop.core.dump(known_relations) }
 		],
 		'title': notw + ': Selection',
-		'messaging_server_location': self.barista_location,
+		'noctua_location': self.hostport,
+		'barista_location': self.barista_location,
 		'barista_token': barista_token,
 		'noctua_landing': noctua_landing,
 		'barista_login': barista_login,
@@ -405,13 +406,20 @@ var NoctuaLauncher = function(){
 	    console.log('process heartbeat request');
 
 	    var ret_obj = {
+		'name': 'Noctua',
 		'okay': true,
 		'date': (new Date()).toJSON(),
-		'extras': {
-		    'ping': 'pong',
-		    'external_kicks': monitor_external_kicks,
-		    'internal_kicks': monitor_internal_kicks
-		}
+		'location': self.hostport,
+		'offerings': [
+		    {
+			'name': 'external_kicks',
+			'value': monitor_external_kicks
+		    },
+		    {
+			'name': 'internal_kicks',
+			'value': monitor_internal_kicks
+		    }
+		]
 	    };
 	    var fin = JSON.stringify(ret_obj);
 

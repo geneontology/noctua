@@ -314,25 +314,47 @@
 
       <div class="panel panel-default">
 	<div class="panel-heading">
-	  <h3 class="panel-title">Barista Administration</h3>
+	  <h3 class="panel-title">Noctua Administration</h3>
 	</div>
 	<div class="panel-body">
 	  
 	  <p>
 	    <a type="button"
 	       class="btn btn-primary"
-	       href="http://toaster.lbl.gov:3400/user_info">Users &raquo;</a>
+	       href="{{noctua_location}}/status">Status &raquo;</a>
+	  </p>
+	  
+	</div>
+      </div>
+
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">Barista Administration</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  {{^barista_token}}
+	  <p>
+	    <a type="button"
+	       class="btn btn-primary"
+	       href="{{barista_location}}/user_info">Users &raquo;</a>
 	  </p>
 	  <p>
 	    <a type="button"
 	       class="btn btn-primary"
-	       href="http://toaster.lbl.gov:3400/user_info_by_token/123">API &raquo;</a>
+	       href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
 	  </p>
 	  <p>
 	    <a type="button"
 	       class="btn btn-primary"
-	       href="http://toaster.lbl.gov:3400/status">Stats &raquo;</a>
+	       href="{{barista_location}}/status">Status &raquo;</a>
 	  </p>
+	  {{/barista_token}}
+	  {{#barista_token}}
+	  <p>
+	    No admin available here--likely a configuration error.
+	  </p>
+	  {{/barista_token}}
 	  
 	</div>
       </div>

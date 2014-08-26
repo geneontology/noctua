@@ -504,13 +504,23 @@ var BaristaLauncher = function(){
 
 	var ret_obj = {
 	    'okay': true,
+	    'name': 'Barista',
 	    'date': (new Date()).toJSON(),
-	    'extras': {
-		'ping': 'pong',
-		'sessions': monitor_sessions,
-		'calls': monitor_calls,
-		'messages': monitor_messages
-	    }
+	    'location': runloc,
+	    'offerings': [
+		{
+		    'name': 'sessions',
+		    'value': monitor_sessions
+		},
+		{
+		    'name': 'calls',
+		    'calls': monitor_calls
+		},
+		{
+		    'name': 'messages',
+		    'messages': monitor_messages
+		}
+	    ]
 	};
 	var fin = JSON.stringify(ret_obj);
 
