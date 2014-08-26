@@ -308,7 +308,7 @@ var Sessioner = function(auth_list){
 
 // Bring in metadata that will be used for identifying
 // user. Spin-up session manager.
-var auth_str = fs.readFileSync('./config/auth.json');
+var auth_str = fs.readFileSync('./config/users.json');
 var auth_list = JSON.parse(auth_str);
 var sessioner = new Sessioner(auth_list);
 
