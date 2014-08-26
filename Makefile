@@ -13,6 +13,9 @@ BARISTA_LOCATION ?= http://localhost:3400
 ## Variable to define the port that Barista starts on.
 BARISTA_PORT ?= 3400
 
+## URL for users.yaml.
+GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
+
 BBOP_JS ?= ../bbop-js/
 BBOPX_JS ?= ../bbopx-js/
 
@@ -25,6 +28,10 @@ TEST_JS_FLAGS = -modules static/bbop.js -modules static/bbopx.js -opt -1
 ###
 ### Building.
 ###
+
+.PHONY: refresh-metadata
+refresh-metadata:
+	wget $(GO_USER_METADATA_FILE) && mv users.json config/
 
 .PHONY: assemble-app
 assemble-app:
