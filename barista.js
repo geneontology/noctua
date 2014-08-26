@@ -136,12 +136,13 @@ var Sessioner = function(auth_list){
     var uinf_by_md5 = {};
     //var uinf_by_email = {};
     //var uinf_by_socket = {}; // will have to be built as we go
-    each(auth_list,
-	 function(a){
-	     //uinf_by_email[a['email']] = a;
-	     uinf_by_md5[a['email-md5']] = a;
-	     //uinf_by_socket[a['email-md5']] = a;
-	 });
+    each(auth_list, function(a){
+	// There are a list of valid emails, so hash for them all.
+	var valid_em5_list = a['email-md5'];
+	each(valid_em5_list, function(em5){
+	    uinf_by_md5[em5] = a;
+	});
+    });
 
     // At the end, all sessions are keyed by the referring token.
     var sessions_by_token = {};
@@ -154,12 +155,12 @@ var Sessioner = function(auth_list){
     self.authorize_by_email = function(email){
 	var ret = false;
 
-	// Our requirements are: email (by md5 proxy), xref, and
+	// Our requirements are: email (by md5 proxy), uri, and
 	// "minerva-go" authorization (empty is fine).
 	var emd5 = str2md5(email);
 	var uinf = uinf_by_md5[emd5];
 	if( uinf ){
-	    if( uinf['xref'] &&
+	    if( uinf['uri'] &&
 		uinf['authorizations'] &&
 		uinf['authorizations']['minerva-go'] ){
 		    ret = true;
@@ -171,14 +172,14 @@ var Sessioner = function(auth_list){
     
     // Internal function to actually create the used session
     // structure.
-    function _gel_session(email, token, nickname, xref){
+    function _gel_session(email, token, nickname, uri){
 
 	// Create new session.
 	var emd5 = str2md5(email);
 	var color = get_color(); // random color
 	sessions_by_token[token] = {
 	    'nickname': nickname,
-	    'xref': xref,
+	    'uri': uri,
 	    'email': email,
 	    'email-md5': emd5,
 	    'token': token,
@@ -209,13 +210,13 @@ var Sessioner = function(auth_list){
 	    var emd5 = str2md5(email);
 	    var uinf = uinf_by_md5[emd5];
 	    var new_nick = uinf['nickname'] || '???';
-	    var new_xref = uinf['xref'];
+	    var new_uri = uinf['uri'];
 
 	    // Generate a new token.
 	    var new_token = get_token();
 
 	    // Gel and clone for return.
-	    return _gel_session(email, new_token, new_nick, new_xref);
+	    return _gel_session(email, new_token, new_nick, new_uri);
 	    // ret = clone(sessions_by_token[new_token]);
 	}
 
@@ -225,8 +226,8 @@ var Sessioner = function(auth_list){
     /*
      * Add a bogus session for testing--dangerous!
      */
-    self.create_bogus_session = function(email, token, nickname, xref){
-	return _gel_session(email, token, nickname, xref);
+    self.create_bogus_session = function(email, token, nickname, uri){
+	return _gel_session(email, token, nickname, uri);
     };
 
     /*
@@ -429,7 +430,7 @@ var BaristaLauncher = function(){
 		res.json({status: "okay",
 			  email: sess.email,
 			  nickname: sess.nickname,
-			  xref: sess.xref,
+			  uri: sess.uri,
 			  token: sess.token,
 			  color: sess.color});
 		return; // return success
@@ -564,7 +565,7 @@ var BaristaLauncher = function(){
 
 	// 
 	var fin = JSON.stringify(ret_obj);
-	console.log('got user info for: ', fin['xref']);
+	console.log('got user info for: ', fin['uri']);
 	_standard_response(res, 200, 'application/json', fin);
     });
     
@@ -663,9 +664,9 @@ var BaristaLauncher = function(){
 	monitor_calls = monitor_calls +1;
 
 	// Try and get a session out for use. The important thing we
-	// need here is the xref to pass back to the API if session
+	// need here is the uri to pass back to the API if session
 	// and possible.
-	var uxref = null;
+	var uuri = null;
 	var has_token_p = false;
 	var has_sess_p = false;
 	if( req && req['query'] && req['query']['token'] ){
@@ -675,7 +676,7 @@ var BaristaLauncher = function(){
 	    var sess = sessioner.get_session_by_token(btok);
 	    if( sess ){
 		console.log('sess: ', sess);
-		uxref = sess.xref;
+		uuri = sess.uri;
 		has_sess_p = true;
 	    }
 	}
@@ -692,11 +693,11 @@ var BaristaLauncher = function(){
 	// //req.url = req.url + '&uid=' + uid;
 
 	// Extract token=??? from the request URL safely
-	// and add the xref as uid.
+	// and add the uri as uid.
 	var url_obj = url.parse(req.url);
 	var q_obj = querystring.parse(url_obj['query']);
 	delete q_obj['token'];
-	q_obj['uid'] = uxref; // may be null
+	q_obj['uid'] = uuri; // may be null
 	// The first works according to the docs, the
 	// second according to real life.
 	url_obj['query'] = querystring.encode(q_obj);
@@ -710,7 +711,7 @@ var BaristaLauncher = function(){
 	// Do we have permissions to make the call?
 	var ns = req.route.params['namespace'] || '';
 	var call = req.route.params['call'] || '';
-	if( ! app_guard.is_public(ns, call) && ! uxref ){
+	if( ! app_guard.is_public(ns, call) && ! uuri ){
 	    console.log('blocking call: ' + req.url);
 	    
 	    var error_msg = 'sproing!';
