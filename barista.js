@@ -651,6 +651,31 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'text/html', out);
     });
 
+    messaging_app.get('/session', function(req, res) {
+
+	// Get return argument (originating URL) if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	}
+	
+	var tmpl_args = {
+	    'pup_tent_js_variables': [
+		{'name': 'global_barista_return', 'value': ret }
+	    ],
+	    'pup_tent_js_libraries': [
+		'https://login.persona.org/include.js',
+		'/BaristaSession.js'
+	    ],
+	    'title': notw + ': Session Manager',
+	    'return': ret
+	};
+	var out = pup_tent.render('barista_session.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
+	_standard_response(res, 200, 'text/html', out);
+    });
+
     ///
     /// API proxy.
     ///
