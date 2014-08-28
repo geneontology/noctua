@@ -167,6 +167,10 @@ var MMEnvBootstrappingInit = function(user_token){
 	}
     }, 10);
 
+    // A regexp we'll compile now to try and get rid of some pretty
+    // uggo strings that may come back for the model titles.
+    var uggo_string = /\"([^]*)\"\^\^xsd\:string/;
+
     // Likely the result of a meta operation performed against
     // Minerva. Likely will be performing UI updates given the new
     // data.
@@ -197,11 +201,24 @@ var MMEnvBootstrappingInit = function(user_token){
 	    
 	    // Insert model IDs into "Select by ID" interface.
 	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
-	    var model_ids = resp.model_ids();
+	    var model_metas = resp.models_meta();
 	    var rep_cache = [];
-	    each(model_ids, function(model_id){
-		rep_cache.push('<option>');
-		rep_cache.push(model_id);
+	    each(model_metas, function(model_id, model_meta){
+		// Try and probe out the best title.
+		var mtitle = model_id;
+		if( model_meta['title'] ){
+		    var tmp_title =  model_meta['title'];
+		    var match = tmp_title.match(uggo_string);
+		    if( ! match ){
+			mtitle = tmp_title;
+		    }else{
+			mtitle = match[1];
+		    }
+		}
+
+		// Add to cache.
+		rep_cache.push('<option value="'+model_id+'">');
+		rep_cache.push(mtitle);
 		rep_cache.push('</option>');
 	    });
 	    var rep_str = rep_cache.join('');
@@ -218,19 +235,6 @@ var MMEnvBootstrappingInit = function(user_token){
 		var new_url = '/seed/model/' + id;
 		_jump_to_page(new_url);
 	    });
-	    
-	    // //
-	    
-	    // // Insert model IDs into "Select by ID" interface.
-	    // jQuery(model_export_by_id_input_elt).empty(); // Clear interfaces.
-	    // var exp_cache = [];
-	    // each(model_ids, function(model_id){
-	    //     ex_cache.push('<option>');
-	    //     rep_cache.push(model_id);
-	    //     rep_cache.push('</option>');
-	    // });
-	    // var rep_str = rep_cache.join('');
-	    // jQuery(select_stored_jump_elt).append(rep_str);
 	    
 	    // Make jump interface jump on click.
 	    jQuery(select_stored_jump_button_elt).click(function(evt){
@@ -371,7 +375,7 @@ var MMEnvBootstrappingInit = function(user_token){
     /// Get info from server.
     ///
 
-    manager.get_model_ids();
+    manager.get_models_meta();
 };
 
 // Start the day the jsPlumb way.
