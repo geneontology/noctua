@@ -3071,6 +3071,19 @@ bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
 	anns = '<dd>none</dd>';
     }
 
+    // Try and get a title out of the model.
+    var mtitle = '???';
+    var tanns = ecore.get_annotations_by_filter(function(a){
+	var ret = false;
+	if( a.property('title') ){
+	    ret = true;
+	}
+	return ret;
+    });
+    if( tanns && tanns[0] ){
+	mtitle = tanns[0].property('title');
+    }
+
     var str_cache = [
 	'<dl class="dl-horizontal">',
 	// '<dt></dt>',
@@ -3079,6 +3092,10 @@ bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
 	'<dt>ID</dt>',
 	'<dd>',
 	ecore.get_id(),
+	'</dd>',
+	'<dt>Name</dt>',
+	'<dd>',
+	mtitle,
 	'</dd>',
 	'<dt>Individuals</dt>',
 	'<dd>',
