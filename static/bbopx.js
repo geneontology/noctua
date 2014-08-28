@@ -456,12 +456,44 @@ bbopx.barista.response.prototype.annotations = function(){
  * 
  * Returns:
  *  list
+ *
+ * See Also:
+ *  <models_meta>
  */
 bbopx.barista.response.prototype.model_ids = function(){
     var ret = [];
     if( this._data && this._data['model_ids'] && 
 	bbop.core.is_array(this._data['model_ids']) ){
 	ret = this._data['model_ids'];
+    }
+    return ret;
+};
+
+/*
+ * Function: models_meta
+ * 
+ * Returns a hash of the model ids to models properties found in ther
+ * response.
+ *
+ * Sometimes not there, so check the return.
+ *
+ * WARNING: A work in progress, but this is intended as an eventual
+ * replacement to model_ids.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  hash
+ *
+ * See Also:
+ *  <model_ids>
+ */
+bbopx.barista.response.prototype.models_meta = function(){
+    var ret = {};
+    if( this._data && this._data['models_meta'] && 
+	bbop.core.is_hash(this._data['models_meta']) ){
+	ret = this._data['models_meta'];
     }
     return ret;
 };
@@ -872,6 +904,20 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
 	var req = new bbopx.minerva.request('model', 'all-model-ids');
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    // Intent: "query".
+    // Expect: "success" and "meta".
+    anchor.get_models_meta = function(){
+
+	// 
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var req = new bbopx.minerva.request('model', 'all-model-meta');
 	reqs.add(req);
 
 	var args = reqs.callable();	
