@@ -83,9 +83,14 @@ var SessionInit = function(){
 		    // client library in mind.
 		    // Add the return button if it was rendered.
 		    if( jQuery('#return-trip-login').length ){
-			jQuery('#return-trip-login').attr(
-			    'href', global_barista_return +
-				'?barista_token='+ data.token);
+			var rurl = global_barista_return +
+			    '?barista_token=' + data.token;
+			ll("bind login return event to: " + rurl);
+			// jQuery('#return-trip-login').click(function(e){
+			//     e.preventDefault();
+			//     alert(rurl);
+			// });
+			jQuery('#return-trip-login').attr('href', rurl);
 		    }
 		}
 	    }, false);
@@ -107,11 +112,16 @@ var SessionInit = function(){
 		jQuery('#logged-out').removeClass('hidden');
 
 		ll("You are logged out of Persona");
-		    
+		
 		// Add the return button if it was rendered.
 		if( jQuery('#return-trip-logout').length ){
-		    jQuery('#return-trip-logout').attr(
-			'href', global_barista_return);
+		    var rurl = global_barista_return;
+		    ll("bind logout return event to: " + rurl);
+		    // jQuery('#return-trip-logout').click(function(e){
+		    // 	e.preventDefault();
+		    // 	alert(rurl);
+		    // });
+		    jQuery('#return-trip-logout').attr('href', rurl);
 		}
 	    });
 	    xhr.send();

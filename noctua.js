@@ -176,10 +176,10 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 	
 	var noctua_landing = _build_token_link(self.hostport, barista_token);
-	var barista_login = barista_loc + '/login' + '?return=' +
+	var barista_login = barista_loc + '/session' + '?return=' +
 	    self.hostport + '/seed/model/' + model_id;
 	var barista_logout =
-		_build_token_link(barista_loc + '/logout' + '?return=' +
+		_build_token_link(barista_loc + '/session' + '?return=' +
 				  self.hostport + '/seed/model/' + model_id,
 				  barista_token);
 	var tmpl_args = {
@@ -292,10 +292,10 @@ var NoctuaLauncher = function(){
 	    var barista_token = self.get_token(req);
 	    
 	    var noctua_landing = _build_token_link(self.hostport, barista_token);
-	    var barista_login = self.barista_location + '/login' +
+	    var barista_login = self.barista_location + '/session' +
 		    '?return=' + self.hostport;
 	    var barista_logout =
-		_build_token_link(self.barista_location +'/logout' + '?return=' +
+		_build_token_link(self.barista_location +'/session'+ '?return=' +
 				  self.hostport, barista_token);
 
 	    
