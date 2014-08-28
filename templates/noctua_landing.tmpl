@@ -333,7 +333,7 @@
 	</div>
 	<div class="panel-body">
 	  
-	  {{^barista_token}}
+	  {{#barista_token}}
 	  <p>
 	    <a type="button"
 	       class="btn btn-primary"
@@ -350,7 +350,7 @@
 	       href="{{barista_location}}/status">Status &raquo;</a>
 	  </p>
 	  {{/barista_token}}
-	  {{#barista_token}}
+	  {{^barista_token}}
 	  <p>
 	    No admin available here--likely a configuration error.
 	  </p>
