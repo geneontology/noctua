@@ -155,7 +155,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	var token_flag = "token";
 	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
 	    alert('Error: it seems like you do not have permission to ' +
-		  'perform that operation.');
+		  'perform that operation. Did you remember to login?');
 	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
 	    alert("Error: it seems like you have a bad token...");
 	}else{
