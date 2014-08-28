@@ -203,7 +203,7 @@ var Sessioner = function(auth_list){
 	var ret = null;
 
 	if( ! self.authorize_by_email(email) ){
-	    // Cannot.
+	    // Cannot--likely bad info or unauthorized.
 	}else{
 
 	    // Get available user information.
@@ -217,7 +217,6 @@ var Sessioner = function(auth_list){
 
 	    // Gel and clone for return.
 	    return _gel_session(email, new_token, new_nick, new_uri);
-	    // ret = clone(sessions_by_token[new_token]);
 	}
 
 	return ret;
@@ -407,52 +406,88 @@ var BaristaLauncher = function(){
     messaging_app.use(express.session({secret: 'notverysecret'}));
     // Must match client browser's address bar.
     var persona_opts = {
-	// BUG/TODO: get that off of localhost--do detection like...the
-	// search?
 	audience: runloc,
+
+	// Internal function to run if remote login was susseccful or
+	// a session remains open.
 	verifyResponse: function(err, req, res, email){
 
-	    // Can get session?
-	    var sess = sessioner.create_session_by_email(email);
-	    console.log('sess: ', sess);
-	    if( ! sess ){
-		console.log('login fail; unknown/ill-formed user: ' + email);
-		res.json({status: "failure", reason: "not in/bad auth.json?"});
+	    console.log('user has authenticated through persona: ' + email);
+
+	    // First, we need to establish a session. Check if this
+	    // email address already has a session associated with
+	    // it. If so, don't bother creating a new one.
+	    var sess = sessioner.get_session_by_email(email);
+	    if( sess ){
+		console.log('recovered session: ', sess);
 	    }else{
+		// Not already there, so let's see if we can create
+		// one from scratch.
+		sess = sessioner.create_session_by_email(email);
+		if( sess ){
+		    // Create new user session.
+		    console.log('created new session: ', sess);
+		}else{
+		    // Cannot create, so some kind of authorization
+		    // issue.
+		    console.log('login fail; unknown/unauthorized user: '+email);
+		    res.json({status: "failure",
+			      email: email,
+			      reason:"unknown/unauthorized (check users.json)"});
+		    return; // WARNING: out-of-flow return
+		}
+	    }
 
-		// Adjust this client/server session.
-		req.session.authorized = true;
+	    console.log('session success (' + sess.email + '): ' + sess.token);
+
+	    // Adjust this client/server session.
+	    req.session.authorized = true;
 		
-		console.log('login success (' + sess.email + '): ' + sess.token);
-		//console.log('session: ', req.session);
-
-		// Pass back the interesting bits.
-		res.json({status: "okay",
-			  email: sess.email,
-			  nickname: sess.nickname,
-			  uri: sess.uri,
-			  token: sess.token,
-			  color: sess.color});
-		return; // return success
-	    }
+	    // Pass back the interesting bits to the 
+	    res.json({status: "okay",
+		      email: sess.email,
+		      nickname: sess.nickname,
+		      uri: sess.uri,
+		      token: sess.token,
+		      color: sess.color});
+	    return; // return success
 	},
+
+	// Code to run when the user has or is logged out.
 	logoutResponse: function(err, req, res) {
-	    if (req.session.authorized) {
 
-		// Adjust this client/server session.
-		req.session.authorized = null;
+	    // Destroy as much of the session information as we can.
+	    var did_something_p = false;
+	    if( req && req.session ){
 
-		// Remove from internal session system.
-		var email = req.session.email;
-		var sess = sessioner.get_session_by_email(email);
-		var token = sess.token;
-		console.log('logging out (' + email + '): ' + token);
-		// console.log('logging out (' + email + '): ' + token, ' ',
-		// 	    req.session);
+		// Looks still authorized?
+		if( req.session.authorized ){
+		    // Adjust this client/server session.
+		    req.session.authorized = null;
+		    console.log('logout: nulled authorization');
+		    did_something_p = true;
+		}
 
-		sessioner.delete_session_by_email(email);
+		// Recoverable email.
+		if( req.session.email ){
+		    var sess = sessioner.get_session_by_email(email);
+		    var email = req.session.email;
+		    var token = sess.token;
+
+		    // Remove from internal session system.
+		    sessioner.delete_session_by_email(email);
+
+		    console.log('logout: Barista delete ('+ email +'): '+ token);
+		    did_something_p = true;
+		}
 	    }
-	    console.log('logout success');
+
+	    if( ! did_something_p ){
+		console.log('logout: nothing to do');
+	    }
+
+	    // We did what we could, get out of here.
+	    console.log('logout: success');
 	    res.json({status: "okay"});
 	}
     };
@@ -620,37 +655,6 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'text/html', out);
     });
     
-    messaging_app.get('/login',	function(req, res) {
-
-	// Get return argument if there.
-	var ret = null;
-	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
-	    // // 
-	    // if( tmpret && tmpret !== '' ){
-	    // 	var uo = url.parse(tmpret);
-	    // 	uo.query['barista_token'] = 
-	    // 	ret = 
-	    // }
-	}
-	
-	var tmpl_args = {
-	    'pup_tent_js_variables': [
-		{'name': 'global_barista_return', 'value': ret }
-	    ],
-	    'pup_tent_js_libraries': [
-		'https://login.persona.org/include.js',
-		'/BaristaLogin.js'
-	    ],
-	    'title': notw + ': Login',
-	    'return': ret
-	};
-	var out = pup_tent.render('barista_login.tmpl',
-				  tmpl_args,
-				  'barista_base.tmpl');
-	_standard_response(res, 200, 'text/html', out);
-    });
-
     messaging_app.get('/session', function(req, res) {
 
 	// Get return argument (originating URL) if there.
@@ -700,7 +704,7 @@ var BaristaLauncher = function(){
 	    var btok = req['query']['token'];
 	    var sess = sessioner.get_session_by_token(btok);
 	    if( sess ){
-		console.log('sess: ', sess);
+		console.log('call using session: ', sess);
 		uuri = sess.uri;
 		has_sess_p = true;
 	    }

@@ -36,71 +36,84 @@ var SessionInit = function(){
     ///
 
     navigator.id.watch({
+
+	// Code to run when the user has or is logged in (or error);
+	// run after barista.js's verifyResponse().
 	onlogin: function(assertion) {
 	    var xhr = new XMLHttpRequest();
 	    xhr.open("POST", "/persona/verify", true);
 	    xhr.setRequestHeader("Content-Type", "application/json");
-	    xhr.addEventListener(
-		"loadend",
-		function(e) {
-		    var data = JSON.parse(this.responseText);
-		    if (data && data.status === "okay") {
-			ll("You have been logged in as: " +
-			   data.email + '/' + data.token);
+	    xhr.addEventListener("loadend", function(e) {
+
+		// First thing, stop the spinner.
+		jQuery('#verify-process').hide();		    
+
+		// Default failures.
+		var data = JSON.parse(this.responseText);
+		if( ! data ){
+		    ll('there is likely a problem with upstream');
+		    alert('there is likely a problem with upstream');
+		}else if( ! data.status === "okay" ){
+		    ll('there is likely an auth problem: ' + data['email']);
+		    alert('there is likely an auth problem: ' + data['email']);
+		}else{
+
+		    // We're in the clear and the user is in the system.
+		    ll("You are logged in as: " + data.email + '/' + data.token);
 			
-			jQuery('#verify-process').hide();
-			
-			// Build up interface.
-			jQuery('#current-status').hide();
-			jQuery('#logged-in-name').append(data.nickname);
-			jQuery('#logged-in-email').append(data.email);
-			jQuery('#logged-in-color').append(data.color);
-			jQuery('#logged-in-token').append(data.token);
-			jQuery('#logged-in-well').removeClass('hidden');
-			jQuery('#logout-trip').append(
-			    '<strong><a href="/logout?barista_token='+
-				data.token +'">Logout</a></strong>');
-			
-			// Only add if there was a return. Need to
-			// grab the return in
-			// global_barista_return and add the
-			// token.
-			// BUG/TODO: Obviously this is wrong and
-			// we need to 1) first properly parse the
-			// URL and then 2) reconstitute it with
-			// the new arguments. I'm just going
-			// forward for now because I don't have a
-			// client library in mind.
-			if( jQuery('#return-trip').length ){
-			    jQuery('#return-trip').append(
-				'<strong><a href="'+ global_barista_return+
-				    '?barista_token='+ data.token +
-				    '">Return to application</a></strong>');
-			}
+		    // Build up interface.
+		    jQuery('#logged-in-name').append(data.nickname);
+		    jQuery('#logged-in-email').append(data.email);
+		    jQuery('#logged-in-color').append(data.color);
+		    jQuery('#logged-in-token').append(data.token);
+
+		    // Strict toggle between the two sides.
+		    jQuery('#logged-out').addClass('hidden');
+		    jQuery('#logged-in').removeClass('hidden');
+
+		    // Only add if there was a return. Need to
+		    // grab the return in
+		    // global_barista_return and add the
+		    // token.
+		    // BUG/TODO: Obviously this is wrong and
+		    // we need to 1) first properly parse the
+		    // URL and then 2) reconstitute it with
+		    // the new arguments. I'm just going
+		    // forward for now because I don't have a
+		    // client library in mind.
+		    // Add the return button if it was rendered.
+		    if( jQuery('#return-trip-login').length ){
+			jQuery('#return-trip-login').attr(
+			    'href', global_barista_return +
+				'?barista_token='+ data.token);
 		    }
-		}, false);
-	    
+		}
+	    }, false);
 	    xhr.send(JSON.stringify({assertion: assertion}));
 	},
+
+	// Code to run when the has or is logged out (after barista.js
+	// logoutResponse).
 	onlogout: function() {
 	    var xhr = new XMLHttpRequest();
 	    xhr.open("POST", "/persona/logout", true);
-	    xhr.addEventListener(
-		"loadend",
-		function(e) {
-		    ll("You have been logged out of Persona");
+	    xhr.addEventListener("loadend", function(e) {
+
+		// First thing, stop the spinner and reveal the hidden
+		// area.
+		jQuery('#verify-process').hide();
+		// Strict toggle between the two sides.
+		jQuery('#logged-in').addClass('hidden');
+		jQuery('#logged-out').removeClass('hidden');
+
+		ll("You are logged out of Persona");
 		    
-		    // 
-		    jQuery('#verify-process').hide();
-		    jQuery('#logged-out-success').removeClass('hidden');
-		    
-		    // Add the return button on success.
-		    if( jQuery('#return-trip').length ){
-			jQuery('#return-trip').append(
-			    '<strong><a href="'+ global_barista_return +
-				'">Return to application</a></strong>');
-		    }
-		});
+		// Add the return button if it was rendered.
+		if( jQuery('#return-trip-logout').length ){
+		    jQuery('#return-trip-logout').attr(
+			'href', global_barista_return);
+		}
+	    });
 	    xhr.send();
 	}
     });    
