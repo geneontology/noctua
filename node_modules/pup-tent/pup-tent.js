@@ -206,8 +206,13 @@ module.exports = function(search_path_list, filename_list){
     // Use our own abstraction.
     var afs = new AbstractFS();
 
-    var zcache = {}; // file cache
-    var tcache = { // variant cache
+    // Path and app file cache.
+    var use_zcache_p = true;
+    var path_cache = {}; // filename/path cache
+    var zcache = {}; // file contents cache
+
+    // Template variable cache.
+    var tcache = {
 	css_libs: [],
 	js_vars: [],
 	js_libs: []
@@ -228,6 +233,7 @@ module.exports = function(search_path_list, filename_list){
 			  //console.log('l@: ' + path);
 			  if( afs.exists_p(path) ){
 			      //console.log('found: ' + path);
+			      path_cache[filename] = path;
 			      zcache[filename] = afs.read_file(path);
 			  }
 		      });
@@ -247,6 +253,7 @@ module.exports = function(search_path_list, filename_list){
 			  var full_file = loc + '/' + file;
 			  if( afs.exists_p(full_file) ){
 			      if( afs.file_p(full_file) ){
+				  path_cache[file] = full_file;
 				  zcache[file] = afs.read_file(full_file);
 			      }
 			  }
@@ -302,9 +309,30 @@ module.exports = function(search_path_list, filename_list){
 	return ret;
     }
 
+    // Play with whether to use the cache or not.
+    function _use_zcache_p(yes_no){
+	if( yes_no == true ){
+	    use_zcache_p = true;
+	}else if( yes_no == false ){
+	    use_zcache_p = false;
+	}
+	return use_zcache_p;
+    }
+
     // Get a file, as string, from the cache by key; null otherwise.
     function _get(key){
-	return zcache[key];
+	var ret = null;
+
+	// Pull from cache or re-read from fs.
+	console.log('key: ' + key)
+	console.log('use_zcache_p: ' + use_zcache_p)
+	if( use_zcache_p ){
+	    ret = zcache[key];
+	}else{
+	    ret = afs.read_file(path_cache[key]);
+	}
+
+	return ret;
     }
 
     // Get a string from a named mustache template, with optional
@@ -325,7 +353,28 @@ module.exports = function(search_path_list, filename_list){
     return {
 
 	/*
-	 * Function: apply
+	 * Function: use_cache_p
+	 * 
+	 * By default, Pup Tent uses a cache of files read from the
+	 * filesystem during the initial scan. However, to enable
+	 * rapid development of browser JS and sites, this can be
+	 * turned off, with files being re-read off the filesystem.
+	 *
+	 * Note that new or deleted files would still require a
+	 * restart.
+	 *
+	 * Parameters:
+	 *    yes_no - *[optional]* change the state of cache use (default: true)
+	 *
+	 * Returns:
+	 *    boolean
+	 */
+	use_cache_p: function(yes_no){
+	    return _use_zcache_p(yes_no);
+	},
+
+	/*
+	 * Function: get
 	 * 
 	 * Get a file from the cache by key; null otherwise.
 	 *
@@ -467,6 +516,8 @@ module.exports = function(search_path_list, filename_list){
 		}else if( type == 'object' ){
 		    out_val = JSON.stringify(in_val);
 		}else if( type == 'number' ){
+		    out_val = in_val;
+		}else if( type == 'boolean' ){
 		    out_val = in_val;
 		}else{
 		    // some kind of null/undefined anyways?
