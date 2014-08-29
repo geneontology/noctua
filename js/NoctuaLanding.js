@@ -35,9 +35,6 @@ var MMEnvBootstrappingInit = function(user_token){
     var what_is = bbop.core.what_is;
 
     // Events registry.
-    //var manager = new bbop_mme_manager(in_server_base);
-    // BUG/TODO: Right now, just hardwiring the uid, but this needs to
-    // be distributed by the moderator after authenication.
     var manager = new bbopx.minerva.manager(global_barista_location,
 					    global_minerva_definition_name,
 					    user_token);
