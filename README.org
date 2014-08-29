@@ -1,5 +1,8 @@
 * The Noctua/Barista/Minerva Stack (GO MME)
   
+  _Current development is very rapid, so some of these docs may be out
+  of date._
+
   More docs/API to be found [[http://kltm.github.io/go-mme][here]].
   
   Prototype editor frontend (Noctua) and messenger server (Barista)
