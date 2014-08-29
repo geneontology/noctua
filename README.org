@@ -1,4 +1,4 @@
-* GO MME
+* The Noctua/Barista/Minerva Stack (GO MME)
   
   More docs/API to be found [[http://kltm.github.io/go-mme][here]].
   
