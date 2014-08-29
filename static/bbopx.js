@@ -3080,9 +3080,7 @@ bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
 	}
 	return ret;
     });
-    if( tanns && tanns[0] ){
-	mtitle = tanns[0].property('title');
-    }
+    if( tanns && tanns[0] ){ mtitle = tanns[0].property('title'); }
 
     var str_cache = [
 	'<dl class="dl-horizontal">',

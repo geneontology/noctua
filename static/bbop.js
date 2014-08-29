@@ -1886,7 +1886,7 @@ bbop.version.revision = "2.2.3";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140828";
+bbop.version.release = "20140829";
 /*
  * Package: logger.js
  * 
@@ -13031,7 +13031,8 @@ bbop.golr.manager.jquery = function (golr_loc, golr_conf_obj){
     // The base jQuery Ajax args we need with the setup we have.
     anchor.jq_vars = {
 	//url: qurl,
-	type: "GET",
+	//type: "GET",
+	type: "POST",
 	dataType: 'jsonp',
 	jsonp: 'json.wrf'
     };
