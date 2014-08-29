@@ -3,18 +3,17 @@
   More docs/API to be found [[http://kltm.github.io/go-mme][here]].
   
   Prototype editor frontend (Noctua) and messenger server (Barista)
-  for the Gene Ontology Molecular Modal Environment.
+  for the Gene Ontology Molecular Modal Environment server (Minerva).
 
-  It is based on BBOP JS (using the AmiGO 2 environment) and
+  It is based on BBOP(X) JS (using the AmiGO 2 environment) and
   jsPlumb. The backend is the OWLTools Molecular Model Manager.
   
-  While the editor is generally developed with Firefox, the experience
-  using Chrome/Chromium is quite a bit smoother.
+  While the editor is generally developed with Firefox, the user
+  experience using Chrome/Chromium is quite a bit smoother.
 
-  A test instance is available at: http://go-genkisugi.rhcloud.com/
+  The current alpha instance is available at: http://noctua.berkeleybop.org
 
 ** How to use demo
-
 *** Generating/selecting a model
 
     - Models that are currently known (either in memory or file) are
@@ -85,16 +84,50 @@
    - TODO, etc.
 
 ** Deployment
-   This should be deployable in most JS environments. The following
-   instructions assume that an MMM server is available.
-*** Local testing
-    make start-app
-    make start-messenger
-*** Local testing with BBOP JS
-    make start-app-dev
-    make start-messenger-dev
-*** OpenShift (server.js only)
-    git push openshift master
-    (currently at: http://go-genkisugi.rhcloud.com/)
-*** Heroku (server.js only)
-    TODO
+   This should be deployable in most JS environments. It should be
+   noted that we do most development on Ubuntu 12.04 using Chris Lea's
+   [[https://launchpad.net/~chris-lea/+archive/ubuntu/node.js][repo]]. Also, our alpha deployment environment is RedHat's OpenShift,
+   so we're hoping this is fairly flexible.
+   
+*** Running Minerva
+    The main/best way to run Minerva is with the "start-go-minerva.sh"
+    script, found in the OWLTools checkout(in the bin folder of
+    owltools/MolecularModelServer). The only input parameter is the
+    root directory for the local GO-SVN checkout.
+
+    In typical setup for running Minerva, you will have to:
+
+    - Build Minerva (only required after updates): build-server.sh
+    - Start server: start-go-minerva.sh /path/to/GO-trunk
+*** Running Noctua and Barista
+    The most important part of getting familiar with the setup is
+    understanding the options in the Makefile. As well, besides the
+    environmental variables, there are a couple of important files for
+    configuration:
+
+    - config/app.json
+    - config/users.json
+
+    These are the backend mapping configuration and user authorization
+    files respectively.
+
+    Also, remember that Noctua cannot be run successfully until both
+    Minerva and Barista are running.
+
+    Also remember that Barista and Noctua are designed to be very
+    flexible about where they are pointing, so that configurations
+    like cloud -> server -> another server and perfectly fine. It is
+    important to look at the initial output of all the server to know
+    who that are trying to talk to and where they are--it is all
+    configurable, you just need the right option.
+**** Local testing
+     make start-barista
+     make start-noctua
+**** Local testing with copies of BBOP JS and BBOPX JS
+     make start-barista-dev
+     make start-noctua-dev
+**** OpenShift (currently noctua.js only)
+     git push openshift master
+     (currently at: http://go-genkisugi.rhcloud.com/)
+**** Heroku (currently noctua.js only)
+     TODO

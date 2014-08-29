@@ -1,5 +1,6 @@
 ####
 #### Example of running locally:
+####   make start-barista
 ####   make start-noctua
 ####
 
