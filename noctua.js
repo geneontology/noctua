@@ -290,14 +290,21 @@ var NoctuaLauncher = function(){
 	    
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
-	    
+
+	    // Build the various links as best we can.
 	    var noctua_landing = _build_token_link(self.hostport, barista_token);
 	    var barista_login = self.barista_location + '/session' +
 		    '?return=' + self.hostport;
 	    var barista_logout =
 		_build_token_link(self.barista_location +'/session'+ '?return=' +
 				  self.hostport, barista_token);
-
+	    // Capella takes a bit more care.
+	    var capella_blank = _build_token_link(self.hostport + '/capella',
+						  barista_token);
+	    var capella_payload = '[{"publication_id": "PMID:000000","annotation_id": "foo:0000000","terms": [ "GO:0003674", "GO:0008150"],"entities": [ "UniProtKB:P0000" ]}]';
+	    var capella_test =
+		    _build_token_link(self.hostport + '/capella?bootstrap=' +
+				      capella_payload, barista_token);
 	    
 	    // Libs and render.
 	    var tmpl_args = {
@@ -305,12 +312,6 @@ var NoctuaLauncher = function(){
 		    '/noctua_landing.css'
 		],
 		'pup_tent_js_libraries': [
-		    // '/bbop-rest-response-mmm.js',
-		    // '/bbop-mmm-requests.js',
-		    // '/bbop-mme-context.js',
-		    // '/bbop-mme-edit.js',
-		    // '/bbop-mme-manager2.js',
-		    // '/bbop-mme-widgets.js',
 		    '/NoctuaLanding.js'
 		],
 		'pup_tent_js_variables': [
@@ -329,7 +330,9 @@ var NoctuaLauncher = function(){
 		'barista_token': barista_token,
 		'noctua_landing': noctua_landing,
 		'barista_login': barista_login,
-		'barista_logout': barista_logout
+		'barista_logout': barista_logout,
+		'capella_blank': capella_blank,
+		'capella_test': capella_test
 	    };
 	    var o = pup_tent.render('noctua_landing.tmpl',
 				    tmpl_args,
@@ -349,10 +352,6 @@ var NoctuaLauncher = function(){
 		     value: known_relations}
 		],
 		'pup_tent_js_libraries': [
-		    // '/bbop-mme-context.js',
-		    // '/bbop-mme-edit.js',
-		    // '/bbop-mme-manager2.js',
-		    // '/bbop-mme-widgets.js',
 		    '/NoctuaBasic.js'
 		]
 	    };
@@ -435,38 +434,8 @@ var NoctuaLauncher = function(){
 	//var server_loc = 'http://localhost:8080/solr/';
 	var gconf = new bbop.golr.conf(amigo.data.golr);
 
-	// // Load a null setup.
-	// // TODO: first get new ID before kicking.
-	// self.app.get('/seed/null', function(req, res) {
-	//     // Assemble return doc.
-	//     res.setHeader('Content-Type', 'text/html');
-	    
-	//     var frame_tmpl = self.cache_get('app_content.tmpl').toString();
-	//     var frame_cont = mustache.render(frame_tmpl);
-
-	//     var base_tmpl = self.cache_get('app_base.tmpl').toString();
-	//     var base_tmpl_args = {
-	// 	'title': 'go-mme: editor',
-	// 	'js_variables': [
-	// 	    {
-	// 		'name': 'global_id',
-	// 		'value': '"unknown"'
-	// 	    },
-	// 	    {
-	// 		'name': 'global_minerva_definition',
-	// 		'value': '"' + msgloc + '"'
-	// 	    },
-	// 	    {
-	// 		'name': 'global_model',
-	// 		'value': '{"id": "???", "instances":[]}'
-	// 	    }
-	// 	],
-	// 	'content': frame_cont
-	//     };
-	//     var ret = mustache.render(base_tmpl, base_tmpl_args);
-	//     res.send(ret);
-	// });
-
+	// Directly kick-to-edit an extant model--most things should
+	// pass through here.
 	self.app.get('/seed/model/:query', function(req, res) {
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
@@ -480,134 +449,129 @@ var NoctuaLauncher = function(){
 		res.send('no identifier');
 	    }else{
 		
-		//console.log('make attempt');
-		
 		// Try and see if we have an API token.
-		var barista_token = self.get_token(req);
-		
-		// // 
-		// function mme_callback_action(resp, man){
-		
-		// 	if( ! resp.okay() ){
-		// 	    res.setHeader('Content-Type', 'text/html');
-		// 	    res.send('bad doc:' + query);
-		// 	}else{				   
-		
-		// 	    //console.log('in success callback');
-		// 	    var obj = resp.data();
-		
+		var barista_token = self.get_token(req);		
 		self.bootstrap_editor(res, notw, query,
 				      //null,
 				      known_relations,
 				      self.barista_location,
 				      barista_token);
-		// 	}
-		// }
-		
-		// // Assemble query to get the desired MM.
-		// var m = new bbop.rest.manager.node(bbop.rest.response.mmm);
-		// m.register('success', 'foo', mme_callback_action);
-		// m.register('error', 'bar', _generic_error_resp);
-		// var t = msgloc + '/api/mmm/m3GetModel';
-		// var t_args = {
-		// 	'modelId': query
-		// };
-		// var astr = m.action(t, t_args);
-		// console.log("action to: " + astr);
 	    }
 	});
 	
-	// Try to bootstrap coming in from Capella.
-	// This is just a label resolver, that then boots a web client that
-	// tries to find a way in to /model/seed.
+	// Try to bootstrap coming in from Capella. After the model is
+	// confirmed generated, go through the usual model/seed path.
 	self.app.get('/capella', function(req, res) {
 
+	    // Let us know that we tried.
 	    monitor_external_kicks = monitor_external_kicks + 1;
 
+	    // Start working through what we have incoming.
 	    var payload_str = req.query['bootstrap'] || null;
 	    console.log('payload_str: ', payload_str);
-	    var payload = JSON.parse(payload_str);
+	    var payload = JSON.parse(payload_str); // to obj
+
+	    // Since we want to reuse the same templates, even on
+	    // serious errors, we are going to get some setup done up
+	    // front.
+	    var tmpl_args = {
+		'pup_tent_js_variables': [
+		    {name: 'global_minerva_definition_name',
+		     value: self.minerva_definition_name },
+		    {name: 'global_barista_location',
+		     value: self.barista_location },
+		    {name: 'global_model',
+		     value: null },
+		    {name: 'global_barista_token',
+		     value:  self.get_token(req) },
+		    {name: 'global_payload',
+		     value: payload }
+		],
+		'pup_tent_js_libraries': [
+		    '/NoctuaCapella.js'
+		],
+		'title': notw + ': Capella'
+		//'messaging_server_location': barista_loc
+	    };
+
+	    // Start possible outputs.
 	    if( ! payload ){
 		// Catch error here if no proper ID.
-		res.setHeader('Content-Type', 'text/html');
-		res.send('no proper bootstrap');
+		tmpl_args.okay_p = false;
+		tmpl_args.message = 'No proper bootstrap argument.';
+		var ret = pup_tent.render('noctua_capella.tmpl', tmpl_args,
+					  'noctua_base.tmpl');
+		self.standard_response(res, 200, 'text/html', ret);
 	    }else{
 		
 		console.log('payload: ', payload);
 		
-		// Collect the terms to resolve--need the aspects.
+		// Collect the terms to resolve--we need the aspects
+		// of the IDs to progress.
 		var terms_to_resolve = [];
-		each(payload,
-		     function(pi){
-			 if( pi['terms'] ){
-			     terms_to_resolve = 
-				 terms_to_resolve.concat(pi['terms']);
-			 }
-		     });
+		each(payload, function(pi){
+		    if( pi['terms'] ){
+			terms_to_resolve = terms_to_resolve.concat(pi['terms']);
+		    }
+		});
 		var qf_to_add = [];
-		each(terms_to_resolve,
-		     function(ttr){
-			 qf_to_add.push('annotation_class:"' + ttr + '"');
-		     });
+		each(terms_to_resolve, function(ttr){
+		    qf_to_add.push('annotation_class:"' + ttr + '"');
+		});
 		
-		// 
-		function term_resolution_action(resp, man){			
+		// Define the action to perform after we resolve our
+		// terms.
+		function action_after_resolution_call(resp, man){
 		    console.log('in success callback');
 		    if( ! resp.success() ){
-			//console.log('bad resp: ', resp);
-			res.setHeader('Content-Type', 'text/html');
-			res.send('bad docs: ' + payload_str);
+			tmpl_args.okay_p = false;
+			tmpl_args.message =
+			    'Bad docs: "' + payload_str + '".';
+			var ret = pup_tent.render('noctua_capella.tmpl',
+						  tmpl_args, 'noctua_base.tmpl');
+			self.standard_response(res, 200, 'text/html', ret);
 		    }else{				   
 			// console.log('in success callback else');
 			
 			// Map terms to aspect.
 			var t2a = {};
-			each(resp.documents(),
-			     function(d){
-				 var ac = d['annotation_class'];
-				 var s = d['source'];
-				 if( ac && s ){ t2a[ac] = s; }
-			     });
-			//console.log('t2a: ', t2a);
-			
-			var tmpl_args = {
-			    // 'pup_tent_css_libraries': [
-			    //     '/NoctuaCapella.css'
-			    // ],
-			    'pup_tent_js_variables': [
-				{name:'global_barista_location',
-				 value: self.barista_location },
-				{name: 'global_barista_token',
-				 value: null },
-				{name: 'global_payload', value: payload },
-				{name: 'global_resolution', value: t2a }
-			    ],
-			    'pup_tent_js_libraries': [
-				// '/bbop-rest-response-mmm.js',
-				// '/bbop-mmm-requests.js',
-				// '/bbop-mme-context.js',
-				// '/bbop-mme-manager2.js',
-				// '/bbop-mme-widgets.js',
-				// '/bbop-messenger-client.js',
-				'/NoctuaCapella.js'
-			    ],
-			    'title': notw + ': Capella'
-			    //'messaging_server_location': barista_loc
-			};
-			var ret = pup_tent.render(
-			    'noctua_capella.tmpl',
-			    tmpl_args,
-			    'noctua_base.tmpl');
+			each(resp.documents(), function(d){
+			    var ac = d['annotation_class'];
+			    var s = d['source'];
+			    if( ac && s ){ t2a[ac] = s; }
+			});
+			console.log('t2a: ', t2a);
+
+			// Add some variable to signal the JS to make
+			// the attempt to communicate with Minerva and
+			// then forward.
+			tmpl_args['pup_tent_js_variables'].push(
+			    {name:'global_attempt_creation_p',
+			     value: true });
+			tmpl_args['pup_tent_js_variables'].push(
+			    {name:'global_payload',
+			     value: payload });
+			tmpl_args['pup_tent_js_variables'].push(
+			    {name:'global_term2aspect',
+			     value: t2a });
+
+			// Final template.
+			tmpl_args.okay_p = true;
+			tmpl_args.message = 'Trying to spin up a new model...';
+			ret = pup_tent.render('noctua_capella.tmpl',
+					      tmpl_args, 'noctua_base.tmpl');
 			self.standard_response(res, 200, 'text/html', ret);
 		    }
 		}
 		
 		// Assemble query to get the desired minimal term
-		// information.
+		// information; this information then goes into the
+		// above callback, that then starts the model building
+		// process.
 		var m = new bbop.golr.manager.nodejs(server_loc, gconf);
 		m.add_query_filter('document_category', 'ontology_class');
 		m.set_personality('ontology');
-		m.register('search', 'foo', term_resolution_action);
+		m.register('search', 'foo', action_after_resolution_call);
 		m.register('error', 'bar', _generic_error_resp);
 		m.set('fq', qf_to_add.join(' OR '));
 		// Apparently need score to make it "success".
@@ -616,47 +580,6 @@ var NoctuaLauncher = function(){
 		console.log('resolve query: ', m.get_query_url());
 	    }
 	});
-	
-	// self.app.post('/action/load', function(req, res) {
-
-	//     // Deal with incoming parameters.
-	//     var model_data = req.route.params['model_data'] ||
-	// 	    req.body['model_data'] ||
-	// 	    '{"id": "???", "instances":[]}';
-
-	//     // Assemble return doc.
-	//     res.setHeader('Content-Type', 'text/html');
-
-	//     var frame_tmpl = self.cache_get('app_content.tmpl').toString();
-	//     var frame_cont = mustache.render(frame_tmpl);
-
-	//     var base_tmpl = self.cache_get('app_base.tmpl').toString();
-	//     var base_tmpl_args = {
-	// 	'title': 'go-mme: editor',
-	// 	'js_variables': [
-	// 	    {
-	// 		// TODO: need to extract the ID.
-	// 		'name': 'global_id',
-	// 		'value': '"unknown"'
-	// 	    },
-	// 	    {
-	// 		'name': 'global_minerva_definition',
-	// 		'value':  '"' + msgloc+ '"'
-	// 	    },
-	// 	    {
-	// 		'name':'global_barista_location',
-	// 		'value':  '"' + msgloc+ '"'
-	// 	    },
-	// 	    {
-	// 		'name': 'global_model',
-	// 		'value': model_data
-	// 	    }
-	// 	],
-	// 	'content': frame_cont
-	//     };
-	//     var ret = mustache.render(base_tmpl, base_tmpl_args);
-	//     res.send(ret);
-	// });
 	
 	// Test export handler.
 	self.app.post('/action/display', function(req, res) {

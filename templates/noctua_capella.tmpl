@@ -1,1 +1,38 @@
-<div id="pl"></div>
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Capella</h2>
+  </div>
+
+  {{^okay_p}}
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      <h3 class="panel-title">We encountered a problem</h3>
+    </div>
+    <div class="panel-body">
+      
+      <p>
+	{{message}}
+      </p>
+
+    </div>
+  </div>
+  {{/okay_p}}
+  {{#okay_p}}
+  <div class="panel panel-success">
+    <div class="panel-heading">
+      <h3 class="panel-title">Things are looking good</h3>
+    </div>
+    <div class="panel-body">
+
+      <!-- The Startup JS will look for this tag to start? -->
+      <span id="attempt_okay_p" class="hidden"></span>
+      <p>
+	{{message}}
+      </p>
+
+    </div>
+  </div>
+  {{/okay_p}}
+      
+</div>
