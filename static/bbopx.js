@@ -1280,7 +1280,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     
     // Intent: "action".
     // Expect: "success" and "rebuild".
-    anchor.bootstrap_model = function(bootstrap_obj){
+    anchor.capella_bootstrap_model = function(bootstrap_obj, term2aspect){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 
@@ -1289,50 +1289,45 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	//req.add('db', db_id); // unecessary
 	reqs.add(req);
 
-	each(bootstrap_obj,
-	     function(ob){
+	var each = bbop.core.each;
+	each(bootstrap_obj, function(ob){
 
-		 // Now, for each of these, we are going to be adding
-		 // stuff to MF instances. If there is no MF coming
-		 // in, we are just going to use GO:0003674.
-		 var mfs = [];
-		 var bps = [];
-		 var ccs = [];
-		 each(bo['terms'],
-		      function(tid){
-			  if( t2a[tid] == 'molecular_function' ){
-			      mfs.push(tid);
-			  }else if( t2a[tid] == 'biological_process' ){
-			      bps.push(tid);
-			  }else if( t2a[tid] == 'cellular_component' ){
-			      ccs.push(tid);
-			  }
-		      });
-		 // There must be this no matter what.
-		 if( bbop.core.is_empty(mfs) ){
- 		     mfs.push('GO:0003674');
-		 }
+	    // Now, for each of these, we are going to be adding
+	    // stuff to MF instances. If there is no MF coming
+	    // in, we are just going to use GO:0003674.
+	    var mfs = [];
+	    var bps = [];
+	    var ccs = [];
+	    each(ob['terms'], function(tid){
+		if( term2aspect[tid] == 'molecular_function' ){
+		    mfs.push(tid);
+		}else if( term2aspect[tid] == 'biological_process' ){
+		    bps.push(tid);
+		}else if( term2aspect[tid] == 'cellular_component' ){
+		    ccs.push(tid);
+		}
+	    });
+	    // There must be this no matter what.
+	    if( bbop.core.is_empty(mfs) ){
+ 		mfs.push('GO:0003674');
+	    }
 
-		 // We are going to be creating instances off of the
-		 // MFs.
-		 each(mfs,
-		      function(mf){
-			  var req =
-			      new bbopx.minerva.request('individual','create');
+	    // We are going to be creating instances off of the
+	    // MFs.
+	    each(mfs, function(mf){
+		var req = new bbopx.minerva.request('individual','create');
 			  
-			  // Add in the occurs_in from CC.
-			  each(ccs,
-			       function(cc){
-				   req.svf_expressions(cc, 'occurs_in');
-			       });
+		// Add in the occurs_in from CC.
+		each(ccs, function(cc){
+		    req.svf_expressions(cc, 'occurs_in');
+		});
 
-			  // Add in the enabled_by from entities.
-			  each(bo['entities'],
-			       function(ent){
-				   req.svf_expressions(ent, 'RO:0002333');
-			       });
-		      });		 
-	     });
+		// Add in the enabled_by from entities.
+		each(ob['entities'], function(ent){
+		    req.svf_expressions(ent, 'RO:0002333');
+		});
+	    });		 
+	});
 
 	// Final send-off.
 	var args = reqs.callable();	
