@@ -43,19 +43,26 @@ var CapellaInit = function(){
 	// permissions issue.
 	var perm_flag = "InsufficientPermissionsException";
 	var token_flag = "token";
+	var err_msg = '!!!';
 	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
-	    alert('Error: it seems like you do not have permission to ' +
-		  'perform that operation. Did you remember to login?');
+	    err_msg = 'Error: it seems like you do not have permission to ' +
+		'perform that operation. Did you remember to login?';
 	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
-	    alert("Error: it seems like you have a bad token...");
+	    err_msg = "Error: it seems like you have a bad token...";
 	}else{
 	    // Generic error.
-	    alert('Error (' +
-		  resp.message_type() + '): ' +
-		  resp.message() + '; ' +
-		  'your operation was likely not performed.');
-	}	console.log('error (' +	resp.message_type() + '): ' +
-			    resp.message());
+	    err_msg = 'Error (' + resp.message_type() + '): ' + resp.message() +
+		'; ' + 'your operation was likely not performed.';
+	}
+	console.log(err_msg);
+
+	// Change the display sadness.
+	jQuery('#success-panel').removeClass('panel-success');
+	jQuery('#success-panel').addClass('panel-danger');
+	jQuery('#success-title').empty();
+	jQuery('#success-title').append('Uh-oh!');
+	jQuery('#success-message').empty();
+	jQuery('#success-message').append(err_msg);
     }, 10);
     manager.register('rebuild', 'foo', function(resp, man){
 	var id = resp.data()['id'];	

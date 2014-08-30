@@ -19,15 +19,15 @@
   </div>
   {{/okay_p}}
   {{#okay_p}}
-  <div class="panel panel-success">
+  <div id="success-panel" class="panel panel-success">
     <div class="panel-heading">
-      <h3 class="panel-title">Things are looking good</h3>
+      <h3 id="success-title" class="panel-title">Things are looking good</h3>
     </div>
     <div class="panel-body">
 
       <!-- The Startup JS will look for this tag to start? -->
       <span id="attempt_okay_p" class="hidden"></span>
-      <p>
+      <p id="success-message">
 	{{message}}
       </p>
 
