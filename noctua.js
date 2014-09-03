@@ -133,14 +133,17 @@ var NoctuaLauncher = function(){
     // Attempt to intelligently add a token to an input URL.
     // BUG: This code is repeated in
     // bbop_mme_widgets.build_token_link().
-    function _build_token_link(url, token){
+    function _build_token_link(url, token, token_name){
 	var new_url = url;
 	
+	// Default to "barista_token".
+	if( ! token_name ){ token_name = 'barista_token'; }
+
 	if( token ){
 	    if( new_url.indexOf('?') == -1 ){
-		new_url = new_url + '?' + 'barista_token=' + token;
+		new_url = new_url + '?' + token_name + '=' + token;
 	    }else{
-		new_url = new_url + '&' + 'barista_token=' + token;
+		new_url = new_url + '&' + token_name + '=' + token;
 	    }
 	}
 	    
