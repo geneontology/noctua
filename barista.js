@@ -532,6 +532,7 @@ var BaristaLauncher = function(){
     /// High-level status overview and hearbeat
     ///
 
+    // General use--no need for a&a.
     messaging_app.get('/status', function(req, res) {
 
 	console.log('process heartbeat request');
@@ -567,14 +568,54 @@ var BaristaLauncher = function(){
     /// Authentication and Authorization.
     ///
 
+    var SESS_NO_TOKEN = -1;
+    var SESS_BAD_TOKEN = -2;
+    var SESS_GOOD = 1;
+
+    // Check to see if we have access to the good stuff. Tri-state.
+    function _session_status(req){
+
+	var ret = null;
+
+	var sess = null;
+	if( req.query && req.query['barista_token'] ){
+	    // Capture token.
+	    var barista_token = req.query['barista_token'];
+	    
+	    // Try and retrieve by the barista token.
+	    sess = sessioner.get_session_by_token(barista_token);
+	    if( sess ){
+		ret = SESS_GOOD;
+		console.log('barista session token: ' + barista_token);
+	    }else{
+		ret = SESS_BAD_TOKEN;
+		console.log('non-session (old/bad?) token, ignore: ' +
+			    barista_token);
+	    }
+	}else{
+	    ret = SESS_NO_TOKEN;
+	    console.log('no token');
+	}
+
+	return ret;
+    }
+
     // Gross overview of current users.
     messaging_app.get('/user_info', function(req, res) {
 	
-	// Gather session info.
+	// Check to see if we have access to the good stuff.
+	var show_all_p = false;
+	var sess_stat = _session_status(req);
+	if( sess_stat == SESS_GOOD ){
+	    show_all_p = true;
+	}
+
+	// Gather all session info.
 	var sessions = sessioner.get_sessions();
 	
 	// Variables, render, and output.
 	var tmpl_args = {
+	    'show_all_p': show_all_p,
 	    'barista_sessions': sessions,
 	    'title': notw + ': Status'
 	};
@@ -602,57 +643,6 @@ var BaristaLauncher = function(){
 	var fin = JSON.stringify(ret_obj);
 	console.log('got user info for: ', fin['uri']);
 	_standard_response(res, 200, 'application/json', fin);
-    });
-    
-    messaging_app.get('/logout', function(req, res) {
-	    
-	//console.log(req);
-	var in_token = null;
-	var barista_token = null;
-	if( req.query && req.query['barista_token'] ){
-	    // Capture token.
-	    in_token = req.query['barista_token'];
-	    
-	    // Try and retrieve by the barista token.
-	    var sess = sessioner.get_session_by_token(in_token);
-	    if( sess ){
-		// If we have it, destroy it.
-		sessioner.delete_session_by_token(in_token);
-		console.log('barista token destroyed: ' + barista_token);
-	    }else{
-		console.log('non-session token: ' + in_token);
-	    }
-	}else{
-	    console.log('no token');
-	}	
-	
-	// Get return argument if there.
-	var ret = null;
-	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
-	}
-	
-	// Render what we did, and launch Logout.js to purge the
-	// cookie session (that is frankly unrelated to what we're
-	// doing).
-	var tmpl_args = {
-	    'pup_tent_js_variables': [
-		{name: 'global_barista_token', value: barista_token},
-		{name: 'global_barista_return', value: ret}
-	    ],
-	    'pup_tent_js_libraries': [
-		'https://login.persona.org/include.js',
-		'/BaristaLogout.js'
-	    ],
-	    'in_token': in_token,
-	    'barista_token': barista_token,
-	    'return': ret,
-	    'title': notw + ': Logout'
-	};
-	var out = pup_tent.render('barista_logout.tmpl',
-				  tmpl_args,
-				  'barista_base.tmpl');
-	_standard_response(res, 200, 'text/html', out);
     });
     
     messaging_app.get('/session', function(req, res) {

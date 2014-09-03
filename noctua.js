@@ -298,6 +298,9 @@ var NoctuaLauncher = function(){
 	    var barista_logout =
 		_build_token_link(self.barista_location +'/session'+ '?return=' +
 				  self.hostport, barista_token);
+	    var barista_users =
+		    _build_token_link(self.barista_location +'/user_info',
+				      barista_token);
 	    // Capella takes a bit more care.
 	    var capella_blank = _build_token_link(self.hostport + '/capella',
 						  barista_token);
@@ -331,6 +334,7 @@ var NoctuaLauncher = function(){
 		'noctua_landing': noctua_landing,
 		'barista_login': barista_login,
 		'barista_logout': barista_logout,
+		'barista_users': barista_users,
 		'capella_blank': capella_blank,
 		'capella_test': capella_test
 	    };

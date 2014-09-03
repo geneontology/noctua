@@ -21,8 +21,10 @@
 	  <dd>{{email-md5}}</dd>
 	  <dt>color</dt>
 	  <dd>{{color}}</dd>
+	  {{#show_all_p}}
 	  <dt>token</dt>
-	  <dd><strike>{{token}}</strike> (can be mined)</dd>
+	  <dd><strike>{{token}}</strike></dd>
+	  {{/show_all_p}}
 	  {{/barista_sessions}}
 	  {{^barista_sessions}}
 	  <dt>Sessions</dt>
