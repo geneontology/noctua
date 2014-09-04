@@ -1062,8 +1062,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }, 10);
     
     manager.register('warning', 'foo', function(resp, man){
+	var comment = resp.commentary() || null;
 	alert('Warning: ' + resp.message() + '; ' +
-	      'your operation was likely not performed');
+	      'your operation was likely not performed.\n' + comment);
     }, 10);
     
     manager.register('error', 'foo', function(resp, man){
@@ -1076,8 +1077,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
 	    alert("Error: it seems like you have a bad token...");
 	}else{
+	    var comment = resp.commentary() || null;
 	    alert('Error (' + resp.message_type() +'): '+ resp.message() +'; '+
-		  'your operation was likely not performed.');
+		  'your operation was likely not performed.\n' + comment);
 	}
     }, 10);
     
