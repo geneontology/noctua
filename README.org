@@ -91,12 +91,14 @@
    noted that we do most development on Ubuntu 12.04 using Chris Lea's
    [[https://launchpad.net/~chris-lea/+archive/ubuntu/node.js][repo]]. Also, our alpha deployment environment is RedHat's OpenShift,
    so we're hoping this is fairly flexible.
+
+   We do have people who have run the whole stack easily on OS X.
    
 *** Running Minerva
     The main/best way to run Minerva is with the "start-go-minerva.sh"
-    script, found in the OWLTools checkout(in the bin folder of
-    owltools/MolecularModelServer). The only input parameter is the
-    root directory for the local GO-SVN checkout.
+    script, found in the [[https://code.google.com/p/owltools/][OWLTools checkout]] (in
+    owltools/MolecularModelServer/bin). The only input parameter is
+    the root directory for the local GO-SVN checkout.
 
     In typical setup for running Minerva, you will have to:
 
