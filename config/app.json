@@ -14,5 +14,13 @@
 	    "getRelations",
 	    "m3Batch"
 	]
+    },
+    {
+	"id": "minerva_caltech_dev",
+	"target": "http://mangolassi.caltech.edu:6800",
+	"public": [
+	    "getRelations",
+	    "m3Batch"
+	]
     }
 ]
