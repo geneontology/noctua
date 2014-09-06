@@ -11,6 +11,10 @@ MINERVA_DEFINITION ?= minerva_local
 ## Variable to define where Noctua looks for Barista.
 BARISTA_LOCATION ?= http://localhost:3400
 
+## Emergency override for exotic Noctua deployments.
+NOCTUA_HOST ?= http://127.0.0.1
+## Also see: PORT in the noctus.js code; used by Heroku in some cases?
+
 ## Variable to define the port that Barista starts on.
 BARISTA_PORT ?= 3400
 
