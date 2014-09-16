@@ -47,7 +47,8 @@ var NoctuaLauncher = function(){
 
     // 
     var barloc = 'http://localhost:3400';
-    var barloc_public = 'http://toaster.lbl.gov:3400';
+    //var barloc_public = 'http://toaster.lbl.gov:3400';
+    var barloc_public = 'http://barista.genkisugi.net'; // BUG: tmp chris fix
     if( process.env.BARISTA_LOCATION ){
 	barloc = process.env.BARISTA_LOCATION;
 	console.log('Barista location taken from environment: ' + barloc);
