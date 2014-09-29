@@ -206,7 +206,7 @@ var NoctuaLauncher = function(){
 		'/connectors-sugiyama.js',
 		'/NoctuaEditor.js'
 	    ],
-	    'title': name_of_the_week + ': Editor',
+	    'title': name_of_the_week + ' Editor',
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'noctua_landing': noctua_landing,

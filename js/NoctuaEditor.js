@@ -1751,7 +1751,18 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
-    
+
+    // As a use case, we want to have the title available to people in
+    // their browsers.
+    var mtitle = 'Untitled';
+    var title_anns = ecore.get_annotations_by_filter(function(a){
+	var ret = false;
+	if( a.property('title') ){ ret = true; }
+	return ret;
+    });
+    if( title_anns && title_anns[0] ){ mtitle = title_anns[0].property('title');}
+    document.title = mtitle + ' (Noctua Editor)';
+
     // Finally, we're going to put up a giant warning for people to
     // remind them that this is alpha software.
     var wrn_txt = [
