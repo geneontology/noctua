@@ -3980,6 +3980,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     var gen_auto =
 	new bbop.widget.search_box(gserv, gconf, svf_class_text.get_id(),
 				   gen_auto_args);
+    gen_auto.lite(true);
     gen_auto.add_query_filter('document_category', 'general');
     //gen_auto.add_query_filter('source', 'eco', ['+']);
     gen_auto.set_personality('general');
@@ -4331,6 +4332,7 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 		    new bbop.widget.search_box(gserv, gconf,
 					       ev_form.text_input.get_id(),
 					       eco_auto_args);
+	    eco_auto.lite(true);
 	    eco_auto.add_query_filter('document_category', 'ontology_class');
 	    eco_auto.add_query_filter('source', 'eco', ['+']);
 	    eco_auto.set_personality('ontology');
