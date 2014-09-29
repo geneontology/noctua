@@ -1284,12 +1284,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_bp_enb_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_bp_enb_auto_id,
 				       simple_bp_enb_auto_args);
+    simple_bp_enb_auto.lite(true);
     simple_bp_enb_auto.add_query_filter('document_category', 'bioentity');
     simple_bp_enb_auto.set_personality('bioentity');
 
     var simple_bp_act_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_bp_act_auto_id,
 				       simple_bp_act_auto_args);
+    simple_bp_act_auto.lite(true);
     simple_bp_act_auto.add_query_filter('document_category', 'ontology_class');
     simple_bp_act_auto.add_query_filter('regulates_closure_label',
     					'biological_process');
@@ -1298,6 +1300,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_bp_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_bp_occ_auto_id,
 				       simple_bp_occ_auto_args);
+    simple_bp_occ_auto.lite(true);
     simple_bp_occ_auto.add_query_filter('document_category', 'ontology_class');
     simple_bp_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
     simple_bp_occ_auto.add_query_filter('source', 'biological_process', ['-']);
@@ -1370,12 +1373,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_enb_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_mf_enb_auto_id,
 				       simple_mf_enb_auto_args);
+    simple_mf_enb_auto.lite(true);
     simple_mf_enb_auto.add_query_filter('document_category', 'bioentity');
     simple_mf_enb_auto.set_personality('bioentity');
 
     var simple_mf_act_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_mf_act_auto_id,
 				       simple_mf_act_auto_args);
+    simple_mf_act_auto.lite(true);
     simple_mf_act_auto.add_query_filter('document_category', 'ontology_class');
     simple_mf_act_auto.add_query_filter('regulates_closure_label',
     					'molecular_function');
@@ -1384,6 +1389,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
 				       simple_mf_occ_auto_args);
+    simple_mf_occ_auto.lite(true);
     simple_mf_occ_auto.add_query_filter('document_category', 'ontology_class');
     simple_mf_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
     simple_mf_occ_auto.add_query_filter('source', 'biological_process', ['-']);
