@@ -1071,11 +1071,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     
     // Intent: "query".
     // Expect: "success" and "meta".
-    anchor.export_model = function(model_id){
+    anchor.export_model = function(model_id, format){
 
-	// 
+	if( typeof(format) === 'undefined' ){ format = 'default'; }
+
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
-	var req = new bbopx.minerva.request('model', 'export');
+	var req = null;
+	if( format == 'gaf' ){
+	    req = new bbopx.minerva.request('model', 'export-legacy');
+	    req.add('format', 'gaf');
+	}else if( format == 'gpad' ){
+	    req = new bbopx.minerva.request('model', 'export-legacy');
+	    req.add('format', 'gpad');
+	}else{
+	    // Default (non-legacy) case is simpler.
+	    req = new bbopx.minerva.request('model', 'export');
+	}
+
+	// Add the model to the request.
 	req.model_id(model_id);
 	reqs.add(req);
 
