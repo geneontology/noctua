@@ -258,8 +258,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var refresh_btn_elt = '#' + refresh_btn_id;
     var reset_btn_id = 'action_reset';
     var reset_btn_elt = '#' + reset_btn_id;
-    var export_btn_id = 'action_export';
-    var export_btn_elt = '#' + export_btn_id;
+    // var export_btn_id = 'action_export';
+    // var export_btn_elt = '#' + export_btn_id;
     var save_btn_id = 'action_save';
     var save_btn_elt = '#' + save_btn_id;
     var ping_btn_id = 'action_ping';
@@ -1447,14 +1447,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    manager.get_model(ecore.get_id());
 	});
 
-    // Export button.
-    jQuery(export_btn_elt).click(
-    	function(){
-	    // Change the form to add the id.
-	    jQuery(action_form_data_elt).val(ecore.get_id());
-	    // Run it off in a new tab.
-	    jQuery(action_form_elt).submit();
-    	});
+    // // Export button.
+    // jQuery(export_btn_elt).click(
+    // 	function(){
+    // 	    // Change the form to add the id.
+    // 	    jQuery(action_form_data_elt).val(ecore.get_id());
+    // 	    // Run it off in a new tab.
+    // 	    jQuery(action_form_elt).submit();
+    // 	});
 
     // Save button.
     jQuery(save_btn_elt).click(
@@ -1775,7 +1775,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	'If you wish to save or continue your experimentation, you should regularly click <strong>[Model] > [Save]</strong>, which will the model to the disk on the server.',
 	'</li>',
 	'<li>',
-	'If your work is particularly valuable, you should perform an extra step and click <strong>[Model] > [Export]</strong>, which will allow you to save your work in an export format to your local disk.',
+	'If your work is particularly valuable, you should perform the extra steps of saving <strong>[Model] > [Save]</strong> and them returning to the landing page and exporting your file [Export]. This will allow you to save your work in an export format to your local disk. Only the <strong>OWL</strong> representation will preserve all detail.',
 	'</li>',
 	'<li>',
 	'Other people can edit your work; ff you want to preserve something in particular, see the previous note.',

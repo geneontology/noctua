@@ -82,8 +82,12 @@ var MMEnvBootstrappingInit = function(user_token){
     var model_create_by_nothing_id = 'button_nothing_for_create';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
     // Create new model from nothing.
-    var model_export_by_id_button_id = 'button_id_for_export';
-    var model_export_by_id_button_elt = '#' + model_export_by_id_button_id;
+    var model_export_by_id_def_button_id = 'button_id_for_def_export';
+    var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
+    var model_export_by_id_gaf_button_id = 'button_id_for_gaf_export';
+    var model_export_by_id_gaf_button_elt = '#'+model_export_by_id_gaf_button_id;
+    var model_export_by_id_gpd_button_id = 'button_id_for_gpd_export';
+    var model_export_by_id_gpd_button_elt = '#'+model_export_by_id_gpd_button_id;
     var model_export_by_id_input_id = 'select_id_for_export';
     var model_export_by_id_input_elt = '#' + model_export_by_id_input_id;
 
@@ -242,12 +246,17 @@ var MMEnvBootstrappingInit = function(user_token){
 	    });
 	    
 	    // Make export interface trigger on click.
-	    jQuery(model_export_by_id_button_elt).click(function(evt){
+	    jQuery(model_export_by_id_def_button_elt).click(function(evt){
 		var id = jQuery(model_export_by_id_input_elt).val();
 		manager.export_model(id);
-		//alert('val: '+ id);
-		// var new_url = '/action/export/' + id;
-		// _jump_to_page(new_url);
+	    });
+	    jQuery(model_export_by_id_gaf_button_elt).click(function(evt){
+		var id = jQuery(model_export_by_id_input_elt).val();
+		manager.export_model(id, 'gaf');
+	    });
+	    jQuery(model_export_by_id_gpd_button_elt).click(function(evt){
+		var id = jQuery(model_export_by_id_input_elt).val();
+		manager.export_model(id, 'gpad');
 	    });
 
 	    //
