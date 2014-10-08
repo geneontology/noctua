@@ -31,6 +31,108 @@ var clone =  bbop.core.clone;
 var notw = 'Barista';
 
 ///
+/// ModelCubby: per-model message caching management.
+///
+
+var ModelCubby = function(){
+    var self = this;
+
+    // All data here.
+    var cubby = {};
+
+    /*
+     * Function: drop
+     *
+     * returns true if new, false if update
+     *
+     * Parameters: 
+     *  model - model id
+     *  namespace - namespace
+     *  key - key
+     *  value - value
+     *
+     * Returns: 
+     *  boolean
+     */ 
+    self.drop = function(model, namespace, key, value){
+
+	var ret = null;
+
+	// Ensure existence of entities.
+	if( typeof(cubby[model]) === 'undefined' ){
+	    cubby[model] = {};
+	}
+	if( typeof(cubby[model][namespace]) === 'undefined' ){
+	    cubby[model][namespace] = {};
+	}
+
+	// Decide the return type.
+	if( typeof(cubby[model][namespace][key]) === 'undefined' ){
+	    ret = true;
+	}else{
+	    ret = false;
+	}
+
+	// Add to data bundle.
+	cubby[model][namespace][key] = value;
+	
+	return ret;
+    };
+
+    /*
+     * returns hash for specified namespace
+     */    
+    self.pickup = function(model, namespace){
+	var ret = {};
+
+	// Give non-empty answer only if defined.
+	if( typeof(cubby[model]) !== 'undefined' &&
+	    typeof(cubby[model][namespace]) !== 'undefined' ){
+	    ret = cubby[model][namespace];
+	}
+
+	return ret;
+    };
+
+    /*
+     * number: count of models known to cubby
+     */
+    self.model_count = function(){
+
+	var ret = Object.keys(cubby).length;
+
+	return ret;
+    };
+
+    /*
+     * number: count of namespaces in a model known to cubby
+     */
+    self.namespace_count = function(model){
+	var ret = 0;
+
+	if( typeof(cubby[model]) !== 'undefined' ){
+	    ret = Object.keys(cubby[model]).length;
+	}
+
+	return ret;
+    };
+
+    /*
+     * number: count of keys in a namespaces in a model known to cubby
+     */
+    self.key_count = function(model, namespace){
+	var ret = 0;
+
+	if( typeof(cubby[model]) !== 'undefined' &&
+	    typeof(cubby[model][namespace]) !== 'undefined' ){
+	    ret = Object.keys(cubby[model][namespace]).length;
+	}
+	
+	return ret;
+    };
+};
+
+///
 /// Backend application authorization monitor.
 ///
 
@@ -322,6 +424,9 @@ sessioner.create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
 var app_str = fs.readFileSync('./config/app.json');
 var app_list = JSON.parse(app_str);
 var app_guard = new AppGuard(app_list);
+
+// Start the model cubby.
+var cubby = new ModelCubby();
 
 ///
 /// Main.
@@ -772,6 +877,17 @@ var BaristaLauncher = function(){
 	}
     });
 
+    // // TODO: Inject data on response.
+    // api_proxy.on('proxyRes', function (proxyRes, req, res) {
+    // 	// console.log('response: ',
+    // 	// 	    JSON.stringify(proxyRes.headers, true, 2));
+    // 	var util = require('util');
+    // 	console.log('presponse: ',
+    // 		    JSON.stringify(util.inspect(proxyRes), true, 2));
+    // 	console.log('response: ',
+    // 		    JSON.stringify(util.inspect(res), true, 2));
+    // });
+
     ///
     /// Everything here on down is Socket.IO messaging works.
     ///
@@ -792,7 +908,7 @@ var BaristaLauncher = function(){
     // This would eventually be information delivered by the
     // authentication system.
     // TODO: This would disappear in a merged moderator system.
-//    var client_sockets = {}; // essentially users
+    //    var client_sockets = {}; // essentially users
     // TODO: The initial stash that a client gets for a channel when first
     // connecting--essentially the recorded history to date.
     //var channel_stash = {};
@@ -891,10 +1007,29 @@ var BaristaLauncher = function(){
 
 	    // Only really get involved if the user is logged in.
 	    if( _is_logged_in_p(data) ){
+		// Relay the actions of logged-in users.
 		data = _mod_data_with_session_info(data);
 		socket.broadcast.emit('relay', data);
 		
-		// TODO: Update board.
+		// Update cubby layout information when screen items
+		// are moving via telekinesis for logged-in users.
+		//console.log('relay: ', data);
+		if( data['class'] === 'telekinesis' ){
+		    var mid = data['model_id'];
+		    var iid = data['item_id'];
+		    var itop = data['top'];
+		    var ileft = data['left'];
+		    if( typeof(mid) !== 'undefined' &&
+			typeof(iid) !== 'undefined' &&
+			typeof(itop) !== 'undefined' &&
+			typeof(ileft) !== 'undefined' ){
+			cubby.drop(mid, 'layout', iid,
+				   {'top': itop, 'left': ileft});
+			//console.log('cubby m: ', cubby.model_count());
+			//console.log('cubby ns: ', cubby.namespace_count(mid));
+			//console.log('cubby ks: ', cubby.key_count(mid, 'layout'));
+		    }
+		}
 	    }
 	});
 	
