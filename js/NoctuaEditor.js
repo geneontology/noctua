@@ -1590,27 +1590,34 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	jQuery(jelt).css('left', left - scroll_left);
     }
 
+    // Update locations for all items in the "objects" list.
     function _on_telekinesis_update(data){
 	//function _on_telekinesis_update(uid, iid, top, left){
 
-	var iid = data['item_id'];
-	var top = data['top'];
-	var left = data['left'];	
+	if( data && data['objects'] ){
+	    var objects = data['objects'];
+	    each( objects, function(obj){
 
-	//var en = ecore.get_node(iid);
-	var enelt = ecore.get_node_elt_id(iid);
-	if( enelt ){
-	    // ll('tkn callback: ' +
-	    //    uid + ' moved '+ iid + ': ' +
-	    //    top + ', ' + left);
-	    jQuery('#' + enelt).css('top', top + 'px');
-	    jQuery('#' + enelt).css('left', left + 'px');
+		var iid = obj['item_id'];
+		var top = obj['top'];
+		var left = obj['left'];	
 
-	    // TODO: Still seems a bit slow. Tried throwing events as
-	    // well, but didn't work. This is certainly the "right"
-	    // way to do it...
-    	    //instance.repaintEverything();	
-	    instance.repaint(enelt);
+		//var en = ecore.get_node(iid);
+		var enelt = ecore.get_node_elt_id(iid);
+		if( enelt ){
+		    // ll('tkn callback: ' +
+		    //    uid + ' moved '+ iid + ': ' +
+		    //    top + ', ' + left);
+		    jQuery('#' + enelt).css('top', top + 'px');
+		    jQuery('#' + enelt).css('left', left + 'px');
+
+		    // TODO: Still seems a bit slow. Tried throwing events as
+		    // well, but didn't work. This is certainly the "right"
+		    // way to do it...
+    		    //instance.repaintEverything();	
+		    instance.repaint(enelt);
+		}
+	    });
 	}
     }
 

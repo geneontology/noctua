@@ -737,9 +737,11 @@ bbopx.barista.client = function(barista_location, token){
     anchor.telekinesis = function(item_id, top, left){
 	var packet = {
 	    'class': 'telekinesis',
-	    'item_id': item_id,
-	    'top': top,
-	    'left': left
+	    'objects': [{
+		'item_id': item_id,
+		'top': top,
+		'left': left
+	    }]
 	};
 	anchor.relay('telekinesis', packet);
     };
