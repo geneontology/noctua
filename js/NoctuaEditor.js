@@ -892,7 +892,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		// real node class elements.
 		_make_selector_source('.demo-window', '.konn');
 		
-    	    });	
+    	    });
     }
 
     // This is a very important core function. It's purpose is to
@@ -1592,11 +1592,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // Update locations for all items in the "objects" list.
     function _on_telekinesis_update(data){
-	//function _on_telekinesis_update(uid, iid, top, left){
 
 	if( data && data['objects'] ){
 	    var objects = data['objects'];
-	    each( objects, function(obj){
+	    each(objects, function(obj){
 
 		var iid = obj['item_id'];
 		var top = obj['top'];
@@ -1621,6 +1620,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
+    // Jimmy into telekinesis format and trigger
+    // _on_telekinesis_update().
+    function _on_layout_response(data){
+	
+	//console.log('_on_layout_response:', data);
+	if( data && data['response'] ){
+	    
+	    // Prep layout info.
+	    var tk_items = {'objects':[]};
+	    each(data['response'], function(iid, tnl){
+		tk_items['objects'].push({
+		    'item_id': iid,
+		    'top': tnl['top'],
+		    'left': tnl['left']
+		});
+	    });
+	    
+	    //
+	    //console.log('tk_items:', tk_items);
+	    _on_telekinesis_update(tk_items);
+	}
+    }
+
     if( typeof(global_barista_location) === 'undefined'  ){
 	alert('no setup for messaging--not gunna happen');
     }else{
@@ -1632,7 +1654,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	barclient.register('message', 'c', _on_message_update);
 	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
 	barclient.register('telekinesis', 'e', _on_telekinesis_update);
+	barclient.register('query', 'f', _on_layout_response);
 	barclient.connect(ecore.get_id());
+
+	// TODO/BUG: Playing with barista queries.
+	barclient.query('query', {'query': 'layout'});
     }
 
     //

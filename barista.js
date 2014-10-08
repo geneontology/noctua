@@ -41,7 +41,7 @@ var ModelCubby = function(){
     var cubby = {};
 
     /*
-     * Function: drop
+     * Function: dropoff
      *
      * returns true if new, false if update
      *
@@ -54,7 +54,7 @@ var ModelCubby = function(){
      * Returns: 
      *  boolean
      */ 
-    self.drop = function(model, namespace, key, value){
+    self.dropoff = function(model, namespace, key, value){
 
 	var ret = null;
 
@@ -75,6 +75,7 @@ var ModelCubby = function(){
 
 	// Add to data bundle.
 	cubby[model][namespace][key] = value;
+	//console.log('cubby dropoff: '+ key + ', ', value);
 	
 	return ret;
     };
@@ -86,6 +87,7 @@ var ModelCubby = function(){
 	var ret = {};
 
 	// Give non-empty answer only if defined.
+	console.log('data: ', cubby);
 	if( typeof(cubby[model]) !== 'undefined' &&
 	    typeof(cubby[model][namespace]) !== 'undefined' ){
 	    ret = cubby[model][namespace];
@@ -1011,23 +1013,66 @@ var BaristaLauncher = function(){
 		data = _mod_data_with_session_info(data);
 		socket.broadcast.emit('relay', data);
 		
-		// Update cubby layout information when screen items
-		// are moving via telekinesis for logged-in users.
+		// Skim object location and update cubby layout
+		// information when screen items are moving via
+		// telekinesis by logged-in users.
 		//console.log('relay: ', data);
 		if( data['class'] === 'telekinesis' ){
 		    var mid = data['model_id'];
-		    var iid = data['item_id'];
-		    var itop = data['top'];
-		    var ileft = data['left'];
-		    if( typeof(mid) !== 'undefined' &&
-			typeof(iid) !== 'undefined' &&
-			typeof(itop) !== 'undefined' &&
-			typeof(ileft) !== 'undefined' ){
-			cubby.drop(mid, 'layout', iid,
-				   {'top': itop, 'left': ileft});
-			//console.log('cubby m: ', cubby.model_count());
-			//console.log('cubby ns: ', cubby.namespace_count(mid));
-			//console.log('cubby ks: ', cubby.key_count(mid, 'layout'));
+		    var obs = data['objects'];
+		    if( typeof(mid) !== 'undefined' && 
+			typeof(obs) === 'object' ){
+			    each(obs, function(ob){
+				var iid = ob['item_id'];
+				var itop = ob['top'];
+				var ileft = ob['left'];
+				if( typeof(iid) !== 'undefined' &&
+				    typeof(itop) !== 'undefined' &&
+				    typeof(ileft) !== 'undefined' ){
+					cubby.dropoff(mid, 'layout', iid,
+						      {'top': itop,
+						       'left': ileft});
+					// console.log('cubby m: ',
+					// 	    cubby.model_count());
+					// console.log('cubby ns: ',
+					// 	    cubby.namespace_count(mid));
+					// console.log('cubby ks: ',
+					// 	    cubby.key_count(mid, 'layout'));
+				    }
+			    });
+			}
+		}
+	    }
+	});
+	
+	//
+	socket.on('query', function(data){
+	    //console.log('srv tele: ' + data);
+	    monitor_messages = monitor_messages +1;
+
+	    // TODO: Respond to client query.
+	    // Pong it back.
+	    //console.log('PROCESSING', socket_id);
+	    //console.log('PROCESSING', socket);
+	    // Send message back to just the sending client.
+	    // TODO: I feel there has to be a better way of doing this.
+	    if( sio.sockets.sockets[socket_id] ){
+
+		// Check that we have a good looking packet.
+		var dq = data['query'];
+		var mid = data['model_id'];
+		if( dq && mid ){
+
+		    // Give the current layout information from cubby.
+		    if( dq === 'layout' ){
+
+			// Inject response.
+			data['response'] = cubby.pickup(mid, 'layout');
+
+			// Send back.
+			sio.sockets.sockets[socket_id].emit('query', data);
+			console.log('respond to query from ' +
+				    socket_id + ' with:', data);
 		    }
 		}
 	    }

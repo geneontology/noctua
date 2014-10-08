@@ -520,6 +520,11 @@ bbopx.barista.response.prototype.export_model = function(){
 //// Let's try and communicate with the socket.io server for
 //// messages and the like.
 ////
+//// There are two makor categories: "relay" and "query". Relays are
+//// for passing information on to other clients (e.g. "where I am");
+//// queries are for asking barista information about what it might
+//// know (e.g. "where is X").
+////
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
@@ -528,10 +533,11 @@ bbopx.barista.client = function(barista_location, token){
     bbop.registry.call(this, ['connect',
 			      'initialization',
 			      //'disconnect',
+			      'relay', // catch-all
 			      'message', 
 			      'clairvoyance',
 			      'telekinesis',
-			      'relay']); // catch-all
+			      'query']); // asking barista something for yourself
     this._is_a = 'bbopx.barista.client';
 
     var anchor = this;
@@ -542,10 +548,14 @@ bbopx.barista.client = function(barista_location, token){
 
     // These are the non-internal ones that we know about.
     var known_relay_classes = {
+	'relay': true,
+	// Specific forms of relay.
 	'message': true,
 	'clairvoyance': true,
-	'telekinesis': true,
-	'relay': true
+	'telekinesis': true
+    };
+    var known_query_classes = {
+	'query': true
     };
 
     var logger = new bbop.logger('barista client');
@@ -602,6 +612,27 @@ bbopx.barista.client = function(barista_location, token){
 	    data['token'] = anchor.token();
 
 	    anchor.socket.emit('relay', data);
+	}
+    };
+
+    /*
+     * General structure for requesting information from Barista about
+     * things it might know.
+     * Always check that the comm is on.
+     * Always inject 'token' and 'model_id'.
+     */
+    anchor.query = function(query_class, data){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('sending query: ('+ anchor.model_id +', '+ anchor.token() +')');
+
+	    // Inject our data.
+	    data['class'] = query_class;
+	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
+
+	    anchor.socket.emit('query', data);
 	}
     };
 
@@ -699,6 +730,27 @@ bbopx.barista.client = function(barista_location, token){
 			ll('no relay class found');
 		    }else if( ! known_relay_classes[dclass] ){
 			ll('unknown relay class: ' + dclass);
+		    }else{
+			// Run appropriate callbacks.
+			ll('apply "'+ dclass +'" callbacks');
+			anchor.apply_callbacks(dclass, [data]);
+		    }
+		}
+	    });
+
+	    // Setup to catch query events from things we'veasked
+	    // barista.
+	    anchor.socket.on('query', function(data){
+		data = _inject_data_with_client_info(data);
+
+		// Check to make sure it interests us.
+		if( _applys_to_us_p(data) ){
+
+		    var dclass = data['class'];
+		    if( ! dclass ){
+			ll('no query class found');
+		    }else if( ! known_query_classes[dclass] ){
+			ll('unknown query class: ' + dclass);
 		    }else{
 			// Run appropriate callbacks.
 			ll('apply "'+ dclass +'" callbacks');
