@@ -404,7 +404,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		var l = ui.position.left;
 
 		//ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
-		barclient.telekinesis(en.id(), t, l);
+		if( barclient ){
+		    barclient.telekinesis(en.id(), t, l);
+		}
 	    }
 	}
 
@@ -1049,12 +1051,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     manager.register('postrun', 'foo1', _inconsistency_check, 10);
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
-    manager.register('postrun', 'foo4', function(resp, man){ // experimental
-	barclient.message({'message_type': resp.message_type(),
-			   'message': resp.message(),
-			   'intention': resp.intention(),
-			   'signal': resp.signal()
-			  });
+    // TODO: Still need this?
+    manager.register('postrun', 'foo4', function(resp, man){ // experimental	
+	// Sends message on minerva manager action completion.
+	if( barclient ){
+	    barclient.message({'message_type': resp.message_type(),
+	    		       'message': resp.message(),
+	    		       'intention': resp.intention(),
+	    		       'signal': resp.signal()
+	    		      });
+	}
     }, 7);
     manager.register('manager_error', 'foo', function(resp, man){
 	alert('There was a manager error (' +
@@ -1089,76 +1095,117 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }, 10);
 
     // Only run the internal function when the filters are passed.
-    function _update_filter(resp, man, run_fun){
+    var seen_packets = {};
+    function _continue_update_p(resp, man, run_fun){
 	
-	// Need to extract our own ID from the manager.
-	var my_uid = man.user_token();
+	var ret = false;
 
-	// Let's do some checking.
-	var r_uid = resp.user_id();
-	var r_sig = resp.signal();
-	var r_int = resp.intention();
-	ll(['uid: ', r_uid, ', sig: ', r_sig, ', int: ', r_int].join(''));
-	// BUG/TODO: This will always be wrong since we cannot compare
-	// tokens to ids.
-	if( r_uid == my_uid ){
-	    // Always run things I requiested.
-	    ll('TODO: running own request');
-	    //run_fun(resp, man);
-	}else if( r_int != 'query' ){
-	    // Run other people's requests as long as they are not
-	    // queries.
-	    ll("TODO: running other's non-query request");
-	    //run_fun(resp, man);
-	}else{
-	    // Otherwise, ignore it.
-	    ll("ignoring other's query request");
+	var this_packet = resp.packet_id();
+	if( this_packet ){
+	    if( seen_packets[this_packet] ){
+		// Skip this update.
+		ll('skip seen packet: ' + this_packet);
+	    }else{
+		// Add packet and continue.
+		seen_packets[this_packet] = true;
+
+		// Only run things that are intended actions.
+		var r_int = resp.intention();
+		ll('new packet: ' + this_packet + ', intent: ' + r_int);
+		if( r_int == 'action' ){
+
+		    // Only run things that require modification.
+		    var r_sig = resp.signal();
+		    if( r_sig == 'merge' || r_sig == 'rebuild' ){
+
+			ret = true;
+
+			// Currently, since running from all users, unecessary.
+			// // Need to extract our own ID from the manager.
+			// var my_uid = man.user_token();
+			// // Let's do some checking.
+			// var r_uid = resp.user_id();
+			// ll(['uid: ', r_uid, ', sig: ',
+			//     r_sig, ', int: ' ,r_int].join(''));
+			// // BUG/TODO: This will always be wrong since
+			// // we cannot compare tokens to ids.
+			// if( r_uid == my_uid ){
+			//     // Always run things I requested.
+			//     ll('TODO: running own request');
+			//     //run_fun(resp, man);
+			// }else if( r_int != 'query' ){
+			//     // Run other people's requests as long as
+			//     // they are not
+			//     // queries.
+			//     ll("TODO: running other's non-query request");
+			//     //run_fun(resp, man);
+			// }else{
+			//     // Otherwise, ignore it.
+			//     ll("ignoring other's query request");
+			// }
+			
+		    }
+		}
+	    }
 	}
+	return ret;
     }
 
-    manager.register('rebuild', 'foo',
-		     function(resp, man){
-			 // TODO: This function should have the rest
-			 // of the function as an argument once the
-			 // moderator is on.
-			 _update_filter(resp, man);
+    manager.register('rebuild', 'foo', function(resp, man){
+	// TODO: This function should have the rest
+	// of the function as an argument once the
+	// moderator is on.
+	if( _continue_update_p(resp, man) ){
+	
+	    var mid = resp.model_id();
+	    var mindividuals = resp.individuals();
+	    var mindividuals_i = resp.inferred_individuals();
+	    var mfacts = resp.facts();
+	    var mannotations = resp.annotations();
+	
+	    // Deal with model.
+	    // if( ! mid || is_empty(mindividuals) ){
+	    //     alert('no data/individuals in inconsistent');
+	    // }else{
+	    _rebuild_model_and_display(mid,
+				       mindividuals,
+				       mindividuals_i,
+				       mfacts, mannotations);
+	    // }
+	}
+    }, 10);
+    // Update locations according to Barista after rebuild event.
+    manager.register('rebuild', 'bar', function(){
+	if( barclient ){
+	    barclient.get_layout();
+	}
+    }, 9);
 
-			 var mid = resp.model_id();
-			 var mindividuals = resp.individuals();
-			 var mindividuals_i = resp.inferred_individuals();
-			 var mfacts = resp.facts();
-			 var mannotations = resp.annotations();
-
-			 // Deal with model.
-			 // if( ! mid || is_empty(mindividuals) ){
-			 //     alert('no data/individuals in inconsistent');
-			 // }else{
-			 _rebuild_model_and_display(mid,
-						    mindividuals,
-						    mindividuals_i,
-						    mfacts, mannotations);
-			 // }
-		     }, 10);
-
-    manager.register('merge', 'foo',
-		     function(resp, man){
-			 // TODO: This function should have the rest
-			 // of the function as an argument once the
-			 // moderator is on.
-			 _update_filter(resp, man);
-
-			 var individuals = resp.individuals();
-			 var individuals_i = resp.inferred_individuals();
-			 var facts = resp.facts();
-			 var annotations = resp.annotations();
-			 if( ! individuals ){
-			     alert('no data/individuals in merge--unable to do');
-			 }else{
-			     _merge_from_new_data(individuals,
-						  individuals_i,
-						  facts, annotations);
-			 }
-		     }, 10);
+    manager.register('merge', 'foo', function(resp, man){
+	// TODO: This function should have the rest
+	// of the function as an argument once the
+	// moderator is on.
+	if( _continue_update_p(resp, man) ){
+	
+	    var individuals = resp.individuals();
+	    var individuals_i = resp.inferred_individuals();
+	    var facts = resp.facts();
+	    var annotations = resp.annotations();
+	    if( ! individuals ){
+		alert('no data/individuals in merge--unable to do');
+	    }else{
+		_merge_from_new_data(individuals,
+				     individuals_i,
+				     facts, annotations);
+	    }
+	}
+    }, 10);
+    // Update locations according to Barista after merge event.
+    manager.register('merge', 'bar', function(){
+	if( barclient ){
+	    barclient.get_layout();
+	}
+    }, 9);
 
     ///
     /// UI event registration.
@@ -1166,64 +1213,61 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // TODO/BUG: Read on.
     // Connection event.
-    instance.bind("connection",
-		  function(info, original_evt) {
-
-		      // If it looks like a new drag-and-drop event
-		      // connection.
-		      if( ! original_evt ){
-			  ll('knock-on "connection": ignoring.');
-		      }else{
-			  ll('direct "connection" event.');
-
-			  // Get the necessary info from the
-			  // connection.
-			  var sn = info.sourceId;
-			  var tn = info.targetId;
-
-			  // TODO/BUG: Destroy the autogen one (I
-			  // can't make them behave as well as the
-			  // programmatic ones--need to understand:
-			  // http://jsplumbtoolkit.com/doc/connections).
-			  // then create the programmatic one.
-			  // This connection is no longer needed.
-			  instance.detach(info.connection);
-
-			  // Create a new edge based on this info.
-			  var snode = ecore.get_node_by_elt_id(sn);
-			  var tnode = ecore.get_node_by_elt_id(tn);
-
-			  // Pop up the modal.
-			  var init_edge =
-				  widgets.add_edge_modal(ecore, manager,
-							 in_relations, aid,
-							 snode.id(), tnode.id());
-			  init_edge.show();
-		      }
-		  });
-
+    instance.bind("connection", function(info, original_evt) {
+	
+	// If it looks like a new drag-and-drop event
+	// connection.
+	if( ! original_evt ){
+	    ll('knock-on "connection": ignoring.');
+	}else{
+	    ll('direct "connection" event.');
+	    
+	    // Get the necessary info from the
+	    // connection.
+	    var sn = info.sourceId;
+	    var tn = info.targetId;
+	    
+	    // TODO/BUG: Destroy the autogen one (I
+	    // can't make them behave as well as the
+	    // programmatic ones--need to understand:
+	    // http://jsplumbtoolkit.com/doc/connections).
+	    // then create the programmatic one.
+	    // This connection is no longer needed.
+	    instance.detach(info.connection);
+	    
+	    // Create a new edge based on this info.
+	    var snode = ecore.get_node_by_elt_id(sn);
+	    var tnode = ecore.get_node_by_elt_id(tn);
+	    
+	    // Pop up the modal.
+	    var init_edge = widgets.add_edge_modal(ecore, manager,
+						   in_relations, aid,
+						   snode.id(), tnode.id());
+	    init_edge.show();
+	}
+    });
+    
     // Detach event.
-    instance.bind("connectionDetached",
-		  function(info, original_evt) {
-		      
-		      // Only to this for direct detachments, not
-		      // knock-on effects from things like merge.
-		      if( ! original_evt ){
-			  ll('knock-on "connectionDetached": ignoring.');
-		      }else{
-			  ll('direct "connectionDetach" event.');
-
-			  var cid = info.connection.id;
-			  ll('there was a connection detached: ' + cid);
-			  var eeid = ecore.get_edge_id_by_connector_id(cid);
-			  ll('looks like edge: ' + eeid);
-			  
-			  var edge = ecore.get_edge(eeid);
-			  manager.remove_fact(ecore.get_id(), edge.source(),
-					      edge.target(), edge.relation());
-		      }
-		  });
-
+    instance.bind("connectionDetached", function(info, original_evt) {
+	
+	// Only to this for direct detachments, not
+	// knock-on effects from things like merge.
+	if( ! original_evt ){
+	    ll('knock-on "connectionDetached": ignoring.');
+	}else{
+	    ll('direct "connectionDetach" event.');
+	    
+	    var cid = info.connection.id;
+	    ll('there was a connection detached: ' + cid);
+	    var eeid = ecore.get_edge_id_by_connector_id(cid);
+	    ll('looks like edge: ' + eeid);
+	    
+	    var edge = ecore.get_edge(eeid);
+	    manager.remove_fact(ecore.get_id(), edge.source(),
+				edge.target(), edge.relation());
+	}
+    });
+    
     // TODO: 
     // Would like this, since otherwise I'll have to deal with
     // decoding what is happening and possibly a race condition.
@@ -1235,11 +1279,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     });
     
     // Reapaint with we scroll the graph.
-    jQuery(graph_div).scroll(
-        function(){
-            jsPlumb.repaintEverything();
-        }
-    );
+    jQuery(graph_div).scroll(function(){
+        jsPlumb.repaintEverything();
+    });
 
     ///
     /// Activate addition template for BP.
@@ -1396,56 +1438,50 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_occ_auto.set_personality('ontology');
 
     // Add new remote node button.
-    jQuery(simple_mf_add_btn_elt).click(
-    	function(){
-    	    var enb = simple_mf_enb_auto_val || '';
-    	    var act = simple_mf_act_auto_val || '';
-    	    var occ = simple_mf_occ_auto_val || '';
-
-    	    if( act == '' ){
-    		alert('Must select activity field from autocomplete list.');
-    	    }else{
-		// Wipe controls' state, internal and external.
-		simple_mf_enb_auto_val = null;
-    		simple_mf_act_auto_val = null;
-    		simple_mf_occ_auto_val = null;
-		jQuery(simple_mf_enb_auto_elt).val('');
-    		jQuery(simple_mf_act_auto_elt).val('');
-    		jQuery(simple_mf_occ_auto_elt).val('');
-
-		// Send message to server.
-		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
-    	    }
+    jQuery(simple_mf_add_btn_elt).click(function(){
+    	var enb = simple_mf_enb_auto_val || '';
+    	var act = simple_mf_act_auto_val || '';
+    	var occ = simple_mf_occ_auto_val || '';
+	
+    	if( act == '' ){
+    	    alert('Must select activity field from autocomplete list.');
+    	}else{
+	    // Wipe controls' state, internal and external.
+	    simple_mf_enb_auto_val = null;
+    	    simple_mf_act_auto_val = null;
+    	    simple_mf_occ_auto_val = null;
+	    jQuery(simple_mf_enb_auto_elt).val('');
+    	    jQuery(simple_mf_act_auto_elt).val('');
+    	    jQuery(simple_mf_occ_auto_elt).val('');
+	    
+	    // Send message to server.
+	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	}
-    );
+    });
 
     ///
     /// Other button activities.
     ///
 
     // Zoom buttons.
-    jQuery(zin_btn_elt).click(
-    	function(){
-    	    var nz = instance.getZoom() + 0.25;
-    	    _set_zoom(nz);
-    	});
-    jQuery(zret_btn_elt).click(
-    	function(){
-    	    _set_zoom(1.0);
-    	});
-    jQuery(zout_btn_elt).click(
-    	function(){
-    	    var nz = instance.getZoom() - 0.25;
-    	    _set_zoom(nz);
-    	});
-
+    jQuery(zin_btn_elt).click(function(){
+    	var nz = instance.getZoom() + 0.25;
+    	_set_zoom(nz);
+    });
+    jQuery(zret_btn_elt).click(function(){
+    	_set_zoom(1.0);
+    });
+    jQuery(zout_btn_elt).click(function(){
+    	var nz = instance.getZoom() - 0.25;
+    	_set_zoom(nz);
+    });
+    
     // Refresh button.
     // Trigger a model get and an inconsistent redraw.
-    jQuery(refresh_btn_elt).click(
-	function(){
-	    ll('starting refresh of model: ' + ecore.get_id());
-	    manager.get_model(ecore.get_id());
-	});
+    jQuery(refresh_btn_elt).click(function(){
+	ll('starting refresh of model: ' + ecore.get_id());
+	manager.get_model(ecore.get_id());
+    });
 
     // // Export button.
     // jQuery(export_btn_elt).click(
@@ -1457,12 +1493,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // 	});
 
     // Save button.
-    jQuery(save_btn_elt).click(
-    	function(){
-	    // Run it off in a new tab.
-	    manager.store_model(ecore.get_id());
-	    //alert('This functionality has been temporarily suspended.');
-    	});
+    jQuery(save_btn_elt).click(function(){
+	// Run it off in a new tab.
+	manager.store_model(ecore.get_id());
+	//alert('This functionality has been temporarily suspended.');
+    });
 
     // // Help button.
     // jQuery(help_btn_elt).click(
@@ -1548,10 +1583,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery(message_area_tab_elt).addClass(cls);
 	    // Clear when clicked on.
 	    jQuery(message_area_tab_elt).unbind('click');
-	    jQuery(message_area_tab_elt).click(
-		function(){
-		    jQuery(message_area_tab_elt).removeClass(cls);
-		});
+	    jQuery(message_area_tab_elt).click(function(){
+		jQuery(message_area_tab_elt).removeClass(cls);
+	    });
 	}
     }
     
@@ -1620,6 +1654,44 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
+    // Serious translation into the minerva manager system.
+    function _on_model_update(data){
+	ll('try to update model from message');
+
+	var mid = data['model_id'];
+	var dresp = data['data'];
+	var bar_resp = new bbopx.barista.response(dresp);
+
+	// // First, make sure we haven't seen this message before.
+	// if( _continue_update_p(bar_resp, manager) ){
+
+	    // We can make some assumptions for now that since it came out
+	    // of Barista that it is good and clean.
+	    if( bar_resp.intention() != 'action' ){
+		// Skip.
+		ll('skipping message resp w/intent: ' + bar_resp.intention());
+	    }else{
+		// TODO/BUG: Might be easier if we had a wrapping of
+		// _on_nominal_success() with with pre-/post-run within
+		// the manager itself.
+		if( bar_resp.signal() == 'merge' ){
+		    ll('try to update model from message as merge');
+		    manager.apply_callbacks('prerun', [manager]);
+		    manager.apply_callbacks('merge', [bar_resp, manager]);
+		    manager.apply_callbacks('postrun', [bar_resp, manager]);
+		}else if( bar_resp.signal() == 'rebuild' ){
+		    ll('try to update model from message as rebuild');
+		    manager.apply_callbacks('prerun', [manager]);
+		    manager.apply_callbacks('rebuild', [bar_resp, manager]);
+		    manager.apply_callbacks('postrun', [bar_resp, manager]);
+		}else{
+		    // Skip.
+		    ll('skipping message resp w/sig: ' + bar_resp.signal());
+		}
+	    }
+	// }
+    }
+
     // Jimmy into telekinesis format and trigger
     // _on_telekinesis_update().
     function _on_layout_response(data){
@@ -1646,7 +1718,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     if( typeof(global_barista_location) === 'undefined'  ){
 	alert('no setup for messaging--not gunna happen');
     }else{
-	// TODO: Eventually we'll
+	// Setup the messaging client to listen to the common events
+	// (telekinesis, clairvoyance) and the interesting one (merge,
+	// rebuild) that will get translated into the minerva manager
+	// calls.
 	ll('try setup for messaging at: ' + global_barista_location);
 	barclient = new bbopx.barista.client(global_barista_location, in_token);
 	barclient.register('connect', 'a', _on_connect);
@@ -1654,19 +1729,25 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	barclient.register('message', 'c', _on_message_update);
 	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
 	barclient.register('telekinesis', 'e', _on_telekinesis_update);
-	barclient.register('query', 'f', _on_layout_response);
+	barclient.register('merge', 'f', _on_model_update);
+	barclient.register('rebuild', 'g', _on_model_update);
+	barclient.register('query', 'h', _on_layout_response);
 	barclient.connect(ecore.get_id());
 
-	// TODO/BUG: Playing with barista queries.
-	barclient.query('query', {'query': 'layout'});
+	// Playing with barista queries. This will trigger soon after
+	// the first initialization layout is accomplished. Also look
+	// in merge and redraw routines.
+	barclient.get_layout();
     }
 
     //
     jQuery(ping_btn_elt).click(function(){
-	barclient.message({'message':
-			   '<strong>please contact me for discussion</strong>',
-			   'message_type': 'success'}
-			 );
+	if( barclient ){
+	    barclient.message({'message':
+			       '<strong>please contact me for discussion</strong>',
+			       'message_type': 'success'}
+			     );
+	}
     });
 
     //

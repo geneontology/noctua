@@ -31,6 +31,18 @@ var clone =  bbop.core.clone;
 var notw = 'Barista';
 
 ///
+/// REs to compile once.
+///
+
+// Recognize jQuery JSONP and extract payload.
+var jsonp_re = /^jQuery[\d\_]+\((.*)\)$/;
+
+// Cached static routes.
+var js_re = /\.js$/;
+var css_re = /\.css$/;
+var html_re = /\.html$/;
+
+///
 /// ModelCubby: per-model message caching management.
 ///
 
@@ -87,7 +99,7 @@ var ModelCubby = function(){
 	var ret = {};
 
 	// Give non-empty answer only if defined.
-	console.log('data: ', cubby);
+	//console.log('data: ', cubby);
 	if( typeof(cubby[model]) !== 'undefined' &&
 	    typeof(cubby[model][namespace]) !== 'undefined' ){
 	    ret = cubby[model][namespace];
@@ -609,10 +621,6 @@ var BaristaLauncher = function(){
     /// Cached static routes.
     ///
 
-    // Cached static routes.
-    var js_re = /\.js$/;
-    var css_re = /\.css$/;
-    var html_re = /\.html$/;
     // Routes for all static cache items.
     each(pup_tent.cached_list(),
 	 function(thing){
@@ -879,16 +887,75 @@ var BaristaLauncher = function(){
 	}
     });
 
-    // // TODO: Inject data on response.
-    // api_proxy.on('proxyRes', function (proxyRes, req, res) {
-    // 	// console.log('response: ',
-    // 	// 	    JSON.stringify(proxyRes.headers, true, 2));
-    // 	var util = require('util');
-    // 	console.log('presponse: ',
-    // 		    JSON.stringify(util.inspect(proxyRes), true, 2));
-    // 	console.log('response: ',
-    // 		    JSON.stringify(util.inspect(res), true, 2));
-    // });
+    // TODO: Pass certain types of responses to /all/ listening
+    // clients. (TODO: eventually, just the ones on the model
+    // channel.)
+    api_proxy.on('proxyRes', function (proxyRes, req, res) {
+
+	// Unfortunately, we do not have access to the completed
+	// response, so we have to assemble it ourselves.
+	var chunks = [];
+	proxyRes.on('data', function(chunk){
+    	    //var util = require('util');
+	    var jsonp_partial = chunk.toString();
+	    chunks.push(jsonp_partial);
+	});
+	// When we got it all, assemble it, remove the jQuery JSONP
+	// wrapper
+	proxyRes.on('end', function(){
+
+	    var jsonp = chunks.join('');
+
+	    // NOTE: Assuming either jQuery JSONP action JSON via CORS
+	    // or similar.
+	    // "jQuery1910009816080028417162_1412824223034(.*);"
+	    //console.log('match: ', jsonp);
+	    var match = jsonp.match(jsonp_re);
+	    if( ! match || ! match.length == 2 ){
+		//console.log('response: n/a');
+	    }else{
+		//console.log('response: ', match[1]);
+		jsonp = match[1];
+	    }
+
+	    // Now what should we do with the JSON? Check it.
+	    var response_okay_p = true;
+	    var resp = null;
+	    try{
+		var resp_json = JSON.parse(jsonp);
+		resp = new bbopx.barista.response(resp_json);
+	    }catch(e){
+		response_okay_p = false;
+		console.log("unparsable response!");
+	    }
+
+	    // Emit to all listeners--cannot target all but call since
+	    // this was not done over messaging in the first place
+	    // (api proxy).
+	    // For filtering, there is a unique ID from Minerva so
+	    // that they can block messages they've heard
+	    // before--similar to the current model filtering. Ish.
+	    if( response_okay_p && resp && resp.okay() && resp.model_id() ){
+		if( resp.intention() !== 'action' ){
+		    console.log("Skip broadcast of message (non-action).");
+		}else if( resp.signal() === 'merge' ){
+		    console.log("Broadcast merge.");
+		    sio.sockets.emit('relay', {'class': 'merge',
+					       'model_id': resp.model_id(),
+					       'packet_id': resp.packet_id(),
+					       'data': resp.raw()});
+		}else if( resp.signal() === 'rebuild' ){
+		    console.log("Broadcast rebuild.");
+		    sio.sockets.emit('relay', {'class': 'rebuild',
+					       'model_id': resp.model_id(),
+					       'packet_id': resp.packet_id(),
+					       'data': resp.raw()});
+		}else{
+		    console.log("Skip broadcast of message (different signal).");
+		}
+	    }
+	});
+    });
 
     ///
     /// Everything here on down is Socket.IO messaging works.
@@ -975,33 +1042,6 @@ var BaristaLauncher = function(){
 	var init_data = _mod_data_with_session_info(null);
 	socket.emit('initialization', init_data);
 
-	// // Relays to others that new user is on and ties
-	// // socket and token.
-	// socket.on('info', function(data){
-	//     //console.log('srv info: %j', data);
-	//     if( _is_logged_in_p(data) ){
-	// 	data = _mod_data_with_session_info(data);
-	// 	socket.broadcast.emit('info', data);
-	//     }
-	// });
-	
-	// socket.on('clairvoyance', function(data){
-	//     //console.log('srv clair: ' + data);
-	//     if( _is_logged_in_p(data) ){
-	// 	data = _mod_data_with_session_info(data);
-	// 	socket.broadcast.emit('clairvoyance', data);
-	//     }
-	// });
-
-	// // TODO: This needs to be blocked on auth issues.
-	// socket.on('telekinesis', function(data){
-	//     //console.log('srv tele: ' + data);
-	//     if( _is_logged_in_p(data) ){
-	// 	data = _mod_data_with_session_info(data);
-	// 	socket.broadcast.emit('telekinesis', data);
-	//     }
-	// });
-	
 	//
 	socket.on('relay', function(data){
 	    //console.log('srv tele: ' + data);
@@ -1037,7 +1077,8 @@ var BaristaLauncher = function(){
 					// console.log('cubby ns: ',
 					// 	    cubby.namespace_count(mid));
 					// console.log('cubby ks: ',
-					// 	    cubby.key_count(mid, 'layout'));
+					// 	    cubby.key_count(mid,
+					//          'layout'));
 				    }
 			    });
 			}
@@ -1072,7 +1113,7 @@ var BaristaLauncher = function(){
 			// Send back.
 			sio.sockets.sockets[socket_id].emit('query', data);
 			console.log('respond to query from ' +
-				    socket_id + ' with:', data);
+				    socket_id);// + ' with:', data);
 		    }
 		}
 	    }
