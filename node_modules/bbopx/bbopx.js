@@ -18,9 +18,6 @@ if( typeof(exports) != 'undefined' ){
  * give safe access to fields and properties.
  * 
  * It is not meant to be a model for the parts in the data section.
- *
- * BUG/NOTE: This is slated to replace the bbop.rest.response.mmm
- * package after it reaches maturity.
  */
 
 // if ( typeof bbop == "undefined" ){ var bbop = {}; }
@@ -33,7 +30,7 @@ if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
 /*
  * Constructor: response
  * 
- * Contructor for a GO MMM REST JSON response object.
+ * Contructor for a Minerva REST JSON response object.
  * 
  * The constructor argument is an object or a string.
  * 
@@ -43,17 +40,16 @@ if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
  * Returns:
  *  response object
  */
-//bbop.rest.response.mmm = function(raw){
 bbopx.barista.response = function(raw){
     bbop.rest.response.call(this);
-    //this._is_a = 'bbop.rest.response.mmm';
     this._is_a = 'bbopx.barista.response';
 
     // Required top-level strings in the response.
     // message and message_type are defined in the superclass.
     this._uid = null; // initiating user
-    this._intention = null; // what the user wanted to do
-    this._signal = null; // 'merge', etc.
+    this._packet_id = null; // identify the packet
+    this._intention = null; // what the user wanted to do ('query', 'action')
+    this._signal = null; // 'merge', 'rebuild', 'meta', etc.
 
     // Optional top-level strings in the response.
     this._commentary = null;
@@ -146,6 +142,7 @@ bbopx.barista.response = function(raw){
 			    this._uid = jresp['uid'] || 'unknown';
 			    this._intention = jresp['intention'] || 'unknown';
 			    this._signal = jresp['signal'] || 'unknown';
+			    this._packet_id = jresp['packet_id'] || 'unknown';
 
 			    // Add any additional fields.
 			    if( cdata ){ this._commentary = cdata; }
@@ -157,7 +154,6 @@ bbopx.barista.response = function(raw){
 	}
     }
 };
-//bbop.core.extend(bbop.rest.response.mmm, bbop.rest.response);
 bbop.core.extend(bbopx.barista.response, bbop.rest.response);
 
 /*
@@ -213,6 +209,24 @@ bbopx.barista.response.prototype.signal = function(){
 };
 
 /*
+ * Function: packet_id
+ * 
+ * Returns the response's unique id. Usful to make sure you're not
+ * talking to yourself in some cases.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.packet_id = function(){
+    var ret = null;
+    if( this._packet_id ){ ret = this._packet_id; }
+    return ret;
+};
+
+/*
  * Function: commentary
  * 
  * Returns the commentary object (whatever that might be in any given
@@ -224,7 +238,6 @@ bbopx.barista.response.prototype.signal = function(){
  * Returns:
  *  copy of commentary object or null
  */
-//bbop.rest.response.mmm.prototype.commentary = function(){
 bbopx.barista.response.prototype.commentary = function(){
     var ret = null;
     if( this._commentary ){
@@ -245,7 +258,6 @@ bbopx.barista.response.prototype.commentary = function(){
  * Returns:
  *  copy of data object or null
  */
-//bbop.rest.response.mmm.prototype.data = function(){
 bbopx.barista.response.prototype.data = function(){
     var ret = null;
     if( this._data ){
@@ -265,7 +277,6 @@ bbopx.barista.response.prototype.data = function(){
  * Returns:
  *  string or null
  */
-//bbop.rest.response.mmm.prototype.model_id = function(){
 bbopx.barista.response.prototype.model_id = function(){
     var ret = null;
     if( this._data && this._data['id'] ){
@@ -286,7 +297,6 @@ bbopx.barista.response.prototype.model_id = function(){
  * Returns:
  *  true or false
  */
-//bbop.rest.response.mmm.prototype.inconsistent_p = function(){
 bbopx.barista.response.prototype.inconsistent_p = function(){
     var ret = false;
     if( this._data &&
@@ -308,7 +318,6 @@ bbopx.barista.response.prototype.inconsistent_p = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.facts = function(){
 bbopx.barista.response.prototype.facts = function(){
     var ret = [];
     if( this._data && this._data['facts'] && 
@@ -329,7 +338,6 @@ bbopx.barista.response.prototype.facts = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.properties = function(){
 bbopx.barista.response.prototype.properties = function(){
     var ret = [];
     if( this._data && this._data['properties'] && 
@@ -350,7 +358,6 @@ bbopx.barista.response.prototype.properties = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.individuals = function(){
 bbopx.barista.response.prototype.individuals = function(){
     var ret = [];
     if( this._data && this._data['individuals'] && 
@@ -372,7 +379,6 @@ bbopx.barista.response.prototype.individuals = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.individuals = function(){
 bbopx.barista.response.prototype.inferred_individuals = function(){
     var ret = [];
     if( this._data && this._data['individuals_i'] && 
@@ -472,7 +478,7 @@ bbopx.barista.response.prototype.model_ids = function(){
 /*
  * Function: models_meta
  * 
- * Returns a hash of the model ids to models properties found in ther
+ * Returns a hash of the model ids to models properties found in the
  * response.
  *
  * Sometimes not there, so check the return.
@@ -520,6 +526,11 @@ bbopx.barista.response.prototype.export_model = function(){
 //// Let's try and communicate with the socket.io server for
 //// messages and the like.
 ////
+//// There are two makor categories: "relay" and "query". Relays are
+//// for passing information on to other clients (e.g. "where I am");
+//// queries are for asking barista information about what it might
+//// know (e.g. "where is X").
+////
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
@@ -528,10 +539,13 @@ bbopx.barista.client = function(barista_location, token){
     bbop.registry.call(this, ['connect',
 			      'initialization',
 			      //'disconnect',
-			      'message', 
+			      'relay', // catch-all
+			      'merge', // data is raw response 
+			      'rebuild', // data is raw response 
+			      'message',
 			      'clairvoyance',
 			      'telekinesis',
-			      'relay']); // catch-all
+			      'query']); // asking barista something for yourself
     this._is_a = 'bbopx.barista.client';
 
     var anchor = this;
@@ -542,10 +556,16 @@ bbopx.barista.client = function(barista_location, token){
 
     // These are the non-internal ones that we know about.
     var known_relay_classes = {
+	'relay': true,
+	// Specific forms of relay.
 	'message': true,
+	'merge': true,
+	'rebuild': true,
 	'clairvoyance': true,
-	'telekinesis': true,
-	'relay': true
+	'telekinesis': true
+    };
+    var known_query_classes = {
+	'query': true
     };
 
     var logger = new bbop.logger('barista client');
@@ -594,7 +614,7 @@ bbopx.barista.client = function(barista_location, token){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
-	    ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
+	    //ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
 
 	    // Inject our data.
 	    data['class'] = relay_class;
@@ -603,6 +623,34 @@ bbopx.barista.client = function(barista_location, token){
 
 	    anchor.socket.emit('relay', data);
 	}
+    };
+
+    /*
+     * General structure for requesting information from Barista about
+     * things it might know.
+     * Always check that the comm is on.
+     * Always inject 'token' and 'model_id'.
+     */
+    anchor.query = function(query_class, data){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('sending query: ('+ anchor.model_id +', '+ anchor.token() +')');
+
+	    // Inject our data.
+	    data['class'] = query_class;
+	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
+
+	    anchor.socket.emit('query', data);
+	}
+    };
+
+    /*
+     * Wrapper for the only thing query is currently used for.
+     */
+    anchor.get_layout = function(){
+	anchor.query('query', {'query': 'layout'});
     };
 
     /*
@@ -701,7 +749,28 @@ bbopx.barista.client = function(barista_location, token){
 			ll('unknown relay class: ' + dclass);
 		    }else{
 			// Run appropriate callbacks.
-			ll('apply "'+ dclass +'" callbacks');
+			ll('apply (relay) "'+ dclass +'" callbacks');
+			anchor.apply_callbacks(dclass, [data]);
+		    }
+		}
+	    });
+
+	    // Setup to catch query events from things we'veasked
+	    // barista.
+	    anchor.socket.on('query', function(data){
+		data = _inject_data_with_client_info(data);
+
+		// Check to make sure it interests us.
+		if( _applys_to_us_p(data) ){
+
+		    var dclass = data['class'];
+		    if( ! dclass ){
+			ll('no query class found');
+		    }else if( ! known_query_classes[dclass] ){
+			ll('unknown query class: ' + dclass);
+		    }else{
+			// Run appropriate callbacks.
+			ll('apply (query) "'+ dclass +'" callbacks');
 			anchor.apply_callbacks(dclass, [data]);
 		    }
 		}
@@ -737,9 +806,11 @@ bbopx.barista.client = function(barista_location, token){
     anchor.telekinesis = function(item_id, top, left){
 	var packet = {
 	    'class': 'telekinesis',
-	    'item_id': item_id,
-	    'top': top,
-	    'left': left
+	    'objects': [{
+		'item_id': item_id,
+		'top': top,
+		'left': left
+	    }]
 	};
 	anchor.relay('telekinesis', packet);
     };
@@ -1071,11 +1142,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     
     // Intent: "query".
     // Expect: "success" and "meta".
-    anchor.export_model = function(model_id){
+    anchor.export_model = function(model_id, format){
 
-	// 
+	if( typeof(format) === 'undefined' ){ format = 'default'; }
+
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
-	var req = new bbopx.minerva.request('model', 'export');
+	var req = null;
+	if( format == 'gaf' ){
+	    req = new bbopx.minerva.request('model', 'export-legacy');
+	    req.add('format', 'gaf');
+	}else if( format == 'gpad' ){
+	    req = new bbopx.minerva.request('model', 'export-legacy');
+	    req.add('format', 'gpad');
+	}else{
+	    // Default (non-legacy) case is simpler.
+	    req = new bbopx.minerva.request('model', 'export');
+	}
+
+	// Add the model to the request.
 	req.model_id(model_id);
 	reqs.add(req);
 
@@ -3053,15 +3137,14 @@ bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
 
     // Any annotation information that came in.
     var anns = '';
-    bbop.core.each(ecore.annotations(),
-		   function(ann){
-		       if( ann.property('comment') ){
-			   anns += '<dd>' +
-			       '<small><strong>comment</strong></small> ' +
-			       ann.property('comment') +
-			       '</dd>';
-		       }
-		   });
+    bbop.core.each(ecore.annotations(), function(ann){
+	if( ann.property('comment') ){
+	    anns += '<dd>' +
+		'<small><strong>comment</strong></small> ' +
+		ann.property('comment') +
+		'</dd>';
+	}
+    });
     if( anns == '' ){
 	anns = '<dd>none</dd>';
     }
@@ -3115,13 +3198,11 @@ bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
     // First, lets get the headers that we'll need by poking the
     // model and getting all of the possible categories.	
     var cat_list = [];
-    each(ecore.get_nodes(),
-	 function(enode_id, enode){
-	     each(enode.types(),
-		  function(in_type){
-		      cat_list.push(in_type.category());
-		  });
-	 });
+    each(ecore.get_nodes(), function(enode_id, enode){
+	each(enode.types(), function(in_type){
+	    cat_list.push(in_type.category());
+	});
+    });
     // Dedupe list.
     var tmph = bbop.core.hashify(cat_list);
     cat_list = bbop.core.get_keys(tmph);
@@ -3137,21 +3218,19 @@ bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
     }else{
 	
 	// Sort header list according to known priorities.
-	cat_list = cat_list.sort(
-	    function(a, b){
-		return aid.priority(b) - aid.priority(a);
-	    });
+	cat_list = cat_list.sort(function(a, b){
+	    return aid.priority(b) - aid.priority(a);
+	});
 	
 	// Convert the ids into readable headers.
 	var nav_tbl_headers = [];
-	each(cat_list,
-	     function(cat_id){
-		 var hdrc = [
-		     aid.readable(cat_id),
-		     '&uarr;&darr;'
-		 ];
-		 nav_tbl_headers.push(hdrc.join(' '));
-	     });
+	each(cat_list, function(cat_id){
+	    var hdrc = [
+		aid.readable(cat_id),
+		'&uarr;&darr;'
+	    ];
+	    nav_tbl_headers.push(hdrc.join(' '));
+	});
 	
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
@@ -3161,37 +3240,33 @@ bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
 					   'table-condensed'].join(' ')});
 	
 	//each(ecore.get_nodes(),
-	each(ecore.edit_node_order(),
-	     function(enode_id){
-		 var enode = ecore.get_node(enode_id);
-		     
-		 // Now that we have an enode, we want to mimic
-		 // the order that we created for the header
-		 // (cat_list). Start by binning the types.
-		 var bin = {};
-		 each(enode.types(),
-		      function(in_type){
-			  var cat = in_type.category();
-			  if( ! bin[cat] ){ bin[cat] = []; }
-			  bin[cat].push(in_type);
-		      });
-		     
-		 // Now unfold the binned types into the table row
-		 // according to the sorted order.
-		 var table_row = [];
-		 each(cat_list,
-		      function(cat_id){
-			  var accumulated_types = bin[cat_id];
-			  var cell_cache = [];
-			  each(accumulated_types,
-			       function(atype){
-				   var tt = bbopx.noctua.type_to_span(atype, aid);
-				   cell_cache.push(tt);
-			       });
-			  table_row.push(cell_cache.join('<br />'));
-		      });
-		 nav_tbl.add_to(table_row);		     
-	     });
+	each(ecore.edit_node_order(), function(enode_id){
+	    var enode = ecore.get_node(enode_id);
+	    
+	    // Now that we have an enode, we want to mimic the order
+	    // that we created for the header (cat_list). Start by
+	    // binning the types.
+	    var bin = {};
+	    each(enode.types(), function(in_type){
+		var cat = in_type.category();
+		if( ! bin[cat] ){ bin[cat] = []; }
+		bin[cat].push(in_type);
+	    });
+	    
+	    // Now unfold the binned types into the table row
+	    // according to the sorted order.
+	    var table_row = [];
+	    each(cat_list, function(cat_id){
+		var accumulated_types = bin[cat_id];
+		var cell_cache = [];
+		each(accumulated_types, function(atype){
+		    var tt = bbopx.noctua.type_to_span(atype, aid);
+		    cell_cache.push(tt);
+		});
+		table_row.push(cell_cache.join('<br />'));
+	    });
+	    nav_tbl.add_to(table_row);		     
+	});
 	
 	// Add to display.
 	jQuery(table_div).empty();
@@ -3221,14 +3296,13 @@ bbopx.noctua.widgets.repaint_edge_table = function(ecore, aid, table_div){
 	
 	// Make the (obvjously known) headers pretty.
 	var nav_tbl_headers = [];
-	each(['subject', 'relation', 'object'],
-	     function(hdr){
-		 var hdrc = [
-		     hdr,
-		     '&uarr;&darr;'
-		 ];
-		 nav_tbl_headers.push(hdrc.join(' '));
-	     });
+	each(['subject', 'relation', 'object'], function(hdr){
+	    var hdrc = [
+		hdr,
+		'&uarr;&darr;'
+	    ];
+	    nav_tbl_headers.push(hdrc.join(' '));
+	});
 		
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
@@ -3237,22 +3311,21 @@ bbopx.noctua.widgets.repaint_edge_table = function(ecore, aid, table_div){
 					   'table-hover',
 					   'table-condensed'].join(' ')});
 	
-	each(edge_list,
-	     function(edge_id){
-		 var edge = ecore.get_edge(edge_id);
-		 var s = edge.source();
-		 var r = edge.relation();
-		 var t = edge.target();
+	each(edge_list, function(edge_id){
+	    var edge = ecore.get_edge(edge_id);
+	    var s = edge.source();
+	    var r = edge.relation();
+	    var t = edge.target();
 
-		 // according to the sorted order.
-		 var table_row = [
-		     aid.readable(s),
-		     aid.readable(r),
-		     aid.readable(t)
-		 ];
-
-		 nav_tbl.add_to(table_row);		     
-	     });
+	    // according to the sorted order.
+	    var table_row = [
+		aid.readable(s),
+		aid.readable(r),
+		aid.readable(t)
+	    ];
+	    
+	    nav_tbl.add_to(table_row);		     
+	});
 	
 	// Add to display.
 	jQuery(table_div).empty();
@@ -3284,12 +3357,11 @@ bbopx.noctua.widgets.enode_to_stack = function(enode, aid){
 
     // Get ready to remove "dupes", first by collecting the signatures
     // of the non-inferred individual types.
-    each(bin_stack,
-	 function(t){
-	     if( ! t.inferred_p() ){
-		 sig_lookup[t.signature()] = true;
-	     }
-	 });
+    each(bin_stack, function(t){
+	if( ! t.inferred_p() ){
+	    sig_lookup[t.signature()] = true;
+	}
+    });
 
     // Sort the types within the stack according to the known
     // type priorities.
@@ -3342,19 +3414,18 @@ bbopx.noctua.widgets.render_node_stack = function(enode, aid){
     // Add type/color information.
     var inferred_type_count = 0;
     var ordered_types = bbopx.noctua.widgets.enode_to_stack(enode, aid);
-    each(ordered_types,
-	 function(item){
-
-	     // Special visual handling of inferred types.
-	     if( item.inferred_p() ){ inferred_type_count++; }
-
-	     var trstr = '<tr class="bbop-mme-stack-tr" ' +
+    each(ordered_types, function(item){
+	
+	// Special visual handling of inferred types.
+	if( item.inferred_p() ){ inferred_type_count++; }
+	
+	var trstr = '<tr class="bbop-mme-stack-tr" ' +
 		 'style="background-color: ' +
-		 aid.color(item.category()) +
-		 ';"><td class="bbop-mme-stack-td">' 
-		 + bbopx.noctua.type_to_span(item, aid) + '</td></tr>';   
-	     enode_stack_table.add_to(trstr);
-	 });
+	    aid.color(item.category()) +
+	    ';"><td class="bbop-mme-stack-td">' 
+	    + bbopx.noctua.type_to_span(item, aid) + '</td></tr>';   
+	enode_stack_table.add_to(trstr);
+    });
 
     // Inject meta-information if extant.
     var anns = enode.annotations();
@@ -3363,11 +3434,10 @@ bbopx.noctua.widgets.render_node_stack = function(enode, aid){
 	// Meta counts.
 	var n_ev = 0;
 	var n_other = 0;
-	each(anns,
-	     function(ann){
-		 if( ann.property('evidence') ){ n_ev++;
-		 }else{ n_other++; }
-	     });
+	each(anns, function(ann){
+	    if( ann.property('evidence') ){ n_ev++; }
+	    else{ n_other++; }
+	});
 
 	// Add to top.
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
@@ -3376,12 +3446,12 @@ bbopx.noctua.widgets.render_node_stack = function(enode, aid){
 	    '</small></td></tr>';
 	enode_stack_table.add_to(trstr);
     }
-
+    
     // Add external visual cue if there were inferred types.
     if( inferred_type_count > 0 ){
 	var itcstr = '<tr class="bbop-mme-stack-tr">' +
-		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
-		'inferred types: ' + inferred_type_count + '</small></td></tr>';
+	    '<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+	    'inferred types: ' + inferred_type_count + '</small></td></tr>';
 	enode_stack_table.add_to(itcstr);
     }
 
@@ -3657,34 +3727,32 @@ bbopx.noctua.widgets.sorted_relation_list = function(relations, aid){
 
     // Get a sorted list of known rels.
     //var rels = aid.all_entities();
-    var rels = relations.sort(
-	function(a,b){ 
-	    var id_a = a['id'];
-	    var id_b = b['id'];
-
-	    var pr_a = aid.priority(id_a);
-	    var pr_b = aid.priority(id_b);
-
-	    // Looking at the optional boolean "relevant" field, if we
-	    // showed no preference in our context, give these a
-	    // boost.
-	    if( pr_a == 0 && a['relevant'] ){ pr_a = boost; }
-	    if( pr_b == 0 && b['relevant'] ){ pr_b = boost; }
-
-	    return pr_b - pr_a;
-	});
+    var rels = relations.sort(function(a,b){ 
+	var id_a = a['id'];
+	var id_b = b['id'];
+	
+	var pr_a = aid.priority(id_a);
+	var pr_b = aid.priority(id_b);
+	
+	// Looking at the optional boolean "relevant" field, if we
+	// showed no preference in our context, give these a
+	// boost.
+	if( pr_a == 0 && a['relevant'] ){ pr_a = boost; }
+	if( pr_b == 0 && b['relevant'] ){ pr_b = boost; }
+	
+	return pr_b - pr_a;
+    });
     var rellist = [];
-    each(rels,
-	 function(rel){
-	     // We have the id.
-	     var r = [rel['id']];
-	     if( rel['label'] ){ // use their label
-		 r.push(rel['label']);
-	     }else{ // otherwise, try readable
-		 r.push(aid.readable(rel['id']));
-	     }
-	     rellist.push(r);
-	 });
+    each(rels, function(rel){
+	// We have the id.
+	var r = [rel['id']];
+	if( rel['label'] ){ // use their label
+	    r.push(rel['label']);
+	}else{ // otherwise, try readable
+	    r.push(aid.readable(rel['id']));
+	}
+	rellist.push(r);
+    });
 
     return rellist;
 };
@@ -3697,8 +3765,8 @@ bbopx.noctua.widgets.sorted_relation_list = function(relations, aid){
  * TODO: make subclass?
  */
 bbopx.noctua.widgets.add_edge_modal = function(ecore, manager,
-					   relations, aid,
-					   source_id, target_id){
+					       relations, aid,
+					       source_id, target_id){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
 
@@ -3719,21 +3787,20 @@ bbopx.noctua.widgets.add_edge_modal = function(ecore, manager,
     var radio_name = bbop.core.uuid();
     var tcache = [mebe.join(' '),
 		  '<div style="height: 25em; overflow-y: scroll;">'];
-    each(rellist,
-	 function(tmp_rel, rel_ind){
-	     tcache.push('<div class="radio"><label>');
-	     tcache.push('<input type="radio" ');
-	     tcache.push('name="' + radio_name + '" ');
-	     tcache.push('value="' + tmp_rel[0] +'"');
-	     if( rel_ind == 0 ){
-		 tcache.push('checked>');
-	     }else{
-		 tcache.push('>');
-	     }
-	     tcache.push(tmp_rel[1] + ' ');
-	     tcache.push('(' + tmp_rel[0] + ')');
-	     tcache.push('</label></div>');	     
-	 });
+    each(rellist, function(tmp_rel, rel_ind){
+	tcache.push('<div class="radio"><label>');
+	tcache.push('<input type="radio" ');
+	tcache.push('name="' + radio_name + '" ');
+	tcache.push('value="' + tmp_rel[0] +'"');
+	if( rel_ind == 0 ){
+	    tcache.push('checked>');
+	}else{
+	    tcache.push('>');
+	}
+	tcache.push(tmp_rel[1] + ' ');
+	tcache.push('(' + tmp_rel[0] + ')');
+	tcache.push('</label></div>');	     
+    });
     tcache.push('</div>');
     
     var save_btn_args = {
@@ -3776,11 +3843,10 @@ bbopx.noctua.widgets.add_edge_modal = function(ecore, manager,
 	mdl.destroy();
     }
     // And add the new one for this instance.
-    jQuery('#' + save_btn.get_id()).click(
-	function(evt){
-	    evt.stopPropagation();
-	    _rel_save_button_start();
-	});
+    jQuery('#' + save_btn.get_id()).click(function(evt){
+	evt.stopPropagation();
+	_rel_save_button_start();
+    });
     
     // Return our final product.
     return mdl;
@@ -3795,8 +3861,8 @@ bbopx.noctua.widgets.add_edge_modal = function(ecore, manager,
  * TODO: make subclass?
  */
 bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
-					    relations, aid,
-					    gserv, gconf){
+						relations, aid,
+						gserv, gconf){
     var each = bbop.core.each;
     var tag = bbop.html.tag;
 
@@ -3807,41 +3873,34 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     // capture their information for further editing.
     var elt2type = {};
     var type_list = [];
-    each(bbopx.noctua.widgets.enode_to_stack(enode, aid),
-	 function(item){
-	     var type_str = bbopx.noctua.type_to_full(item, aid);
-	     var eid = bbop.core.uuid();
-	     elt2type[eid] = item;		 
-	     var acache = [];
-	     acache.push('<li class="list-group-item" style="background-color: '
-			 + aid.color(item.category()) + ';">');
-	     acache.push(type_str);
-	     if( ! item.inferred_p() ){
-		 acache.push('<span id="'+ eid +
-			     '" class="badge app-delete-mark">X</span>');
-	     }
-	     acache.push('<div class="clearfix"></div>');
-	     acache.push('</li>');
-	     type_list.push(acache.join(''));
-	 });
+    each(bbopx.noctua.widgets.enode_to_stack(enode, aid), function(item){
+	var type_str = bbopx.noctua.type_to_full(item, aid);
+	var eid = bbop.core.uuid();
+	elt2type[eid] = item;		 
+	var acache = [];
+	acache.push('<li class="list-group-item" style="background-color: '
+		    + aid.color(item.category()) + ';">');
+	acache.push(type_str);
+	if( ! item.inferred_p() ){
+	    acache.push('<span id="'+ eid +
+			'" class="badge app-delete-mark">X</span>');
+	}
+	acache.push('<div class="clearfix"></div>');
+	acache.push('</li>');
+	type_list.push(acache.join(''));
+    });
 
-    // Generate the dropdown for the 
-    var rellist = bbopx.noctua.widgets.sorted_relation_list(relations, aid);
-    var opts = [new tag('option',{'value': ''},'Select property')];
-    each(rellist,
-	 function(rel){
-	     var opt = new tag('option',
-			       {'value': rel[0]}, rel[1] +' ('+ rel[0] +')');
-	     opts.push(opt);
-	 });
-    var svf_prop_select_args = {
+    // Generate embedded autocomplete for the relations.
+    var svf_prop_text_args = {
     	'generate_id': true,
     	'type': 'text',
-    	'class': 'form-control'
-    	//'placeholder': 'Enter property'
+    	'class': 'form-control',
+    	'placeholder':
+	'Enter property to use (e.g. directly_activates, has_input)'
     };
-    var svf_prop_select = new tag('select', svf_prop_select_args, opts);
+    var svf_prop_text = new tag('input', svf_prop_text_args);
 
+    // Create autocomplete box (enabled_by).
     var svf_class_text_args = {
     	'generate_id': true,
     	'type': 'text',
@@ -3861,7 +3920,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     var svf_form = [
     	'<div class="form">',
     	'<div class="form-group">',
-	svf_prop_select.to_string(),
+	svf_prop_text.to_string(),
     	'</div>',
     	'<div class="form-group">',
 	svf_class_text.to_string(),
@@ -3905,72 +3964,98 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     mdl.add_to_body(tcache.join(''));
 
     // Attach deletes to all of the listed types.
-    each(elt2type,
-	 function(elt_id, type){
-	     jQuery('#' + elt_id).click(
-		 function(evt){
-		     evt.stopPropagation();
-		     var target_id = evt.target.id;
-		     var target_type = elt2type[target_id];
-		     var cid = target_type.class_id();
+    each(elt2type, function(elt_id, type){
+	jQuery('#' + elt_id).click(function(evt){
+	    evt.stopPropagation();
+	    var target_id = evt.target.id;
+	    var target_type = elt2type[target_id];
+	    var cid = target_type.class_id();
+	    
+	    // Trigger the delete.
+	    if( target_type.type() == 'class' ){
+		manager.remove_class(ecore.get_id(), tid, cid);
+	    }else{
+		var pid = target_type.property_id();
+		manager.remove_class_expression(ecore.get_id(), tid,
+						cid, target_type);
+	    }
+	    // Wipe out modal.
+	    mdl.destroy();
+	});
+    });
 
-		     // Trigger the delete.
-		     if( target_type.type() == 'class' ){
-			 manager.remove_class(ecore.get_id(), tid, cid);
-		     }else{
-			 var pid = target_type.property_id();
-			 manager.remove_class_expression(ecore.get_id(), tid,
-							 cid, target_type);
-		     }
-		     // Wipe out modal.
-		     mdl.destroy();
-		 });
-	 });
+    // Generate the dropdown for the relations.
+    var rellist = bbopx.noctua.widgets.sorted_relation_list(relations, aid);
+    // Make the property autocomplete dance.
+    var prop_sel_ac_list = [];
+    each(rellist, function(rel){
+	prop_sel_ac_list.push(
+	    {
+		'value': rel[0],
+		//'desc': '???',
+		'label': rel[1] + ' ('+ rel[0] +')'
+	    });
+    });
+    jQuery('#' + svf_prop_text.get_id()).autocomplete({
+	'minLength': 0,
+	'source': prop_sel_ac_list,
+	'focus': function(event, ui){
+	    jQuery('#' + svf_prop_text.get_id()).val(ui.item.value);
+	    return false;
+	},
+	select: function( event, ui ) {
+	    jQuery('#' + svf_prop_text.get_id()).val(ui.item.value);
+	    return false;
+	}
+    });// .autocomplete('#' + svf_prop_text.get_id()).val(ui.item.label)._renderItem = function(ul, item){
+    // 	return jQuery('<li>')
+    // 	    .append('<a>' + item.label + '<br />' + item.desc + '</a>')
+    // 	    .appendTo(ul);
+    // };
 
     // Add add expression action.
-    jQuery('#' + add_svf_btn.get_id()).click(
-	function(evt){
-	    evt.stopPropagation();
-
-	    var cls = jQuery('#' + svf_class_text.get_id()).val();
-	    var prp = jQuery('#' + svf_prop_select.get_id()).val();
-	    if( cls && prp ){
-		// Trigger the delete--hopefully inconsistent.
-		manager.add_svf(ecore.get_id(), tid, cls, prp);
-
-		// Wipe out modal.
-		mdl.destroy();	    
-	    }else if( cls ){
-		// Trigger the delete--hopefully inconsistent.
-		manager.add_class(ecore.get_id(), tid, cls);
-
-		// Wipe out modal.
-		mdl.destroy();	    
-	    }else{
-		// Allow modal to remain for retry.
-		alert('At least class must be defined');
-	    }
-	});
-    
-    // Add delete action.
-    jQuery('#' + del_btn.get_id()).click(
-	function(evt){
-	    evt.stopPropagation();
-
+    jQuery('#' + add_svf_btn.get_id()).click(function(evt){
+	evt.stopPropagation();
+	
+	var cls = jQuery('#' + svf_class_text.get_id()).val();
+	//var prp = jQuery('#' + svf_prop_select.get_id()).val();
+	var prp = jQuery('#' +  svf_prop_text.get_id()).val();
+	if( cls && prp ){
 	    // Trigger the delete--hopefully inconsistent.
-	    manager.remove_individual(ecore.get_id(), tid);
-
+	    manager.add_svf(ecore.get_id(), tid, cls, prp);
+	    
 	    // Wipe out modal.
 	    mdl.destroy();	    
-	});
+	}else if( cls ){
+	    // Trigger the delete--hopefully inconsistent.
+	    manager.add_class(ecore.get_id(), tid, cls);
+	    
+	    // Wipe out modal.
+	    mdl.destroy();	    
+	}else{
+	    // Allow modal to remain for retry.
+	    alert('At least class must be defined');
+	}
+    });
     
-	// Add autocomplete box for ECO to evidence box.
-	var eco_auto_args = {
-    	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
-    	    'value_template': '{{annotation_class}}',
-    	    'list_select_callback': function(doc){}
-	};
-
+    // Add delete action.
+    jQuery('#' + del_btn.get_id()).click(function(evt){
+	evt.stopPropagation();
+	
+	// Trigger the delete--hopefully inconsistent.
+	manager.remove_individual(ecore.get_id(), tid);
+	
+	// Wipe out modal.
+	mdl.destroy();	    
+    });
+    
+    // Add autocomplete box for ECO to evidence box.
+    var eco_auto_args = {
+    	'label_template':'{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class}}',
+    	'list_select_callback': function(doc){}
+    };
+    
     // Add general autocomplete to the input.
     var gen_auto_args = {
     	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
@@ -3980,6 +4065,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
     var gen_auto =
 	new bbop.widget.search_box(gserv, gconf, svf_class_text.get_id(),
 				   gen_auto_args);
+    gen_auto.lite(true);
     gen_auto.add_query_filter('document_category', 'general');
     //gen_auto.add_query_filter('source', 'eco', ['+']);
     gen_auto.set_personality('general');
@@ -4331,6 +4417,7 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 		    new bbop.widget.search_box(gserv, gconf,
 					       ev_form.text_input.get_id(),
 					       eco_auto_args);
+	    eco_auto.lite(true);
 	    eco_auto.add_query_filter('document_category', 'ontology_class');
 	    eco_auto.add_query_filter('source', 'eco', ['+']);
 	    eco_auto.set_personality('ontology');

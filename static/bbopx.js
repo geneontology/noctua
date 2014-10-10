@@ -18,9 +18,6 @@ if( typeof(exports) != 'undefined' ){
  * give safe access to fields and properties.
  * 
  * It is not meant to be a model for the parts in the data section.
- *
- * BUG/NOTE: This is slated to replace the bbop.rest.response.mmm
- * package after it reaches maturity.
  */
 
 // if ( typeof bbop == "undefined" ){ var bbop = {}; }
@@ -33,7 +30,7 @@ if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
 /*
  * Constructor: response
  * 
- * Contructor for a GO MMM REST JSON response object.
+ * Contructor for a Minerva REST JSON response object.
  * 
  * The constructor argument is an object or a string.
  * 
@@ -43,17 +40,16 @@ if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
  * Returns:
  *  response object
  */
-//bbop.rest.response.mmm = function(raw){
 bbopx.barista.response = function(raw){
     bbop.rest.response.call(this);
-    //this._is_a = 'bbop.rest.response.mmm';
     this._is_a = 'bbopx.barista.response';
 
     // Required top-level strings in the response.
     // message and message_type are defined in the superclass.
     this._uid = null; // initiating user
-    this._intention = null; // what the user wanted to do
-    this._signal = null; // 'merge', etc.
+    this._packet_id = null; // identify the packet
+    this._intention = null; // what the user wanted to do ('query', 'action')
+    this._signal = null; // 'merge', 'rebuild', 'meta', etc.
 
     // Optional top-level strings in the response.
     this._commentary = null;
@@ -146,6 +142,7 @@ bbopx.barista.response = function(raw){
 			    this._uid = jresp['uid'] || 'unknown';
 			    this._intention = jresp['intention'] || 'unknown';
 			    this._signal = jresp['signal'] || 'unknown';
+			    this._packet_id = jresp['packet_id'] || 'unknown';
 
 			    // Add any additional fields.
 			    if( cdata ){ this._commentary = cdata; }
@@ -157,7 +154,6 @@ bbopx.barista.response = function(raw){
 	}
     }
 };
-//bbop.core.extend(bbop.rest.response.mmm, bbop.rest.response);
 bbop.core.extend(bbopx.barista.response, bbop.rest.response);
 
 /*
@@ -213,6 +209,24 @@ bbopx.barista.response.prototype.signal = function(){
 };
 
 /*
+ * Function: packet_id
+ * 
+ * Returns the response's unique id. Usful to make sure you're not
+ * talking to yourself in some cases.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.packet_id = function(){
+    var ret = null;
+    if( this._packet_id ){ ret = this._packet_id; }
+    return ret;
+};
+
+/*
  * Function: commentary
  * 
  * Returns the commentary object (whatever that might be in any given
@@ -224,7 +238,6 @@ bbopx.barista.response.prototype.signal = function(){
  * Returns:
  *  copy of commentary object or null
  */
-//bbop.rest.response.mmm.prototype.commentary = function(){
 bbopx.barista.response.prototype.commentary = function(){
     var ret = null;
     if( this._commentary ){
@@ -245,7 +258,6 @@ bbopx.barista.response.prototype.commentary = function(){
  * Returns:
  *  copy of data object or null
  */
-//bbop.rest.response.mmm.prototype.data = function(){
 bbopx.barista.response.prototype.data = function(){
     var ret = null;
     if( this._data ){
@@ -265,7 +277,6 @@ bbopx.barista.response.prototype.data = function(){
  * Returns:
  *  string or null
  */
-//bbop.rest.response.mmm.prototype.model_id = function(){
 bbopx.barista.response.prototype.model_id = function(){
     var ret = null;
     if( this._data && this._data['id'] ){
@@ -286,7 +297,6 @@ bbopx.barista.response.prototype.model_id = function(){
  * Returns:
  *  true or false
  */
-//bbop.rest.response.mmm.prototype.inconsistent_p = function(){
 bbopx.barista.response.prototype.inconsistent_p = function(){
     var ret = false;
     if( this._data &&
@@ -308,7 +318,6 @@ bbopx.barista.response.prototype.inconsistent_p = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.facts = function(){
 bbopx.barista.response.prototype.facts = function(){
     var ret = [];
     if( this._data && this._data['facts'] && 
@@ -329,7 +338,6 @@ bbopx.barista.response.prototype.facts = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.properties = function(){
 bbopx.barista.response.prototype.properties = function(){
     var ret = [];
     if( this._data && this._data['properties'] && 
@@ -350,7 +358,6 @@ bbopx.barista.response.prototype.properties = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.individuals = function(){
 bbopx.barista.response.prototype.individuals = function(){
     var ret = [];
     if( this._data && this._data['individuals'] && 
@@ -372,7 +379,6 @@ bbopx.barista.response.prototype.individuals = function(){
  * Returns:
  *  list
  */
-//bbop.rest.response.mmm.prototype.individuals = function(){
 bbopx.barista.response.prototype.inferred_individuals = function(){
     var ret = [];
     if( this._data && this._data['individuals_i'] && 
@@ -472,7 +478,7 @@ bbopx.barista.response.prototype.model_ids = function(){
 /*
  * Function: models_meta
  * 
- * Returns a hash of the model ids to models properties found in ther
+ * Returns a hash of the model ids to models properties found in the
  * response.
  *
  * Sometimes not there, so check the return.
@@ -534,7 +540,9 @@ bbopx.barista.client = function(barista_location, token){
 			      'initialization',
 			      //'disconnect',
 			      'relay', // catch-all
-			      'message', 
+			      'merge', // data is raw response 
+			      'rebuild', // data is raw response 
+			      'message',
 			      'clairvoyance',
 			      'telekinesis',
 			      'query']); // asking barista something for yourself
@@ -551,6 +559,8 @@ bbopx.barista.client = function(barista_location, token){
 	'relay': true,
 	// Specific forms of relay.
 	'message': true,
+	'merge': true,
+	'rebuild': true,
 	'clairvoyance': true,
 	'telekinesis': true
     };
@@ -604,7 +614,7 @@ bbopx.barista.client = function(barista_location, token){
 	if( ! anchor.okay() ){
 	    ll('no good socket on location; did you connect()?');
 	}else{
-	    ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
+	    //ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
 
 	    // Inject our data.
 	    data['class'] = relay_class;
@@ -634,6 +644,13 @@ bbopx.barista.client = function(barista_location, token){
 
 	    anchor.socket.emit('query', data);
 	}
+    };
+
+    /*
+     * Wrapper for the only thing query is currently used for.
+     */
+    anchor.get_layout = function(){
+	anchor.query('query', {'query': 'layout'});
     };
 
     /*
@@ -732,7 +749,7 @@ bbopx.barista.client = function(barista_location, token){
 			ll('unknown relay class: ' + dclass);
 		    }else{
 			// Run appropriate callbacks.
-			ll('apply "'+ dclass +'" callbacks');
+			ll('apply (relay) "'+ dclass +'" callbacks');
 			anchor.apply_callbacks(dclass, [data]);
 		    }
 		}
@@ -753,7 +770,7 @@ bbopx.barista.client = function(barista_location, token){
 			ll('unknown query class: ' + dclass);
 		    }else{
 			// Run appropriate callbacks.
-			ll('apply "'+ dclass +'" callbacks');
+			ll('apply (query) "'+ dclass +'" callbacks');
 			anchor.apply_callbacks(dclass, [data]);
 		    }
 		}
