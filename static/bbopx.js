@@ -4506,8 +4506,8 @@ bbopx.noctua.widgets.reporter = function(output_id){
 		}else{		    
 		    out += 'performed  <span class="bbop-mme-message-op">' +
 			intent + '</span> (' + mess + '), ' +
-			'<span class="bbop-mme-message-req">' +
-			'you should refresh' + '</span>';
+			'<span class="">' +
+			'you may with to refresh' + '</span>';
 		}
 	    }else{
 		out += mess_type + ': ' + mess;		
