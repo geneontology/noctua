@@ -223,15 +223,24 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var table_edge_div = '#' + table_edge_id;
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
-    // MF button contact points.
-    var simple_mf_enb_auto_id = 'simple_mf_enb_auto';
-    var simple_mf_enb_auto_elt = '#' + simple_mf_enb_auto_id;
-    var simple_mf_act_auto_id = 'simple_mf_act_auto';
-    var simple_mf_act_auto_elt = '#' + simple_mf_act_auto_id;
-    var simple_mf_occ_auto_id = 'simple_mf_occ_auto';
-    var simple_mf_occ_auto_elt = '#' + simple_mf_occ_auto_id;
-    var simple_mf_add_btn_id = 'simple_mf_adder_button';
-    var simple_mf_add_btn_elt = '#' + simple_mf_add_btn_id;
+    // MF (restrict) button contact points.
+    var simple_mf_restrict_enb_auto_id = 'simple_mf_restrict_enb_auto';
+    var simple_mf_restrict_enb_auto_elt = '#' + simple_mf_restrict_enb_auto_id;
+    var simple_mf_restrict_act_auto_id = 'simple_mf_restrict_act_auto';
+    var simple_mf_restrict_act_auto_elt = '#' + simple_mf_restrict_act_auto_id;
+    var simple_mf_restrict_occ_auto_id = 'simple_mf_restrict_occ_auto';
+    var simple_mf_restrict_occ_auto_elt = '#' + simple_mf_restrict_occ_auto_id;
+    var simple_mf_restrict_add_btn_id = 'simple_mf_restrict_adder_button';
+    var simple_mf_restrict_add_btn_elt = '#' + simple_mf_restrict_add_btn_id;
+    // MF (free form) button contact points.
+    var simple_mf_free_enb_auto_id = 'simple_mf_free_enb_auto';
+    var simple_mf_free_enb_auto_elt = '#' + simple_mf_free_enb_auto_id;
+    var simple_mf_free_act_auto_id = 'simple_mf_free_act_auto';
+    var simple_mf_free_act_auto_elt = '#' + simple_mf_free_act_auto_id;
+    var simple_mf_free_occ_auto_id = 'simple_mf_free_occ_auto';
+    var simple_mf_free_occ_auto_elt = '#' + simple_mf_free_occ_auto_id;
+    var simple_mf_free_add_btn_id = 'simple_mf_free_adder_button';
+    var simple_mf_free_add_btn_elt = '#' + simple_mf_free_add_btn_id;
     // BP button contact points.
     var simple_bp_enb_auto_id = 'simple_bp_enb_auto';
     var simple_bp_enb_auto_elt = '#' + simple_bp_enb_auto_id;
@@ -1379,86 +1388,195 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     );
 
     ///
-    /// Activate addition template for MF.
+    /// Activate addition template for MF (restrict).
     ///
 
     // Storage for the actual selected identifiers.
-    var simple_mf_enb_auto_val = null;
-    var simple_mf_act_auto_val = null;
-    var simple_mf_occ_auto_val = null;
-
+    var simple_mf_restrict_enb_auto_val = null;
+    var simple_mf_restrict_act_auto_val = null;
+    var simple_mf_restrict_occ_auto_val = null;
+    
     // bioentity
-    var simple_mf_enb_auto_args = {
+    var simple_mf_restrict_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_mf_enb_auto_val = doc['bioentity'] || null;
+	    simple_mf_restrict_enb_auto_val = doc['bioentity'] || null;
     	}
     };
     // molecular function
-    var simple_mf_act_auto_args = {
+    var simple_mf_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_mf_act_auto_val = doc['annotation_class'] || null;
+	    simple_mf_restrict_act_auto_val = doc['annotation_class'] || null;
     	}
     };
     // location/occurs_in
-    var simple_mf_occ_auto_args = {
+    var simple_mf_restrict_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_mf_occ_auto_val = doc['annotation_class'] || null;
+	    simple_mf_restrict_occ_auto_val = doc['annotation_class'] || null;
     	}
     };
 
-    var simple_mf_enb_auto =
-	    new bbop.widget.search_box(gserv, gconf, simple_mf_enb_auto_id,
-				       simple_mf_enb_auto_args);
-    simple_mf_enb_auto.lite(true);
-    simple_mf_enb_auto.add_query_filter('document_category', 'bioentity');
-    simple_mf_enb_auto.set_personality('bioentity');
+    var simple_mf_restrict_enb_auto =
+	    new bbop.widget.search_box(gserv, gconf,
+				       simple_mf_restrict_enb_auto_id,
+				       simple_mf_restrict_enb_auto_args);
+    simple_mf_restrict_enb_auto.lite(true);
+    simple_mf_restrict_enb_auto.add_query_filter('document_category',
+						 'bioentity');
+    simple_mf_restrict_enb_auto.set_personality('bioentity');
+    
+    var simple_mf_restrict_act_auto =
+	    new bbop.widget.search_box(gserv, gconf,
+				       simple_mf_restrict_act_auto_id,
+				       simple_mf_restrict_act_auto_args);
+    simple_mf_restrict_act_auto.lite(true);
+    simple_mf_restrict_act_auto.add_query_filter('document_category',
+						 'annotation', ['*']);
+    simple_mf_restrict_act_auto.set_personality('annotation');
+    
+    var simple_mf_restrict_occ_auto =
+	    new bbop.widget.search_box(gserv, gconf,
+				       simple_mf_restrict_occ_auto_id,
+				       simple_mf_restrict_occ_auto_args);
+    simple_mf_restrict_occ_auto.lite(true);
+    simple_mf_restrict_occ_auto.add_query_filter('document_category',
+						 'annotation', ['*']);
+    simple_mf_restrict_occ_auto.set_personality('annotation');
 
-    var simple_mf_act_auto =
-	    new bbop.widget.search_box(gserv, gconf, simple_mf_act_auto_id,
-				       simple_mf_act_auto_args);
-    simple_mf_act_auto.lite(true);
-    simple_mf_act_auto.add_query_filter('document_category', 'ontology_class');
-    simple_mf_act_auto.add_query_filter('regulates_closure_label',
-    					'molecular_function');
-    simple_mf_act_auto.set_personality('ontology');
-
-    var simple_mf_occ_auto =
-	    new bbop.widget.search_box(gserv, gconf, simple_mf_occ_auto_id,
-				       simple_mf_occ_auto_args);
-    simple_mf_occ_auto.lite(true);
-    simple_mf_occ_auto.add_query_filter('document_category', 'ontology_class');
-    simple_mf_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
-    simple_mf_occ_auto.add_query_filter('source', 'biological_process', ['-']);
-    simple_mf_occ_auto.set_personality('ontology');
+    // After properly inputting the enb, take the value enb value and
+    // add it to the filter; remove/clear otherwise.
+    jQuery(simple_mf_restrict_enb_auto_elt).focusout(function(){
+	var enb = simple_mf_restrict_enb_auto_val || '';
+	if( ! enb || enb == '' ){
+	    //
+	    ll('removing the mf (restrict) restriction: ' + enb);
+	    simple_mf_restrict_act_auto.reset_query_filters();
+	    simple_mf_restrict_occ_auto.reset_query_filters();
+	}else{
+	    ll('adding: the mf (restrict) restriction: ' + enb);
+	    simple_mf_restrict_act_auto.add_query_filter('bioentity', enb);
+	    simple_mf_restrict_occ_auto.add_query_filter('bioentity', enb);
+	}
+    });
 
     // Add new remote node button.
-    jQuery(simple_mf_add_btn_elt).click(function(){
-    	var enb = simple_mf_enb_auto_val || '';
-    	var act = simple_mf_act_auto_val || '';
-    	var occ = simple_mf_occ_auto_val || '';
+    jQuery(simple_mf_restrict_add_btn_elt).click(function(){
+    	var enb = simple_mf_restrict_enb_auto_val || '';
+    	var act = simple_mf_restrict_act_auto_val || '';
+    	var occ = simple_mf_restrict_occ_auto_val || '';
 	
     	if( act == '' ){
     	    alert('Must select activity field from autocomplete list.');
     	}else{
 	    // Wipe controls' state, internal and external.
-	    simple_mf_enb_auto_val = null;
-    	    simple_mf_act_auto_val = null;
-    	    simple_mf_occ_auto_val = null;
-	    jQuery(simple_mf_enb_auto_elt).val('');
-    	    jQuery(simple_mf_act_auto_elt).val('');
-    	    jQuery(simple_mf_occ_auto_elt).val('');
+	    simple_mf_restrict_enb_auto_val = null;
+    	    simple_mf_restrict_act_auto_val = null;
+    	    simple_mf_restrict_occ_auto_val = null;
+	    jQuery(simple_mf_restrict_enb_auto_elt).val('');
+    	    jQuery(simple_mf_restrict_act_auto_elt).val('');
+    	    jQuery(simple_mf_restrict_occ_auto_elt).val('');
+	    
+	    // Send message to server.
+	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+    	}
+    });
+
+    ///
+    /// Activate addition template for MF (free form).
+    ///
+
+    // Storage for the actual selected identifiers.
+    var simple_mf_free_enb_auto_val = null;
+    var simple_mf_free_act_auto_val = null;
+    var simple_mf_free_occ_auto_val = null;
+
+    // bioentity
+    var simple_mf_free_enb_auto_args = {
+    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
+    	'value_template': '{{bioentity_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['bioentity_label']);
+	    simple_mf_free_enb_auto_val = doc['bioentity'] || null;
+    	}
+    };
+    // molecular function
+    var simple_mf_free_act_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_mf_free_act_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+    // location/occurs_in
+    var simple_mf_free_occ_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_mf_free_occ_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+
+    var simple_mf_free_enb_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_free_enb_auto_id,
+				       simple_mf_free_enb_auto_args);
+    simple_mf_free_enb_auto.lite(true);
+    simple_mf_free_enb_auto.add_query_filter('document_category', 'bioentity');
+    simple_mf_free_enb_auto.set_personality('bioentity');
+
+    var simple_mf_free_act_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_free_act_auto_id,
+				       simple_mf_free_act_auto_args);
+    simple_mf_free_act_auto.lite(true);
+    simple_mf_free_act_auto.add_query_filter('document_category',
+					     'ontology_class');
+    simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
+    					     'molecular_function');
+    simple_mf_free_act_auto.set_personality('ontology');
+    
+    var simple_mf_free_occ_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_mf_free_occ_auto_id,
+				       simple_mf_free_occ_auto_args);
+    simple_mf_free_occ_auto.lite(true);
+    simple_mf_free_occ_auto.add_query_filter('document_category',
+					     'ontology_class');
+    simple_mf_free_occ_auto.add_query_filter('source',
+					     'molecular_function', ['-']);
+    simple_mf_free_occ_auto.add_query_filter('source',
+					     'biological_process', ['-']);
+    simple_mf_free_occ_auto.set_personality('ontology');
+
+    // Add new remote node button.
+    jQuery(simple_mf_free_add_btn_elt).click(function(){
+    	var enb = simple_mf_free_enb_auto_val || '';
+    	var act = simple_mf_free_act_auto_val || '';
+    	var occ = simple_mf_free_occ_auto_val || '';
+	
+    	if( act == '' ){
+    	    alert('Must select activity field from autocomplete list.');
+    	}else{
+	    // Wipe controls' state, internal and external.
+	    simple_mf_free_enb_auto_val = null;
+    	    simple_mf_free_act_auto_val = null;
+    	    simple_mf_free_occ_auto_val = null;
+	    jQuery(simple_mf_free_enb_auto_elt).val('');
+    	    jQuery(simple_mf_free_act_auto_elt).val('');
+    	    jQuery(simple_mf_free_occ_auto_elt).val('');
 	    
 	    // Send message to server.
 	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
