@@ -482,3 +482,19 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 .dropHover {
     border:1px dotted red;
 }
+
+/*
+ * Override the bbop-js defaults (which override the jQuery ones).
+ */
+.ui-autocomplete-loading {
+    background: white url('images/waiting_ac.gif') right center no-repeat;
+}
+.ui-ajax-loading {
+    background: white url('images/waiting_ac.gif') right center no-repeat;
+}
+.ui-poll-loading-right {
+    background: white url('images/waiting_ac.gif') right center no-repeat;
+}
+.ui-poll-loading-left {
+    background: white url('images/waiting_ac.gif') left center no-repeat;
+}

@@ -396,7 +396,9 @@ var NoctuaLauncher = function(){
 	// Other static routes.
 	self.app.get('/images/waiting_ac.gif', function(req, res){
 	    res.setHeader('Content-Type', 'image/gif');
-	    res.send(pup_tent.get('waiting_ac.gif'));
+	    // BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.
+	    // Probably use _path_cache(key).
+	    res.sendfile('static/waiting_ac.gif');
 	});
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
