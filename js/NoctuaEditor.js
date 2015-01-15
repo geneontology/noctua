@@ -223,15 +223,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var table_edge_div = '#' + table_edge_id;
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
-    // BP button contact points.
-    var simple_bp_enb_auto_id = 'simple_bp_enb_auto';
-    var simple_bp_enb_auto_elt = '#' + simple_bp_enb_auto_id;
-    var simple_bp_act_auto_id = 'simple_bp_act_auto';
-    var simple_bp_act_auto_elt = '#' + simple_bp_act_auto_id;
-    var simple_bp_occ_auto_id = 'simple_bp_occ_auto';
-    var simple_bp_occ_auto_elt = '#' + simple_bp_occ_auto_id;
-    var simple_bp_add_btn_id = 'simple_bp_adder_button';
-    var simple_bp_add_btn_elt = '#' + simple_bp_add_btn_id;
     // MF button contact points.
     var simple_mf_enb_auto_id = 'simple_mf_enb_auto';
     var simple_mf_enb_auto_elt = '#' + simple_mf_enb_auto_id;
@@ -241,6 +232,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_occ_auto_elt = '#' + simple_mf_occ_auto_id;
     var simple_mf_add_btn_id = 'simple_mf_adder_button';
     var simple_mf_add_btn_elt = '#' + simple_mf_add_btn_id;
+    // BP button contact points.
+    var simple_bp_enb_auto_id = 'simple_bp_enb_auto';
+    var simple_bp_enb_auto_elt = '#' + simple_bp_enb_auto_id;
+    var simple_bp_act_auto_id = 'simple_bp_act_auto';
+    var simple_bp_act_auto_elt = '#' + simple_bp_act_auto_id;
+    var simple_bp_occ_auto_id = 'simple_bp_occ_auto';
+    var simple_bp_occ_auto_elt = '#' + simple_bp_occ_auto_id;
+    var simple_bp_add_btn_id = 'simple_bp_adder_button';
+    var simple_bp_add_btn_elt = '#' + simple_bp_add_btn_id;
     // Other contact points.
     var model_ann_id = 'menu-model-annotations';
     var model_ann_elt = '#' + model_ann_id;
@@ -1300,7 +1300,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // bioentity
     var simple_bp_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}})',
+    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
     	function(doc){
@@ -1389,7 +1389,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // bioentity
     var simple_mf_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}})',
+    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
     	'list_select_callback':
     	function(doc){
