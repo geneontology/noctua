@@ -868,6 +868,16 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     }
     _set_url_from_token(user_token);
 
+    // Helper function to add get_undo_redo when the user token
+    // (hopefully good) is defined.
+    function _add_undo_redo_req(req_set, model_id){
+	if( anchor._user_token ){
+	    var req = new bbopx.minerva.request('model', 'get-undo-redo');
+	    req.model_id(model_id);
+	    req_set.add(req);
+	}
+    }
+
     // An internal manager for handling the unhappiness of AJAX callbacks.
     //var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
     var jqm = new bbop.rest.manager.jquery(bbopx.barista.response);
@@ -989,6 +999,25 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
 	var req = new bbopx.minerva.request('model', 'all-model-meta');
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+
+    // This will make the request whether or not the user has an okay
+    // token defined (as opposed to the helper function
+    // _add_undo_redo()).
+    //
+    // Intent: "query".
+    // Expect: "success" and "meta".
+    anchor.get_model_undo_redo = function(model_id){
+
+	// 
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var req = new bbopx.minerva.request('model', 'get-undo-redo');
+	req.model_id(model_id);
 	reqs.add(req);
 
 	var args = reqs.callable();	

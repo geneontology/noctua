@@ -254,6 +254,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var zret_btn_elt = '#' + zret_btn_id;
     var zout_btn_id = 'zoomout';
     var zout_btn_elt = '#' + zout_btn_id;
+    //
+    var undo_btn_id = 'action_undo';
+    var undo_btn_elt = '#' + undo_btn_id;
+    var redo_btn_id = 'action_redo';
+    var redo_btn_elt = '#' + redo_btn_id;
+    //
     var refresh_btn_id = 'action_refresh';
     var refresh_btn_elt = '#' + refresh_btn_id;
     var reset_btn_id = 'action_reset';
@@ -1865,6 +1871,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
+
+    // // TODO: As a test, see what the undo/redo listing looks like.
+    // manager.get_model_undo_redo(ecore.get_id());
 
     // As a use case, we want to have the title available to people in
     // their browsers.
