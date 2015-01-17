@@ -1886,7 +1886,7 @@ bbop.version.revision = "2.2.3";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20141015";
+bbop.version.release = "20150116";
 /*
  * Package: logger.js
  * 
@@ -17837,9 +17837,10 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  * there are probably some fields that you'll want to fill out to make
  * things work decently. The options for the argument hash are:
  * 
- *  fill_p - whether or not to fill the input with the val on select(default true)
+ *  fill_p - whether or not to fill the input with the val on select (default true)
  *  label_template - string template for dropdown, can use any document field
  *  value_template - string template for selected, can use any document field
+ *  additional_results_class - class to add to the pop-up autocomplete ul tag when there are more results than are shown in the results
  *  minimum_length - wait for this many characters to start (default 3)
  *  list_select_callback - function takes a json solr doc on dropdown selection
  * 
@@ -17878,6 +17879,7 @@ bbop.widget.search_box = function(golr_loc,
 	    'fill_p': true,
 	    'label_template': '{{id}}',
 	    'value_template': '{{id}}',
+	    'additional_results_class': '',
 	    'minimum_length': 3, // wait for three characters or more
 	    'list_select_callback': function(){}
 	};
@@ -17890,7 +17892,12 @@ bbop.widget.search_box = function(golr_loc,
     this._list_select_callback = arg_hash['list_select_callback'];
     var label_tt = new bbop.template(arg_hash['label_template']);
     var value_tt = new bbop.template(arg_hash['value_template']);
+    var ar_class = arg_hash['additional_results_class'];
     var minlen = arg_hash['minimum_length'];
+    // The document  return counts. Need  tri-state here since 0  is a
+    // legit return.
+    var result_count = null;
+    var return_count = null;
 
     // The all-important argument hash. See:
     // http://jqueryui.com/demos/autocomplete/#method-widget
@@ -17904,7 +17911,17 @@ bbop.widget.search_box = function(golr_loc,
 	    anchor.jq_vars['success'] = function(json_data){
 		var retlist = [];
 		var resp = new bbop.golr.response(json_data);
+
+		// Reset the last return; remember: tri-state.
+		result_count = null;
+		return_count = null;
+
 		if( resp.success() ){
+
+		    // Get best shot at document counts.
+		    result_count = resp.total_documents();
+		    return_count = resp.documents().length;
+
 		    loop(resp.documents(),
 			 function(doc){
 
@@ -17947,15 +17964,56 @@ bbop.widget.search_box = function(golr_loc,
 	    }
 
 	    // Only do the callback if it is defined.
-	    if( bbop.core.is_defined(anchor._list_select_callback) ){
+	    if( doc_to_apply && 
+		bbop.core.is_defined(anchor._list_select_callback) ){
 		anchor._list_select_callback(doc_to_apply);
 	    }
+	},
+	// What to do when a search is completed.
+	response: function(event, ui){
+	    // if(	result_count != null && return_count != null ){ // possible
+	    // 	if( result_count > return_count ){
+	    // 	    //console.log('incomplete listing');
+	    // 	    var item = {
+	    // 		'label': '...',
+	    // 		'value': null,
+	    // 		'document': null
+	    // 	    };
+	    // 	    ui.content.push(item);
+	    // 	}else{
+	    // 	    //console.log('complete listing');
+	    // 	}
+	    // }
 	}
     };
 
     // Set the ball rolling (attach jQuery autocomplete to doc).
-    jQuery('#' + anchor._interface_id).autocomplete(auto_args);
+    var jac = jQuery('#' + anchor._interface_id).autocomplete(auto_args);
 
+    // Add our render override.
+    // Extension point to get the additional
+    jac.data('ui-autocomplete')._renderMenu = function(ul, items){
+
+	// Allow standard menu construction delegation.
+	var anchor = this;
+	loop(items, function(item){
+	    anchor._renderItemData(ul, item);
+	});
+	
+	// Add a special class to the UL if there are results that
+	// are not shown.
+	if( ar_class && ar_class != '' ){
+	    jQuery(ul).removeClass(ar_class); // default no
+	    if( result_count != null && return_count != null ){ // possible
+		console.log('res_c: ' + result_count);
+		console.log('ret_c: ' + return_count);
+		if( result_count > return_count ){
+		    // If 
+		    jQuery(ul).addClass(ar_class);
+		}
+	    }
+	}
+    };
 
     /*
      * Function: destroy
@@ -20623,13 +20681,19 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  * 
  * Results table and optional buttons.
  *
+ * Optional options looks like:
+ *  callback_priority - default 0
+ *  user_buttons - default [], should be any passable renderable button
+ *  user_buttons_div_id - default null
+ *  selectable_p - have selectable side buttons (default true)
+ *
  * Arguments:
  *  interface_id - string id of the element to build on
  *  manager - the shared GOlr manager to use
  *  conf_class - the profile of the specific conf to use
  *  handler - handler to use in rendering
  *  linker - linker to use in rendering
- *  in_argument_hash - *[optional]* optional hash of optional arguments
+ *  in_argument_hash - *[optional]* optional hash of optional arguments, described above
  * 
  * Returns:
  *  this object
