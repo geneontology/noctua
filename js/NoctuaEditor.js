@@ -1311,6 +1311,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_bp_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
@@ -1321,6 +1322,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_bp_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1331,6 +1333,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_bp_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1400,6 +1403,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
@@ -1410,6 +1414,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1420,6 +1425,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1511,6 +1517,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
@@ -1521,6 +1528,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1531,6 +1539,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
