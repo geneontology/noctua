@@ -33,6 +33,17 @@
     "uri": "GOC:sjc"
   },
   {
+    "nickname": "Jeremy Nguyen Xuan",
+    "email-md5": [
+      "e2938f3e544a9bf2c8ac94b734643d9f"
+    ],
+    "authorizations": {
+      "minerva-go": true
+    },
+    "xref": "GOC:jnx",
+    "uri": "GOC:jnx"
+  },
+  {
     "nickname": "Heiko Dietze",
     "email-md5": [
       "61ab06ea85d8658a7e17cc30295dafbd"
