@@ -31,6 +31,8 @@ TESTS = \
 TEST_JS = rhino
 TEST_JS_FLAGS = -modules static/bbop.js -modules static/bbopx.js -opt -1
 
+NODE_BIN ?= node
+
 ###
 ### Building.
 ###
@@ -70,12 +72,12 @@ pass:
 ##
 .PHONY: start-noctua-dev
 start-noctua-dev: assemble-app
-	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
+	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
-	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) node noctua.js
+	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
 
 ###
 ### Commands/environment for messaging server.
@@ -83,11 +85,11 @@ start-noctua:
 
 .PHONY: start-barista-dev
 start-barista-dev: assemble-app
-	BARISTA_PORT=$(BARISTA_PORT) node barista.js
+	BARISTA_PORT=$(BARISTA_PORT) $(NODE_BIN) barista.js
 
 .PHONY: start-barista
 start-barista:
-	BARISTA_PORT=$(BARISTA_PORT) node barista.js
+	BARISTA_PORT=$(BARISTA_PORT) $(NODE_BIN) barista.js
 
 ###
 ### Documentation for JavaScript.
