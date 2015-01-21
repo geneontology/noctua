@@ -1460,10 +1460,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_occ_auto.lite(true);
     simple_mf_restrict_occ_auto.add_query_filter('document_category',
 						 'annotation', ['*']);
-    simple_mf_restrict_occ_auto.add_query_filter('source', 'molecular_function',
-						 ['-', '*']);
-    simple_mf_restrict_occ_auto.add_query_filter('source', 'biological_process',
-						 ['-', '*']);
+    simple_mf_restrict_occ_auto.add_query_filter('aspect', 'F', ['-', '*']);
+    simple_mf_restrict_occ_auto.add_query_filter('aspect', 'P', ['-', '*']);
     simple_mf_restrict_occ_auto.set_personality('annotation');
 
     // After properly inputting the enb, take the value enb value and
