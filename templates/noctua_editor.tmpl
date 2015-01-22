@@ -215,8 +215,49 @@
 	  <div class="panel-heading">
 	    <h4 class="panel-title">
               <a data-toggle="collapse"
+		 data-parent="#control_accordion" href="#collapse_four">
+		Add process (restrict)
+              </a>
+	    </h4>
+	  </div>
+	  <div id="collapse_four" class="panel-collapse collapse">
+	    <div class="panel-body">
+	      
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_restrict_enb_auto"
+		       placeholder="enabled by">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_restrict_act_auto"
+		       placeholder="biological process">
+	      </p>
+	      <p>
+		<input type="text"
+		       class="form-control"
+		       id="simple_bp_restrict_occ_auto"
+		       placeholder="occurs in">
+	      </p>
+	      <p>
+		<button id="simple_bp_restrict_adder_button"
+			type="button"
+			class="btn btn-primary">Add</button>
+	      </p>
+
+	    </div>
+	    
+	  </div>
+	</div>
+
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <h4 class="panel-title">
+              <a data-toggle="collapse"
 		 data-parent="#control_accordion" href="#collapse_one">
-		Add process
+		Add process (free form)
               </a>
 	    </h4>
 	  </div>
@@ -226,23 +267,23 @@
 	      <p>
 		<input type="text"
 		       class="form-control"
-		       id="simple_bp_enb_auto"
+		       id="simple_bp_free_enb_auto"
 		       placeholder="enabled by">
 	      </p>
 	      <p>
 		<input type="text"
 		       class="form-control"
-		       id="simple_bp_act_auto"
+		       id="simple_bp_free_act_auto"
 		       placeholder="biological process">
 	      </p>
 	      <p>
 		<input type="text"
 		       class="form-control"
-		       id="simple_bp_occ_auto"
+		       id="simple_bp_free_occ_auto"
 		       placeholder="occurs in">
 	      </p>
 	      <p>
-		<button id="simple_bp_adder_button"
+		<button id="simple_bp_free_adder_button"
 			type="button"
 			class="btn btn-primary">Add</button>
 	      </p>
