@@ -350,6 +350,9 @@ var NoctuaLauncher = function(){
 	
 	self.app.get('/basic', function(req, res) {
 			 
+	    // Try and see if we have an API token.
+	    var barista_token = self.get_token(req);
+	    
 	    //
 	    var tmpl_args = {
 		'title': notw + ': Simple',
@@ -357,7 +360,11 @@ var NoctuaLauncher = function(){
 		    {name: 'global_minerva_definition_name',
 		     value: self.minerva_definition_name },
 		    {name: 'global_known_relations',
-		     value: known_relations}
+		     value: known_relations},
+		    {name: 'global_barista_token',
+		     value: barista_token},
+		     {name:'global_barista_location',
+		     value: self.barista_location }
 		],
 		'pup_tent_js_libraries': [
 		    '/NoctuaBasic.js'
