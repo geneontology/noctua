@@ -3,6 +3,7 @@
 ####   make start-barista
 ####   make start-noctua
 ####
+#### : npm bin gulp
 
 ## Variable to pass the location definition Minerva server server to
 ## the deploying app.
