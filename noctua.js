@@ -173,8 +173,10 @@ var NoctuaLauncher = function(){
     // Assemble return doc.
     self.bootstrap_editor = function(res, name_of_the_week,
 				     model_id,
-				     //model_obj,
-				     known_relations, barista_loc, barista_token){
+				     known_relations, barista_loc, barista_token,
+				     model_obj
+				     // BUG^: support for heiko's JSON debug
+				    ){
 
 	// Assemble return doc.
 	res.setHeader('Content-Type', 'text/html');
@@ -192,11 +194,11 @@ var NoctuaLauncher = function(){
 	    ],
 	    'pup_tent_js_variables': [
 		{name: 'global_id', value: model_id },
+		//{name: 'global_model', value: null },
+		{name: 'global_model', value: (model_obj || null)},
 		{name: 'global_minerva_definition_name',
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location', value: self.barista_location },
-		//{name: 'global_model', value: model_obj },
-		{name: 'global_model', value: null },
 		{name: 'global_known_relations', value: known_relations },
 		{name: 'global_barista_token', value: barista_token }
 	    ],
@@ -462,10 +464,35 @@ var NoctuaLauncher = function(){
 		// Try and see if we have an API token.
 		var barista_token = self.get_token(req);		
 		self.bootstrap_editor(res, notw, query,
-				      //null,
 				      known_relations,
 				      self.barista_location,
-				      barista_token);
+				      barista_token
+				      //null,
+				     );
+	    }
+	});
+	
+	// DEBUG: A JSON model debugging tool for @hdietze
+	/// This path will eventually be destryed.
+	self.app.post('/seed/json', function(req, res) {
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    var jmod_str = req.body['json-model'] || '';
+	    if( ! jmod_str || jmod_str == '' ){
+		// Catch error here if no proper ID.
+		res.setHeader('Content-Type', 'text/html');
+		res.send('no json model');
+	    }else{
+		var jmod = JSON.parse(jmod_str); // to obj
+		
+		// No token, no editing, because this is crazy.
+		self.bootstrap_editor(res, notw, null,
+				      known_relations,
+				      self.barista_location,
+				      null,
+				      jmod
+				     );
 	    }
 	});
 	

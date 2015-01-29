@@ -2205,6 +2205,15 @@ jsPlumb.ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
+	    
+	    // BUG: Bad, bad, bad code...
+	    // DEBUG: Path for heiko that prevents initial manager pass and
+	    // uses embedded model.
+	    if( ! global_id && global_model ){
+		// Bootstrap model into viewer--cannot edit.
+		MMEnvInit(global_model, global_known_relations, null);
+
+	    }else{
 
 	    // This manager bootstraps the editor by fetching the
 	    // model out of Minerva.
@@ -2251,6 +2260,7 @@ jsPlumb.ready(function(){
 	    	bbopx.noctua.widgets.user_check(global_barista_location,
 	    					start_token, 'user_name_info');
 	    }
+	}
 	}
 
 });

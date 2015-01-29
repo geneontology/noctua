@@ -357,6 +357,35 @@
 	</div>
       </div>
 
+      <!-- Cheap-and-dirty debugging wire JSON. -->
+      <div class="panel panel-default">
+	<div class="panel-heading">
+	  <h3 class="panel-title">JSON Debugging</h3>
+	</div>
+	<div class="panel-body">
+	  
+	  <form action="/seed/json"
+		id="json-seed"
+		role="form"
+		method="POST">
+	    <p>
+	      <textarea class="form-control"
+			id="model_json_input"
+			name="json-model"
+			placeholder="???"
+			rows="3"></textarea>
+	    </p>
+	    
+	    <p>
+	      <button id="model_json_button"
+		      type="submit"
+		      class="btn btn-primary">Load</button>
+	    </p>
+	  </form>
+	  
+	</div>
+      </div>
+
       <div class="panel panel-default">
 	<div class="panel-heading">
 	  <h3 class="panel-title">Noctua Administration</h3>
