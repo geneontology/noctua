@@ -367,8 +367,14 @@ var NoctuaLauncher = function(){
 		     value: self.barista_location }
 		],
 		'pup_tent_js_libraries': [
-		    '/NoctuaBasic.js'
-		]
+		    '/NoctuaBasic.js',
+		    '/selectize.min.js'
+		],
+	    'pup_tent_css_libraries': [
+			'/selectize.css',
+			'/selectize.bootstrap3.css',
+			'/selectize.custom.css'
+	    ]
 	    };
 	    var ind = pup_tent.render('noctua_basic.tmpl',
 				      tmpl_args,

@@ -51,7 +51,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 					    in_token);
 
     // GOlr location and conf setup.
-    var gserv = 'http://golr.berkeleybop.org/';
+    //var gserv = 'http://golr.berkeleybop.org/';
+    var gserv = 'http://localhost:8983/solr/';
     var gconf = new bbop.golr.conf(amigo.data.golr);
 
     // Define what annotations are allowed to be edited where.
@@ -1350,8 +1351,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 				       simple_bp_act_auto_args);
     simple_bp_act_auto.lite(true);
     simple_bp_act_auto.add_query_filter('document_category', 'ontology_class');
-    simple_bp_act_auto.add_query_filter('regulates_closure_label',
-    					'biological_process');
+//    simple_bp_act_auto.add_query_filter('regulates_closure_label',
+//    					'biological_process');
     simple_bp_act_auto.set_personality('ontology');
 
     var simple_bp_occ_auto =
@@ -1359,8 +1360,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 				       simple_bp_occ_auto_args);
     simple_bp_occ_auto.lite(true);
     simple_bp_occ_auto.add_query_filter('document_category', 'ontology_class');
-    simple_bp_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
-    simple_bp_occ_auto.add_query_filter('source', 'biological_process', ['-']);
+//    simple_bp_occ_auto.add_query_filter('source', 'molecular_function', ['-']);
+//    simple_bp_occ_auto.add_query_filter('source', 'biological_process', ['-']);
     simple_bp_occ_auto.set_personality('ontology');
 
     // Add new remote node button.
@@ -1443,8 +1444,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_act_auto.lite(true);
     simple_mf_restrict_act_auto.add_query_filter('document_category',
 						 'annotation', ['*']);
-    simple_mf_restrict_act_auto.add_query_filter('regulates_closure_label',
-    						 'molecular_function', ['*']);
+//    simple_mf_restrict_act_auto.add_query_filter('regulates_closure_label',
+//    						 'molecular_function', ['*']);
     simple_mf_restrict_act_auto.set_personality('annotation');
     
     var simple_mf_restrict_occ_auto =
@@ -1454,10 +1455,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_occ_auto.lite(true);
     simple_mf_restrict_occ_auto.add_query_filter('document_category',
 						 'annotation', ['*']);
-    simple_mf_restrict_occ_auto.add_query_filter('source', 'molecular_function',
-						 ['-', '*']);
-    simple_mf_restrict_occ_auto.add_query_filter('source', 'biological_process',
-						 ['-', '*']);
+//    simple_mf_restrict_occ_auto.add_query_filter('source', 'molecular_function',
+//						 ['-', '*']);
+//    simple_mf_restrict_occ_auto.add_query_filter('source', 'biological_process',
+//						 ['-', '*']);
     simple_mf_restrict_occ_auto.set_personality('annotation');
 
     // After properly inputting the enb, take the value enb value and
@@ -1551,8 +1552,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_free_act_auto.lite(true);
     simple_mf_free_act_auto.add_query_filter('document_category',
 					     'ontology_class');
-    simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
-    					     'molecular_function');
+//    simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
+//    					     'molecular_function');
     simple_mf_free_act_auto.set_personality('ontology');
     
     var simple_mf_free_occ_auto =
@@ -1561,10 +1562,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_free_occ_auto.lite(true);
     simple_mf_free_occ_auto.add_query_filter('document_category',
 					     'ontology_class');
-    simple_mf_free_occ_auto.add_query_filter('source',
-					     'molecular_function', ['-']);
-    simple_mf_free_occ_auto.add_query_filter('source',
-					     'biological_process', ['-']);
+//    simple_mf_free_occ_auto.add_query_filter('source',
+//					     'molecular_function', ['-']);
+//    simple_mf_free_occ_auto.add_query_filter('source',
+//					     'biological_process', ['-']);
     simple_mf_free_occ_auto.set_personality('ontology');
 
     // Add new remote node button.

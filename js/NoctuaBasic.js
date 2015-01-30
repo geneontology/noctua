@@ -88,17 +88,20 @@ var MMEnvBootstrappingInit = function(user_token){
     manager.register('rebuild', 'foorebuild', function(resp, man){
         console.log('rebuild');
         console.log(resp);
+        _set_alert("success", resp._message);
         set_model_id(resp, man)
     }, 10);
 
 
     manager.register('error', 'errorargh', function(resp, man){
         print_error(resp);
+        _set_alert("danger", resp._message);
     }, 10);
 
     manager.register('merge', 'merdge', function(resp, man){
         console.log('merge');
         console.log(resp);
+        _set_alert("success", resp._message);
     }, 10);
 
     function print_error(err) {
@@ -114,12 +117,51 @@ var MMEnvBootstrappingInit = function(user_token){
         manager.store_model(id);
     }
 
-
-    
+    // Type can be: success info warning danger
+    function _set_alert(type, message) {
+        var alert_wrapper = jQuery('#alert-wrapper');
+        var alert_message = jQuery('#alert-message');
+        alert_message.text(message);
+        alert_wrapper.removeClass();
+        alert_wrapper.addClass("alert alert-dismissible alert-" + type);
+        alert_wrapper.css('display', 'inherit');
+    }
 
     // initialize model
     var id = null // dirty
     manager.generate_model();
+
+
+    jQuery('#select_gene_product').selectize({
+    valueField: 'id',
+    labelField: 'id',
+    searchField: ['id', 'annotation_class_label_searchable'],
+    options: [],
+    create: false,
+    render: {
+        option: function(item, escape) {
+            return '<div>' +
+                item.id + " (" + item.annotation_class_label_searchable + ")" +
+            '</div>';
+        }
+    },
+    load: function(query, callback) {
+        if (!query.length) return callback();
+        jQuery.ajax({
+            url: 'http://localhost:8983/solr/select',
+            data: {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + encodeURIComponent(query.replace(':', '\\:').toUpperCase()) + '*' + ' OR ' + 'annotation_class_label_searchable:' + '*' + encodeURIComponent(query) + '*'},
+            dataType: 'jsonp',
+            jsonp: 'json.wrf',
+            error: function() {
+                callback();
+            },
+            success: function(res) {
+                console.log(res.response.docs);
+                callback(res.response.docs);
+            }
+        });
+    }
+});
 
 };
 
