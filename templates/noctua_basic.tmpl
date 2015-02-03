@@ -10,23 +10,17 @@
 		</div>
 		<div class="panel-body">
 
-			<label for="select_gene_product">Gene products:</label>
-			<select id="select_gene_product" class="repositories" placeholder="Pick a gene..."></select>
-
 			<div class="form-group">
-				<label for="basic_gp_input">Gene product</label>
-				<input id="basic_gp_input"
-				class="form-control"
-				type="text"
-				placeholder="monarch:disease100050">
-			</div> 
+				<label for="select_gene_product">Gene product</label>
+				<div intro='fade' id="hits_placeholder"></div>
+				<select id="select_gene_product" placeholder="Pick a gene..."></select>
+				<div id="gp_placeholder"></div>
+			</div>
 
 			<div class="form-group">
 				<label for="basic_qualifier_input">Qualifier (optional)</label>
-				<input id="basic_qualifier_input"
-				class="form-control"
-				type="text"
-				placeholder="RO:0002200">
+				<div id="qualifier_placeholder"></div>
+				<div id="www"></div>
 			</div>
 
 			<div class="form-group">
@@ -89,5 +83,6 @@
 		</div>
 
 	</div>
+
 
 </div>

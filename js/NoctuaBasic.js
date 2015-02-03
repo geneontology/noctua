@@ -12,6 +12,8 @@ var MMEnvBootstrappingInit = function(user_token){
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
+    var gserv = 'http://localhost:8983/solr/';
+
     // Aliases
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;
@@ -23,8 +25,6 @@ var MMEnvBootstrappingInit = function(user_token){
                         user_token);
 
     // Contact point's.
-    var basic_gp_id = 'basic_gp_input';
-    var basic_gp_elt = '#' + basic_gp_id;
     var save_btn_id = 'select_stored_jump_button';
     var save_btn_elt = '#' + save_btn_id; 
     var basic_qualifier_id = 'basic_qualifier_input';
@@ -62,8 +62,7 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     jQuery(save_btn_elt).click(function(){
-        console.log(jQuery(basic_gp_elt).val());
-        var gp = "HP:0000001";
+        var gp = gp_ractive.get('gp');
         var qualifier = "a";
         var term = "monarch:phenotype100050-pn";
         validate_form(gp, qualifier, term);
@@ -127,12 +126,32 @@ var MMEnvBootstrappingInit = function(user_token){
         alert_wrapper.css('display', 'inherit');
     }
 
+    var gp = "";
+    var gp_ractive = new Ractive({
+      el: 'gp_placeholder',
+      template: '{{#if gp==""}}<div>Cannot be null!</div>{{/if}}',
+      model: gp
+    });
+
+    var hits = 0;
+    var hits_ractive = new Ractive({
+        el: 'hits_placeholder',
+        template: '{{#if isSearching}}{{hits}} hits{{/if}}',
+        model: hits,
+        data: {isSearching: false}
+    })
+
+    var qualifier_ractive = new Ractive({
+      el: 'qualifier_placeholder',
+      template: '<input id="select_qualifier" value="{{qualifier}}" placeholder="qualifier"> <div>{{qualifier}}</div>'
+    });
+
+
     // initialize model
     var id = null // dirty
     manager.generate_model();
 
-
-    jQuery('#select_gene_product').selectize({
+    var gp_selectize = jQuery('#select_gene_product').selectize({
     valueField: 'id',
     labelField: 'id',
     searchField: ['id', 'annotation_class_label_searchable'],
@@ -143,25 +162,52 @@ var MMEnvBootstrappingInit = function(user_token){
             return '<div>' +
                 item.id + " (" + item.annotation_class_label_searchable + ")" +
             '</div>';
+        },
+        item: function(item, escape) {
+            return '<div>' +
+                item.id + " (" + item.annotation_class_label_searchable + ")" +
+            '</div>';
         }
     },
     load: function(query, callback) {
         if (!query.length) return callback();
         jQuery.ajax({
-            url: 'http://localhost:8983/solr/select',
-            data: {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + encodeURIComponent(query.replace(':', '\\:').toUpperCase()) + '*' + ' OR ' + 'annotation_class_label_searchable:' + '*' + encodeURIComponent(query) + '*'},
+            url: gserv + 'select',
+            data: {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' + 'annotation_class_label_searchable:' + '*' + encodeURIComponent(query) + '*'},
             dataType: 'jsonp',
             jsonp: 'json.wrf',
             error: function() {
                 callback();
             },
             success: function(res) {
-                console.log(res.response.docs);
+                hits_ractive.set('hits', res.response.numFound);
+                hits = res.response.numFound;
+                //TODO load underscore.js
+                //var uniq_only = _.uniq(res.response.docs) // remove potential duplicates
+                //callback(uniq_only);
                 callback(res.response.docs);
             }
         });
+    }, 
+    onChange: function(value) {
+        gp_ractive.set('gp', value);
+    },
+    onType: function(str) {        
+        clearCache(); // in order to reset the hits count
+    },
+    onFocus: function() {
+        hits_ractive.set('isSearching', true);
+    },
+    onBlur: function(){
+        hits_ractive.set('isSearching', false);
     }
-});
+    });
+
+    var clearCache = function () {
+        gp_selectize[0].selectize.clearCache("option");
+        gp_selectize[0].selectize.clearOptions();
+    };
+
 
 };
 
@@ -169,6 +215,7 @@ var MMEnvBootstrappingInit = function(user_token){
 // Start the day the jsPlumb way.
 jQuery(document).ready(
     function(){
+
 	// Only roll if the env is correct.
 
     // Try to define token.

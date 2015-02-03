@@ -228,7 +228,7 @@ var NoctuaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
+    var pup_tent = require('pup-tent')(['static', 'static/selectize', 'js', 'css', 'templates']);
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
 	'/jquery-ui-1.10.3.custom.min.css',
@@ -367,6 +367,7 @@ var NoctuaLauncher = function(){
 		     value: self.barista_location }
 		],
 		'pup_tent_js_libraries': [
+			'http://cdn.ractivejs.org/latest/ractive.min.js',
 		    '/NoctuaBasic.js',
 		    '/selectize.min.js'
 		],
