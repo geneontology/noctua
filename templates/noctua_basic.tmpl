@@ -1,7 +1,7 @@
 <div class="container">
 
 	<div class="header text-center">
-		<h2>Noctua Basic</h2>
+		<h2>Web Phenote</h2>
 	</div>
 
 	<div class="panel panel-default">
@@ -11,24 +11,23 @@
 		<div class="panel-body">
 
 			<div class="form-group">
-				<label for="select_gene_product">Gene product</label>
-				<div intro='fade' id="hits_placeholder"></div>
-				<select id="select_gene_product" placeholder="Pick a gene..."></select>
-				<div id="gp_placeholder"></div>
+				<label for="select_gene_product">Disease</label>
+      			<div class="input-group">
+					<select class="form-control" id="select_gene_product" placeholder="Pick a Disease..."></select>
+					<div id="gp_placeholder"></div>
+				</div>
 			</div>
 
 			<div class="form-group">
-				<label for="basic_qualifier_input">Qualifier (optional)</label>
+				<label for="basic_term_input">Phenotype</label>
+      			<div class="input-group">
+					<select class="form-control" id="select_phenotype_product" placeholder="Pick a phenotype..."></select>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="basic_qualifier_input">Age of onset</label>
 				<div id="qualifier_placeholder"></div>
-				<div id="www"></div>
-			</div>
-
-			<div class="form-group">
-				<label for="basic_term_input">Term</label>
-				<input id="basic_term_input"
-				class="form-control"
-				type="text"
-				placeholder="monarch:phenotype100050-pn">
 			</div>
 
 			<div class="form-group">
@@ -46,15 +45,6 @@
 				type="text"
 				placeholder="">
 			</div>
-
-			<div class="form-group">
-				<label for="basic_with_input">With (optional)</label>
-				<input id="basic_with_input"
-				class="form-control"
-				type="text"
-				placeholder="">
-			</div>
-
 
 			<div class="form-group">
 				<label for="title">Title</label>
