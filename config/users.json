@@ -1,5 +1,16 @@
 [
   {
+    "nickname": "Dexter Pratt",
+    "email-md5": [
+      "1c98b0f0a4b0dc79242cfaaf739f9cc8"
+    ],
+    "authorizations": {
+      "minerva-go": true
+    },
+    "xref": "GOC:dp",
+    "uri": "GOC:dp"
+  },
+  {
     "nickname": "Paul Thomas",
     "email-md5": [
       "84c8bfa613c72bb30f82839e1ce78a55"

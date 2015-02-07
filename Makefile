@@ -40,7 +40,7 @@ NODE_BIN ?= node
 
 .PHONY: refresh-metadata
 refresh-metadata:
-	wget $(GO_USER_METADATA_FILE) && mv users.json config/
+	wget --no-check-certificate $(GO_USER_METADATA_FILE) && mv users.json config/
 
 .PHONY: assemble-app
 assemble-app:
