@@ -1886,7 +1886,7 @@ bbop.version.revision = "2.2.3";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150128";
+bbop.version.release = "20150209";
 /*
  * Package: logger.js
  * 
@@ -6607,15 +6607,21 @@ bbop.model.bracket.graph = function(){
 
 	var rel = predicate_acc || '';
 	var dflt = default_weight || 0;
-	var order =
-	    {
-		is_a: 1,
-		has_part: 2,
-		part_of: 3,
-		regulates: 4,
-		negatively_regulates: 5,
-		positively_regulates: 6
-	    };
+	var order = {
+	    'is_a': 1,
+	    'is a': 1,
+	    'has_part': 2,
+	    'has part': 2,
+	    'part_of': 3,
+	    'part of': 3,
+	    'regulates': 4,
+	    'negatively_regulates': 5,
+	    'negatively regulates': 5,
+	    'positively_regulates': 6,
+	    'positively regulates': 6,
+	    'occurs_in': 7,
+	    'occurs in': 7
+	};
 
 	var ret_weight = dflt;
 	if( bbop.core.is_defined(rel) &&
@@ -6713,65 +6719,61 @@ bbop.model.bracket.graph = function(){
 	// So, let's go through all the rows, looking on the
 	// transitivity graph to see if we can find the predicates.
 	var bracket_list = [];
-	each(layout,
-	    function(layout_level){
-		var bracket = [];
-		each(layout_level,
-		     function(layout_item){
-
-			 // The defaults for what we'll pass back out.
-			 var curr_acc = layout_item;
-			 var pred_id = 'is_a';			 
-			 var curr_node = anchor.get_node(curr_acc);
-			 var label = curr_node.label() || layout_item;
-
-			 // 
-
-			 // Now we just have to determine
-			 // predicates. If we're the one, we'll just
-			 // use the defaults.
-			 if( curr_acc == term_acc ){
-			     // Default.
-			 }else{
-			     // Since the transitivity graph only
-			     // stores ancestors, we can also use it
-			     // to passively test if these are
-			     // children we should be looking for.
-			     var trels =
-				 transitivity_graph.get_predicates(term_acc,
-								   curr_acc);
-			     if( ! bbop.core.is_empty(trels) ){
-				 // Not children, so decide which of
-				 // the returned edges is the best.
-				 pred_id = anchor.dominant_relationship(trels);
-			     }else{
-				 // Probably children, so go ahead and
-				 // try and pull the direct
-				 // parent/child relation.
-				 var drels = anchor.get_predicates(curr_acc,
-								   term_acc);
-				 pred_id = anchor.dominant_relationship(drels);
-			     }
-			 }
-
-			 // Turn our old layout item into a new-info
-			 // rich list.
-			 bracket.push([curr_acc, label, pred_id]);
-		     });
-		// Sort alphanum and then re-add to list.
-		bracket.sort(
-		    function(a, b){
-			if( a[1] < b[1] ){
-			    return -1;
-			}else if( a[1] > b[1] ){
-			    return 1;
-			}else{
-			    return 0;
+	each(layout, function(layout_level){
+	    var bracket = [];
+	    each(layout_level, function(layout_item){
+		
+		// The defaults for what we'll pass back out.
+		var curr_acc = layout_item;
+		//var pred_id = 'is_a';
+		// BUG/TODO: This is the temporary workaround for
+		// incomplete transitivity graphs in some cases:
+		// https://github.com/kltm/bbop-js/wiki/TransitivityGraph#troubleshooting-caveats-and-fail-modes
+		var pred_id = 'related_to';
+		var curr_node = anchor.get_node(curr_acc);
+		var label = curr_node.label() || layout_item;
+		
+		// Now we just have to determine predicates. If we're
+		// the one, we'll just use the defaults.
+		if( curr_acc == term_acc ){
+		    // Default.
+		}else{
+		    // Since the transitivity graph only stores
+		    // ancestors, we can also use it to passively test
+		    // if these are children we should be looking for.
+		    var trels =
+			transitivity_graph.get_predicates(term_acc, curr_acc);
+		    if( ! bbop.core.is_empty(trels) ){
+			// Not children, so decide which of
+			// the returned edges is the best.
+			pred_id = anchor.dominant_relationship(trels);
+		    }else{
+			// Probably children, so go ahead and try and
+			// pull the direct parent/child relation.
+			var drels = anchor.get_predicates(curr_acc, term_acc);
+			if( ! bbop.core.is_empty(drels) ){
+			    pred_id = anchor.dominant_relationship(drels);
 			}
-		    });
-		bracket_list.push(bracket);
+		    }
+		}
+		
+		// Turn our old layout item into a new-info
+		// rich list.
+		bracket.push([curr_acc, label, pred_id]);
 	    });
-
+	    // Sort alphanum and then re-add to list.
+	    bracket.sort(function(a, b){
+		if( a[1] < b[1] ){
+		    return -1;
+		}else if( a[1] > b[1] ){
+		    return 1;
+		}else{
+		    return 0;
+		}
+	    });
+	    bracket_list.push(bracket);
+	});
+	
 	return bracket_list;
     };
 };
