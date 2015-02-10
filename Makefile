@@ -1,9 +1,15 @@
 ####
-#### Example of running locally:
-####   make start-barista
+#### Example of running noctua again public servers.
+####   MINERVA_DEFINITION=minerva_public BARISTA_LOCATION=http://barista.berkeleybop.org:3400 make start-noctua
+####
+#### Example of running locally for (GO) dev:
+####   GENEONTOLOGY=~/local/src/svn/geneontology.org/trunk/ make start-minerva-go
+####   make start-barista-dev
 ####   make start-noctua
 ####
+#### TODO:
 #### : npm bin gulp
+####
 
 ## Variable to pass the location definition Minerva server server to
 ## the deploying app.
@@ -23,8 +29,13 @@ BARISTA_PORT ?= 3400
 ## URL for users.yaml.
 GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
 
+## BBOP JS paths.
 BBOP_JS ?= ../bbop-js/
 BBOPX_JS ?= ../bbopx-js/
+
+## OWLTools paths.
+OWLTOOLS ?= ../owltools/
+GENEONTOLOGY ?= ../geneontology/trunk/
 
 ## Testing.
 TESTS = \
@@ -67,7 +78,7 @@ pass:
 	make test | grep -i fail; test $$? -ne 0
 
 ###
-### Commands/environment for application server.
+### Commands/environment for Noctua application server.
 ###
 
 ##
@@ -81,7 +92,7 @@ start-noctua:
 	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
 
 ###
-### Commands/environment for messaging server.
+### Commands/environment for Barista messaging server.
 ###
 
 .PHONY: start-barista-dev
@@ -91,6 +102,15 @@ start-barista-dev: assemble-app
 .PHONY: start-barista
 start-barista:
 	BARISTA_PORT=$(BARISTA_PORT) $(NODE_BIN) barista.js
+
+###
+### Commands/environment for Minerva data server.
+###
+
+.PHONY: start-minerva-go
+start-minerva-go:
+	cd $(OWLTOOLS)/MolecularModelServer/bin && ./build-server.sh
+	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 ###
 ### Documentation for JavaScript.
