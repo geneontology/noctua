@@ -308,6 +308,48 @@ bbopx.barista.response.prototype.inconsistent_p = function(){
 };
 
 /*
+ * Function: has_undo_p
+ * 
+ * Returns a true or false depending on the existence an undo list.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  boolean
+ */
+bbopx.barista.response.prototype.has_undo_p = function(){
+    var ret = false;
+    if( this._data && this._data['undo'] && 
+	bbop.core.is_array(this._data['undo']) &&
+	this._data['undo'].length > 0 ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
+ * Function: has_redo_p
+ * 
+ * Returns a true or false depending on the existence a redo list.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  boolean
+ */
+bbopx.barista.response.prototype.has_redo_p = function(){
+    var ret = false;
+    if( this._data && this._data['redo'] && 
+	bbop.core.is_array(this._data['redo']) &&
+	this._data['redo'].length > 0 ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
  * Function: facts
  * 
  * Returns a list of the facts in the response. Empty list if none.
@@ -868,15 +910,15 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     }
     _set_url_from_token(user_token);
 
-    // Helper function to add get_undo_redo when the user token
-    // (hopefully good) is defined.
-    function _add_undo_redo_req(req_set, model_id){
-	if( anchor._user_token ){
-	    var req = new bbopx.minerva.request('model', 'get-undo-redo');
-	    req.model_id(model_id);
-	    req_set.add(req);
-	}
-    }
+    // // Helper function to add get_undo_redo when the user token
+    // // (hopefully good) is defined.
+    // function _add_undo_redo_req(req_set, model_id){
+    // 	if( anchor._user_token ){
+    // 	    var req = new bbopx.minerva.request('model', 'get-undo-redo');
+    // 	    req.model_id(model_id);
+    // 	    req_set.add(req);
+    // 	}
+    // }
 
     // An internal manager for handling the unhappiness of AJAX callbacks.
     //var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
@@ -1017,6 +1059,42 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
 	var req = new bbopx.minerva.request('model', 'get-undo-redo');
+	req.model_id(model_id);
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    // This will make the request to roll back the model to last
+    // state.
+    //
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.perform_undo = function(model_id){
+
+	// 
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var req = new bbopx.minerva.request('model', 'undo');
+	req.model_id(model_id);
+	reqs.add(req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    // This will make the request to roll forward the model to "next"
+    // state.
+    //
+    // Intent: "action".
+    // Expect: "success" and "rebuild".
+    anchor.perform_redo = function(model_id){
+
+	// 
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var req = new bbopx.minerva.request('model', 'redo');
 	req.model_id(model_id);
 	reqs.add(req);
 
