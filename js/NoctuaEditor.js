@@ -683,6 +683,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
+    // TODO: As a test, see what the undo/redo listing looks like.
+    function _trigger_undo_redo_lookup(){
+	manager.get_model_undo_redo(ecore.get_id());
+    }
+
     function _rebuild_meta(model_id, raw_annotations){
 
 	// Deal with ID(s).
@@ -1075,8 +1080,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     manager.register('postrun', 'foo1', _inconsistency_check, 10);
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
-    // TODO: Still need this?
     manager.register('postrun', 'foo4', function(resp, man){ // experimental	
+	
+	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
 	if( barclient ){
 	    barclient.message({'message_type': resp.message_type(),
@@ -1085,6 +1091,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    		       'signal': resp.signal()
 	    		      });
 	}
+
     }, 7);
     manager.register('manager_error', 'foo', function(resp, man){
 	alert('There was a manager error (' +
@@ -1115,7 +1122,32 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     
     // Remote action registrations.
     manager.register('meta', 'foo', function(resp, man){
-    	alert('Meta operation successful: ' + resp.message());
+    	//alert('Meta operation successful: ' + resp.message());
+
+	///
+	/// Handle undo/redo.
+	///
+
+	//
+	jQuery(undo_btn_elt).parent().addClass('disabled');
+	jQuery(undo_btn_elt).unbind('click');
+	if( resp.has_undo_p() ){
+	    //ll('has UNDO');
+	    jQuery(undo_btn_elt).parent().removeClass('disabled');
+	    jQuery(undo_btn_elt).click(function(){
+		manager.perform_undo(ecore.get_id());
+	    });
+	}
+	//
+	jQuery(redo_btn_elt).parent().addClass('disabled');
+	jQuery(redo_btn_elt).unbind('click');
+	if( resp.has_redo_p() ){
+	    //ll('has REDO');
+	    jQuery(redo_btn_elt).parent().removeClass('disabled');
+	    jQuery(redo_btn_elt).click(function(){
+		manager.perform_redo(ecore.get_id());
+	    });
+	}
     }, 10);
 
     // Only run the internal function when the filters are passed.
@@ -1204,6 +1236,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.get_layout();
 	}
     }, 9);
+    manager.register('rebuild', 'bib', function(){
+	// TODO: As a test, see what the undo/redo listing looks like.
+	_trigger_undo_redo_lookup();
+    }, 8);
 
     manager.register('merge', 'foo', function(resp, man){
 	// TODO: This function should have the rest
@@ -1230,6 +1266,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.get_layout();
 	}
     }, 9);
+    manager.register('merge', 'bib', function(){
+	// TODO: As a test, see what the undo/redo listing looks like.
+	_trigger_undo_redo_lookup();
+    }, 8);
 
     ///
     /// UI event registration.
@@ -1787,6 +1827,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
 			       init_facts, init_anns);
     _refresh_tables();
+    // TODO: As a test, see what the undo/redo listing looks like.
+    _trigger_undo_redo_lookup();
     _shields_down();
 
     ///
@@ -2129,9 +2171,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
-
-    // // TODO: As a test, see what the undo/redo listing looks like.
-    // manager.get_model_undo_redo(ecore.get_id());
 
     // As a use case, we want to have the title available to people in
     // their browsers.
