@@ -1,5 +1,5 @@
 * Configurations
-** api.requests.schema.json
+** api.requests.schema.json (TODO)
    Using http://json-schema.org/.
 
    This aims to be a description of the "requests" argument object
@@ -9,7 +9,7 @@
 
    This may be used in the future as a basis for a Swagger
    description.
-** api.response.schema.json
+** api.response.schema.json (TODO)
    Using http://json-schema.org/.
 
    This aims to be a complete description of the responses that one
@@ -25,6 +25,8 @@
 ** app.json
    A configuration file to describe instances of Minerva (or other
    federated clients), mostly their URLs and permissive paths.
+
+   Used by Barista and Noctua to create appropriate URLs.
 ** auth.json (DEPRECATED)
    An early version of users.json.
 ** users.json
