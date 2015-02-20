@@ -171,18 +171,34 @@ var MMEnvBootstrappingInit = function(user_token){
         }
     });
 
+    var ageofonset = jQuery('#select_ageofonset_product').zearch({
+        onChange: function(value) {
+            console.log(value);
+        },
+        optionDisplay: function(item, escape) {
+            return '<div>' +
+                item.id + " (" + item.annotation_class_label_searchable + ")" +
+            '</div>';
+        },
+        itemDisplay: function(item, escape) {
+            return '<div>' +
+                item.id + " (" + item.annotation_class_label_searchable + ")" +
+            '</div>';
+        },
+        valueField: 'id',
+        searchField: ['id', 'annotation_class_label_searchable'],
+        queryData: function(query) {
+            return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+                    'annotation_class_label_searchable:' + '*' + query + '*'}
+        }
+    });
+
     var gp = "";
     var gp_ractive = new Ractive({
       el: 'gp_placeholder',
       //template: '{{#if gp==""}}<div>Cannot be null!</div>{{/if}}',
       model: gp
     });
-
-    var qualifier_ractive = new Ractive({
-      el: 'qualifier_placeholder',
-      template: '<input id="select_qualifier" value="{{qualifier}}" placeholder="qualifier"> <div>{{qualifier}}</div>'
-    });
-
 
     // initialize model
     var id = null // dirty
