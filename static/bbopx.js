@@ -1257,10 +1257,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = null;
 	if( format == 'gaf' ){
 	    req = new bbopx.minerva.request('model', 'export-legacy');
-	    req.add('format', 'gaf');
+	    req.specify('format', 'gaf');
 	}else if( format == 'gpad' ){
 	    req = new bbopx.minerva.request('model', 'export-legacy');
-	    req.add('format', 'gpad');
+	    req.specify('format', 'gpad');
 	}else{
 	    // Default (non-legacy) case is simpler.
 	    req = new bbopx.minerva.request('model', 'export');
@@ -1282,7 +1282,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'import');
-	req.add('importModel', model_string);
+	req.specify('importModel', model_string);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1416,8 +1416,8 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate');
-	req.add('db', db_id);
-	req.add('subject', class_id);
+	req.specify('db', db_id);
+	req.specify('subject', class_id);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1432,7 +1432,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.add('db', db_id);
+	req.specify('db', db_id);
 	reqs.add(req);
 	
 	var args = reqs.callable();	
@@ -1447,7 +1447,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.add('taxonId', taxon_id);
+	req.specify('taxonId', taxon_id);
 	reqs.add(req);
 	
 	var args = reqs.callable();	
@@ -1477,7 +1477,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 
 	// Just get a new model going.
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	//req.add('db', db_id); // unecessary
+	//req.specify('db', db_id); // unecessary
 	reqs.add(req);
 
 	var each = bbop.core.each;
@@ -1680,6 +1680,7 @@ bbopx.minerva.request = function(entity, operation){
     // Add generic property.
     anchor._add = function(key, val){
 	anchor._arguments[key] = val;
+	return anchor._arguments[key];
     };
 
     // Get generic property.
@@ -1695,6 +1696,22 @@ bbopx.minerva.request = function(entity, operation){
     ///
     /// Main API.
     ///
+
+    /*
+     * Function: specify
+     *
+     * Return a higher-level representation/"serialization" of the
+     * complete object.
+     *
+     * Parameters: 
+     *  n/a
+     *
+     * Returns: 
+     *  simple object
+     */
+    anchor.specify = function(name, val){
+	return anchor._add(name, val);
+    };
 
     /*
      * Function: objectify
