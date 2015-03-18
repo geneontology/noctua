@@ -957,6 +957,26 @@ var BaristaLauncher = function(){
 	});
     });
 
+    // Not everything in life has happy endings. I've run into cases
+    // where the ontologies slow minerva down enough that I get an
+    // error thrown reporting: "Error: socket hang up".
+    api_proxy.on('error', function (error, req, res) {
+	// Report...
+	console.log('We have problem! Maybe a timeout error against Minerva?', 
+		    error);
+	// ..then handle.
+	// TODO: Wait until we have more experience with this before
+	// we handle--obviously only the originating users needs to
+	// know.
+	// var resp = new bbopx.barista.response({});
+	// resp.message_type('error');
+	// resp.message('We have problem! Maybe a timeout error against Minerva?');
+	// 	    sio.sockets.emit('relay', {'class': 'rebuild',
+	// 				       'model_id': resp.model_id(),
+	// 				       'packet_id': resp.packet_id(),
+	// 				       'data': resp.raw()});
+    });
+
     ///
     /// Everything here on down is Socket.IO messaging works.
     ///
