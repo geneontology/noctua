@@ -683,9 +683,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
-    // TODO: As a test, see what the undo/redo listing looks like.
+    // See what the undo/redo listing looks like.
     function _trigger_undo_redo_lookup(){
-	manager.get_model_undo_redo(ecore.get_id());
+	if( manager.user_token() ){ // only try if logged-in; priv op
+	    manager.get_model_undo_redo(ecore.get_id());
+	}
     }
 
     function _rebuild_meta(model_id, raw_annotations){
