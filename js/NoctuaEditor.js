@@ -290,6 +290,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var ping_btn_elt = '#' + ping_btn_id;
     var test_btn_id = 'action_test';
     var test_btn_elt = '#' + test_btn_id;
+    var exp_btn_id = 'action_shin';
+    var exp_btn_elt = '#' + exp_btn_id;
     var help_btn_id = 'action_help';
     var help_btn_elt = '#' + help_btn_id;
     // A hidden for to communicate with the outside world.
@@ -2088,9 +2090,25 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    window.setTimeout(
 		function(){
 		    mdl.destroy();
-		    alert('I did nothing. You wasted two seconds.');
+		    alert('I did nothing. You wasted two seconds. Ha!');
 		}, 2000);
 	}
+    });
+
+    // WARNING: Skunkworks for adding new things to the manager.
+    // Start with an empty model as we run through this.
+    jQuery(exp_btn_elt).click(function(){
+
+	// Just a hook to an experimental method for easy access to
+	// the manager.
+	manager.DO_NOT_USE_THIS(ecore.get_id());
+	
+	// Get the modal up.
+	var mdl = new bbopx.noctua.widgets.contained_modal(
+	    '<strong>Please be patient...<strong>',
+	    'dialog',
+	    'hi');
+	mdl.show();
     });
 
     // Toggle the visibility of the part_of connectors. 
