@@ -6,7 +6,7 @@ if( typeof(exports) != 'undefined' ){
     var bbop = require('bbop').bbop;
 }
 /* 
- * Package: bbopx.barista.response.js
+ * Package: response.js
  * 
  * Namespace: bbopx.barista.response
  * 
@@ -24,7 +24,7 @@ if( typeof(exports) != 'undefined' ){
 // if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
 // if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
 // TODO/BUG: workaround until I get this properly folded into bbop-js.
-if ( typeof bbopx == "undefined" ){ bbopx = {}; }
+if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
 
 /*
@@ -564,19 +564,28 @@ bbopx.barista.response.prototype.export_model = function(){
     }
     return ret;
 };
-////
-//// Let's try and communicate with the socket.io server for
-//// messages and the like.
-////
-//// There are two makor categories: "relay" and "query". Relays are
-//// for passing information on to other clients (e.g. "where I am");
-//// queries are for asking barista information about what it might
-//// know (e.g. "where is X").
-////
+/*
+ * Package: client.js
+ *
+ * Namespace: bbopx.barista.client
+ * 
+ * Let's try and communicate with the socket.io server (Barista) for
+ * messages and the like--client-to-client communication.
+ *
+ * There are two major categories: "relay" and "query". Relays are for
+ * passing information on to other clients (e.g. "where I am");
+ * queries are for asking barista information about what it might know
+ * (e.g. "where is X").
+ */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
 
+/*
+ * Constructor: client
+ *
+ * Registry for client-to-client communication via Barista.
+ */
 bbopx.barista.client = function(barista_location, token){
     bbop.registry.call(this, ['connect',
 			      'initialization',
@@ -626,7 +635,7 @@ bbopx.barista.client = function(barista_location, token){
     }	
 
     /*
-     *
+     * Method: okay
      */
     anchor.okay = function(){
 	var ret = false;
@@ -638,6 +647,8 @@ bbopx.barista.client = function(barista_location, token){
     };
 
     /*
+     * Method: token
+     *
      * Operate on your identifying token.
      */
     anchor.token = function(in_token){
@@ -648,6 +659,8 @@ bbopx.barista.client = function(barista_location, token){
     };
 
     /*
+     * Method: relay
+     *
      * General structure for relaying information between clients.
      * Always check that the comm is on.
      * Always inject 'token' and 'model_id'.
@@ -668,6 +681,8 @@ bbopx.barista.client = function(barista_location, token){
     };
 
     /*
+     * Method: query
+     *
      * General structure for requesting information from Barista about
      * things it might know.
      * Always check that the comm is on.
@@ -689,6 +704,8 @@ bbopx.barista.client = function(barista_location, token){
     };
 
     /*
+     * Method: get_layout
+     *
      * Wrapper for the only thing query is currently used for.
      */
     anchor.get_layout = function(){
@@ -696,10 +713,13 @@ bbopx.barista.client = function(barista_location, token){
     };
 
     /*
+     * Method: connect
+     *
      * Required call before using messenger.
+     *
+     * TODO: Specify the channel over and above the general server.
+     * For the time being, just using the model id in the message.
      */
-    // TODO: Specify the channel over and above the general server.
-    // For the time being, just using the model id in the message.
     anchor.connect = function(model_id){
 	if( ! anchor.okay() ){
 	    ll('no good socket on connect; did you connect()?');
@@ -820,7 +840,11 @@ bbopx.barista.client = function(barista_location, token){
      	}
     };
 
-    // 
+    /*
+     * Method: message
+     *
+     * Just a message.
+     */
     anchor.message = function(m){
 	m['class'] = 'message';
 	// var packet = {
@@ -834,7 +858,11 @@ bbopx.barista.client = function(barista_location, token){
 	anchor.relay('message', m);
     };
 
-    // Remote awareness of our location.
+    /*
+     * Method: clairvoyance
+     *
+     * Remote awareness of our location.
+     */
     anchor.clairvoyance = function(top, left){
 	var packet = {
 	    'class': 'clairvoyance',
@@ -844,7 +872,11 @@ bbopx.barista.client = function(barista_location, token){
 	anchor.relay('clairvoyance', packet);
     };
 
-    // Move objects at a distance.
+    /*
+     * Method: telekinesis
+     *
+     * Move objects at a distance.
+     */
     anchor.telekinesis = function(item_id, top, left){
 	var packet = {
 	    'class': 'telekinesis',
@@ -859,11 +891,22 @@ bbopx.barista.client = function(barista_location, token){
 
 };
 bbop.core.extend(bbopx.barista.client, bbop.registry);
+/* 
+ * Package: manager.js
+ *
+ * Namespace: bbopx.minerva.manager
+ *
+ * jQuery manager for communication with Minerva (via Barista).
+ *
+ * See also:
+ *  <bbopx.barista.response>
+ */
+
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
 
 /*
- * Constructor: bbopx.minerva.manager
+ * Constructor: manager
  * 
  * A manager for handling the AJAX and registry.
  * Initial take from bbop.golr.manager.
@@ -934,7 +977,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	    var resp_seed = {
 		'message_type': 'error',
 		'message': 'deep manager error'
-	    }
+	    };
 	    resp = new bbopx.barista.response(resp_seed);
 	}
 	anchor.apply_callbacks('manager_error', [resp, anchor]);
@@ -973,15 +1016,31 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     /// Control our identity.
     ///
 
-    /**
+    /*
+     * Method: user_id
+     * 
      * DEPRECATED: use user_token()
+     * 
+     * Arguments:
+     *  user_id - string
+     * 
+     * Returns:
+     *  user token
      */
     anchor.user_id = function(user_token){
 	return anchor.user_token(user_token);
     };
 
-    /**
-     * Get/set the user token
+    /*
+     * Method: user_token
+     * 
+     * Get/set the user token.
+     * 
+     * Arguments:
+     *  user_token - string
+     * 
+     * Returns:
+     *  current user token
      */
     anchor.user_token = function(user_token){
 
@@ -997,13 +1056,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	return anchor._user_token;
     };
 
-
     ///
     /// Actual mechanism.
     ///
 
-    // Intent: "query".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: get_model
+     * 
+     * Trigger a rebuild <bbopx.barista.response> with a model.
+     * 
+     * Intent: "query".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.get_model = function(model_id){
 
 	// 
@@ -1020,8 +1090,21 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "query".
-    // Expect: "success" and "meta".
+    /*
+     * Method: get_model_ids
+     * 
+     * Trigger meta <bbopx.barista.response> with a list of all model
+     * ids.
+     * 
+     * Intent: "query".
+     * Expect: "success" and "meta".
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.get_model_ids = function(){
 
 	// 
@@ -1034,8 +1117,21 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "query".
-    // Expect: "success" and "meta".
+    /*
+     * Method: get_models_meta
+     * 
+     * Trigger meta <bbopx.barista.response> with a list of all model
+     * meta-information.
+     * 
+     * Intent: "query".
+     * Expect: "success" and "meta".
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.get_models_meta = function(){
 
 	// 
@@ -1048,12 +1144,25 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
 
-    // This will make the request whether or not the user has an okay
-    // token defined (as opposed to the helper function
-    // _add_undo_redo()).
-    //
-    // Intent: "query".
-    // Expect: "success" and "meta".
+    /*
+     * Method: get_model_undo_redo
+     * 
+     * Trigger meta <bbopx.barista.response> of requested model's
+     * undo/redo information.
+     * 
+     * This will make the request whether or not the user has an okay
+     * token defined (as opposed to the helper function
+     * _add_undo_redo()).
+     *
+     * Intent: "query".
+     * Expect: "success" and "meta".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.get_model_undo_redo = function(model_id){
 
 	// 
@@ -1067,11 +1176,21 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // This will make the request to roll back the model to last
-    // state.
-    //
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: perform_undo
+     * 
+     * Trigger rebuild <bbopx.barista.response> after an attempt to
+     * roll back the model to "last" state.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.perform_undo = function(model_id){
 
 	// 
@@ -1085,11 +1204,21 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // This will make the request to roll forward the model to "next"
-    // state.
-    //
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: perform_redo
+     * 
+     * Trigger rebuild <bbopx.barista.response> after an attempt to
+     * roll forward the model to "next" state.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.perform_redo = function(model_id){
 
 	// 
@@ -1103,8 +1232,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: add_fact
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to add a single fact to a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  source_id - string
+     *  target_id - string
+     *  rel_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
@@ -1118,8 +1263,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: remove_fact
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to remove a single fact to a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  source_id - string
+     *  target_id - string
+     *  rel_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
@@ -1133,24 +1294,55 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    // // Intent: "action".
+    // // Expect: "success" and "merge".
+    // anchor.add_individual = function(model_id, class_id){
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+    // 	var req = new bbopx.minerva.request('individual', 'add');
+    // 	req.model(model_id);
+    // 	req.add_class_expression(class_id);
+    // 	reqs.add(req);
+    // 	var args = reqs.callable();
+    // 	anchor.apply_callbacks('prerun', [anchor]);
+    // 	jqm.action(anchor._url, args, 'GET');
+    // };
+    
+    /*
+     * Method: add_simple_composite
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to add a simple composite unit (class, enabled_by,
+     * and occurs_in) to a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  class_id - string
+     *  enabled_by_id - string
+     *  occurs_in_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_simple_composite = function(model_id, class_id,
     					   enabled_by_id, occurs_in_id){
 
 	// Minimal requirements.
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
-	var req = new bbopx.minerva.request('individual', 'create');
+	var req = new bbopx.minerva.request('individual', 'add');
 	req.model(model_id);
-	req.subject_class(class_id);
+     	req.add_class_expression(class_id);
 
 	// Optional set expressions.
 	if( enabled_by_id ){
-	    //req.svf_expressions(enabled_by_id, 'enabled_by');
-	    req.svf_expressions(enabled_by_id, 'RO:0002333');
+	    //req.add_svf_expression(enabled_by_id, 'enabled_by');
+	    req.add_svf_expression(enabled_by_id, 'RO:0002333');
 	}
 	if( occurs_in_id ){
-	    req.svf_expressions(occurs_in_id, 'occurs_in');	    
+	    req.add_svf_expression(occurs_in_id, 'occurs_in');	    
 	}
 	reqs.add(req);
 
@@ -1159,8 +1351,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: add_class
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to add just a class (instance of a class) to an
+     * individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  individual_id - string
+     *  class_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_class = function(model_id, individual_id, class_id){
 
 	// 
@@ -1168,7 +1376,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'add-type');
 	req.model(model_id);
 	req.individual(individual_id);
-	req.class_expressions(class_id);
+	req.add_class_expression(class_id);
 
 	reqs.add(req);
 
@@ -1177,8 +1385,25 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: add_svf
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to add an SVF expression to an individual in a
+     * model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  individual_id - string
+     *  class_id - string
+     *  property_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_svf = function(model_id, individual_id, class_id, property_id){
 
 	// 
@@ -1186,7 +1411,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'add-type');
 	req.model(model_id);
 	req.individual(individual_id);
-	req.svf_expressions(class_id, property_id);
+	req.add_svf_expression(class_id, property_id);
 
 	reqs.add(req);
 
@@ -1195,8 +1420,23 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: remove_class
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to remove a class from an individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  individual_id - string
+     *  class_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_class = function(model_id, individual_id, class_id){
 
 	// 
@@ -1204,7 +1444,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'remove-type');
 	req.model(model_id);
 	req.individual(individual_id);
-	req.class_expressions(class_id);
+	req.add_class_expression(class_id);
 
 	reqs.add(req);
 
@@ -1213,8 +1453,25 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "merge".
+    /*
+     * Method: remove_class_expression
+     * 
+     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+     * on attempt to remove a complex class expression from an
+     * individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  individual_id - string
+     *  class_id - string
+     *  type - JSON object
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_class_expression = function(model_id, individual_id,
 					      class_id, type){
 
@@ -1223,7 +1480,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'remove-type');
 	req.model(model_id);
 	req.individual(individual_id);
-	req.complex_class_expressions(class_id, type);
+	req.add_complex_class_expression(class_id, type);
 
 	reqs.add(req);
 
@@ -1232,8 +1489,22 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: remove_individual
+     * 
+     * Trigger a rebuild <bbopx.barista.response> on attempt to remove
+     * an individual from a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  individual_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_individual = function(model_id, indv_id){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
@@ -1247,8 +1518,22 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "query".
-    // Expect: "success" and "meta".
+    /*
+     * Method: export_model
+     * 
+     * Trigger a meta <bbopx.barista.response> containing model export
+     * text.
+     *
+     * Intent: "action".
+     * Expect: "success" and "meta".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  format - *[optional]* string (for legacy, "gaf" or "gpad")
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.export_model = function(model_id, format){
 
 	if( typeof(format) === 'undefined' ){ format = 'default'; }
@@ -1257,10 +1542,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = null;
 	if( format == 'gaf' ){
 	    req = new bbopx.minerva.request('model', 'export-legacy');
-	    req.specify('format', 'gaf');
+	    req.special('format', 'gaf');
 	}else if( format == 'gpad' ){
 	    req = new bbopx.minerva.request('model', 'export-legacy');
-	    req.specify('format', 'gpad');
+	    req.special('format', 'gpad');
 	}else{
 	    // Default (non-legacy) case is simpler.
 	    req = new bbopx.minerva.request('model', 'export');
@@ -1275,14 +1560,27 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: import_model
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> for a new
+     * model seeded/created from the argument string.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_string - string representation of a model
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.import_model = function(model_string){
 
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'import');
-	req.specify('importModel', model_string);
+	req.special('importModel', model_string);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1290,8 +1588,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: store_model
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on a
+     * "permanent" store operation on a model.
+     *
+     * NOTE: I'm actually unsure if this is a rebuild--meta makes more
+     * sense, right?
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.store_model = function(model_id){
 
 	// 
@@ -1305,8 +1619,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: add_individual_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation addition to an individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  indv_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
 	// 
@@ -1314,7 +1644,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'add-annotation');
 	req.model(model_id);
 	req.individual(indv_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1322,8 +1652,26 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: add_fact_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation addition to a referenced fact (edge) in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  source_id - string
+     *  target_id - string
+     *  rel_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_fact_annotation = function(model_id,
 					  source_id, target_id, rel_id,
 					  key, value){
@@ -1333,7 +1681,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('edge', 'add-annotation');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();
@@ -1341,15 +1689,30 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: add_model_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation addition to a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.add_model_annotation = function(model_id, key, value){
 
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'add-annotation');
 	req.model(model_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1357,8 +1720,24 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: remove_individual_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation removeal from an individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  indv_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
 	// 
@@ -1366,7 +1745,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('individual', 'remove-annotation');
 	req.model(model_id);
 	req.individual(indv_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1374,8 +1753,26 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: remove_fact_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation removeal from a referenced fact (edge) in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  source_id - string
+     *  target_id - string
+     *  rel_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_fact_annotation = function(model_id,
 					     source_id, target_id, rel_id,
 					     key, value){
@@ -1385,7 +1782,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	var req = new bbopx.minerva.request('edge', 'remove-annotation');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1393,15 +1790,30 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: remove_model_annotation
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * annotation removal from a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  key - string
+     *  value - string
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.remove_model_annotation =function(model_id, key, value){
 
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'remove-annotation');
 	req.model(model_id);
-	req.annotation_values(key, value);
+	req.add_annotation(key, value);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1409,15 +1821,30 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: generate_model_by_class_and_db
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model by providing a starting class
+     * and a database identifier (see GAF extensions).
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  class_id - string
+     *  db_id - string (hope you guess right--as GAF extension)
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.generate_model_by_class_and_db = function(class_id, db_id){
 
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate');
-	req.specify('db', db_id);
-	req.specify('subject', class_id);
+	req.special('db', db_id);
+	req.special('subject', class_id);
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1425,14 +1852,28 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: generate_model_by_db
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model by providing a database
+     * identifier (see GAF extensions).
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  db_id - string (hope you guess right--as GAF extension)
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.generate_model_by_db = function(db_id){
 
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.specify('db', db_id);
+	req.special('db', db_id);
 	reqs.add(req);
 	
 	var args = reqs.callable();	
@@ -1440,14 +1881,28 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: generate_model_by_taxon
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model by providing a database
+     * identifier (see GAF extensions).
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  taxon_id - string (full ncbi)
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.generate_model_by_taxon = function(taxon_id){
 
 	//
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.specify('taxonId', taxon_id);
+	req.special('taxonId', taxon_id);
 	reqs.add(req);
 	
 	var args = reqs.callable();	
@@ -1455,8 +1910,21 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: generate_model
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model...from nothing.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.generate_model = function(){
 
 	//
@@ -1469,15 +1937,33 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
-    // Intent: "action".
-    // Expect: "success" and "rebuild".
+    /*
+     * Method: capella_bootstrap_model
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model with information provided by
+     * Capella.
+     *
+     * If you're attempting to use this, you probably want to revisit
+     * everything and everbody first...
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  bootstrap_obj - JSON object ???
+     *  term2aspect - ???
+     * 
+     * Returns:
+     *  n/a
+     */
     anchor.capella_bootstrap_model = function(bootstrap_obj, term2aspect){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 
 	// Just get a new model going.
 	var req = new bbopx.minerva.request('model', 'generate-blank');
-	//req.specify('db', db_id); // unecessary
+	//req.special('db', db_id); // unecessary
 	reqs.add(req);
 
 	var each = bbop.core.each;
@@ -1506,16 +1992,16 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	    // We are going to be creating instances off of the
 	    // MFs.
 	    each(mfs, function(mf){
-		var req = new bbopx.minerva.request('individual','create');
+		var req = new bbopx.minerva.request('individual', 'add');
 			  
 		// Add in the occurs_in from CC.
 		each(ccs, function(cc){
-		    req.svf_expressions(cc, 'occurs_in');
+		    req.add_svf_expression(cc, 'occurs_in');
 		});
 
 		// Add in the enabled_by from entities.
 		each(ob['entities'], function(ent){
-		    req.svf_expressions(ent, 'RO:0002333');
+		    req.add_svf_expression(ent, 'RO:0002333');
 		});
 	    });
 	});
@@ -1526,26 +2012,84 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     	jqm.action(anchor._url, args, 'GET');
     };
     
+    /*
+     * Method: DO_NOT_USE_THIS
+     * 
+     * WARNING: Apparently you feel that this needs more
+     * explanation. Please read the method name again and
+     * ponder. Seriously, this will mess you up. This is just a hook
+     * for very alpha manager experiments.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
+    anchor.DO_NOT_USE_THIS = function(model_id){
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+
+	// New process individual.
+	var ind1_req = new bbopx.minerva.request('individual', 'add');
+	ind1_req.model(model_id);
+	ind1_req.add_class_expression('GO:0022008'); // neurogenesis
+	reqs.add(ind1_req);
+	
+	// New component (location) individual.
+	var ind2_req = new bbopx.minerva.request('individual', 'add');
+	ind2_req.model(model_id);
+	ind2_req.add_class_expression('CL:0000125'); // glial cell
+	reqs.add(ind2_req);	
+
+	// ind1 occurs_in ind2.
+	var e2_req = new bbopx.minerva.request('edge', 'add');
+	e2_req.model(model_id);
+	e2_req.fact(ind1_req.individual(), ind2_req.individual(), 'occurs_in');
+	reqs.add(e2_req);
+
+	// // Drd3.
+	// var ind3_req = new bbopx.minerva.request('individual', 'add');
+	// ind3_req.model(model_id);
+	// ind3_req.add_class_expression('MGI:MGI:94925'); // Drd3
+	// reqs.add(ind3_req);
+	
+	// // ind1 enabled_by ind3.
+	// var e1_req = new bbopx.minerva.request('edge', 'add');
+	// e1_req.model(model_id);
+	// e1_req.fact(ind1_req.individual(), ind3_req.individual(), 'RO:0002333');
+	// reqs.add(e1_req);
+
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
 };
 bbop.core.extend(bbopx.minerva.manager, bbop.registry);
 /* 
  * Package: requests.js
- * 
- * Namespace: bbopx.minerva.request/bbopx.minerva.request_set
- * 
- * Handle requests to Minerva in a somewhat structured way.
- * 
- * NOTE: This might eventually find its way into bbop-js.
  */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
 
 /*
+ * Namespace: bbopx.minerva.request_variable
+ * 
+ * Internal usage variable for keeping track of implicit
+ * assignToVariable on the client (see Minerva).
+ * 
+ * NOTE: This might eventually find its way into bbop-js.
+ */
+
+/*
  * Constructor: request_variable
  * 
- * Contructor for a request variable to be used to related references
- * during a request.
+ * Contructor for a request variable, used to relate references during
+ * a request.
  * 
  * Arguments:
  *  varvalue - *[optional]* string representing a future variable value
@@ -1601,17 +2145,26 @@ bbopx.minerva.request_variable = function(varvalue){
     anchor.set_p = function(){
 	return anchor._use_var_p;
     };
-
 };
+
+/*
+ * Namespace: bbopx.minerva.request
+ * 
+ * Handle requests to Minerva in a somewhat structured way.
+ * 
+ * NOTE: This might eventually find its way into bbop-js.
+ */
 
 /*
  * Constructor: request
  * 
- * Contructor for a Minerva request item.
+ * Contructor for a Minerva request item. See table for
+ * operation/entity combinations:
+ * https://github.com/berkeleybop/bbopx-js/wiki/MinervaRequestAPI .
  * 
  * Arguments:
- *  entity - string
- *  operation - string
+ *  entity - string, see table
+ *  operation - string, see table
  * 
  * Returns:
  *  request object
@@ -1623,32 +2176,20 @@ bbopx.minerva.request = function(entity, operation){
     var each = bbop.core.each;
     var what_is = bbop.core.what_is;
 
-    //
-    //var possible_entities = ['individual', 'edge', 'model', 'relations'];
+    // Minerva entity to make a call against.
     anchor._entity = entity;
 
-    //
-    //var possible_operations = ['get', 'remove', 'add', 'generate', ???];
+    // Minerva operation to perform on entity.
     anchor._operation = operation;
 
-    // Almost all non-meta operations require a model id.
+    // Almost all non-meta operations require a model id. However,
+    // this is sometimes implied in the case of new model creation.
     anchor._model_id = null;
 
-    // 
-    anchor._subject_id = null;
-    anchor._object_id = null;
-    anchor._predicate_id = null;
-
-    // Tons of ops require individuals.
+    // Tons of ops require individuals, and they need to be implicitly
+    // passable.
     anchor._individual_id = new bbopx.minerva.request_variable();
 
-    // // Try to take care of new assignToVariable
-    // var soft_variables = ['subject', 'object', 'predicate'];
-    // anchor._var_store = {};
-    // each(soft_variables, function(soft_var){
-    // 	anchor._var_store[soft_var] = new bbopx.minerva.request_variable();
-    // });
-    
     // Hold most other additional arguments to the request.
     // TODO: Could use some checking here? Maybe per-entity?
     // Could possibly explore using swagger or json-schema?
@@ -1658,32 +2199,20 @@ bbopx.minerva.request = function(entity, operation){
     /// Internal helper functions.
     ///
 
-    // // Essentially, if the argument is another request, get the
-    // // primary string value out of it (arg order), otherwise, just the
-    // // string.
-    // anchor._squeeze = function(variable, aspect){
-    // 	var ret = null;
-    // 	if( variable &&
-    // 	    what_is(variable) === 'bbopx.minerva.request' &&
-    // 	    variable._var_store[aspect] ){
-    // 		ret = variable._var_store[aspect];
-    // 	}else if( variable && // special handling for special model
-    // 		  what_is(variable) === 'bbopx.minerva.request' &&
-    // 		  aspect === 'model' ){
-    // 		      ret = variable._model_id;
-    // 	}else if( variable && what_is(variable) === 'string' ){
-    // 	    ret = variable;
-    // 	}
-    // 	return ret;
-    // };
+    // Our list of values must be defined if we go this way.
+    anchor._ensure_list = function(key){
+	if( ! anchor._arguments[key] ){
+	    anchor._arguments[key] = [];
+	}
+    };
 
-    // Add generic property.
+    // Add generic property (non-list).
     anchor._add = function(key, val){
 	anchor._arguments[key] = val;
 	return anchor._arguments[key];
     };
 
-    // Get generic property.
+    // Get generic property (non-list).
     anchor._get = function(key){
 	var ret = null;
 	var t = anchor._arguments[key];
@@ -1693,28 +2222,40 @@ bbopx.minerva.request = function(entity, operation){
 	return ret;
     };
 
+    // Getter/setter (non-list).
+    anchor._get_set = function(key, variable){
+	if( variable ){
+	    anchor._add(key, variable);
+	}
+	return anchor._get(key);
+    };
+
     ///
-    /// Main API.
+    /// Public API.
     ///
 
     /*
      * Function: specify
      *
-     * Return a higher-level representation/"serialization" of the
-     * complete object.
+     * Add a "special" variable to the request. For a subset of
+     * requests, this may be required. See table:
+     * https://github.com/berkeleybop/bbopx-js/wiki/MinervaRequestAPI .
      *
      * Parameters: 
-     *  n/a
+     *  name - string
+     *  val - string
      *
      * Returns: 
-     *  simple object
+     *  added value
      */
-    anchor.specify = function(name, val){
-	return anchor._add(name, val);
+    anchor.special = function(name, val){
+	return anchor._get_set(name, val);
     };
 
     /*
      * Function: objectify
+     *
+     * Should only be used in the context of making a request set.
      *
      * Return a higher-level representation/"serialization" of the
      * complete object.
@@ -1726,17 +2267,27 @@ bbopx.minerva.request = function(entity, operation){
      *  simple object
      */
     anchor.objectify = function(){
-	return {
+
+	// Things we will always return.
+	var base = {
 	    'entity': anchor._entity,
 	    'operation': anchor._operation,
 	    'arguments': anchor._arguments
 	};
+
+	// If we're using an implicitly set individual id, make sure
+	// that is added to the call.
+	if( anchor._entity == 'individual' && ! anchor._individual_id.set_p() ){
+	    base['assignToVariable'] = anchor._individual_id.value();
+	}
+
+	return base;
     };
 
     /*
      * Function: individual
      *
-     * Get/set the instnace of this request. If not set explicitly,
+     * Get/set the instance of this request. If not set explicitly,
      * will fall back to a default value.
      *
      * Parameters: 
@@ -1752,7 +2303,7 @@ bbopx.minerva.request = function(entity, operation){
 	}else{
 	    // Fallback to using anonymous one (no change to default).
 	}
-	anchor._add('individual', anchor._individual_id.value());
+	//anchor._add('individual', anchor._individual_id.value());
 	return anchor._individual_id.value();
     };
 
@@ -1768,10 +2319,7 @@ bbopx.minerva.request = function(entity, operation){
      *  string or null
      */
     anchor.subject = function(sub){
-	if( sub ){
-	    anchor._subject_id = sub;
-	}
-	return anchor._subject_id;
+	return anchor._get_set('subject', sub);
     };
 
     /*
@@ -1787,10 +2335,7 @@ bbopx.minerva.request = function(entity, operation){
      *  string or null
      */
     anchor.object = function(obj){
-	if( obj ){
-	    anchor._object_id = obj;
-	}
-	return anchor._object_id;
+	return anchor._get_set('object', obj);
     };
 
     /*
@@ -1806,24 +2351,33 @@ bbopx.minerva.request = function(entity, operation){
      *  string or null
      */
     anchor.predicate = function(pred){
-	if( pred ){
-	    anchor._predicate_id = pred;
-	}
-	return anchor._predicate_id;
+	return anchor._get_set('predicate', pred);
     };
 
-    // Changes actual property.
+    /*
+     * Function: model
+     *
+     * Get/set the topic model of this request.
+     *
+     * If a model is not set, like during requests in a set to a
+     * not-yet-created model, Minerva will often add this itself if it
+     * can after the fact.
+     *
+     * Parameters: 
+     *  model - *[optional]* a string id
+     *
+     * Returns: 
+     *  string or null
+     */
     anchor.model = function(model){
-	if( model ){
-	    anchor._add('modelId', model);
-	}
-	return anchor._get('modelId');
+	return anchor._get_set('modelId', model);
     };
     
     /*
      * Function: fact
      *
-     * Add a fact to the request.
+     * Add a fact to the request. The same as adding subject, object,
+     * and predicate all separately.
      *
      * Parameters: 
      *  sub - string
@@ -1834,64 +2388,98 @@ bbopx.minerva.request = function(entity, operation){
      *  n/a
      */
     anchor.fact = function(sub, obj, pred){
-
 	// Update the request's internal variables.
 	anchor.subject(sub);
 	anchor.object(obj);
 	anchor.predicate(pred);
-
-	anchor._add('subject', sub);
-	anchor._add('object', obj);
-	anchor._add('predicate', pred);
     };
 
-    //
-    anchor.subject_class = function(cls){
-	if( cls ){
-    	    anchor._add('subject', cls);
-	}
-    	return cls;
-    };
-
-    anchor.annotation_values = function(key, val){
+    /*
+     * Function: add_annotation
+     *
+     * Add an annotation pair to the request.
+     *
+     * Parameters: 
+     *  key - string
+     *  val - string
+     *
+     * Returns: 
+     *  number of annotations
+     */
+    anchor.add_annotation = function(key, val){
 	// Our list of values must be defined if we go this way.
-	if( ! anchor._arguments['values'] ){
-	    anchor._arguments['values'] = [];
-	}
+	anchor._ensure_list('values');
 	anchor._arguments['values'].push({'key': key, 'value': val});
+	return anchor._arguments['values'].length;
     };
 
-    /**
+    /*
+     * Function: annotations
+     *
+     * Return list of annotations in request.
+     *
+     * Parameters: 
+     *  n/a
+     *
+     * Returns: 
+     *  (actual) list of request "values" pairs
+     */
+    anchor.annotations = function(){
+	return anchor._arguments['values'];
+    };
+
+    /*
+     * Function: add_class_expression
+     *
+     * General use for simple ops.
+     *
+     * Parameters: 
+     *  class_id - string
+     *  property_id - string
+     *
+     * Returns: 
+     *  number of expressions
+     */
+    anchor.add_class_expression = function(class_id){
+	// Our list of values must be defined if we go this way.
+	anchor._ensure_list('expressions');
+
+	var expression = {
+	    'type': 'class',
+	    'literal': class_id
+	};
+	anchor._arguments['expressions'].push(expression);
+
+	return anchor._arguments['expressions'].length;
+    };
+
+    /*
+     * Function: add_svf_expression
+     *
      * Special use.
      * A short form for "addition" requests that can overload the
      * literal (on the server side) with Manchester syntax.
+     *
+     * WARNING: I'm not actually sure of the veracity of the above
+     * statement.
+     *
+     * Parameters: 
+     *  class_id - string
+     *  property_id - string (id or...something more complicated?!?)
+     *
+     * Returns: 
+     *  number of expressions
      */
-    anchor.svf_expressions = function(class_id, property_id){
-	// Our list of expressions must be defined if we go this way.
-        if( ! anchor._arguments['expressions'] ){
-            anchor._arguments['expressions'] = [];
-        }
+    anchor.add_svf_expression = function(class_id, property_id){
+	// Our list of values must be defined if we go this way.
+	anchor._ensure_list('expressions');
 	var expression = {
             'type': 'svf',
             'literal': class_id,
             'onProp': property_id
 	};
 	anchor._arguments['expressions'].push(expression);
-    };
-
-    /**
-     * General use for simple ops.
-     */
-    anchor.class_expressions = function(class_id){
-	// Our list of expressions must be defined if we go this way.
-	if( ! anchor._arguments['expressions'] ){
-	    anchor._arguments['expressions'] = [];
-	}
-	var expression = {
-	    'type': 'class',
-	    'literal': class_id
-	};
-	anchor._arguments['expressions'].push(expression);
+	return anchor._arguments['expressions'].length;
     };
 
     // Create a usable argument bundle from a type.
@@ -1942,23 +2530,60 @@ bbopx.minerva.request = function(entity, operation){
 	return expression;
     }
 
-    anchor.complex_class_expressions = function(class_id, type){
-	// Our list of expressions must be defined if we go this way.
-	if( ! anchor._arguments['expressions'] ){
-	    anchor._arguments['expressions'] = [];
-	}
+    /*
+     * Function: add_complex_class_expression
+     *
+     * Most general free form.
+     *
+     * Parameters: 
+     *  class_id - string
+     *  type - complex class expression in JSON format
+     *
+     * Returns: 
+     *  number of expressions
+     */
+    anchor.add_complex_class_expression = function(class_id, type){
+	// Our list of values must be defined if we go this way.
+	anchor._ensure_list('expressions');
 
 	// May be very complicated--recursively assemble.
 	var expression = _gen_class_exp(type);
-
 	anchor._arguments['expressions'].push(expression);
+	return anchor._arguments['expressions'].length;
+    };
+
+    /*
+     * Function: expressions
+     *
+     * Return list of expressions in request.
+     *
+     * Parameters: 
+     *  n/a
+     *
+     * Returns: 
+     *  (actual) list of request "expressions".
+     */
+    anchor.expressions = function(){
+	return anchor._arguments['expressions'];
     };
 };
 
 /*
+ * Namespace: bbopx.minerva.request_set
+ * 
+ * Handle sets of requests and serialize for Minerva call.
+ * 
+ * NOTE: This might eventually find its way into bbop-js.
+ */
+
+/*
  * Constructor: request_set
  * 
- * Contructor for a Minerva request item set.
+ * Constructor for a Minerva request item set.
+ * 
+ * Request sets are essentially serial request queues, that reference
+ * eachother using the request_variables contained in invididual
+ * requests.
  * 
  * Arguments:
  *  user_token - string
@@ -2004,7 +2629,7 @@ bbopx.minerva.request_set = function(user_token, intention){
      *  n/a
      * 
      * Returns:
-     *  ???
+     *  serialization of all queued requests
      */
     anchor.callable = function(){
 
@@ -2027,11 +2652,11 @@ bbopx.minerva.request_set = function(user_token, intention){
 	return rset;
     };
 };
-
-// 
-////
-//// ...
-////
+/*
+ * Package: context.js
+ *
+ * A handful of functions for drawing entities in different contexts.
+ */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
@@ -2059,7 +2684,9 @@ if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 //     return ret;
 // };
 
-/**
+/*
+ * Function: type_to_minimal
+ *
  * Return a single-line text-only one-level representation of a type.
  */
 bbopx.noctua.type_to_minimal = function(in_type, aid){
@@ -2131,7 +2758,9 @@ bbopx.noctua.type_to_minimal = function(in_type, aid){
 //     return text;
 // };
 
-/**
+/*
+ * Function: type_to_span
+ *
  * Essentially, minimal rendered as a usable span, with a color
  * option.
  */
@@ -2154,7 +2783,9 @@ bbopx.noctua.type_to_span = function(in_type, aid, color_p){
     return text;
 };
 
-/**
+/*
+ * Function: type_to_full
+ *
  * A recursive writer for when we no longer care--a table that goes on
  * and on...
  */
@@ -2299,16 +2930,24 @@ bbopx.noctua.type_to_full = function(in_type, aid){
 //     //exports.bbop_mme_context = bbop_mme_context;
 //     //exports.bbop_type_to_tcell = bbop_type_to_tcell;
 // }
-
-////
-//// Playing with graph area scroll.
-//// Take a look at:
-////  http://hitconsultants.com/dragscroll_scrollsync/scrollpane.html
-////
+/*
+ * Package: draggable-canvas.js
+ *
+ * Namespace: bbopx.noctua.draggable_canvas
+ *
+ * Playing with graph area scroll.
+ * Take a look at:
+ *  http://hitconsultants.com/dragscroll_scrollsync/scrollpane.html
+ */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 
+/*
+ * Constructor: draggable_canvas
+ *
+ * Make the div a draggable canvas.
+ */
 bbopx.noctua.draggable_canvas = function(container_id){
 
     var logger = new bbop.logger('drag');
@@ -2414,7 +3053,7 @@ bbopx.noctua.draggable_canvas = function(container_id){
     // 	    ll('unbind on focusout');
     // 	    _unbind_scroller();
     // 	});
-}
+};
 ///
 /// Core edit model. Essentially several sets and an order.
 /// This is meant to be changed when we get a richer model working,
@@ -3035,7 +3674,7 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 
 	// Load stuff into the frame.
 	this._frame = [];
-	// TODO: argh! hardcody
+	// TODO: Argh! Hardcode-y!
 	var f_set = in_type[t + 'Of'] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.noctua.edit.type(f_type));
@@ -3434,13 +4073,22 @@ bbopx.noctua.edit.edge.prototype.get_annotations_by_filter =
     bbopx.noctua.edit._get_annotations_by_filter;
 bbopx.noctua.edit.edge.prototype.get_annotation_by_id =
     bbopx.noctua.edit._get_annotation_by_id;
-////
-//// Simple abstraction to take care of operating on stored locations.
-////
+/*
+ * Package: location-store.js
+ *
+ * Namespace: bbopx.noctua.location-store
+ *
+ * Simple abstraction to take care of operating on stored locations.
+ */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 
+/*
+ * Constructor: location_store
+ *
+ * Object to track object locations.
+ */
 bbopx.noctua.location_store = function(){
 
     var anchor = this;
@@ -3453,7 +4101,19 @@ bbopx.noctua.location_store = function(){
     // 
     var lstore = {};
 
-    // True if new, false if update.
+    /*
+     * Function: add
+     *
+     * True if new, false if update. 
+     *
+     * Parameters: 
+     *  id - string
+     *  x - number 
+     *  y - number 
+     *
+     * Returns: 
+     *  true (new id) or false (known id)
+     */
     anchor.add = function(id, x, y){
 	var ret = true;
 
@@ -3465,7 +4125,17 @@ bbopx.noctua.location_store = function(){
 	return ret;
     };
 
-    // True is removal, false if wasn't there.
+    /*
+     * Function: remove
+     *
+     * True is removal, false if wasn't there.
+     *
+     * Parameters: 
+     *  id - string
+     *
+     * Returns: 
+     *  boolean
+     */
     anchor.remove = function(id){
 	var ret = false;
 
@@ -3477,7 +4147,17 @@ bbopx.noctua.location_store = function(){
 	return ret;
     };
 
-    // 
+    /*
+     * Function: get
+     *
+     * Get x/y coord of id.
+     *
+     * Parameters: 
+     *  id - string
+     *
+     * Returns: 
+     *  x/y object pair
+     */
     anchor.get = function(id){
 	var ret = null;
 
@@ -3489,15 +4169,21 @@ bbopx.noctua.location_store = function(){
     };
 
 };
-////
-//// Namespace for large drawing routines.
-////
+/* 
+ * Package: widgets.js
+ *
+ * Namespace: bbopx.noctua.widgets
+ *
+ * Namespace for large drawing routines.
+ */
 
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 if ( typeof bbopx.noctua.widgets == "undefined" ){ bbopx.noctua.widgets = {}; }
 
 /*
+ * Function: build_token_link
+ *
  * "Static" function.
  *
  * For the time being, the cannonical way of building a link with a
@@ -3517,7 +4203,11 @@ bbopx.noctua.widgets.build_token_link = function(url, token){
     return new_url;
 };
 
-// Add edit model node contents to a descriptive table.
+/*
+ * Function: repaint_info
+ *
+ * Add edit model node contents to a descriptive table.
+ */
 bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
 
     // Node and edge counts.
@@ -3579,7 +4269,11 @@ bbopx.noctua.widgets.repaint_info = function(ecore, aid, info_div){
     jQuery(info_div).append(str_cache.join(' '));
 };
 
-// Add edit model node contents to a descriptive table.
+/*
+ * Function: repaint_exp_table
+ *
+ * Add edit model node contents to a descriptive table.
+ */
 bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
 
     var each = bbop.core.each;
@@ -3666,7 +4360,11 @@ bbopx.noctua.widgets.repaint_exp_table = function(ecore, aid, table_div){
     }
 };
 
-// Add edit model edge contents to a descriptive table.
+/*
+ * Function: repaint_edge_table
+ *
+ * Add edit model edge contents to a descriptive table.
+ */
 bbopx.noctua.widgets.repaint_edge_table = function(ecore, aid, table_div){
 
     var each = bbop.core.each;
@@ -3725,11 +4423,18 @@ bbopx.noctua.widgets.repaint_edge_table = function(ecore, aid, table_div){
     }
 };
 
+/*
+ * Function: wipe
+ *
+ * Wipe out the contents of a jQuery-identified div.
+ */
 bbopx.noctua.widgets.wipe = function(div){
     jQuery(div).empty();
 };
 
 /*
+ * Function: enode_to_stack
+ *
  * Takes a core edit node as the argument, categorize the
  * contained types, order them.
  *
@@ -3790,7 +4495,9 @@ bbopx.noctua.widgets.enode_to_stack = function(enode, aid){
 };
     
 /*
- * 
+ * Function: render_node_stack
+ *
+ * ???
  */
 bbopx.noctua.widgets.render_node_stack = function(enode, aid){
 
@@ -3848,6 +4555,8 @@ bbopx.noctua.widgets.render_node_stack = function(enode, aid){
 };
 
 /*
+ * Function: add_enode
+ *
  * Add a new enode.
  */
 bbopx.noctua.widgets.add_enode = function(ecore, enode, aid, graph_div){
@@ -3883,6 +4592,8 @@ bbopx.noctua.widgets.add_enode = function(ecore, enode, aid, graph_div){
 };
 
 /*
+ * Function: update_enode
+ *
  * Update the displayed contents of an enode.
  */
 bbopx.noctua.widgets.update_enode = function(ecore, enode, aid){
@@ -3910,6 +4621,8 @@ bbopx.noctua.widgets.update_enode = function(ecore, enode, aid){
 };
 
 /*
+ * Constructor: contained_modal
+ *
  * Object.
  * 
  * The contained_modal is a simple modal dialog 
@@ -4066,6 +4779,8 @@ bbopx.noctua.widgets.contained_modal = function(type, arg_title, arg_body){
 };
 
 /*
+ * Constructor: compute_shield
+ * 
  * Contained blocking shield for general compute activity.
  * 
  * Function that returns object.
@@ -4100,7 +4815,9 @@ bbopx.noctua.widgets.compute_shield = function(){
     return mdl;
 };
 
-/**
+/*
+ * Function: sorted_relation_list
+ *
  * Function that returns a sorted relation list of the form [[id, label], ...]
  * 
  * Optional boost when we don't care using the boolean "relevant" field.
@@ -4147,6 +4864,8 @@ bbopx.noctua.widgets.sorted_relation_list = function(relations, aid){
 };
 
 /*
+ * Constructor: add_edge_modal
+ * 
  * Contained shield for creating new edges between nodes.
  * 
  * Function that returns object.
@@ -4242,6 +4961,8 @@ bbopx.noctua.widgets.add_edge_modal = function(ecore, manager,
 };
 
 /*
+ * Constructor: edit_node_modal
+ * 
  * Contained shield for editing the properties of a node (including
  * deletion).
  * 
@@ -4464,6 +5185,8 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
 };
 
 /*
+ * Constructor: edit_annotation_modal
+ * 
  * Contained shield for generically editing the annotations of an
  * identifier entity.
  * 
@@ -4818,6 +5541,8 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 };
 
 /*
+ * Constructor: reporter
+ * 
  * Object.
  * 
  * Output formatted commentary to element.
