@@ -2117,40 +2117,38 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	
 	// First, collect all of the part_of connections.
 	var poc = {};
-	each(ecore.get_edges(),
-	     function(edge_id){
-		 var edge = ecore.get_edge(edge_id);
-		 //if( edge && edge.relation() == 'part_of' ){
-		 if( edge && edge.relation() == 'BFO:0000050' ){
-		     var conn_id =
-			     ecore.get_connector_id_by_edge_id(edge.id());
-		     poc[conn_id] = true;
-		 }
-	     });	    
+	each(ecore.get_edges(), function(edge_id){
+	    var edge = ecore.get_edge(edge_id);
+	    //if( edge && edge.relation() == 'part_of' ){
+	    if( edge && edge.relation() == 'BFO:0000050' ){
+		var conn_id =
+		    ecore.get_connector_id_by_edge_id(edge.id());
+		poc[conn_id] = true;
+	    }
+	});	    
 	
 	// Switch viz.
 	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
 	
 	// Toggle viz on and off.
-	each(instance.getConnections(),
-	     function(conn){
-		 if( poc[conn.id] ){
-		     conn.setVisible(viz_p);
-		     conn.endpoints[0].setVisible(viz_p);
-		     conn.endpoints[1].setVisible(viz_p);
+	each(instance.getConnections(), function(conn){
+	    if( poc[conn.id] ){
+		conn.setVisible(viz_p);
+		conn.endpoints[0].setVisible(viz_p);
+		conn.endpoints[1].setVisible(viz_p);
 		     
-		     // Disappearing is easy, making visiable
-		     // leads to artifacts.
-		     if( viz_p ){
-			 // _shields_up();
-			 // instance.doWhileSuspended(
-    			 // 	 function(){
-			 instance.repaintEverything();
-			 // });
-			 // _shields_down();
-		     }
-		 }
-	     });
+		// Disappearing is easy, making visiable
+		// leads to artifacts.
+		if( viz_p ){
+		    // _shields_up();
+		    // instance.doWhileSuspended(
+    		    // 	 function(){
+		    instance.repaintEverything();
+		    // });
+		    // _shields_down();
+		}
+	    }
+	});
     });
     
     // Toggle the screenshot mode.
@@ -2274,52 +2272,53 @@ jsPlumb.ready(function(){
 
 	    }else{
 
-	    // This manager bootstraps the editor by fetching the
-	    // model out of Minerva.
-	    var manager =
+		// This manager bootstraps the editor by fetching the
+		// model out of Minerva.
+		var manager =
 		    new bbopx.minerva.manager(global_barista_location,
 					      global_minerva_definition_name,
 					      start_token);
-
-	    // Have a manager and model id, defined a success callback
-	    // and try and get the full model to start the bootstrap.
-	    manager.register('manager_error', 'foo', function(resp, man){
-		alert('Early manager error (' +
-		      resp.message_type() + '): ' + resp.message());
-	    }, 10);
-	    manager.register('error', 'foo', function(resp, man){		
-		if( ! resp.commentary() ){
-		    alert('Early error (' +
-			  resp.message_type()+ '): ' + 
-			  resp.message());
-		}else{
-		    alert('Early error (' +
-			  resp.message_type() + '): ' +
-			  resp.message() + '; ' +
-			  resp.commentary());
+		
+		// Have a manager and model id, defined a success callback
+		// and try and get the full model to start the bootstrap.
+		manager.register('manager_error', 'foo', function(resp, man){
+		    alert('Early manager error (' +
+			  resp.message_type() + '): ' + resp.message());
+		}, 10);
+		manager.register('error', 'foo', function(resp, man){		
+		    if( ! resp.commentary() ){
+			alert('Early error (' +
+			      resp.message_type()+ '): ' + 
+			      resp.message());
+		    }else{
+			alert('Early error (' +
+			      resp.message_type() + '): ' +
+			      resp.message() + '; ' +
+			      resp.commentary());
+		    }
+		}, 10);
+		manager.register('rebuild', 'foo', function(resp, man){
+		    //alert('in');
+		    // Replace placeholder at top level for debug.
+		    global_model = resp.data();
+		    // Bootstrap rest of session.
+		    MMEnvInit(resp.data(),
+			      global_known_relations,
+			      start_token);
+		});
+		manager.get_model(global_id);
+		//var rr = manager.get_model(global_id);
+		//console.log('rr: ' + rr);
+		
+		// When all is said and done, let's also fillout the user
+		// name just for niceness. This is also a test of CORS in
+		// express.
+		if( start_token ){
+	    	    bbopx.noctua.widgets.user_check(global_barista_location,
+	    					    start_token,
+						    'user_name_info');
 		}
-	    }, 10);
-	    manager.register('rebuild', 'foo', function(resp, man){
-		//alert('in');
-		// Replace placeholder at top level for debug.
-		global_model = resp.data();
-		// Bootstrap rest of session.
-		MMEnvInit(resp.data(),
-			  global_known_relations,
-			  start_token);
-	    });
-	    manager.get_model(global_id);
-	    //var rr = manager.get_model(global_id);
-	    //console.log('rr: ' + rr);
-
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
-	    if( start_token ){
-	    	bbopx.noctua.widgets.user_check(global_barista_location,
-	    					start_token, 'user_name_info');
 	    }
-	}
 	}
 
 });
