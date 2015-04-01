@@ -916,11 +916,14 @@ if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
  *  namespace - string for namespace of API to use
  *  app_blob - JSON object that defines targets
  *  user_token - identifying string for the user of the manager (Barista token)
+ *  engine - *[optional]* AJAX manager client to use (default: jquery)
+ *  use_jsonp - *[optional]* wrap requests in JSONP (only usable w/jquery, default: true)
  * 
  * Returns:
  *  a classic manager
  */
-bbopx.minerva.manager = function(barista_location, namespace, user_token){
+bbopx.minerva.manager = function(barista_location, namespace, user_token, 
+				 engine, use_jsonp){
     bbop.registry.call(this, ['prerun', // internal; anchor only
 			      'postrun', // internal
 			      'manager_error', // internal/external...odd
@@ -963,11 +966,30 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
     // 	}
     // }
 
-    // An internal manager for handling the unhappiness of AJAX callbacks.
-    //var jqm = new bbop.rest.manager.jquery(bbop.rest.response.mmm);
-    var jqm = new bbop.rest.manager.jquery(bbopx.barista.response);
-    jqm.use_jsonp(true); // we are definitely doing this remotely
+    // Select an internal manager for handling the unhappiness of AJAX
+    // callbacks.
+    var jqm = null;
+    if( ! engine ){ engine = 'jquery'; } // default to jquery
+    if( engine.toLowerCase() == 'jquery' ){
+	jqm = new bbop.rest.manager.jquery(bbopx.barista.response);
+    }else if( engine.toLowerCase() == 'node' ){
+	jqm = new bbop.rest.manager.node(bbopx.barista.response);
+    }else{
+	// Default to jQuery.
+	engine = 'jquery';
+	jqm = new bbop.rest.manager.jquery(bbopx.barista.response);
+    }
 
+    // Should JSONP be used for these calls, only for jQuery.
+    if( engine.toLowerCase() == 'jquery' ){
+	var jsonp_p = true;
+	if( typeof(use_jsonp) !== 'undefined' && ! use_jsonp ){
+	    jsonp_p = false;
+	}
+	jqm.use_jsonp(true); // we are definitely doing this remotely
+    }
+
+    // How to deal with failure.
     function _on_fail(resp, man){
 	// See if we got any traction.
 	if( ! resp || ! resp.message_type() || ! resp.message() ){
@@ -2041,7 +2063,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token){
 	// New component (location) individual.
 	var ind2_req = new bbopx.minerva.request('individual', 'add');
 	ind2_req.model(model_id);
-	ind2_req.add_class_expression('CL:0000125'); // glial cell
+	ind2_req.add_class_expression('GO:0004464'); // cell part
 	reqs.add(ind2_req);	
 
 	// ind1 occurs_in ind2.
@@ -2278,7 +2300,8 @@ bbopx.minerva.request = function(entity, operation){
 	// If we're using an implicitly set individual id, make sure
 	// that is added to the call.
 	if( anchor._entity == 'individual' && ! anchor._individual_id.set_p() ){
-	    base['assignToVariable'] = anchor._individual_id.value();
+	    base['arguments']['assignToVariable'] =
+		anchor._individual_id.value();
 	}
 
 	return base;
