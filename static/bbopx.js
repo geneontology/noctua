@@ -1502,7 +1502,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	var req = new bbopx.minerva.request('individual', 'remove-type');
 	req.model(model_id);
 	req.individual(individual_id);
-	req.add_complex_class_expression(class_id, type);
+	req.add_complex_class_expression(type);
 
 	reqs.add(req);
 
@@ -2054,36 +2054,89 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.DO_NOT_USE_THIS = function(model_id){
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
 
-	// New process individual.
-	var ind1_req = new bbopx.minerva.request('individual', 'add');
-	ind1_req.model(model_id);
-	ind1_req.add_class_expression('GO:0022008'); // neurogenesis
-	reqs.add(ind1_req);
+	///
+	/// "Main" individuals.
+	///
+
+	// New function individual (MF--core individual).
+	var act_ind_req = new bbopx.minerva.request('individual', 'add');
+	act_ind_req.model(model_id);
+	act_ind_req.add_class_expression('GO:0008046'); // axon guidance receptor activity
+	reqs.add(act_ind_req);
+	
+	// New process individual (BP).
+	var pro_ind_req = new bbopx.minerva.request('individual', 'add');
+	pro_ind_req.model(model_id);
+	pro_ind_req.add_class_expression('GO:0022008'); // neurogenesis
+	reqs.add(pro_ind_req);
 	
 	// New component (location) individual.
-	var ind2_req = new bbopx.minerva.request('individual', 'add');
-	ind2_req.model(model_id);
-	ind2_req.add_class_expression('GO:0004464'); // cell part
-	reqs.add(ind2_req);	
+	var loc_ind_req = new bbopx.minerva.request('individual', 'add');
+	loc_ind_req.model(model_id);
+	loc_ind_req.add_class_expression('GO:0004464'); // cell part
+	reqs.add(loc_ind_req);
 
-	// ind1 occurs_in ind2.
+	// Drd3.
+	var gp_ind_req = new bbopx.minerva.request('individual', 'add');
+	gp_ind_req.model(model_id);
+	gp_ind_req.add_class_expression('MGI:MGI:94925'); // Drd3
+	reqs.add(gp_ind_req);
+	
+	///
+	/// "Main" edges.
+	///
+
+	// act enabled_by gp.
+	var e1_req = new bbopx.minerva.request('edge', 'add');
+	e1_req.model(model_id);
+	e1_req.fact(act_ind_req.individual(), gp_ind_req.individual(),
+		    'RO:0002333');
+	reqs.add(e1_req);
+
+	// act occurs_in loc.
 	var e2_req = new bbopx.minerva.request('edge', 'add');
 	e2_req.model(model_id);
-	e2_req.fact(ind1_req.individual(), ind2_req.individual(), 'occurs_in');
+	e2_req.fact(act_ind_req.individual(), loc_ind_req.individual(),
+		    'occurs_in');
 	reqs.add(e2_req);
 
-	// // Drd3.
-	// var ind3_req = new bbopx.minerva.request('individual', 'add');
-	// ind3_req.model(model_id);
-	// ind3_req.add_class_expression('MGI:MGI:94925'); // Drd3
-	// reqs.add(ind3_req);
-	
-	// // ind1 enabled_by ind3.
-	// var e1_req = new bbopx.minerva.request('edge', 'add');
-	// e1_req.model(model_id);
-	// e1_req.fact(ind1_req.individual(), ind3_req.individual(), 'RO:0002333');
-	// reqs.add(e1_req);
+	// act enabled_by gp.
+	var e3_req = new bbopx.minerva.request('edge', 'add');
+	e3_req.model(model_id);
+	e3_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
+		    'part_of');
+	reqs.add(e3_req);
 
+	///
+	/// Attempt at evidence.
+	///
+	/// Evidence is a feel-floating evidence instance, that is
+	/// reference in ann annotation to the object in question. The
+	/// reason for this is that the core data model does not
+	/// support edge-to-edge constructs.
+	///
+
+	// Add a bit of evidence to the "world".
+	var ev1_ind_req = new bbopx.minerva.request('individual', 'add');
+	ev1_ind_req.model(model_id);
+	ev1_ind_req.add_class_expression('ECO:0000001'); // inference from background scientific knowledge
+	reqs.add(ev1_ind_req);
+
+	// Tie it to the edge.
+	var ev1_ann_req = new bbopx.minerva.request('edge', 'add-annotation');
+	ev1_ann_req.model(model_id);
+	ev1_ann_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
+			 'part_of');
+	// See if heiko likes this cheat: allows us to have multiple
+	// ev and still know "good" IRIs from "bad" IRIs.
+	ev1_ann_req.add_annotation('evidence', ev1_ind_req.individual());
+	reqs.add(ev1_ann_req);
+
+	///
+	/// ...
+	///
+
+	// Run.
 	var args = reqs.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(anchor._url, args, 'GET');
@@ -2559,13 +2612,12 @@ bbopx.minerva.request = function(entity, operation){
      * Most general free form.
      *
      * Parameters: 
-     *  class_id - string
-     *  type - complex class expression in JSON format
+     *  type - complex class expression in JSON format (<bbopx.noctua.edit.type>)
      *
      * Returns: 
      *  number of expressions
      */
-    anchor.add_complex_class_expression = function(class_id, type){
+    anchor.add_complex_class_expression = function(type){
 	// Our list of values must be defined if we go this way.
 	anchor._ensure_list('expressions');
 
