@@ -1241,8 +1241,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }, 9);
     manager.register('rebuild', 'bib', function(){
-	// TODO: As a test, see what the undo/redo listing looks like.
+	// Update undo/redo info.
 	_trigger_undo_redo_lookup();
+	//console.log('merge get-undo-redo');
     }, 8);
 
     manager.register('merge', 'foo', function(resp, man){
@@ -1271,8 +1272,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }, 9);
     manager.register('merge', 'bib', function(){
-	// TODO: As a test, see what the undo/redo listing looks like.
+	// Update undo/redo info.
 	_trigger_undo_redo_lookup();
+	//console.log('merge get-undo-redo');
     }, 8);
 
     ///
@@ -1831,7 +1833,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
 			       init_facts, init_anns);
     _refresh_tables();
-    // TODO: As a test, see what the undo/redo listing looks like.
+    // Get initial information.
+    // TODO: This will be unnecessary in future versions where the 
+    // model was pulled live (standard rebuild).
     _trigger_undo_redo_lookup();
     _shields_down();
 

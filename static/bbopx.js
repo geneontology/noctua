@@ -1021,6 +1021,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	}else if( m == 'success' ){
 	    var sig = resp.signal();
 	    if( sig == 'merge' || sig == 'rebuild' || sig == 'meta' ){
+		console.log('run on signal: ' + sig);
 		anchor.apply_callbacks(sig, [resp, anchor]);		
 	    }else{
 		alert('unknown signal: very bad');
@@ -2122,16 +2123,23 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	ev1_ind_req.add_class_expression('ECO:0000001'); // inference from background scientific knowledge
 	reqs.add(ev1_ind_req);
 
-	// Tie it to the edge.
-	var ev1_ann_req = new bbopx.minerva.request('edge', 'add-annotation');
-	ev1_ann_req.model(model_id);
-	ev1_ann_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
-			 'part_of');
-	// See if heiko likes this cheat: allows us to have multiple
-	// ev and still know "good" IRIs from "bad" IRIs.
-	ev1_ann_req.add_annotation('evidence', ev1_ind_req.individual());
-	reqs.add(ev1_ann_req);
+	// Add the pmid to it
+	var ev1_ind_ann_req =
+		new bbopx.minerva.request('individual','add-annotation');
+	ev1_ind_ann_req.model(model_id);
+	ev1_ind_ann_req.individual(ev1_ind_req.individual());
+	ev1_ind_ann_req.add_annotation('source', 'PMID:0000000');
+	reqs.add(ev1_ind_ann_req);
 
+	// Tie it to the edge.
+	var ev1_edge_ann_req =
+		new bbopx.minerva.request('edge', 'add-annotation');
+	ev1_edge_ann_req.model(model_id);
+	ev1_edge_ann_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
+			      'part_of');
+	ev1_edge_ann_req.add_annotation('evidence', ev1_ind_req.individual());
+	reqs.add(ev1_edge_ann_req);
+	
 	///
 	/// ...
 	///
