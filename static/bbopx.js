@@ -1021,7 +1021,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	}else if( m == 'success' ){
 	    var sig = resp.signal();
 	    if( sig == 'merge' || sig == 'rebuild' || sig == 'meta' ){
-		console.log('run on signal: ' + sig);
+		//console.log('run on signal: ' + sig);
 		anchor.apply_callbacks(sig, [resp, anchor]);		
 	    }else{
 		alert('unknown signal: very bad');
@@ -2053,93 +2053,42 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      *  n/a
      */
     anchor.DO_NOT_USE_THIS = function(model_id){
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(),
+						 'action', model_id);
 
 	///
-	/// "Main" individuals.
+	/// Individuals.
 	///
 
-	// New function individual (MF--core individual).
-	var act_ind_req = new bbopx.minerva.request('individual', 'add');
-	act_ind_req.model(model_id);
-	act_ind_req.add_class_expression('GO:0008046'); // axon guidance receptor activity
-	reqs.add(act_ind_req);
-	
-	// New process individual (BP).
-	var pro_ind_req = new bbopx.minerva.request('individual', 'add');
-	pro_ind_req.model(model_id);
-	pro_ind_req.add_class_expression('GO:0022008'); // neurogenesis
-	reqs.add(pro_ind_req);
-	
-	// New component (location) individual.
-	var loc_ind_req = new bbopx.minerva.request('individual', 'add');
-	loc_ind_req.model(model_id);
-	loc_ind_req.add_class_expression('GO:0004464'); // cell part
-	reqs.add(loc_ind_req);
+	// axon guidance receptor activity
+	reqs.add_simple_individual('GO:0008046');
+	var mf = reqs.last_individual_id();    
 
-	// Drd3.
-	var gp_ind_req = new bbopx.minerva.request('individual', 'add');
-	gp_ind_req.model(model_id);
-	gp_ind_req.add_class_expression('MGI:MGI:94925'); // Drd3
-	reqs.add(gp_ind_req);
+	// neurogenesis
+	reqs.add_simple_individual('GO:0022008');
+	var bp = reqs.last_individual_id();
+
+	// cell part
+	reqs.add_simple_individual('GO:0004464');
+	var loc = reqs.last_individual_id();
+
+	// Drd3
+	reqs.add_simple_individual('MGI:MGI:94925');
+	var gp = reqs.last_individual_id();
 	
 	///
-	/// "Main" edges.
+	/// Edges and evidence.
 	///
-
-	// act enabled_by gp.
-	var e1_req = new bbopx.minerva.request('edge', 'add');
-	e1_req.model(model_id);
-	e1_req.fact(act_ind_req.individual(), gp_ind_req.individual(),
-		    'RO:0002333');
-	reqs.add(e1_req);
-
-	// act occurs_in loc.
-	var e2_req = new bbopx.minerva.request('edge', 'add');
-	e2_req.model(model_id);
-	e2_req.fact(act_ind_req.individual(), loc_ind_req.individual(),
-		    'occurs_in');
-	reqs.add(e2_req);
-
-	// act enabled_by gp.
-	var e3_req = new bbopx.minerva.request('edge', 'add');
-	e3_req.model(model_id);
-	e3_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
-		    'part_of');
-	reqs.add(e3_req);
-
-	///
-	/// Attempt at evidence.
-	///
-	/// Evidence is a feel-floating evidence instance, that is
-	/// reference in ann annotation to the object in question. The
-	/// reason for this is that the core data model does not
-	/// support edge-to-edge constructs.
-	///
-
-	// Add a bit of evidence to the "world".
-	var ev1_ind_req = new bbopx.minerva.request('individual', 'add');
-	ev1_ind_req.model(model_id);
-	ev1_ind_req.add_class_expression('ECO:0000001'); // inference from background scientific knowledge
-	reqs.add(ev1_ind_req);
-
-	// Add the pmid to it
-	var ev1_ind_ann_req =
-		new bbopx.minerva.request('individual','add-annotation');
-	ev1_ind_ann_req.model(model_id);
-	ev1_ind_ann_req.individual(ev1_ind_req.individual());
-	ev1_ind_ann_req.add_annotation('source', 'PMID:0000000');
-	reqs.add(ev1_ind_ann_req);
-
-	// Tie it to the edge.
-	var ev1_edge_ann_req =
-		new bbopx.minerva.request('edge', 'add-annotation');
-	ev1_edge_ann_req.model(model_id);
-	ev1_edge_ann_req.fact(act_ind_req.individual(), pro_ind_req.individual(),
-			      'part_of');
-	ev1_edge_ann_req.add_annotation('evidence', ev1_ind_req.individual());
-	reqs.add(ev1_edge_ann_req);
+    
+	reqs.add_fact(mf, bp, 'part_of');
+	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
+				  mf, bp, 'part_of');
+		
+	reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
 	
+	reqs.add_fact(mf, gp, 'occurs_in');
+
 	///
 	/// ...
 	///
@@ -2316,6 +2265,21 @@ bbopx.minerva.request = function(entity, operation){
     ///
     /// Public API.
     ///
+
+    /*
+     * Function: entity
+     *
+     * The specified entity string.
+     *
+     * Parameters:
+     *  n/a
+     *
+     * Returns: 
+     *  string or null
+     */
+    anchor.entity = function(){
+	return anchor._entity;
+    };
 
     /*
      * Function: specify
@@ -2668,14 +2632,22 @@ bbopx.minerva.request = function(entity, operation){
  * eachother using the request_variables contained in invididual
  * requests.
  * 
+ * As the request_set operations almost always produce request_sets
+ * (with senisible defaults and fail modes), they can easily be
+ * chained together.
+ * 
+ * If a model_id is given, it will be applied to any request that does
+ * not have one.
+ *
  * Arguments:
  *  user_token - string
  *  intention - string
+ *  model_id - *[optional]* string
  * 
  * Returns:
  *  request set object
  */
-bbopx.minerva.request_set = function(user_token, intention){
+bbopx.minerva.request_set = function(user_token, intention, model_id){
     var anchor = this;
     anchor._is_a = 'bbopx.minerva.request_set';
 
@@ -2685,22 +2657,294 @@ bbopx.minerva.request_set = function(user_token, intention){
     // 
     anchor._user_token = user_token || null;
     anchor._intention = intention;
+    anchor._model_id = model_id || null;
     anchor._requests = [];
-    //anchor._fallback_entity_id = uuid();
+    anchor._last_entity_id = null;
+
+    /*
+     * Method: last_individual_id
+     * 
+     * Return the ID of the last individual identified in a call
+     * (implicitly or explicitly).
+     * 
+     * Arguments:
+     *  number_to_skip - *[optional]* number of matches to skip (default: 0)
+     * 
+     * Returns:
+     *  string or null
+     *
+     * See also:
+     *  <bbopx.minerva.request_set.last_fact_triple>
+     */
+    anchor.last_individual_id = function(number_to_skip){
+	var retval = null;
+
+	// Get the last thing identifiable as an individual.
+	// 'for' necessary for backwards beakable iteration.
+	for( var ugh = anchor._requests.length; ugh > 0; ugh-- ){
+	    var req = anchor._requests[ugh -1];
+	    if( req.entity() === 'individual' ){
+		if( number_to_skip > 0 ){ // knock off skippables
+		    number_to_skip--;
+		}else{
+		    retval = req.individual();
+		    break;
+		}
+	    }
+	};
+	
+	return retval;
+    };
+
+    /*
+     * Method: last_fact_triple
+     * 
+     * In our model, facts are anonymous (do not have an ID) and need
+     * to be referred to by their unique triple: subject id, object
+     * id, and predicate (edge type) id.
+     * 
+     * This methods return a list of the three string or null.
+     * 
+     * Arguments:
+     *  number_to_skip - *[optional]* number of matches to skip (default: 0)
+     * 
+     * Returns:
+     *  list of three strings or null
+     *
+     * See also:
+     *  <bbopx.minerva.request_set.last_individual_id>
+     */
+    anchor.last_fact_triple = function(number_to_skip){
+	var retval = null;
+
+	// Get the last thing identifiable as an individual.
+	// 'for' necessary for backwards beakable iteration.
+	for( var ugh = anchor._requests.length; ugh > 0; ugh-- ){
+	    var req = anchor._requests[ugh -1];
+	    if( req.entity() === 'edge' ){
+		if( number_to_skip > 0 ){ // knock off skippables
+		    number_to_skip--;
+		}else{
+		    retval = [];
+		    retval.push(req.subject());
+		    retval.push(req.object());
+		    retval.push(req.predicate());
+		    break;
+		}
+	    }
+	};
+	
+	return retval;
+    };
 
     /*
      * Method: add
      * 
-     * Add a request to the queue.
+     * Add a request to the queue. This is the most "primitive" method
+     * of adding things to the request queue and should only be used
+     * when other methods (look at the API) are not available.
      * 
      * Arguments:
      *  req - <bbopx.minerva.request>
      * 
      * Returns:
-     *  n/a
+     *  <bbopx.minerva.request_set>
      */
     anchor.add = function(req){
 	anchor._requests.push(req);
+	return anchor;
+    };
+
+    /*
+     * Method: add_simple_individual
+     * 
+     * Requests necessary to add an instance of with type class to the
+     * model.
+     * 
+     * Arguments:
+     *  cls_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_simple_individual = function(cls_id, model_id){
+
+	if( cls_id ){
+	    var ind_req = new bbopx.minerva.request('individual', 'add');
+	    if( model_id ){ ind_req.model(model_id); } // optionally add
+
+	    ind_req.add_class_expression(cls_id); 
+
+	    anchor.add(ind_req);
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_fact
+     * 
+     * Requests necessary to add an edge between two instances in a
+     * model.
+     * 
+     * Arguments:
+     *  subject_cls_id - string
+     *  object_cls_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_fact = function(subject_cls_id, object_cls_id, predicate_id,
+			       model_id){
+
+	if( subject_cls_id && object_cls_id && predicate_id ){
+	    var edge_req = new bbopx.minerva.request('edge', 'add');
+	    if( model_id ){ edge_req.model(model_id); } // optionally add
+
+	    edge_req.fact(subject_cls_id, object_cls_id, predicate_id);
+
+	    anchor.add(edge_req);
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_evidence_to_fact
+     * 
+     * Adds "anonymous" evidence individual that is referenced in the
+     * fact's annotations, as well as a fact of it's own to the batch.
+     * 
+     * Arguments:
+     *  evidence_id - string
+     *  source_ids - null, string, or list of strings (PMIDs, etc.)
+     *  subject_cls_id - string
+     *  object_cls_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_evidence_to_fact = function(evidence_id, source_ids,
+					   subject_cls_id, object_cls_id,
+					   predicate_id, model_id){
+
+	if( evidence_id && subject_cls_id && object_cls_id && predicate_id ){
+
+	    // Create floating evidence instance...
+	    var ev_ind_req = new bbopx.minerva.request('individual', 'add');
+	    ev_ind_req.model(model_id);
+	    ev_ind_req.add_class_expression(evidence_id);
+	    anchor.add(ev_ind_req);
+
+	    // If there are source_id(s), add them to our new
+	    // individual.
+	    if( source_ids ){
+
+		// Ensure an iterable list of source ids no matter
+		// what our argument is.
+		var source_id_list = [];
+		if( bbop.core.what_is(source_ids) == 'string' ){
+		    source_id_list = [source_ids];
+		}else if( bbop.core.what_is(source_ids) == 'array' ){
+		    source_id_list = source_ids;
+		}else{
+		    // Don't know what it is, not gunna touch it.
+		}
+
+		// Add each source as an annotation to the floating
+		// evidence instance.
+		each(source_id_list, function(src_id){
+		    var ev_ind_ann_req =
+			    new bbopx.minerva.request('individual',
+						      'add-annotation');
+		    if( model_id ){ ev_ind_ann_req.model(model_id); } // optional
+		    ev_ind_ann_req.individual(ev_ind_req.individual());
+		    ev_ind_ann_req.add_annotation('source', src_id);
+		    anchor.add(ev_ind_ann_req);
+		});
+	    }
+	    
+	    // Tie the floating evidence to the edge with an
+	    // annotation to the edge.
+	    var ev_edge_ann_req =
+		    new bbopx.minerva.request('edge', 'add-annotation');
+	    if( model_id ){ ev_edge_ann_req.model(model_id); } // optional
+	    ev_edge_ann_req.fact(subject_cls_id, object_cls_id, predicate_id);
+	    ev_edge_ann_req.add_annotation('evidence', ev_ind_req.individual());
+	    anchor.add(ev_edge_ann_req);
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_evidence_to_last_fact
+     * 
+     * Adds "anonymous" evidence individual that is referenced in the
+     * fact's annotations, as well as a fact of it's own to the batch.
+     * 
+     * *[WARNING: Can only be used once, probably not at all!]*
+     * 
+     * Arguments:
+     *  evidence_id - string
+     *  source_ids - null, string, or list of strings (PMIDs, etc.)
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_evidence_to_last_fact = function(evidence_id, source_ids,
+						model_id){
+
+	var tmp_triple = anchor.last_fact_triple();
+	if( tmp_triple ){
+	    anchor.add_evidence_to_fact(evidence_id, source_ids,
+					tmp_triple[0], tmp_triple[1],
+					tmp_triple[2], model_id);
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: structure
+     * 
+     * Create the JSON object that will be passed to the Minerva
+     * server.
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  final object of all queued requests
+     */
+    anchor.structure = function(){
+
+	// Ready the base return.
+	var rset = {
+	    'token': anchor._user_token,
+	    'intention': anchor._intention
+	};
+
+	// Add a JSON stringified request arguments.
+	var reqs = [];
+	each(anchor._requests,
+	     function(req){
+		 // If possible, add model in cases where is was not
+		 // supplied.
+		 if( ! req.model() && anchor._model_id ){
+		     req.model(anchor._model_id);
+		 }
+		 reqs.push(req.objectify());
+	     });
+	rset['requests'] = reqs;
+
+	return rset;
     };
 
     /*
@@ -2716,18 +2960,9 @@ bbopx.minerva.request_set = function(user_token, intention){
      */
     anchor.callable = function(){
 
-	// Ready the base return.
-	var rset = {
-	    'token': anchor._user_token,
-	    'intention': anchor._intention
-	};
+	var rset = anchor.structure();
+	var reqs = rset['requests'];
 
-	// Add a JSON stringified request arguments.
-	var reqs = [];
-	each(anchor._requests,
-	     function(req){
-		 reqs.push(req.objectify());
-	     });
 	var str = bbop.json.stringify(reqs);
 	var enc = encodeURIComponent(str);
 	rset['requests'] = enc;
