@@ -2101,18 +2101,43 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // WARNING: Skunkworks for adding new things to the manager.
     // Start with an empty model as we run through this.
+    // TODO/BUG: DO_NOT_USE_THIS.
     jQuery(exp_btn_elt).click(function(){
+
+	// Get the modal up.
+	var mdl = new bbopx.noctua.widgets.contained_modal(
+	    'dialog',
+	    'Please be patient...',
+	    'Hey!');
+	mdl.show();
 
 	// Just a hook to an experimental method for easy access to
 	// the manager.
-	manager.DO_NOT_USE_THIS(ecore.get_id());
+	var reqs = new bbopx.minerva.request_set(manager.user_token(),
+						 'action', ecore.get_id());
+
+	/// Individuals.
+	// axon guidance receptor activity
+	reqs.add_simple_individual('GO:0008046');
+	var mf = reqs.last_individual_id();    
+	// neurogenesis
+	reqs.add_simple_individual('GO:0022008');
+	var bp = reqs.last_individual_id();
+	// cell part
+	reqs.add_simple_individual('GO:0004464');
+	var loc = reqs.last_individual_id();
+	// Drd3
+	reqs.add_simple_individual('MGI:MGI:94925');
+	var gp = reqs.last_individual_id();
 	
-	// Get the modal up.
-	var mdl = new bbopx.noctua.widgets.contained_modal(
-	    '<strong>Please be patient...<strong>',
-	    'dialog',
-	    'hi');
-	mdl.show();
+	// Edges and evidence.    
+	reqs.add_fact(mf, bp, 'part_of');
+	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
+				  mf, bp, 'part_of');
+	reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
+	reqs.add_fact(mf, gp, 'occurs_in');
+
+	manager.request_with(reqs, ecore.get_id());
     });
 
     // Toggle the visibility of the part_of connectors. 
