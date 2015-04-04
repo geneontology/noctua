@@ -937,6 +937,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     this._is_a = 'bbopx.minerva.manager';
     var anchor = this;
 
+    // Aliases.
+    var each = bbop.core.each;
+    var is_empty = bbop.core.is_empty;
+
     //var url = barista_location + '/api/' + namespace + '/m3Batch';
     anchor._url = null;
     // 
@@ -1989,7 +1993,6 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	//req.special('db', db_id); // unecessary
 	reqs.add(req);
 
-	var each = bbop.core.each;
 	each(bootstrap_obj, function(ob){
 
 	    // Now, for each of these, we are going to be adding
@@ -2008,7 +2011,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 		}
 	    });
 	    // There must be this no matter what.
-	    if( bbop.core.is_empty(mfs) ){
+	    if( is_empty(mfs) ){
  		mfs.push('GO:0003674');
 	    }
 
@@ -2036,68 +2039,26 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     };
     
     /*
-     * Method: DO_NOT_USE_THIS
+     * Method: request_with
      * 
-     * WARNING: Apparently you feel that this needs more
-     * explanation. Please read the method name again and
-     * ponder. Seriously, this will mess you up. This is just a hook
-     * for very alpha manager experiments.
+     * Make a custom request with your own request set.
      *
-     * Intent: "action".
-     * Expect: "success" and "rebuild".
+     * Intent: ??? - whatever you set
+     * Expect: "success" and ??? (depends on your request)
      * 
      * Arguments:
+     *  request_set - <bbopx.noctua.request_set>
      *  model_id - string
      * 
      * Returns:
      *  n/a
      */
-    anchor.DO_NOT_USE_THIS = function(model_id){
-
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(),
-						 'action', model_id);
-
-	///
-	/// Individuals.
-	///
-
-	// axon guidance receptor activity
-	reqs.add_simple_individual('GO:0008046');
-	var mf = reqs.last_individual_id();    
-
-	// neurogenesis
-	reqs.add_simple_individual('GO:0022008');
-	var bp = reqs.last_individual_id();
-
-	// cell part
-	reqs.add_simple_individual('GO:0004464');
-	var loc = reqs.last_individual_id();
-
-	// Drd3
-	reqs.add_simple_individual('MGI:MGI:94925');
-	var gp = reqs.last_individual_id();
-	
-	///
-	/// Edges and evidence.
-	///
-    
-	reqs.add_fact(mf, bp, 'part_of');
-	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
-				  mf, bp, 'part_of');
-		
-	reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
-	
-	reqs.add_fact(mf, gp, 'occurs_in');
-
-	///
-	/// ...
-	///
-
+    anchor.request_with = function(request_set, model_id){
 	// Run.
-	var args = reqs.callable();	
+	var args = request_set.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
     	jqm.action(anchor._url, args, 'GET');
-    };
+    };    
     
 };
 bbop.core.extend(bbopx.minerva.manager, bbop.registry);
@@ -2680,7 +2641,7 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 	var retval = null;
 
 	// Get the last thing identifiable as an individual.
-	// 'for' necessary for backwards beakable iteration.
+	// 'for' necessary for backwards breakable iteration.
 	for( var ugh = anchor._requests.length; ugh > 0; ugh-- ){
 	    var req = anchor._requests[ugh -1];
 	    if( req.entity() === 'individual' ){
@@ -2718,7 +2679,7 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 	var retval = null;
 
 	// Get the last thing identifiable as an individual.
-	// 'for' necessary for backwards beakable iteration.
+	// 'for' necessary for backwards breakable iteration.
 	for( var ugh = anchor._requests.length; ugh > 0; ugh-- ){
 	    var req = anchor._requests[ugh -1];
 	    if( req.entity() === 'edge' ){
@@ -2761,6 +2722,8 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * Requests necessary to add an instance of with type class to the
      * model.
      * 
+     * Expect: "success" and "merge".
+     * 
      * Arguments:
      *  cls_id - string
      *  model_id - *[optional]* string
@@ -2787,6 +2750,8 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * 
      * Requests necessary to add an edge between two instances in a
      * model.
+     *
+     * Expect: "success" and "merge".
      * 
      * Arguments:
      *  subject_cls_id - string
