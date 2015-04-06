@@ -2802,7 +2802,7 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 
 	    // Create floating evidence instance...
 	    var ev_ind_req = new bbopx.minerva.request('individual', 'add');
-	    ev_ind_req.model(model_id);
+	    if( model_id ){ ev_ind_req.model(model_id); } // optional
 	    ev_ind_req.add_class_expression(evidence_id);
 	    anchor.add(ev_ind_req);
 
@@ -2853,7 +2853,7 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * Adds "anonymous" evidence individual that is referenced in the
      * fact's annotations, as well as a fact of it's own to the batch.
      * 
-     * *[WARNING: Can only be used once, probably not at all!]*
+     * *[WARNING: Should only be used once, probably not at all!]*
      * 
      * Arguments:
      *  evidence_id - string
@@ -2873,6 +2873,178 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 					tmp_triple[2], model_id);
 	}
 
+	return anchor;
+    };
+
+    // A helper function to sort out all of the different annotation
+    // operations and targets in one function.
+    //
+    // Args:
+    //  op - "add" | "remove"
+    //  thing - "model" | "individual" | "fact" 
+    //  thing_identifier - ind: id; fact: triple; model: implied
+    //  key - string 
+    //  value - string
+    //  model_id - (optional with fact and individual) string
+    anchor._op_annotation_to_target = function(op, target, target_identifier,
+					       key, value, model_id){
+
+	// First, decide the request.
+	var req = null;
+	if( op == 'add' || op == 'remove' ){
+	    req = new bbopx.minerva.request(target, op + '-annotation');
+	    if( model_id ){ req.model(model_id); } // optional
+	}else{
+	    throw new Error('unknown annotation operation');
+	}
+
+	// Add necessary arguments to identify the target.
+	if( target == 'model' ){
+	    // Already done.
+	}else if( target == 'individual' ){
+	    req.individual(target_identifier);
+	}else if( target == 'fact' ){
+	    req.fact(target_identifier[0],
+		     target_identifier[1],
+		     target_identifier[2]);
+	}else{
+	    throw new Error('unknown annotation target');
+	}
+
+	// Add the annotation.
+	if( key && value ){	
+	    req.add_annotation(key, value);
+	    anchor.add(req);
+	}
+    };
+
+    /*
+     * Method: add_annotation_to_model
+     * 
+     * Adds unique key/value set to model.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_annotation_to_model = function(key, value, model_id){
+	anchor._op_annotation_to_target('add', 'model', null,
+					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: remove_annotation_from_model
+     * 
+     * Adds unique key/value set to model.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_annotation_from_model = function(key, value, model_id){
+	anchor._op_annotation_to_target('remove', 'model', null,
+					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: add_annotation_to_individual
+     * 
+     * Adds unique key/value set to an individual.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  individual_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_annotation_to_individual = function(key, value, individual_id,
+						   model_id){
+	anchor._op_annotation_to_target('add', 'individual', individual_id,
+					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: remove_annotation_from_individual
+     * 
+     * Removes unique key/value set from an individual.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  individual_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_annotation_from_individual = function(key, value,
+							individual_id, model_id){
+	anchor._op_annotation_to_target('remove', 'individual', individual_id,
+					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: add_annotation_to_fact
+     * 
+     * Adds unique key/value set to a fact.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  subject_id - string
+     *  object_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_annotation_to_fact = function(key, value, subject_id,
+					     object_id, predicate_id,
+					     model_id){
+	anchor._op_annotation_to_target('add', 'fact',
+					[subject_id, object_id, predicate_id],
+					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: remove_annotation_from_fact
+     * 
+     * Removes unique key/value set from a fact.
+     * 
+     * Arguments:
+     *  key - string
+     *  value - string
+     *  subject_id - string
+     *  object_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_annotation_to_fact = function(key, value, subject_id,
+					     object_id, predicate_id,
+					     model_id){
+	anchor._op_annotation_to_target('remove', 'fact',
+					[subject_id, object_id, predicate_id],
+					key, value, model_id);
 	return anchor;
     };
 
