@@ -1894,14 +1894,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.3.0";
+bbop.version.revision = "2.2.4";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150406";
+bbop.version.release = "20150413";
 /*
  * Package: logger.js
  * 

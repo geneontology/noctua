@@ -1104,7 +1104,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_model = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'get');
 	req.model(model_id);
 	reqs.add(req);
@@ -1135,7 +1135,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_model_ids = function(){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'all-model-ids');
 	reqs.add(req);
 
@@ -1162,7 +1162,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_models_meta = function(){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'all-model-meta');
 	reqs.add(req);
 
@@ -1193,7 +1193,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_model_undo_redo = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'get-undo-redo');
 	req.model(model_id);
 	reqs.add(req);
@@ -1221,7 +1221,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.perform_undo = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'undo');
 	req.model(model_id);
 	reqs.add(req);
@@ -1249,7 +1249,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.perform_redo = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'redo');
 	req.model(model_id);
 	reqs.add(req);
@@ -1279,7 +1279,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('edge', 'add');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -1310,7 +1310,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('edge', 'remove');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -1325,7 +1325,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     // // Expect: "success" and "merge".
     // anchor.add_individual = function(model_id, class_id){
     // 	// 
-    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
     // 	var req = new bbopx.minerva.request('individual', 'add');
     // 	req.model(model_id);
     // 	req.add_class_expression(class_id);
@@ -1358,7 +1358,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     					   enabled_by_id, occurs_in_id){
 
 	// Minimal requirements.
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'add');
 	req.model(model_id);
      	req.add_class_expression(class_id);
@@ -1399,7 +1399,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.add_class = function(model_id, individual_id, class_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'add-type');
 	req.model(model_id);
 	req.individual(individual_id);
@@ -1434,7 +1434,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.add_svf = function(model_id, individual_id, class_id, property_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'add-type');
 	req.model(model_id);
 	req.individual(individual_id);
@@ -1467,7 +1467,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.remove_class = function(model_id, individual_id, class_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'remove-type');
 	req.model(model_id);
 	req.individual(individual_id);
@@ -1503,7 +1503,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					      class_id, type){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'remove-type');
 	req.model(model_id);
 	req.individual(individual_id);
@@ -1534,7 +1534,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_individual = function(model_id, indv_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'remove');
 	req.model(model_id);
 	req.individual(indv_id);
@@ -1565,7 +1565,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 
 	if( typeof(format) === 'undefined' ){ format = 'default'; }
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = null;
 	if( format == 'gaf' ){
 	    req = new bbopx.minerva.request('model', 'export-legacy');
@@ -1605,7 +1605,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.import_model = function(model_string){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'import');
 	req.special('importModel', model_string);
 	reqs.add(req);
@@ -1621,8 +1621,8 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Trigger a rebuild response <bbopx.barista.response> on a
      * "permanent" store operation on a model.
      *
-     * NOTE: I'm actually unsure if this is a rebuild--meta makes more
-     * sense, right?
+     * What?! A "rebuild" and not "meta"? Yes. This allows a workflow
+     * where a model is created, edited, and stored all in one pass.
      *
      * Intent: "action".
      * Expect: "success" and "rebuild".
@@ -1636,7 +1636,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.store_model = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'query');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'store');
 	req.model(model_id);
 	reqs.add(req);
@@ -1667,7 +1667,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'add-annotation');
 	req.model(model_id);
 	req.individual(indv_id);
@@ -1704,7 +1704,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					  key, value){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('edge', 'add-annotation');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -1736,7 +1736,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.add_model_annotation = function(model_id, key, value){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'add-annotation');
 	req.model(model_id);
 	req.add_annotation(key, value);
@@ -1768,7 +1768,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('individual', 'remove-annotation');
 	req.model(model_id);
 	req.individual(indv_id);
@@ -1805,7 +1805,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					     key, value){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('edge', 'remove-annotation');
 	req.model(model_id);
 	req.fact(source_id, target_id, rel_id);
@@ -1837,7 +1837,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.remove_model_annotation =function(model_id, key, value){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'remove-annotation');
 	req.model(model_id);
 	req.add_annotation(key, value);
@@ -1868,7 +1868,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.generate_model_by_class_and_db = function(class_id, db_id){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'generate');
 	req.special('db', db_id);
 	req.special('subject', class_id);
@@ -1898,7 +1898,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.generate_model_by_db = function(db_id){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'generate-blank');
 	req.special('db', db_id);
 	reqs.add(req);
@@ -1927,7 +1927,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.generate_model_by_taxon = function(taxon_id){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'generate-blank');
 	req.special('taxonId', taxon_id);
 	reqs.add(req);
@@ -1955,7 +1955,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.generate_model = function(){
 
 	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 	var req = new bbopx.minerva.request('model', 'generate-blank');
 	reqs.add(req);
 	
@@ -1986,7 +1986,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.capella_bootstrap_model = function(bootstrap_obj, term2aspect){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token(), 'action');
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
 
 	// Just get a new model going.
 	var req = new bbopx.minerva.request('model', 'generate-blank');
@@ -2243,7 +2243,7 @@ bbopx.minerva.request = function(entity, operation){
     };
 
     /*
-     * Function: specify
+     * Function: special
      *
      * Add a "special" variable to the request. For a subset of
      * requests, this may be required. See table:
@@ -2602,25 +2602,32 @@ bbopx.minerva.request = function(entity, operation){
  *
  * Arguments:
  *  user_token - string
- *  intention - string
  *  model_id - *[optional]* string
  * 
  * Returns:
  *  request set object
  */
-bbopx.minerva.request_set = function(user_token, intention, model_id){
+bbopx.minerva.request_set = function(user_token, model_id){
     var anchor = this;
     anchor._is_a = 'bbopx.minerva.request_set';
 
     var each = bbop.core.each;
     //var uuid = bbop.core.uuid;
+    var what_is = bbop.core.what_is;
 
     // 
     anchor._user_token = user_token || null;
-    anchor._intention = intention;
+    //anchor._intention = intention;
     anchor._model_id = model_id || null;
     anchor._requests = [];
     anchor._last_entity_id = null;
+
+    // Intentions, whether one wants their actions to be communicated
+    // to the outside world ('action' vs 'query') are now silently
+    // handled withint the request_set framework. The default is the
+    // weakest, unles less (almost always) a creative operation is
+    // attempted.
+    anchor._intention = 'query';
 
     /*
      * Method: last_individual_id
@@ -2707,11 +2714,26 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * 
      * Arguments:
      *  req - <bbopx.minerva.request>
+     *  intention - *[optional]* 'action' or 'query' ('action' default)
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add = function(req){
+    anchor.add = function(req, intention){
+
+	// We always want the "strongest" intention for the batch.
+	// If no explicit intention is mentioned, assume that this is
+	// a custom op (outside of the API) and is there for an
+	// 'action'.
+	if( ! intention ){
+	    anchor._intention = 'action';
+	}else if( intention == 'action' ){
+	    anchor._intention = intention;
+	}else if( intention == 'query' ){
+	    // Skip as it is at least weaker than a possibly set
+	    // 'action'.
+	}
+
 	anchor._requests.push(req);
 	return anchor;
     };
@@ -2734,12 +2756,72 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
     anchor.add_simple_individual = function(cls_id, model_id){
 
 	if( cls_id ){
+
 	    var ind_req = new bbopx.minerva.request('individual', 'add');
 	    if( model_id ){ ind_req.model(model_id); } // optionally add
 
 	    ind_req.add_class_expression(cls_id); 
 
-	    anchor.add(ind_req);
+	    anchor.add(ind_req, 'action');
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_complex_individual
+     * 
+     * Requests necessary to add an instance of with type class to the
+     * model.
+     * 
+     * Expect: "success" and "merge".
+     * 
+     * Arguments:
+     *  cls_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_complex_individual = function(cls_expression, model_id){
+
+	if( cls_expression ){
+
+	    var ind_req = new bbopx.minerva.request('individual', 'add');
+	    if( model_id ){ ind_req.model(model_id); } // optionally add
+
+	    ind_req.add_class_expression(cls_id); 
+
+	    anchor.add(ind_req, 'action');
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: remove_individual
+     * 
+     * Requests necessary to remove an individual.
+     * 
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  individual_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_individual = function(individual_id, model_id){
+
+	if( individual_id ){
+
+	    var ind_req = new bbopx.minerva.request('individual', 'remove');
+	    if( model_id ){ ind_req.model(model_id); } // optionally add
+
+	    ind_req.individual(individual_id); 
+
+	    anchor.add(ind_req, 'action');
 	}
 
 	return anchor;
@@ -2754,24 +2836,58 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * Expect: "success" and "merge".
      * 
      * Arguments:
-     *  subject_cls_id - string
-     *  object_cls_id - string
+     *  subject_indv_id - string
+     *  object_indv_id - string
      *  predicate_id - string
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add_fact = function(subject_cls_id, object_cls_id, predicate_id,
+    anchor.add_fact = function(subject_indv_id, object_indv_id, predicate_id,
 			       model_id){
 
-	if( subject_cls_id && object_cls_id && predicate_id ){
+	if( subject_indv_id && object_indv_id && predicate_id ){
+
 	    var edge_req = new bbopx.minerva.request('edge', 'add');
 	    if( model_id ){ edge_req.model(model_id); } // optionally add
 
-	    edge_req.fact(subject_cls_id, object_cls_id, predicate_id);
+	    edge_req.fact(subject_indv_id, object_indv_id, predicate_id);
 
-	    anchor.add(edge_req);
+	    anchor.add(edge_req, 'action');
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: remove_fact
+     * 
+     * Requests necessary to remove an edge between two instances in a
+     * model.
+     *
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  subject_indv_id - string
+     *  object_indv_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_fact = function(subject_indv_id, object_indv_id, predicate_id,
+				  model_id){
+
+	if( subject_indv_id && object_indv_id && predicate_id ){
+
+	    var edge_req = new bbopx.minerva.request('edge', 'remove');
+	    if( model_id ){ edge_req.model(model_id); } // optionally add
+
+	    edge_req.fact(subject_indv_id, object_indv_id, predicate_id);
+
+	    anchor.add(edge_req, 'action');
 	}
 
 	return anchor;
@@ -2781,67 +2897,50 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * Method: add_evidence_to_fact
      * 
      * Adds "anonymous" evidence individual that is referenced in the
-     * fact's annotations, as well as a fact of it's own to the batch.
+     * fact's annotations to the batch.
      * 
      * Arguments:
      *  evidence_id - string
-     *  source_ids - null, string, or list of strings (PMIDs, etc.)
-     *  subject_cls_id - string
-     *  object_cls_id - string
+     *  source_id - string
+     *  subject_indv_id - string
+     *  object_indv_id - string
      *  predicate_id - string
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add_evidence_to_fact = function(evidence_id, source_ids,
-					   subject_cls_id, object_cls_id,
+    anchor.add_evidence_to_fact = function(evidence_id, source_id,
+					   subject_indv_id, object_indv_id,
 					   predicate_id, model_id){
 
-	if( evidence_id && subject_cls_id && object_cls_id && predicate_id ){
+	// Quick check.
+	if( evidence_id && source_id && 
+	    subject_indv_id && object_indv_id && predicate_id ){
 
 	    // Create floating evidence instance...
 	    var ev_ind_req = new bbopx.minerva.request('individual', 'add');
 	    if( model_id ){ ev_ind_req.model(model_id); } // optional
 	    ev_ind_req.add_class_expression(evidence_id);
-	    anchor.add(ev_ind_req);
+	    anchor.add(ev_ind_req, 'action');
 
-	    // If there are source_id(s), add them to our new
-	    // individual.
-	    if( source_ids ){
-
-		// Ensure an iterable list of source ids no matter
-		// what our argument is.
-		var source_id_list = [];
-		if( bbop.core.what_is(source_ids) == 'string' ){
-		    source_id_list = [source_ids];
-		}else if( bbop.core.what_is(source_ids) == 'array' ){
-		    source_id_list = source_ids;
-		}else{
-		    // Don't know what it is, not gunna touch it.
-		}
-
-		// Add each source as an annotation to the floating
-		// evidence instance.
-		each(source_id_list, function(src_id){
-		    var ev_ind_ann_req =
-			    new bbopx.minerva.request('individual',
-						      'add-annotation');
-		    if( model_id ){ ev_ind_ann_req.model(model_id); } // optional
-		    ev_ind_ann_req.individual(ev_ind_req.individual());
-		    ev_ind_ann_req.add_annotation('source', src_id);
-		    anchor.add(ev_ind_ann_req);
-		});
-	    }
+	    // Add each source as an annotation to the floating
+	    // evidence instance.
+	    var ev_ind_ann_req =
+		    new bbopx.minerva.request('individual', 'add-annotation');
+	    if( model_id ){ ev_ind_ann_req.model(model_id); } // optional
+	    ev_ind_ann_req.individual(ev_ind_req.individual());
+	    ev_ind_ann_req.add_annotation('source', source_id);
+	    anchor.add(ev_ind_ann_req, 'action');
 	    
 	    // Tie the floating evidence to the edge with an
 	    // annotation to the edge.
 	    var ev_edge_ann_req =
 		    new bbopx.minerva.request('edge', 'add-annotation');
 	    if( model_id ){ ev_edge_ann_req.model(model_id); } // optional
-	    ev_edge_ann_req.fact(subject_cls_id, object_cls_id, predicate_id);
+	    ev_edge_ann_req.fact(subject_indv_id, object_indv_id, predicate_id);
 	    ev_edge_ann_req.add_annotation('evidence', ev_ind_req.individual());
-	    anchor.add(ev_edge_ann_req);
+	    anchor.add(ev_edge_ann_req, 'action');
 	}
 
 	return anchor;
@@ -2868,12 +2967,50 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 
 	var tmp_triple = anchor.last_fact_triple();
 	if( tmp_triple ){
+
 	    anchor.add_evidence_to_fact(evidence_id, source_ids,
 					tmp_triple[0], tmp_triple[1],
 					tmp_triple[2], model_id);
 	}
 
 	return anchor;
+    };
+
+    /*
+     * Method: remove_evidence_from_fact
+     * 
+     * Remove the evidence annotation from a fact.
+     * 
+     * Do not need to worry about the "floating" evidence instance
+     * made by evidence creation--clean-up will be taken care of by
+     * Minerva.
+     * 
+     * Arguments:
+     *  evidence_individual_id - string
+     *  subject_indv_id - string
+     *  object_indv_id - string
+     *  predicate_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_evidence_from_fact = function(evidence_individual_id,
+    						subject_indv_id, object_indv_id,
+    						predicate_id, model_id){
+	
+    	if( evidence_individual_id &&
+	    subject_indv_id && object_indv_id && predicate_id ){
+
+	    // In our simplified world, evidence deletion just becomes
+	    // a specific case of annotation deletion.
+	    anchor.remove_annotation_from_fact(
+		'evidence', evidence_individual_id,
+		subject_indv_id, object_indv_id, predicate_id,
+		model_id);
+	}
+
+    	return anchor;
     };
 
     // A helper function to sort out all of the different annotation
@@ -2914,7 +3051,7 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
 	// Add the annotation.
 	if( key && value ){	
 	    req.add_annotation(key, value);
-	    anchor.add(req);
+	    anchor.add(req, 'action');
 	}
     };
 
@@ -3039,12 +3176,205 @@ bbopx.minerva.request_set = function(user_token, intention, model_id){
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add_annotation_to_fact = function(key, value, subject_id,
-					     object_id, predicate_id,
-					     model_id){
+    anchor.remove_annotation_from_fact = function(key, value, subject_id,
+						  object_id, predicate_id,
+						  model_id){
 	anchor._op_annotation_to_target('remove', 'fact',
 					[subject_id, object_id, predicate_id],
 					key, value, model_id);
+	return anchor;
+    };
+
+    /*
+     * Method: undo_last_model_batch
+     * 
+     * Undo the last batch of operations performed on the model.
+     * 
+     * Arguments:
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.undo_last_model_batch = function(model_id){
+
+	var mod_req = new bbopx.minerva.request('model', 'undo');
+	if( model_id ){ mod_req.model(model_id); } // optionally add
+
+	anchor.add(mod_req, 'action');
+
+	return anchor;
+    };
+
+    /*
+     * Method: redo_last_model_batch
+     * 
+     * Redo the last batch of operations performed on the model.
+     * 
+     * Arguments:
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.undo_last_model_batch = function(model_id){
+
+	var mod_req = new bbopx.minerva.request('model', 'redo');
+	if( model_id ){ mod_req.model(model_id); } // optionally add
+
+	anchor.add(mod_req, 'action');
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_model
+     * 
+     * Essentially a wrapper for the "generate" class of model
+     * methods. The possible seeding arguments fir the argument hash
+     * are:
+     *  class_id - *[optional]* string; an initial class to build around
+     *  database_id - *[optional]* string; the background database
+     *  taxon_id - *[optional]* string; the background species
+     * 
+     * Arguments:
+     *  argument_hash - string (see above for properties)
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_model = function(argument_hash){
+
+	// Work out all incoming arguments to testable state.
+	var request_argument = null;
+	var cls_id = null;
+	var db_id = null;
+	var tax_id = null;
+	if( ! argument_hash ){
+	    request_argument = 'generate-blank';
+	    argument_hash = {};
+	}else{
+	    
+	    if( argument_hash['class_id'] ){
+		cls_id = argument_hash['class_id'];
+	    }
+	    if( argument_hash['database_id'] ){
+		db_id = argument_hash['database_id'];
+	    }
+	    if( argument_hash['taxon_id'] ){
+		tax_id = argument_hash['taxon_id'];
+	    }
+
+	    // Special historical case.
+	    if( cls_id && db_id ){
+		request_argument = 'generate';
+	    }else{
+		request_argument = 'generate-blank';
+	    }
+	}
+
+	// Now that all arguments are defined, build up the request.
+	var model_req = new bbopx.minerva.request('model', request_argument);
+	if( cls_id ){ model_req.special('subject', cls_id); }
+	if( db_id ){ model_req.special('db', db_id); }
+	if( tax_id ){ model_req.special('taxonId', db_id); }
+	// Unlikely to have any listeners though...
+	anchor.add(model_req, 'action');
+
+	return anchor;
+    };
+
+    /*
+     * Method: store_model
+     * 
+     * Store the model to the model store (file on disk as of this
+     * writing, but may change soon).
+     * 
+     * Arguments:
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.store_model = function(model_id){
+
+	var store_req = new bbopx.minerva.request('model', 'store');
+	if( model_id ){ store_req.model(model_id); } // optionally add
+
+	// No need to broadcast and disrupt to others on the model if
+	// it's just this.
+	anchor.add(store_req, 'query');
+
+	return anchor;
+    };
+
+    /*
+     * Method: model_query
+     * 
+     * The is a catch-all for various non-operating (meta) queries to
+     * Minerva about the state of a model.
+     * 
+     * These *[CANNOT]* be used with any other request.
+     * 
+     * Code defensively: this is likely to be *[DEPRECATED]* in the
+     * near future (once the Minerva meta API is cleaned). TODO.
+     * 
+     * Arguments:
+     *  operation - 'get' and 'get-undo-redo'
+     *  model_id - string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.model_query = function(operation, model_id){
+
+	if( operation && model_id ){
+
+	    var req = null;
+	    if( operation == 'get' ){
+		req = new bbopx.minerva.request('model', 'get');
+	    }else if( operation == 'get-undo-redo' ){
+		req = new bbopx.minerva.request('model', 'get-undo-redo');
+	    }
+	}
+
+	if( req ){
+	    req.model(model_id);
+	    // Just personal question.
+	    anchor.add(req, 'query');
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: models_query
+     * 
+     * The is a catch-all for various non-operating (meta) queries to
+     * Minerva about the state of all of the known models.
+     * 
+     * These *[CANNOT]* be used with any other request.
+     * 
+     * Code defensively: this is likely to be *[DEPRECATED]* in the
+     * near future (once the Minerva meta API is cleaned). TODO.
+     * 
+     * Arguments:
+     *  operation - 'all-model-ids' and 'all-model-meta'
+     *  model_id - string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.models_query = function(operation, model_id){
+
+	if( operation && model_id ){
+	    if( operation == 'all-model-ids' || operation == 'all-model-meta' ){
+		var req = new bbopx.minerva.request('model', operation);
+		// Just personal question.
+		anchor.add(req, 'query');
+	    }
+	}
+
 	return anchor;
     };
 
