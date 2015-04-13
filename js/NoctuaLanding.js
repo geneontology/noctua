@@ -200,14 +200,9 @@ var MMEnvBootstrappingInit = function(user_token){
 
 	}else{
 	    
-	    // Insert model IDs into "Select by ID" interface.
-	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
-	    var model_metas = resp.models_meta();
-	    var rep_cache = [];
-	    each(model_metas, function(model_id, model_meta){
-
-		// Try and probe out the best title from the data we
-		// having there.
+	    // Try and probe out the best title from the data we
+	    // having there.
+	    function _get_model_title(model_id, model_meta){
 		var mtitle = model_id;
 		if( model_meta['title'] ){
 		    var tmp_title =  model_meta['title'];
@@ -218,12 +213,57 @@ var MMEnvBootstrappingInit = function(user_token){
 			mtitle = match[1];
 		    }
 		}
+		return mtitle;
+	    }
 
-		// Check to see if it's deprecated and highlight that
-		// fact.
+	    // Check if model is deprecated.
+	    function _model_deprecated_p(model_meta){
+		var retval = false;
 		if( model_meta['deprecated'] &&
 		    ( model_meta['deprecated'] == true || 
 		      model_meta['deprecated'] == 'true' ) ){
+		    retval = true;
+		}
+		return retval;
+	    }
+
+	    // Get the model meta information and sort the models by
+	    // alphabetical titles.
+	    var model_metas = resp.models_meta();
+	    var model_meta_ids = bbop.core.get_keys(model_metas) || [];
+	    var sorted_model_meta_ids = model_meta_ids.sort(function(a, b){
+		var a_meta = model_metas[a];
+		var b_meta = model_metas[b];
+		var gt_p =
+		    _get_model_title(a, a_meta) < _get_model_title(b, b_meta);
+		var retval = 0;
+		// Std sort.
+		if( gt_p == true ){ retval = -1; }
+		else if( gt_p == false ){ retval = 1; }
+		// Bad if one is deprecated.
+		if( _model_deprecated_p(a_meta) != _model_deprecated_p(b_meta) ){
+		    if( _model_deprecated_p(a_meta) ){
+			retval = 1;
+		    }else if( _model_deprecated_p(b_meta) ){
+			retval = -1;
+		    }
+		}
+		
+		return retval;
+	    });
+
+	    // Insert model IDs into "Select by ID" interface.
+	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
+	    var rep_cache = [];
+	    each(sorted_model_meta_ids, function(model_id){
+
+		var model_meta = model_metas[model_id];
+
+		var mtitle =  _get_model_title(model_id, model_meta);
+
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( _model_deprecated_p(model_meta) ){
 		    mtitle = '[DEPRECATED] ' + mtitle;
 		}
 
