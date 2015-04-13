@@ -205,7 +205,9 @@ var MMEnvBootstrappingInit = function(user_token){
 	    var model_metas = resp.models_meta();
 	    var rep_cache = [];
 	    each(model_metas, function(model_id, model_meta){
-		// Try and probe out the best title.
+
+		// Try and probe out the best title from the data we
+		// having there.
 		var mtitle = model_id;
 		if( model_meta['title'] ){
 		    var tmp_title =  model_meta['title'];
@@ -217,8 +219,16 @@ var MMEnvBootstrappingInit = function(user_token){
 		    }
 		}
 
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( model_meta['deprecated'] &&
+		    ( model_meta['deprecated'] == true || 
+		      model_meta['deprecated'] == 'true' ) ){
+		    mtitle = '[DEPRECATED] ' + mtitle;
+		}
+
 		// Add to cache.
-		rep_cache.push('<option value="'+model_id+'">');
+		rep_cache.push('<option value="'+ model_id +'">');
 		rep_cache.push(mtitle);
 		rep_cache.push('</option>');
 	    });

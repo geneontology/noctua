@@ -99,6 +99,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	//     'placeholder': 'Enter reference type'
 	// },
 	{
+	    'id': 'deprecated',
+	    'label': 'Deprecated',
+	    'widget_type': 'text',
+	    'policy': 'mutable',
+	    'cardinality': 'one',
+	    'placeholder': 'false'
+	},
+	{
 	    'id': 'comment',
 	    'label': 'Comment',
 	    'widget_type': 'textarea',
