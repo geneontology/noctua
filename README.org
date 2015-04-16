@@ -3,7 +3,7 @@
   _Current development is very rapid, so some of these docs may be out
   of date._
 
-  More docs/API to be found [[http://kltm.github.io/go-mme][here]].
+  More docs/API to be found [[http://geneontology.github.io/noctua][here]].
   
   Prototype editor frontend (Noctua) and messenger server (Barista)
   for the Gene Ontology Molecular Modal Environment server (Minerva).
