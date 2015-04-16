@@ -5,892 +5,592 @@
 if( typeof(exports) != 'undefined' ){
     var bbop = require('bbop').bbop;
 }
-/* 
- * Package: response.js
- * 
- * Namespace: bbopx.barista.response
- * 
- * Generic BBOP handler for dealing with the gross parsing of
- * responses from the GO Molecular Model Manager REST server JSON
- * responses.
- * 
- * It will detect if the incoming response is structured correctly and
- * give safe access to fields and properties.
- * 
- * It is not meant to be a model for the parts in the data section.
- */
+////
+//// The idea here is to have a generic class expression class that
+//// can be used at all levels of communication an display (instead of
+//// the previous major/minor models).
+////
 
-// if ( typeof bbop == "undefined" ){ var bbop = {}; }
-// if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
-// if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
-// TODO/BUG: workaround until I get this properly folded into bbop-js.
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
-if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
+if ( typeof bbopx.minerva == "undefined" ){ bbopx.minerva = {}; }
 
-/*
- * Constructor: response
+/**
+ * Class expressions.
  * 
- * Contructor for a Minerva REST JSON response object.
+ * This is a full-bodied implementation of all the different aspects
+ * that we need to capture for type class expressions: information
+ * capture from JSON, on-the-fly creations, and display
+ * properties. These used to be separate behaviors, but with the
+ * client taking over more responsibility from Minerva, a more robust
+ * and testable soluton was needed.
  * 
- * The constructor argument is an object or a string.
+ * Types can be: class ids and the expressions: SVF, union, and
+ * intersection. Of the latter group, all are nestable.
  * 
- * Arguments:
- *  raw - the JSON object as a string or object
+ * Categories is a graphical/UI distinction. They can be: instance_of,
+ * <relation id>, union, and intersection.
  * 
- * Returns:
- *  response object
- */
-bbopx.barista.response = function(raw){
-    bbop.rest.response.call(this);
-    this._is_a = 'bbopx.barista.response';
-
-    // Required top-level strings in the response.
-    // message and message_type are defined in the superclass.
-    this._uid = null; // initiating user
-    this._packet_id = null; // identify the packet
-    this._intention = null; // what the user wanted to do ('query', 'action')
-    this._signal = null; // 'merge', 'rebuild', 'meta', etc.
-
-    // Optional top-level strings in the response.
-    this._commentary = null;
-
-    // Optional top-level objects.
-    // Data contains model_id, inconsistency, etc.
-    this._data = null;
-
-    // Start with the assumption that the response is bad, try and
-    // prove otherwise.
-    this.okay(false);
-
-    // Raw will only be provided in that cases that it makes sense.
-    this._raw = null;
-    
-    // If we have no data coming in, there is a problem...
-    if( ! raw ){
-	
-	this.message('empty response in handler');
-	this.message_type('error');
-
-    }else{
-
-	// If we do have something coming in, And it looks like
-	// something we might be able to deal with, do our best to
-	// decode it.
-	var itsa = bbop.core.what_is(raw);
-	if( itsa != 'string' && itsa != 'object' ){
-	    
-	    // No idea what this thing is...
-	    this.message('bad argument type in handler');
-	    this.message_type('error');
-
-	}else{
-	    
-	    // Try to make the string an object.
-	    if( itsa == 'string' ){
-		try {
-		    this._raw = bbop.json.parse(raw);
-		}catch(e){
-		    // Didn't make it--chuck it to create a signal.
-		    this._raw = null;
-		    this.message('handler could not parse string response');
-		    this.message_type('error');
-		}
-	    }else{
-		// Looks like somebody else got here first.
-		this._raw = raw;
-	    }
-
-	    // If we managed to define some kind of raw incoming data
-	    // that is (or has been parsed to) a model, start probing
-	    // it out to see if it is structured correctly.
-	    if( this._raw ){
-
-		// Check required fields.
-		var jresp = this._raw;
-		// These must always be defined.
-		if( ! jresp['message_type'] || ! jresp['message'] ){
-		    // Core info.
-		    this.message_type('error');
-		    this.message('message and message_type must always exist');
-		}else{
-
-		    // Take out the individual optional bits for
-		    // examination.
-		    var cdata = jresp['commentary'] || null;
-		    var odata = jresp['data'] || null;
-
-		    // If data, object.
-		    if( odata && bbop.core.what_is(odata) != 'object' ){
-		    // if( odata && bbop.core.what_is(odata) != 'object' &&
-		    // 	bbop.core.what_is(odata) != 'array' ){
-			this.message('data not object');
-			this.message_type('error');
-		    }else{
-			// If commentary, string.
-			if( cdata && bbop.core.what_is(cdata) != 'string' ){
-			    this.message('commentary not string');
-			    this.message_type('error');
-			}else{
-			    // Looks fine then I guess.
-			    this.okay(true);
-
-			    // Super-class.
-			    this.message_type(jresp['message_type']);
-			    this.message(jresp['message']);
-
-			    // Plug in the other required fields.
-			    this._uid = jresp['uid'] || 'unknown';
-			    this._intention = jresp['intention'] || 'unknown';
-			    this._signal = jresp['signal'] || 'unknown';
-			    this._packet_id = jresp['packet_id'] || 'unknown';
-
-			    // Add any additional fields.
-			    if( cdata ){ this._commentary = cdata; }
-			    if( odata ){ this._data = odata; }
-			}
-		    }
-		}
-	    }
-	}
-    }
-};
-bbop.core.extend(bbopx.barista.response, bbop.rest.response);
-
-/*
- * Function: user_id
- * 
- * Returns the user id (uid) for a call if it was generated my a known
- * user.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string or null
- */
-bbopx.barista.response.prototype.user_id = function(){
-    var ret = null;
-    if( this._uid ){ ret = this._uid; }
-    return ret;
-};
-
-/*
- * Function: intention
- * 
- * Returns the user intention for a call.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string or null
- */
-bbopx.barista.response.prototype.intention = function(){
-    var ret = null;
-    if( this._intention ){ ret = this._intention; }
-    return ret;
-};
-
-/*
- * Function: signal
- * 
- * Returns the server's action signal, if there was one.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string or null
- */
-bbopx.barista.response.prototype.signal = function(){
-    var ret = null;
-    if( this._signal ){ ret = this._signal; }
-    return ret;
-};
-
-/*
- * Function: packet_id
- * 
- * Returns the response's unique id. Usful to make sure you're not
- * talking to yourself in some cases.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string or null
- */
-bbopx.barista.response.prototype.packet_id = function(){
-    var ret = null;
-    if( this._packet_id ){ ret = this._packet_id; }
-    return ret;
-};
-
-/*
- * Function: commentary
- * 
- * Returns the commentary object (whatever that might be in any given
- * case).
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  copy of commentary object or null
- */
-bbopx.barista.response.prototype.commentary = function(){
-    var ret = null;
-    if( this._commentary ){
-	ret = bbop.core.clone(this._commentary);
-    }
-    return ret;
-};
-
-/*
- * Function: data
- * 
- * Returns the data object (whatever that might be in any given
- * case). This grossly returns all response data, if any.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  copy of data object or null
- */
-bbopx.barista.response.prototype.data = function(){
-    var ret = null;
-    if( this._data ){
-	ret = bbop.core.clone(this._data);
-    }
-    return ret;
-};
-
-/*
- * Function: model_id
- * 
- * Returns the model id of the response.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string or null
- */
-bbopx.barista.response.prototype.model_id = function(){
-    var ret = null;
-    if( this._data && this._data['id'] ){
-	ret = this._data['id'];
-    }
-    return ret;
-};
-
-/*
- * Function: inconsistent_p
- * 
- * Returns true or false on whether or not the returned model is
- * thought to be inconsistent. Starting assumption is that it is not.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  true or false
- */
-bbopx.barista.response.prototype.inconsistent_p = function(){
-    var ret = false;
-    if( this._data &&
-	typeof(this._data['inconsistent_p']) !== 'undefined' &&
-	this._data['inconsistent_p'] == true ){
-	ret = true;
-    }
-    return ret;
-};
-
-/*
- * Function: has_undo_p
- * 
- * Returns a true or false depending on the existence an undo list.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  boolean
- */
-bbopx.barista.response.prototype.has_undo_p = function(){
-    var ret = false;
-    if( this._data && this._data['undo'] && 
-	bbop.core.is_array(this._data['undo']) &&
-	this._data['undo'].length > 0 ){
-	ret = true;
-    }
-    return ret;
-};
-
-/*
- * Function: has_redo_p
- * 
- * Returns a true or false depending on the existence a redo list.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  boolean
- */
-bbopx.barista.response.prototype.has_redo_p = function(){
-    var ret = false;
-    if( this._data && this._data['redo'] && 
-	bbop.core.is_array(this._data['redo']) &&
-	this._data['redo'].length > 0 ){
-	ret = true;
-    }
-    return ret;
-};
-
-/*
- * Function: facts
- * 
- * Returns a list of the facts in the response. Empty list if none.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.facts = function(){
-    var ret = [];
-    if( this._data && this._data['facts'] && 
-	bbop.core.is_array(this._data['facts']) ){
-	ret = this._data['facts'];
-    }
-    return ret;
-};
-
-/*
- * Function: properties
- * 
- * Returns a list of the properties in the response. Empty list if none.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.properties = function(){
-    var ret = [];
-    if( this._data && this._data['properties'] && 
-	bbop.core.is_array(this._data['properties']) ){
-	ret = this._data['properties'];
-    }
-    return ret;
-};
-
-/*
- * Function: individuals
- * 
- * Returns a list of the individuals in the response. Empty list if none.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.individuals = function(){
-    var ret = [];
-    if( this._data && this._data['individuals'] && 
-	bbop.core.is_array(this._data['individuals']) ){
-	ret = this._data['individuals'];
-    }
-    return ret;
-};
-
-/*
- * Function: inferred_individuals
- * 
- * Returns a list of the inferred_individuals in the response. Empty
- * list if none.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.inferred_individuals = function(){
-    var ret = [];
-    if( this._data && this._data['individuals_i'] && 
-	bbop.core.is_array(this._data['individuals_i']) ){
-	ret = this._data['individuals_i'];
-    }
-    return ret;
-};
-
-/*
- * Function: relations
- * 
- * Returns a list of the relations found in the response. Sometimes not
- * there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.relations = function(){
-    var ret = [];
-    if( this._data && this._data['relations'] && 
-	bbop.core.is_array(this._data['relations']) ){
-	ret = this._data['relations'];
-    }
-    return ret;
-};
-
-/*
- * Function: evidence
- * 
- * Returns a list of the evidence found in the response. Sometimes not
- * there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.evidence = function(){
-    var ret = [];
-    if( this._data && this._data['evidence'] && 
-	bbop.core.is_array(this._data['evidence']) ){
-	ret = this._data['evidence'];
-    }
-    return ret;
-};
-
-/*
- * Function: annotations
- * 
- * Returns a list of the (complex) annotations found in the
- * response. Sometimes not there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.annotations = function(){
-    var ret = [];
-    if( this._data && this._data['annotations'] && 
-	bbop.core.is_array(this._data['annotations']) ){
-	ret = this._data['annotations'];
-    }
-    return ret;
-};
-
-/*
- * Function: model_ids
- * 
- * Returns a list the model ids found in the response. Sometimes not
- * there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
+ * This model also incorporates whether or not the type is
+ * inferred. At this level they are treated the same, but a higher
+ * level may (must) treat them as display decorations.
  *
- * See Also:
- *  <models_meta>
+ * The argument "in_type" may be:
+ *  - a class id (string)
+ *  - a JSON blob as described from Minerva
+ *  - another <bbopx.minerva.class_expression>
+ *  - null (user will load or interactively create one)
+ *
+ * Parameters:
+ *  in_type - the raw type description (see above)
+ *  inferred_p - *[optional]* whether or not the type is inferred (default false)
  */
-bbopx.barista.response.prototype.model_ids = function(){
-    var ret = [];
-    if( this._data && this._data['model_ids'] && 
-	bbop.core.is_array(this._data['model_ids']) ){
-	ret = this._data['model_ids'];
+bbopx.minerva.class_expression = function(in_type, inferred_p){
+    this._is_a = 'bbopx.minerva.class_expression';
+
+    // Aliases.
+    var anchor = this;
+    var each = bbop.core.each;
+    var what_is = bbop.core.what_is;
+
+    ///
+    /// Initialize.
+    ///
+
+    // in_type is always a JSON object, trivial catch of attempt to
+    // use just a string as a class identifier.
+    if( in_type ){
+    	if( what_is(in_type) == 'bbopx.minerva.class_expression' ){
+    	    // Unfold and re-parse (takes some properties of new
+    	    // host).
+    	    in_type = in_type.structure();
+    	}else if( what_is(in_type) == 'object' ){
+	    // Fine as it is.
+    	}else if( what_is(in_type) == 'string' ){
+	    // Convert to a safe representation.
+	    in_type = {
+		'type': 'Class',
+		'id': in_type,
+		'label': in_type
+	    };
+    	}
     }
-    return ret;
+
+    // Inferred type defaults to false.
+    this._inferred_p = false;
+    if( typeof(inferred_p) !== 'undefined' && inferred_p == true ){
+	this._inferred_p = true;
+    }
+
+    // Every single one is a precious snowflake (which is necessary
+    // for managing some of the aspects of the UI for some use cases).
+    this._id = bbop.core.uuid();
+
+    // Derived property defaults.
+    this._type = null;
+    this._category = 'unknown';
+    this._class_id = null;
+    this._class_label = null;
+    this._property_id = null;
+    this._property_label = null;
+    // Recursive elements.
+    this._frame = [];
+
+    // 
+    this._raw_type = in_type;
+    if( in_type ){
+	anchor.parse(in_type);
+    }
 };
 
-/*
- * Function: models_meta
+/**
+ * Function: id
  * 
- * Returns a hash of the model ids to models properties found in the
- * response.
- *
- * Sometimes not there, so check the return.
- *
- * WARNING: A work in progress, but this is intended as an eventual
- * replacement to model_ids.
- * 
- * Arguments:
+ * Parameters: 
  *  n/a
- * 
- * Returns:
- *  hash
  *
- * See Also:
- *  <model_ids>
- */
-bbopx.barista.response.prototype.models_meta = function(){
-    var ret = {};
-    if( this._data && this._data['models_meta'] && 
-	bbop.core.is_hash(this._data['models_meta']) ){
-	ret = this._data['models_meta'];
-    }
-    return ret;
-};
-
-/*
- * Function: export
- * 
- * Returns the string of the export found in the return.
- * 
- * Arguments:
- *  n/a
- * 
  * Returns:
  *  string
  */
-bbopx.barista.response.prototype.export_model = function(){
-    var ret = '';
-    if( this._data && this._data['export'] ){
-	ret = this._data['export'];
-    }
-    return ret;
+bbopx.minerva.class_expression.prototype.id = function(){
+    return this._id;
 };
-/*
- * Package: client.js
- *
- * Namespace: bbopx.barista.client
+
+/**
+ * Function: inferred_p
  * 
- * Let's try and communicate with the socket.io server (Barista) for
- * messages and the like--client-to-client communication.
+ * Parameters: 
+ *  n/a
  *
- * There are two major categories: "relay" and "query". Relays are for
- * passing information on to other clients (e.g. "where I am");
- * queries are for asking barista information about what it might know
- * (e.g. "where is X").
+ * Returns:
+ *  true or false
  */
+bbopx.minerva.class_expression.prototype.inferred_p = function(){
+    return this._inferred_p;
+};
 
-if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
-if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
-
-/*
- * Constructor: client
+/** 
+ * Function: nested_p
  *
- * Registry for client-to-client communication via Barista.
+ * If the type has a recursive frame.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  true or false
  */
-bbopx.barista.client = function(barista_location, token){
-    bbop.registry.call(this, ['connect',
-			      'initialization',
-			      //'disconnect',
-			      'relay', // catch-all
-			      'merge', // data is raw response 
-			      'rebuild', // data is raw response 
-			      'message',
-			      'clairvoyance',
-			      'telekinesis',
-			      'query']); // asking barista something for yourself
-    this._is_a = 'bbopx.barista.client';
+bbopx.minerva.class_expression.prototype.nested_p = function(){
+    var retval = false;
+    if( this._frame.length > 0 ){
+	retval = true;
+    }
+    return retval;
+};
+
+/**
+ * Function: signature
+ * 
+ * A cheap way of identifying if two class_expressions are the same.
+ * This essentially returns a string of the main attributes of a type.
+ * It is meant to be semi-unique and collide with dupe inferences.
+ *
+ * BUG/WARNING: At this point, colliding signatures should mean a
+ * dupe, but non-colliding signamtes does *not* guarantee that they
+ * are not dupes (think different intersection orderings).
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string
+ */
+bbopx.minerva.class_expression.prototype.signature = function(){
+    var anchor = this;
+    var each = bbop.core.each;
+
+    var sig = [];
+
+    // The easy ones.
+    sig.push(anchor.category() || '');
+    sig.push(anchor.type() || '');
+    sig.push(anchor.class_id() || '');
+    sig.push(anchor.property_id() || '');
+
+    // And now recursively on frames.
+    if( anchor.frame() ){
+	each(anchor.frame(), function(f){
+	    sig.push(f.signature() || '');
+	});
+    }
+
+    return sig.join('_');
+};
+
+/** 
+ * Function: category
+ *
+ * Try to put an instance type into some kind of rendering
+ * category.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string (default 'unknown')
+ */
+bbopx.minerva.class_expression.prototype.category = function(){
+    return this._category;
+};
+
+/** 
+ * Function: type
+ *
+ * The "type" of the type.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbopx.minerva.class_expression.prototype.type = function(){
+    return this._type;
+};
+
+/** 
+ * Function: svf_class_expression
+ *
+ * The class expression when we are dealing with SVF.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  type or null
+ */
+bbopx.minerva.class_expression.prototype.svf_class_expression = function(){
+    var ret = null
+    if( this.type() == 'svf' ){
+	ret = this._frame[0];
+    }    
+    return ret; 
+};
+
+/** 
+ * Function: frame
+ *
+ * If the type has a recursive frame, a list of the types it contains.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  list of <bbopx.minerva.class_expression>
+ */
+bbopx.minerva.class_expression.prototype.frame = function(){
+    return this._frame;
+};
+
+/** 
+ * Function: class_id
+ *
+ * The considered class id.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbopx.minerva.class_expression.prototype.class_id = function(){
+    return this._class_id;
+};
+
+/** 
+ * Function: class_label
+ *
+ * The considered class label, defaults to ID if not found.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbopx.minerva.class_expression.prototype.class_label = function(){
+    return this._class_label;
+};
+
+/** 
+ * Function: property_id
+ *
+ * The considered class property id.
+ * Not defined for 'Class' types.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbopx.minerva.class_expression.prototype.property_id = function(){
+    return this._property_id;
+};
+
+/** 
+ * Function: property_label
+ *
+ * The considered class property label.
+ * Not defined for 'Class' types.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string or null
+ */
+bbopx.minerva.class_expression.prototype.property_label = function(){
+    return this._property_label;
+};
+
+/**
+ * Function: parse
+ * 
+ * Parse a JSON blob into the current instance, clobbering anything in
+ * there, except id.
+ *
+ * Parameters: 
+ *  in_type - conformant JSON object
+ *
+ * Returns:
+ *  self
+ */
+bbopx.minerva.class_expression.prototype.parse = function(in_type){
 
     var anchor = this;
-    anchor._token = token;
-    anchor.socket = null;
-    anchor.model_id = null;
-    anchor.okay_p = null;
+    var each = bbop.core.each;
 
-    // These are the non-internal ones that we know about.
-    var known_relay_classes = {
-	'relay': true,
-	// Specific forms of relay.
-	'message': true,
-	'merge': true,
-	'rebuild': true,
-	'clairvoyance': true,
-	'telekinesis': true
-    };
-    var known_query_classes = {
-	'query': true
-    };
+    // Helper.
+    function _decide_type(type){
+	var rettype = null;
 
-    var logger = new bbop.logger('barista client');
-    logger.DEBUG = true;
-    //logger.DEBUG = false;
-    function ll(str){ logger.kvetch(str); }
-
-    // Check to make sure that the optional library was correctly
-    // loaded.
-    if( typeof(io) === 'undefined' || typeof(io.connect) === 'undefined' ){
-	ll('was unable to load server.io from messaging server (io undefined)');
-	anchor.okay_p = false;
-    }else{
-	ll('likely have the right setup--attempting');
-	anchor.okay_p = true;
-    }	
-
-    /*
-     * Method: okay
-     */
-    anchor.okay = function(){
-	var ret = false;
-	//if( anchor.okay_p && anchor.socket && anchor.model_id ){
-	if( anchor.okay_p ){
-	    ret = true;
-	}
-	return ret;
-    };
-
-    /*
-     * Method: token
-     *
-     * Operate on your identifying token.
-     */
-    anchor.token = function(in_token){
-	if( in_token ){
-	    anchor._token = in_token;
-	}
-	return anchor._token;
-    };
-
-    /*
-     * Method: relay
-     *
-     * General structure for relaying information between clients.
-     * Always check that the comm is on.
-     * Always inject 'token' and 'model_id'.
-     */
-    anchor.relay = function(relay_class, data){
-	if( ! anchor.okay() ){
-	    ll('no good socket on location; did you connect()?');
+	// Easiest case.
+	var t = type['type'] || null;
+	if( t == 'Class' ){
+	    rettype = 'class';
 	}else{
-	    //ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
-
-	    // Inject our data.
-	    data['class'] = relay_class;
-	    data['model_id'] = anchor.model_id;
-	    data['token'] = anchor.token();
-
-	    anchor.socket.emit('relay', data);
+	    // Okay, we're dealing with a class expression...but which
+	    // one? Talking to Heiko, these can be only one--they are
+	    // not going to be mixed.
+	    if( type['unionOf'] ){
+		rettype = 'union';
+	    }else if( type['intersectionOf'] ){
+		rettype = 'intersection';
+	    }else{
+		// Leaving us with SVF.
+		rettype = 'svf';
+	    }
 	}
-    };
 
-    /*
-     * Method: query
-     *
-     * General structure for requesting information from Barista about
-     * things it might know.
-     * Always check that the comm is on.
-     * Always inject 'token' and 'model_id'.
-     */
-    anchor.query = function(query_class, data){
-	if( ! anchor.okay() ){
-	    ll('no good socket on location; did you connect()?');
-	}else{
-	    ll('sending query: ('+ anchor.model_id +', '+ anchor.token() +')');
+	return rettype;
+    }
 
-	    // Inject our data.
-	    data['class'] = query_class;
-	    data['model_id'] = anchor.model_id;
-	    data['token'] = anchor.token();
+    // Define the category, and build up an instant picture of what we
+    // need to know about the property.
+    var t = _decide_type(in_type);
+    if( t == 'class' ){
 
-	    anchor.socket.emit('query', data);
-	}
-    };
+	// Easiest to extract.
+	this._type = t;
+	this._category = 'instance_of';
+	this._class_id = in_type['id'];
+	this._class_label = in_type['label'] || this._class_id;
+	// No related properties.
+	
+    }else if( t == 'union' || t == 'intersection' ){ // conjunctions
 
-    /*
-     * Method: get_layout
-     *
-     * Wrapper for the only thing query is currently used for.
-     */
-    anchor.get_layout = function(){
-	anchor.query('query', {'query': 'layout'});
-    };
+	// These are simply recursive.
+	this._type = t;
+	this._category = t;
 
-    /*
-     * Method: connect
-     *
-     * Required call before using messenger.
-     *
-     * TODO: Specify the channel over and above the general server.
-     * For the time being, just using the model id in the message.
-     */
-    anchor.connect = function(model_id){
-	if( ! anchor.okay() ){
-	    ll('no good socket on connect; did you connect()?');
-	}else{
-
-	    // Set internal variables and make actual connection.
-	    //anchor.socket = io.connect(barista_location + '/messenger');
-	    anchor.socket = io.connect(barista_location);
-	    anchor.model_id = model_id;
-	    anchor.socket_id = anchor.socket.id;
+	// Load stuff into the frame.
+	this._frame = [];
+	var f_set = in_type[t + 'Of'] || [];
+	each(f_set, function(f_type){
+	    anchor._frame.push(new bbopx.minerva.class_expression(f_type));
+	}); 
+    }else{ // SVF
 	    
-	    function _inject_data_with_client_info(data){
-		if( ! data ){
-		    data = {};
-		    //}else{
-		}
+	// We're then dealing with an SVF: a property plus a class
+	// expression. We are expecting a "Restriction", although we
+	// don't really do anything with that information (maybe
+	// later).
+	this._type = t;
+	// Extract the property information
+	this._category = in_type['onProperty']['id'];
+	this._property_id = in_type['onProperty']['id'];
+	this._property_label =
+	    in_type['onProperty']['label'] || this._property_id;	    
 
-		// // Standard.
-		// data['model_id'] = anchor.model_id;
-		// data['socket_id'] = anchor.socket_id;
-		// data['token'] = anchor.token();
+	// Okay, let's recur down the class expression. It should be
+	// one, but we'll use the frame. Access should be though
+	// svf_class_expression().
+	var f_type = in_type['someValuesFrom'];
+	this._frame = [new bbopx.minerva.class_expression(f_type)];
+    }
 
-		// // Optional.
-		// data['message_type'] = null;
-		// data['message'] = null;
-		// data['signal'] = null;
-		// data['intention'] = null;
-		// data['top'] = null;
-		// data['left'] = null;
-		// data['data'] = null;
-		// data['state'] = null;
-		
-		return data;
-	    }
-
-	    // Check whether ot not we should ignore the incoming
-	    // data.
-	    function _applys_to_us_p(data){
-		var ret = false;
-
-		var mid = data['model_id'] || null;
-		if( ! mid || mid != anchor.model_id ){
-		    ll('skip packet--not for us');
-		}else{
-		    ret = true;
-		}
-
-		return ret;
-	    }
-
-	    // This internal connect is special since no data is
-	    // actually coming from the outsice world.
-	    anchor.socket.on('connect', function (empty_placeholder){
-		var data = _inject_data_with_client_info(empty_placeholder);
-
-		// Let others know that I have connected using the 
-		data['message_type'] = 'success';
-		data['message'] = 'new client connected';
-		//anchor.socket.emit('relay', data);
-		anchor.relay('message', data);
-
-		// Run appropriate callbacks.
-		ll('apply "connect" callbacks');
-		anchor.apply_callbacks('connect', [data]);
-	    });
-
-	    // Our initialization data from the server.
-	    anchor.socket.on('initialization', function (data){
-		data = _inject_data_with_client_info(data);
-		//ll('received initialization info from socket: ' + sid);
-		
-		// Run appropriate callbacks.
-		ll('apply "initialization" callbacks');
-		anchor.apply_callbacks('initialization', [data]);
-	    });
-
-	    // Setup to catch info events from the clients and pass
-	    // them on if they were meant for us. 
-	    anchor.socket.on('relay', function(data){
-		data = _inject_data_with_client_info(data);
-
-		// Check to make sure it interests us.
-		if( _applys_to_us_p(data) ){
-
-		    var dclass = data['class'];
-		    if( ! dclass ){
-			ll('no relay class found');
-		    }else if( ! known_relay_classes[dclass] ){
-			ll('unknown relay class: ' + dclass);
-		    }else{
-			// Run appropriate callbacks.
-			ll('apply (relay) "'+ dclass +'" callbacks');
-			anchor.apply_callbacks(dclass, [data]);
-		    }
-		}
-	    });
-
-	    // Setup to catch query events from things we'veasked
-	    // barista.
-	    anchor.socket.on('query', function(data){
-		data = _inject_data_with_client_info(data);
-
-		// Check to make sure it interests us.
-		if( _applys_to_us_p(data) ){
-
-		    var dclass = data['class'];
-		    if( ! dclass ){
-			ll('no query class found');
-		    }else if( ! known_query_classes[dclass] ){
-			ll('unknown query class: ' + dclass);
-		    }else{
-			// Run appropriate callbacks.
-			ll('apply (query) "'+ dclass +'" callbacks');
-			anchor.apply_callbacks(dclass, [data]);
-		    }
-		}
-	    });
-     	}
-    };
-
-    /*
-     * Method: message
-     *
-     * Just a message.
-     */
-    anchor.message = function(m){
-	m['class'] = 'message';
-	// var packet = {
-	//     'class': 'message',
-	//     'message_type': m['message_type'],
-	//     'message': m['message'],
-	//     'me': m['message_type'],
-	//     'message_type': m['message_type']
-	// };
-	// anchor.relay('message', packet);
-	anchor.relay('message', m);
-    };
-
-    /*
-     * Method: clairvoyance
-     *
-     * Remote awareness of our location.
-     */
-    anchor.clairvoyance = function(top, left){
-	var packet = {
-	    'class': 'clairvoyance',
-	    'top': top,
-	    'left': left
-	};
-	anchor.relay('clairvoyance', packet);
-    };
-
-    /*
-     * Method: telekinesis
-     *
-     * Move objects at a distance.
-     */
-    anchor.telekinesis = function(item_id, top, left){
-	var packet = {
-	    'class': 'telekinesis',
-	    'objects': [{
-		'item_id': item_id,
-		'top': top,
-		'left': left
-	    }]
-	};
-	anchor.relay('telekinesis', packet);
-    };
-
+    return anchor;
 };
-bbop.core.extend(bbopx.barista.client, bbop.registry);
+
+/**
+ * Function: as_class
+ * 
+ * Parse a JSON blob into the current instance, clobbering anything in
+ * there, except id.
+ *
+ * Parameters: 
+ *  in_type - string
+ *
+ * Returns:
+ *  self
+ */
+bbopx.minerva.class_expression.prototype.as_class = function(in_type){
+
+    if( in_type ){
+	var ce = new bbopx.minerva.class_expression(in_type);
+	this.parse(ce.structure());
+    }
+
+    return this;
+};
+
+/**
+ * Function: as_svf
+ * 
+ * Convert a null class_expression into an arbitrary SVF.
+ *
+ * Parameters:
+ *  class_expr - ID string (e.g. GO:0022008) or <bbopx.minerva.class_expression>
+ *  property_id - string
+ *
+ * Returns:
+ *  self
+ */
+bbopx.minerva.class_expression.prototype.as_svf = function(
+    class_expr, property_id){
+
+    // Cheap our way into this--can be almost anything.
+    var cxpr = new bbopx.minerva.class_expression(class_expr);
+
+    // Our list of values must be defined if we go this way.
+    var expression = {
+	'type': 'Restriction',
+	'someValuesFrom': cxpr.structure(),
+	'onProperty': {
+	    'type': "ObjectProperty",
+	    'id': property_id
+	}
+    };
+
+    this.parse(expression);
+
+    return this;
+};
+
+/**
+ * Function: as_set
+ * 
+ * Convert a null class_expression into a set of class expressions.
+ *
+ * Parameters:
+ *  set_type - 'intersection' || 'union'
+ *  set_list - list of ID strings of <bbopx.minerva.class_expressions>
+ *
+ * Returns:
+ *  self
+ */
+bbopx.minerva.class_expression.prototype.as_set = function(
+    set_type, set_list){
+
+    // We do allow empties.
+    if( ! set_list ){ set_list = []; }
+
+    if( set_type == 'union' || set_type == 'intersection' ){
+
+	// Work into a viable argument.
+	var set = [];
+	bbop.core.each(set_list, function(item){
+	    var cexpr = new bbopx.minerva.class_expression(item);
+	    set.push(cexpr.structure());
+	}); 
+
+	// 
+	var fset = set_type + 'Of';
+	var parsable = {};
+	parsable[fset] = set;
+	this.parse(parsable);
+    }
+
+    return this;
+};
+
+/** 
+ * Function: structure
+ *
+ * Hm. Essentially dump out the information contained within into a
+ * JSON object that is appropriate for consumption my Minerva
+ * requests.
+ *
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  JSON object
+ */
+bbopx.minerva.class_expression.prototype.structure = function(){
+
+    // Aliases.
+    var anchor = this;
+    var each = bbop.core.each;
+
+    // We'll return this.
+    var expression = {};
+    
+    // Extract type.
+    var t = anchor.type(); 
+    if( t == 'class' ){ // trivial
+
+	expression['type'] = 'Class';
+	expression['id'] = anchor.class_id();
+
+    }else if( t == 'svf' ){ // SVF
+	
+	// Easy part of SVF.
+	expression['type'] = 'Restriction';
+	expression['onProperty'] = {
+	    'type': 'ObjectProperty',
+	    'id': anchor.property_id()
+	};
+	
+	// The hard part: grab or recur for someValuesFrom class
+	// expression.
+	var svfce = anchor.svf_class_expression();
+	var st = svfce.type();
+	if( st == 'class' ){
+	    expression['someValuesFrom'] = {
+		'type': 'Class',
+		'id': svfce.class_id()
+	    };
+	}else if( t == 'union' || t == 'intersection' || t == 'svf' ){
+	    expression['someValuesFrom'] = [svfce.structure()];
+	}else{
+	    throw new Error('unknown type in sub-request processing: ' + st);
+	}
+	
+    }else if( t == 'union' || t == 'intersection' ){ // compositions
+	
+	// Recursively add all of the types in the frame.
+	var ecache = [];
+	var frame = anchor.frame();
+	each(frame, function(ftype){
+	    ecache.push(ftype.structure());
+	});
+
+	// Correct structure.
+	var ekey = t + 'Of';
+	expression[ekey] = ecache;
+	
+    }else{
+	throw new Error('unknown type in request processing: ' + t);
+    }
+    
+    return expression;
+};
+
+
+bbopx.minerva.class_expression.intersection = function(list){
+    var ce = new bbopx.minerva.class_expression();
+    ce.as_set('intersection', list);
+    return ce;
+};
+
+bbopx.minerva.class_expression.union = function(list){
+    var ce = new bbopx.minerva.class_expression();
+    ce.as_set('union', list);
+    return ce;
+};
+
+bbopx.minerva.class_expression.svf = function(cls_expr, prop_id){
+    var ce = new bbopx.minerva.class_expression();
+    ce.as_svf(cls_expr, prop_id);
+    return ce;
+};
+
+bbopx.minerva.class_expression.cls = function(id){
+    var ce = new bbopx.minerva.class_expression();
+    ce.as_class(id);
+    return ce;
+};
 /* 
  * Package: manager.js
  *
@@ -2440,24 +2140,21 @@ bbopx.minerva.request = function(entity, operation){
     /*
      * Function: add_class_expression
      *
-     * General use for simple ops.
+     * General use for whatever.
      *
      * Parameters: 
-     *  class_id - string
+     *  class_expr - anything that can be taken by <bbopx.minerva.class_expression> constructor
      *  property_id - string
      *
      * Returns: 
      *  number of expressions
      */
-    anchor.add_class_expression = function(class_id){
+    anchor.add_class_expression = function(class_expr){
 	// Our list of values must be defined if we go this way.
 	anchor._ensure_list('expressions');
 
-	var expression = {
-	    'type': 'class',
-	    'literal': class_id
-	};
-	anchor._arguments['expressions'].push(expression);
+	var expr = new bbopx.minerva.class_expression(class_expr);
+	anchor._arguments['expressions'].push(expr.structure());
 
 	return anchor._arguments['expressions'].length;
     };
@@ -2469,95 +2166,45 @@ bbopx.minerva.request = function(entity, operation){
      * A short form for "addition" requests that can overload the
      * literal (on the server side) with Manchester syntax.
      *
-     * WARNING: I'm not actually sure of the veracity of the above
-     * statement.
-     *
      * Parameters: 
-     *  class_id - string
+     *  class_expr - anything that can be taken by <bbopx.minerva.class_expression> constructor
      *  property_id - string (id or...something more complicated?!?)
      *
      * Returns: 
      *  number of expressions
      */
-    anchor.add_svf_expression = function(class_id, property_id){
+    anchor.add_svf_expression = function(class_expr, property_id){
 	// Our list of values must be defined if we go this way.
 	anchor._ensure_list('expressions');
-	var expression = {
-            'type': 'svf',
-            'literal': class_id,
-            'onProp': property_id
-	};
-	anchor._arguments['expressions'].push(expression);
+
+	var expr = new bbopx.minerva.class_expression();
+	expr.as_svf(class_expr, property_id);
+	anchor._arguments['expressions'].push(expr.structure());
+
 	return anchor._arguments['expressions'].length;
     };
 
-    // Create a usable argument bundle from a type.
-    function _gen_class_exp(type){
-
-	// We'll return this.
-	var expression = {};
-	
-	// Extract type.
-	var t = type.type(); 
-	if( t == 'class' ){ // trivial
-	    expression['type'] = 'class';
-	    expression['literal'] = type.class_id();
-	}else if( t == 'union' || t == 'intersection' ){
-
-	    expression['type'] = t;
-
-	    // Recursively add all of the types in the frame.
-	    var ecache = [];
-	    var frame = type.frame();
-	    each(frame,
-		 function(ftype){
-		     ecache.push(_gen_class_exp(ftype));
-		 });
-	    expression['expressions'] = ecache;
-	    
-	}else if( t == 'svf' ){
-
-	    // Easy part of SVF.
-	    expression['type'] = 'svf';
-	    expression['onProp'] = type.property_id();
-	    
-	    // The hard part: grab or recur.
-	    var svfce = type.svf_class_expression();
-	    var st = svfce.type();
-	    if( st == 'class' ){
-		expression['literal'] = svfce.class_id();
-	    }else if( t == 'union' || t == 'intersection' || t == 'svf' ){
-		expression['expressions'] = [_gen_class_exp(svfce)];
-	    }else{
-		throw new Error('unknown type in sub-request prcessing: ' + st);
-	    }
-	    
-	}else{
-	    throw new Error('unknown type in request prcessing: ' + t);
-	}
-
-	return expression;
-    }
-
     /*
-     * Function: add_complex_class_expression
+     * Function: add_set_class_expression
      *
-     * Most general free form.
+     * Intersections and unions.
      *
      * Parameters: 
-     *  type - complex class expression in JSON format (<bbopx.noctua.edit.type>)
+     *  type - 'intersection' or 'union'
+     *  class_expr_list - a list of anything that can be taken by <bbopx.minerva.class_expression> constructor
      *
      * Returns: 
      *  number of expressions
      */
-    anchor.add_complex_class_expression = function(type){
-	// Our list of values must be defined if we go this way.
-	anchor._ensure_list('expressions');
+    anchor.add_set_class_expression = function(type, class_expr_list){
+    	// Our list of values must be defined if we go this way.
+    	anchor._ensure_list('expressions');
 
-	// May be very complicated--recursively assemble.
-	var expression = _gen_class_exp(type);
-	anchor._arguments['expressions'].push(expression);
-	return anchor._arguments['expressions'].length;
+	var expr = new bbopx.minerva.class_expression();
+	expr.as_set(type, class_expr_list);
+	anchor._arguments['expressions'].push(expr.structure());
+
+    	return anchor._arguments['expressions'].length;
     };
 
     /*
@@ -2739,7 +2386,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
     };
 
     /*
-     * Method: add_simple_individual
+     * Method: add_individual
      * 
      * Requests necessary to add an instance of with type class to the
      * model.
@@ -2747,55 +2394,29 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Expect: "success" and "merge".
      * 
      * Arguments:
-     *  cls_id - string
+     *  class_expr - anything that can be taken by <bbopx.minerva.class_expression> constructor
      *  model_id - *[optional]* string
      * 
      * Returns:
-     *  <bbopx.minerva.request_set>
+     *  id of individual added, as string
      */
-    anchor.add_simple_individual = function(cls_id, model_id){
+    anchor.add_individual = function(class_expr, model_id){
 
-	if( cls_id ){
+	var retval = null;
+	if( class_expr ){
 
 	    var ind_req = new bbopx.minerva.request('individual', 'add');
 	    if( model_id ){ ind_req.model(model_id); } // optionally add
 
-	    ind_req.add_class_expression(cls_id); 
+	    ind_req.add_class_expression(class_expr);
 
 	    anchor.add(ind_req, 'action');
+
+	    retval = ind_req.individual();
 	}
 
-	return anchor;
-    };
-
-    /*
-     * Method: add_complex_individual
-     * 
-     * Requests necessary to add an instance of with type class to the
-     * model.
-     * 
-     * Expect: "success" and "merge".
-     * 
-     * Arguments:
-     *  cls_id - string
-     *  model_id - *[optional]* string
-     * 
-     * Returns:
-     *  <bbopx.minerva.request_set>
-     */
-    anchor.add_complex_individual = function(cls_expression, model_id){
-
-	if( cls_expression ){
-
-	    var ind_req = new bbopx.minerva.request('individual', 'add');
-	    if( model_id ){ ind_req.model(model_id); } // optionally add
-
-	    ind_req.add_class_expression(cls_id); 
-
-	    anchor.add(ind_req, 'action');
-	}
-
-	return anchor;
+	//return anchor;
+	return retval;
     };
 
     /*
@@ -2827,6 +2448,80 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	return anchor;
     };
 
+    //  value - string
+    //  model_id - (optional with fact and individual) string
+    anchor._op_type_to_individual = function(op, class_expr, individual_id,
+					     model_id){
+
+	if( op && class_expr && individual_id ){
+	    if( op != 'add' && op != 'remove' ){
+		throw new Error('unknown type operation');
+	    }else{
+		var type_req =
+			new bbopx.minerva.request('individual', op + 'type');
+
+		if( model_id ){ type_req.model(model_id); } // optionally add
+
+		// 
+		type_req.add_class_expression(class_expr);
+
+		anchor.add(type_req, 'action');
+	    }
+	}
+
+	return anchor;
+    };
+
+    /*
+     * Method: add_type_to_individual
+     * 
+     * Add the identified type to the individual. Multiple calls are
+     * logicially treated as an "intersection", but not processed and
+     * displayed as such.
+     * 
+     * Arguments:
+     *  class_expr - anything that can be taken by <bbopx.minerva.class_expression> constructor
+     *  individual_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.add_type_to_individual = function(class_expr, individual_id,
+					     model_id){
+	return anchor._op_type_to_individual('add', class_expr, individual_id,
+					     model_id);
+    };
+
+    /*
+     * Method: remove_type_from_individual
+     * 
+     * Remove the identified type from the individual.
+     * 
+     * Arguments:
+     *  class_expr - anything that can be taken by <bbopx.minerva.class_expression> constructor
+     *  individual_id - string
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.remove_type_from_individual = function(class_expr, individual_id,
+						  model_id){
+	return anchor._op_type_to_individual('remove', class_expr, individual_id,
+					     model_id);
+    };
+
+    // Throw an error if no subject, object, predicate triple as
+    // argument.
+    anchor._ensure_fact = function(triple){
+	if( triple && triple[0] && triple[1] && triple[2] ){
+	    // Okay.
+	}else{
+	    throw new Error('triple did not look like a proper fact');
+	}
+    };
+
     /*
      * Method: add_fact
      * 
@@ -2836,28 +2531,23 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Expect: "success" and "merge".
      * 
      * Arguments:
-     *  subject_indv_id - string
-     *  object_indv_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add_fact = function(subject_indv_id, object_indv_id, predicate_id,
-			       model_id){
+    anchor.add_fact = function(triple, model_id){
+	anchor._ensure_fact(triple);
 
-	if( subject_indv_id && object_indv_id && predicate_id ){
+	var edge_req = new bbopx.minerva.request('edge', 'add');
+	if( model_id ){ edge_req.model(model_id); } // optionally add
 
-	    var edge_req = new bbopx.minerva.request('edge', 'add');
-	    if( model_id ){ edge_req.model(model_id); } // optionally add
+	edge_req.fact(triple[0], triple[1], triple[2]);
 
-	    edge_req.fact(subject_indv_id, object_indv_id, predicate_id);
+	anchor.add(edge_req, 'action');
 
-	    anchor.add(edge_req, 'action');
-	}
-
-	return anchor;
+	return triple;
     };
 
     /*
@@ -2869,26 +2559,21 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Expect: "success" and "rebuild".
      * 
      * Arguments:
-     *  subject_indv_id - string
-     *  object_indv_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.remove_fact = function(subject_indv_id, object_indv_id, predicate_id,
-				  model_id){
+    anchor.remove_fact = function(triple, model_id){
+	anchor._ensure_fact(triple);
 
-	if( subject_indv_id && object_indv_id && predicate_id ){
-
-	    var edge_req = new bbopx.minerva.request('edge', 'remove');
-	    if( model_id ){ edge_req.model(model_id); } // optionally add
-
-	    edge_req.fact(subject_indv_id, object_indv_id, predicate_id);
-
-	    anchor.add(edge_req, 'action');
-	}
+	var edge_req = new bbopx.minerva.request('edge', 'remove');
+	if( model_id ){ edge_req.model(model_id); } // optionally add
+	
+	edge_req.fact(triple[0], triple[1], triple[2]);
+	
+	anchor.add(edge_req, 'action');
 
 	return anchor;
     };
@@ -2902,21 +2587,18 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Arguments:
      *  evidence_id - string
      *  source_id - string
-     *  subject_indv_id - string
-     *  object_indv_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
     anchor.add_evidence_to_fact = function(evidence_id, source_id,
-					   subject_indv_id, object_indv_id,
-					   predicate_id, model_id){
+					   triple, model_id){
+	anchor._ensure_fact(triple);
 
 	// Quick check.
-	if( evidence_id && source_id && 
-	    subject_indv_id && object_indv_id && predicate_id ){
+	if( evidence_id && source_id && triple ){
 
 	    // Create floating evidence instance...
 	    var ev_ind_req = new bbopx.minerva.request('individual', 'add');
@@ -2938,7 +2620,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	    var ev_edge_ann_req =
 		    new bbopx.minerva.request('edge', 'add-annotation');
 	    if( model_id ){ ev_edge_ann_req.model(model_id); } // optional
-	    ev_edge_ann_req.fact(subject_indv_id, object_indv_id, predicate_id);
+	    ev_edge_ann_req.fact(triple[0], triple[1], triple[2]);
 	    ev_edge_ann_req.add_annotation('evidence', ev_ind_req.individual());
 	    anchor.add(ev_edge_ann_req, 'action');
 	}
@@ -2968,9 +2650,8 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	var tmp_triple = anchor.last_fact_triple();
 	if( tmp_triple ){
 
-	    anchor.add_evidence_to_fact(evidence_id, source_ids,
-					tmp_triple[0], tmp_triple[1],
-					tmp_triple[2], model_id);
+	    anchor.add_evidence_to_fact(evidence_id, source_ids, tmp_triple,
+					model_id);
 	}
 
 	return anchor;
@@ -2987,27 +2668,22 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * 
      * Arguments:
      *  evidence_individual_id - string
-     *  subject_indv_id - string
-     *  object_indv_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
     anchor.remove_evidence_from_fact = function(evidence_individual_id,
-    						subject_indv_id, object_indv_id,
-    						predicate_id, model_id){
+    						triple, model_id){
+	anchor._ensure_fact(triple);
 	
-    	if( evidence_individual_id &&
-	    subject_indv_id && object_indv_id && predicate_id ){
+    	if( evidence_individual_id && triple ){
 
 	    // In our simplified world, evidence deletion just becomes
 	    // a specific case of annotation deletion.
 	    anchor.remove_annotation_from_fact(
-		'evidence', evidence_individual_id,
-		subject_indv_id, object_indv_id, predicate_id,
-		model_id);
+		'evidence', evidence_individual_id, triple, model_id);
 	}
 
     	return anchor;
@@ -3041,6 +2717,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	}else if( target == 'individual' ){
 	    req.individual(target_identifier);
 	}else if( target == 'fact' ){
+	    anchor._ensure_fact(target_identifier);
 	    req.fact(target_identifier[0],
 		     target_identifier[1],
 		     target_identifier[2]);
@@ -3143,20 +2820,16 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Arguments:
      *  key - string
      *  value - string
-     *  subject_id - string
-     *  object_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.add_annotation_to_fact = function(key, value, subject_id,
-					     object_id, predicate_id,
-					     model_id){
+    anchor.add_annotation_to_fact = function(key, value, triple, model_id){
+	anchor._ensure_fact(triple);
 	anchor._op_annotation_to_target('add', 'fact',
-					[subject_id, object_id, predicate_id],
-					key, value, model_id);
+					triple,	key, value, model_id);
 	return anchor;
     };
 
@@ -3168,19 +2841,15 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Arguments:
      *  key - string
      *  value - string
-     *  subject_id - string
-     *  object_id - string
-     *  predicate_id - string
+     *  triple - list of three strings: [SUBJECT_ID, OBJECT_ID, PREDICATE_ID]
      *  model_id - *[optional]* string
      * 
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.remove_annotation_from_fact = function(key, value, subject_id,
-						  object_id, predicate_id,
-						  model_id){
-	anchor._op_annotation_to_target('remove', 'fact',
-					[subject_id, object_id, predicate_id],
+    anchor.remove_annotation_from_fact = function(key, value, triple, model_id){
+	anchor._ensure_fact(triple);
+	anchor._op_annotation_to_target('remove', 'fact', triple,
 					key, value, model_id);
 	return anchor;
     };
@@ -3437,6 +3106,892 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	return rset;
     };
 };
+/* 
+ * Package: response.js
+ * 
+ * Namespace: bbopx.barista.response
+ * 
+ * Generic BBOP handler for dealing with the gross parsing of
+ * responses from the GO Molecular Model Manager REST server JSON
+ * responses.
+ * 
+ * It will detect if the incoming response is structured correctly and
+ * give safe access to fields and properties.
+ * 
+ * It is not meant to be a model for the parts in the data section.
+ */
+
+// if ( typeof bbop == "undefined" ){ var bbop = {}; }
+// if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+// if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
+// TODO/BUG: workaround until I get this properly folded into bbop-js.
+if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
+if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
+
+/*
+ * Constructor: response
+ * 
+ * Contructor for a Minerva REST JSON response object.
+ * 
+ * The constructor argument is an object or a string.
+ * 
+ * Arguments:
+ *  raw - the JSON object as a string or object
+ * 
+ * Returns:
+ *  response object
+ */
+bbopx.barista.response = function(raw){
+    bbop.rest.response.call(this);
+    this._is_a = 'bbopx.barista.response';
+
+    // Required top-level strings in the response.
+    // message and message_type are defined in the superclass.
+    this._uid = null; // initiating user
+    this._packet_id = null; // identify the packet
+    this._intention = null; // what the user wanted to do ('query', 'action')
+    this._signal = null; // 'merge', 'rebuild', 'meta', etc.
+
+    // Optional top-level strings in the response.
+    this._commentary = null;
+
+    // Optional top-level objects.
+    // Data contains model_id, inconsistency, etc.
+    this._data = null;
+
+    // Start with the assumption that the response is bad, try and
+    // prove otherwise.
+    this.okay(false);
+
+    // Raw will only be provided in that cases that it makes sense.
+    this._raw = null;
+    
+    // If we have no data coming in, there is a problem...
+    if( ! raw ){
+	
+	this.message('empty response in handler');
+	this.message_type('error');
+
+    }else{
+
+	// If we do have something coming in, And it looks like
+	// something we might be able to deal with, do our best to
+	// decode it.
+	var itsa = bbop.core.what_is(raw);
+	if( itsa != 'string' && itsa != 'object' ){
+	    
+	    // No idea what this thing is...
+	    this.message('bad argument type in handler');
+	    this.message_type('error');
+
+	}else{
+	    
+	    // Try to make the string an object.
+	    if( itsa == 'string' ){
+		try {
+		    this._raw = bbop.json.parse(raw);
+		}catch(e){
+		    // Didn't make it--chuck it to create a signal.
+		    this._raw = null;
+		    this.message('handler could not parse string response');
+		    this.message_type('error');
+		}
+	    }else{
+		// Looks like somebody else got here first.
+		this._raw = raw;
+	    }
+
+	    // If we managed to define some kind of raw incoming data
+	    // that is (or has been parsed to) a model, start probing
+	    // it out to see if it is structured correctly.
+	    if( this._raw ){
+
+		// Check required fields.
+		var jresp = this._raw;
+		// These must always be defined.
+		if( ! jresp['message_type'] || ! jresp['message'] ){
+		    // Core info.
+		    this.message_type('error');
+		    this.message('message and message_type must always exist');
+		}else{
+
+		    // Take out the individual optional bits for
+		    // examination.
+		    var cdata = jresp['commentary'] || null;
+		    var odata = jresp['data'] || null;
+
+		    // If data, object.
+		    if( odata && bbop.core.what_is(odata) != 'object' ){
+		    // if( odata && bbop.core.what_is(odata) != 'object' &&
+		    // 	bbop.core.what_is(odata) != 'array' ){
+			this.message('data not object');
+			this.message_type('error');
+		    }else{
+			// If commentary, string.
+			if( cdata && bbop.core.what_is(cdata) != 'string' ){
+			    this.message('commentary not string');
+			    this.message_type('error');
+			}else{
+			    // Looks fine then I guess.
+			    this.okay(true);
+
+			    // Super-class.
+			    this.message_type(jresp['message_type']);
+			    this.message(jresp['message']);
+
+			    // Plug in the other required fields.
+			    this._uid = jresp['uid'] || 'unknown';
+			    this._intention = jresp['intention'] || 'unknown';
+			    this._signal = jresp['signal'] || 'unknown';
+			    this._packet_id = jresp['packet_id'] || 'unknown';
+
+			    // Add any additional fields.
+			    if( cdata ){ this._commentary = cdata; }
+			    if( odata ){ this._data = odata; }
+			}
+		    }
+		}
+	    }
+	}
+    }
+};
+bbop.core.extend(bbopx.barista.response, bbop.rest.response);
+
+/*
+ * Function: user_id
+ * 
+ * Returns the user id (uid) for a call if it was generated my a known
+ * user.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.user_id = function(){
+    var ret = null;
+    if( this._uid ){ ret = this._uid; }
+    return ret;
+};
+
+/*
+ * Function: intention
+ * 
+ * Returns the user intention for a call.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.intention = function(){
+    var ret = null;
+    if( this._intention ){ ret = this._intention; }
+    return ret;
+};
+
+/*
+ * Function: signal
+ * 
+ * Returns the server's action signal, if there was one.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.signal = function(){
+    var ret = null;
+    if( this._signal ){ ret = this._signal; }
+    return ret;
+};
+
+/*
+ * Function: packet_id
+ * 
+ * Returns the response's unique id. Usful to make sure you're not
+ * talking to yourself in some cases.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.packet_id = function(){
+    var ret = null;
+    if( this._packet_id ){ ret = this._packet_id; }
+    return ret;
+};
+
+/*
+ * Function: commentary
+ * 
+ * Returns the commentary object (whatever that might be in any given
+ * case).
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  copy of commentary object or null
+ */
+bbopx.barista.response.prototype.commentary = function(){
+    var ret = null;
+    if( this._commentary ){
+	ret = bbop.core.clone(this._commentary);
+    }
+    return ret;
+};
+
+/*
+ * Function: data
+ * 
+ * Returns the data object (whatever that might be in any given
+ * case). This grossly returns all response data, if any.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  copy of data object or null
+ */
+bbopx.barista.response.prototype.data = function(){
+    var ret = null;
+    if( this._data ){
+	ret = bbop.core.clone(this._data);
+    }
+    return ret;
+};
+
+/*
+ * Function: model_id
+ * 
+ * Returns the model id of the response.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbopx.barista.response.prototype.model_id = function(){
+    var ret = null;
+    if( this._data && this._data['id'] ){
+	ret = this._data['id'];
+    }
+    return ret;
+};
+
+/*
+ * Function: inconsistent_p
+ * 
+ * Returns true or false on whether or not the returned model is
+ * thought to be inconsistent. Starting assumption is that it is not.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  true or false
+ */
+bbopx.barista.response.prototype.inconsistent_p = function(){
+    var ret = false;
+    if( this._data &&
+	typeof(this._data['inconsistent_p']) !== 'undefined' &&
+	this._data['inconsistent_p'] == true ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
+ * Function: has_undo_p
+ * 
+ * Returns a true or false depending on the existence an undo list.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  boolean
+ */
+bbopx.barista.response.prototype.has_undo_p = function(){
+    var ret = false;
+    if( this._data && this._data['undo'] && 
+	bbop.core.is_array(this._data['undo']) &&
+	this._data['undo'].length > 0 ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
+ * Function: has_redo_p
+ * 
+ * Returns a true or false depending on the existence a redo list.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  boolean
+ */
+bbopx.barista.response.prototype.has_redo_p = function(){
+    var ret = false;
+    if( this._data && this._data['redo'] && 
+	bbop.core.is_array(this._data['redo']) &&
+	this._data['redo'].length > 0 ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
+ * Function: facts
+ * 
+ * Returns a list of the facts in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.facts = function(){
+    var ret = [];
+    if( this._data && this._data['facts'] && 
+	bbop.core.is_array(this._data['facts']) ){
+	ret = this._data['facts'];
+    }
+    return ret;
+};
+
+/*
+ * Function: properties
+ * 
+ * Returns a list of the properties in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.properties = function(){
+    var ret = [];
+    if( this._data && this._data['properties'] && 
+	bbop.core.is_array(this._data['properties']) ){
+	ret = this._data['properties'];
+    }
+    return ret;
+};
+
+/*
+ * Function: individuals
+ * 
+ * Returns a list of the individuals in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.individuals = function(){
+    var ret = [];
+    if( this._data && this._data['individuals'] && 
+	bbop.core.is_array(this._data['individuals']) ){
+	ret = this._data['individuals'];
+    }
+    return ret;
+};
+
+/*
+ * Function: inferred_individuals
+ * 
+ * Returns a list of the inferred_individuals in the response. Empty
+ * list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.inferred_individuals = function(){
+    var ret = [];
+    if( this._data && this._data['individuals_i'] && 
+	bbop.core.is_array(this._data['individuals_i']) ){
+	ret = this._data['individuals_i'];
+    }
+    return ret;
+};
+
+/*
+ * Function: relations
+ * 
+ * Returns a list of the relations found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.relations = function(){
+    var ret = [];
+    if( this._data && this._data['relations'] && 
+	bbop.core.is_array(this._data['relations']) ){
+	ret = this._data['relations'];
+    }
+    return ret;
+};
+
+/*
+ * Function: evidence
+ * 
+ * Returns a list of the evidence found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.evidence = function(){
+    var ret = [];
+    if( this._data && this._data['evidence'] && 
+	bbop.core.is_array(this._data['evidence']) ){
+	ret = this._data['evidence'];
+    }
+    return ret;
+};
+
+/*
+ * Function: annotations
+ * 
+ * Returns a list of the (complex) annotations found in the
+ * response. Sometimes not there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.annotations = function(){
+    var ret = [];
+    if( this._data && this._data['annotations'] && 
+	bbop.core.is_array(this._data['annotations']) ){
+	ret = this._data['annotations'];
+    }
+    return ret;
+};
+
+/*
+ * Function: model_ids
+ * 
+ * Returns a list the model ids found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ *
+ * See Also:
+ *  <models_meta>
+ */
+bbopx.barista.response.prototype.model_ids = function(){
+    var ret = [];
+    if( this._data && this._data['model_ids'] && 
+	bbop.core.is_array(this._data['model_ids']) ){
+	ret = this._data['model_ids'];
+    }
+    return ret;
+};
+
+/*
+ * Function: models_meta
+ * 
+ * Returns a hash of the model ids to models properties found in the
+ * response.
+ *
+ * Sometimes not there, so check the return.
+ *
+ * WARNING: A work in progress, but this is intended as an eventual
+ * replacement to model_ids.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  hash
+ *
+ * See Also:
+ *  <model_ids>
+ */
+bbopx.barista.response.prototype.models_meta = function(){
+    var ret = {};
+    if( this._data && this._data['models_meta'] && 
+	bbop.core.is_hash(this._data['models_meta']) ){
+	ret = this._data['models_meta'];
+    }
+    return ret;
+};
+
+/*
+ * Function: export
+ * 
+ * Returns the string of the export found in the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string
+ */
+bbopx.barista.response.prototype.export_model = function(){
+    var ret = '';
+    if( this._data && this._data['export'] ){
+	ret = this._data['export'];
+    }
+    return ret;
+};
+/*
+ * Package: client.js
+ *
+ * Namespace: bbopx.barista.client
+ * 
+ * Let's try and communicate with the socket.io server (Barista) for
+ * messages and the like--client-to-client communication.
+ *
+ * There are two major categories: "relay" and "query". Relays are for
+ * passing information on to other clients (e.g. "where I am");
+ * queries are for asking barista information about what it might know
+ * (e.g. "where is X").
+ */
+
+if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
+if ( typeof bbopx.barista == "undefined" ){ bbopx.barista = {}; }
+
+/*
+ * Constructor: client
+ *
+ * Registry for client-to-client communication via Barista.
+ */
+bbopx.barista.client = function(barista_location, token){
+    bbop.registry.call(this, ['connect',
+			      'initialization',
+			      //'disconnect',
+			      'relay', // catch-all
+			      'merge', // data is raw response 
+			      'rebuild', // data is raw response 
+			      'message',
+			      'clairvoyance',
+			      'telekinesis',
+			      'query']); // asking barista something for yourself
+    this._is_a = 'bbopx.barista.client';
+
+    var anchor = this;
+    anchor._token = token;
+    anchor.socket = null;
+    anchor.model_id = null;
+    anchor.okay_p = null;
+
+    // These are the non-internal ones that we know about.
+    var known_relay_classes = {
+	'relay': true,
+	// Specific forms of relay.
+	'message': true,
+	'merge': true,
+	'rebuild': true,
+	'clairvoyance': true,
+	'telekinesis': true
+    };
+    var known_query_classes = {
+	'query': true
+    };
+
+    var logger = new bbop.logger('barista client');
+    logger.DEBUG = true;
+    //logger.DEBUG = false;
+    function ll(str){ logger.kvetch(str); }
+
+    // Check to make sure that the optional library was correctly
+    // loaded.
+    if( typeof(io) === 'undefined' || typeof(io.connect) === 'undefined' ){
+	ll('was unable to load server.io from messaging server (io undefined)');
+	anchor.okay_p = false;
+    }else{
+	ll('likely have the right setup--attempting');
+	anchor.okay_p = true;
+    }	
+
+    /*
+     * Method: okay
+     */
+    anchor.okay = function(){
+	var ret = false;
+	//if( anchor.okay_p && anchor.socket && anchor.model_id ){
+	if( anchor.okay_p ){
+	    ret = true;
+	}
+	return ret;
+    };
+
+    /*
+     * Method: token
+     *
+     * Operate on your identifying token.
+     */
+    anchor.token = function(in_token){
+	if( in_token ){
+	    anchor._token = in_token;
+	}
+	return anchor._token;
+    };
+
+    /*
+     * Method: relay
+     *
+     * General structure for relaying information between clients.
+     * Always check that the comm is on.
+     * Always inject 'token' and 'model_id'.
+     */
+    anchor.relay = function(relay_class, data){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    //ll('relay: (' + anchor.model_id + ', ' + anchor.token() + ')');
+
+	    // Inject our data.
+	    data['class'] = relay_class;
+	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
+
+	    anchor.socket.emit('relay', data);
+	}
+    };
+
+    /*
+     * Method: query
+     *
+     * General structure for requesting information from Barista about
+     * things it might know.
+     * Always check that the comm is on.
+     * Always inject 'token' and 'model_id'.
+     */
+    anchor.query = function(query_class, data){
+	if( ! anchor.okay() ){
+	    ll('no good socket on location; did you connect()?');
+	}else{
+	    ll('sending query: ('+ anchor.model_id +', '+ anchor.token() +')');
+
+	    // Inject our data.
+	    data['class'] = query_class;
+	    data['model_id'] = anchor.model_id;
+	    data['token'] = anchor.token();
+
+	    anchor.socket.emit('query', data);
+	}
+    };
+
+    /*
+     * Method: get_layout
+     *
+     * Wrapper for the only thing query is currently used for.
+     */
+    anchor.get_layout = function(){
+	anchor.query('query', {'query': 'layout'});
+    };
+
+    /*
+     * Method: connect
+     *
+     * Required call before using messenger.
+     *
+     * TODO: Specify the channel over and above the general server.
+     * For the time being, just using the model id in the message.
+     */
+    anchor.connect = function(model_id){
+	if( ! anchor.okay() ){
+	    ll('no good socket on connect; did you connect()?');
+	}else{
+
+	    // Set internal variables and make actual connection.
+	    //anchor.socket = io.connect(barista_location + '/messenger');
+	    anchor.socket = io.connect(barista_location);
+	    anchor.model_id = model_id;
+	    anchor.socket_id = anchor.socket.id;
+	    
+	    function _inject_data_with_client_info(data){
+		if( ! data ){
+		    data = {};
+		    //}else{
+		}
+
+		// // Standard.
+		// data['model_id'] = anchor.model_id;
+		// data['socket_id'] = anchor.socket_id;
+		// data['token'] = anchor.token();
+
+		// // Optional.
+		// data['message_type'] = null;
+		// data['message'] = null;
+		// data['signal'] = null;
+		// data['intention'] = null;
+		// data['top'] = null;
+		// data['left'] = null;
+		// data['data'] = null;
+		// data['state'] = null;
+		
+		return data;
+	    }
+
+	    // Check whether ot not we should ignore the incoming
+	    // data.
+	    function _applys_to_us_p(data){
+		var ret = false;
+
+		var mid = data['model_id'] || null;
+		if( ! mid || mid != anchor.model_id ){
+		    ll('skip packet--not for us');
+		}else{
+		    ret = true;
+		}
+
+		return ret;
+	    }
+
+	    // This internal connect is special since no data is
+	    // actually coming from the outsice world.
+	    anchor.socket.on('connect', function (empty_placeholder){
+		var data = _inject_data_with_client_info(empty_placeholder);
+
+		// Let others know that I have connected using the 
+		data['message_type'] = 'success';
+		data['message'] = 'new client connected';
+		//anchor.socket.emit('relay', data);
+		anchor.relay('message', data);
+
+		// Run appropriate callbacks.
+		ll('apply "connect" callbacks');
+		anchor.apply_callbacks('connect', [data]);
+	    });
+
+	    // Our initialization data from the server.
+	    anchor.socket.on('initialization', function (data){
+		data = _inject_data_with_client_info(data);
+		//ll('received initialization info from socket: ' + sid);
+		
+		// Run appropriate callbacks.
+		ll('apply "initialization" callbacks');
+		anchor.apply_callbacks('initialization', [data]);
+	    });
+
+	    // Setup to catch info events from the clients and pass
+	    // them on if they were meant for us. 
+	    anchor.socket.on('relay', function(data){
+		data = _inject_data_with_client_info(data);
+
+		// Check to make sure it interests us.
+		if( _applys_to_us_p(data) ){
+
+		    var dclass = data['class'];
+		    if( ! dclass ){
+			ll('no relay class found');
+		    }else if( ! known_relay_classes[dclass] ){
+			ll('unknown relay class: ' + dclass);
+		    }else{
+			// Run appropriate callbacks.
+			ll('apply (relay) "'+ dclass +'" callbacks');
+			anchor.apply_callbacks(dclass, [data]);
+		    }
+		}
+	    });
+
+	    // Setup to catch query events from things we'veasked
+	    // barista.
+	    anchor.socket.on('query', function(data){
+		data = _inject_data_with_client_info(data);
+
+		// Check to make sure it interests us.
+		if( _applys_to_us_p(data) ){
+
+		    var dclass = data['class'];
+		    if( ! dclass ){
+			ll('no query class found');
+		    }else if( ! known_query_classes[dclass] ){
+			ll('unknown query class: ' + dclass);
+		    }else{
+			// Run appropriate callbacks.
+			ll('apply (query) "'+ dclass +'" callbacks');
+			anchor.apply_callbacks(dclass, [data]);
+		    }
+		}
+	    });
+     	}
+    };
+
+    /*
+     * Method: message
+     *
+     * Just a message.
+     */
+    anchor.message = function(m){
+	m['class'] = 'message';
+	// var packet = {
+	//     'class': 'message',
+	//     'message_type': m['message_type'],
+	//     'message': m['message'],
+	//     'me': m['message_type'],
+	//     'message_type': m['message_type']
+	// };
+	// anchor.relay('message', packet);
+	anchor.relay('message', m);
+    };
+
+    /*
+     * Method: clairvoyance
+     *
+     * Remote awareness of our location.
+     */
+    anchor.clairvoyance = function(top, left){
+	var packet = {
+	    'class': 'clairvoyance',
+	    'top': top,
+	    'left': left
+	};
+	anchor.relay('clairvoyance', packet);
+    };
+
+    /*
+     * Method: telekinesis
+     *
+     * Move objects at a distance.
+     */
+    anchor.telekinesis = function(item_id, top, left){
+	var packet = {
+	    'class': 'telekinesis',
+	    'objects': [{
+		'item_id': item_id,
+		'top': top,
+		'left': left
+	    }]
+	};
+	anchor.relay('telekinesis', packet);
+    };
+
+};
+bbop.core.extend(bbopx.barista.client, bbop.registry);
 /*
  * Package: context.js
  *
@@ -4385,9 +4940,9 @@ bbopx.noctua.edit.core.prototype.get_annotation_by_id =
  * Categories is more a graphical distinction. They can be:
  * instance_of, <relation id>, union, and intersection.
  * 
- * This model also incorporates whether or not the type is inferred. At this
- * level they are treated the say, but higher level may (must) treat them
- * as display decorations.
+ * This model also incorporates whether or not the type is
+ * inferred. At this level they are treated the same, but a higher
+ * level may (must) treat them as display decorations.
  *
  * Parameters:
  *  in_types - the raw type blob from the server
@@ -4467,9 +5022,9 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
     }else{
 	    
 	// We're then dealing with an SVF: a property plus a class
-	// expression. In the future there may be many things, but
-	// for now we are expecting a "Restriction", although we don't
-	// really do anything with that information (maybe later).
+	// expression. We are expecting a "Restriction", although we
+	// don't really do anything with that information (maybe
+	// later).
 	this._type = t;
 	// Extract the property information
 	this._category = in_type['onProperty']['id'];

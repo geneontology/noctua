@@ -293,9 +293,7 @@ bbop.core.what_is = function(in_thing){
 bbop.core.is_array = function(in_thing){
     var retval = false;
     if( in_thing &&
-	typeof(in_thing) == 'object' &&
-	typeof(in_thing.push) == 'function' &&
-	typeof(in_thing.length) == 'number' ){
+	Array.isArray(in_thing) ){
 	retval = true;
     }
     return retval;
@@ -512,19 +510,19 @@ bbop.core.clone = function(thing){
 	// Is it a null, hash, or an array?
 	if( thing == null ){
 	    clone = null;
-	}else if( typeof(thing.length) === 'undefined' ){
-	    // Looks like a hash!
-	    //print("looks like a hash");
-	    clone = {};
-	    for(var h in thing){
-		clone[h] = bbop.core.clone(thing[h]);
-	    }
-	}else{
+	}else if( Array.isArray(thing) ){
 	    // Looks like an array!
 	    //print("looks like an array");
 	    clone = [];
 	    for(var i = 0; i < thing.length; i++){
 		clone[i] = bbop.core.clone(thing[i]);
+	    }
+	}else{
+	    // Looks like a hash!
+	    //print("looks like a hash");
+	    clone = {};
+	    for(var h in thing){
+		clone[h] = bbop.core.clone(thing[h]);
 	    }
 	}
     }else{
@@ -1339,6 +1337,7 @@ bbop.test = function(){
     }
 
     // Looking at array as sets of...something.
+    // DEPRECATED
     function _same_set(set1, set2){
 	var h1 = {};
 	var h2 = {};
@@ -1348,6 +1347,7 @@ bbop.test = function(){
     }
 
     // NOTE/WARNING: This is a very shallow comparison function.
+    // DEPRECATED
     function _same_hash(hash1, hash2){
 
 	var same_p = true;
@@ -1376,6 +1376,69 @@ bbop.test = function(){
 	}
 	
 	return same_p;
+    }
+
+    // Better general comparison function.
+    function _is_same(a, b){
+	//bark('typeof(a, b): ' + typeof(a) + ',' + typeof(b));
+
+	var ret = false;
+	if( a == b ){ // atoms, incl. null and 'string'
+	    //bark('true on equal atoms: ' + a + '<>' + b);
+	    ret = true;
+	}else{ // is list or obj (ignore func)
+	    if( typeof(a) === 'object' && typeof(b) === 'object' ){
+		//bark('...are objects');
+		
+		// Null is an object, but not like the others.
+		if( a == null || b == null ){
+		    ret = false;
+		}else if( Array.isArray(a) && Array.isArray(b) ){ // array equiv
+		    //bark('...are arrays');
+		    
+		    // Recursively check array equiv.
+		    if( a.length == b.length ){
+			if( a.length == 0 ){
+			    //bark('true on 0 length array');
+			    ret = true;
+			}else{
+			    ret = true; // assume true until false here
+			    for( var i = 0; i < a.length; i++ ){
+				if( ! _is_same(a[i], b[i]) ){
+				    //bark('false on diff @ index: ' + i);
+				    ret = false;
+				    break;
+				}
+			    }
+			}
+		    }
+
+		}else{ // object equiv.
+
+		    // Get unique set of keys.
+		    var a_keys = Object.keys(a);
+		    var b_keys = Object.keys(b);
+		    var keys = a_keys.concat(b_keys.filter(function(it){
+			return a_keys.indexOf(it) < 0;
+		    }));
+		    
+		    // Assume true until false.
+		    ret = true;
+		    for( var j = 0; j < keys.length; j++ ){ // no forEach - break
+			var k = keys[j];
+			if( ! _is_same(a[k], b[k]) ){
+			    //bark('false on key: ' + k);
+			    ret = false;
+			    break;
+			}
+		    }
+		}
+	    }else{
+		//bark('false by default');
+	    }
+	}
+	
+	return ret;
     }
 
     // TODO: This could probably be done better.
@@ -1469,6 +1532,8 @@ bbop.test = function(){
     /*
      * Function: is_same_atom
      *
+     * DEPRECATED
+     *
      * Test whether two atoms are the same.
      *
      * Parameters: 
@@ -1488,6 +1553,8 @@ bbop.test = function(){
      * Function: is_different_atom
      *
      * A negative version of <is_same_atom>.
+     *
+     * DEPRECATED
      *
      * Parameters: 
      *  question - the atom to test
@@ -1668,6 +1735,8 @@ bbop.test = function(){
      *
      * Test whether two sets (as atomic arrays) are the same.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  set1 - set (as array)
      *  set2 - set (as array)
@@ -1684,6 +1753,8 @@ bbop.test = function(){
      * Function: is_different_set
      *
      * A negative version of <is_same_set>.
+     *
+     * DEPRECATED
      *
      * Parameters: 
      *  set1 - set (as array)
@@ -1702,6 +1773,8 @@ bbop.test = function(){
      *
      * Test whether two simple atomic hashes are the same.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1719,6 +1792,8 @@ bbop.test = function(){
      *
      * A negative version of <is_same_hash>.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1729,6 +1804,47 @@ bbop.test = function(){
      */
     this.is_different_hash = function(hash1, hash2, msg){
 	_complete(! _same_hash(hash1, hash2), msg);
+    };
+
+    /*
+     * Function: is_same_thing
+     *
+     * Test whether two things (not functions) are pretty much the
+     * same. For atoms and structures of atoms and other structures.
+     *
+     * This is a general purpose tool that should replace all the
+     * other similarity functions.
+     *
+     * Parameters: 
+     *  thing1 - thing (not function)
+     *  thing2 - thing (not function)
+     *  msg - *[optional]* informational message about test
+     *
+     * Returns: 
+     *  n/a
+     */
+    this.is_same_thing = function(thing1, thing2, msg){
+	_complete(_is_same(thing1, thing2), msg);
+    };
+
+    /*
+     * Function: is_different_thing
+     *
+     * A negative version of <is_same_thing>.
+     *
+     * This is a general purpose tool that should replace all the
+     * other difference functions.
+     *
+     * Parameters: 
+     *  thing1 - thing (not function)
+     *  thing2 - thing (not function)
+     *  msg - *[optional]* informational message about test
+     *
+     * Returns: 
+     *  n/a
+     */
+    this.is_different_thing = function(thing1, thing2, msg){
+	_complete(! _is_same(thing1, thing2), msg);
     };
 
     /*
@@ -1894,14 +2010,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.2.4";
+bbop.version.revision = "2.3.0";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150413";
+bbop.version.release = "20150416";
 /*
  * Package: logger.js
  * 
