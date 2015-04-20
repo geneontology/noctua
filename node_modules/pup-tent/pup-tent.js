@@ -208,6 +208,8 @@ module.exports = function(search_path_list, filename_list){
 
     // Path and app file cache.
     var use_zcache_p = true;
+    var ns_cache_full = {}; // note the full filepaths only
+    var ns_cache_flat = {}; // note the flat filenames only
     var path_cache = {}; // filename/path cache
     var zcache = {}; // file contents cache
 
@@ -218,24 +220,48 @@ module.exports = function(search_path_list, filename_list){
 	js_libs: []
     };
 
-    // If we have a filename list, just look for those in out search
+    // Make sure the file is there, then save it to the
+    // appropriate caches.
+    function _check_and_save(path){
+	//console.log('l@: ' + path);
+	if( afs.exists_p(path) ){
+	    if( afs.file_p(path) ){
+		//console.log('found file: ' + path);
+		
+		// Break into parts for saving if it is a full file.
+		var filename = path;
+		var slash_loc = path.lastIndexOf('/') + 1;
+		if( slash_loc != 0 ){
+		    filename = path.substr(slash_loc, path.length);
+		}
+		
+		// Capture full path.
+		path_cache[path] = path;
+		zcache[path] = afs.read_file(path);
+		
+		// Capture flattened name.
+		path_cache[filename] = path;
+		zcache[filename] = afs.read_file(path);
+		
+		// Capture which is which.
+		ns_cache_flat[filename] = true;
+		ns_cache_full[path] = true;
+	    }
+	}
+    }
+
+    // If we have a filename list, just look for those in our search
     // paths. If we don't have a filename_list, just grab all of the
     // files in the search path.
     if( us.isArray(filename_list) ){
-    
+
 	each(filename_list, // e.g. ['Login.js', 'login_content.tmpl']
 	     function(filename){
-		 
 		 // Try to read from static and js.
 		 each(search_path_list, // e.g. ['static', 'js', ...]
 		      function(loc){
-			  var path = './' + loc + '/' + filename;
-			  //console.log('l@: ' + path);
-			  if( afs.exists_p(path) ){
-			      //console.log('found: ' + path);
-			      path_cache[filename] = path;
-			      zcache[filename] = afs.read_file(path);
-			  }
+			  var path = loc + '/' + filename;
+			  _check_and_save(path);
 		      });
 	     });
     }else{
@@ -243,7 +269,7 @@ module.exports = function(search_path_list, filename_list){
 	// Try to read from static and js.
 	each(search_path_list, // e.g. ['static', 'js', ...]
 	     function(loc){
-		 var path = './' + loc;
+		 var path = loc;
 		 //console.log('in loc: ' + loc);
 		 var files = afs.list_directory(loc);
 		 each(files,
@@ -251,12 +277,7 @@ module.exports = function(search_path_list, filename_list){
 			  // Get only files, not directories.
 			  //console.log('found file: ' + file);
 			  var full_file = loc + '/' + file;
-			  if( afs.exists_p(full_file) ){
-			      if( afs.file_p(full_file) ){
-				  path_cache[file] = full_file;
-				  zcache[file] = afs.read_file(full_file);
-			      }
-			  }
+			  _check_and_save(full_file);
 		      });
 	     });
     }
@@ -392,16 +413,29 @@ module.exports = function(search_path_list, filename_list){
 	/*
 	 * Function: cached_list
 	 * 
-	 * Returns a list of the cached files.
+	 * Returns a list of the cached files. Optionally, a subset of the total keys (as most will be stored twice--the filename and filename + full path).
 	 *
 	 * Parameters:
-	 *  n/a
+	 *  type - *[optional]* the type of namespace keys to return, 'full', 'flat', and 'all' (default: 'all')
 	 *
 	 * Returns:
 	 *    list of strings
 	 */
-	cached_list: function(){
-	    return us.keys(zcache);
+	cached_list: function(type){
+
+	    // Default.
+	    if( typeof(type) === 'undefined' ){	type = 'all'; }
+
+	    // Select the cache.
+	    var cache_to_use = path_cache;
+	    if( type === 'full' ){
+		cache_to_use = ns_cache_full;
+	    }else if( type === 'flat' ){
+		cache_to_use = ns_cache_flat;
+	    }
+	    
+	    // Return the keys only.
+	    return us.keys(cache_to_use);
 	},
 
 	/*
