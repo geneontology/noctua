@@ -1,7 +1,7 @@
 {
-  "name": "go-mme",
+  "name": "noctua",
   "version": "0.0.9",
-  "description": "Experimental MME editor for GO.",
+  "description": "Experimental annotation editor for GO.",
   "keywords": [
     "OpenShift",
     "Node.js",
@@ -23,7 +23,7 @@
   "homepage": "http://berkeleybop.org/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kltm/go-mme"
+    "url": "https://github.com/geneontology/noctua"
   },
   "engines": {
     "node": ">= 0.10.0",
@@ -33,8 +33,8 @@
     "underscore": "~1.6.0",
     "mustache": "~0.8.2",
     "pup-tent": "~0.9.5",
-    "bbop": "~2.2.2",
-    "bbopx": "~0.9.9",
+    "bbop": "~2.3.1",
+    "bbopx": "~0.9.11",
     "amigo2": "~2.2.2",
     "express": "~3.4.6"
   },
