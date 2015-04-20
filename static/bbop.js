@@ -2017,7 +2017,7 @@ bbop.version.revision = "2.3.0";
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150416";
+bbop.version.release = "20150420";
 /*
  * Package: logger.js
  * 
@@ -8796,29 +8796,30 @@ bbop.rest.manager.node.prototype.update = function(callback_type){
 	res.setEncoding('utf8');
 	var raw_data = '';
 	res.on('data', function (chunk) {
-		   //console.log('BODY: ' + chunk);
-		   raw_data = raw_data + chunk;
-	       });
+	    //console.log('BODY: ' + chunk);
+	    raw_data = raw_data + chunk;
+	});
 	// Throw to .
 	res.on('end', function () {
-		   var response = new anchor._response_handler(raw_data);
-		   if( response && response.okay() ){
-		       anchor.apply_callbacks('success', [response, anchor]);
-		   }else{
-		       // Make sure that there is something there to
-		       // hold on to.
-		       if( ! response ){
-			   response = new anchor._response_handler(null);
-			   response.okay(false);
-			   response.message_type('error');
-			   response.message('null response');
-		       }else{
-			   response.message_type('error');
-			   response.message('bad response');
-		       }
-		       anchor.apply_callbacks('error', [response, anchor]);
-		   }
-	       });
+	    //console.log('END with: ' + raw_data);
+	    var response = new anchor._response_handler(raw_data);
+	    if( response && response.okay() ){
+		anchor.apply_callbacks('success', [response, anchor]);
+	    }else{
+		// Make sure that there is something there to
+		// hold on to.
+		if( ! response ){
+		    response = new anchor._response_handler(null);
+		    response.okay(false);
+		    response.message_type('error');
+		    response.message('null response');
+		}else{
+		    response.message_type('error');
+		    response.message('bad response');
+		}
+		anchor.apply_callbacks('error', [response, anchor]);
+	    }
+	});
     }
 
     // Conditional merging of the remaining variant parts.

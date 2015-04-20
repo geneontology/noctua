@@ -293,9 +293,7 @@ bbop.core.what_is = function(in_thing){
 bbop.core.is_array = function(in_thing){
     var retval = false;
     if( in_thing &&
-	typeof(in_thing) == 'object' &&
-	typeof(in_thing.push) == 'function' &&
-	typeof(in_thing.length) == 'number' ){
+	Array.isArray(in_thing) ){
 	retval = true;
     }
     return retval;
@@ -512,19 +510,19 @@ bbop.core.clone = function(thing){
 	// Is it a null, hash, or an array?
 	if( thing == null ){
 	    clone = null;
-	}else if( typeof(thing.length) === 'undefined' ){
-	    // Looks like a hash!
-	    //print("looks like a hash");
-	    clone = {};
-	    for(var h in thing){
-		clone[h] = bbop.core.clone(thing[h]);
-	    }
-	}else{
+	}else if( Array.isArray(thing) ){
 	    // Looks like an array!
 	    //print("looks like an array");
 	    clone = [];
 	    for(var i = 0; i < thing.length; i++){
 		clone[i] = bbop.core.clone(thing[i]);
+	    }
+	}else{
+	    // Looks like a hash!
+	    //print("looks like a hash");
+	    clone = {};
+	    for(var h in thing){
+		clone[h] = bbop.core.clone(thing[h]);
 	    }
 	}
     }else{
@@ -1254,6 +1252,21 @@ if ( typeof bbop == "undefined" ){ var bbop = {}; }
 bbop.test = function(){
 
     ///
+    /// Either rhino or node, right?
+    ///
+
+    // print or console.log
+    var barker = function(thing){};
+    if( typeof(console) !== 'undefined' && typeof(console.log) === 'function' ){
+	barker = console.log;	
+    }else if( typeof(print) === 'function' ){
+	barker = print;
+    }
+    function bark(thing){
+	barker(thing);
+    }
+
+    ///
     /// Accounting and reporting.
     ///
 
@@ -1267,16 +1280,16 @@ bbop.test = function(){
     function _complete(bool, msg){
 	if( bool ){
 	    if( msg ){
-		print('Test ' + test_number + ' passed: ' + msg + '.');
+		bark('Test ' + test_number + ' passed: ' + msg + '.');
 	    }else{
-		print('Test ' + test_number + ' passed.');
+		bark('Test ' + test_number + ' passed.');
 	    }
 	    _incr_passed();
 	}else{
 	    if( msg ){
-		print('FAIL: Test ' + test_number + ' failed: ' + msg + '.');
+		bark('FAIL: Test ' + test_number + ' failed: ' + msg + '.');
 	    }else{
-		print('FAIL: Test ' + test_number + ' failed.');
+		bark('FAIL: Test ' + test_number + ' failed.');
 	    }
 	    _incr_failed();
 	}
@@ -1296,10 +1309,10 @@ bbop.test = function(){
      */
     this.report = function(){
 	if( tests_passed + 1 == test_number ){
-	    print('* All tests passed.');
+	    bark('* All tests passed.');
 	}else{
-	    print('* Tests passed: ' + tests_passed);
-	    print('* Tests failed: ' + tests_failed);
+	    bark('* Tests passed: ' + tests_passed);
+	    bark('* Tests failed: ' + tests_failed);
 	}
     };
 
@@ -1324,6 +1337,7 @@ bbop.test = function(){
     }
 
     // Looking at array as sets of...something.
+    // DEPRECATED
     function _same_set(set1, set2){
 	var h1 = {};
 	var h2 = {};
@@ -1333,6 +1347,7 @@ bbop.test = function(){
     }
 
     // NOTE/WARNING: This is a very shallow comparison function.
+    // DEPRECATED
     function _same_hash(hash1, hash2){
 
 	var same_p = true;
@@ -1361,6 +1376,69 @@ bbop.test = function(){
 	}
 	
 	return same_p;
+    }
+
+    // Better general comparison function.
+    function _is_same(a, b){
+	//bark('typeof(a, b): ' + typeof(a) + ',' + typeof(b));
+
+	var ret = false;
+	if( a == b ){ // atoms, incl. null and 'string'
+	    //bark('true on equal atoms: ' + a + '<>' + b);
+	    ret = true;
+	}else{ // is list or obj (ignore func)
+	    if( typeof(a) === 'object' && typeof(b) === 'object' ){
+		//bark('...are objects');
+		
+		// Null is an object, but not like the others.
+		if( a == null || b == null ){
+		    ret = false;
+		}else if( Array.isArray(a) && Array.isArray(b) ){ // array equiv
+		    //bark('...are arrays');
+		    
+		    // Recursively check array equiv.
+		    if( a.length == b.length ){
+			if( a.length == 0 ){
+			    //bark('true on 0 length array');
+			    ret = true;
+			}else{
+			    ret = true; // assume true until false here
+			    for( var i = 0; i < a.length; i++ ){
+				if( ! _is_same(a[i], b[i]) ){
+				    //bark('false on diff @ index: ' + i);
+				    ret = false;
+				    break;
+				}
+			    }
+			}
+		    }
+
+		}else{ // object equiv.
+
+		    // Get unique set of keys.
+		    var a_keys = Object.keys(a);
+		    var b_keys = Object.keys(b);
+		    var keys = a_keys.concat(b_keys.filter(function(it){
+			return a_keys.indexOf(it) < 0;
+		    }));
+		    
+		    // Assume true until false.
+		    ret = true;
+		    for( var j = 0; j < keys.length; j++ ){ // no forEach - break
+			var k = keys[j];
+			if( ! _is_same(a[k], b[k]) ){
+			    //bark('false on key: ' + k);
+			    ret = false;
+			    break;
+			}
+		    }
+		}
+	    }else{
+		//bark('false by default');
+	    }
+	}
+	
+	return ret;
     }
 
     // TODO: This could probably be done better.
@@ -1438,7 +1516,7 @@ bbop.test = function(){
 	    
 	    var car = base_str.substr(0, si);
 	    var cdr = base_str.substr(si, base_str.length);
-	    //print(car + "|" + add_str + "|" + cdr);
+	    //bark(car + "|" + add_str + "|" + cdr);
 	    if( car + add_str + cdr == target_str){
 		retval = true;
 		break;
@@ -1453,6 +1531,8 @@ bbop.test = function(){
 
     /*
      * Function: is_same_atom
+     *
+     * DEPRECATED
      *
      * Test whether two atoms are the same.
      *
@@ -1473,6 +1553,8 @@ bbop.test = function(){
      * Function: is_different_atom
      *
      * A negative version of <is_same_atom>.
+     *
+     * DEPRECATED
      *
      * Parameters: 
      *  question - the atom to test
@@ -1653,6 +1735,8 @@ bbop.test = function(){
      *
      * Test whether two sets (as atomic arrays) are the same.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  set1 - set (as array)
      *  set2 - set (as array)
@@ -1669,6 +1753,8 @@ bbop.test = function(){
      * Function: is_different_set
      *
      * A negative version of <is_same_set>.
+     *
+     * DEPRECATED
      *
      * Parameters: 
      *  set1 - set (as array)
@@ -1687,6 +1773,8 @@ bbop.test = function(){
      *
      * Test whether two simple atomic hashes are the same.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1704,6 +1792,8 @@ bbop.test = function(){
      *
      * A negative version of <is_same_hash>.
      *
+     * DEPRECATED
+     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1714,6 +1804,47 @@ bbop.test = function(){
      */
     this.is_different_hash = function(hash1, hash2, msg){
 	_complete(! _same_hash(hash1, hash2), msg);
+    };
+
+    /*
+     * Function: is_same_thing
+     *
+     * Test whether two things (not functions) are pretty much the
+     * same. For atoms and structures of atoms and other structures.
+     *
+     * This is a general purpose tool that should replace all the
+     * other similarity functions.
+     *
+     * Parameters: 
+     *  thing1 - thing (not function)
+     *  thing2 - thing (not function)
+     *  msg - *[optional]* informational message about test
+     *
+     * Returns: 
+     *  n/a
+     */
+    this.is_same_thing = function(thing1, thing2, msg){
+	_complete(_is_same(thing1, thing2), msg);
+    };
+
+    /*
+     * Function: is_different_thing
+     *
+     * A negative version of <is_same_thing>.
+     *
+     * This is a general purpose tool that should replace all the
+     * other difference functions.
+     *
+     * Parameters: 
+     *  thing1 - thing (not function)
+     *  thing2 - thing (not function)
+     *  msg - *[optional]* informational message about test
+     *
+     * Returns: 
+     *  n/a
+     */
+    this.is_different_thing = function(thing1, thing2, msg){
+	_complete(! _is_same(thing1, thing2), msg);
     };
 
     /*
@@ -1879,14 +2010,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.2.2";
+bbop.version.revision = "2.3.0";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140817";
+bbop.version.release = "20150420";
 /*
  * Package: logger.js
  * 
@@ -6607,15 +6738,21 @@ bbop.model.bracket.graph = function(){
 
 	var rel = predicate_acc || '';
 	var dflt = default_weight || 0;
-	var order =
-	    {
-		is_a: 1,
-		has_part: 2,
-		part_of: 3,
-		regulates: 4,
-		negatively_regulates: 5,
-		positively_regulates: 6
-	    };
+	var order = {
+	    'is_a': 1,
+	    'is a': 1,
+	    'has_part': 2,
+	    'has part': 2,
+	    'part_of': 3,
+	    'part of': 3,
+	    'regulates': 4,
+	    'negatively_regulates': 5,
+	    'negatively regulates': 5,
+	    'positively_regulates': 6,
+	    'positively regulates': 6,
+	    'occurs_in': 7,
+	    'occurs in': 7
+	};
 
 	var ret_weight = dflt;
 	if( bbop.core.is_defined(rel) &&
@@ -6713,65 +6850,61 @@ bbop.model.bracket.graph = function(){
 	// So, let's go through all the rows, looking on the
 	// transitivity graph to see if we can find the predicates.
 	var bracket_list = [];
-	each(layout,
-	    function(layout_level){
-		var bracket = [];
-		each(layout_level,
-		     function(layout_item){
-
-			 // The defaults for what we'll pass back out.
-			 var curr_acc = layout_item;
-			 var pred_id = 'is_a';			 
-			 var curr_node = anchor.get_node(curr_acc);
-			 var label = curr_node.label() || layout_item;
-
-			 // 
-
-			 // Now we just have to determine
-			 // predicates. If we're the one, we'll just
-			 // use the defaults.
-			 if( curr_acc == term_acc ){
-			     // Default.
-			 }else{
-			     // Since the transitivity graph only
-			     // stores ancestors, we can also use it
-			     // to passively test if these are
-			     // children we should be looking for.
-			     var trels =
-				 transitivity_graph.get_predicates(term_acc,
-								   curr_acc);
-			     if( ! bbop.core.is_empty(trels) ){
-				 // Not children, so decide which of
-				 // the returned edges is the best.
-				 pred_id = anchor.dominant_relationship(trels);
-			     }else{
-				 // Probably children, so go ahead and
-				 // try and pull the direct
-				 // parent/child relation.
-				 var drels = anchor.get_predicates(curr_acc,
-								   term_acc);
-				 pred_id = anchor.dominant_relationship(drels);
-			     }
-			 }
-
-			 // Turn our old layout item into a new-info
-			 // rich list.
-			 bracket.push([curr_acc, label, pred_id]);
-		     });
-		// Sort alphanum and then re-add to list.
-		bracket.sort(
-		    function(a, b){
-			if( a[1] < b[1] ){
-			    return -1;
-			}else if( a[1] > b[1] ){
-			    return 1;
-			}else{
-			    return 0;
+	each(layout, function(layout_level){
+	    var bracket = [];
+	    each(layout_level, function(layout_item){
+		
+		// The defaults for what we'll pass back out.
+		var curr_acc = layout_item;
+		//var pred_id = 'is_a';
+		// BUG/TODO: This is the temporary workaround for
+		// incomplete transitivity graphs in some cases:
+		// https://github.com/kltm/bbop-js/wiki/TransitivityGraph#troubleshooting-caveats-and-fail-modes
+		var pred_id = 'related_to';
+		var curr_node = anchor.get_node(curr_acc);
+		var label = curr_node.label() || layout_item;
+		
+		// Now we just have to determine predicates. If we're
+		// the one, we'll just use the defaults.
+		if( curr_acc == term_acc ){
+		    // Default.
+		}else{
+		    // Since the transitivity graph only stores
+		    // ancestors, we can also use it to passively test
+		    // if these are children we should be looking for.
+		    var trels =
+			transitivity_graph.get_predicates(term_acc, curr_acc);
+		    if( ! bbop.core.is_empty(trels) ){
+			// Not children, so decide which of
+			// the returned edges is the best.
+			pred_id = anchor.dominant_relationship(trels);
+		    }else{
+			// Probably children, so go ahead and try and
+			// pull the direct parent/child relation.
+			var drels = anchor.get_predicates(curr_acc, term_acc);
+			if( ! bbop.core.is_empty(drels) ){
+			    pred_id = anchor.dominant_relationship(drels);
 			}
-		    });
-		bracket_list.push(bracket);
+		    }
+		}
+		
+		// Turn our old layout item into a new-info
+		// rich list.
+		bracket.push([curr_acc, label, pred_id]);
 	    });
-
+	    // Sort alphanum and then re-add to list.
+	    bracket.sort(function(a, b){
+		if( a[1] < b[1] ){
+		    return -1;
+		}else if( a[1] > b[1] ){
+		    return 1;
+		}else{
+		    return 0;
+		}
+	    });
+	    bracket_list.push(bracket);
+	});
+	
 	return bracket_list;
     };
 };
@@ -8663,29 +8796,30 @@ bbop.rest.manager.node.prototype.update = function(callback_type){
 	res.setEncoding('utf8');
 	var raw_data = '';
 	res.on('data', function (chunk) {
-		   //console.log('BODY: ' + chunk);
-		   raw_data = raw_data + chunk;
-	       });
+	    //console.log('BODY: ' + chunk);
+	    raw_data = raw_data + chunk;
+	});
 	// Throw to .
 	res.on('end', function () {
-		   var response = new anchor._response_handler(raw_data);
-		   if( response && response.okay() ){
-		       anchor.apply_callbacks('success', [response, anchor]);
-		   }else{
-		       // Make sure that there is something there to
-		       // hold on to.
-		       if( ! response ){
-			   response = new anchor._response_handler(null);
-			   response.okay(false);
-			   response.message_type('error');
-			   response.message('null response');
-		       }else{
-			   response.message_type('error');
-			   response.message('bad response');
-		       }
-		       anchor.apply_callbacks('error', [response, anchor]);
-		   }
-	       });
+	    //console.log('END with: ' + raw_data);
+	    var response = new anchor._response_handler(raw_data);
+	    if( response && response.okay() ){
+		anchor.apply_callbacks('success', [response, anchor]);
+	    }else{
+		// Make sure that there is something there to
+		// hold on to.
+		if( ! response ){
+		    response = new anchor._response_handler(null);
+		    response.okay(false);
+		    response.message_type('error');
+		    response.message('null response');
+		}else{
+		    response.message_type('error');
+		    response.message('bad response');
+		}
+		anchor.apply_callbacks('error', [response, anchor]);
+	    }
+	});
     }
 
     // Conditional merging of the remaining variant parts.
@@ -9233,6 +9367,19 @@ bbop.golr.conf_class = function (class_conf_struct){
      */
     this.id = function(){
 	return this._class['id'];
+    };
+
+    /*
+     * Function: document_category
+     * 
+     * The document category that this personality is meant to work
+     * with. Otherwise, returns the class id.
+     * 
+     * Returns:
+     *  String.
+     */
+    this.document_category = function(){
+	return this._class['document_category'] || this.id();
     };
 
     /*
@@ -10361,7 +10508,7 @@ if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
  */
 bbop.golr.manager = function (golr_loc, golr_conf_obj){
     //bbop.registry.call(this, ['reset', 'search', 'error']);
-    bbop.registry.call(this, ['reset', 'search', 'error']);
+    bbop.registry.call(this, ['prerun', 'reset', 'search', 'error', 'postrun']);
     this._is_a = 'bbop.golr.manager';
 
     // Get a good self-reference point.
@@ -10372,6 +10519,9 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
     //this._logger.DEBUG = true;
     this._logger.DEBUG = false;
     function ll(str){ anchor._logger.kvetch(str); }
+
+    // Just want to compile these once.
+    var alphanum = new RegExp(/^[a-zA-Z0-9 ]+$/);
 
     // To help keep requests from the past haunting us. Actually doing
     // something with this number is up to the UI.
@@ -11146,6 +11296,7 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 	ll('run reset callbacks...');
 	var response = new bbop.golr.response(json_data);
 	anchor.apply_callbacks('reset', [response, anchor]);
+	anchor.apply_callbacks('postrun', [response, anchor]);
     };
 
     // The main callback function called after a successful AJAX call in
@@ -11154,6 +11305,7 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 	ll('run search callbacks...');
 	var response = new bbop.golr.response(json_data);
 	anchor.apply_callbacks('search', [response, anchor]);
+	anchor.apply_callbacks('postrun', [response, anchor]);
     };
 
     // This set is called when we run into a problem.
@@ -11161,6 +11313,7 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 	ll('run error callbacks...');
 	var response = new bbop.golr.response(json_data);
 	anchor.apply_callbacks('error', [response, anchor]);
+	anchor.apply_callbacks('postrun', [response, anchor]);
     };
 
     /*
@@ -11718,8 +11871,9 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
      * A specialized setter for the query variable ('q'), as follows:
      *
      * If the input is all alphanum or space, the input is
-     * tokenized. The last token, if it is at least three characters,
-     * gets a wildcard '*'.
+     * tokenized. If there is one token, if it is at least three
+     * characters, gets a wildcard '*'; if there are more tokens, the
+     * last one gets a wild card.
      * 
      * This might be a more comfortable way to search for most naive
      * (non-power user) interfaces.
@@ -11740,19 +11894,36 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 	// Check that there is something there.
 	if( new_query && new_query.length && new_query.length > 0 ){
 
-	    // That it is alphanum+space-ish
-	    var alphanum = new RegExp(/^[a-zA-Z0-9 ]+$/);
-	    if( alphanum.test(new_query) ){
-	    
-		// Break it into tokens and get the last.
-		var tokens = new_query.split(new RegExp('\\s+'));
-		var last_token = tokens[tokens.length -1];
-		//ll('last: ' + last_token);
-		
-		// If it is three or more, add the wildcard.
-		if( last_token.length >= 3 ){
-		    tokens[tokens.length -1] = last_token + '*';
+	    // Check if the last real input has a space after it.
+	    var has_cursor_p = true;
+	    if( new_query.slice(-1) === ' ' ){
+		has_cursor_p = false;
+	    }
 
+	    // Now chomp it down again to get rid of whitespace.
+	    new_query = bbop.core.chomp(new_query);
+
+	    // Check (again) that there is something there.
+	    if( new_query && new_query.length && new_query.length > 0 ){
+
+		// That it is alphanum+space-ish and that we actually
+		// might want to add a wildcard (i.e. has cursor).
+		if( alphanum.test(new_query) && has_cursor_p ){
+	    
+		    // Break it into tokens and get the last.
+		    var tokens = new_query.split(new RegExp('\\s+'));
+		    var last_token = tokens[tokens.length -1];
+		    //ll('last: ' + last_token);
+		
+		    if( tokens.length == 1 ){
+			
+			// If it is three or more, add the wildcard.
+			if( last_token.length >= 3 ){
+			    tokens[tokens.length -1] = last_token + '*';
+			}
+		    }else{
+			tokens[tokens.length -1] = last_token + '*';
+		    }
 		    // And join it all back into our comfy query.
 		    comfy_query = tokens.join(' ');
 		}
@@ -11785,16 +11956,30 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 	return anchor.query;
     };
 
+    // Function to unwind and lock a list if identifiers onto a field.
+    function _lock_map(field, id_list){
+	var fixed_list = [];
+	bbop.core.each(id_list,
+		       function(item){
+			   fixed_list.push(bbop.core.ensure(item, '"'));
+		       });
+
+	var base_id_list = '(' + fixed_list.join(' OR ') + ')';
+
+	var ret_query = field + ':' + base_id_list;
+	return ret_query;
+	
+    }
+
     /*
      * Function: set_ids
      *
      * Like <set_id>, a limited setter. It removes whatever else is on
      * query and replaces it with something like:
      * 
-     * : gm.get_download_url(['id', 'score'], {'entity_list':['GO:1', 'GO:2']})
-     * : http://golr.berkeleybop.org/select?defType=edismax&qt=standard&indent=on&wt=csv&rows=1000&start=0&fl=id,score&facet=true&facet.mincount=1&facet.sort=count&json.nl=arrarr&facet.limit=25&csv.encapsulator=&csv.separator=%09&csv.header=false&csv.mv.separator=%7C&q=id:(%22GO:1%22%20OR%20%22GO:2%22)
+     * : gm.set_ids(['GO:1', 'GO:2'])
      * 
-     * This is for when you want to lock into a set of documents. All
+     * This is for when you want to lock into a set of documents by id. All
      * other query operations behave as they should around it.
      * 
      * Parameters: 
@@ -11807,16 +11992,43 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
      *  <set_ids>
      */
     this.set_ids = function(id_list){
+	anchor.query = _lock_map('id', id_list);
+	return anchor.query;
+    };
+
+    /*
+     * Function: set_targets
+     *
+     * Like a more generalized version of <set_ids>, a limited. It
+     * removes whatever else is on query and replaces it with
+     * something like:
+     * 
+     * : gm.set_targets(['GO:1', 'GO:2'], ['field_1', 'field_2'])
+     * 
+     * This is for when you want to lock into a set of documents by
+     * locking onto identifiers in some set of search fields. All
+     * other query operations behave as they should around it.
+     * 
+     * Parameters: 
+     *  id_list - a list of ids to search for
+     *  field_list - a list of fields ids to search across
+     *
+     * Returns:
+     *  the current setting of query ('q')
+     * 
+     * Also see:
+     *  <set_ids>
+     */
+    this.set_targets = function(id_list, field_list){
 
 	var fixed_list = [];
-	bbop.core.each(id_list,
-		       function(item){
-			   fixed_list.push(bbop.core.ensure(item, '"'));
-		       });
+	bbop.core.each(field_list, function(field){
+	    fixed_list.push(_lock_map(field, id_list));
+	});
 
-	var base_id_list = '(' + fixed_list.join(' OR ') + ')';
+	var sum = fixed_list.join(' OR ');
 
-	anchor.query = 'id:' + base_id_list;
+	anchor.query = sum;
 	return anchor.query;
     };
 
@@ -12867,6 +13079,8 @@ bbop.golr.manager.prototype.update = function(callback_type, rows, start){
     	throw new Error("Unknown callback_type: " + callback_type);
     }
     
+    this.apply_callbacks('prerun', [this]);
+
     //ll('qurl: ' + qurl);
     return qurl;
 };
@@ -13031,9 +13245,10 @@ bbop.golr.manager.jquery = function (golr_loc, golr_conf_obj){
     // The base jQuery Ajax args we need with the setup we have.
     anchor.jq_vars = {
 	//url: qurl,
-	type: "GET",
-	dataType: 'jsonp',
-	jsonp: 'json.wrf'
+	//type: "GET",
+	'type': "POST",
+	'dataType': 'jsonp',
+	'jsonp': 'json.wrf'
     };
 
     // We'll override the original with something that actually speaks
@@ -13142,8 +13357,7 @@ bbop.core.extend(bbop.golr.manager.jquery, bbop.golr.manager);
  * Also see:
  *  <get_query_url>
  */
-bbop.golr.manager.jquery.prototype.update = function(callback_type,
-						     rows, start){
+bbop.golr.manager.jquery.prototype.update = function(callback_type, rows, start){
     
     // Get "parents" url first.
     var parent_update = bbop.golr.manager.prototype.update;
@@ -13781,9 +13995,9 @@ bbop.widget.display.button_templates.field_download = function(label,
 	{
 	    label: label,
 	    diabled_p: false,
-	    text_p: false,
-	    icon: 'ui-icon-document',
-	    click_function_generator: function(manager){
+	    // text_p: false,
+	    // icon: 'ui-icon-document',
+	    click_function_generator: function(manager, results_table){
 		return function(event){
 		    var dialog_props = {
 			title: 'Download',
@@ -13791,7 +14005,7 @@ bbop.widget.display.button_templates.field_download = function(label,
 			    'Download': function(){
 				//alert('download');
 				dl_props['entity_list'] =
-				    manager.get_selected_items();
+				    results_table.get_selected_items();
 				var raw_gdl =
 				    manager.get_download_url(fields, dl_props);
 				window.open(raw_gdl, '_blank');
@@ -13980,7 +14194,7 @@ bbop.widget.display.button_templates.send_fields_to_galaxy = function(label,
 	    }
 	};
 
-  return galaxy_button;
+    return galaxy_button;
 };
 
 /*
@@ -14150,16 +14364,16 @@ bbop.widget.display.button_templates.flexible_download = function(label, count,
 
 			// To alphabetical.
 			pool_list.sort(function(a, b){
-					   var av = a[0];
-					   var bv = b[0];
-					   var val = 0;
-					   if( av < bv ){
-					       return -1;
-					   }else if( av > bv){
-					       return 1;
-					   }
-					   return val;
-				       });
+			    var av = a[0];
+			    var bv = b[0];
+			    var val = 0;
+			    if( av < bv ){
+				return -1;
+			    }else if( av > bv){
+				return 1;
+			    }
+			    return val;
+			});
 
 			// Stub sender.
 			var dss_args = {
@@ -14182,6 +14396,121 @@ bbop.widget.display.button_templates.flexible_download = function(label, count,
 		};
 	    }
 	};
+    return flexible_download_button;
+};
+
+/*
+ * Method: flexible_download
+ * 
+ * Generate the template for a button that gives the user a DnD and
+ * reorderable selector for how they want their tab-delimited
+ * downloads.
+ * 
+ * Arguments:
+ *  label - the text to use for the hover
+ *  count - the number of items to be downloadable
+ *  start_fields - ordered list of the initially selected fields 
+ *  personality - the personality (id) that we want to work with
+ *  gconf - a copy of the <golr_conf> for the currrent setup
+ * 
+ * Returns:
+ *  hash form of jQuery button template for consumption by other widgets
+ */
+bbop.widget.display.button_templates.flexible_download_b3 = function(
+    label, count, start_fields, personality, gconf){
+
+    var dl_props = {
+	'entity_list': null,
+	'rows': count
+    };
+
+    // Aliases.
+    var loop = bbop.core.each;
+    var hashify = bbop.core.hashify;
+
+    var flexible_download_button = {
+	label: label,
+	diabled_p: false,
+	click_function_generator: function(results_table, manager){
+	    
+	    return function(event){
+		
+		var class_conf = gconf.get_class(personality);
+		if( class_conf ){
+		    
+		    // First, a hash of our default items so we
+		    // can check against them later to remove
+		    // those items from the selectable pool.
+		    // Then convert the list into a more
+		    // interesting data type.
+		    var start_hash = hashify(start_fields);
+		    var start_list = [];
+		    loop(start_fields, function(field_id, field_index){
+			var cf = class_conf.get_field(field_id);
+			var cname = cf.display_name();
+			var cid = cf.id();
+			var pset = [cname, cid];
+			start_list.push(pset);
+		    });
+		    
+		    // Then get an ordered list of all the
+		    // different values we want to show in
+		    // the pool list.
+		    var pool_list = [];
+		    var all_fields = class_conf.get_fields();
+		    loop(all_fields, function(field, field_index){
+			var field_id = field.id();
+			if( start_hash[field_id] ){
+			    // Skip if already in start list.
+			}else{
+			    var cname = field.display_name();
+			    var cid = field.id();
+			    var pset = [cname, cid];
+			    pool_list.push(pset);
+			}
+		    });
+		    
+		    // To alphabetical.
+		    pool_list.sort(function(a, b){
+			var av = a[0];
+			var bv = b[0];
+			var val = 0;
+			if( av < bv ){
+			    return -1;
+			}else if( av > bv){
+			    return 1;
+			}
+			return val;
+		    });
+		    
+		    // Stub sender.
+		    var dss_args = {
+			title: 'Select the fields to download (up to ' + count + ')',
+			blurb: '<p><strong>Drag and drop</strong> the desired fields <strong>from the left</strong> column (available pool) <strong>to the right</strong> (selected fields). You may also reorder them.</p><p>Download up to ' + count + ' lines in a new window by clicking <strong>Download</strong>. If your request is large or if the the server busy, this may take a while to complete--please be patient.</p>',
+			//blurb: 'By clicking "Download" at the bottom, you may download up to ' + count + ' lines in your browser in a new window. If your request is large or if the the server busy, this may take a while to complete--please be patient.',
+			pool_list: pool_list,
+			selected_list: start_list,
+			action_label: 'Download',
+			action: function(selected_items){
+			    // Get selected items from results
+			    // checkboxes.
+			    dl_props['entity_list'] = null;
+			    if( ! bbop.core.is_empty(results_table) ){
+			    	dl_props['entity_list'] =
+   				    results_table.get_selected_items();
+			    }
+			    // Download for the selected fields...
+			    var raw_gdl =
+			    	    manager.get_download_url(selected_items,
+			    				     dl_props);
+			    // ...opening it in a new window.
+			    window.open(raw_gdl, '_blank');
+			}};
+		    new bbop.widget.drop_select_shield(dss_args);
+		}
+	    };
+	}
+    };
     return flexible_download_button;
 };
 /*
@@ -14592,6 +14921,391 @@ bbop.widget.display.results_table_by_class = function(cclass,
     //return final_table;
 };
 //bbop.widget.display.results_table_by_class.prototype = new bbop.html.tag;
+/*
+ * Package: results_table_by_class_conf_bs3.js
+ * 
+ * Namespace: bbop.widget.display.results_table_by_class_conf_bs3
+ * 
+ * Subclass of <bbop.html.tag>.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
+
+/*
+ * Function: results_table_by_class_conf_bs3
+ *
+ * Using a conf class and a set of data, automatically populate and
+ * return a results table.
+ *  
+ * This is the Bootstrap 3 version of this display. It affixes itself
+ * directly to the DOM using jQuery at elt_id.
+ *  
+ * Parameters:
+ *  class_conf - a <bbop.golr.conf_class>
+ *  golr_resp - a <bbop.golr.response>
+ *  linker - a linker object; see <amigo.linker> for more details
+ *  handler - a handler object; see <amigo.handler> for more details
+ *  elt_id - the element id to attach it to
+ *  selectable_p - *[optional]* whether to create checkboxes (default true)
+ *
+ * Returns:
+ *  this object
+ *
+ * See Also:
+ *  <bbop.widget.display.results_table_by_class>
+ */
+bbop.widget.display.results_table_by_class_conf_b3 = function(cclass,
+							      golr_resp,
+							      linker,
+							      handler,
+							      elt_id,
+							      selectable_p,
+							      select_toggle_id,
+							      select_item_name){
+
+    //
+    var anchor = this;
+
+    // Temp logger.
+    var logger = new bbop.logger();
+    //logger.DEBUG = true;
+    logger.DEBUG = false;
+    function ll(str){ logger.kvetch('RTBCCBS3: ' + str); }
+
+    // Conveience aliases.
+    var each = bbop.core.each;
+    var is_defined = bbop.core.is_defined;
+
+    // The context we'll deliver to
+    var display_context = 'bbop.widgets.search_pane';
+
+    // Only want to compile once.
+    var ea_regexp = new RegExp("\<\/a\>", "i"); // detect an <a>
+    var br_regexp = new RegExp("\<br\ \/\>", "i"); // detect a <br />
+
+    // // Sort out whether we want to display checkboxes. Also, give life
+    // // to the necessary variables if they will be called upon.
+    // var select_toggle_id = null;
+    // var select_item_name = null;
+    // if( is_defined(selectable_p) && selectable_p == true ){
+
+    // }
+
+    // Now take what we have, and wrap around some expansion code
+    // if it looks like it is too long.
+    var trim_hash = {};
+    var trimit = 100;
+    function _trim_and_store( in_str ){
+
+	var retval = in_str;
+
+	//ll("T&S: " + in_str);
+
+	// Skip if it is too short.
+	//if( ! ea_regexp.test(retval) && retval.length > (trimit + 50) ){
+	if( retval.length > (trimit + 50) ){
+	    //ll("T&S: too long: " + retval);
+
+	    // Let there be tests.
+	    var list_p = br_regexp.test(retval);
+	    var anchors_p = ea_regexp.test(retval);
+
+	    var tease = null;
+	    if( ! anchors_p && ! list_p ){
+		// A normal string then...trim it!
+		//ll("\tT&S: easy normal text, go nuts!");
+		tease = new bbop.html.span(bbop.core.crop(retval, trimit, ''),
+					   {'generate_id': true});
+	    }else if( anchors_p && ! list_p ){
+		// It looks like it is a link without a break, so not
+		// a list. We cannot trim this safely.
+		//ll("\tT&S: single link so cannot work on!");
+	    }else{
+		//ll("\tT&S: we have a list to deal with");
+		
+		var new_str_list = retval.split(br_regexp);
+		if( new_str_list.length <= 3 ){
+		    // Let's just ignore lists that are only three
+		    // items.
+		    //ll("\tT&S: pass thru list length <= 3");
+		}else{
+		    //ll("\tT&S: contruct into 2 plus tag");
+		    var new_str = '';
+		    new_str = new_str + new_str_list.shift();
+		    new_str = new_str + '<br />';
+		    new_str = new_str + new_str_list.shift();
+		    tease = new bbop.html.span(new_str, {'generate_id': true});
+		}
+	    }
+
+	    // If we have a tease, assemble the rest of the packet
+	    // to create the UI.
+	    if( tease ){
+		// Setup the text for tease and full versions.
+		function bgen(lbl, dsc){
+		    var b = new bbop.html.button(
+  			lbl,
+			{
+			    'generate_id': true,
+			    'type': 'button',
+			    'title': dsc || lbl,
+			    //'class': 'btn btn-default btn-xs'
+			    'class': 'btn btn-primary btn-xs'
+			});
+		    return b;
+		}
+		var more_b = new bgen('more...', 'Display the complete list');
+		var full = new bbop.html.span(retval,
+					      {'generate_id': true});
+		var less_b = new bgen('less', 'Display the truncated list');
+		
+		// Store the different parts for later activation.
+		var tease_id = tease.get_id();
+		var more_b_id = more_b.get_id();
+		var full_id = full.get_id();
+		var less_b_id = less_b.get_id();
+		trim_hash[tease_id] = 
+		    [tease_id, more_b_id, full_id, less_b_id];
+		
+		// New final string.
+		retval = tease.to_string() + " " +
+		    more_b.to_string() + " " +
+		    full.to_string() + " " +
+		    less_b.to_string();
+	    }
+	}
+
+	return retval;
+    }
+
+    // Create a locally mangled checkbox.
+    function _create_select_box(val, id, name){
+	if( ! is_defined(name) ){
+	    name = select_item_name;	    
+	}
+	
+	var input_attrs = {
+	    'value': val,
+	    'name': name,
+	    'type': 'checkbox'
+	};
+	if( is_defined(id) ){
+	    input_attrs['id'] = id;
+	}
+	var input = new bbop.html.input(input_attrs);
+	return input;
+    }
+
+    ///
+    /// Render the headers.
+    ///
+
+    // Start with score, and add the others by order of the class
+    // results_weights field.
+    // var headers = ['score'];
+    // var headers_display = ['Score'];
+    var headers = [];
+    var headers_display = [];
+    if( selectable_p ){
+	// Hint for later.
+	headers.push(select_toggle_id);
+
+	// Header select for selecting all.
+	var hinp = _create_select_box('', select_toggle_id, '');
+	//headers_display.push('All ' + hinp.to_string());
+	headers_display.push(hinp.to_string());
+    }
+    var results_order = cclass.field_order_by_weight('result');
+    each(results_order,
+	 function(fid){
+	     // Store the raw headers/fid for future use.
+	     headers.push(fid);
+	     // Get the headers into a presentable state.
+	     var field = cclass.get_field(fid);
+	     if( ! field ){ throw new Error('conf error: not found:' + fid); }
+	     //headers_display.push(field.display_name());
+	     var fdname = field.display_name();
+	     var fdesc = field.description() || '???';
+	     var head_span_attrs = {
+		 // TODO/NOTE: to make the tooltip work properly, since the
+		 // table headers are being created each time,
+		 // the tooltop initiator would have to be called after
+		 // each pass...I don't know that I want to do that.
+		 //'class': 'bbop-js-ui-hoverable bbop-js-ui-tooltip',
+		 'class': 'bbop-js-ui-hoverable',
+		 'title': fdesc
+	     };
+	     // More aggressive link version.
+	     //var head_span = new bbop.html.anchor(fdname, head_span_attrs);
+	     var head_span = new bbop.html.span(fdname, head_span_attrs);
+	     headers_display.push(head_span.to_string());
+	 });
+
+    ///
+    /// Render the documents.
+    ///
+
+    // Some of what we'll do for each field in each doc (see below).
+    // var ext = cclass.searchable_extension();
+    function _process_entry(fid, iid, doc){
+
+	var retval = '';
+	var did = doc['id'];
+
+	// BUG/TODO: First see if the filed will be multi or not.
+	// If not multi, follow the first path. If multi, break it
+	// down and try again.
+
+	// Get a label instead if we can.
+	var ilabel = golr_resp.get_doc_label(did, fid, iid);
+	if( ! ilabel ){
+	    ilabel = iid;
+	}
+
+	// Extract highlighting if we can from whatever our "label"
+	// was.
+	var hl = golr_resp.get_doc_highlight(did, fid, ilabel);
+
+	// See what kind of link we can create from what we got.
+	var ilink = linker.anchor({id: iid, label: ilabel, hilite: hl}, fid);
+	
+	ll('processing: ' + [fid, ilabel, iid].join(', '));
+	//ll('ilink: ' + ilink);
+
+	// See what we got, in order of how much we'd like to have it.
+	if( ilink ){
+	    retval = ilink;
+	}else if( ilabel ){
+	    retval = ilabel;
+	}else{
+	    retval = iid;
+	}
+
+	return retval;
+    }
+
+    // Cycle through and render each document.
+    // For each doc, deal with it as best we can using a little
+    // probing. Score is a special case as it is not an explicit
+    // field.
+    var table_buff = [];
+    var docs = golr_resp.documents();
+    each(docs, function(doc){
+	     
+	// Well, they had better be in here, so we're just gunna cycle
+	// through all the headers/fids.
+	var entry_buff = [];
+	each(headers, function(fid){
+	    // Detect out use of the special selectable column and add
+	    // a special checkbox there.
+	    if( fid == select_toggle_id ){
+		// Also
+		var did = doc['id'];
+		var dinp = _create_select_box(did);
+		entry_buff.push(dinp.to_string());
+	    }else if( fid == 'score' ){
+		// Remember: score is also
+		// special--non-explicit--case.
+		var score = doc['score'] || 0.0;
+		score = bbop.core.to_string(100.0 * score);
+		entry_buff.push(bbop.core.crop(score, 4) + '%');
+	    }else{
+		
+		// Not "score", so let's figure out what we can
+		// automatically.
+		var field = cclass.get_field(fid);
+		
+		// Make sure that something is there and that we can
+		// iterate over whatever it is.
+		var bits = [];
+		if( doc[fid] ){
+		    if( field.is_multi() ){
+			//ll("Is multi: " + fid);
+			bits = doc[fid];
+		    }else{
+			//ll("Is single: " + fid);
+			bits = [doc[fid]];
+		    }
+		}
+		
+		// Render each of the bits.
+		var tmp_buff = [];
+		each(bits, function(bit){
+		    
+		    // The major difference that we'll have here is
+		    // between standard fields and special handler
+		    // fields. If the handler resolves to null, fall
+		    // back onto standard.
+		    ll('! B:' + bit + ', F:' + fid + ', D:' + display_context);
+		    var out = handler.dispatch(bit, fid, display_context);
+		    if( is_defined(out) && out != null ){
+			// Handler success.
+			tmp_buff.push(out);
+		    }else{
+			// Standard output.   
+			out = _process_entry(fid, bit, doc);
+			//ll('out: ' + out);
+			tmp_buff.push(out);
+		    }
+		});
+		// Join it, trim/store it, push to to output.
+		var joined = tmp_buff.join('<br />');
+		entry_buff.push(_trim_and_store(joined));
+	    }
+	});
+	table_buff.push(entry_buff);
+    });
+	
+    // Add the table to the DOM.
+    var final_table =
+	new bbop.html.table(headers_display, table_buff,
+			    {'class': 'table table-striped table-hover table-condensed'});
+	// new bbop.html.table(headers_display, table_buff,
+	// 		    {'class': 'bbop-js-search-pane-results-table'});
+    jQuery('#' + elt_id).append(bbop.core.to_string(final_table));
+    
+    // Add the roll-up/down events to the doc.
+    each(trim_hash, function(key, val){
+	var tease_id = val[0];
+	var more_b_id = val[1];
+	var full_id = val[2];
+	var less_b_id = val[3];
+	
+	// Initial state.
+	jQuery('#' + full_id ).hide();
+	jQuery('#' + less_b_id ).hide();
+	
+	// Click actions to go back and forth.
+	jQuery('#' + more_b_id ).click(function(){
+	    jQuery('#' + tease_id ).hide();
+	    jQuery('#' + more_b_id ).hide();
+	    jQuery('#' + full_id ).show('fast');
+	    jQuery('#' + less_b_id ).show('fast');
+	});
+	jQuery('#' + less_b_id ).click(function(){
+	    jQuery('#' + full_id ).hide();
+	    jQuery('#' + less_b_id ).hide();
+	    jQuery('#' + tease_id ).show('fast');
+	    jQuery('#' + more_b_id ).show('fast');
+	});
+    });
+
+    // Since we already added to the DOM in the table, now add the
+    // group toggle if the optional checkboxes are defined.
+    if( select_toggle_id && select_item_name ){
+	jQuery('#' + select_toggle_id).click(function(){
+	    var cstr = 'input[id=' + select_toggle_id + ']';
+	    var nstr = 'input[name=' + select_item_name + ']';
+	    if( jQuery(cstr).prop('checked') ){
+		jQuery(nstr).prop('checked', true);
+	    }else{
+		jQuery(nstr).prop('checked', false);
+	    }
+	});
+    }
+};
 /*
  * Package: two_column_layout.js
  * 
@@ -17257,9 +17971,10 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  * there are probably some fields that you'll want to fill out to make
  * things work decently. The options for the argument hash are:
  * 
- *  fill_p - whether or not to fill the input with the val on select(default true)
+ *  fill_p - whether or not to fill the input with the val on select (default true)
  *  label_template - string template for dropdown, can use any document field
  *  value_template - string template for selected, can use any document field
+ *  additional_results_class - class to add to the pop-up autocomplete ul tag when there are more results than are shown in the results
  *  minimum_length - wait for this many characters to start (default 3)
  *  list_select_callback - function takes a json solr doc on dropdown selection
  * 
@@ -17298,6 +18013,7 @@ bbop.widget.search_box = function(golr_loc,
 	    'fill_p': true,
 	    'label_template': '{{id}}',
 	    'value_template': '{{id}}',
+	    'additional_results_class': '',
 	    'minimum_length': 3, // wait for three characters or more
 	    'list_select_callback': function(){}
 	};
@@ -17310,7 +18026,12 @@ bbop.widget.search_box = function(golr_loc,
     this._list_select_callback = arg_hash['list_select_callback'];
     var label_tt = new bbop.template(arg_hash['label_template']);
     var value_tt = new bbop.template(arg_hash['value_template']);
+    var ar_class = arg_hash['additional_results_class'];
     var minlen = arg_hash['minimum_length'];
+    // The document  return counts. Need  tri-state here since 0  is a
+    // legit return.
+    var result_count = null;
+    var return_count = null;
 
     // The all-important argument hash. See:
     // http://jqueryui.com/demos/autocomplete/#method-widget
@@ -17324,7 +18045,17 @@ bbop.widget.search_box = function(golr_loc,
 	    anchor.jq_vars['success'] = function(json_data){
 		var retlist = [];
 		var resp = new bbop.golr.response(json_data);
+
+		// Reset the last return; remember: tri-state.
+		result_count = null;
+		return_count = null;
+
 		if( resp.success() ){
+
+		    // Get best shot at document counts.
+		    result_count = resp.total_documents();
+		    return_count = resp.documents().length;
+
 		    loop(resp.documents(),
 			 function(doc){
 
@@ -17367,15 +18098,56 @@ bbop.widget.search_box = function(golr_loc,
 	    }
 
 	    // Only do the callback if it is defined.
-	    if( bbop.core.is_defined(anchor._list_select_callback) ){
+	    if( doc_to_apply && 
+		bbop.core.is_defined(anchor._list_select_callback) ){
 		anchor._list_select_callback(doc_to_apply);
 	    }
+	},
+	// What to do when a search is completed.
+	response: function(event, ui){
+	    // if(	result_count != null && return_count != null ){ // possible
+	    // 	if( result_count > return_count ){
+	    // 	    //console.log('incomplete listing');
+	    // 	    var item = {
+	    // 		'label': '...',
+	    // 		'value': null,
+	    // 		'document': null
+	    // 	    };
+	    // 	    ui.content.push(item);
+	    // 	}else{
+	    // 	    //console.log('complete listing');
+	    // 	}
+	    // }
 	}
     };
 
     // Set the ball rolling (attach jQuery autocomplete to doc).
-    jQuery('#' + anchor._interface_id).autocomplete(auto_args);
+    var jac = jQuery('#' + anchor._interface_id).autocomplete(auto_args);
 
+    // Add our render override.
+    // Extension point to get the additional
+    jac.data('ui-autocomplete')._renderMenu = function(ul, items){
+
+	// Allow standard menu construction delegation.
+	var anchor = this;
+	loop(items, function(item){
+	    anchor._renderItemData(ul, item);
+	});
+	
+	// Add a special class to the UL if there are results that
+	// are not shown.
+	if( ar_class && ar_class != '' ){
+	    jQuery(ul).removeClass(ar_class); // default no
+	    if( result_count != null && return_count != null ){ // possible
+		console.log('res_c: ' + result_count);
+		console.log('ret_c: ' + return_count);
+		if( result_count > return_count ){
+		    // If 
+		    jQuery(ul).addClass(ar_class);
+		}
+	    }
+	}
+    };
 
     /*
      * Function: destroy
@@ -18539,8 +19311,6 @@ bbop.core.extend(bbop.widget.search_pane, bbop.golr.manager.jquery);
  * 
  * This is a Bootstrap 3 widget.
  * 
- * TODO/BUG: Needs a wait spinner to something.
- * 
  * See Also:
  *  <search_pane.js>
  *  <live_search.js>
@@ -18554,24 +19324,20 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  * 
  * Contructor for the bbop.widget.live_filters object.
  * 
- * Interactively explore a search personality with no direct side
- * effects.
+ * Widget interface to interactively explore a search personality with
+ * no direct side effects.
  *
- * This is a specialized (and widgetized) subclass of
- * <bbop.golr.manager.jquery>.
- * 
  * Arguments:
- *  golr_loc - string url to GOlr server;
- *  golr_conf_obj - a <bbop.golr.conf> object
  *  interface_id - string id of the element to build on
+ *  manager - the shared GOlr manager to use
+ *  golr_conf_obj - the profile of the specific 
  *  in_argument_hash - *[optional]* optional hash of optional arguments
  * 
  * Returns:
  *  this object
  */
-bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
-				    interface_id, in_argument_hash){
-    bbop.golr.manager.jquery.call(this, golr_loc, golr_conf_obj);
+bbop.widget.live_filters = function(interface_id, manager, golr_conf_obj,
+				    in_argument_hash){
     this._is_a = 'bbop.widget.live_filters';
 
     var anchor = this;
@@ -18597,19 +19363,18 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     /// Deal with incoming arguments.
     ///
 
-    this._class_conf = golr_conf_obj;
+    // this._class_conf = golr_conf_obj;
 
     // Our argument default hash.
-    var default_hash =
-	{
-	    'meta_label': 'Documents:&nbsp;',
-	    'display_meta_p': true,
-	    'display_free_text_p': true,
-	    'free_text_placeholder': 'Free-text filter',
-	    'display_accordion_p': true,
-	    'minimum_free_text_length': 3, // wait for three characters or more
-	    'on_update_callback': function(){}
-	};
+    var default_hash = {
+	'meta_label': 'Documents:&nbsp;',
+	'display_meta_p': true,
+	'display_free_text_p': true,
+	'free_text_placeholder': 'Free-text filter',
+	'display_accordion_p': true,
+	'minimum_free_text_length': 3, // wait for three characters or more
+	'on_update_callback': function(){}
+    };
     var folding_hash = in_argument_hash || {};
     var arg_hash = bbop.core.fold(default_hash, folding_hash);
     // 
@@ -18717,6 +19482,36 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     }
 
     /*
+     * Function: spin_up
+     * 
+     * Turn on the spinner.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns
+     *  n/a
+     */
+    this.spin_up = function(){
+	_spin_up();
+    };
+	
+    /*
+     * Function: spin_down
+     * 
+     * Turn off the spinner.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns
+     *  n/a
+     */
+    this.spin_down = function(){
+	_spin_down();
+    };
+	
+    /*
      * Function: establish_display
      * 
      * Completely redraw the display.
@@ -18737,7 +19532,7 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     	// Can only make a display if there is a set
     	// personality--there is no general default and it is an
     	// error.
-    	var personality = anchor.get_personality();
+    	var personality = manager.get_personality();
     	var cclass = golr_conf_obj.get_class(personality);
     	if( ! personality || ! cclass ){
     	    ll('ERROR: no usable personality set');
@@ -19008,7 +19803,7 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     	    // jQuery('#' + meta_div_id).append(ms.to_string());
 	};
 	if( this._display_meta_p ){
-    	    anchor.register('search', 'meta_first', this.draw_meta, -1);
+    	    manager.register('search', 'meta_first', this.draw_meta, -1);
 	}
 
 	// Detect whether or not a keyboard event is ignorable.
@@ -19096,14 +19891,14 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     		function(){
     		    manager.reset_query();
     		    //anchor.set_query_field(manager.get_query());
-    		    anchor.set_query_field('');
+    		    manager.set_query_field('');
     		    manager.search();
     		    // We are now searching--show it.
     		    _spin_up();
     		});
 	};
 	if( this._display_free_text_p ){
-    	    anchor.register('search', 'query_first', this.draw_query, 0);
+    	    manager.register('search', 'query_first', this.draw_query, 0);
 	}
 	
 	/*
@@ -19638,11 +20433,11 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
 	};
 
 	if( this._display_accordion_p ){
-    	    anchor.register('search', 'accrdn_first', this.draw_accordion, 1);
-    	    anchor.register('search', 'current_first',
-			    this.draw_current_filters, 2);
-    	    anchor.register('search', 'sticky_first',
-			    this.draw_sticky_filters, 3);
+    	    manager.register('search', 'accrdn_first', this.draw_accordion, 1);
+    	    manager.register('search', 'current_first',
+			     this.draw_current_filters, 2);
+    	    manager.register('search', 'sticky_first',
+			     this.draw_sticky_filters, 3);
 	}
 
 	/*
@@ -19662,154 +20457,629 @@ bbop.widget.live_filters = function(golr_loc, golr_conf_obj,
     	    alert("Runtime error: " + error_message);
     	    _spin_down();
 	};
-    	anchor.register('error', 'error_first', this.draw_error, 0);
+    	manager.register('error', 'error_first', this.draw_error, 0);
 
 	// 
 	function spin_down_wait(){
 	    _spin_down();
 	}
-    	anchor.register('search', 'donedonedone', spin_down_wait, -100);
+    	manager.register('search', 'donedonedone', spin_down_wait, -100);
 
-	///
-    	// /// Things to do on every reset event. Essentially re-draw
-    	// /// everything.
-	// ///
-
-    	// if( show_searchbox_p ){ // conditionally display search box stuff
-    	//     anchor.register('reset', 'reset_query', anchor.ui.reset_query, -1);
-	// }
-    	// if( show_filterbox_p ){ // conditionally display filter stuff
-    	//     anchor.register('reset', 'sticky_first',
-    	// 		    anchor.ui.draw_sticky_filters, -1);
-    	//     anchor.register('reset', 'curr_first',
-    	// 		    anchor.ui.draw_current_filters, -1);
-    	//     anchor.register('reset', 'accordion_first',
-    	// 		    anchor.ui.draw_accordion, -1);
-    	// }
-    	// // We're always showing meta and results.
-    	// anchor.register('reset', 'meta_first', anchor.ui.draw_meta, -1);
-    	// anchor.register('reset', 'results_first', anchor.ui.draw_results, -1);
-	
-	// // Finally, we're going to add a first run behavior here.
-	// // We'll wrap the user-defined function into a 
-	// function _initial_runner(response, manager){
-	//     // I can't just remove the callback from the register
-	//     // after the first run because it would be reconstituted
-	//     // every time it was reset (established).
-	//     if( anchor.initial_reset_p ){
-	// 	anchor.initial_reset_p = false;
-	// 	anchor.initial_reset_callback(response, manager);
-	// 	//ll('unregister: ' + anchor.unregister('reset', 'first_run'));
-	//     }
-	// }
-    	// anchor.register('reset', 'initial_reset', _initial_runner, -100);
-
-	// ///
-    	// /// Things to do on every search event.
-	// ///
-
-    	// if( show_searchbox_p ){ // conditionally display search box stuff
-	//     // TODO: I worry a little about this being rebound after
-	//     // every keyboard event, but rationally, considering the
-	//     // rebinds and redraws that are happening down in the
-	//     // accordion, that seems a little silly.
-    	//     anchor.register('search', 'draw_query', anchor.ui.draw_query, -1);
-	// }
-    	// if( show_filterbox_p ){ // conditionally display filter stuff
-    	//     anchor.register('search','sticky_filters_std',
-    	// 		    anchor.ui.draw_sticky_filters);
-    	//     anchor.register('search','curr_filters_std',
-    	// 		    anchor.ui.draw_current_filters);
-    	//     anchor.register('search', 'accordion_std',
-	// 		    anchor.ui.draw_accordion);
-    	// }
-    	// // These will always be updated after a search.
-    	// anchor.register('search', 'meta_usual', anchor.ui.draw_meta);
-    	// anchor.register('search', 'results_usual', anchor.ui.draw_results);
-	
-    	// // Things to do on an error.
-    	// anchor.register('error', 'results_unusual', anchor.ui.draw_error);	
-	
-    	// // Setup the gross frames for the filters and results.
-    	// if( show_searchbox_p ){ // conditionally display search box stuff
-    	//     anchor.ui.setup_query('Free-text filtering',
-	// 			  icon_clear_label,
-	// 			  icon_clear_source);
-	// }
-    	// if( show_filterbox_p ){ // conditionally display filter stuff
-    	//     anchor.ui.setup_sticky_filters();
-    	//     anchor.ui.setup_current_filters(icon_remove_label,
-	// 				    icon_remove_source);
-    	//     anchor.ui.setup_accordion(icon_positive_label,
-	// 			      icon_positive_source,
-	// 			      icon_negative_label,
-	// 			      icon_negative_source,
-	// 			      spinner_shield_source,
-	// 			      spinner_shield_message);
-	// }
-    	// anchor.ui.setup_results({'meta': show_pager_p,
-	// 			 'spinner_source': spinner_search_source});
-	
     	// Start the ball with a reset event.
-    	anchor.search();
+    	//manager.search();
 
 	// The display has been established.
 	anchor._established_p = true;
     };
-
-    // /*
-    //  * Function: reset_query
-    //  *
-    //  * Simply reset the query and then redraw (rebind) the query.
-    //  * 
-    //  * Parameters:
-    //  *  response - the <bbop.golr.response> returned from the server
-    //  *  manager - <bbop.golr.manager> that we initially registered with
-    //  *
-    //  * Returns:
-    //  *  n/a
-    //  * 
-    //  * See:
-    //  *  <draw_query>
-    //  */
-    // this.reset_query = function(response, manager){
-
-    // 	ll('reset_query for: ' + ui_query_input_id);
-
-    // 	// Reset manager back to the default.
-    // 	manager.reset_query();
-
-    // 	anchor.draw_query(response, manager);
-    // };
-
-    // /*
-    //  * Function: set_query_field
-    //  *
-    //  * Set the text in the search query field box.
-    //  * 
-    //  * If no query is set, the field is cleared.
-    //  * 
-    //  * Parameters:
-    //  *  query - *[optional]* string
-    //  *
-    //  * Returns:
-    //  *  true or false on whether the task was accomplished
-    //  */
-    // this.set_query_field = function(query){
-    // 	var retval = false;
-    // 	if( ! query ){
-    // 	    query = '';
-    // 	}
-    // 	if( jQuery('#' + ui_query_input_id) ){
-    // 	    ll("changing query search field: to " + query);
-    // 	    jQuery('#' + ui_query_input_id).val(query);
-    // 	    //jQuery('#' + ui_query_input_id).keyup();
-    // 	    retval = true;
-    // 	}
-    // 	return retval;
-    // };
 };
-bbop.core.extend(bbop.widget.live_filters, bbop.golr.manager.jquery);
+/*
+ * Package: live_pager.js
+ * 
+ * Namespace: bbop.widget.live_pager
+ * 
+ * BBOP JS object to allow the the paging/downloading etc. of a GOlr
+ * manager.
+ * 
+ * Very much like a separated pager from the search pane.
+ * 
+ * This is a Bootstrap 3 widget.
+ * 
+ * See Also:
+ *  <search_pane.js>
+ *  <live_search.js>
+ *  <live_filters.js>
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+
+/*
+ * Constructor: live_pager
+ * 
+ * Contructor for the bbop.widget.live_pager object.
+ * 
+ * Display a manager response. Not a manager itself, but can use the
+ * argument manager to page, download, etc.
+ *
+ * Arguments:
+ *  interface_id - string id of the element to build on
+ *  manager - a manager object to probe for display and use for remoting
+ *  in_argument_hash - *[optional]* optional hash of optional arguments
+ * 
+ * Returns:
+ *  this object
+ */
+bbop.widget.live_pager = function(interface_id, manager, in_argument_hash){
+    this._is_a = 'bbop.widget.live_pager';
+
+    var anchor = this;
+    var each = bbop.core.each;
+    function ll(str){ console.log(str); };
+
+    // Some top-level variable defined.
+    var ui_count_control_div_id =
+	    interface_id + '_countctl_div_' + bbop.core.uuid();
+    var external_button_location_id = 'pager_button_holder_' + bbop.core.uuid();
+
+    // Handle incoming arguements.
+    var default_hash = {
+	'callback_priority': 0
+    };
+    var folding_hash = in_argument_hash || {};
+    var arg_hash = bbop.core.fold(default_hash, folding_hash);
+    //
+    var callback_priority = arg_hash['callback_priority'];
+
+    // Last things last, bind to the manager.
+    // TODO/BUG: Should this actually happen outside the widget? How
+    // complicated is this really?
+    var fun_id = bbop.core.uuid();
+    manager.register('search', fun_id, _repaint_on_callback, callback_priority);
+
+    // Add the "disabled" property to a button if the boolean
+    // value says so.
+    function _disable_if(bttn, disbool){
+	if( disbool ){
+	    jQuery('#' + bttn.get_id()).attr('disabled','disabled');
+	}
+    }
+
+    // (Re)draw the count control with the current information in the
+    // manager. This also tries to set the selector to the response
+    // number (to keep things in sync), unbinds any current "change"
+    // event, and adds a new change event.
+    function _repaint_on_callback(response, manager){
+	
+	//ll('draw live_pager at: ' + interface_id);
+
+	///
+	/// Section 1: the numbers display.
+	///
+
+	// Collect numbers for display.
+	var total_c = response.total_documents();
+	var first_d = response.start_document();
+	var last_d = response.end_document();
+
+	// Draw meta; the current numbers and page--the same for
+	// every type of return.
+	jQuery('#' + interface_id).empty();
+	if( total_c == 0 ){
+	    jQuery('#' + interface_id).append('No results found.');
+	}else{
+
+	    // A top-level div to contain the literal meta results, and the count
+	    // selector next to them.
+	    var mdiv_attrs = {
+		'class': 'row',
+		'generate_id': true
+	    };
+	    var mdiv = new bbop.html.tag('div', mdiv_attrs);
+
+	    // The literal return metadata.
+	    var dmeta_attrs = {
+		//'class': 'bbop-js-search-pane-meta'
+		'generate_id': true,
+		'class': 'col-xs-6 col-sm-6 col-md-4 col-lg-4'
+	    };
+	    var dmeta = new bbop.html.tag('div', dmeta_attrs);
+	    dmeta.add_to('<div>Total: ' + total_c +
+			 '; showing: ' + first_d +
+			 '-' + last_d + '</div>');
+	    mdiv.add_to(dmeta);
+
+	    ///
+	    /// Section 2: results count control.
+	    ///
+
+	    // Create a text label.
+	    var sel_label_attrs = {
+		//'for': ui_count_control_div_id,
+		// 'generate_id': true,
+		//'class': 'control-label'
+	    };
+	    var sel_label = new bbop.html.tag('span', sel_label_attrs,
+					      'Results&nbsp;count&nbsp;&nbsp;');
+	    
+	    // Create inputs (the current order is important for proper
+	    // for/id creation).
+	    var cinputs = [];
+	    each([10, 25, 50, 100],
+		 function(num, cindex){
+		     // Create and store the option.
+		     var sel_input_attrs = {
+			 'generate_id': true,
+			 'value': num
+		     };
+		     var sel_input =
+			     new bbop.html.tag('option', sel_input_attrs, num);
+		     var sel_input_id = sel_input.get_id();
+		     cinputs.push(sel_input);
+		 });
+	    // Option container div.
+	    var sel_attrs = {
+		'id': ui_count_control_div_id,
+		//'class': 'form-control',
+		'style': 'width: 5em;'
+	    };
+	    var sel = new bbop.html.tag('select', sel_attrs, cinputs);
+	    
+	    // Container div.
+	    var sel_div_attrs = {
+	    	'generate_id': true
+		//'class': 'col-xs-6 col-sm-6 col-md-3 col-lg-3'
+	    	//'class': 'form-group'
+	    	//'style': 'width: 7em;'
+	    };
+	    var sel_div = new bbop.html.tag('div', sel_div_attrs);
+	    
+	    // Assemble these elements into the UI.
+	    sel_div.add_to(sel_label);
+	    sel_div.add_to(sel);
+	    //mdiv.add_to(sel_div);
+	    dmeta.add_to(sel_div);
+
+	    // Render out the last two sections.
+	    jQuery('#' + interface_id).append(mdiv.to_string());
+	    
+	    ///
+	    /// Section 3: results count activity, setting.
+	    ///
+
+	    // First, unbind so we don't accidentally trigger with any
+	    // changes and don't pile up event handlers.
+	    jQuery('#' + ui_count_control_div_id).unbind('change');
+
+	    // Next, pull out the number of rows requested.
+	    var step = response.row_step();
+	    
+	    // Set the value to the number.
+	    jQuery('#' + ui_count_control_div_id).val(step);
+	    
+	    // Finally, reactivate the event handler on the select.
+	    jQuery('#' + ui_count_control_div_id).change(
+		function(event, ui){
+		    var sv = jQuery('#' + ui_count_control_div_id).val();
+		    if( bbop.core.is_defined(sv) ){
+			// Convert to a number.
+			var si = parseInt(sv);
+			
+			// Set manager and to the search.
+			manager.set_results_count(si);
+			manager.search();
+			// We are now searching--show it.
+			//_spin_up();
+		    }
+		});
+
+	    ///
+	    /// Section 4: the paging buttons.
+	    ///
+	    
+	    var bdiv_attrs = {
+ 		'class': 'col-xs-12 col-sm-12 col-md-8 col-lg-8',
+	    	'generate_id': true
+	    };
+	    var bdiv = new bbop.html.tag('div', bdiv_attrs);
+	    //jQuery('#' + interface_id).append(bdiv.to_string());
+	    jQuery('#' + mdiv.get_id()).append(bdiv.to_string());
+	    var bdiv_id = bdiv.get_id();
+
+	    // Now add the raw buttons to the interface, and after this,
+	    // activation and adding events.
+	    var bopts = {
+		'generate_id': true,
+		'class': 'btn btn-primary'
+	    };
+	    var b_first = new bbop.html.button('&laquo;First', bopts);
+	    //jQuery('#' + interface_id).append(b_first.to_string());
+	    jQuery('#' + bdiv_id).append(b_first.to_string());
+	    var b_back = new bbop.html.button('&lt;Prev', bopts);
+	    //jQuery('#' + interface_id).append(b_back.to_string());
+	    jQuery('#' + bdiv_id).append(b_back.to_string());
+	    var b_forward = new bbop.html.button('Next&gt;', bopts);
+	    //jQuery('#' + interface_id).append(b_forward.to_string());
+	    jQuery('#' + bdiv_id).append(b_forward.to_string());
+	    var b_last = new bbop.html.button('Last&raquo;', bopts);
+	    //jQuery('#' + interface_id).append(b_last.to_string());
+	    jQuery('#' + bdiv_id).append(b_last.to_string());
+
+	    // Do the math about what buttons to activate.
+	    var b_first_disabled_p = false;
+	    var b_back_disabled_p = false;
+	    var b_forward_disabled_p = false;
+	    var b_last_disabled_p = false;
+	    
+	    // Only activate paging if it is necessary to the returns.
+	    if( ! response.paging_p() ){
+		b_first_disabled_p = true;
+		b_back_disabled_p = true;
+		b_forward_disabled_p = true;
+		b_last_disabled_p = true;
+	    }
+	    
+	    // Don't activate back on the first page.
+	    if( ! response.paging_previous_p() ){
+		b_first_disabled_p = true;
+		b_back_disabled_p = true;
+	    }
+	    
+	    // Don't activate next on the last page.
+	    if( ! response.paging_next_p() ){
+		b_forward_disabled_p = true;
+		b_last_disabled_p = true;
+	    }
+
+	    // First page button.
+	    _disable_if(b_first, b_first_disabled_p);
+	    jQuery('#' + b_first.get_id()).click(function(){
+		// Cheat and trust reset by proxy to work.
+		manager.page_first(); 
+		// We are now searching--show it.
+		//_spin_up();
+	    });
+	    
+	    // Previous page button.
+	    _disable_if(b_back, b_back_disabled_p);
+	    jQuery('#' + b_back.get_id()).click(function(){
+		manager.page_previous();
+		// We are now searching--show it.
+		//_spin_up();
+	    });
+	    
+	    // Next page button.
+	    _disable_if(b_forward, b_forward_disabled_p);
+	    jQuery('#' + b_forward.get_id()).click(function(){
+		manager.page_next();
+		// We are now searching--show it.
+		//_spin_up();
+	    });
+	    
+	    // Last page button.
+	    _disable_if(b_last, b_last_disabled_p);
+	    jQuery('#' + b_last.get_id()).click(function(){
+		// A little trickier.
+		manager.page_last(total_c);
+		// We are now searching--show it.
+		//_spin_up();
+	    });
+
+	    ///
+	    /// Section 5: make a place for external buttons.
+	    ///
+
+	    var holder_attrs = {
+		'id': external_button_location_id
+	    };
+	    var holder = new bbop.html.tag('span', holder_attrs);
+	    jQuery('#' + bdiv_id).append('&nbsp;' + holder.to_string());
+	}
+    }
+
+	
+    /*
+     * Function: button_span_id
+     * 
+     * Returns the location of a place to add external buttons if you
+     * want.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns
+     *  string rep of place to put external buttons (span tag)
+     */
+    anchor.button_span_id = function(){
+	return external_button_location_id;
+    };
+};
+/*
+ * Package: live_results.js
+ * 
+ * Namespace: bbop.widget.live_results
+ * 
+ * BBOP JS widget to display the results of a search on callback.
+ * 
+ * TODO: Button insertion in other non-internal places.
+ * 
+ * This is a Bootstrap 3 widget.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+
+/*
+ * Constructor: live_results
+ * 
+ * Contructor for the bbop.widget.live_results object.
+ * 
+ * Results table and optional buttons.
+ *
+ * Optional options looks like:
+ *  callback_priority - default 0
+ *  user_buttons - default [], should be any passable renderable button
+ *  user_buttons_div_id - default null
+ *  selectable_p - have selectable side buttons (default true)
+ *
+ * Arguments:
+ *  interface_id - string id of the element to build on
+ *  manager - the shared GOlr manager to use
+ *  conf_class - the profile of the specific conf to use
+ *  handler - handler to use in rendering
+ *  linker - linker to use in rendering
+ *  in_argument_hash - *[optional]* optional hash of optional arguments, described above
+ * 
+ * Returns:
+ *  this object
+ */
+bbop.widget.live_results = function(interface_id, manager, conf_class,
+				    handler, linker, in_argument_hash){
+    this._is_a = 'bbop.widget.live_results';
+
+    var anchor = this;
+    var each = bbop.core.each;
+    
+    // Per-UI logger.
+    var logger = new bbop.logger();
+    logger.DEBUG = false;
+    //logger.DEBUG = true;
+    function ll(str){ logger.kvetch('LR: ' + str); }
+
+    var results_table = null;
+
+    // Some top-level variable defined.
+    // Special id and names for optional select column.
+    var local_mangle = bbop.core.uuid();
+    var select_column_id = 'rtbcc_select_' + local_mangle;
+    var select_item_name = 'rtbcc_select_name_' + local_mangle;
+
+    ///
+    /// Deal with incoming arguments.
+    ///
+
+    // Our argument default hash.
+    var default_hash = {
+	'callback_priority': 0,
+	'user_buttons': [],
+	'user_buttons_div_id': null,
+	'selectable_p': true
+    };
+    var folding_hash = in_argument_hash || {};
+    var arg_hash = bbop.core.fold(default_hash, folding_hash);
+    // 
+    var callback_priority = arg_hash['callback_priority'];
+    var user_buttons = arg_hash['user_buttons'];
+    var user_buttons_div_id = arg_hash['user_buttons_div_id'];
+    var selectable_p = arg_hash['selectable_p'];
+
+    //
+    var fun_id = bbop.core.uuid();
+
+    ///
+    /// Set the callbacks.
+    ///
+
+    // Add the "disabled" property to a button if the boolean
+    // value says so.
+    function _disable_if(bttn, disbool){
+	if( disbool ){
+	    jQuery('#' + bttn.get_id()).attr('disabled','disabled');
+	}
+    }
+    
+    // (Re)draw the user-defined buttons in the meta
+    // information area.  Will naturally fail if there is no
+    // meta div that has been nested with the user button
+    // element.
+    function _draw_user_buttons(button_definitions, loc_id){
+	function _button_rollout(button_def_hash){
+	    var default_hash = {
+		label : '?',
+		disabled_p : false,
+		click_function_generator :
+		function(anchor, manager){
+		    return function(anchor, manager){
+			alert('No callback defined for this button--' +
+			      'the generator may have been empty!');
+		    };
+		}
+    	    };
+	    var folding_hash = button_def_hash || {};
+	    var arg_hash = bbop.core.fold(default_hash, folding_hash);
+	    
+	    var label = arg_hash['label'];
+	    var disabled_p = arg_hash['disabled_p'];
+	    var click_function_generator = arg_hash['click_function_generator'];
+	    
+	    /// Add button to DOM.
+	    var b_props = {
+		'generate_id': true,
+		'class': 'btn btn-primary'
+	    };
+	    var b = new bbop.html.button(label, b_props);
+	    jQuery('#' + loc_id).append(b.to_string());
+	    _disable_if(b, disabled_p);
+	    
+	    // Bind function to action.
+	    var click_fun = click_function_generator(anchor, manager);
+	    jQuery('#' + b.get_id()).click(click_fun);
+	}
+	
+	// Check that we're not about to do the impossible.
+	if( ! jQuery('#' + loc_id) ){
+	    alert('cannot refresh buttons without a place to draw them');
+	}else{
+	    jQuery('#' + loc_id).empty();
+	    bbop.core.each(button_definitions, _button_rollout);
+	}
+    }
+
+    // Draw a table at the right place or an error message.
+    function _draw_table_or_something(resp, manager){
+
+	// Wipe interface.
+	jQuery('#' + interface_id).empty();
+
+	// Vary by what we got.
+	if( ! resp.success() || resp.total_documents() == 0 ){
+	    jQuery('#' + interface_id).append('<em>No results given your input and search fields. Please refine and try again.</em>');
+	}else{
+
+	    // Render the buttons.
+	    //console.log('user_buttons: ', user_buttons);
+	    if( user_buttons && user_buttons.length && user_buttons.length > 0 ){
+
+		// Ensure we have somewhere to put our buttons. If not
+		// supplied with an injection id, make our own and use
+		// it.
+		var insert_div_id = user_buttons_div_id;
+		if( ! user_buttons_div_id ){
+
+		    // Generate new dic and add it to the display.
+		    var ubt_attrs = {
+			'generate_id': true
+		    };
+		    var ubt = new bbop.html.tag('div', ubt_attrs);
+		    jQuery('#' + interface_id).append(ubt.to_string());
+		    
+		    // Ensure the id.
+		    insert_div_id = ubt.get_id();
+		}
+
+		// Add all of the defined buttons after the spacing.
+		_draw_user_buttons(user_buttons, insert_div_id);
+	    }
+
+	    // Display results.
+	    var bwd = bbop.widget.display;
+	    results_table =
+		bwd.results_table_by_class_conf_b3(conf_class, resp, linker,
+						   handler, interface_id,
+						   selectable_p,
+						   select_column_id,
+						   select_item_name);
+	}
+    }
+    manager.register('search', fun_id, _draw_table_or_something,
+		     callback_priority);
+    
+    // Somehow report an error to the user.
+    //  error_message - a string(?) describing the error
+    //  manager - <bbop.golr.manager> that we initially registered with
+    function _draw_error(error_message, manager){
+    	ll("draw_error: " + error_message);
+    	alert("Runtime error: " + error_message);
+    	//_spin_down();
+    };
+    manager.register('error', fun_id, _draw_error, callback_priority);
+
+    ///
+    /// External API.
+    ///
+
+    /*
+     * Function: item_name
+     *
+     * Return a string of the name attribute used by the checkboxes if
+     * we selected for checkboxes to be displayed.
+     * 
+     * Parameters:
+     *  n/a
+     *
+     * Returns:
+     *  string or null if displaying checkboxes was false
+     */
+    this.item_name = function(){	
+	return select_item_name;
+    };
+
+    /*
+     * Function: toggle_id
+     *
+     * Return a string of the id of the checkbox in the header if we
+     * selected for checkboxes to be displayed.
+     * 
+     * Parameters:
+     *  n/a
+     *
+     * Returns:
+     *  string or null if displaying checkboxes was false
+     */
+    this.toggle_id = function(){	
+	return select_column_id;
+    };
+    
+    /*
+     * Function: get_selected_items
+     * 
+     * The idea is to return a list of the items selected (with
+     * checkboxes) in the display. This means that there are three
+     * possibilities. 1) We are not using checkboxes or the display
+     * has not been established, so we return null; 2) no or all items
+     * have been selected, so we get back an empty list (all == none
+     * in our view); 3) a subset list of strings (ids).
+     * 
+     * NOTE: Naturally, does not function until the display is established.
+     * 
+     * Parameters:
+     *  n/a
+     *
+     * Returns
+     *  string list or null
+     */
+    this.get_selected_items = function(){
+	var retval = null;
+
+	// 
+	if( selectable_p ){
+	    retval = [];
+
+	    // Cycle through and pull out the values of the checked
+	    // ones.
+	    var total_count = 0;
+	    var nstr = 'input[name=' + select_item_name + ']';
+	    jQuery(nstr).each(
+		function(){
+		    if( this.checked ){
+			var val = jQuery(this).val();
+			retval.push(val);
+		    }
+		    total_count++;
+		});
+
+	    // If we are selecting all of the items on this page, that
+	    // is the same as not selecting any in our world, so reset
+	    // and warn.
+	    if( total_count > 0 && total_count == retval.length ){
+		alert('You can "select" all of the items on a results page by not selecting any (all being the default). This will also get your results processed faster and cause significantly less overhead on the servers.');
+		retval = [];
+	    }	    
+	}
+
+	return retval;
+    };
+
+};
 /*
  * Package: repl.js
  * 

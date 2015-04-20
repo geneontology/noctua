@@ -68,7 +68,7 @@ bbopx.minerva.class_expression = function(in_type, inferred_p){
     	}else if( what_is(in_type) == 'string' ){
 	    // Convert to a safe representation.
 	    in_type = {
-		'type': 'Class',
+		'type': 'class',
 		'id': in_type,
 		'label': in_type
 	    };
@@ -285,7 +285,7 @@ bbopx.minerva.class_expression.prototype.class_label = function(){
  * Function: property_id
  *
  * The considered class property id.
- * Not defined for 'Class' types.
+ * Not defined for 'class' types.
  *
  * Parameters: 
  *  n/a
@@ -301,7 +301,7 @@ bbopx.minerva.class_expression.prototype.property_id = function(){
  * Function: property_label
  *
  * The considered class property label.
- * Not defined for 'Class' types.
+ * Not defined for 'class' types.
  *
  * Parameters: 
  *  n/a
@@ -336,15 +336,15 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 
 	// Easiest case.
 	var t = type['type'] || null;
-	if( t == 'Class' ){
+	if( t == 'class' ){
 	    rettype = 'class';
 	}else{
 	    // Okay, we're dealing with a class expression...but which
 	    // one? Talking to Heiko, these can be only one--they are
 	    // not going to be mixed.
-	    if( type['unionOf'] ){
+	    if( type['union'] ){
 		rettype = 'union';
-	    }else if( type['intersectionOf'] ){
+	    }else if( type['intersection'] ){
 		rettype = 'intersection';
 	    }else{
 		// Leaving us with SVF.
@@ -375,7 +375,7 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 
 	// Load stuff into the frame.
 	this._frame = [];
-	var f_set = in_type[t + 'Of'] || [];
+	var f_set = in_type[t] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.minerva.class_expression(f_type));
 	}); 
@@ -395,7 +395,7 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	// Okay, let's recur down the class expression. It should be
 	// one, but we'll use the frame. Access should be though
 	// svf_class_expression().
-	var f_type = in_type['someValuesFrom'];
+	var f_type = in_type['svf'];
 	this._frame = [new bbopx.minerva.class_expression(f_type)];
     }
 
@@ -444,10 +444,10 @@ bbopx.minerva.class_expression.prototype.as_svf = function(
 
     // Our list of values must be defined if we go this way.
     var expression = {
-	'type': 'Restriction',
-	'someValuesFrom': cxpr.structure(),
+	'type': 'restriction',
+	'svf': cxpr.structure(),
 	'onProperty': {
-	    'type': "ObjectProperty",
+	    'type': "property",
 	    'id': property_id
 	}
     };
@@ -485,7 +485,7 @@ bbopx.minerva.class_expression.prototype.as_set = function(
 	}); 
 
 	// 
-	var fset = set_type + 'Of';
+	var fset = set_type;
 	var parsable = {};
 	parsable[fset] = set;
 	this.parse(parsable);
@@ -520,15 +520,15 @@ bbopx.minerva.class_expression.prototype.structure = function(){
     var t = anchor.type(); 
     if( t == 'class' ){ // trivial
 
-	expression['type'] = 'Class';
+	expression['type'] = 'class';
 	expression['id'] = anchor.class_id();
 
     }else if( t == 'svf' ){ // SVF
 	
 	// Easy part of SVF.
-	expression['type'] = 'Restriction';
-	expression['onProperty'] = {
-	    'type': 'ObjectProperty',
+	expression['type'] = 'restriction';
+	expression['property'] = {
+	    'type': 'property',
 	    'id': anchor.property_id()
 	};
 	
@@ -537,12 +537,12 @@ bbopx.minerva.class_expression.prototype.structure = function(){
 	var svfce = anchor.svf_class_expression();
 	var st = svfce.type();
 	if( st == 'class' ){
-	    expression['someValuesFrom'] = {
-		'type': 'Class',
+	    expression['svf'] = {
+		'type': 'class',
 		'id': svfce.class_id()
 	    };
 	}else if( t == 'union' || t == 'intersection' || t == 'svf' ){
-	    expression['someValuesFrom'] = [svfce.structure()];
+	    expression['svf'] = [svfce.structure()];
 	}else{
 	    throw new Error('unknown type in sub-request processing: ' + st);
 	}
@@ -557,7 +557,7 @@ bbopx.minerva.class_expression.prototype.structure = function(){
 	});
 
 	// Correct structure.
-	var ekey = t + 'Of';
+	var ekey = t;
 	expression[ekey] = ecache;
 	
     }else{
@@ -1748,12 +1748,13 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * 
      * Arguments:
      *  request_set - <bbopx.noctua.request_set>
-     *  model_id - string
+     *  model_id - *[TODO?]* string
      * 
      * Returns:
      *  n/a
      */
     anchor.request_with = function(request_set, model_id){
+	//anchor.request_with = function(request_set, model_id){
 	// Run.
 	var args = request_set.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
@@ -1986,7 +1987,7 @@ bbopx.minerva.request = function(entity, operation){
 	// If we're using an implicitly set individual id, make sure
 	// that is added to the call.
 	if( anchor._entity == 'individual' && ! anchor._individual_id.set_p() ){
-	    base['arguments']['assignToVariable'] =
+	    base['arguments']['assign-to-variable'] =
 		anchor._individual_id.value();
 	}
 
@@ -2079,7 +2080,7 @@ bbopx.minerva.request = function(entity, operation){
      *  string or null
      */
     anchor.model = function(model){
-	return anchor._get_set('modelId', model);
+	return anchor._get_set('model-id', model);
     };
     
     /*
@@ -2458,7 +2459,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
 		throw new Error('unknown type operation');
 	    }else{
 		var type_req =
-			new bbopx.minerva.request('individual', op + 'type');
+			new bbopx.minerva.request('individual', op + '-type');
 
 		if( model_id ){ type_req.model(model_id); } // optionally add
 
@@ -2886,13 +2887,32 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.undo_last_model_batch = function(model_id){
+    anchor.redo_last_model_batch = function(model_id){
 
 	var mod_req = new bbopx.minerva.request('model', 'redo');
 	if( model_id ){ mod_req.model(model_id); } // optionally add
 
 	anchor.add(mod_req, 'action');
 
+	return anchor;
+    };
+
+    /*
+     * Method: get_relations
+     * 
+     * Essentially, get the list of relations.
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.get_relations = function(){
+
+	var req = new bbopx.minerva.request('relations', 'get');
+	anchor.add(req, 'query');
+	
 	return anchor;
     };
 
@@ -2924,14 +2944,14 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	    argument_hash = {};
 	}else{
 	    
-	    if( argument_hash['class_id'] ){
-		cls_id = argument_hash['class_id'];
+	    if( argument_hash['class-id'] ){
+		cls_id = argument_hash['class-id'];
 	    }
-	    if( argument_hash['database_id'] ){
-		db_id = argument_hash['database_id'];
+	    if( argument_hash['database-id'] ){
+		db_id = argument_hash['database-id'];
 	    }
-	    if( argument_hash['taxon_id'] ){
-		tax_id = argument_hash['taxon_id'];
+	    if( argument_hash['taxon-id'] ){
+		tax_id = argument_hash['taxon-id'];
 	    }
 
 	    // Special historical case.
@@ -2946,7 +2966,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	var model_req = new bbopx.minerva.request('model', request_argument);
 	if( cls_id ){ model_req.special('subject', cls_id); }
 	if( db_id ){ model_req.special('db', db_id); }
-	if( tax_id ){ model_req.special('taxonId', db_id); }
+	if( tax_id ){ model_req.special('taxon-id', db_id); }
 	// Unlikely to have any listeners though...
 	anchor.add(model_req, 'action');
 
@@ -3209,7 +3229,7 @@ bbopx.barista.response = function(raw){
 		// Check required fields.
 		var jresp = this._raw;
 		// These must always be defined.
-		if( ! jresp['message_type'] || ! jresp['message'] ){
+		if( ! jresp['message-type'] || ! jresp['message'] ){
 		    // Core info.
 		    this.message_type('error');
 		    this.message('message and message_type must always exist');
@@ -3236,14 +3256,14 @@ bbopx.barista.response = function(raw){
 			    this.okay(true);
 
 			    // Super-class.
-			    this.message_type(jresp['message_type']);
+			    this.message_type(jresp['message-type']);
 			    this.message(jresp['message']);
 
 			    // Plug in the other required fields.
 			    this._uid = jresp['uid'] || 'unknown';
 			    this._intention = jresp['intention'] || 'unknown';
 			    this._signal = jresp['signal'] || 'unknown';
-			    this._packet_id = jresp['packet_id'] || 'unknown';
+			    this._packet_id = jresp['packet-id'] || 'unknown';
 
 			    // Add any additional fields.
 			    if( cdata ){ this._commentary = cdata; }
@@ -3401,8 +3421,8 @@ bbopx.barista.response.prototype.model_id = function(){
 bbopx.barista.response.prototype.inconsistent_p = function(){
     var ret = false;
     if( this._data &&
-	typeof(this._data['inconsistent_p']) !== 'undefined' &&
-	this._data['inconsistent_p'] == true ){
+	typeof(this._data['inconsistent-p']) !== 'undefined' &&
+	this._data['inconsistent-p'] == true ){
 	ret = true;
     }
     return ret;
@@ -3524,9 +3544,9 @@ bbopx.barista.response.prototype.individuals = function(){
  */
 bbopx.barista.response.prototype.inferred_individuals = function(){
     var ret = [];
-    if( this._data && this._data['individuals_i'] && 
-	bbop.core.is_array(this._data['individuals_i']) ){
-	ret = this._data['individuals_i'];
+    if( this._data && this._data['individuals-i'] && 
+	bbop.core.is_array(this._data['individuals-i']) ){
+	ret = this._data['individuals-i'];
     }
     return ret;
 };
@@ -3611,9 +3631,9 @@ bbopx.barista.response.prototype.annotations = function(){
  */
 bbopx.barista.response.prototype.model_ids = function(){
     var ret = [];
-    if( this._data && this._data['model_ids'] && 
-	bbop.core.is_array(this._data['model_ids']) ){
-	ret = this._data['model_ids'];
+    if( this._data && this._data['model-ids'] && 
+	bbop.core.is_array(this._data['model-ids']) ){
+	ret = this._data['model-ids'];
     }
     return ret;
 };
@@ -3640,9 +3660,9 @@ bbopx.barista.response.prototype.model_ids = function(){
  */
 bbopx.barista.response.prototype.models_meta = function(){
     var ret = {};
-    if( this._data && this._data['models_meta'] && 
-	bbop.core.is_hash(this._data['models_meta']) ){
-	ret = this._data['models_meta'];
+    if( this._data && this._data['models-meta'] && 
+	bbop.core.is_hash(this._data['models-meta']) ){
+	ret = this._data['models-meta'];
     }
     return ret;
 };
