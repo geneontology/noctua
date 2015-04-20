@@ -62,8 +62,13 @@ assemble-app:
 	cd
 	cp $(BBOP_JS)/staging/bbop.js static/
 	cp $(BBOPX_JS)/staging/bbopx.js static/
-#	cp $(BBOP_JS)/staging/bbop.js node_modules/bbop/bbop.js
-#	cp $(BBOPX_JS)/staging/bbopx.js node_modules/bbopx/bbopx.js
+
+## Note, these two are useful for ultra-fast prototyping, bypassing the
+## necessary NPM steps for the server code.
+.PHONY: patch-test-js
+patch-test-js:
+	cp $(BBOP_JS)/staging/bbop.js node_modules/bbop/bbop.js
+	cp $(BBOPX_JS)/staging/bbopx.js node_modules/bbopx/bbopx.js
 
 ###
 ### Tests.
