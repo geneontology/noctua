@@ -683,22 +683,32 @@ var noctua = new NoctuaLauncher();
 // the interesting things we need from the web.
 // In this case, we're going after RO so we can pass it in once and
 // early.
-var imngr = new bbop.rest.manager.node(bbop.rest.response.mmm);
+var imngr = new bbop.rest.manager.node(bbopx.barista.response);
 imngr.register('success', 's1', function(resp, man){
-    console.log("got getRelations, starting initializing seq");
-    console.log(bbop.core.what_is(resp));
-    console.log('rel count: ' + resp.relations().length);
-    noctua.initialize(resp.relations());
-    noctua.start();
+    console.log('response is: ' + bbop.core.what_is(resp));
+    var nrel = resp.relations().length;
+    console.log("got " + nrel + " relations, starting initializing sequence...");
+    if( nrel > 0 ){
+	noctua.initialize(resp.relations());
+	noctua.start();
+    }else{
+	console.error('failure: no relations on initialization response');
+    }
 });
 imngr.register('error', 'e1', function(resp, man){
     //console.log('erred out: %j', resp); 
-    console.log('not okay: %j', resp.okay());
+    //console.log(bbop.core.what_is(resp));
+    //console.log(resp._raw);
+    //console.log(resp.relations());
+    console.log('okay?: %j', resp.okay());
+    console.log('message type: %j', resp.message_type());
+    console.log('message: %j', resp.message());
 });
-//var t = noctua.minerva_definition_name + '/api/mmm/getRelations';
-var t = noctua.barista_location + '/api/' +
-	noctua.minerva_definition_name + '/getRelations';
-var t_args = {};
-var astr = imngr.action(t, t_args);
-//console.log("base ctarget " + t);
+
+// Assemble initial request to get relations for bootstrap.
+var reqs = new bbopx.minerva.request_set();
+reqs.get_relations();
+var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
+    '/m3Batch';
+var astr = imngr.action(t, reqs.callable());
 console.log("Minerva request to: " + astr);
