@@ -922,6 +922,7 @@ var BaristaLauncher = function(){
 	    var response_okay_p = true;
 	    var resp = null;
 	    try{
+		//console.log(jsonp);
 		var resp_json = JSON.parse(jsonp);
 		resp = new bbopx.barista.response(resp_json);
 	    }catch(e){
