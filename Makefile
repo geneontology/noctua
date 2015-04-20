@@ -53,6 +53,8 @@ NODE_BIN ?= node
 refresh-metadata:
 	wget --no-check-certificate $(GO_USER_METADATA_FILE) && mv users.json config/
 
+## Note, last two are useful for ultra-fast prototyping, bypassing the
+## necessary NPM steps for the server code.
 .PHONY: assemble-app
 assemble-app:
 	cd $(BBOP_JS) && make bundle
@@ -60,6 +62,8 @@ assemble-app:
 	cd
 	cp $(BBOP_JS)/staging/bbop.js static/
 	cp $(BBOPX_JS)/staging/bbopx.js static/
+#	cp $(BBOP_JS)/staging/bbop.js node_modules/bbop/bbop.js
+#	cp $(BBOPX_JS)/staging/bbopx.js node_modules/bbopx/bbopx.js
 
 ###
 ### Tests.
