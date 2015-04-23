@@ -4995,15 +4995,15 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 
 	// Easiest case.
 	var t = type['type'] || null;
-	if( t == 'Class' ){
+	if( t == 'class' ){
 	    rettype = 'class';
 	}else{
 	    // Okay, we're dealing with a class expression...but which
 	    // one? Talking to Heiko, these can be only one--they are
 	    // not going to be mixed.
-	    if( type['unionOf'] ){
+	    if( type['union'] ){
 		rettype = 'union';
-	    }else if( type['intersectionOf'] ){
+	    }else if( type['intersection'] ){
 		rettype = 'intersection';
 	    }else{
 		// Leaving us with SVF.
@@ -5035,7 +5035,7 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 	// Load stuff into the frame.
 	this._frame = [];
 	// TODO: Argh! Hardcode-y!
-	var f_set = in_type[t + 'Of'] || [];
+	var f_set = in_type[t] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.noctua.edit.type(f_type));
 	});
@@ -5047,15 +5047,15 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 	// later).
 	this._type = t;
 	// Extract the property information
-	this._category = in_type['onProperty']['id'];
-	this._property_id = in_type['onProperty']['id'];
+	this._category = in_type['property']['id'];
+	this._property_id = in_type['property']['id'];
 	this._property_label =
-	    in_type['onProperty']['label'] || this._property_id;	    
+	    in_type['property']['label'] || this._property_id;	    
 
 	// Okay, let's recur down the class expression. It should be
 	// one, but we'll use the frame. Access should be though
 	// svf_class_expression().
-	var f_type = in_type['someValuesFrom'];
+	var f_type = in_type['svf'];
 	this._frame = [new bbopx.noctua.edit.type(f_type)];
     }
 };
