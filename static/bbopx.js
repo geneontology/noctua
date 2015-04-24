@@ -338,18 +338,15 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	var t = type['type'] || null;
 	if( t == 'class' ){
 	    rettype = 'class';
+	}else if( t == 'union' ){
+	    rettype = 'union';
+	}else if( t == 'intersection' ){
+	    rettype = 'intersection';
+	}else if( t == 'restriction' ){
+	    // Leaving us with SVF for now for "restriction".
+	    rettype = 'svf';
 	}else{
-	    // Okay, we're dealing with a class expression...but which
-	    // one? Talking to Heiko, these can be only one--they are
-	    // not going to be mixed.
-	    if( type['union'] ){
-		rettype = 'union';
-	    }else if( type['intersection'] ){
-		rettype = 'intersection';
-	    }else{
-		// Leaving us with SVF.
-		rettype = 'svf';
-	    }
+	    // No idea...
 	}
 
 	return rettype;
@@ -375,28 +372,31 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 
 	// Load stuff into the frame.
 	this._frame = [];
-	var f_set = in_type[t] || [];
+	var f_set = in_type['expressions'] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.minerva.class_expression(f_type));
 	}); 
-    }else{ // SVF
+    }else if( t == 'svf' ){ // SVF
 	    
 	// We're then dealing with an SVF: a property plus a class
-	// expression. We are expecting a "Restriction", although we
+	// expression. We are expecting a "restriction", although we
 	// don't really do anything with that information (maybe
 	// later).
 	this._type = t;
 	// Extract the property information
-	this._category = in_type['onProperty']['id'];
-	this._property_id = in_type['onProperty']['id'];
+	this._category = in_type['property']['id'];
+	this._property_id = in_type['property']['id'];
 	this._property_label =
-	    in_type['onProperty']['label'] || this._property_id;	    
+	    in_type['property']['label'] || this._property_id;	    
 
 	// Okay, let's recur down the class expression. It should be
 	// one, but we'll use the frame. Access should be though
 	// svf_class_expression().
 	var f_type = in_type['svf'];
 	this._frame = [new bbopx.minerva.class_expression(f_type)];
+    }else{
+	// Should not be possible, so let's stop it here.
+	throw new Error('unknown type leaked in');
     }
 
     return anchor;
@@ -446,7 +446,7 @@ bbopx.minerva.class_expression.prototype.as_svf = function(
     var expression = {
 	'type': 'restriction',
 	'svf': cxpr.structure(),
-	'onProperty': {
+	'property': {
 	    'type': "property",
 	    'id': property_id
 	}
@@ -484,10 +484,12 @@ bbopx.minerva.class_expression.prototype.as_set = function(
 	    set.push(cexpr.structure());
 	}); 
 
-	// 
+	// A little massaging is necessary to get it into the correct
+	// format here.
 	var fset = set_type;
 	var parsable = {};
-	parsable[fset] = set;
+	parsable['type'] = fset;
+	parsable['expressions'] = set;
 	this.parse(parsable);
     }
 
@@ -557,8 +559,8 @@ bbopx.minerva.class_expression.prototype.structure = function(){
 	});
 
 	// Correct structure.
-	var ekey = t;
-	expression[ekey] = ecache;
+	expression['type'] = t;
+	expression['expressions'] = ecache;
 	
     }else{
 	throw new Error('unknown type in request processing: ' + t);
@@ -4830,319 +4832,6 @@ bbopx.noctua.edit.core.prototype.get_annotation_by_id =
     bbopx.noctua.edit._get_annotation_by_id;
 
 /**
- * Edit types.
- * 
- * A *very* simplified version of types, with just enough so that we
- * aren't constantly trying to work with them endlessly elsewhere in
- * the code.
- * 
- * Types can be: Class and the class expressions: SVF, union, and
- * intersection.
- * 
- * Categories is more a graphical distinction. They can be:
- * instance_of, <relation id>, union, and intersection.
- * 
- * This model also incorporates whether or not the type is
- * inferred. At this level they are treated the same, but a higher
- * level may (must) treat them as display decorations.
- *
- * Parameters:
- *  in_types - the raw type blob from the server
- *  inferred_p - whether or not the type is inferred (default false)
- */
-bbopx.noctua.edit.type = function(in_type, inferred_p){
-
-    var anchor = this;
-    var each = bbop.core.each;
-
-    // Initialize.
-    this._raw_type = in_type;
-    this._inferred_p = inferred_p || false;
-    this._id = bbop.core.uuid();
-
-    // Derived property defaults.
-    this._type = null;
-    this._category = 'unknown';
-    this._class_id = null;
-    this._class_label = null;
-    this._property_id = null;
-    this._property_label = null;
-    // For recursive elements.
-    //this._frame_type = null;
-    this._frame = [];
-
-    // Helpers.
-    function _decide_type(type){
-	var rettype = null;
-
-	// Easiest case.
-	var t = type['type'] || null;
-	if( t == 'class' ){
-	    rettype = 'class';
-	}else{
-	    // Okay, we're dealing with a class expression...but which
-	    // one? Talking to Heiko, these can be only one--they are
-	    // not going to be mixed.
-	    if( type['union'] ){
-		rettype = 'union';
-	    }else if( type['intersection'] ){
-		rettype = 'intersection';
-	    }else{
-		// Leaving us with SVF.
-		rettype = 'svf';
-	    }
-	}
-
-	return rettype;
-    }
-
-    // Define the category, and build up an instant picture of what we
-    // need to know about the property.
-    var t = _decide_type(in_type);
-    if( t == 'class' ){
-
-	// Easiest to extract.
-	this._type = t;
-	this._category = 'instance_of';
-	this._class_id = in_type['id'];
-	this._class_label = in_type['label'] || this._class_id;
-	// No related properties.
-	
-    }else if( t == 'union' || t == 'intersection' ){
-
-	// These are simply recursive.
-	this._type = t;
-	this._category = t;
-
-	// Load stuff into the frame.
-	this._frame = [];
-	// TODO: Argh! Hardcode-y!
-	var f_set = in_type[t] || [];
-	each(f_set, function(f_type){
-	    anchor._frame.push(new bbopx.noctua.edit.type(f_type));
-	});
-    }else{
-	    
-	// We're then dealing with an SVF: a property plus a class
-	// expression. We are expecting a "Restriction", although we
-	// don't really do anything with that information (maybe
-	// later).
-	this._type = t;
-	// Extract the property information
-	this._category = in_type['property']['id'];
-	this._property_id = in_type['property']['id'];
-	this._property_label =
-	    in_type['property']['label'] || this._property_id;	    
-
-	// Okay, let's recur down the class expression. It should be
-	// one, but we'll use the frame. Access should be though
-	// svf_class_expression().
-	var f_type = in_type['svf'];
-	this._frame = [new bbopx.noctua.edit.type(f_type)];
-    }
-};
-
-/**
- * Function: id
- * 
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string
- */
-bbopx.noctua.edit.type.prototype.id = function(){
-    return this._id;
-};
-
-/**
- * Function: inferred_p
- * 
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  boolean
- */
-bbopx.noctua.edit.type.prototype.inferred_p = function(){
-    return this._inferred_p;
-};
-
-/**
- * Function: signature
- * 
- * A cheap way of identifying if two types are the same.
- * This essentially returns a string of the main attributes of a type.
- * It is meant to be semi-unique and collide with dupe inferences.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string
- */
-bbopx.noctua.edit.type.prototype.signature = function(){
-    var anchor = this;
-    var each = bbop.core.each;
-
-    var sig = [];
-
-    // The easy ones.
-    sig.push(anchor.category() || '');
-    sig.push(anchor.type() || '');
-    sig.push(anchor.class_id() || '');
-    sig.push(anchor.property_id() || '');
-
-    // And now recursively on frames.
-    if( anchor.frame() ){
-	each(anchor.frame(), function(f){
-	    sig.push(f.signature() || '');
-	});
-    }
-
-    return sig.join('_');
-};
-
-/** 
- * Function: category
- *
- * Try to put an instance type into some kind of rendering
- * category.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string (default 'unknown')
- */
-bbopx.noctua.edit.type.prototype.category = function(){
-    return this._category;
-};
-
-/** 
- * Function: type
- *
- * The "type" of the type.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.type = function(){
-    return this._type;
-};
-
-/** 
- * Function: svf_class_expression
- *
- * The class expression when we are dealing with SVF.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  type or null
- */
-bbopx.noctua.edit.type.prototype.svf_class_expression = function(){
-    // Yes, a reuse of _frame.
-    return this._frame[0] || null;
-};
-
-// /** 
-//  * Function: frame_type
-//  *
-//  * If the type has a recursive frame, the "type" of said frame.
-//  *
-//  * Parameters: 
-//  *  n/a
-//  *
-//  * Returns:
-//  *  string or null
-//  */
-// bbopx.noctua.edit.type.prototype.frame_type = function(){
-//     return this._frame_type;
-// };
-
-/** 
- * Function: frame
- *
- * If the type has a recursive frame, a list of the types it contains.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  list
- */
-bbopx.noctua.edit.type.prototype.frame = function(){
-    return this._frame;
-};
-
-/** 
- * Function: class_id
- *
- * The considered class id.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.class_id = function(){
-    return this._class_id;
-};
-
-/** 
- * Function: class_label
- *
- * The considered class label, defaults to ID if not found.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.class_label = function(){
-    return this._class_label;
-};
-
-/** 
- * Function: property_id
- *
- * The considered class property id.
- * Not defined for 'Class' types.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.property_id = function(){
-    return this._property_id;
-};
-
-/** 
- * Function: property_label
- *
- * The considered class property label.
- * Not defined for 'Class' types.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.property_label = function(){
-    return this._property_label;
-};
-
-/**
  * Edit nodes.
  * 
  * Parameters:
@@ -5165,9 +4854,9 @@ bbopx.noctua.edit.node = function(in_id, in_types){
     }
     if( typeof(in_types) !== 'undefined' ){
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type);
+	    var new_type = new bbopx.minerva.class_expression(in_type);
 	    anchor._id2type[new_type.id()] = new_type;
-	    anchor._types.push(new bbopx.noctua.edit.type(in_type));
+	    anchor._types.push(new bbopx.minerva.class_expression(in_type));
 	});
     }
     
@@ -5204,7 +4893,7 @@ bbopx.noctua.edit.node.prototype.types = function(in_types){
 	anchor._types = [];
 
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type);
+	    var new_type = new bbopx.minerva.class_expression(in_type);
 	    anchor._id2type[new_type.id()] = new_type;
 	    anchor._types.push(new_type);
 	});
@@ -5232,7 +4921,7 @@ bbopx.noctua.edit.node.prototype.add_types = function(in_types, inferred_p){
 
     if( in_types && bbop.core.what_is(in_types) == 'array' ){
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type, inf_p);
+	    var new_type = new bbopx.minerva_class_expression(in_type, inf_p);
 	    anchor._id2type[new_type.id()] = new_type;
 	    anchor._types.push(new_type);
 	    

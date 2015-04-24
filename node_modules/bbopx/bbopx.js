@@ -338,18 +338,15 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	var t = type['type'] || null;
 	if( t == 'class' ){
 	    rettype = 'class';
+	}else if( t == 'union' ){
+	    rettype = 'union';
+	}else if( t == 'intersection' ){
+	    rettype = 'intersection';
+	}else if( t == 'restriction' ){
+	    // Leaving us with SVF for now for "restriction".
+	    rettype = 'svf';
 	}else{
-	    // Okay, we're dealing with a class expression...but which
-	    // one? Talking to Heiko, these can be only one--they are
-	    // not going to be mixed.
-	    if( type['union'] ){
-		rettype = 'union';
-	    }else if( type['intersection'] ){
-		rettype = 'intersection';
-	    }else{
-		// Leaving us with SVF.
-		rettype = 'svf';
-	    }
+	    // No idea...
 	}
 
 	return rettype;
@@ -375,28 +372,31 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 
 	// Load stuff into the frame.
 	this._frame = [];
-	var f_set = in_type[t] || [];
+	var f_set = in_type['expressions'] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.minerva.class_expression(f_type));
 	}); 
-    }else{ // SVF
+    }else if( t == 'svf' ){ // SVF
 	    
 	// We're then dealing with an SVF: a property plus a class
-	// expression. We are expecting a "Restriction", although we
+	// expression. We are expecting a "restriction", although we
 	// don't really do anything with that information (maybe
 	// later).
 	this._type = t;
 	// Extract the property information
-	this._category = in_type['onProperty']['id'];
-	this._property_id = in_type['onProperty']['id'];
+	this._category = in_type['property']['id'];
+	this._property_id = in_type['property']['id'];
 	this._property_label =
-	    in_type['onProperty']['label'] || this._property_id;	    
+	    in_type['property']['label'] || this._property_id;	    
 
 	// Okay, let's recur down the class expression. It should be
 	// one, but we'll use the frame. Access should be though
 	// svf_class_expression().
 	var f_type = in_type['svf'];
 	this._frame = [new bbopx.minerva.class_expression(f_type)];
+    }else{
+	// Should not be possible, so let's stop it here.
+	throw new Error('unknown type leaked in');
     }
 
     return anchor;
@@ -446,7 +446,7 @@ bbopx.minerva.class_expression.prototype.as_svf = function(
     var expression = {
 	'type': 'restriction',
 	'svf': cxpr.structure(),
-	'onProperty': {
+	'property': {
 	    'type': "property",
 	    'id': property_id
 	}
@@ -484,10 +484,12 @@ bbopx.minerva.class_expression.prototype.as_set = function(
 	    set.push(cexpr.structure());
 	}); 
 
-	// 
+	// A little massaging is necessary to get it into the correct
+	// format here.
 	var fset = set_type;
 	var parsable = {};
-	parsable[fset] = set;
+	parsable['type'] = fset;
+	parsable['expressions'] = set;
 	this.parse(parsable);
     }
 
@@ -558,7 +560,7 @@ bbopx.minerva.class_expression.prototype.structure = function(){
 
 	// Correct structure.
 	expression['type'] = t;
-	expression[t] = ecache;
+	expression['expressions'] = ecache;
 	
     }else{
 	throw new Error('unknown type in request processing: ' + t);
