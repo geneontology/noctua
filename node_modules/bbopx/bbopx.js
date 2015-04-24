@@ -557,8 +557,8 @@ bbopx.minerva.class_expression.prototype.structure = function(){
 	});
 
 	// Correct structure.
-	var ekey = t;
-	expression[ekey] = ecache;
+	expression['type'] = t;
+	expression[t] = ecache;
 	
     }else{
 	throw new Error('unknown type in request processing: ' + t);
