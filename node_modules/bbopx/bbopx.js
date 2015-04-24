@@ -845,7 +845,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     };
     
     /*
-     * Method: get_models_meta
+     * Method: get_meta
      * 
      * Trigger meta <bbopx.barista.response> with a list of all model
      * meta-information.
@@ -859,11 +859,11 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Returns:
      *  n/a
      */
-    anchor.get_models_meta = function(){
+    anchor.get_meta = function(){
 
 	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'all-model-meta');
+	var req = new bbopx.minerva.request('meta', 'get');
 	reqs.add(req);
 
 	var args = reqs.callable();	
@@ -1246,6 +1246,39 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     };
     
     /*
+     * Method: add_model
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on
+     * attempting to create a new model...from nothing. Or something!
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  taxon_id - *[DEPRECATED]* *[optional]* string (full ncbi)
+     *  class_id - *[DEPRECATED]* *[optional]* string
+     * 
+     * Returns:
+     *  n/a
+     */
+    anchor.add_model = function(taxon_id, class_id){
+
+	//
+	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+	var req = new bbopx.minerva.request('model', 'add');
+
+	// These are pretty much deprecated.
+	if( taxon_id ){ req.special('taxon-id', taxon_id); }
+	if( class_id ){ req.special('class-id', class_id); }
+
+	reqs.add(req);
+	
+	var args = reqs.callable();	
+    	anchor.apply_callbacks('prerun', [anchor]);
+    	jqm.action(anchor._url, args, 'GET');
+    };
+    
+    /*
      * Method: export_model
      * 
      * Trigger a meta <bbopx.barista.response> containing model export
@@ -1549,123 +1582,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     };
     
     /*
-     * Method: generate_model_by_class_and_db
-     * 
-     * Trigger a rebuild response <bbopx.barista.response> on
-     * attempting to create a new model by providing a starting class
-     * and a database identifier (see GAF extensions).
-     *
-     * Intent: "action".
-     * Expect: "success" and "rebuild".
-     * 
-     * Arguments:
-     *  class_id - string
-     *  db_id - string (hope you guess right--as GAF extension)
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.generate_model_by_class_and_db = function(class_id, db_id){
-
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'generate');
-	req.special('db', db_id);
-	req.special('subject', class_id);
-	reqs.add(req);
-
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: generate_model_by_db
-     * 
-     * Trigger a rebuild response <bbopx.barista.response> on
-     * attempting to create a new model by providing a database
-     * identifier (see GAF extensions).
-     *
-     * Intent: "action".
-     * Expect: "success" and "rebuild".
-     * 
-     * Arguments:
-     *  db_id - string (hope you guess right--as GAF extension)
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.generate_model_by_db = function(db_id){
-
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.special('db', db_id);
-	reqs.add(req);
-	
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: generate_model_by_taxon
-     * 
-     * Trigger a rebuild response <bbopx.barista.response> on
-     * attempting to create a new model by providing a database
-     * identifier (see GAF extensions).
-     *
-     * Intent: "action".
-     * Expect: "success" and "rebuild".
-     * 
-     * Arguments:
-     *  taxon_id - string (full ncbi)
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.generate_model_by_taxon = function(taxon_id){
-
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'generate-blank');
-	req.special('taxonId', taxon_id);
-	reqs.add(req);
-	
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: generate_model
-     * 
-     * Trigger a rebuild response <bbopx.barista.response> on
-     * attempting to create a new model...from nothing.
-     *
-     * Intent: "action".
-     * Expect: "success" and "rebuild".
-     * 
-     * Arguments:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.generate_model = function(){
-
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'generate-blank');
-	reqs.add(req);
-	
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
      * Method: capella_bootstrap_model
+     * 
+     * DEPRECATED: This is currently very very old code and is mostly
+     * here as a bookmark on where to restart.
      * 
      * Trigger a rebuild response <bbopx.barista.response> on
      * attempting to create a new model with information provided by
@@ -2898,7 +2818,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
     };
 
     /*
-     * Method: get_relations
+     * Method: get_meta
      * 
      * Essentially, get the list of relations.
      * 
@@ -2908,11 +2828,61 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Returns:
      *  <bbopx.minerva.request_set>
      */
-    anchor.get_relations = function(){
+    anchor.get_meta = function(){
 
-	var req = new bbopx.minerva.request('relations', 'get');
+	var req = new bbopx.minerva.request('meta', 'get');
+
+	// Just personal question.
 	anchor.add(req, 'query');
 	
+	return anchor;
+    };
+
+    /*
+     * Method: get_model
+     * 
+     * The the state of a model.
+     * 
+     * This *[CANNOT]* be used with any other request.
+     * 
+     * Arguments:
+     *  model_id - string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.get_model = function(model_id){
+	
+	var req = new bbopx.minerva.request('model', 'get');
+	if( model_id ){ req.model(model_id); }
+	
+	// Just personal question.
+	anchor.add(req, 'query');
+	
+	return anchor;
+    };
+
+    /*
+     * Method: get_undo_redo
+     * 
+     * Get the current undo/redo information for a model.
+     * 
+     * This *[CANNOT]* be used with any other request.
+     * 
+     * Arguments:
+     *  model_id - *[optional]* string
+     * 
+     * Returns:
+     *  <bbopx.minerva.request_set>
+     */
+    anchor.get_undo_redo = function(model_id){
+
+	var req = new bbopx.minerva.request('model', 'get-undo-redo');
+	if( model_id ){ req.model(model_id); }
+	
+	// Just personal question.
+	anchor.add(req, 'query');
+
 	return anchor;
     };
 
@@ -2922,9 +2892,8 @@ bbopx.minerva.request_set = function(user_token, model_id){
      * Essentially a wrapper for the "generate" class of model
      * methods. The possible seeding arguments fir the argument hash
      * are:
-     *  class_id - *[optional]* string; an initial class to build around
-     *  database_id - *[optional]* string; the background database
-     *  taxon_id - *[optional]* string; the background species
+     *  class-id - *[optional]* string; an initial class to build around
+     *  taxon-id - *[optional]* string; the background species
      * 
      * Arguments:
      *  argument_hash - string (see above for properties)
@@ -2935,38 +2904,21 @@ bbopx.minerva.request_set = function(user_token, model_id){
     anchor.add_model = function(argument_hash){
 
 	// Work out all incoming arguments to testable state.
-	var request_argument = null;
 	var cls_id = null;
-	var db_id = null;
 	var tax_id = null;
-	if( ! argument_hash ){
-	    request_argument = 'generate-blank';
-	    argument_hash = {};
-	}else{
-	    
+	if( argument_hash ){	    
 	    if( argument_hash['class-id'] ){
 		cls_id = argument_hash['class-id'];
-	    }
-	    if( argument_hash['database-id'] ){
-		db_id = argument_hash['database-id'];
 	    }
 	    if( argument_hash['taxon-id'] ){
 		tax_id = argument_hash['taxon-id'];
 	    }
-
-	    // Special historical case.
-	    if( cls_id && db_id ){
-		request_argument = 'generate';
-	    }else{
-		request_argument = 'generate-blank';
-	    }
 	}
 
 	// Now that all arguments are defined, build up the request.
-	var model_req = new bbopx.minerva.request('model', request_argument);
-	if( cls_id ){ model_req.special('subject', cls_id); }
-	if( db_id ){ model_req.special('db', db_id); }
-	if( tax_id ){ model_req.special('taxon-id', db_id); }
+	var model_req = new bbopx.minerva.request('model', 'add');
+	if( cls_id ){ model_req.special('class-id', cls_id); }
+	if( tax_id ){ model_req.special('taxon-id', tax_id); }
 	// Unlikely to have any listeners though...
 	anchor.add(model_req, 'action');
 
@@ -2993,76 +2945,6 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	// No need to broadcast and disrupt to others on the model if
 	// it's just this.
 	anchor.add(store_req, 'query');
-
-	return anchor;
-    };
-
-    /*
-     * Method: model_query
-     * 
-     * The is a catch-all for various non-operating (meta) queries to
-     * Minerva about the state of a model.
-     * 
-     * These *[CANNOT]* be used with any other request.
-     * 
-     * Code defensively: this is likely to be *[DEPRECATED]* in the
-     * near future (once the Minerva meta API is cleaned). TODO.
-     * 
-     * Arguments:
-     *  operation - 'get' and 'get-undo-redo'
-     *  model_id - string
-     * 
-     * Returns:
-     *  <bbopx.minerva.request_set>
-     */
-    anchor.model_query = function(operation, model_id){
-
-	if( operation && model_id ){
-
-	    var req = null;
-	    if( operation == 'get' ){
-		req = new bbopx.minerva.request('model', 'get');
-	    }else if( operation == 'get-undo-redo' ){
-		req = new bbopx.minerva.request('model', 'get-undo-redo');
-	    }
-	}
-
-	if( req ){
-	    req.model(model_id);
-	    // Just personal question.
-	    anchor.add(req, 'query');
-	}
-
-	return anchor;
-    };
-
-    /*
-     * Method: models_query
-     * 
-     * The is a catch-all for various non-operating (meta) queries to
-     * Minerva about the state of all of the known models.
-     * 
-     * These *[CANNOT]* be used with any other request.
-     * 
-     * Code defensively: this is likely to be *[DEPRECATED]* in the
-     * near future (once the Minerva meta API is cleaned). TODO.
-     * 
-     * Arguments:
-     *  operation - 'all-model-ids' and 'all-model-meta'
-     *  model_id - string
-     * 
-     * Returns:
-     *  <bbopx.minerva.request_set>
-     */
-    anchor.models_query = function(operation, model_id){
-
-	if( operation && model_id ){
-	    if( operation == 'all-model-ids' || operation == 'all-model-meta' ){
-		var req = new bbopx.minerva.request('model', operation);
-		// Just personal question.
-		anchor.add(req, 'query');
-	    }
-	}
 
 	return anchor;
     };
@@ -3552,48 +3434,6 @@ bbopx.barista.response.prototype.inferred_individuals = function(){
 };
 
 /*
- * Function: relations
- * 
- * Returns a list of the relations found in the response. Sometimes not
- * there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.relations = function(){
-    var ret = [];
-    if( this._data && this._data['relations'] && 
-	bbop.core.is_array(this._data['relations']) ){
-	ret = this._data['relations'];
-    }
-    return ret;
-};
-
-/*
- * Function: evidence
- * 
- * Returns a list of the evidence found in the response. Sometimes not
- * there, so check the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  list
- */
-bbopx.barista.response.prototype.evidence = function(){
-    var ret = [];
-    if( this._data && this._data['evidence'] && 
-	bbop.core.is_array(this._data['evidence']) ){
-	ret = this._data['evidence'];
-    }
-    return ret;
-};
-
-/*
  * Function: annotations
  * 
  * Returns a list of the (complex) annotations found in the
@@ -3615,6 +3455,67 @@ bbopx.barista.response.prototype.annotations = function(){
 };
 
 /*
+ * Function: export
+ * 
+ * Returns the string of the export found in the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string
+ */
+bbopx.barista.response.prototype.export_model = function(){
+    var ret = '';
+    if( this._data && this._data['export'] ){
+	ret = this._data['export'];
+    }
+    return ret;
+};
+
+/*
+ * Function: relations
+ * 
+ * Returns a list of the relations found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.relations = function(){
+    var ret = [];
+    if( this._data && this._data['meta'] && this._data['meta']['relations'] && 
+	bbop.core.is_array(this._data['meta']['relations']) ){
+	ret = this._data['meta']['relations'];
+    }
+    return ret;
+};
+
+/*
+ * Function: evidence
+ * 
+ * Returns a list of the evidence found in the response. Sometimes not
+ * there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbopx.barista.response.prototype.evidence = function(){
+    var ret = [];
+    if( this._data && this._data['meta'] && this._data['meta']['evidence'] && 
+	bbop.core.is_array(this._data['meta']['evidence']) ){
+	ret = this._data['meta']['evidence'];
+    }
+    return ret;
+};
+
+/*
  * Function: model_ids
  * 
  * Returns a list the model ids found in the response. Sometimes not
@@ -3631,9 +3532,9 @@ bbopx.barista.response.prototype.annotations = function(){
  */
 bbopx.barista.response.prototype.model_ids = function(){
     var ret = [];
-    if( this._data && this._data['model-ids'] && 
-	bbop.core.is_array(this._data['model-ids']) ){
-	ret = this._data['model-ids'];
+    if( this._data && this._data['meta'] && this._data['meta']['model-ids'] && 
+	bbop.core.is_array(this._data['meta']['model-ids']) ){
+	ret = this._data['meta']['model-ids'];
     }
     return ret;
 };
@@ -3660,28 +3561,9 @@ bbopx.barista.response.prototype.model_ids = function(){
  */
 bbopx.barista.response.prototype.models_meta = function(){
     var ret = {};
-    if( this._data && this._data['models-meta'] && 
-	bbop.core.is_hash(this._data['models-meta']) ){
-	ret = this._data['models-meta'];
-    }
-    return ret;
-};
-
-/*
- * Function: export
- * 
- * Returns the string of the export found in the return.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  string
- */
-bbopx.barista.response.prototype.export_model = function(){
-    var ret = '';
-    if( this._data && this._data['export'] ){
-	ret = this._data['export'];
+    if( this._data && this._data['meta'] && this._data['meta']['models-meta'] && 
+	bbop.core.is_hash(this._data['meta']['models-meta']) ){
+	ret = this._data['meta']['models-meta'];
     }
     return ret;
 };
@@ -4995,15 +4877,15 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 
 	// Easiest case.
 	var t = type['type'] || null;
-	if( t == 'Class' ){
+	if( t == 'class' ){
 	    rettype = 'class';
 	}else{
 	    // Okay, we're dealing with a class expression...but which
 	    // one? Talking to Heiko, these can be only one--they are
 	    // not going to be mixed.
-	    if( type['unionOf'] ){
+	    if( type['union'] ){
 		rettype = 'union';
-	    }else if( type['intersectionOf'] ){
+	    }else if( type['intersection'] ){
 		rettype = 'intersection';
 	    }else{
 		// Leaving us with SVF.
@@ -5035,7 +4917,7 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 	// Load stuff into the frame.
 	this._frame = [];
 	// TODO: Argh! Hardcode-y!
-	var f_set = in_type[t + 'Of'] || [];
+	var f_set = in_type[t] || [];
 	each(f_set, function(f_type){
 	    anchor._frame.push(new bbopx.noctua.edit.type(f_type));
 	});
@@ -5047,15 +4929,15 @@ bbopx.noctua.edit.type = function(in_type, inferred_p){
 	// later).
 	this._type = t;
 	// Extract the property information
-	this._category = in_type['onProperty']['id'];
-	this._property_id = in_type['onProperty']['id'];
+	this._category = in_type['property']['id'];
+	this._property_id = in_type['property']['id'];
 	this._property_label =
-	    in_type['onProperty']['label'] || this._property_id;	    
+	    in_type['property']['label'] || this._property_id;	    
 
 	// Okay, let's recur down the class expression. It should be
 	// one, but we'll use the frame. Access should be though
 	// svf_class_expression().
-	var f_type = in_type['someValuesFrom'];
+	var f_type = in_type['svf'];
 	this._frame = [new bbopx.noctua.edit.type(f_type)];
     }
 };
