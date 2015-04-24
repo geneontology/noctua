@@ -44,22 +44,6 @@ var MMEnvBootstrappingInit = function(user_token){
     var gconf = new bbop.golr.conf(amigo.data.golr);
 
     // Contact points for Chris's wizard.
-    var auto_wizard_term_id = 'auto_wizard_term';
-    var auto_wizard_term_elt = '#' + auto_wizard_term_id;
-    var auto_wizard_spdb_id = 'auto_wizard_spdb';
-    var auto_wizard_spdb_elt = '#' + auto_wizard_spdb_id;
-    var auto_wizard_button_generate_id = 'auto_wizard_button_generate';
-    var auto_wizard_button_generate_elt = '#' + auto_wizard_button_generate_id;
-    // // Contact point for the simpler blank generator.
-    // var auto_blank_spdb_id = 'auto_blank_spdb';
-    // var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
-    // var auto_blank_button_generate_id = 'auto_blank_button_generate';
-    // var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
-    //
-    // var select_memory_jump_id = 'select_memory_jump';
-    // var select_memory_jump_elt = '#' + select_memory_jump_id;
-    // var select_memory_jump_button_id = 'select_memory_jump_button';
-    // var select_memory_jump_button_elt = '#' + select_memory_jump_button_id;
     var select_stored_jump_id = 'select_stored_jump';
     var select_stored_jump_elt = '#' + select_stored_jump_id;
     var select_stored_jump_button_id = 'select_stored_jump_button';
@@ -329,7 +313,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(model_create_by_taxon_button_elt).click(function(evt){
 		var id = jQuery(model_create_by_taxon_input_elt).val();
 		//alert('val: ' + id);
-		manager.generate_model_by_taxon(id);
+		manager.add_model(id, null);
 	    });
 	}
     });
@@ -344,37 +328,6 @@ var MMEnvBootstrappingInit = function(user_token){
     /// Add the local responders.
     ///
 
-    //var auto_wizard_term_val = null;
-    var auto_wizard_term_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //auto_wizard_term_val = doc['annotation_class'];
-    	}
-    };
-    var auto_wizard_term =
-	new bbop.widget.search_box(gserv, gconf,
-				   'auto_wizard_term', auto_wizard_term_args);
-    auto_wizard_term.add_query_filter('document_category', 'ontology_class');
-    auto_wizard_term.set_personality('ontology');
-
-    // // species database
-    // //var auto_wizard_spdb_val = null;
-    // var auto_wizard_spdb_args = {
-    // 	'label_template': '{{assigned_by}}',
-    // 	'value_template': '{{assigned_by}}',
-    // 	'list_select_callback':
-    // 	function(doc){
-    // 	    //auto_wizard_spdb_val = doc['assigned_by'];
-    // 	}
-    // };
-    // var auto_wizard_spdb =
-    // 	new bbop.widget.search_box(gserv, gconf,
-    // 				   'auto_wizard_spdb', auto_wizard_spdb_args);
-    // auto_wizard_spdb.add_query_filter('document_category', 'annotation');
-    // auto_wizard_spdb.set_personality('annotation');
-
     ///
     /// Activate UI buttons.
     ///
@@ -387,36 +340,8 @@ var MMEnvBootstrappingInit = function(user_token){
     jQuery(model_create_by_nothing_elt).click(function(evt){
 	evt.stopPropagation();
 	evt.preventDefault();
-	manager.generate_model();
+	manager.add_model();
     });
-
-    // Activate create from class and db.
-    jQuery(auto_wizard_button_generate_elt).click(function(){
-    	var term = auto_wizard_term.content();
-    	//var spdb = auto_wizard_spdb.content();
-    	var spdb = jQuery(auto_wizard_spdb_elt).val();
-
-    	if( ! term || term == '' || ! spdb || spdb == '' ){
-    	    alert('necessary field empty');
-    	}else{
-	    // BUG: For Chris.
-	    // wizard_jump_term = term;
-	    // wizard_jump_db = spdb;
-	    // manager.generate_model(wizard_jump_term, wizard_jump_db);
-	    manager.generate_model_by_class_and_db(term, spdb);
-    	}
-    }
-						 );
-    // // ...
-    // jQuery(auto_blank_button_generate_elt).click(function(){
-    // 	var spdb = jQuery(auto_blank_spdb_elt).val();
-
-    // 	if( ! spdb || spdb == '' ){
-    // 	    alert('necessary field empty');
-    // 	}else{
-    // 	    manager.generate_model_by_db(spdb);
-    // 	}
-    // });
 
     // Activate importer.
     jQuery(model_data_button_elt).click(function(evt){
@@ -431,7 +356,7 @@ var MMEnvBootstrappingInit = function(user_token){
     /// Get info from server.
     ///
 
-    manager.get_models_meta();
+    manager.get_meta();
 };
 
 // Start the day the jsPlumb way.
