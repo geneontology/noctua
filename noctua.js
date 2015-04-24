@@ -707,7 +707,7 @@ imngr.register('error', 'e1', function(resp, man){
 
 // Assemble initial request to get relations for bootstrap.
 var reqs = new bbopx.minerva.request_set();
-reqs.get_relations();
+reqs.get_meta();
 var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
     '/m3Batch';
 var astr = imngr.action(t, reqs.callable());
