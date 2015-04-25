@@ -805,46 +805,38 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.get_model = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'get');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.get_model();
 
-	var args = reqs.callable();	
-	anchor.apply_callbacks('prerun', [anchor]);
-	//console.log('get_model anchor._url: ' + anchor._url);
-	//console.log('get_model args: ', args);
-	//console.log('get_model ass: ' + jqm.assemble());
-	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
-    /*
-     * Method: get_model_ids
-     * 
-     * Trigger meta <bbopx.barista.response> with a list of all model
-     * ids.
-     * 
-     * Intent: "query".
-     * Expect: "success" and "meta".
-     * 
-     * Arguments:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.get_model_ids = function(){
+    // /*
+    //  * Method: get_model_ids
+    //  * 
+    //  * Trigger meta <bbopx.barista.response> with a list of all model
+    //  * ids.
+    //  * 
+    //  * Intent: "query".
+    //  * Expect: "success" and "meta".
+    //  * 
+    //  * Arguments:
+    //  *  n/a
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.get_model_ids = function(){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'all-model-ids');
-	reqs.add(req);
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('model', 'all-model-ids');
+    // 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
+    // 	var args = reqs.callable();	
+    // 	anchor.apply_callbacks('prerun', [anchor]);
+    // 	jqm.action(anchor._url, args, 'GET');
+    // };
     
     /*
      * Method: get_meta
@@ -863,14 +855,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.get_meta = function(){
 
-	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('meta', 'get');
-	reqs.add(req);
+	reqs.get_meta();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
 
     /*
@@ -895,14 +883,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_model_undo_redo = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'get-undo-redo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.get_undo_redo();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -922,15 +906,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.perform_undo = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'undo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.undo_last_model_batch();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -950,15 +929,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.perform_redo = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'redo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.redo_last_model_batch();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -981,15 +955,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'add');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_fact([source_id, target_id, rel_id]);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -1012,30 +981,11 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'remove');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_fact([source_id, target_id, rel_id]);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
-    
-    // // Intent: "action".
-    // // Expect: "success" and "merge".
-    // anchor.add_individual = function(model_id, class_id){
-    // 	// 
-    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-    // 	var req = new bbopx.minerva.request('individual', 'add');
-    // 	req.model(model_id);
-    // 	req.add_class_expression(class_id);
-    // 	reqs.add(req);
-    // 	var args = reqs.callable();
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(anchor._url, args, 'GET');
-    // };
     
     /*
      * Method: add_simple_composite
@@ -1049,43 +999,136 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * 
      * Arguments:
      *  model_id - string
-     *  class_id - string
-     *  enabled_by_id - string
-     *  occurs_in_id - string
+     *  cls_exp - anything taken by <bbopx.minerva.class_expression>
+     *  enabled_by_expr - *[optional]* anything taken by <bbopx.minerva.class_expression>
+     *  occurs_in_expr - *[optional]* anything taken by <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.add_simple_composite = function(model_id, class_id,
-    					   enabled_by_id, occurs_in_id){
+    anchor.add_simple_composite = function(model_id, cls_expr,
+    					   enabled_by_expr, occurs_in_expr){
 
 	// Minimal requirements.
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add');
-	req.model(model_id);
-     	req.add_class_expression(class_id);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+     	reqs.add_class_expression(cls_expr);
 
 	// Optional set expressions.
-	if( enabled_by_id ){
-	    //req.add_svf_expression(enabled_by_id, 'enabled_by');
-	    req.add_svf_expression(enabled_by_id, 'RO:0002333');
+	if( enabled_by_expr ){
+	    reqs.add_svf_expression(enabled_by_expr, 'RO:0002333');
 	}
-	if( occurs_in_id ){
-	    req.add_svf_expression(occurs_in_id, 'occurs_in');	    
+	if( occurs_in_expr ){
+	    reqs.add_svf_expression(occurs_in_expr, 'occurs_in');	    
 	}
-	reqs.add(req);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
+    // /*
+    //  * Method: add_class
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to add just a class (instance of a class) to an
+    //  * individual in a model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.add_class = function(model_id, individual_id, class_id){
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'add-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_class_expression(class_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
+    // /*
+    //  * Method: add_svf
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to add an SVF expression to an individual in a
+    //  * model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  *  property_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.add_svf = function(model_id, individual_id, class_id, property_id){
+
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+    // 	reqs.add_svf_expression(type, individual_id);
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'add-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_svf_expression(class_id, property_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
+    // /*
+    //  * Method: remove_class
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to remove a class from an individual in a model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.remove_class = function(model_id, individual_id, class_id){
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'remove-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_class_expression(class_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
     /*
-     * Method: add_class
+     * Method: add_class_expression
      * 
      * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to add just a class (instance of a class) to an
-     * individual in a model.
+     * on attempt to add a complex class expression to an individual
+     * in a model.
      *
      * Intent: "action".
      * Expect: "success" and "merge".
@@ -1093,93 +1136,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Arguments:
      *  model_id - string
      *  individual_id - string
-     *  class_id - string
+     *  cls_expr - anything acceptible to <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.add_class = function(model_id, individual_id, class_id){
+    anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_class_expression(class_id);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_type_individual(cls_expr, individual_id);
 
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: add_svf
-     * 
-     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to add an SVF expression to an individual in a
-     * model.
-     *
-     * Intent: "action".
-     * Expect: "success" and "merge".
-     * 
-     * Arguments:
-     *  model_id - string
-     *  individual_id - string
-     *  class_id - string
-     *  property_id - string
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.add_svf = function(model_id, individual_id, class_id, property_id){
-
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_svf_expression(class_id, property_id);
-
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: remove_class
-     * 
-     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to remove a class from an individual in a model.
-     *
-     * Intent: "action".
-     * Expect: "success" and "merge".
-     * 
-     * Arguments:
-     *  model_id - string
-     *  individual_id - string
-     *  class_id - string
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.remove_class = function(model_id, individual_id, class_id){
-
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_class_expression(class_id);
-
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1195,27 +1162,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Arguments:
      *  model_id - string
      *  individual_id - string
-     *  class_id - string
-     *  type - JSON object
+     *  cls_expr - anything acceptible to <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.remove_class_expression = function(model_id, individual_id,
-					      class_id, type){
+    anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_complex_class_expression(type);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_type_individual(cls_expr, individual_id);
 
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1236,15 +1193,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_individual = function(model_id, indv_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove');
-	req.model(model_id);
-	req.individual(indv_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_individual(indv_id);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1265,23 +1217,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_model = function(taxon_id, class_id){
 
-	//
+	// Conditions taken care of by request_set.
 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'add');
-
-	// These are pretty much deprecated.
-	if( taxon_id ){ req.special('taxon-id', taxon_id); }
-	if( class_id ){ req.special('class-id', class_id); }
-
-	reqs.add(req);
+	reqs.add_model({'class-id': class_id, 'taxon_id': taxon_id});
 	
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
      * Method: export_model
+     * 
+     * *[DEPRECATED]*
      * 
      * Trigger a meta <bbopx.barista.response> containing model export
      * text.
@@ -1317,13 +1263,13 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	req.model(model_id);
 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
      * Method: import_model
+     * 
+     * *[DEPRECATED]*
      * 
      * Trigger a rebuild response <bbopx.barista.response> for a new
      * model seeded/created from the argument string.
@@ -1345,9 +1291,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	req.special('importModel', model_string);
 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1370,15 +1314,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.store_model = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'store');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.store_model();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1401,17 +1340,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-annotation');
-	req.model(model_id);
-	req.individual(indv_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_individual(indv_id, key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1438,17 +1370,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					  source_id, target_id, rel_id,
 					  key, value){
 
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'add-annotation');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_fact([source_id, target_id, rel_id], key, value);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1470,16 +1395,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_model_annotation = function(model_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'add-annotation');
-	req.model(model_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_model(key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1502,17 +1421,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-annotation');
-	req.model(model_id);
-	req.individual(indv_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_individual(indv_id, key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1539,17 +1451,11 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					     source_id, target_id, rel_id,
 					     key, value){
 
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'remove-annotation');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_fact([source_id, target_id, rel_id],
+					 key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1571,16 +1477,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_model_annotation =function(model_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'remove-annotation');
-	req.model(model_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_model(key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1654,10 +1554,9 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	    });
 	});
 
+
 	// Final send-off.
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1676,7 +1575,6 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      *  n/a
      */
     anchor.request_with = function(request_set, model_id){
-	//anchor.request_with = function(request_set, model_id){
 	// Run.
 	var args = request_set.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
@@ -4323,6 +4221,11 @@ bbopx.noctua.clean = function(str){
  * Edit annotations.
  * Everything can take annotations.
  * 
+ * This structure of the raw key-value set has been updated in the
+ * wire protocol. It now looks like:
+ * 
+ * : {"key": "contributor", "value": "GOC:kltm" }
+ * 
  * Parameters:
  *  kv_set - *[optional]* a set of keys and values; a simple object
  */
@@ -4332,7 +4235,17 @@ bbopx.noctua.edit.annotation = function(kv_set){
     this._properties = {};
 
     if( kv_set && bbop.core.what_is(kv_set) == 'object' ){
-	this._properties = bbop.core.clone(kv_set);
+
+	// Attempt to convert
+	if( kv_set['key'] && kv_set['value'] ){
+	    var key = kv_set['key'];
+	    var val = kv_set['value'];
+	    var adj_set = {};
+	    adj_set[key] = val;
+	    this._properties = bbop.core.clone(adj_set);
+	}else{
+	    console.log('bad annoatation k/v set: ', kv_set);
+	}
     }
 };
 
@@ -6001,7 +5914,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
 
     // Setup base modal.
     var mdl = new bbopx.noctua.widgets.contained_modal('dialog',
-						   'Edit Instance: ' + tid);
+						       'Edit Instance: ' + tid);
     mdl.add_to_body(tcache.join(''));
 
     // Attach deletes to all of the listed types.
