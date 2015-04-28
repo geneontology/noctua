@@ -342,8 +342,7 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	    rettype = 'union';
 	}else if( t == 'intersection' ){
 	    rettype = 'intersection';
-	}else if( t == 'restriction' ){
-	    // Leaving us with SVF for now for "restriction".
+	}else if( t == 'svf' ){
 	    rettype = 'svf';
 	}else{
 	    // No idea...
@@ -389,13 +388,14 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	this._property_label =
 	    in_type['property']['label'] || this._property_id;	    
 
-	// Okay, let's recur down the class expression. It should be
-	// one, but we'll use the frame. Access should be though
-	// svf_class_expression().
-	var f_type = in_type['svf'];
+	// Okay, let's recur down the class expression. It should just
+	// be one, but we'll just reuse the frame. Access should be
+	// though svf_class_expression().
+	var f_type = in_type['filler'];
 	this._frame = [new bbopx.minerva.class_expression(f_type)];
     }else{
 	// Should not be possible, so let's stop it here.
+	//console.log('unknown type :', in_type);
 	throw new Error('unknown type leaked in');
     }
 
@@ -444,12 +444,12 @@ bbopx.minerva.class_expression.prototype.as_svf = function(
 
     // Our list of values must be defined if we go this way.
     var expression = {
-	'type': 'restriction',
-	'svf': cxpr.structure(),
+	'type': 'svf',
 	'property': {
 	    'type': "property",
 	    'id': property_id
-	}
+	},
+	'filler': cxpr.structure()
     };
 
     this.parse(expression);
@@ -528,26 +528,16 @@ bbopx.minerva.class_expression.prototype.structure = function(){
     }else if( t == 'svf' ){ // SVF
 	
 	// Easy part of SVF.
-	expression['type'] = 'restriction';
+	expression['type'] = 'svf';
 	expression['property'] = {
 	    'type': 'property',
 	    'id': anchor.property_id()
 	};
 	
-	// The hard part: grab or recur for someValuesFrom class
-	// expression.
+	// Recur for someValuesFrom class expression.
 	var svfce = anchor.svf_class_expression();
 	var st = svfce.type();
-	if( st == 'class' ){
-	    expression['svf'] = {
-		'type': 'class',
-		'id': svfce.class_id()
-	    };
-	}else if( t == 'union' || t == 'intersection' || t == 'svf' ){
-	    expression['svf'] = [svfce.structure()];
-	}else{
-	    throw new Error('unknown type in sub-request processing: ' + st);
-	}
+	expression['filler'] = svfce.structure();
 	
     }else if( t == 'union' || t == 'intersection' ){ // compositions
 	
@@ -3803,29 +3793,6 @@ bbop.core.extend(bbopx.barista.client, bbop.registry);
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 
-// var bbopx.noctua.categorize = function(in_type){
-
-//     var ret = {
-// 	category: 'unknown',
-// 	text: '???'
-//     };
-
-//     var t = in_type['type'];
-//     if( t == 'Class' ){
-// 	var i = in_type['id'];
-// 	var l = in_type['label'];
-// 	ret['category'] = 'instance_of';
-// 	ret['text'] = l + ' (' + i + ')';
-//     }else if( t == 'Restriction' ){
-// 	var thing = in_type['someValuesFrom']['id'];
-// 	var thing_rel = in_type['onProperty']['id'];
-// 	ret['category'] = thing_rel;
-// 	ret['text'] = thing_rel + ' (' + thing + ')';
-//     }
-
-//     return ret;
-// };
-
 /*
  * Function: type_to_minimal
  *
@@ -3873,33 +3840,6 @@ bbopx.noctua.type_to_minimal = function(in_type, aid){
     return ret;
 };
 
-// /*
-//  * 
-//  */
-// var bbopx.noctua.type_to_expanded = function(in_type, aid){
-
-//     var text = '[???]';
-
-//     var t = in_type.type();
-//     //var ft = in_type.frame_type();
-//     var ft = null;
-//     var f = in_type.frame();
-//     if( t == 'Class' && ft == null ){
-// 	text = in_type.class_label() + ' (' + in_type.class_id() + ')';
-//     }else if( t == 'Restriction' && ft == null ){
-// 	var thing = in_type.class_label();
-// 	var thing_prop = in_type.property_label();
-// 	text = aid.readable(thing_prop) + '(' + thing + ')';
-//     }else if( ft == 'intersectionOf' ){
-// 	var thing_prop = in_type.property_label();
-// 	text = aid.readable(thing_prop) + '(' + ft + '[' + f.length + '])';
-//     }else if( ft == 'unionOf' ){
-// 	text = ft + '[' + f.length + ']';
-//     }
-
-//     return text;
-// };
-
 /*
  * Function: type_to_span
  *
@@ -3909,7 +3849,6 @@ bbopx.noctua.type_to_minimal = function(in_type, aid){
 bbopx.noctua.type_to_span = function(in_type, aid, color_p){
 
     var min = bbopx.noctua.type_to_minimal(in_type, aid);
-    //var exp = bbopx.noctua.type_to_expanded(in_type, aid);
 
     var text = null;
     if( color_p ){
@@ -4007,71 +3946,6 @@ bbopx.noctua.type_to_full = function(in_type, aid){
 
     return text;
 };
-
-// {
-//   "type": "Class",
-//   "label": "phosphatase activity",
-//   "id": "GO_0016791"
-// }
-///// 
-// {
-//   "someValuesFrom": {
-//     "type": "Class",
-//     "id": "WB_WBGene00000913"
-//   },
-//   "type": "Restriction",
-//   "onProperty": {
-//     "type": "ObjectProperty",
-//     "id": "enabled_by"
-//   }
-/////
-// {
-//   "onProperty": {
-//     "id": "RO:0002333",
-//     "type": "ObjectProperty",
-//     "label": "enabled_by"
-//   },
-//   "type": "Restriction",
-//   "someValuesFrom": {
-//     "intersectionOf": [
-//       {
-//         "id": "GO:0043234",
-//         "type": "Class",
-//         "label": "protein complex"
-//       },
-//       {
-//         "onProperty": {
-//           "id": "BFO:0000051",
-//           "type": "ObjectProperty",
-//           "label": "has part"
-//         },
-//         "type": "Restriction",
-//         "someValuesFrom": {
-//           "id": "UniProtKB:P0002",
-//           "type": "Class"
-//         }
-//       },
-//       {
-//         "onProperty": {
-//           "id": "BFO:0000051",
-//           "type": "ObjectProperty",
-//           "label": "has part"
-//         },
-//         "type": "Restriction",
-//         "someValuesFrom": {
-//           "id": "UniProtKB:P0003",
-//           "type": "Class"
-//         }
-//       }
-//     ]
-//   }
-// }
-
-// // Support CommonJS if it looks like that's how we're rolling.
-// if( typeof(exports) != 'undefined' ){
-//     //exports.bbop_mme_context = bbop_mme_context;
-//     //exports.bbop_type_to_tcell = bbop_type_to_tcell;
-// }
 /*
  * Package: draggable-canvas.js
  *
