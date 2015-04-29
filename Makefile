@@ -121,6 +121,10 @@ start-minerva-go:
 	cd $(OWLTOOLS)/MolecularModelServer/bin && ./build-server.sh
 	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
+.PHONY: start-minerva-go-fast
+start-minerva-go-fast:
+	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
+
 ###
 ### Documentation for JavaScript.
 ###
