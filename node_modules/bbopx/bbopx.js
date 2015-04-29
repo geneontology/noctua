@@ -342,8 +342,7 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	    rettype = 'union';
 	}else if( t == 'intersection' ){
 	    rettype = 'intersection';
-	}else if( t == 'restriction' ){
-	    // Leaving us with SVF for now for "restriction".
+	}else if( t == 'svf' ){
 	    rettype = 'svf';
 	}else{
 	    // No idea...
@@ -389,13 +388,14 @@ bbopx.minerva.class_expression.prototype.parse = function(in_type){
 	this._property_label =
 	    in_type['property']['label'] || this._property_id;	    
 
-	// Okay, let's recur down the class expression. It should be
-	// one, but we'll use the frame. Access should be though
-	// svf_class_expression().
-	var f_type = in_type['svf'];
+	// Okay, let's recur down the class expression. It should just
+	// be one, but we'll just reuse the frame. Access should be
+	// though svf_class_expression().
+	var f_type = in_type['filler'];
 	this._frame = [new bbopx.minerva.class_expression(f_type)];
     }else{
 	// Should not be possible, so let's stop it here.
+	//console.log('unknown type :', in_type);
 	throw new Error('unknown type leaked in');
     }
 
@@ -444,12 +444,12 @@ bbopx.minerva.class_expression.prototype.as_svf = function(
 
     // Our list of values must be defined if we go this way.
     var expression = {
-	'type': 'restriction',
-	'svf': cxpr.structure(),
+	'type': 'svf',
 	'property': {
 	    'type': "property",
 	    'id': property_id
-	}
+	},
+	'filler': cxpr.structure()
     };
 
     this.parse(expression);
@@ -528,26 +528,16 @@ bbopx.minerva.class_expression.prototype.structure = function(){
     }else if( t == 'svf' ){ // SVF
 	
 	// Easy part of SVF.
-	expression['type'] = 'restriction';
+	expression['type'] = 'svf';
 	expression['property'] = {
 	    'type': 'property',
 	    'id': anchor.property_id()
 	};
 	
-	// The hard part: grab or recur for someValuesFrom class
-	// expression.
+	// Recur for someValuesFrom class expression.
 	var svfce = anchor.svf_class_expression();
 	var st = svfce.type();
-	if( st == 'class' ){
-	    expression['svf'] = {
-		'type': 'class',
-		'id': svfce.class_id()
-	    };
-	}else if( t == 'union' || t == 'intersection' || t == 'svf' ){
-	    expression['svf'] = [svfce.structure()];
-	}else{
-	    throw new Error('unknown type in sub-request processing: ' + st);
-	}
+	expression['filler'] = svfce.structure();
 	
     }else if( t == 'union' || t == 'intersection' ){ // compositions
 	
@@ -805,46 +795,38 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.get_model = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'get');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.get_model();
 
-	var args = reqs.callable();	
-	anchor.apply_callbacks('prerun', [anchor]);
-	//console.log('get_model anchor._url: ' + anchor._url);
-	//console.log('get_model args: ', args);
-	//console.log('get_model ass: ' + jqm.assemble());
-	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
-    /*
-     * Method: get_model_ids
-     * 
-     * Trigger meta <bbopx.barista.response> with a list of all model
-     * ids.
-     * 
-     * Intent: "query".
-     * Expect: "success" and "meta".
-     * 
-     * Arguments:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.get_model_ids = function(){
+    // /*
+    //  * Method: get_model_ids
+    //  * 
+    //  * Trigger meta <bbopx.barista.response> with a list of all model
+    //  * ids.
+    //  * 
+    //  * Intent: "query".
+    //  * Expect: "success" and "meta".
+    //  * 
+    //  * Arguments:
+    //  *  n/a
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.get_model_ids = function(){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'all-model-ids');
-	reqs.add(req);
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('model', 'all-model-ids');
+    // 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
+    // 	var args = reqs.callable();	
+    // 	anchor.apply_callbacks('prerun', [anchor]);
+    // 	jqm.action(anchor._url, args, 'GET');
+    // };
     
     /*
      * Method: get_meta
@@ -863,14 +845,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.get_meta = function(){
 
-	// 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('meta', 'get');
-	reqs.add(req);
+	reqs.get_meta();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
 
     /*
@@ -895,14 +873,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.get_model_undo_redo = function(model_id){
 
 	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'get-undo-redo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.get_undo_redo();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -922,15 +896,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.perform_undo = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'undo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.undo_last_model_batch();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -950,15 +919,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.perform_redo = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'redo');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.redo_last_model_batch();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -981,15 +945,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'add');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_fact([source_id, target_id, rel_id]);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
     /*
@@ -1012,30 +971,11 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_fact = function(model_id, source_id, target_id, rel_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'remove');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_fact([source_id, target_id, rel_id]);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
-    
-    // // Intent: "action".
-    // // Expect: "success" and "merge".
-    // anchor.add_individual = function(model_id, class_id){
-    // 	// 
-    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-    // 	var req = new bbopx.minerva.request('individual', 'add');
-    // 	req.model(model_id);
-    // 	req.add_class_expression(class_id);
-    // 	reqs.add(req);
-    // 	var args = reqs.callable();
-    // 	anchor.apply_callbacks('prerun', [anchor]);
-    // 	jqm.action(anchor._url, args, 'GET');
-    // };
     
     /*
      * Method: add_simple_composite
@@ -1049,43 +989,136 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * 
      * Arguments:
      *  model_id - string
-     *  class_id - string
-     *  enabled_by_id - string
-     *  occurs_in_id - string
+     *  cls_exp - anything taken by <bbopx.minerva.class_expression>
+     *  enabled_by_expr - *[optional]* anything taken by <bbopx.minerva.class_expression>
+     *  occurs_in_expr - *[optional]* anything taken by <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.add_simple_composite = function(model_id, class_id,
-    					   enabled_by_id, occurs_in_id){
+    anchor.add_simple_composite = function(model_id, cls_expr,
+    					   enabled_by_expr, occurs_in_expr){
 
 	// Minimal requirements.
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add');
-	req.model(model_id);
-     	req.add_class_expression(class_id);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+     	reqs.add_class_expression(cls_expr);
 
 	// Optional set expressions.
-	if( enabled_by_id ){
-	    //req.add_svf_expression(enabled_by_id, 'enabled_by');
-	    req.add_svf_expression(enabled_by_id, 'RO:0002333');
+	if( enabled_by_expr ){
+	    reqs.add_svf_expression(enabled_by_expr, 'RO:0002333');
 	}
-	if( occurs_in_id ){
-	    req.add_svf_expression(occurs_in_id, 'occurs_in');	    
+	if( occurs_in_expr ){
+	    reqs.add_svf_expression(occurs_in_expr, 'occurs_in');	    
 	}
-	reqs.add(req);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+ 	anchor.request_with(reqs);
     };
     
+    // /*
+    //  * Method: add_class
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to add just a class (instance of a class) to an
+    //  * individual in a model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.add_class = function(model_id, individual_id, class_id){
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'add-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_class_expression(class_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
+    // /*
+    //  * Method: add_svf
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to add an SVF expression to an individual in a
+    //  * model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  *  property_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.add_svf = function(model_id, individual_id, class_id, property_id){
+
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+    // 	reqs.add_svf_expression(type, individual_id);
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'add-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_svf_expression(class_id, property_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
+    // /*
+    //  * Method: remove_class
+    //  * 
+    //  * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
+    //  * on attempt to remove a class from an individual in a model.
+    //  *
+    //  * Intent: "action".
+    //  * Expect: "success" and "merge".
+    //  * 
+    //  * Arguments:
+    //  *  model_id - string
+    //  *  individual_id - string
+    //  *  class_id - string
+    //  * 
+    //  * Returns:
+    //  *  n/a
+    //  */
+    // anchor.remove_class = function(model_id, individual_id, class_id){
+
+    // 	// 
+    // 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
+    // 	var req = new bbopx.minerva.request('individual', 'remove-type');
+    // 	req.model(model_id);
+    // 	req.individual(individual_id);
+    // 	req.add_class_expression(class_id);
+
+    // 	reqs.add(req);
+
+    // 		anchor.request_with(reqs);
+    // };
+    
     /*
-     * Method: add_class
+     * Method: add_class_expression
      * 
      * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to add just a class (instance of a class) to an
-     * individual in a model.
+     * on attempt to add a complex class expression to an individual
+     * in a model.
      *
      * Intent: "action".
      * Expect: "success" and "merge".
@@ -1093,93 +1126,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Arguments:
      *  model_id - string
      *  individual_id - string
-     *  class_id - string
+     *  cls_expr - anything acceptible to <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.add_class = function(model_id, individual_id, class_id){
+    anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_class_expression(class_id);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_type_individual(cls_expr, individual_id);
 
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: add_svf
-     * 
-     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to add an SVF expression to an individual in a
-     * model.
-     *
-     * Intent: "action".
-     * Expect: "success" and "merge".
-     * 
-     * Arguments:
-     *  model_id - string
-     *  individual_id - string
-     *  class_id - string
-     *  property_id - string
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.add_svf = function(model_id, individual_id, class_id, property_id){
-
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_svf_expression(class_id, property_id);
-
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
-    };
-    
-    /*
-     * Method: remove_class
-     * 
-     * Trigger merge (or possibly a rebuild) <bbopx.barista.response>
-     * on attempt to remove a class from an individual in a model.
-     *
-     * Intent: "action".
-     * Expect: "success" and "merge".
-     * 
-     * Arguments:
-     *  model_id - string
-     *  individual_id - string
-     *  class_id - string
-     * 
-     * Returns:
-     *  n/a
-     */
-    anchor.remove_class = function(model_id, individual_id, class_id){
-
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_class_expression(class_id);
-
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1195,27 +1152,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Arguments:
      *  model_id - string
      *  individual_id - string
-     *  class_id - string
-     *  type - JSON object
+     *  cls_expr - anything acceptible to <bbopx.minerva.class_expression>
      * 
      * Returns:
      *  n/a
      */
-    anchor.remove_class_expression = function(model_id, individual_id,
-					      class_id, type){
+    anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-type');
-	req.model(model_id);
-	req.individual(individual_id);
-	req.add_complex_class_expression(type);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_type_individual(cls_expr, individual_id);
 
-	reqs.add(req);
-
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1236,15 +1183,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_individual = function(model_id, indv_id){
 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove');
-	req.model(model_id);
-	req.individual(indv_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_individual(indv_id);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1265,23 +1207,17 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_model = function(taxon_id, class_id){
 
-	//
+	// Conditions taken care of by request_set.
 	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'add');
-
-	// These are pretty much deprecated.
-	if( taxon_id ){ req.special('taxon-id', taxon_id); }
-	if( class_id ){ req.special('class-id', class_id); }
-
-	reqs.add(req);
+	reqs.add_model({'class-id': class_id, 'taxon_id': taxon_id});
 	
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
      * Method: export_model
+     * 
+     * *[DEPRECATED]*
      * 
      * Trigger a meta <bbopx.barista.response> containing model export
      * text.
@@ -1317,13 +1253,13 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	req.model(model_id);
 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
      * Method: import_model
+     * 
+     * *[DEPRECATED]*
      * 
      * Trigger a rebuild response <bbopx.barista.response> for a new
      * model seeded/created from the argument string.
@@ -1345,9 +1281,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	req.special('importModel', model_string);
 	reqs.add(req);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1370,15 +1304,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.store_model = function(model_id){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'store');
-	req.model(model_id);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.store_model();
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1401,17 +1330,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'add-annotation');
-	req.model(model_id);
-	req.individual(indv_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_individual(key, value, indv_id);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1438,17 +1360,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					  source_id, target_id, rel_id,
 					  key, value){
 
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'add-annotation');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_fact(key, value, [source_id, target_id, rel_id]);
 
-	var args = reqs.callable();
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1470,16 +1385,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.add_model_annotation = function(model_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'add-annotation');
-	req.model(model_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_annotation_to_model(key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1502,17 +1411,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('individual', 'remove-annotation');
-	req.model(model_id);
-	req.individual(indv_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_individual(key, value, indv_id);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1539,17 +1441,11 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					     source_id, target_id, rel_id,
 					     key, value){
 
-	//
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('edge', 'remove-annotation');
-	req.model(model_id);
-	req.fact(source_id, target_id, rel_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_fact(key, value,
+					 [source_id, target_id, rel_id]);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1571,16 +1467,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      */
     anchor.remove_model_annotation =function(model_id, key, value){
 
-	// 
-	var reqs = new bbopx.minerva.request_set(anchor.user_token());
-	var req = new bbopx.minerva.request('model', 'remove-annotation');
-	req.model(model_id);
-	req.add_annotation(key, value);
-	reqs.add(req);
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_annotation_from_model(key, value);
 
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1654,10 +1544,9 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 	    });
 	});
 
+
 	// Final send-off.
-	var args = reqs.callable();	
-    	anchor.apply_callbacks('prerun', [anchor]);
-    	jqm.action(anchor._url, args, 'GET');
+	anchor.request_with(reqs);
     };
     
     /*
@@ -1676,7 +1565,6 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      *  n/a
      */
     anchor.request_with = function(request_set, model_id){
-	//anchor.request_with = function(request_set, model_id){
 	// Run.
 	var args = request_set.callable();	
     	anchor.apply_callbacks('prerun', [anchor]);
@@ -3905,29 +3793,6 @@ bbop.core.extend(bbopx.barista.client, bbop.registry);
 if ( typeof bbopx == "undefined" ){ var bbopx = {}; }
 if ( typeof bbopx.noctua == "undefined" ){ bbopx.noctua = {}; }
 
-// var bbopx.noctua.categorize = function(in_type){
-
-//     var ret = {
-// 	category: 'unknown',
-// 	text: '???'
-//     };
-
-//     var t = in_type['type'];
-//     if( t == 'Class' ){
-// 	var i = in_type['id'];
-// 	var l = in_type['label'];
-// 	ret['category'] = 'instance_of';
-// 	ret['text'] = l + ' (' + i + ')';
-//     }else if( t == 'Restriction' ){
-// 	var thing = in_type['someValuesFrom']['id'];
-// 	var thing_rel = in_type['onProperty']['id'];
-// 	ret['category'] = thing_rel;
-// 	ret['text'] = thing_rel + ' (' + thing + ')';
-//     }
-
-//     return ret;
-// };
-
 /*
  * Function: type_to_minimal
  *
@@ -3975,33 +3840,6 @@ bbopx.noctua.type_to_minimal = function(in_type, aid){
     return ret;
 };
 
-// /*
-//  * 
-//  */
-// var bbopx.noctua.type_to_expanded = function(in_type, aid){
-
-//     var text = '[???]';
-
-//     var t = in_type.type();
-//     //var ft = in_type.frame_type();
-//     var ft = null;
-//     var f = in_type.frame();
-//     if( t == 'Class' && ft == null ){
-// 	text = in_type.class_label() + ' (' + in_type.class_id() + ')';
-//     }else if( t == 'Restriction' && ft == null ){
-// 	var thing = in_type.class_label();
-// 	var thing_prop = in_type.property_label();
-// 	text = aid.readable(thing_prop) + '(' + thing + ')';
-//     }else if( ft == 'intersectionOf' ){
-// 	var thing_prop = in_type.property_label();
-// 	text = aid.readable(thing_prop) + '(' + ft + '[' + f.length + '])';
-//     }else if( ft == 'unionOf' ){
-// 	text = ft + '[' + f.length + ']';
-//     }
-
-//     return text;
-// };
-
 /*
  * Function: type_to_span
  *
@@ -4011,7 +3849,6 @@ bbopx.noctua.type_to_minimal = function(in_type, aid){
 bbopx.noctua.type_to_span = function(in_type, aid, color_p){
 
     var min = bbopx.noctua.type_to_minimal(in_type, aid);
-    //var exp = bbopx.noctua.type_to_expanded(in_type, aid);
 
     var text = null;
     if( color_p ){
@@ -4109,71 +3946,6 @@ bbopx.noctua.type_to_full = function(in_type, aid){
 
     return text;
 };
-
-// {
-//   "type": "Class",
-//   "label": "phosphatase activity",
-//   "id": "GO_0016791"
-// }
-///// 
-// {
-//   "someValuesFrom": {
-//     "type": "Class",
-//     "id": "WB_WBGene00000913"
-//   },
-//   "type": "Restriction",
-//   "onProperty": {
-//     "type": "ObjectProperty",
-//     "id": "enabled_by"
-//   }
-/////
-// {
-//   "onProperty": {
-//     "id": "RO:0002333",
-//     "type": "ObjectProperty",
-//     "label": "enabled_by"
-//   },
-//   "type": "Restriction",
-//   "someValuesFrom": {
-//     "intersectionOf": [
-//       {
-//         "id": "GO:0043234",
-//         "type": "Class",
-//         "label": "protein complex"
-//       },
-//       {
-//         "onProperty": {
-//           "id": "BFO:0000051",
-//           "type": "ObjectProperty",
-//           "label": "has part"
-//         },
-//         "type": "Restriction",
-//         "someValuesFrom": {
-//           "id": "UniProtKB:P0002",
-//           "type": "Class"
-//         }
-//       },
-//       {
-//         "onProperty": {
-//           "id": "BFO:0000051",
-//           "type": "ObjectProperty",
-//           "label": "has part"
-//         },
-//         "type": "Restriction",
-//         "someValuesFrom": {
-//           "id": "UniProtKB:P0003",
-//           "type": "Class"
-//         }
-//       }
-//     ]
-//   }
-// }
-
-// // Support CommonJS if it looks like that's how we're rolling.
-// if( typeof(exports) != 'undefined' ){
-//     //exports.bbop_mme_context = bbop_mme_context;
-//     //exports.bbop_type_to_tcell = bbop_type_to_tcell;
-// }
 /*
  * Package: draggable-canvas.js
  *
@@ -4323,6 +4095,11 @@ bbopx.noctua.clean = function(str){
  * Edit annotations.
  * Everything can take annotations.
  * 
+ * This structure of the raw key-value set has been updated in the
+ * wire protocol. It now looks like:
+ * 
+ * : {"key": "contributor", "value": "GOC:kltm" }
+ * 
  * Parameters:
  *  kv_set - *[optional]* a set of keys and values; a simple object
  */
@@ -4332,7 +4109,17 @@ bbopx.noctua.edit.annotation = function(kv_set){
     this._properties = {};
 
     if( kv_set && bbop.core.what_is(kv_set) == 'object' ){
-	this._properties = bbop.core.clone(kv_set);
+
+	// Attempt to convert
+	if( kv_set['key'] && kv_set['value'] ){
+	    var key = kv_set['key'];
+	    var val = kv_set['value'];
+	    var adj_set = {};
+	    adj_set[key] = val;
+	    this._properties = bbop.core.clone(adj_set);
+	}else{
+	    console.log('bad annoatation k/v set: ', kv_set);
+	}
     }
 };
 
@@ -4832,319 +4619,6 @@ bbopx.noctua.edit.core.prototype.get_annotation_by_id =
     bbopx.noctua.edit._get_annotation_by_id;
 
 /**
- * Edit types.
- * 
- * A *very* simplified version of types, with just enough so that we
- * aren't constantly trying to work with them endlessly elsewhere in
- * the code.
- * 
- * Types can be: Class and the class expressions: SVF, union, and
- * intersection.
- * 
- * Categories is more a graphical distinction. They can be:
- * instance_of, <relation id>, union, and intersection.
- * 
- * This model also incorporates whether or not the type is
- * inferred. At this level they are treated the same, but a higher
- * level may (must) treat them as display decorations.
- *
- * Parameters:
- *  in_types - the raw type blob from the server
- *  inferred_p - whether or not the type is inferred (default false)
- */
-bbopx.noctua.edit.type = function(in_type, inferred_p){
-
-    var anchor = this;
-    var each = bbop.core.each;
-
-    // Initialize.
-    this._raw_type = in_type;
-    this._inferred_p = inferred_p || false;
-    this._id = bbop.core.uuid();
-
-    // Derived property defaults.
-    this._type = null;
-    this._category = 'unknown';
-    this._class_id = null;
-    this._class_label = null;
-    this._property_id = null;
-    this._property_label = null;
-    // For recursive elements.
-    //this._frame_type = null;
-    this._frame = [];
-
-    // Helpers.
-    function _decide_type(type){
-	var rettype = null;
-
-	// Easiest case.
-	var t = type['type'] || null;
-	if( t == 'class' ){
-	    rettype = 'class';
-	}else{
-	    // Okay, we're dealing with a class expression...but which
-	    // one? Talking to Heiko, these can be only one--they are
-	    // not going to be mixed.
-	    if( type['union'] ){
-		rettype = 'union';
-	    }else if( type['intersection'] ){
-		rettype = 'intersection';
-	    }else{
-		// Leaving us with SVF.
-		rettype = 'svf';
-	    }
-	}
-
-	return rettype;
-    }
-
-    // Define the category, and build up an instant picture of what we
-    // need to know about the property.
-    var t = _decide_type(in_type);
-    if( t == 'class' ){
-
-	// Easiest to extract.
-	this._type = t;
-	this._category = 'instance_of';
-	this._class_id = in_type['id'];
-	this._class_label = in_type['label'] || this._class_id;
-	// No related properties.
-	
-    }else if( t == 'union' || t == 'intersection' ){
-
-	// These are simply recursive.
-	this._type = t;
-	this._category = t;
-
-	// Load stuff into the frame.
-	this._frame = [];
-	// TODO: Argh! Hardcode-y!
-	var f_set = in_type[t] || [];
-	each(f_set, function(f_type){
-	    anchor._frame.push(new bbopx.noctua.edit.type(f_type));
-	});
-    }else{
-	    
-	// We're then dealing with an SVF: a property plus a class
-	// expression. We are expecting a "Restriction", although we
-	// don't really do anything with that information (maybe
-	// later).
-	this._type = t;
-	// Extract the property information
-	this._category = in_type['property']['id'];
-	this._property_id = in_type['property']['id'];
-	this._property_label =
-	    in_type['property']['label'] || this._property_id;	    
-
-	// Okay, let's recur down the class expression. It should be
-	// one, but we'll use the frame. Access should be though
-	// svf_class_expression().
-	var f_type = in_type['svf'];
-	this._frame = [new bbopx.noctua.edit.type(f_type)];
-    }
-};
-
-/**
- * Function: id
- * 
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string
- */
-bbopx.noctua.edit.type.prototype.id = function(){
-    return this._id;
-};
-
-/**
- * Function: inferred_p
- * 
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  boolean
- */
-bbopx.noctua.edit.type.prototype.inferred_p = function(){
-    return this._inferred_p;
-};
-
-/**
- * Function: signature
- * 
- * A cheap way of identifying if two types are the same.
- * This essentially returns a string of the main attributes of a type.
- * It is meant to be semi-unique and collide with dupe inferences.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string
- */
-bbopx.noctua.edit.type.prototype.signature = function(){
-    var anchor = this;
-    var each = bbop.core.each;
-
-    var sig = [];
-
-    // The easy ones.
-    sig.push(anchor.category() || '');
-    sig.push(anchor.type() || '');
-    sig.push(anchor.class_id() || '');
-    sig.push(anchor.property_id() || '');
-
-    // And now recursively on frames.
-    if( anchor.frame() ){
-	each(anchor.frame(), function(f){
-	    sig.push(f.signature() || '');
-	});
-    }
-
-    return sig.join('_');
-};
-
-/** 
- * Function: category
- *
- * Try to put an instance type into some kind of rendering
- * category.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string (default 'unknown')
- */
-bbopx.noctua.edit.type.prototype.category = function(){
-    return this._category;
-};
-
-/** 
- * Function: type
- *
- * The "type" of the type.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.type = function(){
-    return this._type;
-};
-
-/** 
- * Function: svf_class_expression
- *
- * The class expression when we are dealing with SVF.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  type or null
- */
-bbopx.noctua.edit.type.prototype.svf_class_expression = function(){
-    // Yes, a reuse of _frame.
-    return this._frame[0] || null;
-};
-
-// /** 
-//  * Function: frame_type
-//  *
-//  * If the type has a recursive frame, the "type" of said frame.
-//  *
-//  * Parameters: 
-//  *  n/a
-//  *
-//  * Returns:
-//  *  string or null
-//  */
-// bbopx.noctua.edit.type.prototype.frame_type = function(){
-//     return this._frame_type;
-// };
-
-/** 
- * Function: frame
- *
- * If the type has a recursive frame, a list of the types it contains.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  list
- */
-bbopx.noctua.edit.type.prototype.frame = function(){
-    return this._frame;
-};
-
-/** 
- * Function: class_id
- *
- * The considered class id.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.class_id = function(){
-    return this._class_id;
-};
-
-/** 
- * Function: class_label
- *
- * The considered class label, defaults to ID if not found.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.class_label = function(){
-    return this._class_label;
-};
-
-/** 
- * Function: property_id
- *
- * The considered class property id.
- * Not defined for 'Class' types.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.property_id = function(){
-    return this._property_id;
-};
-
-/** 
- * Function: property_label
- *
- * The considered class property label.
- * Not defined for 'Class' types.
- *
- * Parameters: 
- *  n/a
- *
- * Returns:
- *  string or null
- */
-bbopx.noctua.edit.type.prototype.property_label = function(){
-    return this._property_label;
-};
-
-/**
  * Edit nodes.
  * 
  * Parameters:
@@ -5167,9 +4641,9 @@ bbopx.noctua.edit.node = function(in_id, in_types){
     }
     if( typeof(in_types) !== 'undefined' ){
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type);
+	    var new_type = new bbopx.minerva.class_expression(in_type);
 	    anchor._id2type[new_type.id()] = new_type;
-	    anchor._types.push(new bbopx.noctua.edit.type(in_type));
+	    anchor._types.push(new bbopx.minerva.class_expression(in_type));
 	});
     }
     
@@ -5206,7 +4680,7 @@ bbopx.noctua.edit.node.prototype.types = function(in_types){
 	anchor._types = [];
 
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type);
+	    var new_type = new bbopx.minerva.class_expression(in_type);
 	    anchor._id2type[new_type.id()] = new_type;
 	    anchor._types.push(new_type);
 	});
@@ -5234,7 +4708,7 @@ bbopx.noctua.edit.node.prototype.add_types = function(in_types, inferred_p){
 
     if( in_types && bbop.core.what_is(in_types) == 'array' ){
 	bbop.core.each(in_types, function(in_type){
-	    var new_type = new bbopx.noctua.edit.type(in_type, inf_p);
+	    var new_type = new bbopx.minerva_class_expression(in_type, inf_p);
 	    anchor._id2type[new_type.id()] = new_type;
 	    anchor._types.push(new_type);
 	    
@@ -6314,7 +5788,7 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
 
     // Setup base modal.
     var mdl = new bbopx.noctua.widgets.contained_modal('dialog',
-						   'Edit Instance: ' + tid);
+						       'Edit Instance: ' + tid);
     mdl.add_to_body(tcache.join(''));
 
     // Attach deletes to all of the listed types.
