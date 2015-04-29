@@ -1331,7 +1331,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.add_individual_annotation = function(model_id, indv_id, key, value){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.add_annotation_to_individual(indv_id, key, value);
+	reqs.add_annotation_to_individual(key, value, indv_id);
 
 	anchor.request_with(reqs);
     };
@@ -1361,7 +1361,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					  key, value){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.add_annotation_to_fact([source_id, target_id, rel_id], key, value);
+	reqs.add_annotation_to_fact(key, value, [source_id, target_id, rel_id]);
 
 	anchor.request_with(reqs);
     };
@@ -1412,7 +1412,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.remove_individual_annotation =function(model_id, indv_id, key, value){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.remove_annotation_from_individual(indv_id, key, value);
+	reqs.remove_annotation_from_individual(key, value, indv_id);
 
 	anchor.request_with(reqs);
     };
@@ -1442,8 +1442,8 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 					     key, value){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.remove_annotation_from_fact([source_id, target_id, rel_id],
-					 key, value);
+	reqs.remove_annotation_from_fact(key, value,
+					 [source_id, target_id, rel_id]);
 
 	anchor.request_with(reqs);
     };
