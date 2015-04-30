@@ -2505,7 +2505,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
     //
     // Args:
     //  op - "add" | "remove"
-    //  thing - "model" | "individual" | "fact" 
+    //  thing - "model" | "individual" | "edge" 
     //  thing_identifier - ind: id; fact: triple; model: implied
     //  key - string 
     //  value - string
@@ -2527,7 +2527,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
 	    // Already done.
 	}else if( target == 'individual' ){
 	    req.individual(target_identifier);
-	}else if( target == 'fact' ){
+	}else if( target == 'edge' ){
 	    anchor._ensure_fact(target_identifier);
 	    req.fact(target_identifier[0],
 		     target_identifier[1],
@@ -2639,7 +2639,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
      */
     anchor.add_annotation_to_fact = function(key, value, triple, model_id){
 	anchor._ensure_fact(triple);
-	anchor._op_annotation_to_target('add', 'fact',
+	anchor._op_annotation_to_target('add', 'edge',
 					triple,	key, value, model_id);
 	return anchor;
     };
@@ -2660,7 +2660,7 @@ bbopx.minerva.request_set = function(user_token, model_id){
      */
     anchor.remove_annotation_from_fact = function(key, value, triple, model_id){
 	anchor._ensure_fact(triple);
-	anchor._op_annotation_to_target('remove', 'fact', triple,
+	anchor._op_annotation_to_target('remove', 'edge', triple,
 					key, value, model_id);
 	return anchor;
     };
