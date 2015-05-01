@@ -1001,14 +1001,20 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
 
 	// Minimal requirements.
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-     	reqs.add_class_expression(cls_expr);
+     	var ind = reqs.add_individual(cls_expr);
 
 	// Optional set expressions.
 	if( enabled_by_expr ){
-	    reqs.add_svf_expression(enabled_by_expr, 'RO:0002333');
+	    reqs.add_type_to_individual(
+		bbopx.minerva.class_expression.svf(enabled_by_expr,
+						   'RO:0002333'),
+	    ind);
 	}
 	if( occurs_in_expr ){
-	    reqs.add_svf_expression(occurs_in_expr, 'occurs_in');	    
+	    reqs.add_type_to_individual(
+		bbopx.minerva.class_expression.svf(occurs_in_expr,
+						   'occurs_in'),
+	    ind);
 	}
 
  	anchor.request_with(reqs);
@@ -1131,10 +1137,10 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
      * Returns:
      *  n/a
      */
-    anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
+    anchor.add_class_expression = function(model_id, individual_id, cls_expr){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.add_type_individual(cls_expr, individual_id);
+	reqs.add_type_to_individual(cls_expr, individual_id);
 
 	anchor.request_with(reqs);
     };
@@ -1160,7 +1166,7 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     anchor.remove_class_expression = function(model_id, individual_id, cls_expr){
 
 	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
-	reqs.remove_type_individual(cls_expr, individual_id);
+	reqs.remove_type_from_individual(cls_expr, individual_id);
 
 	anchor.request_with(reqs);
     };
@@ -5851,14 +5857,15 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
 	    var target_type = elt2type[target_id];
 	    var cid = target_type.class_id();
 	    
-	    // Trigger the delete.
-	    if( target_type.type() == 'class' ){
-		manager.remove_class(ecore.get_id(), tid, cid);
-	    }else{
-		var pid = target_type.property_id();
-		manager.remove_class_expression(ecore.get_id(), tid,
-						cid, target_type);
-	    }
+	    manager.remove_class_expression(ecore.get_id(), tid, target_type);
+	    // // Trigger the delete.
+	    // if( target_type.type() == 'class' ){
+	    // 	manager.remove_class_expression(ecore.get_id(), tid, cid);
+	    // }else{
+	    // 	var pid = target_type.property_id();
+	    // 	manager.remove_class_expression(ecore.get_id(), tid,
+	    // 					cid, target_type);
+	    // }
 	    // Wipe out modal.
 	    mdl.destroy();
 	});
@@ -5902,13 +5909,15 @@ bbopx.noctua.widgets.edit_node_modal = function(ecore, manager, enode,
 	var prp = jQuery('#' +  svf_prop_text.get_id()).val();
 	if( cls && prp ){
 	    // Trigger the delete--hopefully inconsistent.
-	    manager.add_svf(ecore.get_id(), tid, cls, prp);
+	    manager.add_class_expression(
+		ecore.get_id(), tid,
+		bbopx.minerva.class_expression.svf(cls, prp));
 	    
 	    // Wipe out modal.
 	    mdl.destroy();	    
 	}else if( cls ){
 	    // Trigger the delete--hopefully inconsistent.
-	    manager.add_class(ecore.get_id(), tid, cls);
+	    manager.add_class_expression(ecore.get_id(), tid, cls);
 	    
 	    // Wipe out modal.
 	    mdl.destroy();	    
