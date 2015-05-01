@@ -143,20 +143,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	{
 	    'id': 'evidence',
 	    'label': 'Evidence',
-	    'widget_type': 'text',
+	    //'widget_type': 'text',
+	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type'
-	    
+	    'placeholder': 'Enter evidence type',
+	    'placeholder_secondary': 'Enter source'
 	},
-	{
-	    'id': 'source',
-	    'label': 'Source',
-	    'widget_type': 'text',
-	    'policy': 'mutable',
-	    'cardinality': 'many',
-	    'placeholder': 'Enter reference type'
-	},
+	// {
+	//     'id': 'source',
+	//     'label': 'Source',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter reference type'
+	// },
 	{
 	    'id': 'comment',
 	    'label': 'Comment',
@@ -194,20 +195,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	{
 	    'id': 'evidence',
 	    'label': 'Evidence',
-	    'widget_type': 'text',
+	    //'widget_type': 'text',
+	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type'
-	    
+	    'placeholder': 'Enter evidence type',
+	    'placeholder_secondary': 'Enter source'
 	},
-	{
-	    'id': 'source',
-	    'label': 'Source',
-	    'widget_type': 'text',
-	    'policy': 'mutable',
-	    'cardinality': 'many',
-	    'placeholder': 'Enter reference type'
-	},
+	// {
+	//     'id': 'source',
+	//     'label': 'Source',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter reference type'
+	// },
 	{
 	    'id': 'comment',
 	    'label': 'Comment',
