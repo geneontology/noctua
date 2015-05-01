@@ -1317,6 +1317,88 @@ bbopx.minerva.manager = function(barista_location, namespace, user_token,
     };
     
     /*
+     * Method: add_individual_evidence
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * evidence addition referencing an individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  indv_id - string
+     *  evidence_id - string
+     *  source_ids - string or list of strings
+     * 
+     * Returns:
+     *  n/a
+     */
+    anchor.add_individual_evidence = function(model_id, indv_id,
+					      evidence_id, source_ids){
+
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_evidence(evidence_id, source_ids, indv_id, model_id);
+	
+	anchor.request_with(reqs);
+    };
+    
+    /*
+     * Method: add_fact_evidence
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * evidence addition referencing a fact in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  source_id - string
+     *  target_id - string
+     *  rel_id - string
+     *  evidence_id - string
+     *  source_ids - string or list of strings
+     * 
+     * Returns:
+     *  n/a
+     */
+    anchor.add_fact_evidence = function(model_id,
+					source_id, target_id, rel_id,
+					evidence_id, source_ids){
+
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.add_evidence(evidence_id, source_ids,
+			  [source_id, target_id, rel_id], model_id);
+
+	anchor.request_with(reqs);
+    };
+    
+    /*
+     * Method: remove_evidence
+     * 
+     * Trigger a rebuild response <bbopx.barista.response> on an
+     * evidence addition referencing an individual in a model.
+     *
+     * Intent: "action".
+     * Expect: "success" and "rebuild".
+     * 
+     * Arguments:
+     *  model_id - string
+     *  evidence_individual_id - string
+     * 
+     * Returns:
+     *  n/a
+     */
+    anchor.remove_evidence = function(model_id, evidence_individual_id){
+
+	var reqs = new bbopx.minerva.request_set(anchor.user_token(), model_id);
+	reqs.remove_evidence(evidence_individual_id, model_id);
+	
+	anchor.request_with(reqs);
+    };
+    
+    /*
      * Method: add_individual_annotation
      * 
      * Trigger a rebuild response <bbopx.barista.response> on an
@@ -6004,14 +6086,27 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 	    entity.relation() + ' / ' +
 	    entity.target();
     }else{
-	// Apparently a bum ID.
+	// TODO: Apparently a bum ID.
     }
 
+    //
     // Create a "generic" enity-based dispatch to control all the
     // possible combinations of our "generic" interface in this case.
     // Usage of model brought in through closure.
+    //
+    // "ann_val" is either a string (for most types of annotation) or,
+    // for evidence addition, a hash of the form:
+    // : {evidence_id: STRING; source_ids: [LIST OF STRINGS] }
+    //
     function _ann_dispatch(entity, entity_type, entity_op, model_id,
 			   ann_key, ann_val){
+
+	// We start by getting ready to check on the special case of
+	// "evidence" psuedo-annotations.
+	var is_ev_p = false;
+	if( ann_key == 'evidence' ){
+	    is_ev_p = true;
+	}
 
 	// Prepare args for ye olde dispatch.
 	var args = {};
@@ -6026,31 +6121,72 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 	    // TODO: would like a debug msg here.
 	}
 
-	// First, select function.
-	var delegate_function = null;
-	if( entity_type == 'individual' ){
-	    delegate_function = manager.add_individual_annotation;
-	    if( entity_op == 'remove' ){
-		delegate_function = manager.remove_individual_annotation;
+	// All evidence psuedo-annotations are handled one way, the
+	// rest of the annotations another way.
+	if( is_ev_p ){ // in the case of evidence...
+
+	    if( entity_op == 'add' ){
+		// Ensure that the argument is of the right type when
+		// attempting to add evidence.
+		if( ! ann_val['evidence_id'] || ! ann_val['source_ids'] ){
+		    throw new Error('bad evidence ann args');
+		}
+				
+		// Evidence addition is only defined for individuals
+		// and facts.
+		if( entity_type == 'individual' ){
+		    manager.add_individual_evidence(model_id, args['id'],
+						    ann_val['evidence_id'],
+						    ann_val['source_ids']);
+		}else if( entity_type == 'fact' &&  entity_op == 'add' ){
+		    manager.add_fact_evidence(model_id,
+					      args['source'],
+					      args['target'],
+					      args['relation'],
+					      ann_val['evidence_id'],
+					      ann_val['source_ids']);
+		}else{
+		    throw new Error('only fact and individual for evidence add');
+		}
+
+	    }else{
+		// Removing evidence is all the same (ann_val as a
+		// string referenceing the evidence individual to be
+		// removed).
+		manager.remove_evidence(model_id, ann_val);
 	    }
-	    // All add/remove operations run with the same arguments:
-	    // now run operation.
-	    delegate_function(model_id, args['id'], ann_key, ann_val);
-	}else if( entity_type == 'fact' ){
-	    delegate_function = manager.add_fact_annotation;
-	    if( entity_op == 'remove' ){
-		delegate_function = manager.remove_fact_annotation;
-	    }
-	    delegate_function(model_id,
-			      args['source'], args['target'], args['relation'],
-			      ann_key, ann_val);
+	    
 	}else{
-	    // Model a wee bit different, and more simple.
-	    delegate_function = manager.add_model_annotation;
-	    if( entity_op == 'remove' ){
-		delegate_function = manager.remove_model_annotation;
+
+	    // All add/remove operations run with the same arguments.
+	    if( entity_type == 'individual' ){
+		if( entity_op == 'remove' ){
+		    manager.remove_individual_annotation(
+			model_id, args['id'], ann_key, ann_val);
+		}else{
+		    manager.add_individual_annotation(
+			model_id, args['id'], ann_key, ann_val);
+		}
+	    }else if( entity_type == 'fact' ){
+		if( entity_op == 'remove' ){
+		    manager.remove_fact_annotation(
+			model_id,
+			args['source'], args['target'], args['relation'],
+			ann_key, ann_val);
+		}else{
+		    manager.add_fact_annotation(
+			model_id,
+			args['source'], args['target'], args['relation'],
+			ann_key, ann_val);
+		}
+	    }else{
+		// Models are a wee bit different, and more simple.
+		if( entity_op == 'remove' ){
+		    manager.remove_model_annotation(model_id, ann_key, ann_val);
+		}else{
+		    manager.add_model_annotation(model_id, ann_key, ann_val);
+		}
 	    }
-	    delegate_function(model_id, ann_key, ann_val);
 	}
     }	
 
@@ -6063,8 +6199,9 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
     // A simple object to have a more object-like sub-widget for
     // handling the addition calls.
     //
-    // widget_type - "text_area" or "text"
-    function _abstract_annotation_widget(widget_type, placeholder){
+    // widget_type - "text_area", "text", or "source_ref"
+    function _abstract_annotation_widget(widget_type, placeholder,
+					 placeholder_secondary){
 
 	var anchor = this;
 
@@ -6087,9 +6224,15 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 	    text_args['type'] = 'text';
 	    text_args['rows'] = '2';
 	    anchor.text_input = new tag('textarea', text_args);
-	}else{ // 'text'
+	}else if( widget_type == 'text' ){
 	    text_args['type'] = 'text';
 	    anchor.text_input = new tag('input', text_args);
+	}else{ // 'source_ref'
+	    text_args['type'] = 'text';
+	    anchor.text_input = new tag('input', text_args);
+	    // Gets a second input.
+	    text_args['placeholder'] = placeholder_secondary;
+	    anchor.text_input_secondary = new tag('input', text_args);	    
 	}
 
 	// Both placed into the larger form string.
@@ -6103,11 +6246,22 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
     		anchor.add_button.to_string(),
 		'</div>'
 	    ];
-	}else{ // 'text'
+	}else if( widget_type == 'textarea' ){
 	    form = [
     		'<div class="form-inline">',
     		'<div class="form-group">',
 		anchor.text_input.to_string(),
+    		'</div>',
+    		anchor.add_button.to_string(),
+    		'</div>'
+	    ];
+	}else{ // 'source_ref'
+	    form = [
+    		'<div class="form-inline">',
+    		'<div class="form-group">',
+		anchor.text_input.to_string(),
+		'&nbsp;',
+		anchor.text_input_secondary.to_string(),
     		'</div>',
     		anchor.add_button.to_string(),
     		'</div>'
@@ -6200,6 +6354,8 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 	    var epol =  entry_info['policy'];
 	    var ecrd =  entry_info['cardinality'];
 	    var eplc =  entry_info['placeholder'];
+	    // for evidence
+	    var eplc_b = entry_info['placeholder_secondary'] || '';
 	    // Has?
 	    var ehas = entry_info['list'].length || 0;
 	    // UI output string.
@@ -6222,8 +6378,14 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 		//console.log(' ehas: ' + ehas);
 		if( ecrd != 'one' || ehas == 0 ){
 		    console.log(' widget for: ' + eid);
-		    var form_widget =
+		    var form_widget = null;
+		    if( ewid == 'source_ref' ){ // evidence is special
+			form_widget =
+			    new _abstract_annotation_widget(ewid, eplc, eplc_b);
+		    }else{
+			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc);
+		    }
 
 		    // Add to the literal output.
 		    out_cache.push(form_widget.form_string);
@@ -6258,7 +6420,7 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 		    var ann = entity.get_annotation_by_id(ann_id);
 		    var ann_val = ann.property(ann_key);
 		    _ann_dispatch(entity, entity_type, 'remove',
-				  ecore.get_id(),ann_key, ann_val);
+				  ecore.get_id(), ann_key, ann_val);
 		    
 		    // Wipe out modal on action.
 		    mdl.destroy();
@@ -6275,13 +6437,35 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
 		
 		jQuery('#' + form.add_button.get_id()).click(function(evt){
 		    evt.stopPropagation();
-	    
-		    var val = jQuery('#' + form.text_input.get_id()).val();
-		    if( val && val != '' ){
-			_ann_dispatch(entity, entity_type, 'add',
-				      ecore.get_id(), ann_key, val);
+
+		    if( ann_key == 'evidence' ){
+			
+			// In the case of evidence, we need to brind
+			// in the two different text items and make
+			// them into the correct object for
+			// _ann_dispatch().
+			var val = 
+			    jQuery('#'+form.text_input.get_id()).val();
+			var val_b =
+			    jQuery('#'+form.text_input_secondary.get_id()).val();
+			
+			if( val && val != '' && val_b && val_b != '' ){
+			    _ann_dispatch(entity, entity_type, 'add',
+					  ecore.get_id(), ann_key,
+					  { 'evidence_id': val,
+					    'source_ids': val_b });
+			}else{
+			    alert('need all arguments added for ' + entity_id);
+			}
+
 		    }else{
-			alert('no ' + ann_key + ' added for ' + entity_id);
+			var val = jQuery('#' + form.text_input.get_id()).val();
+			if( val && val != '' ){
+			    _ann_dispatch(entity, entity_type, 'add',
+					  ecore.get_id(), ann_key, val);
+			}else{
+			    alert('no ' + ann_key + ' added for ' + entity_id);
+			}
 		    }
 	    
 		    // Wipe out modal.
