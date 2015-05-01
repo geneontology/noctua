@@ -293,7 +293,9 @@ bbop.core.what_is = function(in_thing){
 bbop.core.is_array = function(in_thing){
     var retval = false;
     if( in_thing &&
-	Array.isArray(in_thing) ){
+	typeof(in_thing) == 'object' &&
+	typeof(in_thing.push) == 'function' &&
+	typeof(in_thing.length) == 'number' ){
 	retval = true;
     }
     return retval;
@@ -510,19 +512,19 @@ bbop.core.clone = function(thing){
 	// Is it a null, hash, or an array?
 	if( thing == null ){
 	    clone = null;
-	}else if( Array.isArray(thing) ){
-	    // Looks like an array!
-	    //print("looks like an array");
-	    clone = [];
-	    for(var i = 0; i < thing.length; i++){
-		clone[i] = bbop.core.clone(thing[i]);
-	    }
-	}else{
+	}else if( typeof(thing.length) === 'undefined' ){
 	    // Looks like a hash!
 	    //print("looks like a hash");
 	    clone = {};
 	    for(var h in thing){
 		clone[h] = bbop.core.clone(thing[h]);
+	    }
+	}else{
+	    // Looks like an array!
+	    //print("looks like an array");
+	    clone = [];
+	    for(var i = 0; i < thing.length; i++){
+		clone[i] = bbop.core.clone(thing[i]);
 	    }
 	}
     }else{
@@ -1337,7 +1339,6 @@ bbop.test = function(){
     }
 
     // Looking at array as sets of...something.
-    // DEPRECATED
     function _same_set(set1, set2){
 	var h1 = {};
 	var h2 = {};
@@ -1347,7 +1348,6 @@ bbop.test = function(){
     }
 
     // NOTE/WARNING: This is a very shallow comparison function.
-    // DEPRECATED
     function _same_hash(hash1, hash2){
 
 	var same_p = true;
@@ -1376,69 +1376,6 @@ bbop.test = function(){
 	}
 	
 	return same_p;
-    }
-
-    // Better general comparison function.
-    function _is_same(a, b){
-	//bark('typeof(a, b): ' + typeof(a) + ',' + typeof(b));
-
-	var ret = false;
-	if( a == b ){ // atoms, incl. null and 'string'
-	    //bark('true on equal atoms: ' + a + '<>' + b);
-	    ret = true;
-	}else{ // is list or obj (ignore func)
-	    if( typeof(a) === 'object' && typeof(b) === 'object' ){
-		//bark('...are objects');
-		
-		// Null is an object, but not like the others.
-		if( a == null || b == null ){
-		    ret = false;
-		}else if( Array.isArray(a) && Array.isArray(b) ){ // array equiv
-		    //bark('...are arrays');
-		    
-		    // Recursively check array equiv.
-		    if( a.length == b.length ){
-			if( a.length == 0 ){
-			    //bark('true on 0 length array');
-			    ret = true;
-			}else{
-			    ret = true; // assume true until false here
-			    for( var i = 0; i < a.length; i++ ){
-				if( ! _is_same(a[i], b[i]) ){
-				    //bark('false on diff @ index: ' + i);
-				    ret = false;
-				    break;
-				}
-			    }
-			}
-		    }
-
-		}else{ // object equiv.
-
-		    // Get unique set of keys.
-		    var a_keys = Object.keys(a);
-		    var b_keys = Object.keys(b);
-		    var keys = a_keys.concat(b_keys.filter(function(it){
-			return a_keys.indexOf(it) < 0;
-		    }));
-		    
-		    // Assume true until false.
-		    ret = true;
-		    for( var j = 0; j < keys.length; j++ ){ // no forEach - break
-			var k = keys[j];
-			if( ! _is_same(a[k], b[k]) ){
-			    //bark('false on key: ' + k);
-			    ret = false;
-			    break;
-			}
-		    }
-		}
-	    }else{
-		//bark('false by default');
-	    }
-	}
-	
-	return ret;
     }
 
     // TODO: This could probably be done better.
@@ -1532,8 +1469,6 @@ bbop.test = function(){
     /*
      * Function: is_same_atom
      *
-     * DEPRECATED
-     *
      * Test whether two atoms are the same.
      *
      * Parameters: 
@@ -1553,8 +1488,6 @@ bbop.test = function(){
      * Function: is_different_atom
      *
      * A negative version of <is_same_atom>.
-     *
-     * DEPRECATED
      *
      * Parameters: 
      *  question - the atom to test
@@ -1735,8 +1668,6 @@ bbop.test = function(){
      *
      * Test whether two sets (as atomic arrays) are the same.
      *
-     * DEPRECATED
-     *
      * Parameters: 
      *  set1 - set (as array)
      *  set2 - set (as array)
@@ -1753,8 +1684,6 @@ bbop.test = function(){
      * Function: is_different_set
      *
      * A negative version of <is_same_set>.
-     *
-     * DEPRECATED
      *
      * Parameters: 
      *  set1 - set (as array)
@@ -1773,8 +1702,6 @@ bbop.test = function(){
      *
      * Test whether two simple atomic hashes are the same.
      *
-     * DEPRECATED
-     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1792,8 +1719,6 @@ bbop.test = function(){
      *
      * A negative version of <is_same_hash>.
      *
-     * DEPRECATED
-     *
      * Parameters: 
      *  hash1 - hash
      *  hash2 - hash
@@ -1804,47 +1729,6 @@ bbop.test = function(){
      */
     this.is_different_hash = function(hash1, hash2, msg){
 	_complete(! _same_hash(hash1, hash2), msg);
-    };
-
-    /*
-     * Function: is_same_thing
-     *
-     * Test whether two things (not functions) are pretty much the
-     * same. For atoms and structures of atoms and other structures.
-     *
-     * This is a general purpose tool that should replace all the
-     * other similarity functions.
-     *
-     * Parameters: 
-     *  thing1 - thing (not function)
-     *  thing2 - thing (not function)
-     *  msg - *[optional]* informational message about test
-     *
-     * Returns: 
-     *  n/a
-     */
-    this.is_same_thing = function(thing1, thing2, msg){
-	_complete(_is_same(thing1, thing2), msg);
-    };
-
-    /*
-     * Function: is_different_thing
-     *
-     * A negative version of <is_same_thing>.
-     *
-     * This is a general purpose tool that should replace all the
-     * other difference functions.
-     *
-     * Parameters: 
-     *  thing1 - thing (not function)
-     *  thing2 - thing (not function)
-     *  msg - *[optional]* informational message about test
-     *
-     * Returns: 
-     *  n/a
-     */
-    this.is_different_thing = function(thing1, thing2, msg){
-	_complete(! _is_same(thing1, thing2), msg);
     };
 
     /*
@@ -2010,14 +1894,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.3.1";
+bbop.version.revision = "2.2.4";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150430";
+bbop.version.release = "20150501";
 /*
  * Package: logger.js
  * 
@@ -8796,30 +8680,29 @@ bbop.rest.manager.node.prototype.update = function(callback_type){
 	res.setEncoding('utf8');
 	var raw_data = '';
 	res.on('data', function (chunk) {
-	    //console.log('BODY: ' + chunk);
-	    raw_data = raw_data + chunk;
-	});
+		   //console.log('BODY: ' + chunk);
+		   raw_data = raw_data + chunk;
+	       });
 	// Throw to .
 	res.on('end', function () {
-	    //console.log('END with: ' + raw_data);
-	    var response = new anchor._response_handler(raw_data);
-	    if( response && response.okay() ){
-		anchor.apply_callbacks('success', [response, anchor]);
-	    }else{
-		// Make sure that there is something there to
-		// hold on to.
-		if( ! response ){
-		    response = new anchor._response_handler(null);
-		    response.okay(false);
-		    response.message_type('error');
-		    response.message('null response');
-		}else{
-		    response.message_type('error');
-		    response.message('bad response');
-		}
-		anchor.apply_callbacks('error', [response, anchor]);
-	    }
-	});
+		   var response = new anchor._response_handler(raw_data);
+		   if( response && response.okay() ){
+		       anchor.apply_callbacks('success', [response, anchor]);
+		   }else{
+		       // Make sure that there is something there to
+		       // hold on to.
+		       if( ! response ){
+			   response = new anchor._response_handler(null);
+			   response.okay(false);
+			   response.message_type('error');
+			   response.message('null response');
+		       }else{
+			   response.message_type('error');
+			   response.message('bad response');
+		       }
+		       anchor.apply_callbacks('error', [response, anchor]);
+		   }
+	       });
     }
 
     // Conditional merging of the remaining variant parts.
@@ -15327,7 +15210,7 @@ if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
  * These are currently hardwired to:
  * 
  * : 'class': 'twocol-leftcolumn', 'style': 'margin-top: -15px;'
- * : 'class': 'twocol-content', 'style': 'margin-left: 26em; margin-top: -15px;'
+ * : 'class': 'twocol-content', 'style': 'margin-left: 28em; margin-top: -15px;'
  * 
  * Parameters:
  *  col1 - the string or <bbop.html> object for the left column
@@ -15350,8 +15233,8 @@ bbop.widget.display.two_column_layout = function (col1, col2){
     // Right (display) side.
     this._two_column_stack_right =
 	new bbop.html.tag('div',
-			  {'class': 'twocol-content',
-			   'style': 'margin-left: 26em; margin-top: -15px;'},
+			  {'class': 'twocol-content'},
+			   // 'style': 'margin-left: 28em; margin-top: -15px;'},
 			  col2);
     this.add_to(this._two_column_stack_right);
 };
