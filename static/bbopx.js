@@ -3597,6 +3597,143 @@ bbopx.barista.response.prototype.models_meta = function(){
     }
     return ret;
 };
+
+/*
+ * Function: graph
+ * 
+ * *[This is a work in progress.]*
+ * 
+ * Returns a <bbop.model.graph> that represents the graph structure of
+ * the returned data.
+ *
+ * This is essentially an attempt at rolling individual, facts,
+ * (model) annotations, and inferred individuals into a single
+ * coherent object that can then be used to create different editorial
+ * views.
+ *
+ * This graph represents a few things in non-obvious ways. For
+ * example, there is heavy use of the meta property of the edges,
+ * nodes, and graph:
+ *
+ * : {
+ * :  annotations: {comment: [], ...},
+ * :  inferred_types: [], // nodes only
+ * :  evidence: [], // depending on compression type
+ * :  subgraphs: [], // depending on compression type
+ * :  ...
+ * : }
+ *
+ * Also there (will be) different versions of the graph created
+ * depending on the compression type.
+ *
+ * *[none]* the graph is rendered as given, with no attempts to fold away irritating or confusing abstractions; the only addition is to add inferred types (for nodes) to the metadata
+ *
+ * *[evidence]* is similar to 'none', except that the implied evidence is folded into the metadata of the ; no singleton evidence individuals should be present
+ *
+ * *[go-editor]* this is the version for the GO graph editor; it has enabled_by and occurs_in relations folded into the "nested" section (model TBD)
+ *
+ * Arguments:
+ *  comppression_type - *[optional]* 'none', 'evidence', 'go-editor'  (default 'none')
+ * 
+ * Returns:
+ *  <bbop.model.graph> or null
+ */
+bbopx.barista.response.prototype.graph = function(){
+
+    var anchor = this;
+
+    // All the information that we'll need; could maybe be passed as
+    // arguments to a separate graph system in the future (think a
+    // noctua subclass of bbop-graph).
+    var mid = resp.model_id();
+    var mindividuals = resp.individuals();
+    var mindividuals_i = resp.inferred_individuals();
+    var mfacts = resp.facts();
+    var mannotations = resp.annotations();
+
+    // // Okay, connectons 
+    // var _connecton = function(){
+	
+    // }
+
+    // Create a metadata model to work with for the time being.
+    var _metadata = function(){
+	var anchor = this;
+
+	// Defaults.
+	anchor._annotations = [];
+	//anchor._inferred_types = [];
+	anchor._evidence = [];
+	//anchor._subgraphs = [];
+
+	//
+	anchor.add_annotation = function(key, value){
+	    anchor._annotations.push({
+		'key': key,
+		'value': value
+	    });
+	};
+
+	// Return list or null.
+	anchor.get_annotations = function(key, value){
+	    var ret = null
+
+	    // Collect all the annotations that fit the profile.
+	    var anns = [];
+	    bbop.core.each(anchor._annotations, function(a){
+		if( key && value ){
+		    // Must match key and value.
+		    if( a['key'] == key && a['value'] == value ){
+			anns.push(a);
+		    }
+		}else if( key ){
+		    // Must match key.
+		    if( a['key'] == key ){
+			anns.push(a);
+		    }
+		}else{
+		    // Any annotation.
+		    anns.push(a);
+		}
+	    });
+
+	    // Only switch if we got anns.
+	    if( anns.length > 0 ){ ret = anns; }
+
+	    return ret;
+	};
+
+	//
+	anchor.add_evidence = function(source_id, evidence_id, evidence_lbl){
+	    anchor._evidence.push({
+		'source_id': source_id,
+		'evidence_id': evidence_id,
+		'evidence_label': (evidence_lbl || evidence_id)
+	    });
+	};
+
+	//
+	anchor.get_evidence = function(){
+	    return anchor._evidence;
+	};
+    };
+
+    // First, create the graph and add id and annotation metadata to
+    // it.
+    var graph = new bbop.model.graph();
+    graph.id(mid);
+    var graph_metadata = new _metadata();
+    bbop.core.each(mannotations, function(a){
+	graph_metadata.add_annotation(a);
+    });
+    // _rebuild_meta(model_id, annotations);
+    graph.metadata(graph_metadata);
+
+    // Assemble the nodes one of three ways (with some overlap): 'none', 'evidence', and 
+    // _squeeze_inferred
+
+    return graph;
+};
 /*
  * Package: client.js
  *
@@ -6246,7 +6383,7 @@ bbopx.noctua.widgets.edit_annotations_modal = function(annotation_config,
     		anchor.add_button.to_string(),
 		'</div>'
 	    ];
-	}else if( widget_type == 'textarea' ){
+	}else if( widget_type == 'text' ){
 	    form = [
     		'<div class="form-inline">',
     		'<div class="form-group">',
