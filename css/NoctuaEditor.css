@@ -498,3 +498,10 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 .ui-poll-loading-left {
     background: white url('images/waiting_ac.gif') left center no-repeat;
 }
+
+/*
+ * BBOP MME 
+ */ 
+.bbop-mme-more-results-ul {
+    border-bottom: 3px dotted;
+}

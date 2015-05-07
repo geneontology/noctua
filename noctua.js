@@ -173,8 +173,10 @@ var NoctuaLauncher = function(){
     // Assemble return doc.
     self.bootstrap_editor = function(res, name_of_the_week,
 				     model_id,
-				     //model_obj,
-				     known_relations, barista_loc, barista_token){
+				     known_relations, barista_loc, barista_token,
+				     model_obj
+				     // BUG^: support for heiko's JSON debug
+				    ){
 
 	// Assemble return doc.
 	res.setHeader('Content-Type', 'text/html');
@@ -192,11 +194,11 @@ var NoctuaLauncher = function(){
 	    ],
 	    'pup_tent_js_variables': [
 		{name: 'global_id', value: model_id },
+		//{name: 'global_model', value: null },
+		{name: 'global_model', value: (model_obj || null)},
 		{name: 'global_minerva_definition_name',
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location', value: self.barista_location },
-		//{name: 'global_model', value: model_obj },
-		{name: 'global_model', value: null },
 		{name: 'global_known_relations', value: known_relations },
 		{name: 'global_barista_token', value: barista_token }
 	    ],
@@ -476,10 +478,35 @@ var NoctuaLauncher = function(){
 		// Try and see if we have an API token.
 		var barista_token = self.get_token(req);		
 		self.bootstrap_editor(res, notw, query,
-				      //null,
 				      known_relations,
 				      self.barista_location,
-				      barista_token);
+				      barista_token
+				      //null,
+				     );
+	    }
+	});
+	
+	// DEBUG: A JSON model debugging tool for @hdietze
+	/// This path will eventually be destryed.
+	self.app.post('/seed/json', function(req, res) {
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    var jmod_str = req.body['json-model'] || '';
+	    if( ! jmod_str || jmod_str == '' ){
+		// Catch error here if no proper ID.
+		res.setHeader('Content-Type', 'text/html');
+		res.send('no json model');
+	    }else{
+		var jmod = JSON.parse(jmod_str); // to obj
+		
+		// No token, no editing, because this is crazy.
+		self.bootstrap_editor(res, notw, null,
+				      known_relations,
+				      self.barista_location,
+				      null,
+				      jmod
+				     );
 	    }
 	});
 	
@@ -670,22 +697,32 @@ var noctua = new NoctuaLauncher();
 // the interesting things we need from the web.
 // In this case, we're going after RO so we can pass it in once and
 // early.
-var imngr = new bbop.rest.manager.node(bbop.rest.response.mmm);
+var imngr = new bbop.rest.manager.node(bbopx.barista.response);
 imngr.register('success', 's1', function(resp, man){
-    console.log("got getRelations, starting initializing seq");
-    console.log(bbop.core.what_is(resp));
-    console.log('rel count: ' + resp.relations().length);
-    noctua.initialize(resp.relations());
-    noctua.start();
+    console.log('response is: ' + bbop.core.what_is(resp));
+    var nrel = resp.relations().length;
+    console.log("got " + nrel + " relations, starting initializing sequence...");
+    if( nrel > 0 ){
+	noctua.initialize(resp.relations());
+	noctua.start();
+    }else{
+	console.error('failure: no relations on initialization response');
+    }
 });
 imngr.register('error', 'e1', function(resp, man){
     //console.log('erred out: %j', resp); 
-    console.log('not okay: %j', resp.okay());
+    //console.log(bbop.core.what_is(resp));
+    //console.log(resp._raw);
+    //console.log(resp.relations());
+    console.log('okay?: %j', resp.okay());
+    console.log('message type: %j', resp.message_type());
+    console.log('message: %j', resp.message());
 });
-//var t = noctua.minerva_definition_name + '/api/mmm/getRelations';
-var t = noctua.barista_location + '/api/' +
-	noctua.minerva_definition_name + '/getRelations';
-var t_args = {};
-var astr = imngr.action(t, t_args);
-//console.log("base ctarget " + t);
+
+// Assemble initial request to get relations for bootstrap.
+var reqs = new bbopx.minerva.request_set();
+reqs.get_meta();
+var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
+    '/m3Batch';
+var astr = imngr.action(t, reqs.callable());
 console.log("Minerva request to: " + astr);

@@ -145,7 +145,7 @@ var MMEnvBootstrappingInit = function(user_token){
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
             return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query + '*'}
+                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
         }
     });
 
@@ -167,7 +167,7 @@ var MMEnvBootstrappingInit = function(user_token){
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
             return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query + '*'}
+                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
         }
     });
 
@@ -189,7 +189,7 @@ var MMEnvBootstrappingInit = function(user_token){
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
             return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query + '*'}
+                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
         }
     });
 

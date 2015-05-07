@@ -44,22 +44,6 @@ var MMEnvBootstrappingInit = function(user_token){
     var gconf = new bbop.golr.conf(amigo.data.golr);
 
     // Contact points for Chris's wizard.
-    var auto_wizard_term_id = 'auto_wizard_term';
-    var auto_wizard_term_elt = '#' + auto_wizard_term_id;
-    var auto_wizard_spdb_id = 'auto_wizard_spdb';
-    var auto_wizard_spdb_elt = '#' + auto_wizard_spdb_id;
-    var auto_wizard_button_generate_id = 'auto_wizard_button_generate';
-    var auto_wizard_button_generate_elt = '#' + auto_wizard_button_generate_id;
-    // // Contact point for the simpler blank generator.
-    // var auto_blank_spdb_id = 'auto_blank_spdb';
-    // var auto_blank_spdb_elt = '#' + auto_blank_spdb_id;
-    // var auto_blank_button_generate_id = 'auto_blank_button_generate';
-    // var auto_blank_button_generate_elt = '#' + auto_blank_button_generate_id;
-    //
-    // var select_memory_jump_id = 'select_memory_jump';
-    // var select_memory_jump_elt = '#' + select_memory_jump_id;
-    // var select_memory_jump_button_id = 'select_memory_jump_button';
-    // var select_memory_jump_button_elt = '#' + select_memory_jump_button_id;
     var select_stored_jump_id = 'select_stored_jump';
     var select_stored_jump_elt = '#' + select_stored_jump_id;
     var select_stored_jump_button_id = 'select_stored_jump_button';
@@ -200,12 +184,9 @@ var MMEnvBootstrappingInit = function(user_token){
 
 	}else{
 	    
-	    // Insert model IDs into "Select by ID" interface.
-	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
-	    var model_metas = resp.models_meta();
-	    var rep_cache = [];
-	    each(model_metas, function(model_id, model_meta){
-		// Try and probe out the best title.
+	    // Try and probe out the best title from the data we
+	    // having there.
+	    function _get_model_title(model_id, model_meta){
 		var mtitle = model_id;
 		if( model_meta['title'] ){
 		    var tmp_title =  model_meta['title'];
@@ -216,9 +197,62 @@ var MMEnvBootstrappingInit = function(user_token){
 			mtitle = match[1];
 		    }
 		}
+		return mtitle;
+	    }
+
+	    // Check if model is deprecated.
+	    function _model_deprecated_p(model_meta){
+		var retval = false;
+		if( model_meta['deprecated'] &&
+		    ( model_meta['deprecated'] == true || 
+		      model_meta['deprecated'] == 'true' ) ){
+		    retval = true;
+		}
+		return retval;
+	    }
+
+	    // Get the model meta information and sort the models by
+	    // alphabetical titles.
+	    var model_metas = resp.models_meta();
+	    var model_meta_ids = bbop.core.get_keys(model_metas) || [];
+	    var sorted_model_meta_ids = model_meta_ids.sort(function(a, b){
+		var a_meta = model_metas[a];
+		var b_meta = model_metas[b];
+		var gt_p =
+		    _get_model_title(a, a_meta) < _get_model_title(b, b_meta);
+		var retval = 0;
+		// Std sort.
+		if( gt_p == true ){ retval = -1; }
+		else if( gt_p == false ){ retval = 1; }
+		// Bad if one is deprecated.
+		if( _model_deprecated_p(a_meta) != _model_deprecated_p(b_meta) ){
+		    if( _model_deprecated_p(a_meta) ){
+			retval = 1;
+		    }else if( _model_deprecated_p(b_meta) ){
+			retval = -1;
+		    }
+		}
+		
+		return retval;
+	    });
+
+	    // Insert model IDs into "Select by ID" interface.
+	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
+	    var rep_cache = [];
+	    each(sorted_model_meta_ids, function(model_id){
+
+		var model_meta = model_metas[model_id];
+
+		var mtitle =  _get_model_title(model_id, model_meta);
+
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( _model_deprecated_p(model_meta) ){
+		    mtitle = '[DEPRECATED] ' + mtitle;
+		}
 
 		// Add to cache.
-		rep_cache.push('<option value="'+model_id+'">');
+		rep_cache.push('<option value="'+ model_id +'">');
 		rep_cache.push(mtitle);
 		rep_cache.push('</option>');
 	    });
@@ -279,7 +313,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(model_create_by_taxon_button_elt).click(function(evt){
 		var id = jQuery(model_create_by_taxon_input_elt).val();
 		//alert('val: ' + id);
-		manager.generate_model_by_taxon(id);
+		manager.add_model(id, null);
 	    });
 	}
     });
@@ -294,37 +328,6 @@ var MMEnvBootstrappingInit = function(user_token){
     /// Add the local responders.
     ///
 
-    //var auto_wizard_term_val = null;
-    var auto_wizard_term_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class}}',
-    	'list_select_callback':
-    	function(doc){
-    	    //auto_wizard_term_val = doc['annotation_class'];
-    	}
-    };
-    var auto_wizard_term =
-	new bbop.widget.search_box(gserv, gconf,
-				   'auto_wizard_term', auto_wizard_term_args);
-    auto_wizard_term.add_query_filter('document_category', 'ontology_class');
-    auto_wizard_term.set_personality('ontology');
-
-    // // species database
-    // //var auto_wizard_spdb_val = null;
-    // var auto_wizard_spdb_args = {
-    // 	'label_template': '{{assigned_by}}',
-    // 	'value_template': '{{assigned_by}}',
-    // 	'list_select_callback':
-    // 	function(doc){
-    // 	    //auto_wizard_spdb_val = doc['assigned_by'];
-    // 	}
-    // };
-    // var auto_wizard_spdb =
-    // 	new bbop.widget.search_box(gserv, gconf,
-    // 				   'auto_wizard_spdb', auto_wizard_spdb_args);
-    // auto_wizard_spdb.add_query_filter('document_category', 'annotation');
-    // auto_wizard_spdb.set_personality('annotation');
-
     ///
     /// Activate UI buttons.
     ///
@@ -337,36 +340,8 @@ var MMEnvBootstrappingInit = function(user_token){
     jQuery(model_create_by_nothing_elt).click(function(evt){
 	evt.stopPropagation();
 	evt.preventDefault();
-	manager.generate_model();
+	manager.add_model();
     });
-
-    // Activate create from class and db.
-    jQuery(auto_wizard_button_generate_elt).click(function(){
-    	var term = auto_wizard_term.content();
-    	//var spdb = auto_wizard_spdb.content();
-    	var spdb = jQuery(auto_wizard_spdb_elt).val();
-
-    	if( ! term || term == '' || ! spdb || spdb == '' ){
-    	    alert('necessary field empty');
-    	}else{
-	    // BUG: For Chris.
-	    // wizard_jump_term = term;
-	    // wizard_jump_db = spdb;
-	    // manager.generate_model(wizard_jump_term, wizard_jump_db);
-	    manager.generate_model_by_class_and_db(term, spdb);
-    	}
-    }
-						 );
-    // // ...
-    // jQuery(auto_blank_button_generate_elt).click(function(){
-    // 	var spdb = jQuery(auto_blank_spdb_elt).val();
-
-    // 	if( ! spdb || spdb == '' ){
-    // 	    alert('necessary field empty');
-    // 	}else{
-    // 	    manager.generate_model_by_db(spdb);
-    // 	}
-    // });
 
     // Activate importer.
     jQuery(model_data_button_elt).click(function(evt){
@@ -381,7 +356,7 @@ var MMEnvBootstrappingInit = function(user_token){
     /// Get info from server.
     ///
 
-    manager.get_models_meta();
+    manager.get_meta();
 };
 
 // Start the day the jsPlumb way.
