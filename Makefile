@@ -138,11 +138,12 @@ install:
 docs: install
 	./node_modules/.bin/gulp doc
 
-## 
+## Tests with mocha/chai.
 .PHONY: tests
 tests:
 	./node_modules/.bin/gulp test
 
-## Documentation for JavaScript.
-environment.js:
-	./node_modules/.bin/
+## Build with browserify.
+.PHONY: build
+build:
+	./node_modules/.bin/gulp build
