@@ -1,50 +1,55 @@
 {
-  "name": "noctua",
-  "version": "0.0.9",
-  "description": "Experimental annotation editor for the Gene Ontology.",
-  "keywords": [
-    "OpenShift",
-    "Heroku",
-    "Node.js",
-    "application",
-    "gene ontology",
-    "GO",
-    "amigo",
-    "bbop",
-    "bbopx",
-    "pup-tent",
-    "noctua",
-    "barista"
-  ],
-  "author": {
-    "name": "SJC",
-    "email": "sjcarbon@lbl.gov",
-    "url": "http://berkeleybop.org/"
-  },
-  "homepage": "http://berkeleybop.org/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/geneontology/noctua"
-  },
-  "engines": {
-    "node": ">= 0.12.2",
-    "npm": ">= 2.7.4"
-  },
-  "dependencies": {
-    "underscore": "~1.8.3",
-    "mustache": "~2.0.0",
-    "pup-tent": "~0.9.6",
-    "bbop": "~2.3.0",
-    "bbopx": "~0.9.23",
-    "amigo2": "~2.3.0",
-    "express": "~3.4.6",
-    "express-persona": "~0.1.2"
-  },
-  "devDependencies": {
-    "gulp": "^3.8.11",
-    "gulp-jsdoc": "^0.1.4"
-  },
-  "bundleDependencies": [],
-  "private": false,
-  "main": "noctua.js"
+    "name": "noctua",
+    "version": "0.0.9",
+    "description": "Experimental annotation editor for the Gene Ontology.",
+    "keywords": [
+	"OpenShift",
+	"Heroku",
+	"Node.js",
+	"application",
+	"gene ontology",
+	"GO",
+	"amigo",
+	"bbop",
+	"bbopx",
+	"pup-tent",
+	"noctua",
+	"barista"
+    ],
+    "author": {
+	"name": "SJC",
+	"email": "sjcarbon@lbl.gov",
+	"url": "http://berkeleybop.org/"
+    },
+    "homepage": "http://berkeleybop.org/",
+    "repository": {
+	"type": "git",
+	"url": "https://github.com/geneontology/noctua"
+    },
+    "engines": {
+	"node": ">= 0.12.2",
+	"npm": ">= 2.7.4"
+    },
+    "dependencies": {
+	"amigo2": "^2.3.0",
+	"aws-sdk": "2.0.4",
+	"bbop": "^2.3.0",
+	"bbopx": "^0.9.23",
+	"cors": "2.4.1",
+	"express-persona": "0.1.2",
+	"express": "3.4.6",
+	"http-proxy": "1.1.4",
+	"minimist": "0.2.0",
+	"mustache": "2.0.0",
+	"pup-tent": "0.9.6",
+	"socket.io": "0.9.16",
+	"underscore": "1.8.3"
+    },
+    "devDependencies": {
+	"gulp": "^3.8.11",
+	"gulp-jsdoc": "^0.1.4"
+    },
+    "bundleDependencies": [],
+    "private": false,
+    "main": "noctua.js"
 }
