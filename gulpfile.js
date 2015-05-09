@@ -4,6 +4,7 @@
 
 var gulp = require('gulp');
 var jsdoc = require("gulp-jsdoc");
+var mocha = require('gulp-mocha');
 //var concat = require('gulp-concat');
 //var uglify = require('gulp-uglify');
 //var sourcemaps = require('gulp-sourcemaps');
@@ -11,7 +12,8 @@ var jsdoc = require("gulp-jsdoc");
 
 var paths = {
   clients: ['js/*'],
-  scripts: ['scripts/*']
+  scripts: ['scripts/*'],
+  tests: ['tests/*.test.js']
 //  images: 'sr/*'
 };
 
@@ -34,13 +36,13 @@ gulp.task('scripts', ['clean'], function() {
     .pipe(gulp.dest('build/js'));
 });
 
-// Copy all static images
-gulp.task('images', ['clean'], function() {
-  return gulp.src(paths.images)
-    // Pass in options to the task
-    .pipe(imagemin({optimizationLevel: 5}))
-    .pipe(gulp.dest('build/img'));
-});
+// // Copy all static images
+// gulp.task('images', ['clean'], function() {
+//   return gulp.src(paths.images)
+//     // Pass in options to the task
+//     .pipe(imagemin({optimizationLevel: 5}))
+//     .pipe(gulp.dest('build/img'));
+// });
 
 // // Rerun the task when a file changes
 // gulp.task('watch', function() {
@@ -50,7 +52,18 @@ gulp.task('images', ['clean'], function() {
 
 gulp.task('doc', function() {
     gulp.src(paths.clients, paths.scripts)
-        .pipe(jsdoc('./doc'))
+        .pipe(jsdoc('./doc'));
+});
+
+// NOTE: I'm using chai here.
+gulp.task('test', function() {
+    return gulp.src(paths.tests, { read: false }).pipe(mocha({
+	reporter: 'spec',
+	globals: {
+	    // Use a different should.
+	    should: require('chai').should()
+	}
+    }));
 });
 
 // The default task (called when you run `gulp` from cli)

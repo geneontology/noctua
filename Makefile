@@ -133,9 +133,12 @@ start-minerva-go-fast:
 install:
 	npm install
 
-
 ## Documentation for JavaScript.
 .PHONY: docs
 docs: install
 	node ./node_modules/gulp/bin/gulp.js doc
-#	naturaldocs --rebuild-output --input ./js --project docs/.naturaldocs_project/ --output html docs/
+
+## Documentation for JavaScript.
+.PHONY: tests
+tests:
+	node ./node_modules/gulp/bin/gulp.js test

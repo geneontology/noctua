@@ -46,8 +46,10 @@
 	"underscore": "1.8.3"
     },
     "devDependencies": {
+	"chai": "^2.3.0",
 	"gulp": "^3.8.11",
-	"gulp-jsdoc": "^0.1.4"
+	"gulp-jsdoc": "^0.1.4",
+	"gulp-mocha": "^2.0.1"
     },
     "bundleDependencies": [],
     "private": false,
