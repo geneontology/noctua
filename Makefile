@@ -57,11 +57,11 @@ refresh-metadata:
 ## necessary NPM steps for the server code.
 .PHONY: assemble-app
 assemble-app:
-	cd $(BBOP_JS) && make bundle
-	cd $(BBOPX_JS) && make bundle
+#	cd $(BBOP_JS) && make bundle
+#	cd $(BBOPX_JS) && make bundle
 	cd
-	cp $(BBOP_JS)/staging/bbop.js static/
-	cp $(BBOPX_JS)/staging/bbopx.js static/
+#	cp $(BBOP_JS)/staging/bbop.js static/
+#	cp $(BBOPX_JS)/staging/bbopx.js static/
 
 ## Note, these two are useful for ultra-fast prototyping, bypassing the
 ## necessary NPM steps for the server code.
@@ -136,9 +136,13 @@ install:
 ## Documentation for JavaScript.
 .PHONY: docs
 docs: install
-	node ./node_modules/gulp/bin/gulp.js doc
+	./node_modules/.bin/gulp doc
 
-## Documentation for JavaScript.
+## 
 .PHONY: tests
 tests:
-	node ./node_modules/gulp/bin/gulp.js test
+	./node_modules/.bin/gulp test
+
+## Documentation for JavaScript.
+environment.js:
+	./node_modules/.bin/

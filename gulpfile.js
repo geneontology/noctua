@@ -5,6 +5,9 @@
 var gulp = require('gulp');
 var jsdoc = require("gulp-jsdoc");
 var mocha = require('gulp-mocha');
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+var uglify = require('gulp-uglify');
 //var concat = require('gulp-concat');
 //var uglify = require('gulp-uglify');
 //var sourcemaps = require('gulp-sourcemaps');
@@ -17,24 +20,24 @@ var paths = {
 //  images: 'sr/*'
 };
 
-// Not all tasks need to use streams
-// A gulpfile is just another node program and you can use all packages available on npm
-gulp.task('clean', function(cb) {
-  // You can use multiple globbing patterns as you would with `gulp.src`
-  del(['build'], cb);
-});
+// // Not all tasks need to use streams
+// // A gulpfile is just another node program and you can use all packages available on npm
+// gulp.task('clean', function(cb) {
+//   // You can use multiple globbing patterns as you would with `gulp.src`
+//   del(['build'], cb);
+// });
 
-gulp.task('scripts', ['clean'], function() {
-  // Minify and copy all JavaScript (except vendor scripts)
-  // with sourcemaps all the way down
-  return gulp.src(paths.scripts)
-    .pipe(sourcemaps.init())
-      .pipe(coffee())
-      .pipe(uglify())
-      .pipe(concat('all.min.js'))
-    .pipe(sourcemaps.write())
-    .pipe(gulp.dest('build/js'));
-});
+// gulp.task('scripts', ['clean'], function() {
+//   // Minify and copy all JavaScript (except vendor scripts)
+//   // with sourcemaps all the way down
+//   return gulp.src(paths.scripts)
+//     .pipe(sourcemaps.init())
+//       .pipe(coffee())
+//       .pipe(uglify())
+//       .pipe(concat('all.min.js'))
+//     .pipe(sourcemaps.write())
+//     .pipe(gulp.dest('build/js'));
+// });
 
 // // Copy all static images
 // gulp.task('images', ['clean'], function() {
@@ -50,11 +53,13 @@ gulp.task('scripts', ['clean'], function() {
 //   gulp.watch(paths.images, ['images']);
 // });
 
+// Build docs directory with JSDoc.
 gulp.task('doc', function() {
     gulp.src(paths.clients, paths.scripts)
         .pipe(jsdoc('./doc'));
 });
 
+// Testing with mocha/chai.
 // NOTE: I'm using chai here.
 gulp.task('test', function() {
     return gulp.src(paths.tests, { read: false }).pipe(mocha({
@@ -64,6 +69,28 @@ gulp.task('test', function() {
 	    should: require('chai').should()
 	}
     }));
+});
+
+// Browser runtime environment construction.
+gulp.task('build', function() {
+    return browserify()
+//	.require('jquery')
+	.require('bbop')
+	.require('bbopx')
+	.require('amigo2')
+	.exclude('ringo/httpclient') // not in npm, don't need in browser
+	.bundle()
+    //Pass desired output filename to vinyl-source-stream
+	.pipe(source('noctua-runtime.js'))
+    // Start piping stream to tasks!
+	.pipe(gulp.dest('./static/'));
+});
+
+
+gulp.task('compress', function() {
+  return gulp.src('static/noctua-runtime.js')
+    .pipe(uglify())
+    .pipe(gulp.dest('./static/'));
 });
 
 // The default task (called when you run `gulp` from cli)
