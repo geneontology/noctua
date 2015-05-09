@@ -10,8 +10,9 @@ var jsdoc = require("gulp-jsdoc");
 //var del = require('del');
 
 var paths = {
-  scripts: ['client/js/**/*.coffee', '!client/external/**/*.coffee'],
-  images: 'client/img/**/*'
+  clients: ['js/*'],
+  scripts: ['scripts/*']
+//  images: 'sr/*'
 };
 
 // Not all tasks need to use streams
@@ -48,7 +49,7 @@ gulp.task('images', ['clean'], function() {
 // });
 
 gulp.task('doc', function() {
-    gulp.src("./bin/*.js")
+    gulp.src(paths.clients, paths.scripts)
         .pipe(jsdoc('./doc'))
 });
 

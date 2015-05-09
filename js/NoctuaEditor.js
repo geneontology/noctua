@@ -1,13 +1,19 @@
-////
-//// ...
-////
+/**
+ * NoctuaEditor runner.
+ * Application initializer.
+ * Application logic.
+ * Initialze with (optional) incoming data ans setup the GUI.
+ *
+ * @module NoctuaEditor
+ */
 
-///
-/// Application initializer.
-/// Application logic.
-/// Initialze with (optional) incoming data ans setup the GUI.
-///
-
+/**
+ * Bootstraps a working environment for the MME client.
+ *
+ * @param {Object} in_model TODO
+ * @param {Object} in_relations TODO
+ * @param {Object} in_token TODO
+ */
 var MMEnvInit = function(in_model, in_relations, in_token){
     
     // TODO: Add this as an argument.

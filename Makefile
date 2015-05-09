@@ -126,9 +126,16 @@ start-minerva-go-fast:
 	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 ###
-### Documentation for JavaScript.
+### Gulp-based workflows.
 ###
 
+.PHONY: install
+install:
+	npm install
+
+
+## Documentation for JavaScript.
 .PHONY: docs
-docs:
-	naturaldocs --rebuild-output --input ./js --project docs/.naturaldocs_project/ --output html docs/
+docs: install
+	node ./node_modules/gulp/bin/gulp.js doc
+#	naturaldocs --rebuild-output --input ./js --project docs/.naturaldocs_project/ --output html docs/
