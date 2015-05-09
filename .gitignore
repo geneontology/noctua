@@ -2,8 +2,8 @@
 doc
 !doc/README.org
 
-# ## Node modules are handled by "npm install" and out package.json
-# node_modules
+## Node modules are handled by "npm install" and out package.json
+node_modules
 
 ## Do not commit our TAGS
 TAGS
