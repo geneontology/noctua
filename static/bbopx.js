@@ -3601,7 +3601,7 @@ bbopx.barista.response.prototype.models_meta = function(){
 ///
 /// TODO: Experiment done: move all below into the bbopx.noctua.edit
 ///
- 
+
 // /*
 //  * Function: graph
 //  * 

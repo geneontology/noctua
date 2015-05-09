@@ -2010,14 +2010,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.3.1";
+bbop.version.revision = "2.3.2";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20150507";
+bbop.version.release = "20150508";
 /*
  * Package: logger.js
  * 
@@ -14974,6 +14974,11 @@ bbop.widget.display.results_table_by_class_conf_b3 = function(cclass,
     logger.DEBUG = false;
     function ll(str){ logger.kvetch('RTBCCBS3: ' + str); }
 
+    // Tie important things down for cell rendering prototype.
+    anchor._golr_response = golr_resp;
+    anchor._linker = linker;
+    anchor._handler = handler;
+
     // Conveience aliases.
     var each = bbop.core.each;
     var is_defined = bbop.core.is_defined;
@@ -15147,45 +15152,6 @@ bbop.widget.display.results_table_by_class_conf_b3 = function(cclass,
     /// Render the documents.
     ///
 
-    // Some of what we'll do for each field in each doc (see below).
-    // var ext = cclass.searchable_extension();
-    function _process_entry(fid, iid, doc){
-
-	var retval = '';
-	var did = doc['id'];
-
-	// BUG/TODO: First see if the filed will be multi or not.
-	// If not multi, follow the first path. If multi, break it
-	// down and try again.
-
-	// Get a label instead if we can.
-	var ilabel = golr_resp.get_doc_label(did, fid, iid);
-	if( ! ilabel ){
-	    ilabel = iid;
-	}
-
-	// Extract highlighting if we can from whatever our "label"
-	// was.
-	var hl = golr_resp.get_doc_highlight(did, fid, ilabel);
-
-	// See what kind of link we can create from what we got.
-	var ilink = linker.anchor({id: iid, label: ilabel, hilite: hl}, fid);
-	
-	ll('processing: ' + [fid, ilabel, iid].join(', '));
-	//ll('ilink: ' + ilink);
-
-	// See what we got, in order of how much we'd like to have it.
-	if( ilink ){
-	    retval = ilink;
-	}else if( ilabel ){
-	    retval = ilabel;
-	}else{
-	    retval = iid;
-	}
-
-	return retval;
-    }
-
     // Cycle through and render each document.
     // For each doc, deal with it as best we can using a little
     // probing. Score is a special case as it is not an explicit
@@ -15232,23 +15198,9 @@ bbop.widget.display.results_table_by_class_conf_b3 = function(cclass,
 		
 		// Render each of the bits.
 		var tmp_buff = [];
-		each(bits, function(bit){
-		    
-		    // The major difference that we'll have here is
-		    // between standard fields and special handler
-		    // fields. If the handler resolves to null, fall
-		    // back onto standard.
-		    ll('! B:' + bit + ', F:' + fid + ', D:' + display_context);
-		    var out = handler.dispatch(bit, fid, display_context);
-		    if( is_defined(out) && out != null ){
-			// Handler success.
-			tmp_buff.push(out);
-		    }else{
-			// Standard output.   
-			out = _process_entry(fid, bit, doc);
-			//ll('out: ' + out);
-			tmp_buff.push(out);
-		    }
+		each(bits, function(bit){		    
+		    out = anchor.process_entry(bit, fid, doc, display_context);
+		    tmp_buff.push(out);
 		});
 		// Join it, trim/store it, push to to output.
 		var joined = tmp_buff.join('<br />');
@@ -15306,6 +15258,79 @@ bbop.widget.display.results_table_by_class_conf_b3 = function(cclass,
 	});
     }
 };
+
+/*
+ * Function: process_entry
+ *
+ * The function used to render a single entry in a cell in the results
+ * table. It can be overridden to specify special behaviour. There may
+ * be multiple entries within a cell, but they will all have this
+ * function individually run over them.
+ *
+ * This function can access this._golr_response (a
+ * <bbop.golr.response>), this._linker (a <bbop.linker>), and
+ * this._handler (a <bbop.handler>).
+ *
+ * Arguments:
+ *  bit - string (?) for the one entry in the cell
+ *  field_id - string for the field under consideration
+ *  document - the single document for this item from the solr response
+ *
+ * Returns:
+ *  string or empty string ('')
+ */
+bbop.widget.display.results_table_by_class_conf_b3.prototype.process_entry = 
+    function(bit, field_id, document, display_context){
+	
+    	var anchor = this;
+
+	// First, allow the hanndler to take a whack at it. Forgive
+	// the local return. The major difference that we'll have here
+	// is between standard fields and special handler fields. If
+	// the handler resolves to null, fall back onto standard.
+	//ll('! B:' + bit + ', F:' + fid + ', D:' + display_context);
+	var out = anchor._handler.dispatch(bit, field_id, display_context);
+	if( bbop.core.is_defined(out) && out != null ){
+	    return out;
+	}
+
+	// Otherwise, use the rest of the context to try and render
+	// the item.
+    	var retval = '';
+    	var did = document['id'];
+	
+    	// BUG/TODO: First see if the filed will be multi or not.
+    	// If not multi, follow the first path. If multi, break it
+    	// down and try again.
+	
+    	// Get a label instead if we can.
+    	var ilabel = anchor._golr_response.get_doc_label(did, field_id, bit);
+    	if( ! ilabel ){
+    	    ilabel = bit;
+    	}
+	
+    	// Extract highlighting if we can from whatever our "label"
+    	// was.
+    	var hl = anchor._golr_response.get_doc_highlight(did, field_id, ilabel);
+	
+    	// See what kind of link we can create from what we got.
+    	var ilink =
+    	    anchor._linker.anchor({id:bit, label:ilabel, hilite:hl}, field_id);
+	
+    	//ll('processing: ' + [field_id, ilabel, bit].join(', '));
+    	//ll('ilink: ' + ilink);
+	
+    	// See what we got, in order of how much we'd like to have it.
+    	if( ilink ){
+    	    retval = ilink;
+    	}else if( ilabel ){
+    	    retval = ilabel;
+    	}else{
+    	    retval = bit;
+    	}
+	
+    	return retval;
+    };
 /*
  * Package: two_column_layout.js
  * 
@@ -20973,11 +20998,11 @@ bbop.widget.live_results = function(interface_id, manager, conf_class,
 	    // Display results.
 	    var bwd = bbop.widget.display;
 	    results_table =
-		bwd.results_table_by_class_conf_b3(conf_class, resp, linker,
-						   handler, interface_id,
-						   selectable_p,
-						   select_column_id,
-						   select_item_name);
+		new bwd.results_table_by_class_conf_b3(conf_class, resp, linker,
+						       handler, interface_id,
+						       selectable_p,
+						       select_column_id,
+						       select_item_name);
 	}
     }
     manager.register('search', fun_id, _draw_table_or_something,
