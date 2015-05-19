@@ -354,7 +354,7 @@ var NoctuaLauncher = function(){
 			 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
-	    
+
 	    //
 	    var tmpl_args = {
 		'title': notw + ': Simple',
@@ -365,8 +365,10 @@ var NoctuaLauncher = function(){
 		     value: known_relations},
 		    {name: 'global_barista_token',
 		     value: barista_token},
-		     {name:'global_barista_location',
-		     value: self.barista_location }
+		    {name:'global_barista_location',
+		     value: self.barista_location },
+		    {name: 'golr_loc',
+		     value: server_loc}
 		],
 		'pup_tent_js_libraries': [
 			'http://cdn.ractivejs.org/latest/ractive.min.js',
