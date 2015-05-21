@@ -6,8 +6,6 @@
 /// ...
 ///
 
-var golr_manager_for_gene = null;
-
 var MMEnvBootstrappingInit = function(user_token){
 
     var logger = new bbop.logger('mme basic');
@@ -62,12 +60,21 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     jQuery(save_btn_elt).click(function(){
-        var gp = gp_ractive.get('gp');
+        var title = "testing title";//jQuery('#title_input').val();
+
+        var gp = "HP:0010938";
         var qualifier = "a";
         var term = "monarch:phenotype100050-pn";
         validate_form(gp, qualifier, term);
 
-        manager.add_simple_composite(id, gp, qualifier);
+        var r = new bbopx.minerva.request_set(manager.user_token())
+        r.add_model();
+        r.add_annotation_to_model("title", title);
+        r.add_annotation_to_individual(qualifier, term, r.add_individual(gp));
+
+        manager.request_with(r, "justdoit");
+
+        //manager.add_simple_composite(id, gp, qualifier);
     });
 
 
@@ -126,26 +133,13 @@ var MMEnvBootstrappingInit = function(user_token){
         alert_wrapper.css('display', 'inherit');
     }
 
-    // var m = new bbop.golr.manager.nodejs(server_loc, gconf);
-    // m.add_query_filter('document_category', 'ontology_class');
-    // m.set_personality('ontology');
-    // m.register('search', 'foo', action_after_resolution_call);
-    // m.register('error', 'bar', _generic_error_resp);
-    // m.set('fq', qf_to_add.join(' OR '));
-    // // Apparently need score to make it "success".
-    // m.set('fl', 'id,annotation_class,source,score');
-    // m.search();
-
-    // create a GolR manager
     var gconf = new bbop.golr.conf(golr_json);
     golr_loc = 'http://localhost:8983/solr/'; // TODO delete
-     golr_manager_for_gene = new bbop.golr.manager.jquery(golr_loc, gconf);
-    golr_manager_for_gene.set('fl', 'id,annotation_class_label_searchable');
-  //golr_manager_for_gene.add_query_filter('id', 'annotation_class_label_searchable');
+    var golr_manager_for_gene = new bbop.golr.manager.jquery(golr_loc, gconf);
 
-    var gene_selectize = jQuery('#select_gene_product').zearch({
+    var gene_selectize = jQuery('#select_gene_product').solrautocomplete({
         onChange: function(value) {
-            gp_ractive.set('gp', value);
+            console.log(value);
         },
         required: true,
         optionDisplay: function(item, escape) {
@@ -161,13 +155,14 @@ var MMEnvBootstrappingInit = function(user_token){
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-            return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
+            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
         },
         golrManager: golr_manager_for_gene
     });
 
-    var phen = jQuery('#select_phenotype_product').zearch({
+    var golr_manager_for_phenotype = new bbop.golr.manager.jquery(golr_loc, gconf);
+    var phen = jQuery('#select_phenotype_product').solrautocomplete({
         onChange: function(value) {
             console.log(value);
         },
@@ -184,12 +179,14 @@ var MMEnvBootstrappingInit = function(user_token){
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-            return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
-        }
+            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+        },
+        golrManager: golr_manager_for_phenotype
     });
 
-    var ageofonset = jQuery('#select_ageofonset_product').zearch({
+    var golr_manager_for_ageofonset = new bbop.golr.manager.jquery(golr_loc, gconf);
+    var ageofonset = jQuery('#select_ageofonset_product').solrautocomplete({
         onChange: function(value) {
             console.log(value);
         },
@@ -206,9 +203,10 @@ var MMEnvBootstrappingInit = function(user_token){
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-            return {'wt':'json', 'fl':'id,annotation_class_label_searchable', 'q':'id:' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                    'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*'}
-        }
+            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+        },
+        golrManager: golr_manager_for_ageofonset
     });
 
     var gp = "";
@@ -219,8 +217,8 @@ var MMEnvBootstrappingInit = function(user_token){
     });
 
     // initialize model
-    var id = null // dirty
-    manager.generate_model();
+    //var id = null // dirty
+    //manager.add_model();
 
 };
 
@@ -248,7 +246,7 @@ jQuery(document).ready(
 
 
 // Depends on selectize
-jQuery.widget('jj.zearch', {
+jQuery.widget('bbop-widget.solrautocomplete', {
     options: {
         webserviceUrl: "http://localhost:8983/solr/select",
         onChange: console.log,
@@ -288,12 +286,13 @@ jQuery.widget('jj.zearch', {
             },
             load: function(query, callback) {
                 if (!query.length) return callback();
-                var fakecallback = function(res) {
-                  console.log(res);
+
+                var customCallBack = function(res) {
+                  _updateHits(res._raw.response.numFound);
+                  callback(res._raw.response.docs);
                 };
-                widgetGolrManager.register('search', 'foo', fakecallback);
-                widgetGolrManager.set_query('id:' + query + '*' + ' OR ' +
-                        'annotation_class_label_searchable:' + '*' + query + '*');
+                widgetGolrManager.register('search', 'foo', customCallBack);
+                widgetGolrManager.set_query(widgetQueryData(query));
                 widgetGolrManager.search();
 
                 // jQuery.ajax({

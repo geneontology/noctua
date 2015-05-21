@@ -1,10 +1,10 @@
-/*  
+/*
  * Package: noctua.js
- * 
+ *
  * This is a Heroku/NodeJS/local script, using the require environment.
- * 
+ *
  * A server that will render GO graphs into jsPlumb.
- * 
+ *
  * : BARISTA_LOCATION=http://localhost:3400 make start-noctua
  */
 
@@ -45,7 +45,7 @@ var NoctuaLauncher = function(){
     /// Process CLI environmental variables.
     ///
 
-    // 
+    //
     var barloc = 'http://localhost:3400';
     //var barloc_public = 'http://toaster.lbl.gov:3400';
     var barloc_public = 'http://barista.berkeleybop.org'; // BUG: tmp chris fix
@@ -87,7 +87,7 @@ var NoctuaLauncher = function(){
 	self.IS_ENV_LOCAL = false;
 
 	if( process.env.OPENSHIFT_APP_DNS ){
-	    self.IS_ENV_OPENSHIFT = true;	    
+	    self.IS_ENV_OPENSHIFT = true;
 
 	    // Try and setup hostname and port as best we can.
             self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
@@ -136,7 +136,7 @@ var NoctuaLauncher = function(){
     // bbop_mme_widgets.build_token_link().
     function _build_token_link(url, token, token_name){
 	var new_url = url;
-	
+
 	// Default to "barista_token".
 	if( ! token_name ){ token_name = 'barista_token'; }
 
@@ -147,14 +147,14 @@ var NoctuaLauncher = function(){
 		new_url = new_url + '&' + token_name + '=' + token;
 	    }
 	}
-	    
+
 	return new_url;
     }
 
     ///
     /// Response helper.
     ///
-    
+
     self.get_token = function(req){
 	var ret = null;
 	if( req && req.query && req.query['barista_token'] ){
@@ -180,7 +180,7 @@ var NoctuaLauncher = function(){
 
 	// Assemble return doc.
 	res.setHeader('Content-Type', 'text/html');
-	
+
 	var noctua_landing = _build_token_link(self.hostport, barista_token);
 	var barista_login = barista_loc + '/session' + '?return=' +
 	    self.hostport + '/seed/model/' + model_id;
@@ -231,6 +231,7 @@ var NoctuaLauncher = function(){
     ///
 
     var pup_tent = require('pup-tent')(['static', 'static/selectize', 'js', 'css', 'templates']);
+    pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
 	'/jquery-ui-1.10.3.custom.min.css',
@@ -293,7 +294,7 @@ var NoctuaLauncher = function(){
 	///
 
 	self.app.get('/', function(req, res) {
-	    
+
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
 
@@ -314,7 +315,7 @@ var NoctuaLauncher = function(){
 	    var capella_test =
 		    _build_token_link(self.hostport + '/capella?bootstrap=' +
 				      capella_payload, barista_token);
-	    
+
 	    // Libs and render.
 	    var tmpl_args = {
 		'pup_tent_css_libraries': [
@@ -349,9 +350,9 @@ var NoctuaLauncher = function(){
 				    'noctua_base_landing.tmpl');
 	    self.standard_response(res, 200, 'text/html', o);
 	});
-	
+
 	self.app.get('/basic', function(req, res) {
-			 
+
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
 
@@ -401,7 +402,7 @@ var NoctuaLauncher = function(){
 	    }else if( html_re.test(thing) ){
 		ctype = 'text/html';
 	    }
-	    
+
 	    // This will skip cached templates.
 	    if( ctype !== null ){
 		self.app.get('/' + thing, function(req, res) {
@@ -476,9 +477,9 @@ var NoctuaLauncher = function(){
 		res.setHeader('Content-Type', 'text/html');
 		res.send('no identifier');
 	    }else{
-		
+
 		// Try and see if we have an API token.
-		var barista_token = self.get_token(req);		
+		var barista_token = self.get_token(req);
 		self.bootstrap_editor(res, notw, query,
 				      known_relations,
 				      self.barista_location,
@@ -487,7 +488,7 @@ var NoctuaLauncher = function(){
 				     );
 	    }
 	});
-	
+
 	// DEBUG: A JSON model debugging tool for @hdietze
 	/// This path will eventually be destryed.
 	self.app.post('/seed/json', function(req, res) {
@@ -501,7 +502,7 @@ var NoctuaLauncher = function(){
 		res.send('no json model');
 	    }else{
 		var jmod = JSON.parse(jmod_str); // to obj
-		
+
 		// No token, no editing, because this is crazy.
 		self.bootstrap_editor(res, notw, null,
 				      known_relations,
@@ -511,7 +512,7 @@ var NoctuaLauncher = function(){
 				     );
 	    }
 	});
-	
+
 	// Try to bootstrap coming in from Capella. After the model is
 	// confirmed generated, go through the usual model/seed path.
 	self.app.get('/capella', function(req, res) {
@@ -556,9 +557,9 @@ var NoctuaLauncher = function(){
 					  'noctua_base.tmpl');
 		self.standard_response(res, 200, 'text/html', ret);
 	    }else{
-		
+
 		console.log('payload: ', payload);
-		
+
 		// Collect the terms to resolve--we need the aspects
 		// of the IDs to progress.
 		var terms_to_resolve = [];
@@ -571,7 +572,7 @@ var NoctuaLauncher = function(){
 		each(terms_to_resolve, function(ttr){
 		    qf_to_add.push('annotation_class:"' + ttr + '"');
 		});
-		
+
 		// Define the action to perform after we resolve our
 		// terms.
 		function action_after_resolution_call(resp, man){
@@ -583,9 +584,9 @@ var NoctuaLauncher = function(){
 			var ret = pup_tent.render('noctua_capella.tmpl',
 						  tmpl_args, 'noctua_base.tmpl');
 			self.standard_response(res, 200, 'text/html', ret);
-		    }else{				   
+		    }else{
 			// console.log('in success callback else');
-			
+
 			// Map terms to aspect.
 			var t2a = {};
 			each(resp.documents(), function(d){
@@ -616,7 +617,7 @@ var NoctuaLauncher = function(){
 			self.standard_response(res, 200, 'text/html', ret);
 		    }
 		}
-		
+
 		// Assemble query to get the desired minimal term
 		// information; this information then goes into the
 		// above callback, that then starts the model building
@@ -633,27 +634,27 @@ var NoctuaLauncher = function(){
 		console.log('resolve query: ', m.get_query_url());
 	    }
 	});
-	
+
 	// Test export handler.
 	self.app.post('/action/display', function(req, res) {
-	    
+
 	    // Deal with incoming parameters.
 	    var mstr = req.query['thing'] ||
 		    req.route.params['thing'] ||
 		    req.body['thing'] ||
 		    '???';
 	    //console.log('display thing: ' + mstr);
-	    
+
 	    // Assemble return doc.
 	    //res.setHeader('Content-Type', 'text/owl');
 	    res.setHeader('Content-Type', 'text/plain');
 	    res.send(unescape(mstr));
 	});
     };
-    
+
     // Initializes the sample application.
     self.initialize = function(known_relations){
-	
+
 	var knw_rel = known_relations || [];
 
         // self.setupVariables();
@@ -712,7 +713,7 @@ imngr.register('success', 's1', function(resp, man){
     }
 });
 imngr.register('error', 'e1', function(resp, man){
-    //console.log('erred out: %j', resp); 
+    //console.log('erred out: %j', resp);
     //console.log(bbop.core.what_is(resp));
     //console.log(resp._raw);
     //console.log(resp.relations());
