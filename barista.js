@@ -496,6 +496,7 @@ var BaristaLauncher = function(){
     ///
 
     var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
+    pup_tent.use_cache_p(false);
 
     // Ready the common libs (the actually mapping is taken care of
     // later on).
