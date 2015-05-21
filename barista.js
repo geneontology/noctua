@@ -509,10 +509,10 @@ var BaristaLauncher = function(){
 	'/jquery-1.9.1.min.js',
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
-	'/commonjs-runtime.js']);
-	// '/bbop.js',
-	// '/bbopx.js',
-	// '/amigo2.js']);
+	//'/commonjs-runtime.js']);
+	'/bbop.js',
+	'/bbopx.js',
+	'/amigo2.js']);
 
     // Spin up the main messenging server.
     var express = require('express');

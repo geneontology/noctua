@@ -244,8 +244,10 @@ var NoctuaLauncher = function(){
 	'/jquery-ui-1.10.3.custom.min.js',
 	'/jquery.jsPlumb-1.5.5.js',
 	'/jquery.tablesorter.min.js',
-	'/commonjs-runtime.js'
-    ]);
+	//'/commonjs-runtime.js'
+	'/bbop.js',
+	'/bbopx.js',
+	'/amigo2.js']);
 
     ///
     /// Termination functions.

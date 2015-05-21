@@ -74,8 +74,38 @@ gulp.task('test', function() {
 // See what browserify-shim is up to.
 process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
 
-// Browser runtime environment construction.
+// // Browser runtime environment construction.
+// gulp.task('build', function() {
+//     return browserify()
+//     //.require('jquery')
+//     //.require('jquery-ui')
+//     //.require('bootstrap')
+//     //.require('jsplumb')
+//     //.require('tablesorter')
+//     //.require('./connectors-sugiyama.js')
+//     //.require('./js/NoctuaEditor.js')
+// 	.require('bbop')
+// 	.require('bbopx')
+// 	.require('amigo2')
+// 	.exclude('ringo/httpclient') // not in npm, don't need in browser
+// 	.bundle()
+//     //Pass desired output filename to vinyl-source-stream
+// 	.pipe(source('commonjs-runtime.js'))
+//     // Start piping stream to tasks!
+// 	.pipe(gulp.dest('./static/'));
+// });
+
+// Build docs directory with JSDoc.
 gulp.task('build', function() {
+    gulp.src(['./node_modules/bbop/bbop.js',
+	      './node_modules/bbopx/bbopx.js',
+	      './node_modules/amigo2/amigo2.js'
+	     ])
+	.pipe(gulp.dest('./static/'));
+});
+
+// Browser runtime environment construction.
+gulp.task('client-build', function() {
     return browserify()
     //.require('jquery')
     //.require('jquery-ui')

@@ -1,8 +1,8 @@
 //var jQuery = require('jquery');
 //var jsPlumb = require('jsplumb');
-var bbop = require('bbop').bbop;
-var bbopx = require('bbopx');
-var amigo = require('amigo2');
+// var bbop = require('bbop').bbop;
+// var bbopx = require('bbopx');
+// var amigo = require('amigo2');
 
 /**
  * NoctuaEditor runner.
