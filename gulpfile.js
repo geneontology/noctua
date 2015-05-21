@@ -1,5 +1,5 @@
 ////
-//// Usage: node ./node_modules/gulp/bin/gulp.js doc
+//// Usage: node ./node_modules/.bin/gulp doc
 ////
 
 var gulp = require('gulp');
@@ -71,17 +71,26 @@ gulp.task('test', function() {
     }));
 });
 
+// See what browserify-shim is up to.
+process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
+
 // Browser runtime environment construction.
 gulp.task('build', function() {
     return browserify()
-//	.require('jquery')
+    //.require('jquery')
+    //.require('jquery-ui')
+    //.require('bootstrap')
+    //.require('jsplumb')
+    //.require('tablesorter')
+    //.require('./connectors-sugiyama.js')
+    //.require('./js/NoctuaEditor.js')
 	.require('bbop')
 	.require('bbopx')
 	.require('amigo2')
 	.exclude('ringo/httpclient') // not in npm, don't need in browser
 	.bundle()
     //Pass desired output filename to vinyl-source-stream
-	.pipe(source('noctua-runtime.js'))
+	.pipe(source('commonjs-runtime.js'))
     // Start piping stream to tasks!
 	.pipe(gulp.dest('./static/'));
 });
