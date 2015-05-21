@@ -39,8 +39,7 @@
 	"bootstrap": "3.3.4",
 	"express-persona": "0.1.2",
 	"express": "3.4.6",
-	"http-proxy": "1.1.4",
-	"jquery-ui": "1.10.4",
+	"http-proxy": "1.11.1",
 	"jquery": "1.9.1",
 	"minimist": "0.2.0",
 	"mustache": "2.0.0",
@@ -58,6 +57,21 @@
 	"gulp-uglify": "^1.2.0",
 	"vinyl-source-stream": "1.1.0",
 	"watchify": "^3.2.1"
+    },
+    "browserify": {
+	"transform": [ "browserify-shim" ]
+    },
+    "browser": {
+	"jquery": "./node_modules/jquery/jquery.js",
+	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.js",
+	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
+	"jsplumb": "./external_js/jquery.jsPlumb-1.5.5.js",
+	"tablesorter": "./external_js/jquery.tablesorter.min.js"
+    },
+    "browserify-shim": {
+	"jquery": { "exports": "global:jQuery" },
+	"jquery-ui": { "depends": ["jquery"] },
+	"jsplumb": { "exports": "global:jsPlumb"}
     },
     "bundleDependencies": [],
     "private": false,
