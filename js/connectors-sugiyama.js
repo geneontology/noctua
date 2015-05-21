@@ -9,6 +9,8 @@
 
 (function() {
 
+    var bbop = require('bbop').bbop;
+
      var logger = new bbop.logger('jsPlumb-sugi');
      logger.DEBUG = true;
      function ll(str){ logger.kvetch(str); }

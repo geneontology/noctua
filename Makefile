@@ -57,11 +57,11 @@ refresh-metadata:
 ## necessary NPM steps for the server code.
 .PHONY: assemble-app
 assemble-app:
-	cd $(BBOP_JS) && make bundle
-	cd $(BBOPX_JS) && make bundle
+#	cd $(BBOP_JS) && make bundle
+#	cd $(BBOPX_JS) && make bundle
 	cd
-	cp $(BBOP_JS)/staging/bbop.js static/
-	cp $(BBOPX_JS)/staging/bbopx.js static/
+#	cp $(BBOP_JS)/staging/bbop.js static/
+#	cp $(BBOPX_JS)/staging/bbopx.js static/
 
 ## Note, these two are useful for ultra-fast prototyping, bypassing the
 ## necessary NPM steps for the server code.
@@ -126,9 +126,24 @@ start-minerva-go-fast:
 	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 ###
-### Documentation for JavaScript.
+### Gulp-based workflows.
 ###
 
+.PHONY: install
+install:
+	npm install
+
+## Documentation for JavaScript.
 .PHONY: docs
-docs:
-	naturaldocs --rebuild-output --input ./js --project docs/.naturaldocs_project/ --output html docs/
+docs: install
+	./node_modules/.bin/gulp doc
+
+## Tests with mocha/chai.
+.PHONY: tests
+tests:
+	./node_modules/.bin/gulp test
+
+## Build with browserify.
+.PHONY: build
+build:
+	./node_modules/.bin/gulp build

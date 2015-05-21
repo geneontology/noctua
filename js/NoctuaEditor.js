@@ -1,13 +1,24 @@
-////
-//// ...
-////
+//var jQuery = require('jquery');
+var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
+var amigo = require('amigo2');
 
-///
-/// Application initializer.
-/// Application logic.
-/// Initialze with (optional) incoming data ans setup the GUI.
-///
+/**
+ * NoctuaEditor runner.
+ * Application initializer.
+ * Application logic.
+ * Initialze with (optional) incoming data ans setup the GUI.
+ *
+ * @module NoctuaEditor
+ */
 
+/**
+ * Bootstraps a working environment for the MME client.
+ *
+ * @param {Object} in_model TODO
+ * @param {Object} in_relations TODO
+ * @param {Object} in_token TODO
+ */
 var MMEnvInit = function(in_model, in_relations, in_token){
     
     // TODO: Add this as an argument.

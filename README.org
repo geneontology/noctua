@@ -1,5 +1,7 @@
-* The Noctua/Barista/Minerva Stack (GO MME)
+* The Noctua (Editor + Barista + Minerva) Stack
   
+  Previously the GO MME.
+
   _Current development is very rapid, so some of these docs may be out
   of date._
 
@@ -15,6 +17,27 @@
   experience using Chrome/Chromium is quite a bit smoother.
 
   The current alpha instance is available at: http://noctua.berkeleybop.org
+
+** Installation
+  
+   You must start with a modern version of Node.js. All of the tooling
+   is built around that and should install easily with:
+
+   : npm install
+
+** Running
+
+*** Minerva
+
+    TODO
+
+*** Barista
+
+    TODO
+
+*** Graph Editor (previously "Noctua")
+
+    TODO
 
 ** How to use demo
 *** Generating/selecting a model
