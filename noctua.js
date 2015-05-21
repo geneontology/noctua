@@ -232,6 +232,7 @@ var NoctuaLauncher = function(){
     ///
 
     var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
+    pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
 	'/jquery-ui-1.10.3.custom.min.css',
