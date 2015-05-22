@@ -10,6 +10,8 @@ var source = require('vinyl-source-stream');
 var uglify = require('gulp-uglify');
 var us = require('underscore');
 var del = require('del');
+var bump = require('gulp-bump');
+//var git = require('gulp-git');
 //var watch = require('gulp-watch');
 //var watchify = require('watchify');
 //var concat = require('gulp-concat');
@@ -112,6 +114,34 @@ gulp.task('clean', function(cb) {
     del(['./deploy/*', './deploy/js/*', '!./deploy/README.org',
 	 './doc/*', '!./doc/README.org']);
 });
+
+// Release tools for patch release.
+gulp.task('release', ['patch-bump', 'public-npm']);
+
+gulp.task('patch-bump', function(){
+    gulp.src('./package.json')
+        .pipe(bump({type: 'patch'}))
+        .pipe(gulp.dest('./'));
+});
+
+// 
+gulp.task('publish-npm', function() {
+    var npm = require("npm");
+    npm.load(function (er, npm) {
+        // NPM
+        npm.commands.publish(); 
+    });
+});
+
+// gulp.task('git-tag', function(){
+//     console.log('TODO: WORK IN PROGRESS');
+//     // Make a note in the git repo.
+//     var pkg = require('./package.json');
+//     var pver = pkg.version;
+//     git.tag('go-exp-widget-' + pver, 'version message', function (err){
+//         if(err) throw err;
+//     });
+// });
 
 // gulp.task('compress', function() {
 //   return gulp.src('static/noctua-runtime.js')
