@@ -99,7 +99,8 @@ process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
 gulp.task('build', function() {
     gulp.src(['./node_modules/bbop/bbop.js',
 	      './node_modules/bbopx/bbopx.js',
-	      './node_modules/amigo2/amigo2.js'
+	      './node_modules/amigo2/amigo2.js',
+	      './node_modules/bootstrap/dist/js/bootstrap.js'
 	     ])
 	.pipe(gulp.dest('./static/'));
 });
