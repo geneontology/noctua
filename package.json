@@ -37,6 +37,7 @@
 	"bbopx": "^0.9.23",
 	"cors": "2.4.1",
 	"bootstrap": "3.3.4",
+        "del": "^1.1.1",
 	"express-persona": "0.1.2",
 	"express": "3.4.6",
 	"http-proxy": "1.11.1",

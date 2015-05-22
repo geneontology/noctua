@@ -1,5 +1,5 @@
 ////
-//// Usage: node ./node_modules/.bin/gulp doc|test|build|watch
+//// Usage: node ./node_modules/.bin/gulp doc|build|test|watch|clean
 ////
 
 var gulp = require('gulp');
@@ -9,11 +9,11 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var uglify = require('gulp-uglify');
 var us = require('underscore');
+var del = require('del');
 //var watch = require('gulp-watch');
 //var watchify = require('watchify');
 //var concat = require('gulp-concat');
 //var sourcemaps = require('gulp-sourcemaps');
-//var del = require('del');
 
 var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
@@ -107,6 +107,12 @@ gulp.task('watch', function() {
   gulp.watch(paths.support, ['build']);
 });
 
+// 
+gulp.task('clean', function(cb) {
+    del(['./deploy/*', './deploy/js/*', '!./deploy/README.org',
+	 './doc/*', '!./doc/README.org']);
+});
+
 // gulp.task('compress', function() {
 //   return gulp.src('static/noctua-runtime.js')
 //     .pipe(uglify())
@@ -139,7 +145,4 @@ gulp.task('watch', function() {
 // }
 
 // The default task (called when you run `gulp` from cli)
-//gulp.task('default', ['watch', 'scripts', 'images']);
-gulp.task('default', function() {
-    console.log("Targets are: doc, test, build, watch");
-});
+gulp.task('default', ['doc', 'build', 'test']);
