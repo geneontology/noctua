@@ -116,7 +116,7 @@ gulp.task('clean', function(cb) {
 });
 
 // Release tools for patch release.
-gulp.task('release', ['patch-bump', 'public-npm']);
+gulp.task('release', ['patch-bump', 'publish-npm']);
 
 gulp.task('patch-bump', function(){
     gulp.src('./package.json')
