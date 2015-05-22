@@ -60,9 +60,9 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     jQuery(save_btn_elt).click(function(){
-        var title = "testing title";//jQuery('#title_input').val();
+        var title = jQuery('#title_input').val();
 
-        var gp = "HP:0010938";
+        var gp = jQuery('#select_gene_product').val();
         var qualifier = "a";
         var term = "monarch:phenotype100050-pn";
         validate_form(gp, qualifier, term);
