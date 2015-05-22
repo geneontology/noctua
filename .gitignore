@@ -2,6 +2,10 @@
 doc
 !doc/README.org
 
+## Ignore the JS deployment directory.
+deploy
+!deploy/README.org
+
 ## Node modules are handled by "npm install" and out package.json
 node_modules
 

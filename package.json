@@ -66,12 +66,13 @@
 	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.js",
 	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
 	"jsplumb": "./external_js/jquery.jsPlumb-1.5.5.js",
-	"tablesorter": "./external_js/jquery.tablesorter.min.js"
+	"tablesorter": "./external_js/jquery.tablesorter.min.js",
+	"connectors-sugiyama": "./js/connectors-sugiyama.js"
     },
     "browserify-shim": {
 	"jquery": { "exports": "global:jQuery" },
 	"jquery-ui": { "depends": ["jquery"] },
-	"jsplumb": { "exports": "global:jsPlumb"}
+	"jsplumb": { "exports": "global:jsPlumb" }
     },
     "bundleDependencies": [],
     "private": false,

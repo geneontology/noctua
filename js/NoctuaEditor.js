@@ -1,9 +1,3 @@
-//var jQuery = require('jquery');
-//var jsPlumb = require('jsplumb');
-// var bbop = require('bbop').bbop;
-// var bbopx = require('bbopx');
-// var amigo = require('amigo2');
-
 /**
  * NoctuaEditor runner.
  * Application initializer.
@@ -12,6 +6,16 @@
  *
  * @module NoctuaEditor
  */
+
+var jQuery = require('jquery');
+//require('jquery-ui');
+//require('bootstrap');
+//require('tablesorter');
+var jsPlumb = require('jsplumb');
+//require('./js/connectors-sugiyama.js');
+var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
+var amigo = require('amigo2');
 
 /**
  * Bootstraps a working environment for the MME client.

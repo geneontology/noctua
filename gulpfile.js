@@ -1,5 +1,5 @@
 ////
-//// Usage: node ./node_modules/.bin/gulp doc
+//// Usage: node ./node_modules/.bin/gulp build, doc, etc.
 ////
 
 var gulp = require('gulp');
@@ -8,50 +8,16 @@ var mocha = require('gulp-mocha');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var uglify = require('gulp-uglify');
+var us = require('underscore');
 //var concat = require('gulp-concat');
-//var uglify = require('gulp-uglify');
 //var sourcemaps = require('gulp-sourcemaps');
 //var del = require('del');
 
 var paths = {
-  clients: ['js/*'],
+  clients: ['js/NoctuaEditor.js'],
   scripts: ['scripts/*'],
   tests: ['tests/*.test.js']
-//  images: 'sr/*'
 };
-
-// // Not all tasks need to use streams
-// // A gulpfile is just another node program and you can use all packages available on npm
-// gulp.task('clean', function(cb) {
-//   // You can use multiple globbing patterns as you would with `gulp.src`
-//   del(['build'], cb);
-// });
-
-// gulp.task('scripts', ['clean'], function() {
-//   // Minify and copy all JavaScript (except vendor scripts)
-//   // with sourcemaps all the way down
-//   return gulp.src(paths.scripts)
-//     .pipe(sourcemaps.init())
-//       .pipe(coffee())
-//       .pipe(uglify())
-//       .pipe(concat('all.min.js'))
-//     .pipe(sourcemaps.write())
-//     .pipe(gulp.dest('build/js'));
-// });
-
-// // Copy all static images
-// gulp.task('images', ['clean'], function() {
-//   return gulp.src(paths.images)
-//     // Pass in options to the task
-//     .pipe(imagemin({optimizationLevel: 5}))
-//     .pipe(gulp.dest('build/img'));
-// });
-
-// // Rerun the task when a file changes
-// gulp.task('watch', function() {
-//   gulp.watch(paths.scripts, ['scripts']);
-//   gulp.watch(paths.images, ['images']);
-// });
 
 // Build docs directory with JSDoc.
 gulp.task('doc', function() {
@@ -71,67 +37,57 @@ gulp.task('test', function() {
     }));
 });
 
-// See what browserify-shim is up to.
-process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
+// Build the clients as best we can.
+gulp.task('build', [
+    'ready-non-commonjs-libs',
+    'build-client-landing',
+    'build-client-editor'
+]);
 
-// // Browser runtime environment construction.
-// gulp.task('build', function() {
-//     return browserify()
-//     //.require('jquery')
-//     //.require('jquery-ui')
-//     //.require('bootstrap')
-//     //.require('jsplumb')
-//     //.require('tablesorter')
-//     //.require('./connectors-sugiyama.js')
-//     //.require('./js/NoctuaEditor.js')
-// 	.require('bbop')
-// 	.require('bbopx')
-// 	.require('amigo2')
-// 	.exclude('ringo/httpclient') // not in npm, don't need in browser
-// 	.bundle()
-//     //Pass desired output filename to vinyl-source-stream
-// 	.pipe(source('commonjs-runtime.js'))
-//     // Start piping stream to tasks!
-// 	.pipe(gulp.dest('./static/'));
-// });
-
-// Build docs directory with JSDoc.
-gulp.task('build', function() {
-    gulp.src(['./node_modules/bbop/bbop.js',
-	      './node_modules/bbopx/bbopx.js',
-	      './node_modules/amigo2/amigo2.js',
-	      './node_modules/bootstrap/dist/js/bootstrap.js'
-	     ])
-	.pipe(gulp.dest('./static/'));
+gulp.task('ready-non-commonjs-libs', function(){
+    var pkg = require('./package.json');
+    us.each(pkg.browser, function(val, key){
+	console.log('copy: ' + key);
+	gulp.src(val)
+	    .pipe(gulp.dest('./deploy/'));
+    });
 });
+
+
+// See what browserify-shim is up to.
+//process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
 
 // Browser runtime environment construction.
-gulp.task('client-build', function() {
-    return browserify()
-    //.require('jquery')
-    //.require('jquery-ui')
-    //.require('bootstrap')
-    //.require('jsplumb')
-    //.require('tablesorter')
-    //.require('./connectors-sugiyama.js')
-    //.require('./js/NoctuaEditor.js')
-	.require('bbop')
-	.require('bbopx')
-	.require('amigo2')
-	.exclude('ringo/httpclient') // not in npm, don't need in browser
+gulp.task('build-client-landing', function() {
+    browserify('./js/NoctuaLanding.js')
+    // not in npm, don't need in browser
+	.exclude('ringo/httpclient')
 	.bundle()
-    //Pass desired output filename to vinyl-source-stream
-	.pipe(source('commonjs-runtime.js'))
-    // Start piping stream to tasks!
-	.pipe(gulp.dest('./static/'));
+    // desired output filename to vinyl-source-stream
+	.pipe(source('NoctuaLanding.js'))
+	.pipe(gulp.dest('./deploy/'));
+});
+gulp.task('build-client-editor', function() {
+    browserify('./js/NoctuaEditor.js')
+    // not in npm, don't need in browser
+	.exclude('ringo/httpclient')
+	.bundle()
+    // desired output filename to vinyl-source-stream
+	.pipe(source('NoctuaEditor.js'))
+	.pipe(gulp.dest('./deploy/')); // 
 });
 
+// // Rerun the task when a file changes
+// gulp.task('watch', function() {
+//   gulp.watch(paths.scripts, ['scripts']);
+//   gulp.watch(paths.images, ['images']);
+// });
 
-gulp.task('compress', function() {
-  return gulp.src('static/noctua-runtime.js')
-    .pipe(uglify())
-    .pipe(gulp.dest('./static/'));
-});
+// gulp.task('compress', function() {
+//   return gulp.src('static/noctua-runtime.js')
+//     .pipe(uglify())
+//     .pipe(gulp.dest('./deploy/'));
+// });
 
 // The default task (called when you run `gulp` from cli)
 //gulp.task('default', ['watch', 'scripts', 'images']);

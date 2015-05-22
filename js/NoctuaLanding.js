@@ -2,6 +2,11 @@
 //// ...
 ////
 
+var jQuery = require('jquery');
+var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
+var amigo = require('amigo2');
+
 var global_known_taxons = [
     ['3702', 'Arabidopsis thaliana'],
     ['9913', 'Bos taurus'],
