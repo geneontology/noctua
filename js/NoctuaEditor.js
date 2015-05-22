@@ -21,14 +21,14 @@
  * @param {Object} in_token TODO
  */
 var MMEnvInit = function(in_model, in_relations, in_token){
-    
+
     // TODO: Add this as an argument.
     //var use_waypoints_p = true;
     // var use_waypoints_p = false;
     // Form is: { <sub>: <obj>: [[x1, y1], ..., [xn, yn]] }
     // Where 1 is the initial node and n is the terminal node.
     var waypoints = {};
-    
+
     var logger = new bbop.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
@@ -42,7 +42,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var bme_edge = bbopx.noctua.edit.edge;
     var bme_node = bbopx.noctua.edit.node;
     var widgets = bbopx.noctua.widgets;
-    
+
     // Help with strings and colors--configured separately.
     var aid = new bbop.context(amigo.data.context);
 
@@ -100,7 +100,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	//     'policy': 'mutable',
 	//     'cardinality': 'many',
 	//     'placeholder': 'Enter evidence type'
-	    
+
 	// },
 	// {
 	//     'id': 'source',
@@ -124,7 +124,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
     var instance_annotation_config = [
@@ -155,27 +155,28 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	{
 	    'id': 'evidence',
 	    'label': 'Evidence',
-	    'widget_type': 'text',
+	    //'widget_type': 'text',
+	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type'
-	    
+	    'placeholder': 'Enter evidence type',
+	    'placeholder_secondary': 'Enter source'
 	},
-	{
-	    'id': 'source',
-	    'label': 'Source',
-	    'widget_type': 'text',
-	    'policy': 'mutable',
-	    'cardinality': 'many',
-	    'placeholder': 'Enter reference type'
-	},
+	// {
+	//     'id': 'source',
+	//     'label': 'Source',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter reference type'
+	// },
 	{
 	    'id': 'comment',
 	    'label': 'Comment',
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
     var fact_annotation_config = [
@@ -206,27 +207,28 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	{
 	    'id': 'evidence',
 	    'label': 'Evidence',
-	    'widget_type': 'text',
+	    //'widget_type': 'text',
+	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type'
-	    
+	    'placeholder': 'Enter evidence type',
+	    'placeholder_secondary': 'Enter source'
 	},
-	{
-	    'id': 'source',
-	    'label': 'Source',
-	    'widget_type': 'text',
-	    'policy': 'mutable',
-	    'cardinality': 'many',
-	    'placeholder': 'Enter reference type'
-	},
+	// {
+	//     'id': 'source',
+	//     'label': 'Source',
+	//     'widget_type': 'text',
+	//     'policy': 'mutable',
+	//     'cardinality': 'many',
+	//     'placeholder': 'Enter reference type'
+	// },
 	{
 	    'id': 'comment',
 	    'label': 'Comment',
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
 
@@ -261,15 +263,24 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_occ_auto_elt = '#' + simple_mf_free_occ_auto_id;
     var simple_mf_free_add_btn_id = 'simple_mf_free_adder_button';
     var simple_mf_free_add_btn_elt = '#' + simple_mf_free_add_btn_id;
-    // BP button contact points.
-    var simple_bp_enb_auto_id = 'simple_bp_enb_auto';
-    var simple_bp_enb_auto_elt = '#' + simple_bp_enb_auto_id;
-    var simple_bp_act_auto_id = 'simple_bp_act_auto';
-    var simple_bp_act_auto_elt = '#' + simple_bp_act_auto_id;
-    var simple_bp_occ_auto_id = 'simple_bp_occ_auto';
-    var simple_bp_occ_auto_elt = '#' + simple_bp_occ_auto_id;
-    var simple_bp_add_btn_id = 'simple_bp_adder_button';
-    var simple_bp_add_btn_elt = '#' + simple_bp_add_btn_id;
+    // BP (restrict) button contact points.
+    var simple_bp_restrict_enb_auto_id = 'simple_bp_restrict_enb_auto';
+    var simple_bp_restrict_enb_auto_elt = '#' + simple_bp_restrict_enb_auto_id;
+    var simple_bp_restrict_act_auto_id = 'simple_bp_restrict_act_auto';
+    var simple_bp_restrict_act_auto_elt = '#' + simple_bp_restrict_act_auto_id;
+    var simple_bp_restrict_occ_auto_id = 'simple_bp_restrict_occ_auto';
+    var simple_bp_restrict_occ_auto_elt = '#' + simple_bp_restrict_occ_auto_id;
+    var simple_bp_restrict_add_btn_id = 'simple_bp_restrict_adder_button';
+    var simple_bp_restrict_add_btn_elt = '#' + simple_bp_restrict_add_btn_id;
+    // BP (free form) button contact points.
+    var simple_bp_free_enb_auto_id = 'simple_bp_free_enb_auto';
+    var simple_bp_free_enb_auto_elt = '#' + simple_bp_free_enb_auto_id;
+    var simple_bp_free_act_auto_id = 'simple_bp_free_act_auto';
+    var simple_bp_free_act_auto_elt = '#' + simple_bp_free_act_auto_id;
+    var simple_bp_free_occ_auto_id = 'simple_bp_free_occ_auto';
+    var simple_bp_free_occ_auto_elt = '#' + simple_bp_free_occ_auto_id;
+    var simple_bp_free_add_btn_id = 'simple_bp_free_adder_button';
+    var simple_bp_free_add_btn_elt = '#' + simple_bp_free_add_btn_id;
     // Other contact points.
     var model_ann_id = 'menu-model-annotations';
     var model_ann_elt = '#' + model_ann_id;
@@ -301,6 +312,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var ping_btn_elt = '#' + ping_btn_id;
     var test_btn_id = 'action_test';
     var test_btn_elt = '#' + test_btn_id;
+    var exp_btn_id = 'action_shin';
+    var exp_btn_elt = '#' + exp_btn_id;
     var help_btn_id = 'action_help';
     var help_btn_elt = '#' + help_btn_id;
     // A hidden for to communicate with the outside world.
@@ -328,7 +341,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var vbox_width = 5;
     var vbox_height = 5;
     function _box_top(raw_y){
-	return ((box_height + v_spacer) * raw_y) + v_spacer;	
+	return ((box_height + v_spacer) * raw_y) + v_spacer;
     }
     function _box_left(raw_x){
 	return ((box_width + h_spacer) * raw_x) + h_spacer;
@@ -361,7 +374,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
             //Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    EndpointStyles : [
-		{ 
+		{
 		    width: 15,
 		    height: 15,
 		    //strokeStyle: '#000000',
@@ -473,7 +486,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
             connector:[ "Sugiyama", { curviness: 25 } ]
         });
     }
-    
+
     function _attach_node_dblclick_ann(sel){
 
 	// BUG/TODO: trial
@@ -482,11 +495,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	jQuery(sel).dblclick(
 	    function(event){
 		event.stopPropagation();
-		
+
 		//var target_elt = jQuery(event.target);
 		var target_id = jQuery(this).attr('id');
 		var enode = ecore.get_node_by_elt_id(target_id);
-		if( enode ){		    
+		if( enode ){
 		    var ann_edit_modal = widgets.edit_annotations_modal;
 		    var eam = ann_edit_modal(instance_annotation_config,
 					     ecore, manager, enode.id(),
@@ -511,7 +524,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
-		if( enode ){		    
+		if( enode ){
 		    var nedit = widgets.edit_node_modal(ecore, manager, enode,
 							in_relations, aid,
 							gserv, gconf);
@@ -598,7 +611,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
 
     	var new_conn_args = {
-	    // remember that edge ids and elts ids are the same 
+	    // remember that edge ids and elts ids are the same
     	    'source': ecore.get_node_elt_id(sn),
     	    'target': ecore.get_node_elt_id(tn),
 	    //'label': 'foo' // works
@@ -680,7 +693,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
-    // 
+    //
     function _inconsistency_check(resp, man){
 	ll('doing the inconsistent_p check');
 	if( resp.inconsistent_p() &&
@@ -691,6 +704,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		  jQuery(graph_container_div).hasClass('model-inconsistent') ){
 	    // Restore the interface coloration.
 	    jQuery(graph_container_div).removeClass('model-inconsistent');
+	}
+    }
+
+    // See what the undo/redo listing looks like.
+    function _trigger_undo_redo_lookup(){
+	if( manager.user_token() ){ // only try if logged-in; priv op
+	    manager.get_model_undo_redo(ecore.get_id());
 	}
     }
 
@@ -722,7 +742,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    ecore.annotations(annotations);
 	}
     }
-    
+
     // squeeze the inferred individual info out to id -> types
     function _squeezed_inferred(inferred_individuals){
 	var inf_indv_lookup = {}; // ids to types
@@ -743,7 +763,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 					facts, annotations){
 
 	ll('rebuilding from scratch');
-	
+
 	// Wipe UI.
 	each(ecore.get_nodes(),
 	     function(enid, en){
@@ -816,14 +836,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		     fin_y = layout_coords['y'];
 		 }else{
 		     fin_x = _vari();
-		     fin_y = _vari();		 
+		     fin_y = _vari();
 		 }
 
 		 // Take the final coordinate and add it as a hint into
 		 // the edit node.
 		 en.x_init(fin_x);
 		 en.y_init(fin_y);
-	     });	
+	     });
 
 	///
 	/// Assemble (optionally used) waypoint information.
@@ -839,29 +859,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// 	 var vn = new bme_node(id, 'virtual');
 	// 	 vn.x_init(_vbox_left(raw_x));
 	// 	 vn.y_init(_vbox_top(raw_y));
-	
+
 	// 	 ecore.add_node(vn);
-	//      });	
-	
+	//      });
+
 	// Add additional waypoint path information to the edges.
 	// Points are either in the layout_store or they are virtual
 	// and we will generate them as we go.
 	each(layout['paths'],
     	     function(path){
-		 
+
 		 // Ensure the require waypoints structure using the
 		 // only two real points of reference.
 		 var nodes = path['nodes'];
 		 var sub_id = nodes[0];
 		 var obj_id = nodes[nodes.length -1];
-		 
+
 		 // Now iterate over all of the waypoints to make it
 		 // there.
 		 // Note that we realize that the first and last ones
 		 // will be irrelevant since we'll be relying on
 		 // jsPlumb to figure those out for us.
 		 var layout_waypoints = path['waypoints'];
-		 each(layout_waypoints, 
+		 each(layout_waypoints,
 		      function(waypoint, wi){
 			  if( wi > 0 && wi < (layout_waypoints.length -1) ){
 			      var vc = [
@@ -906,16 +926,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		     function(eeid, eedge){
     			 _connect_with_edge(eedge);
     		     });
-		
+
 		// Edit annotations on doible click.
 		_attach_node_dblclick_ann('.demo-window');
 
 		// Make nodes draggable.
 		_attach_node_draggable(".demo-window");
-		// if( use_waypoints_p ){	
+		// if( use_waypoints_p ){
 		//     _attach_node_draggable(".waypoint");
 		// }
-		
+
 		// Make nodes able to use edit dialog.
 		_attach_node_click_edit('.open-dialog');
 
@@ -924,11 +944,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		// if( use_waypoints_p ){ // same for waypoints/virtual nodes
 		//     _make_selector_target('.waypoint');
     		// }
-		
+
 		// Make the konn class available as source from inside the
 		// real node class elements.
 		_make_selector_source('.demo-window', '.konn');
-		
+
     	    });
     }
 
@@ -983,7 +1003,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		     if( ! dyn_node ){
 			 alert('id issue somewhere--refresh to see state');
 		     }else{
-			 
+
 			 // Initial node layout settings.
     			 var dyn_x = _vari() +
 				 jQuery(graph_container_div).scrollLeft();
@@ -991,10 +1011,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 				 jQuery(graph_container_div).scrollTop();
 			 dyn_node.x_init(dyn_x);
 			 dyn_node.y_init(dyn_y);
-			 
+
 			 // Draw it to screen.
 			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
-			 
+
 			 // Mark it for refreshing.
 			 refresh_node_id = dyn_node.id();
 		     }
@@ -1003,7 +1023,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		 // Refresh any node created or updated in the jsPlumb
 		 // physical view.
 		 if( refresh_node_id ){
-		     
+
 		     // Make node active in display.
 		     var dnid = refresh_node_id;
 		     var ddid = '#' + ecore.get_node_elt_id(dnid);
@@ -1018,29 +1038,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		     // _attach_node_click_edit(ddid);
 		     // _make_selector_target(ddid);
 		     // _make_selector_source(ddid, '.konn');
-		     
+
     		     jsPlumb.repaintEverything();
 		     refresh_node_id = null; // reset in case of error
 		 }
 	     });
-	
+
 	// Now look at individuals/edges (by individual) for
 	// purging.
 	each(individuals,
 	     function(ind){
 		 var source_node = ecore.get_node_by_individual(ind);
-		 
+
 		 var snid = source_node.id();
 		 var src_edges = ecore.get_edges_by_source(snid);
 		 //var src_edges = ecore.get_edges_by_target(snid);
-		 
+
 		 // Delete all edges/connectors for said node in
 		 // model.
 		 each(src_edges,
 		      function(src_edge){
 			  ecore.remove_edge(src_edge.id());
 		      });
-		 
+
 		 // Now delete all edges for the node in the UI.
 		 var snid_elt = ecore.get_node_elt_id(snid);
 		 var src_conns =
@@ -1049,11 +1069,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		      function(src_conn){
 			  instance.detach(src_conn);
 		      });
-		 
+
 		 // // Add all edges from the new individuals to the
 		 // // model.
 		 // var redges = ecore.add_edges_from_individual(ind, aid);
-		 
+
 		 // // Now add them to the display.
 		 // each(redges,
 		 //      function(redge){
@@ -1076,18 +1096,19 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	     });
 	ecore.annotations(replacement_annotations);
     }
-    
+
     ///
     /// Manager registration and ordering.
     ///
-    
+
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'foo1', _inconsistency_check, 10);
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
-    // TODO: Still need this?
-    manager.register('postrun', 'foo4', function(resp, man){ // experimental	
+    manager.register('postrun', 'foo4', function(resp, man){ // experimental
+
+	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
 	if( barclient ){
 	    barclient.message({'message_type': resp.message_type(),
@@ -1096,18 +1117,19 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    		       'signal': resp.signal()
 	    		      });
 	}
+
     }, 7);
     manager.register('manager_error', 'foo', function(resp, man){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
-    
+
     manager.register('warning', 'foo', function(resp, man){
 	var comment = resp.commentary() || null;
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed.\n' + comment);
     }, 10);
-    
+
     manager.register('error', 'foo', function(resp, man){
 
 	var perm_flag = "InsufficientPermissionsException";
@@ -1123,16 +1145,41 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		  'your operation was likely not performed.\n' + comment);
 	}
     }, 10);
-    
+
     // Remote action registrations.
     manager.register('meta', 'foo', function(resp, man){
-    	alert('Meta operation successful: ' + resp.message());
+    	//alert('Meta operation successful: ' + resp.message());
+
+	///
+	/// Handle undo/redo.
+	///
+
+	//
+	jQuery(undo_btn_elt).parent().addClass('disabled');
+	jQuery(undo_btn_elt).unbind('click');
+	if( resp.has_undo_p() ){
+	    //ll('has UNDO');
+	    jQuery(undo_btn_elt).parent().removeClass('disabled');
+	    jQuery(undo_btn_elt).click(function(){
+		manager.perform_undo(ecore.get_id());
+	    });
+	}
+	//
+	jQuery(redo_btn_elt).parent().addClass('disabled');
+	jQuery(redo_btn_elt).unbind('click');
+	if( resp.has_redo_p() ){
+	    //ll('has REDO');
+	    jQuery(redo_btn_elt).parent().removeClass('disabled');
+	    jQuery(redo_btn_elt).click(function(){
+		manager.perform_redo(ecore.get_id());
+	    });
+	}
     }, 10);
 
     // Only run the internal function when the filters are passed.
     var seen_packets = {};
     function _continue_update_p(resp, man, run_fun){
-	
+
 	var ret = false;
 
 	var this_packet = resp.packet_id();
@@ -1178,7 +1225,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			//     // Otherwise, ignore it.
 			//     ll("ignoring other's query request");
 			// }
-			
+
 		    }
 		}
 	    }
@@ -1191,13 +1238,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// of the function as an argument once the
 	// moderator is on.
 	if( _continue_update_p(resp, man) ){
-	
+
 	    var mid = resp.model_id();
 	    var mindividuals = resp.individuals();
 	    var mindividuals_i = resp.inferred_individuals();
 	    var mfacts = resp.facts();
 	    var mannotations = resp.annotations();
-	
+
 	    // Deal with model.
 	    // if( ! mid || is_empty(mindividuals) ){
 	    //     alert('no data/individuals in inconsistent');
@@ -1215,13 +1262,18 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.get_layout();
 	}
     }, 9);
+    manager.register('rebuild', 'bib', function(){
+	// Update undo/redo info.
+	_trigger_undo_redo_lookup();
+	//console.log('merge get-undo-redo');
+    }, 8);
 
     manager.register('merge', 'foo', function(resp, man){
 	// TODO: This function should have the rest
 	// of the function as an argument once the
 	// moderator is on.
 	if( _continue_update_p(resp, man) ){
-	
+
 	    var individuals = resp.individuals();
 	    var individuals_i = resp.inferred_individuals();
 	    var facts = resp.facts();
@@ -1241,27 +1293,32 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.get_layout();
 	}
     }, 9);
+    manager.register('merge', 'bib', function(){
+	// Update undo/redo info.
+	_trigger_undo_redo_lookup();
+	//console.log('merge get-undo-redo');
+    }, 8);
 
     ///
     /// UI event registration.
-    ///    
+    ///
 
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection", function(info, original_evt) {
-	
+
 	// If it looks like a new drag-and-drop event
 	// connection.
 	if( ! original_evt ){
 	    ll('knock-on "connection": ignoring.');
 	}else{
 	    ll('direct "connection" event.');
-	    
+
 	    // Get the necessary info from the
 	    // connection.
 	    var sn = info.sourceId;
 	    var tn = info.targetId;
-	    
+
 	    // TODO/BUG: Destroy the autogen one (I
 	    // can't make them behave as well as the
 	    // programmatic ones--need to understand:
@@ -1269,11 +1326,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // then create the programmatic one.
 	    // This connection is no longer needed.
 	    instance.detach(info.connection);
-	    
+
 	    // Create a new edge based on this info.
 	    var snode = ecore.get_node_by_elt_id(sn);
 	    var tnode = ecore.get_node_by_elt_id(tn);
-	    
+
 	    // Pop up the modal.
 	    var init_edge = widgets.add_edge_modal(ecore, manager,
 						   in_relations, aid,
@@ -1281,29 +1338,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    init_edge.show();
 	}
     });
-    
+
     // Detach event.
     instance.bind("connectionDetached", function(info, original_evt) {
-	
+
 	// Only to this for direct detachments, not
 	// knock-on effects from things like merge.
 	if( ! original_evt ){
 	    ll('knock-on "connectionDetached": ignoring.');
 	}else{
 	    ll('direct "connectionDetach" event.');
-	    
+
 	    var cid = info.connection.id;
 	    ll('there was a connection detached: ' + cid);
 	    var eeid = ecore.get_edge_id_by_connector_id(cid);
 	    ll('looks like edge: ' + eeid);
-	    
+
 	    var edge = ecore.get_edge(eeid);
 	    manager.remove_fact(ecore.get_id(), edge.source(),
 				edge.target(), edge.relation());
 	}
     });
-    
-    // TODO: 
+
+    // TODO:
     // Would like this, since otherwise I'll have to deal with
     // decoding what is happening and possibly a race condition.
     // https://github.com/sporritt/jsPlumb/issues/157
@@ -1312,58 +1369,63 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	//ll('there was a connection moved: ' + cid);
     	alert('there was a "connectionMoved" event: ' + cid);
     });
-    
+
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(function(){
         jsPlumb.repaintEverything();
     });
 
     ///
-    /// Activate addition template for BP.
+    /// Activate addition template for BP (restrict).
     ///
 
     // Storage for the actual selected identifiers.
-    var simple_bp_enb_auto_val = null;
-    var simple_bp_act_auto_val = null;
-    var simple_bp_occ_auto_val = null;
+    var simple_bp_restrict_enb_auto_val = null;
+    var simple_bp_restrict_act_auto_val = null;
+    var simple_bp_restrict_occ_auto_val = null;
 
     // bioentity
-    var simple_bp_enb_auto_args = {
+    var simple_bp_restrict_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_bp_enb_auto_val = doc['bioentity'] || null;
+	    simple_bp_restrict_enb_auto_val = doc['bioentity'] || null;
     	}
     };
     // molecular function
-    var simple_bp_act_auto_args = {
+    var simple_bp_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_bp_act_auto_val = doc['annotation_class'] || null;
+	    simple_bp_restrict_act_auto_val = doc['annotation_class'] || null;
     	}
     };
     // location/occurs_in
-    var simple_bp_occ_auto_args = {
+    var simple_bp_restrict_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_bp_occ_auto_val = doc['annotation_class'] || null;
+	    simple_bp_restrict_occ_auto_val = doc['annotation_class'] || null;
     	}
     };
 
-    var simple_bp_enb_auto =
-	    new bbop.widget.search_box(gserv, gconf, simple_bp_enb_auto_id,
-				       simple_bp_enb_auto_args);
-    simple_bp_enb_auto.lite(true);
-    simple_bp_enb_auto.add_query_filter('document_category', 'bioentity');
-    simple_bp_enb_auto.set_personality('bioentity');
+    var simple_bp_restrict_enb_auto =
+	    new bbop.widget.search_box(gserv, gconf,
+				       simple_bp_restrict_enb_auto_id,
+				       simple_bp_restrict_enb_auto_args);
+    simple_bp_restrict_enb_auto.lite(true);
+    simple_bp_restrict_enb_auto.add_query_filter('document_category',
+						 'bioentity');
+    simple_bp_restrict_enb_auto.set_personality('bioentity');
 
     var simple_bp_restrict_act_auto =
 	    new bbop.widget.search_box(gserv, gconf,
@@ -1404,22 +1466,118 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     });
 
     // Add new remote node button.
-    jQuery(simple_bp_add_btn_elt).click(
+    jQuery(simple_bp_restrict_add_btn_elt).click(
     	function(){
-    	    var enb = simple_bp_enb_auto_val || '';
-    	    var act = simple_bp_act_auto_val || '';
-    	    var occ = simple_bp_occ_auto_val || '';
+    	    var enb = simple_bp_restrict_enb_auto_val || '';
+    	    var act = simple_bp_restrict_act_auto_val || '';
+    	    var occ = simple_bp_restrict_occ_auto_val || '';
 
     	    if( act == '' ){
     		alert('Must select activity field from autocomplete list.');
     	    }else{
 		// Wipe controls' state, internal and external.
-		simple_bp_enb_auto_val = null;
-    		simple_bp_act_auto_val = null;
-    		simple_bp_occ_auto_val = null;
-		jQuery(simple_bp_enb_auto_elt).val('');
-    		jQuery(simple_bp_act_auto_elt).val('');
-    		jQuery(simple_bp_occ_auto_elt).val('');
+		simple_bp_restrict_enb_auto_val = null;
+    		simple_bp_restrict_act_auto_val = null;
+    		simple_bp_restrict_occ_auto_val = null;
+		jQuery(simple_bp_restrict_enb_auto_elt).val('');
+    		jQuery(simple_bp_restrict_act_auto_elt).val('');
+    		jQuery(simple_bp_restrict_occ_auto_elt).val('');
+
+		// Send message to server.
+		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+    	    }
+    	}
+    );
+
+    ///
+    /// Activate addition template for BP (free).
+    ///
+
+    // Storage for the actual selected identifiers.
+    var simple_bp_free_enb_auto_val = null;
+    var simple_bp_free_act_auto_val = null;
+    var simple_bp_free_occ_auto_val = null;
+
+    // bioentity
+    var simple_bp_free_enb_auto_args = {
+    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
+    	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['bioentity_label']);
+	    simple_bp_free_enb_auto_val = doc['bioentity'] || null;
+    	}
+    };
+    // molecular function
+    var simple_bp_free_act_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_bp_free_act_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+    // location/occurs_in
+    var simple_bp_free_occ_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
+    	'list_select_callback':
+    	function(doc){
+    	    //alert('adding: ' + doc['annotation_class_label']);
+	    simple_bp_free_occ_auto_val = doc['annotation_class'] || null;
+    	}
+    };
+
+    var simple_bp_free_enb_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_free_enb_auto_id,
+				       simple_bp_free_enb_auto_args);
+    simple_bp_free_enb_auto.lite(true);
+    simple_bp_free_enb_auto.add_query_filter('document_category', 'bioentity');
+    simple_bp_free_enb_auto.set_personality('bioentity');
+
+    var simple_bp_free_act_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_free_act_auto_id,
+				       simple_bp_free_act_auto_args);
+    simple_bp_free_act_auto.lite(true);
+    simple_bp_free_act_auto.add_query_filter('document_category',
+					     'ontology_class');
+    simple_bp_free_act_auto.add_query_filter('regulates_closure_label',
+    					     'biological_process');
+    simple_bp_free_act_auto.set_personality('ontology');
+
+    var simple_bp_free_occ_auto =
+	    new bbop.widget.search_box(gserv, gconf, simple_bp_free_occ_auto_id,
+				       simple_bp_free_occ_auto_args);
+    simple_bp_free_occ_auto.lite(true);
+    simple_bp_free_occ_auto.add_query_filter('document_category',
+					     'ontology_class');
+    simple_bp_free_occ_auto.add_query_filter('source',
+					     'molecular_function', ['-']);
+    simple_bp_free_occ_auto.add_query_filter('source',
+					     'biological_process', ['-']);
+    simple_bp_free_occ_auto.set_personality('ontology');
+
+    // Add new remote node button.
+    jQuery(simple_bp_free_add_btn_elt).click(
+    	function(){
+    	    var enb = simple_bp_free_enb_auto_val || '';
+    	    var act = simple_bp_free_act_auto_val || '';
+    	    var occ = simple_bp_free_occ_auto_val || '';
+
+    	    if( act == '' ){
+    		alert('Must select activity field from autocomplete list.');
+    	    }else{
+		// Wipe controls' state, internal and external.
+		simple_bp_free_enb_auto_val = null;
+    		simple_bp_free_act_auto_val = null;
+    		simple_bp_free_occ_auto_val = null;
+		jQuery(simple_bp_free_enb_auto_elt).val('');
+    		jQuery(simple_bp_free_act_auto_elt).val('');
+    		jQuery(simple_bp_free_occ_auto_elt).val('');
 
 		// Send message to server.
 		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
@@ -1435,11 +1593,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_enb_auto_val = null;
     var simple_mf_restrict_act_auto_val = null;
     var simple_mf_restrict_occ_auto_val = null;
-    
+
     // bioentity
     var simple_mf_restrict_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
@@ -1450,6 +1609,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1460,6 +1620,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1475,7 +1636,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_enb_auto.add_query_filter('document_category',
 						 'bioentity');
     simple_mf_restrict_enb_auto.set_personality('bioentity');
-    
+
     var simple_mf_restrict_act_auto =
 	    new bbop.widget.search_box(gserv, gconf,
 				       simple_mf_restrict_act_auto_id,
@@ -1486,7 +1647,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_act_auto.add_query_filter('regulates_closure_label',
     						 'molecular_function', ['*']);
     simple_mf_restrict_act_auto.set_personality('annotation');
-    
+
     var simple_mf_restrict_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf,
 				       simple_mf_restrict_occ_auto_id,
@@ -1519,7 +1680,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var enb = simple_mf_restrict_enb_auto_val || '';
     	var act = simple_mf_restrict_act_auto_val || '';
     	var occ = simple_mf_restrict_occ_auto_val || '';
-	
+
     	if( act == '' ){
     	    alert('Must select activity field from autocomplete list.');
     	}else{
@@ -1530,7 +1691,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery(simple_mf_restrict_enb_auto_elt).val('');
     	    jQuery(simple_mf_restrict_act_auto_elt).val('');
     	    jQuery(simple_mf_restrict_occ_auto_elt).val('');
-	    
+
 	    // Send message to server.
 	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	}
@@ -1549,6 +1710,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
     	'value_template': '{{bioentity_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
@@ -1559,6 +1721,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1569,6 +1732,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_free_occ_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
     	'list_select_callback':
     	function(doc){
     	    //alert('adding: ' + doc['annotation_class_label']);
@@ -1592,7 +1756,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
     					     'molecular_function');
     simple_mf_free_act_auto.set_personality('ontology');
-    
+
     var simple_mf_free_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_mf_free_occ_auto_id,
 				       simple_mf_free_occ_auto_args);
@@ -1610,7 +1774,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var enb = simple_mf_free_enb_auto_val || '';
     	var act = simple_mf_free_act_auto_val || '';
     	var occ = simple_mf_free_occ_auto_val || '';
-	
+
     	if( act == '' ){
     	    alert('Must select activity field from autocomplete list.');
     	}else{
@@ -1621,7 +1785,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery(simple_mf_free_enb_auto_elt).val('');
     	    jQuery(simple_mf_free_act_auto_elt).val('');
     	    jQuery(simple_mf_free_occ_auto_elt).val('');
-	    
+
 	    // Send message to server.
 	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	}
@@ -1643,7 +1807,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var nz = instance.getZoom() - 0.25;
     	_set_zoom(nz);
     });
-    
+
     // Refresh button.
     // Trigger a model get and an inconsistent redraw.
     jQuery(refresh_btn_elt).click(function(){
@@ -1691,6 +1855,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
 			       init_facts, init_anns);
     _refresh_tables();
+    // Get initial information.
+    // TODO: This will be unnecessary in future versions where the
+    // model was pulled live (standard rebuild).
+    _trigger_undo_redo_lookup();
     _shields_down();
 
     ///
@@ -1723,12 +1891,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// // Change our user id.
 	// manager.user_token(uid);
-	// 
+	//
 	// TODO: Actually, this call could be used to paint or display with
 	// our user info beyond the token.
     }
 
-    // Catch both the regular back-and-forth, as well as the 
+    // Catch both the regular back-and-forth, as well as the
     function _on_message_update(data){
 	//function _on_message_update(data, uid, ucolor){
 
@@ -1739,7 +1907,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// Add to the top of the message list.
 	reporter.comment(data);
-	
+
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
 	//alert('someone did something');
@@ -1756,7 +1924,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    });
 	}
     }
-    
+
     function _on_clairvoyance_update(data){
 	//function _on_clairvoyance_update(id, color, top, left){
 
@@ -1801,7 +1969,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 		var iid = obj['item_id'];
 		var top = obj['top'];
-		var left = obj['left'];	
+		var left = obj['left'];
 
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
@@ -1815,7 +1983,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    // TODO: Still seems a bit slow. Tried throwing events as
 		    // well, but didn't work. This is certainly the "right"
 		    // way to do it...
-    		    //instance.repaintEverything();	
+    		    //instance.repaintEverything();
 		    instance.repaint(enelt);
 		}
 	    });
@@ -1863,10 +2031,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Jimmy into telekinesis format and trigger
     // _on_telekinesis_update().
     function _on_layout_response(data){
-	
+
 	//console.log('_on_layout_response:', data);
 	if( data && data['response'] ){
-	    
+
 	    // Prep layout info.
 	    var tk_items = {'objects':[]};
 	    each(data['response'], function(iid, tnl){
@@ -1876,7 +2044,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    'left': tnl['left']
 		});
 	    });
-	    
+
 	    //
 	    //console.log('tk_items:', tk_items);
 	    _on_telekinesis_update(tk_items);
@@ -1927,88 +2095,127 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	eam.show();
     });
 
-    // 
+    //
     jQuery(test_btn_elt).click(function(){
 	//alert('in progress');
-	
+
 	// Grab node.
 	var nset = ecore.get_nodes();
 	var nkeys = bbop.core.get_keys(nset);
 	var node = nset[nkeys[0]];
 	if( node ){
-	    // 
+	    //
 	    //alert('in progress: + ' + node.id());
 	    //bbop_mme_widgets.contained_modal('shield');
 	    //var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
 	    var mdl = bbopx.noctua.widgets.compute_shield();
 	    mdl.show();
-	    
+
 	    // Works.
  	    // Test that destroy works.
 	    window.setTimeout(
 		function(){
 		    mdl.destroy();
-		    alert('I did nothing. You wasted two seconds.');
+		    alert('I did nothing. You wasted two seconds. Ha!');
 		}, 2000);
 	}
     });
 
-    // Toggle the visibility of the part_of connectors. 
+    // WARNING: Skunkworks for adding new things to the manager.
+    // Start with an empty model as we run through this.
+    // TODO/BUG: DO_NOT_USE_THIS.
+    jQuery(exp_btn_elt).click(function(){
+
+	// Get the modal up.
+	var mdl = new bbopx.noctua.widgets.contained_modal(
+	    'dialog',
+	    'Please be patient...',
+	    'Hey!');
+	mdl.show();
+
+	// Just a hook to an experimental method for easy access to
+	// the manager.
+	var reqs = new bbopx.minerva.request_set(manager.user_token(),
+						 'action', ecore.get_id());
+
+	/// Individuals.
+	// axon guidance receptor activity
+	reqs.add_simple_individual('GO:0008046');
+	var mf = reqs.last_individual_id();
+	// neurogenesis
+	reqs.add_simple_individual('GO:0022008');
+	var bp = reqs.last_individual_id();
+	// cell part
+	reqs.add_simple_individual('GO:0004464');
+	var loc = reqs.last_individual_id();
+	// Drd3
+	reqs.add_simple_individual('MGI:MGI:94925');
+	var gp = reqs.last_individual_id();
+
+	// Edges and evidence.
+	reqs.add_fact(mf, bp, 'part_of');
+	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
+				  mf, bp, 'part_of');
+	reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
+	reqs.add_fact(mf, gp, 'occurs_in');
+
+	manager.request_with(reqs, ecore.get_id());
+    });
+
+    // Toggle the visibility of the part_of connectors.
     var viz_p = true;
     jQuery(toggle_part_of_elt).click(function(){
-	
+
 	// First, collect all of the part_of connections.
 	var poc = {};
-	each(ecore.get_edges(),
-	     function(edge_id){
-		 var edge = ecore.get_edge(edge_id);
-		 //if( edge && edge.relation() == 'part_of' ){
-		 if( edge && edge.relation() == 'BFO:0000050' ){
-		     var conn_id =
-			     ecore.get_connector_id_by_edge_id(edge.id());
-		     poc[conn_id] = true;
-		 }
-	     });	    
-	
+	each(ecore.get_edges(), function(edge_id){
+	    var edge = ecore.get_edge(edge_id);
+	    //if( edge && edge.relation() == 'part_of' ){
+	    if( edge && edge.relation() == 'BFO:0000050' ){
+		var conn_id =
+		    ecore.get_connector_id_by_edge_id(edge.id());
+		poc[conn_id] = true;
+	    }
+	});
+
 	// Switch viz.
 	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
-	
+
 	// Toggle viz on and off.
-	each(instance.getConnections(),
-	     function(conn){
-		 if( poc[conn.id] ){
-		     conn.setVisible(viz_p);
-		     conn.endpoints[0].setVisible(viz_p);
-		     conn.endpoints[1].setVisible(viz_p);
-		     
-		     // Disappearing is easy, making visiable
-		     // leads to artifacts.
-		     if( viz_p ){
-			 // _shields_up();
-			 // instance.doWhileSuspended(
-    			 // 	 function(){
-			 instance.repaintEverything();
-			 // });
-			 // _shields_down();
-		     }
-		 }
-	     });
+	each(instance.getConnections(), function(conn){
+	    if( poc[conn.id] ){
+		conn.setVisible(viz_p);
+		conn.endpoints[0].setVisible(viz_p);
+		conn.endpoints[1].setVisible(viz_p);
+
+		// Disappearing is easy, making visiable
+		// leads to artifacts.
+		if( viz_p ){
+		    // _shields_up();
+		    // instance.doWhileSuspended(
+    		    // 	 function(){
+		    instance.repaintEverything();
+		    // });
+		    // _shields_down();
+		}
+	    }
+	});
     });
-    
+
     // Toggle the screenshot mode.
     var screen_p = false;
     jQuery(toggle_screen_elt).click(function(){
 
 	// Toggle switch.
 	if( screen_p ){ screen_p = false; }else{ screen_p = true; }
-	
+
 	// Change the styles.
 	if( screen_p ){
 	    // Remove the side.
 	    jQuery('.app-graph-container').css('margin-left', '0em');
 	    jQuery('.app-editor-bounds').css('height', '100%');
 	    jQuery('.app-table-bounds').css('height', '0%');
-	    jQuery('.app-controls').css('width', '0em');		
+	    jQuery('.app-controls').css('width', '0em');
 	}else{
 	    // Re-establish the sides.
 	    jQuery('.app-graph-container').css('margin-left', '15em');
@@ -2016,9 +2223,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery('.app-table-bounds').css('height', '30%');
 	    jQuery('.app-controls').css('width', '15em');
 	}
-	
+
     });
-    
+
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
     bbopx.noctua.draggable_canvas(graph_container_id);
@@ -2033,9 +2240,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
-
-    // // TODO: As a test, see what the undo/redo listing looks like.
-    // manager.get_model_undo_redo(ecore.get_id());
 
     // As a use case, we want to have the title available to people in
     // their browsers.
@@ -2110,50 +2314,61 @@ jsPlumb.ready(function(){
 	    alert('environment not ready');
 	}else{
 
-	    // This manager bootstraps the editor by fetching the
-	    // model out of Minerva.
-	    var manager =
+	    // BUG: Bad, bad, bad code...
+	    // DEBUG: Path for heiko that prevents initial manager pass and
+	    // uses embedded model.
+	    if( ! global_id && global_model ){
+		// Bootstrap model into viewer--cannot edit.
+		MMEnvInit(global_model, global_known_relations, null);
+
+	    }else{
+
+		// This manager bootstraps the editor by fetching the
+		// model out of Minerva.
+		var manager =
 		    new bbopx.minerva.manager(global_barista_location,
 					      global_minerva_definition_name,
 					      start_token);
 
-	    // Have a manager and model id, defined a success callback
-	    // and try and get the full model to start the bootstrap.
-	    manager.register('manager_error', 'foo', function(resp, man){
-		alert('Early manager error (' +
-		      resp.message_type() + '): ' + resp.message());
-	    }, 10);
-	    manager.register('error', 'foo', function(resp, man){		
-		if( ! resp.commentary() ){
-		    alert('Early error (' +
-			  resp.message_type()+ '): ' + 
-			  resp.message());
-		}else{
-		    alert('Early error (' +
-			  resp.message_type() + '): ' +
-			  resp.message() + '; ' +
-			  resp.commentary());
-		}
-	    }, 10);
-	    manager.register('rebuild', 'foo', function(resp, man){
-		//alert('in');
-		// Replace placeholder at top level for debug.
-		global_model = resp.data();
-		// Bootstrap rest of session.
-		MMEnvInit(resp.data(),
-			  global_known_relations,
-			  start_token);
-	    });
-	    manager.get_model(global_id);
-	    //var rr = manager.get_model(global_id);
-	    //console.log('rr: ' + rr);
+		// Have a manager and model id, defined a success callback
+		// and try and get the full model to start the bootstrap.
+		manager.register('manager_error', 'foo', function(resp, man){
+		    alert('Early manager error (' +
+			  resp.message_type() + '): ' + resp.message());
+		}, 10);
+		manager.register('error', 'foo', function(resp, man){
+		    if( ! resp.commentary() ){
+			alert('Early error (' +
+			      resp.message_type()+ '): ' +
+			      resp.message());
+		    }else{
+			alert('Early error (' +
+			      resp.message_type() + '): ' +
+			      resp.message() + '; ' +
+			      resp.commentary());
+		    }
+		}, 10);
+		manager.register('rebuild', 'foo', function(resp, man){
+		    //alert('in');
+		    // Replace placeholder at top level for debug.
+		    global_model = resp.data();
+		    // Bootstrap rest of session.
+		    MMEnvInit(resp.data(),
+			      global_known_relations,
+			      start_token);
+		});
+		manager.get_model(global_id);
+		//var rr = manager.get_model(global_id);
+		//console.log('rr: ' + rr);
 
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
-	    if( start_token ){
-	    	bbopx.noctua.widgets.user_check(global_barista_location,
-	    					start_token, 'user_name_info');
+		// When all is said and done, let's also fillout the user
+		// name just for niceness. This is also a test of CORS in
+		// express.
+		if( start_token ){
+	    	    bbopx.noctua.widgets.user_check(global_barista_location,
+	    					    start_token,
+						    'user_name_info');
+		}
 	    }
 	}
 
