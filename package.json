@@ -37,6 +37,7 @@
 	"bbopx": "^0.9.23",
 	"cors": "2.4.1",
 	"bootstrap": "3.3.4",
+        "del": "^1.1.1",
 	"express-persona": "0.1.2",
 	"express": "3.4.6",
 	"http-proxy": "1.11.1",
@@ -63,15 +64,16 @@
     },
     "browser": {
 	"jquery": "./node_modules/jquery/jquery.js",
-	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.js",
+	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
 	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
 	"jsplumb": "./external_js/jquery.jsPlumb-1.5.5.js",
-	"tablesorter": "./external_js/jquery.tablesorter.min.js"
+	"tablesorter": "./external_js/jquery.tablesorter.min.js",
+	"connectors-sugiyama": "./js/connectors-sugiyama.js"
     },
     "browserify-shim": {
 	"jquery": { "exports": "global:jQuery" },
 	"jquery-ui": { "depends": ["jquery"] },
-	"jsplumb": { "exports": "global:jsPlumb"}
+	"jsplumb": { "exports": "global:jsPlumb" }
     },
     "bundleDependencies": [],
     "private": false,

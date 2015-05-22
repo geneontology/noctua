@@ -20,10 +20,24 @@
 
 ** Installation
   
-   You must start with a modern version of Node.js. All of the tooling
-   is built around that and should install easily with:
+   You must start with a modern version of Node.js (say >=0.12.3). All
+   of the tooling is built around that and should install easily with:
 
    : npm install
+   : ./node_modules/.bin/gulp build
+
+   Or, if you have "./node_modules/.bin" in your paht:
+
+   : npm install
+   : gulp build
+
+   Tha available gulp tasks are:
+
+   - doc - build the docs, available in doc/
+   - test - need more here
+   - build - assemble the apps for running
+   - watch - development file monitor
+   - clean - clean out /doc and /deploy
 
 ** Running
 
@@ -31,13 +45,25 @@
 
     TODO
 
+    Everybody is different, but mine is like: 
+
+    : GENEONTOLOGY="/home/sjcarbon/local/src/svn/geneontology.org/trunk/" make start-minerva-go-fast
+
 *** Barista
 
     TODO
 
+    Everybody is different, but mine is like: 
+
+    : make start-barista-dev
+
 *** Graph Editor (previously "Noctua")
 
     TODO
+
+    Everybody is different, but mine is like: 
+
+    : make start-noctua-dev
 
 ** How to use demo
 *** Generating/selecting a model

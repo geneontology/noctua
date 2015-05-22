@@ -11,9 +11,9 @@
 
     //var bbop = require('bbop').bbop;
 
-     var logger = new bbop.logger('jsPlumb-sugi');
-     logger.DEBUG = true;
-     function ll(str){ logger.kvetch(str); }
+     // var logger = new bbop.logger('jsPlumb-sugi');
+     // logger.DEBUG = true;
+     // function ll(str){ logger.kvetch(str); }
 
      var Sugiyama = function(params) {
          params = params || {};

@@ -204,10 +204,8 @@ var NoctuaLauncher = function(){
 	    ],
 	    'pup_tent_js_libraries': [
 		self.barista_location + '/socket.io/socket.io.js',
-//		'/jquery.jsPlumb-1.5.5.js',
 		'/connectors-sugiyama.js',
 		'/NoctuaEditor.js'
-//		'/commonjs-runtime.js'
 	    ],
 	    'title': name_of_the_week + ' Editor',
 	    'barista_token': barista_token,
@@ -230,7 +228,8 @@ var NoctuaLauncher = function(){
     ///
     /// Cache and template rendering.
     ///
-    var pup_tent = require('pup-tent')(['static', 'static/selectize', 'js', 'css', 'templates']);
+    var ppaths = ['static', 'static/selectize', 'deploy', 'deploy/js', 'css', 'templates'];
+    var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
@@ -239,14 +238,11 @@ var NoctuaLauncher = function(){
 	'/amigo.css']);
     pup_tent.set_common('js_libs', [
 	'/jquery.js',
-	'/bootstrap.js',
+	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
 	'/jquery.jsPlumb-1.5.5.js',
-	'/jquery.tablesorter.min.js',
-	//'/commonjs-runtime.js'
-	'/bbop.js',
-	'/bbopx.js',
-	'/amigo2.js']);
+	'/jquery.tablesorter.min.js'
+    ]);
 
     ///
     /// Termination functions.
