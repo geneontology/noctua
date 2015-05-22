@@ -496,6 +496,7 @@ var BaristaLauncher = function(){
     ///
 
     var pup_tent = require('pup-tent')(['static', 'js', 'css', 'templates']);
+    pup_tent.use_cache_p(false);
 
     // Ready the common libs (the actually mapping is taken care of
     // later on).
@@ -508,6 +509,7 @@ var BaristaLauncher = function(){
 	'/jquery-1.9.1.min.js',
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
+	//'/commonjs-runtime.js']);
 	'/bbop.js',
 	'/bbopx.js',
 	'/amigo2.js']);
