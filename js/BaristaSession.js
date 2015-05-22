@@ -2,6 +2,11 @@
 //// ...
 ////
 
+var jQuery = require('jquery');
+var bbop = require('bbop').bbop;
+var bbopx = require('bbopx');
+var amigo = require('amigo2');
+
 ///
 /// ...
 ///

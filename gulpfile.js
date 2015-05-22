@@ -1,5 +1,5 @@
 ////
-//// Usage: node ./node_modules/.bin/gulp build, doc, etc.
+//// Usage: node ./node_modules/.bin/gulp doc|test|build|watch
 ////
 
 var gulp = require('gulp');
@@ -9,14 +9,23 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var uglify = require('gulp-uglify');
 var us = require('underscore');
+//var watch = require('gulp-watch');
+//var watchify = require('watchify');
 //var concat = require('gulp-concat');
 //var sourcemaps = require('gulp-sourcemaps');
 //var del = require('del');
 
 var paths = {
-  clients: ['js/NoctuaEditor.js'],
-  scripts: ['scripts/*'],
-  tests: ['tests/*.test.js']
+    // WARNING: Cannot use glob for clients--I use the explicit listing
+    // to generate a dynamic browserify set.
+    clients: ['js/NoctuaEditor.js',
+	      'js/NoctuaLanding.js',
+	      'js/BaristaLogin.js',
+	      'js/BaristaLogout.js',
+	      'js/BaristaSession.js'],
+    support: ['js/connectors-sugiyama.js'],
+    scripts: ['scripts/*'],
+    tests: ['tests/*.test.js']
 };
 
 // Build docs directory with JSDoc.
@@ -37,13 +46,7 @@ gulp.task('test', function() {
     }));
 });
 
-// Build the clients as best we can.
-gulp.task('build', [
-    'ready-non-commonjs-libs',
-    'build-client-landing',
-    'build-client-editor'
-]);
-
+//
 gulp.task('ready-non-commonjs-libs', function(){
     var pkg = require('./package.json');
     us.each(pkg.browser, function(val, key){
@@ -53,35 +56,56 @@ gulp.task('ready-non-commonjs-libs', function(){
     });
 });
 
+// Build the clients as best we can.
+var build_tasks = [
+    'ready-non-commonjs-libs'
+];
+// Dynamically define tasks.
+us.each(paths.clients, function(file, index){
 
-// See what browserify-shim is up to.
-//process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
+    var taskname = 'build-client_' + file;
 
-// Browser runtime environment construction.
-gulp.task('build-client-landing', function() {
-    browserify('./js/NoctuaLanding.js')
-    // not in npm, don't need in browser
-	.exclude('ringo/httpclient')
-	.bundle()
-    // desired output filename to vinyl-source-stream
-	.pipe(source('NoctuaLanding.js'))
-	.pipe(gulp.dest('./deploy/'));
+    // Add to task list.
+    build_tasks.push(taskname);
+
+    // See what browserify-shim is up to.
+    //process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
+
+    // Browser runtime environment construction.
+    function _client_task(file){
+	return browserify(file)
+	// not in npm, don't need in browser
+	    .exclude('ringo/httpclient')
+	    .bundle()
+	// desired output filename to vinyl-source-stream
+	    .pipe(source(file))
+	    .pipe(gulp.dest('./deploy/'));
+    }
+    
+    // Define task.
+    gulp.task(taskname, function() {
+	return _client_task(file);
+    });
+
 });
-gulp.task('build-client-editor', function() {
-    browserify('./js/NoctuaEditor.js')
-    // not in npm, don't need in browser
-	.exclude('ringo/httpclient')
-	.bundle()
-    // desired output filename to vinyl-source-stream
-	.pipe(source('NoctuaEditor.js'))
-	.pipe(gulp.dest('./deploy/')); // 
-});
 
-// // Rerun the task when a file changes
-// gulp.task('watch', function() {
-//   gulp.watch(paths.scripts, ['scripts']);
-//   gulp.watch(paths.images, ['images']);
+gulp.task('build', build_tasks);
+//     'build-client-landing',
+//     'build-client-editor'
+// ]);
+
+// gulp.task('build-client-landing', function() {
+//     return _client_task('./js/NoctuaLanding.js');
 // });
+// gulp.task('build-client-editor', function() {
+//     return _client_task('./js/NoctuaEditor.js');
+// });
+
+// Rerun tasks when a file changes.
+gulp.task('watch', function() {
+  gulp.watch(paths.clients, ['build']);
+  gulp.watch(paths.support, ['build']);
+});
 
 // gulp.task('compress', function() {
 //   return gulp.src('static/noctua-runtime.js')
@@ -89,8 +113,33 @@ gulp.task('build-client-editor', function() {
 //     .pipe(gulp.dest('./deploy/'));
 // });
 
+// var browserify_opts = {
+//   entries: paths.clients,
+//   debug: true
+// };
+// //var opts = assign({}, watchify.args, browserify_opts);
+// var w = watchify(browserify(browserify_opts)); 
+// w.on('update', bundle); // on any dep update, runs the bundler
+// w.on('log', console.log); // output build logs to terminal
+
+// function bundle() {
+//   return w.bundle()
+//     // log errors if they happen
+//     .on('error', console.log.bind('ERROR: browserify'))
+// 	.exclude('ringo/httpclient')
+// 	.bundle()
+// 	.pipe(source('bundle.js'))
+//     // optional, remove if you don't need to buffer file contents
+// //    .pipe(buffer())
+//     // optional, remove if you dont want sourcemaps
+// //    .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
+//        // Add transformation tasks to the pipeline here.
+// //    .pipe(sourcemaps.write('./')) // writes .map file
+//     .pipe(gulp.dest('./deploy/'));
+// }
+
 // The default task (called when you run `gulp` from cli)
 //gulp.task('default', ['watch', 'scripts', 'images']);
 gulp.task('default', function() {
-    console.log("'allo 'allo!");
+    console.log("Targets are: doc, test, build, watch");
 });

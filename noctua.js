@@ -229,7 +229,8 @@ var NoctuaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    var pup_tent = require('pup-tent')(['static', 'deploy', 'css', 'templates']);
+    var ppaths = ['static', 'deploy', 'deploy/js', 'css', 'templates'];
+    var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
@@ -238,7 +239,7 @@ var NoctuaLauncher = function(){
 	'/amigo.css']);
     pup_tent.set_common('js_libs', [
 	'/jquery.js',
-	'/bootstrap.js',
+	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
 	'/jquery.jsPlumb-1.5.5.js',
 	'/jquery.tablesorter.min.js'

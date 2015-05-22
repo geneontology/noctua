@@ -495,7 +495,8 @@ var BaristaLauncher = function(){
     /// Cache and template rendering.
     ///
 
-    var pup_tent = require('pup-tent')(['static', 'deploy', 'css', 'templates']);
+    var ppaths = ['static', 'deploy', 'deploy/js', 'css', 'templates'];
+    var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
 
     // Ready the common libs (the actually mapping is taken care of
@@ -506,13 +507,13 @@ var BaristaLauncher = function(){
 	'/bbop.css',
 	'/amigo.css']);
     pup_tent.set_common('js_libs', [
-	'/jquery-1.9.1.min.js',
+	'/jquery.js',
 	'/bootstrap.min.js',
-	'/jquery-ui-1.10.3.custom.min.js',
-	//'/commonjs-runtime.js']);
-	'/bbop.js',
-	'/bbopx.js',
-	'/amigo2.js']);
+	'/jquery-ui-1.10.3.custom.min.js']);
+	// //'/commonjs-runtime.js']);
+	// '/bbop.js',
+	// '/bbopx.js',
+	// '/amigo2.js']);
 
     // Spin up the main messenging server.
     var express = require('express');
