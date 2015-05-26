@@ -1,80 +1,65 @@
 <div class="container">
 
-	<div class="header text-center">
-		<h2>Web Phenote</h2>
-	</div>
+  <div class="header text-center">
+    <h2>Web Phenote</h2>
+  </div>
 
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">Basic Interface</h3>
-		</div>
-		<div class="panel-body">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Basic Interface</h3>
+    </div>
+    <div class="panel-body">
 
-			<div class="form-group">
-				<label for="select_gene_product">Disease</label>
-      			<div class="input-group">
-					<select class="form-control" id="select_gene_product" placeholder="Pick a Disease..."></select>
-					<div id="gp_placeholder"></div>
-				</div>
-			</div>
+      <div class="form-group">
+        <label for="select_disease">Disease</label>
+        <div class="input-group">
+          <select class="form-control" id="select_disease" placeholder="Pick a Disease..."></select>
+          <div id="gp_placeholder"></div>
+        </div>
+      </div>
 
-			<div class="form-group">
-				<label for="basic_term_input">Phenotype</label>
-      			<div class="input-group">
-					<select class="form-control" id="select_phenotype_product" placeholder="Pick a phenotype..."></select>
-				</div>
-			</div>
+      <div class="form-group">
+        <label for="select_phenotype">Phenotype</label>
+        <div class="input-group">
+          <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..."></select>
+        </div>
+      </div>
 
-			<div class="form-group">
-				<label for="basic_qualifier_input">Age of onset</label>
-				<div class="input-group">
-					<select class="form-control" id="select_ageofonset_product" placeholder="Define the age of onset..."></select>
-				</div>
-			</div>
+      <div class="form-group">
+        <label for="select_ageofonset">Age of onset</label>
+        <div class="input-group">
+          <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..."></select>
+        </div>
+      </div>
 
-			<div class="form-group">
-				<label for="basic_evidence_input">Evidence</label>
-				<input id="basic_evidence_input"
-				class="form-control"
-				type="text"
-				placeholder="">
-			</div>
+      <div class="form-group">
+        <label for="basic_evidence_input">Evidence</label>
+        <input id="basic_evidence_input" class="form-control" type="text" placeholder="">
+      </div>
 
-			<div class="form-group">
-				<label for="basic_reference_input">Reference</label>
-				<input id="basic_reference_input"
-				class="form-control"
-				type="text"
-				placeholder="">
-			</div>
+      <div class="form-group">
+        <label for="basic_reference_input">Reference</label>
+        <input id="basic_reference_input" class="form-control" type="text" placeholder="">
+      </div>
 
-			<div class="form-group">
-				<label for="title">Title</label>
-				<input id="title_input"
-				class="form-control"
-				type="text"
-				placeholder="">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input id="title_input" class="form-control" type="text" placeholder="">
+      </div>
 
-				<button id="add_title_button"
-				type="submit"
-				class="btn btn-primary">Add title</button>
-			</div>
+      <button id="select_stored_jump_button" type="submit" class="btn btn-primary">Create</button>
 
-			<button id="select_stored_jump_button"
-			type="submit"
-			class="btn btn-primary">Create</button>
+      <button id="save_button" type="submit" class="btn btn-primary">Save into file</button>
 
-			<button id="save_button"
-			type="submit"
-			class="btn btn-primary">Save into file</button>
+      <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div id="alert-message">hidden</div>
+      </div>
+    </div>
 
-			<div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
-				<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<div id="alert-message">hidden</div>
-			</div>
-		</div>
-
-	</div>
+  </div>
 
 
 </div>

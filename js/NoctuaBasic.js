@@ -11,353 +11,351 @@ var bbop = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo = require('amigo2');
 
-var MMEnvBootstrappingInit = function(user_token){
+var MMEnvBootstrappingInit = function(user_token) {
 
-    var logger = new bbop.logger('mme basic');
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
+  var logger = new bbop.logger('mme basic');
+  logger.DEBUG = true;
 
-    // Aliases
-    var each = bbop.core.each;
-    var is_defined = bbop.core.is_defined;
-    var what_is = bbop.core.what_is;
+  function ll(str) {
+    logger.kvetch(str);
+  }
 
-    // Events registry.
-    var manager = new bbopx.minerva.manager(global_barista_location,
-                        global_minerva_definition_name,
-                        user_token);
+  // Aliases
+  var each = bbop.core.each;
+  var is_defined = bbop.core.is_defined;
+  var what_is = bbop.core.what_is;
 
-    // Contact point's.
-    var save_btn_id = 'select_stored_jump_button';
-    var save_btn_elt = '#' + save_btn_id;
-    var basic_qualifier_id = 'basic_qualifier_input';
-    var basic_qualifier_elt = '#' + basic_qualifier_id;
-    var basic_term_id = 'basic_term_input';
-    var basic_term_elt = '#' + basic_term_id;
+  // Events registry.
+  var manager = new bbopx.minerva.manager(global_barista_location,
+    global_minerva_definition_name,
+    user_token);
+
+  // Contact point's.
+  var save_btn_id = 'select_stored_jump_button';
+  var save_btn_elt = '#' + save_btn_id;
+  var basic_qualifier_id = 'basic_qualifier_input';
+  var basic_qualifier_elt = '#' + basic_qualifier_id;
+  var basic_term_id = 'basic_term_input';
+  var basic_term_elt = '#' + basic_term_id;
 
 
-    ///
-    /// Helpers.
-    ///
+  ///
+  /// Helpers.
+  ///
 
-    var compute_shield_modal = null;
+  var compute_shield_modal = null;
 
-    // Block interface from taking user input while
-    // operating.
-    function _shields_up(){
-	if( compute_shield_modal ){
-	    // Already have one.
-	}else{
-	    ll('shield up');
-	    compute_shield_modal = bbop_mme_widgets.compute_shield();
-	    compute_shield_modal.show();
-	}
+  // Block interface from taking user input while
+  // operating.
+  function _shields_up() {
+    if (compute_shield_modal) {
+      // Already have one.
+    } else {
+      ll('shield up');
+      compute_shield_modal = bbop_mme_widgets.compute_shield();
+      compute_shield_modal.show();
     }
-    // Release interface when transaction done.
-    function _shields_down(){
-	if( compute_shield_modal ){
-	    ll('shield down');
-	    compute_shield_modal.destroy();
-	    compute_shield_modal = null;
-	}else{
-	    // None to begin with.
-	}
+  }
+
+  // Release interface when transaction done.
+  function _shields_down() {
+    if (compute_shield_modal) {
+      ll('shield down');
+      compute_shield_modal.destroy();
+      compute_shield_modal = null;
+    } else {
+      // None to begin with.
     }
+  }
 
-    jQuery(save_btn_elt).click(function(){
-        var title = jQuery('#title_input').val();
+  jQuery(save_btn_elt).click(function() {
+    var title = jQuery('#title_input').val();
 
-        var gp = jQuery('#select_gene_product').val();
-        var qualifier = "a";
-        var term = "monarch:phenotype100050-pn";
-        validate_form(gp, qualifier, term);
+    var gp = jQuery('#select_disease').val();
+    var qualifier = "a";
+    var term = "monarch:phenotype100050-pn";
+    validate_form(gp, qualifier, term);
 
-        var r = new bbopx.minerva.request_set(manager.user_token())
-        r.add_model();
-        r.add_annotation_to_model("title", title);
-        r.add_annotation_to_individual(qualifier, term, r.add_individual(gp));
+    var r = new bbopx.minerva.request_set(manager.user_token())
+    r.add_model();
+    r.add_annotation_to_model("title", title);
+    r.add_annotation_to_individual(qualifier, term, r.add_individual(gp));
 
-        manager.request_with(r, "justdoit");
+    manager.request_with(r, "justdoit");
 
-        //manager.add_simple_composite(id, gp, qualifier);
-    });
-
-
-    jQuery('#save_button').click(function(){
-        _store_it();
-    });
-
-    jQuery('#add_title_button').click(function(){
-        var title = jQuery('#title_input').val();
-        manager.add_model_annotation(id, "title", title);
-    });
-
-    function validate_form(gp, qualifier, term) {
-
-    }
-
-    manager.register('rebuild', 'foorebuild', function(resp, man){
-        console.log('rebuild');
-        console.log(resp);
-        _set_alert("success", resp._message);
-        set_model_id(resp, man)
-    }, 10);
+  });
 
 
-    manager.register('error', 'errorargh', function(resp, man){
-        print_error(resp);
-        _set_alert("danger", resp._message);
-    }, 10);
+  jQuery('#save_button').click(function() {
+    _store_it();
+  });
 
-    manager.register('merge', 'merdge', function(resp, man){
-        console.log('merge');
-        console.log(resp);
-        _set_alert("success", resp._message);
-    }, 10);
+  function validate_form(gp, qualifier, term) {
 
-    function print_error(err) {
-        console.log("An error has occured!");
-        console.log(err);
-    }
+  }
 
-    function set_model_id(resp, man){
-        id = resp.data()['id'];
-    }
+  manager.register('rebuild', 'foorebuild', function(resp, man) {
+    console.log('rebuild');
+    console.log(resp);
+    _set_alert("success", resp._message);
+    set_model_id(resp, man)
+  }, 10);
 
-    function _store_it(){
-        manager.store_model(id);
-    }
 
-    // Type can be: success info warning danger
-    function _set_alert(type, message) {
-        var alert_wrapper = jQuery('#alert-wrapper');
-        var alert_message = jQuery('#alert-message');
-        alert_message.text(message);
-        alert_wrapper.removeClass();
-        alert_wrapper.addClass("alert alert-dismissible alert-" + type);
-        alert_wrapper.css('display', 'inherit');
-    }
+  manager.register('error', 'errorargh', function(resp, man) {
+    print_error(resp);
+    _set_alert("danger", resp._message);
+  }, 10);
 
-    var gconf = new bbop.golr.conf(golr_json);
-    golr_loc = 'http://localhost:8983/solr/'; // TODO delete
-    var golr_manager_for_gene = new bbop.golr.manager.jquery(golr_loc, gconf);
+  manager.register('merge', 'merdge', function(resp, man) {
+    console.log('merge');
+    console.log(resp);
+    _set_alert("success", resp._message);
+  }, 10);
 
-    var gene_selectize = jQuery('#select_gene_product').solrautocomplete({
-        onChange: function(value) {
-            console.log(value);
-        },
-        required: true,
-        optionDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        itemDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        valueField: 'id',
-        searchField: ['id', 'annotation_class_label_searchable'],
-        queryData: function(query) {
-            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
-        },
-        golrManager: golr_manager_for_gene
-    });
+  function print_error(err) {
+    console.log("An error has occured!");
+    console.log(err);
+  }
 
-    var golr_manager_for_phenotype = new bbop.golr.manager.jquery(golr_loc, gconf);
-    var phen = jQuery('#select_phenotype_product').solrautocomplete({
-        onChange: function(value) {
-            console.log(value);
-        },
-        optionDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        itemDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        valueField: 'id',
-        searchField: ['id', 'annotation_class_label_searchable'],
-        queryData: function(query) {
-            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
-        },
-        golrManager: golr_manager_for_phenotype
-    });
+  function set_model_id(resp, man) {
+    id = resp.data()['id'];
+  }
 
-    var golr_manager_for_ageofonset = new bbop.golr.manager.jquery(golr_loc, gconf);
-    var ageofonset = jQuery('#select_ageofonset_product').solrautocomplete({
-        onChange: function(value) {
-            console.log(value);
-        },
-        optionDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        itemDisplay: function(item, escape) {
-            return '<div>' +
-                item.id + " (" + item.annotation_class_label_searchable + ")" +
-            '</div>';
-        },
-        valueField: 'id',
-        searchField: ['id', 'annotation_class_label_searchable'],
-        queryData: function(query) {
-            return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-                  'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
-        },
-        golrManager: golr_manager_for_ageofonset
-    });
+  function _store_it() {
+    manager.store_model(id);
+  }
 
-    var gp = "";
-    var gp_ractive = new Ractive({
-      el: 'gp_placeholder',
-      //template: '{{#if gp==""}}<div>Cannot be null!</div>{{/if}}',
-      model: gp
-    });
+  // Type can be: success info warning danger
+  function _set_alert(type, message) {
+    var alert_wrapper = jQuery('#alert-wrapper');
+    var alert_message = jQuery('#alert-message');
+    alert_message.text(message);
+    alert_wrapper.removeClass();
+    alert_wrapper.addClass("alert alert-dismissible alert-" + type);
+    alert_wrapper.css('display', 'inherit');
+  }
 
-    // initialize model
-    //var id = null // dirty
-    //manager.add_model();
+  var gconf = new bbop.golr.conf(golr_json);
+  golr_loc = 'http://localhost:8983/solr/'; // TODO delete
+  var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);
+
+  var gene_selectize = jQuery('#select_disease').solrautocomplete({
+    onChange: function(value) {
+      console.log(value);
+    },
+    required: true,
+    optionDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    itemDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    valueField: 'id',
+    searchField: ['id', 'annotation_class_label_searchable'],
+    queryData: function(query) {
+      return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+        'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+    },
+    golrManager: golr_manager_for_disease
+  });
+
+  var golr_manager_for_phenotype = new bbop.golr.manager.jquery(golr_loc, gconf);
+  var phen = jQuery('#select_phenotype').solrautocomplete({
+    onChange: function(value) {
+      console.log(value);
+    },
+    optionDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    itemDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    valueField: 'id',
+    searchField: ['id', 'annotation_class_label_searchable'],
+    queryData: function(query) {
+      return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+        'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+    },
+    golrManager: golr_manager_for_phenotype
+  });
+
+  var golr_manager_for_ageofonset = new bbop.golr.manager.jquery(golr_loc, gconf);
+  var ageofonset = jQuery('#select_ageofonset').solrautocomplete({
+    onChange: function(value) {
+      console.log(value);
+    },
+    optionDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    itemDisplay: function(item, escape) {
+      return '<div>' +
+        item.id + " (" + item.annotation_class_label_searchable + ")" +
+        '</div>';
+    },
+    valueField: 'id',
+    searchField: ['id', 'annotation_class_label_searchable'],
+    queryData: function(query) {
+      return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
+        'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+    },
+    golrManager: golr_manager_for_ageofonset
+  });
+
+  var gp = "";
+  var gp_ractive = new Ractive({
+    el: 'gp_placeholder',
+    //template: '{{#if gp==""}}<div>Cannot be null!</div>{{/if}}',
+    model: gp
+  });
+
+  // initialize model
+  //var id = null // dirty
+  //manager.add_model();
 
 };
 
 
 // Start the day the jsPlumb way.
 jQuery(document).ready(
-    function(){
+  function() {
 
-	// Only roll if the env is correct.
+    // Only roll if the env is correct.
 
     // Try to define token.
     var user_token = null;
-    if( global_barista_token ){
-        user_token = global_barista_token;
+    if (global_barista_token) {
+      user_token = global_barista_token;
     }
 
     // Next we need a manager to try and pull in the model.
-    if( typeof(global_minerva_definition_name) === 'undefined' ||
-    typeof(global_barista_location) === 'undefined' ) {
-        alert('environment not ready');
-	} else {
-	    MMEnvBootstrappingInit(user_token);
-	}
-    });
+    if (typeof(global_minerva_definition_name) === 'undefined' ||
+      typeof(global_barista_location) === 'undefined') {
+      alert('environment not ready');
+    } else {
+      MMEnvBootstrappingInit(user_token);
+    }
+  });
 
 
 // Depends on selectize
 jQuery.widget('bbop-widget.solrautocomplete', {
-    options: {
-        webserviceUrl: "http://localhost:8983/solr/select",
-        onChange: console.log,
-        required: false,
-        optionDisplay: null,
-        itemDisplay: null,
-        valueField: null,
-        searchField: null,
-        queryData: null,
-        golrManger: null
-    },
+  options: {
+    webserviceUrl: "http://localhost:8983/solr/select",
+    onChange: console.log,
+    required: false,
+    optionDisplay: null,
+    itemDisplay: null,
+    valueField: null,
+    searchField: null,
+    queryData: null,
+    golrManger: null
+  },
 
-    _create: function () {
-        // redefine the variables to avoid conflicts with selectize's scope
-        var widgetOnChange = this.options.onChange;
-        var widgetWebservicerUrl = this.options.webserviceUrl;
-        var widgetRequired = this.options.required;
-        var widgetOptionDisplay = this.options.optionDisplay;
-        var widgetItemDisplay = this.options.itemDisplay;
-        var widgetValueField = this.options.valueField;
-        var widgetSearchField = this.options.searchField;
-        var widgetQueryData = this.options.queryData;
-        var widgetGolrManager = this.options.golrManager;
-        var _currentValue = null;
+  _create: function() {
+    // redefine the variables to avoid conflicts with selectize's scope
+    var widgetOnChange = this.options.onChange;
+    var widgetWebservicerUrl = this.options.webserviceUrl;
+    var widgetRequired = this.options.required;
+    var widgetOptionDisplay = this.options.optionDisplay;
+    var widgetItemDisplay = this.options.itemDisplay;
+    var widgetValueField = this.options.valueField;
+    var widgetSearchField = this.options.searchField;
+    var widgetQueryData = this.options.queryData;
+    var widgetGolrManager = this.options.golrManager;
+    var _currentValue = null;
 
-        // Right label for user feedback
-        var feedbackLabel = jQuery('<div style="width:130px;padding-left:15px;"></div>');
-        this.element.after(feedbackLabel);
+    // Right label for user feedback
+    var feedbackLabel = jQuery('<div style="width:130px;padding-left:15px;"></div>');
+    this.element.after(feedbackLabel);
 
-        var selectized = this.element.selectize({
-            valueField: widgetValueField,
-            searchField: widgetSearchField,
-            create: false,
-            render: {
-                option: widgetOptionDisplay,
-                item: widgetItemDisplay
-            },
-            load: function(query, callback) {
-                if (!query.length) return callback();
+    var selectized = this.element.selectize({
+      valueField: widgetValueField,
+      searchField: widgetSearchField,
+      create: false,
+      render: {
+        option: widgetOptionDisplay,
+        item: widgetItemDisplay
+      },
+      load: function(query, callback) {
+        if (!query.length) return callback();
 
-                var customCallBack = function(res) {
-                  _updateHits(res._raw.response.numFound);
-                  callback(res._raw.response.docs);
-                };
-                widgetGolrManager.register('search', 'foo', customCallBack);
-                widgetGolrManager.set_query(widgetQueryData(query));
-                widgetGolrManager.search();
-
-                // jQuery.ajax({
-                //     url: widgetWebservicerUrl,
-                //     data: widgetQueryData(query),
-                //     dataType: 'jsonp',
-                //     jsonp: 'json.wrf',
-                //     error: function() {
-                //         callback();
-                //     },
-                //     success: function(res) {
-                //         _updateHits(res.response.numFound);
-                //         //TODO load underscore.js
-                //         //var uniq_only = _.uniq(res.response.docs) // remove potential duplicates
-                //         //callback(uniq_only);
-                //         callback(res.response.docs);
-                //     }
-                // });
-            },
-            onChange: function(value) {
-                widgetOnChange(value);
-                _checkSanity(value);
-                _currentValue = value;
-            },
-            onType: function(str) {
-                _clearCache(); // in order to request the server at each typing
-            },
-            onBlur: function() {
-                _checkSanity(_currentValue);
-            }
-        });
-
-        var _checkSanity = function(value) {
-            if(widgetRequired && (value == null || value == "")) {
-                feedbackLabel.text('Cannot be empty!');
-            } else {
-                feedbackLabel.text('');
-            }
-        }
-
-        var _clearCache = function () {
-            selectized[0].selectize.clearCache("option");
-            selectized[0].selectize.clearOptions();
+        var customCallBack = function(res) {
+          _updateHits(res._raw.response.numFound);
+          callback(res._raw.response.docs);
         };
+        widgetGolrManager.register('search', 'foo', customCallBack);
+        widgetGolrManager.set_query(widgetQueryData(query));
+        widgetGolrManager.search();
 
-        var _updateHits = function(h) {
-            feedbackLabel.text(h + ' hits');
-        };
+        // jQuery.ajax({
+        //     url: widgetWebservicerUrl,
+        //     data: widgetQueryData(query),
+        //     dataType: 'jsonp',
+        //     jsonp: 'json.wrf',
+        //     error: function() {
+        //         callback();
+        //     },
+        //     success: function(res) {
+        //         _updateHits(res.response.numFound);
+        //         //TODO load underscore.js
+        //         //var uniq_only = _.uniq(res.response.docs) // remove potential duplicates
+        //         //callback(uniq_only);
+        //         callback(res.response.docs);
+        //     }
+        // });
+      },
+      onChange: function(value) {
+        widgetOnChange(value);
+        _checkSanity(value);
+        _currentValue = value;
+      },
+      onType: function(str) {
+        _clearCache(); // in order to request the server at each typing
+      },
+      onBlur: function() {
+        _checkSanity(_currentValue);
+      }
+    });
 
-    },
-
-    _destroy: function () {
-        selectized[0].selectize.destroy();
-    },
-
-
-    _setOptions: function (options) {
-        this._super( options );
-        this.refresh();
+    var _checkSanity = function(value) {
+      if (widgetRequired && (value == null || value == "")) {
+        feedbackLabel.text('Cannot be empty!');
+      } else {
+        feedbackLabel.text('');
+      }
     }
+
+    var _clearCache = function() {
+      selectized[0].selectize.clearCache("option");
+      selectized[0].selectize.clearOptions();
+    };
+
+    var _updateHits = function(h) {
+      feedbackLabel.text(h + ' hits');
+    };
+
+  },
+
+  _destroy: function() {
+    selectized[0].selectize.destroy();
+  },
+
+
+  _setOptions: function(options) {
+    this._super(options);
+    this.refresh();
+  }
 });
 
 // TODO take that conf from the Monarch App
