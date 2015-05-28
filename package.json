@@ -1,7 +1,7 @@
 {
     "name": "noctua",
     "version": "0.0.10",
-    "license": "BSD",
+    "license": "BSD-3-Clause",
     "description": "Experimental annotation editor for the Gene Ontology.",
     "keywords": [
         "OpenShift",
