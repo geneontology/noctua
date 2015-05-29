@@ -19,7 +19,8 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     clients: ['js/NoctuaEditor.js',
-              'js/NoctuaBasic.js',
+              'js/NoctuaBasic/NoctuaBasicApp.js',
+              'js/NoctuaBasic/NoctuaBasicController.js',
 	      'js/NoctuaLanding.js',
 	      'js/BaristaLogin.js',
 	      'js/BaristaLogout.js',

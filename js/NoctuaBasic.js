@@ -71,15 +71,19 @@ var MMEnvBootstrappingInit = function(user_token) {
   jQuery(save_btn_elt).click(function() {
     var title = jQuery('#title_input').val();
 
-    var gp = jQuery('#select_disease').val();
-    var qualifier = "a";
-    var term = "monarch:phenotype100050-pn";
-    validate_form(gp, qualifier, term);
+    var selected_disease = jQuery('#select_disease').val();
+    var selected_phenotype = jQuery('#select_phenotype').val();
+    var selected_ageofonset = jQuery('#select_ageofonset').val();
+    //validate_form(gp, qualifier, term);
+
+    var phenotype_ageofonset_relation = "RO:0002488";
+    var has_phenotype_relation = "BFO:0000051";
 
     var r = new bbopx.minerva.request_set(manager.user_token())
     r.add_model();
     r.add_annotation_to_model("title", title);
-    r.add_annotation_to_individual(qualifier, term, r.add_individual(gp));
+    r.add_fact([r.add_individual(selected_disease), r.add_individual(selected_phenotype), has_phenotype_relation]);
+
 
     manager.request_with(r, "justdoit");
 
@@ -100,7 +104,6 @@ var MMEnvBootstrappingInit = function(user_token) {
     _set_alert("success", resp._message);
     set_model_id(resp, man)
   }, 10);
-
 
   manager.register('error', 'errorargh', function(resp, man) {
     print_error(resp);
@@ -169,6 +172,7 @@ var MMEnvBootstrappingInit = function(user_token) {
     onChange: function(value) {
       console.log(value);
     },
+    required: true,
     optionDisplay: function(item, escape) {
       return '<div>' +
         item.id + " (" + item.annotation_class_label_searchable + ")" +
@@ -212,16 +216,6 @@ var MMEnvBootstrappingInit = function(user_token) {
     golrManager: golr_manager_for_ageofonset
   });
 
-  var gp = "";
-  var gp_ractive = new Ractive({
-    el: 'gp_placeholder',
-    //template: '{{#if gp==""}}<div>Cannot be null!</div>{{/if}}',
-    model: gp
-  });
-
-  // initialize model
-  //var id = null // dirty
-  //manager.add_model();
 
 };
 
