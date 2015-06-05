@@ -3,66 +3,63 @@
   <div class="header text-center">
     <h2>Web Phenote</h2>
   </div>
+  <div ng-controller="NoctuaBasicController" ng-init="init()">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Basic Interface</h3>
+      </div>
+      <div class="panel-body">
 
-  <div class="panel panel-default" ng-controller="NoctuaBasicController" ng-init="init()">
-    <div class="panel-heading">
-      <h3 class="panel-title">Basic Interface</h3>
+        <div class="form-group">
+          <label for="select_disease">Disease</label>
+          <div class="input-group">
+            <select class="form-control" id="select_disease" placeholder="Pick a Disease..." ng-model="selected_disease"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="select_phenotype">Phenotype</label>
+          <div class="input-group">
+            <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..." ng-model="selected_phenotype"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="select_ageofonset">Age of onset (of the phenotype)</label>
+          <div class="input-group">
+            <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..." ng-model="selected_ageofonset"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="basic_evidence_input">Evidence</label>
+          <input id="basic_evidence_input" id="select_evidence" class="form-control" type="text" placeholder="" ng-model="selected_evidence">
+        </div>
+
+        <div class="form-group">
+          <label for="basic_reference_input">Reference</label>
+          <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference">
+        </div>
+
+        <div class="form-group">
+          <label for="basic_reference_input">Description</label>
+          <input id="basic_reference_input" id="select_description" class="form-control" type="text" placeholder="" ng-model="selected_description">
+        </div>
+
+        <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create()">Add</button>
+
+        <button id="save_button" type="submit" class="btn btn-primary">Save into file</button>
+
+        <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <div id="alert-message">hidden</div>
+        </div>
+      </div>
+
     </div>
-    <div class="panel-body">
-
-      <div class="form-group">
-        <label for="select_disease">Disease</label>
-        <div class="input-group">
-          <select class="form-control" id="select_disease" placeholder="Pick a Disease..." ng-model="selected_disease"></select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="select_phenotype">Phenotype</label>
-        <div class="input-group">
-          <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..." ng-model="selected_phenotype"></select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="select_ageofonset">Age of onset (of the phenotype)</label>
-        <div class="input-group">
-          <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..." ng-model="selected_ageofonset"></select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="basic_evidence_input">Evidence</label>
-        <input id="basic_evidence_input" id="select_evidence" class="form-control" type="text" placeholder="" ng-model="selected_evidence">
-      </div>
-
-      <div class="form-group">
-        <label for="basic_reference_input">Reference</label>
-        <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference">
-      </div>
-
-      <div class="form-group">
-        <label for="basic_reference_input">Description</label>
-        <input id="basic_reference_input" id="select_description" class="form-control" type="text" placeholder="" ng-model="selected_description">
-      </div>
-
-      <div class="form-group">
-        <label for="title">Title</label>
-        <input id="title_input" class="form-control" type="text" placeholder="" ng-model="title">
-      </div>
-
-      <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create()">Create</button>
-
-      <button id="save_button" type="submit" class="btn btn-primary">Save into file</button>
-
-      <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <div id="alert-message">hidden</div>
-      </div>
-    </div>
-
+    {[{response_model}]}
   </div>
 
 

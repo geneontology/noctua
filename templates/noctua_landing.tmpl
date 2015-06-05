@@ -10,14 +10,14 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      
+
       <!-- <span class="navbar-brand">MME Editor</span> -->
       <a href="{{noctua_landing}}" class="navbar-brand">Noctua ALPHA</a>
     </div>
 
     <div class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-	
+
 	<!-- Help. -->
 	<!-- <p class="navbar-text"> -->
 	<li>
@@ -27,7 +27,7 @@
 	     title="">Help</a>
 	</li>
 	<!-- </p> -->
-	
+
       </ul>
 
       <div class="nav navbar-right">
@@ -47,9 +47,9 @@
 	   href="{{barista_logout}}"
 	   title="">Logout</a>
 	{{/barista_token}}
-	
+
       </div>
-      
+
     </div>
 
   </div>
@@ -57,7 +57,7 @@
 
 <!-- Main "app". -->
 <div class="container">
-  
+
   <div class="header text-center">
     <h2>Editor Access</h2>
   </div>
@@ -90,7 +90,7 @@
 	    Edit or view a model by selecting from the list and
 	    clicking the button.
 	  </p>
-	  
+
 	  <div class="form-group">
 	    <!-- <label for="select_stored_jump">Select by ID</label> -->
 	    <select id="select_stored_jump" class="form-control">
@@ -100,10 +100,10 @@
 	  <button id="select_stored_jump_button"
 		  type="submit"
 		  class="btn btn-primary">Edit/View &raquo;</button>
-	  
+
 	</div>
       </div>
-      
+
       <div class="panel panel-default">
 	<div class="panel-heading">
 	  <h3 class="panel-title">Browse</h3>
@@ -120,10 +120,10 @@
 	       class="btn btn-primary"
 	       href="http://amigo2.berkeleybop.org/amigo/search/complex_annotation">Search &raquo;</a>
 	  </p>
-	  
+
 	</div>
       </div>
-      
+
     </div>
 
     <!-- Create tab. -->
@@ -138,7 +138,7 @@
 	  <p>
 	    You <strong>must</strong> be logged in to create a new
 	    model from a taxon.
-	  </p>	  
+	  </p>
 
 	  <div class="form-group">
 	    <!-- <label for="select_stored_jump">Select by ID</label> -->
@@ -163,7 +163,7 @@
 	  <p>
 	    You <strong>must</strong> be logged in to create a new
 	    model.
-	  </p>	  
+	  </p>
 
 	  <button id="button_nothing_for_create"
 		  type="button"
@@ -182,7 +182,7 @@
 	  <h3 class="panel-title">Load model using ??? format</h3>
 	</div>
 	<div class="panel-body">
-	  
+
 	  <p>
 	    You do <strong>not</strong> want to be using this right
 	    now.
@@ -194,14 +194,14 @@
 		      placeholder="???"
 		      rows="3"></textarea>
 	  </p>
-	  
+
 	  <p>
 	    <button id="model_data_button"
 		    type="submit"
 		    class="btn btn-primary">Load</button>
 	  </p>
 	  <!-- </form> -->
-	  
+
 	</div>
       </div>
 
@@ -221,7 +221,7 @@
 	    clicking the button for the export file type that you
 	    want.
 	  </p>
-	  
+
 	  <div class="form-group">
 	    <!-- <label for="select_stored_jump">Select by ID</label> -->
 	    <select id="select_id_for_export" class="form-control">
@@ -230,16 +230,16 @@
 	  </div>
 	  <button id="button_id_for_def_export"
 		  type="submit"
-		  class="btn btn-primary">Export OWL &raquo;</button>	  
+		  class="btn btn-primary">Export OWL &raquo;</button>
 	  <button id="button_id_for_gaf_export"
 		  type="submit"
-		  class="btn btn-primary">Export GAF &raquo;</button>	  
+		  class="btn btn-primary">Export GAF &raquo;</button>
 	  <button id="button_id_for_gpd_export"
 		  type="submit"
-		  class="btn btn-primary">Export GPAD &raquo;</button>	  
+		  class="btn btn-primary">Export GPAD &raquo;</button>
 	</div>
       </div>
-      
+
     </div>
 
     <!-- About tab. -->
@@ -254,29 +254,39 @@
 	  <p>
 	    TODO
 	  </p>
-	  
+
 	</div>
       </div>
-      
+
     </div>
 
     <!-- Danger Zone tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="danger">
 
-      <!-- Affiliated interfaces. -->
-      <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Other Interfaces</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <p>
-	    A (non-functioning) basic interface can be
-	    found <a href="/basic">here</a>.
-	  </p>
-	  
-	</div>
-      </div>
+<!-- Affiliated interfaces. -->
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Other Interfaces</h3>
+  </div>
+  <div class="panel-body">
+
+    <p>
+      Edit or view a model by selecting from the list and clicking the button.
+    </p>
+
+    <div class="form-group">
+      <!-- <label for="select_stored_jump">Select by ID</label> -->
+      <select id="select_stored_jump_basic" class="form-control">
+        <option>n/a</option>
+      </select>
+    </div>
+    <button id="select_stored_jump_button_basic" type="submit" class="btn btn-primary">Edit/View &raquo;</button>
+    OR
+    <button id="new_jump_button_basic" type="submit" class="btn btn-primary">Create &raquo;</button>
+
+  </div>
+</div>
+
 
       <!-- Attempting Capella. -->
       <div class="panel panel-default">
@@ -284,7 +294,7 @@
 	  <h3 class="panel-title">Capella Bootstrap</h3>
 	</div>
 	<div class="panel-body">
-	  
+
 	  <p>
 	    Various test methods to look at how capella kick-ins
 	    behave.
@@ -293,7 +303,7 @@
 	    <a href="{{capella_blank}}">(blank)</a><br />
 	    <a href="{{capella_test}}">(test payload)</a>
 	  </p>
-	  
+
 	</div>
       </div>
 
@@ -303,7 +313,7 @@
 	  <h3 class="panel-title">JSON Debugging</h3>
 	</div>
 	<div class="panel-body">
-	  
+
 	  <form action="/seed/json"
 		id="json-seed"
 		role="form"
@@ -315,14 +325,14 @@
 			placeholder="???"
 			rows="3"></textarea>
 	    </p>
-	    
+
 	    <p>
 	      <button id="model_json_button"
 		      type="submit"
 		      class="btn btn-primary">Load</button>
 	    </p>
 	  </form>
-	  
+
 	</div>
       </div>
 
@@ -331,13 +341,13 @@
 	  <h3 class="panel-title">Noctua Administration</h3>
 	</div>
 	<div class="panel-body">
-	  
+
 	  <p>
 	    <a type="button"
 	       class="btn btn-primary"
 	       href="{{noctua_location}}/status">Status &raquo;</a>
 	  </p>
-	  
+
 	</div>
       </div>
 
@@ -346,7 +356,7 @@
 	  <h3 class="panel-title">Barista Administration</h3>
 	</div>
 	<div class="panel-body">
-	  
+
 	  {{#barista_token}}
 	  <p>
 	    <a type="button"
@@ -371,7 +381,7 @@
 	    A configuration error is also possible.
 	  </p>
 	  {{/barista_token}}
-	  
+
 	</div>
       </div>
 

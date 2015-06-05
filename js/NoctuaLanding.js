@@ -29,7 +29,7 @@ var global_known_taxons = [
 ];
 
 var MMEnvBootstrappingInit = function(user_token){
-    
+
     var logger = new bbop.logger('mme bsi');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
@@ -96,7 +96,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    compute_shield_modal = bbopx.noctua.widgets.compute_shield();
 	    compute_shield_modal.show();
 	}
-    }    
+    }
     // Release interface when transaction done.
     function _shields_down(){
 	if( compute_shield_modal ){
@@ -116,10 +116,16 @@ var MMEnvBootstrappingInit = function(user_token){
     // On any model build success, forward to the new page.
     // var wizard_jump_term = null;
     // var wizard_jump_db = null;
-    function _generated_model(resp, man){
-	var id = resp.data()['id'];
-	var new_url = '/seed/model/' + id;
-	_jump_to_page(new_url);
+    var to_basic_form = false;
+    function _generated_model(resp, man) {
+      var id = resp.data()['id'];
+      var new_url = "";
+      if (to_basic_form) {
+        new_url = '/basic/' + id;
+      } else {
+        new_url = '/seed/model/' + id;
+      }
+      _jump_to_page(new_url);
     }
 
     // Internal registrations.
@@ -167,10 +173,10 @@ var MMEnvBootstrappingInit = function(user_token){
     // However, export also comes through this way, so we check for
     // that first.
     manager.register('meta', 'foo', function(resp, man){
-	
+
 	if( resp.export_model() ){
 
-	    // 
+	    //
 	    var exp = resp.export_model();
 	    var rand = bbop.core.uuid();
 	    //alert(exp);
@@ -188,7 +194,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    // expdia.show();
 
 	}else{
-	    
+
 	    // Try and probe out the best title from the data we
 	    // having there.
 	    function _get_model_title(model_id, model_meta){
@@ -209,7 +215,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    function _model_deprecated_p(model_meta){
 		var retval = false;
 		if( model_meta['deprecated'] &&
-		    ( model_meta['deprecated'] == true || 
+		    ( model_meta['deprecated'] == true ||
 		      model_meta['deprecated'] == 'true' ) ){
 		    retval = true;
 		}
@@ -237,7 +243,7 @@ var MMEnvBootstrappingInit = function(user_token){
 			retval = -1;
 		    }
 		}
-		
+
 		return retval;
 	    });
 
@@ -263,11 +269,15 @@ var MMEnvBootstrappingInit = function(user_token){
 	    });
 	    var rep_str = rep_cache.join('');
 	    jQuery(select_stored_jump_elt).append(rep_str);
-	    
+
+	    jQuery("#select_stored_jump_basic").empty();
+	    jQuery("#select_stored_jump_basic").append(rep_str);
+
+
 	    // Also add this list to the export interface.
 	    jQuery(model_export_by_id_input_elt).empty();
 	    jQuery(model_export_by_id_input_elt).append(rep_str);
-	    
+
 	    // Make jump interface jump on click.
 	    jQuery(select_stored_jump_button_elt).click(function(evt){
 		var id = jQuery(select_stored_jump_elt).val();
@@ -275,15 +285,20 @@ var MMEnvBootstrappingInit = function(user_token){
 		var new_url = '/seed/model/' + id;
 		_jump_to_page(new_url);
 	    });
-	    
+
 	    // Make jump interface jump on click.
-	    jQuery(select_stored_jump_button_elt).click(function(evt){
-		var id = jQuery(select_stored_jump_elt).val();
-		//alert('val: '+ id);
-		var new_url = '/seed/model/' + id;
-		_jump_to_page(new_url);
+	    jQuery("#select_stored_jump_button_basic").click(function(evt) {
+	      var id = jQuery("#select_stored_jump_basic").val();
+	      //alert('val: '+ id);
+	      var new_url = '/basic/' + id;
+	      _jump_to_page(new_url);
 	    });
-	    
+
+      jQuery("#new_jump_button_basic").click(function(evt) {
+        to_basic_form = true;
+        manager.add_model();
+	    });
+
 	    // Make export interface trigger on click.
 	    jQuery(model_export_by_id_def_button_elt).click(function(evt){
 		var id = jQuery(model_export_by_id_input_elt).val();
@@ -299,7 +314,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    });
 
 	    //
-	    
+
 	    // Insert taxon info into "Create new fmodel fron taxon"
 	    // interface.
 	    jQuery(model_create_by_taxon_input_elt).empty();
@@ -313,7 +328,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    });
 	    var tax_str = tax_cache.join('');
 	    jQuery(model_create_by_taxon_input_elt).append(tax_str);
-	    
+
 	    // Get create-by-taxon ready to go.
 	    jQuery(model_create_by_taxon_button_elt).click(function(evt){
 		var id = jQuery(model_create_by_taxon_input_elt).val();
@@ -353,7 +368,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	evt.stopPropagation();
 	evt.preventDefault();
 	//alert('not yet implemented');
-	var in_str = jQuery(model_data_input_elt).val(); 
+	var in_str = jQuery(model_data_input_elt).val();
 	manager.import_model(in_str);
     });
 

@@ -8,13 +8,16 @@ angular
   .module('noctuaBasicApp')
   .controller('NoctuaBasicController', NoctuaBasicController);
 
-function NoctuaBasicController($scope) {
+function NoctuaBasicController($scope, $mdToast, $animate) {
   var phenotype_ageofonset_relation = "RO:0002488";
   var has_phenotype_relation = "BFO:0000051";
 
   // Events registry.
   var manager = null;
   var user_token = null;
+  var compute_shield_modal = null;
+  var _shields_up = null;
+  var _shields_down = null;
   $scope.selected_disease = null;
   $scope.selected_phenotype = null;
   $scope.selected_ageofonset = null;
@@ -22,7 +25,7 @@ function NoctuaBasicController($scope) {
   $scope.selected_reference = null;
   $scope.selected_description = null;
 
-  $scope.title = null;
+  $scope.response_model = null;
 
 
   $scope.init = function() {
@@ -43,55 +46,68 @@ function NoctuaBasicController($scope) {
         user_token);
       initializeAutocomplete();
       initializeCallbacks();
+      manager.get_model(model_id);
     }
   }
 
-  $scope.create = function() {
-    var title = jQuery('#title_input').val();
+  var displayToast = function(type, msg) {
+    $mdToast.show({
+      template: '<md-toast class="md-toast ' + type + ' md-capsule">' + msg + '</md-toast>',
+      hideDelay: 5000,
+      position: 'bottom'
+    });
+  };
 
+  $scope.create = function() {
     var r = new bbopx.minerva.request_set(manager.user_token())
-    r.add_model();
-    r.add_annotation_to_model("title", $scope.title);
-    r.add_fact([r.add_individual($scope.selected_disease), r.add_individual($scope.selected_phenotype), has_phenotype_relation]);
+    r.add_fact([r.add_individual($scope.selected_disease, model_id),
+        r.add_individual($scope.selected_phenotype, model_id),
+        has_phenotype_relation
+      ],
+      model_id);
 
     if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
-      r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset), phenotype_ageofonset_relation]);
+      r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
     }
 
     if ($scope.selected_evidence != "" && $scope.selected_evidence != null) {
-      r.add_annotation_to_individual("evidence", $scope.selected_evidence, r.last_individual_id());
+      r.add_annotation_to_individual("evidence", $scope.selected_evidence, r.last_individual_id(), model_id);
     }
 
     if ($scope.selected_reference != "" && $scope.selected_reference != null) {
-      r.add_annotation_to_individual("source", $scope.selected_reference, r.last_individual_id());
+      r.add_annotation_to_individual("source", $scope.selected_reference, r.last_individual_id(), model_id);
     }
 
     if ($scope.selected_description != "" && $scope.selected_description != null) {
-      r.add_annotation_to_individual("comment", $scope.selected_description, r.last_individual_id());
+      r.add_annotation_to_individual("comment", $scope.selected_description, r.last_individual_id(), model_id);
     }
 
     manager.request_with(r, "justdoit");
-
   }
 
   initializeCallbacks = function() {
     manager.register('error', 'errorargh', function(resp, man) {
       console.log("error");
       console.log(resp);
-      //_set_alert("danger", resp._message);
+      displayToast("error", resp._message);
     }, 10);
 
     manager.register('rebuild', 'foorebuild', function(resp, man) {
       console.log('rebuild');
       console.log(resp);
-      //_set_alert("success", resp._message);
-      //set_model_id(resp, man)
+      displayToast("success", resp._message);
+
+      $scope.response_model = JSON.stringify(resp);
+      $scope.$apply();
     }, 10);
 
     manager.register('merge', 'merdge', function(resp, man) {
       console.log('merge');
       console.log(resp);
-      //_set_alert("success", resp._message);
+      displayToast("success", resp._message);
+
+      $scope.response_model = JSON.stringify(resp);
+      $scope.$apply();
     }, 10);
   }
 

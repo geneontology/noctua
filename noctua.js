@@ -348,10 +348,11 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'text/html', o);
 	});
 
-	self.app.get('/basic', function(req, res) {
+	self.app.get('/basic/:query', function(req, res) {
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
+      var query = req.route.params['query'] || '';
 
 	    //
 	    var tmpl_args = {
@@ -366,21 +367,28 @@ var NoctuaLauncher = function(){
 		    {name:'global_barista_location',
 		     value: self.barista_location },
 		    {name: 'golr_loc',
-		     value: server_loc}
+		     value: server_loc},
+        {name: 'model_id',
+         value: query}
 		],
 		'pup_tent_js_libraries': [
         // TODO load via npm
 			  'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
     		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
+    		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
+    		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
+    		'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
 		    '/selectize.min.js',
         '/bbop-widget-solr-autocomplete.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicController.js'
 		],
 	    'pup_tent_css_libraries': [
+      '/css/NoctuaBasic.css',
 			'/selectize.css',
 			'/selectize.bootstrap3.css',
-			'/selectize.custom.css'
+			'/selectize.custom.css',
+			'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
 	    ]
 	    };
 	    var ind = pup_tent.render('noctua_basic.tmpl',

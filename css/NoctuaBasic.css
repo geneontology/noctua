@@ -1,0 +1,7 @@
+.md-toast.error {
+    background-color: red;
+}
+
+.md-toast.success {
+    background-color: green;
+}
