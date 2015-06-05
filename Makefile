@@ -35,6 +35,7 @@ BBOPX_JS ?= ../bbopx-js/
 
 ## OWLTools paths.
 OWLTOOLS ?= ../owltools/
+MINERVA_SERVER ?= ../minerva/
 GENEONTOLOGY ?= ../geneontology/trunk/
 
 ## Testing.
@@ -118,12 +119,12 @@ start-barista:
 
 .PHONY: start-minerva-go
 start-minerva-go:
-	cd $(OWLTOOLS)/MolecularModelServer/bin && ./build-server.sh
-	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
+	cd $(MINERVA_SERVER)/minerva-server/bin && ./build-server.sh
+	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 .PHONY: start-minerva-go-fast
 start-minerva-go-fast:
-	cd $(OWLTOOLS)/MolecularModelServer/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
+	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 ###
 ### Gulp-based workflows.
