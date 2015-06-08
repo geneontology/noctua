@@ -33,7 +33,7 @@
         "bbop": "^2.3.0",
         "bbopx": "^0.9.23",
         "bbop-graph": "0.0.12",
-        "bbop-grap-noctua": "0.0.3",
+        "bbop-graph-noctua": "0.0.3",
         "cors": "2.4.1",
         "bootstrap": "3.3.4",
         "del": "^1.1.1",
