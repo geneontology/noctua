@@ -85,8 +85,10 @@ us.each(paths.clients, function(file, index){
     }
     
     // Define task.
-    gulp.task(taskname, function() {
-	return _client_task(file);
+    gulp.task(taskname, function(cb){
+	//return _client_task(file);
+	_client_task(file);
+	cb(null);
     });
 
 });
@@ -104,15 +106,17 @@ gulp.task('build', build_tasks);
 // });
 
 // Rerun tasks when a file changes.
-gulp.task('watch', function() {
-  gulp.watch(paths.clients, ['build']);
-  gulp.watch(paths.support, ['build']);
+gulp.task('watch', function(cb) {
+    gulp.watch(paths.clients, ['build']);
+    gulp.watch(paths.support, ['build']);
+    cb(null);
 });
 
 // 
 gulp.task('clean', function(cb) {
     del(['./deploy/*', './deploy/js/*', '!./deploy/README.org',
 	 './doc/*', '!./doc/README.org']);
+    cb(null);
 });
 
 // Release tools for patch release.
@@ -125,12 +129,13 @@ gulp.task('patch-bump', function(){
 });
 
 // 
-gulp.task('publish-npm', function() {
+gulp.task('publish-npm', function(cb) {
     var npm = require("npm");
     npm.load(function (er, npm) {
         // NPM
         npm.commands.publish(); 
     });
+    cb(null);
 });
 
 // gulp.task('git-tag', function(){
