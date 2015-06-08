@@ -17,6 +17,18 @@ var bbop = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo = require('amigo2');
 
+// The new backbone libs.
+//var bbop
+var us = require('underscore');
+var bbop_core = require('bbop-core');
+var model = require('bbop-graph-noctua');
+
+// Aliases.
+var each = us.each;
+// var noctua_graph = model.graph;
+// var noctua_node = model.node;
+// var edge = model.edge;
+
 /**
  * Bootstraps a working environment for the MME client.
  *
@@ -33,15 +45,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Where 1 is the initial node and n is the terminal node.
     var waypoints = {};
     
-    var logger = new bbop.logger('noctua editor');
+    var logger = new bbop_core.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
     // Aliases
-    var each = bbop.core.each;
-    var is_defined = bbop.core.is_defined;
-    var is_empty = bbop.core.is_empty;
-    var what_is = bbop.core.what_is;
     var bme_core = bbopx.noctua.edit.core;
     var bme_edge = bbopx.noctua.edit.edge;
     var bme_node = bbopx.noctua.edit.node;
@@ -404,10 +412,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     function _set_zoom(zlvl) {
 	var btype = [ "-webkit-", "-moz-", "-ms-", "-o-", "" ];
         var scale_str = "scale(" + zlvl + ")";
-	each(btype,
-	     function(b){
-		 jQuery(graph_div).css(b + "transform", scale_str);
-	     });
+	each(btype, function(b){
+	    jQuery(graph_div).css(b + "transform", scale_str);
+	});
 	instance.setZoom(zlvl);
     };
 
@@ -574,11 +581,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // Meta counts.
 	    var n_ev = 0;
 	    var n_other = 0;
-	    each(eanns,
-		 function(ann){
-		     if( ann.property('evidence') ){ n_ev++;
-						   }else{ n_other++; }
-		 });
+	    each(eanns, function(ann){
+		if( ann.property('evidence') ){ n_ev++;
+					      }else{ n_other++; }
+	    });
 	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
 
@@ -738,11 +744,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Completely replace the old ones in the process.
 	if( raw_annotations ){
 	    var annotations = [];
-	    each(raw_annotations,
-		 function(ann_kv_set){
-		     var na = new bbopx.noctua.edit.annotation(ann_kv_set);
-		     annotations.push(na);
-		 });
+	    each(raw_annotations, function(ann_kv_set){
+		var na = new bbopx.noctua.edit.annotation(ann_kv_set);
+		annotations.push(na);
+	    });
 	    ecore.annotations(annotations);
 	}
     }
@@ -750,14 +755,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // squeeze the inferred individual info out to id -> types
     function _squeezed_inferred(inferred_individuals){
 	var inf_indv_lookup = {}; // ids to types
-	each(inferred_individuals, // fold in inferred type information
-	     function(indv){
-		 // Get ID.
-		 var inf_iid = indv['id'] || null;
-		 if( inf_iid ){
-		     inf_indv_lookup[inf_iid] = indv['type'] || [];
-		 }
-	     });
+	// fold in inferred type information
+	each(inferred_individuals, function(indv){
+	    // Get ID.
+	    var inf_iid = indv['id'] || null;
+	    if( inf_iid ){
+		inf_indv_lookup[inf_iid] = indv['type'] || [];
+	    }
+	});
 	return inf_indv_lookup;
     }
 
@@ -769,11 +774,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	ll('rebuilding from scratch');
 	
 	// Wipe UI.
-	each(ecore.get_nodes(),
-	     function(enid, en){
-		 _delete_iae_from_ui(enid);
-		 _delete_iae_from_ecore(enid);
-	     });
+	each(ecore.get_nodes(), function(en, enid){
+	    _delete_iae_from_ui(enid);
+	    _delete_iae_from_ecore(enid);
+	});
 	widgets.wipe(graph_div); // rather severe
 
 	// Wipe ecore.
@@ -785,18 +789,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
 
 	// Starting fresh, add everything coming in to the edit model.
-	each(individuals, // add nodes
-	     function(indv){
-		 var unode = ecore.add_node_from_individual(indv);
-
-		 // Add inferred info.
-		 var inftypes = inf_indv_lookup[unode.id()];
-		 if( inftypes ){ unode.add_types(inftypes, true); }
-	     });
-	each(facts, // add facts
-	     function(fact){
-		 ecore.add_edge_from_fact(fact, aid);
-	     });
+	each(individuals, function(indv){ // add nodes
+	    var unode = ecore.add_node_from_individual(indv);
+	    
+	    // Add inferred info.
+	    var inftypes = inf_indv_lookup[unode.id()];
+	    if( inftypes ){ unode.add_types(inftypes, true); }
+	});
+	each(facts, function(fact){ // add facts
+	    ecore.add_edge_from_fact(fact, aid);
+	});
 
 	///
 	/// We now have a well-defined edit core. Let's try and add
@@ -813,42 +815,40 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// be some missing due to finding cycles in the graph, so we
 	// have this two-step process.
 	var layout_store = new bbopx.noctua.location_store();
-	each(layout['nodes'],
-	     function(litem, index){
-		 var id = litem['id'];
-		 var raw_x = litem['x'];
-		 var raw_y = litem['y'];
-		 var fin_x = _box_left(raw_x);
-		 var fin_y = _box_top(raw_y);
-		 layout_store.add(id, fin_x, fin_y);
-	     });
+	each(layout['nodes'], function(litem, index){
+	    var id = litem['id'];
+	    var raw_x = litem['x'];
+	    var raw_y = litem['y'];
+	    var fin_x = _box_left(raw_x);
+	    var fin_y = _box_top(raw_y);
+	    layout_store.add(id, fin_x, fin_y);
+	});
 	// Now got through all of the actual nodes.
-	each(ecore.get_nodes(),
-	     function(enid, en){
-
-		 // Try and see if we have coords; the precedence is:
-		 // historical (drop), layout, make some up.
-		 var fin_x = null;
-		 var fin_y = null;
-		 var hist_coords = historical_store.get(enid);
-		 var layout_coords = layout_store.get(enid);
-		 if( hist_coords ){
-		     fin_x = hist_coords['x'];
-		     fin_y = hist_coords['y'];
-		 }else if( layout_coords ){
-		     fin_x = layout_coords['x'];
-		     fin_y = layout_coords['y'];
-		 }else{
-		     fin_x = _vari();
-		     fin_y = _vari();		 
-		 }
-
-		 // Take the final coordinate and add it as a hint into
-		 // the edit node.
-		 en.x_init(fin_x);
-		 en.y_init(fin_y);
-	     });	
-
+	each(ecore.get_nodes(), function(en, enid){
+	    
+	    // Try and see if we have coords; the precedence is:
+	    // historical (drop), layout, make some up.
+	    var fin_x = null;
+	    var fin_y = null;
+	    var hist_coords = historical_store.get(enid);
+	    var layout_coords = layout_store.get(enid);
+	    if( hist_coords ){
+		fin_x = hist_coords['x'];
+		fin_y = hist_coords['y'];
+	    }else if( layout_coords ){
+		fin_x = layout_coords['x'];
+		fin_y = layout_coords['y'];
+	    }else{
+		fin_x = _vari();
+		fin_y = _vari();		 
+	    }
+	    
+	    // Take the final coordinate and add it as a hint into
+	    // the edit node.
+	    en.x_init(fin_x);
+	    en.y_init(fin_y);
+	});	
+	
 	///
 	/// Assemble (optionally used) waypoint information.
 	///
@@ -870,66 +870,61 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Add additional waypoint path information to the edges.
 	// Points are either in the layout_store or they are virtual
 	// and we will generate them as we go.
-	each(layout['paths'],
-    	     function(path){
+	each(layout['paths'], function(path){
 		 
-		 // Ensure the require waypoints structure using the
-		 // only two real points of reference.
-		 var nodes = path['nodes'];
-		 var sub_id = nodes[0];
-		 var obj_id = nodes[nodes.length -1];
-		 
-		 // Now iterate over all of the waypoints to make it
-		 // there.
-		 // Note that we realize that the first and last ones
-		 // will be irrelevant since we'll be relying on
-		 // jsPlumb to figure those out for us.
-		 var layout_waypoints = path['waypoints'];
-		 each(layout_waypoints, 
-		      function(waypoint, wi){
-			  if( wi > 0 && wi < (layout_waypoints.length -1) ){
-			      var vc = [
-				  _vbox_left(waypoint['x']),
-				  _vbox_top(waypoint['y'])
-			      ];
-
-			      // To keep the output easier, only add
-			      // new structure on need...
-			      if( ! waypoints[sub_id] ){
-				  waypoints[sub_id] = {};
-			      }
-			      if( ! waypoints[sub_id][obj_id] ){
-				  waypoints[sub_id][obj_id] = [];
-			      }
-
-			      waypoints[sub_id][obj_id].push(vc);
-			  }
-		      });
-	     });
+	    // Ensure the require waypoints structure using the
+	    // only two real points of reference.
+	    var nodes = path['nodes'];
+	    var sub_id = nodes[0];
+	    var obj_id = nodes[nodes.length -1];
+	    
+	    // Now iterate over all of the waypoints to make it
+	    // there.
+	    // Note that we realize that the first and last ones
+	    // will be irrelevant since we'll be relying on
+	    // jsPlumb to figure those out for us.
+	    var layout_waypoints = path['waypoints'];
+	    each(layout_waypoints, function(wi, waypoint){
+		if( wi > 0 && wi < (layout_waypoints.length -1) ){
+		    var vc = [
+			_vbox_left(waypoint['x']),
+			_vbox_top(waypoint['y'])
+		    ];
+		    
+		    // To keep the output easier, only add
+		    // new structure on need...
+		    if( ! waypoints[sub_id] ){
+			waypoints[sub_id] = {};
+		    }
+		    if( ! waypoints[sub_id][obj_id] ){
+			waypoints[sub_id][obj_id] = [];
+		    }
+		    
+		    waypoints[sub_id][obj_id].push(vc);
+		}
+	    });
+	});
 	//ll('waypoints: ' + bbop.core.dump(waypoints));
 
 	// For our intitialization/first drawing, suspend jsPlumb
 	// stuff while we get a little work done rebuilding the UI.
-	instance.doWhileSuspended(
-    	    function(){
-
-		// Initial render of the graph.
-    		each(ecore.get_nodes(),
-    		     function(enode_id, enode){
-			 // Add if a "real" node.
-    			 // if( enode.existential() == 'real' ){
-    			 widgets.add_enode(ecore, enode, aid, graph_div);
-    			 // }else{
-			 //   // == 'virtual'; will not be used if no waypoints.
-			 //     widgets.add_virtual_node(ecore, enode,
-			 // 			      aid, graph_div);
-    			 // }
-    		     });
-    		// Now let's try to add all the edges/connections.
-    		each(ecore.get_edges(),
-    		     function(eeid, eedge){
-    			 _connect_with_edge(eedge);
-    		     });
+	instance.doWhileSuspended( function(){
+	    
+	    // Initial render of the graph.
+    	    each(ecore.get_nodes(), function(enode, enode_id){
+		// Add if a "real" node.
+    		// if( enode.existential() == 'real' ){
+    		widgets.add_enode(ecore, enode, aid, graph_div);
+    		// }else{
+		//   // == 'virtual'; will not be used if no waypoints.
+		//     widgets.add_virtual_node(ecore, enode,
+		// 			      aid, graph_div);
+    		// }
+    	    });
+    	    // Now let's try to add all the edges/connections.
+    	    each(ecore.get_edges(), function(eedge, eeid){
+    		_connect_with_edge(eedge);
+    	    });
 		
 		// Edit annotations on doible click.
 		_attach_node_dblclick_ann('.demo-window');
@@ -965,139 +960,132 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
 
 	// Next, look at individuals/nodes for addition or updating.
-	each(individuals,
-	     function(ind){
-		 // Update node. This is preferred since
-		 // deleting it would mean that all the connections
-		 // would have to be reconstructed as well.
-		 var refresh_node_id = null;
-		 var update_node = ecore.get_node_by_individual(ind);
-		 if( update_node ){
-		     ll('update node');
-
-		     // "Update" the edit node in core by clobbering it.
-		     var unode = ecore.add_node_from_individual(ind);
-
-		     // Add inferred info.
-		     var inftypes = inf_indv_lookup[unode.id()];
-		     if( inftypes ){
-			 ll('add inftypes: ' + inftypes.length);
-			 ll('...and? ' + unode.add_types(inftypes, true));
-		     }
-
-		     // Wipe node contents; redraw node contents.
-		     widgets.update_enode(ecore, unode, aid);
-
-		     // Mark it for refreshing.
-		     refresh_node_id = unode.id();
-
-		     //alert('cannot update nodes yet; suggest refreshing');
-		 }else{
-		     ll('add node');
-
-		     // Add new node to edit core, pull it out for
-		     // some work.
-		     ecore.add_node_from_individual(ind);
-		     var dyn_node = ecore.get_node_by_individual(ind);
-
-		     // Add inferred info.
-		     var dinftypes = inf_indv_lookup[dyn_node.id()];
-		     if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
-
-		     if( ! dyn_node ){
-			 alert('id issue somewhere--refresh to see state');
-		     }else{
-			 
-			 // Initial node layout settings.
-    			 var dyn_x = _vari() +
-				 jQuery(graph_container_div).scrollLeft();
-    			 var dyn_y = _vari() +
-				 jQuery(graph_container_div).scrollTop();
-			 dyn_node.x_init(dyn_x);
-			 dyn_node.y_init(dyn_y);
-			 
-			 // Draw it to screen.
-			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
-			 
-			 // Mark it for refreshing.
-			 refresh_node_id = dyn_node.id();
-		     }
-		 }
-
-		 // Refresh any node created or updated in the jsPlumb
-		 // physical view.
-		 if( refresh_node_id ){
-		     
-		     // Make node active in display.
-		     var dnid = refresh_node_id;
-		     var ddid = '#' + ecore.get_node_elt_id(dnid);
-		     _attach_node_dblclick_ann('.demo-window');
-		     _attach_node_draggable(ddid);
-		     // //_make_selector_target(ddid);
-		     // //_make_selector_source(ddid, '.konn');
-		     // // _attach_node_draggable('.demo-window');
-		     _attach_node_click_edit(".open-dialog");
-		     _make_selector_target('.demo-window');
-		     _make_selector_source('.demo-window', '.konn');
-		     // _attach_node_click_edit(ddid);
-		     // _make_selector_target(ddid);
-		     // _make_selector_source(ddid, '.konn');
-		     
-    		     jsPlumb.repaintEverything();
-		     refresh_node_id = null; // reset in case of error
-		 }
-	     });
+	each(individuals, function(ind){
+	    // Update node. This is preferred since
+	    // deleting it would mean that all the connections
+	    // would have to be reconstructed as well.
+	    var refresh_node_id = null;
+	    var update_node = ecore.get_node_by_individual(ind);
+	    if( update_node ){
+		ll('update node');
+		
+		// "Update" the edit node in core by clobbering it.
+		var unode = ecore.add_node_from_individual(ind);
+		
+		// Add inferred info.
+		var inftypes = inf_indv_lookup[unode.id()];
+		if( inftypes ){
+		    ll('add inftypes: ' + inftypes.length);
+		    ll('...and? ' + unode.add_types(inftypes, true));
+		}
+		
+		// Wipe node contents; redraw node contents.
+		widgets.update_enode(ecore, unode, aid);
+		
+		// Mark it for refreshing.
+		refresh_node_id = unode.id();
+		
+		//alert('cannot update nodes yet; suggest refreshing');
+	    }else{
+		ll('add node');
+		
+		// Add new node to edit core, pull it out for
+		// some work.
+		ecore.add_node_from_individual(ind);
+		var dyn_node = ecore.get_node_by_individual(ind);
+		
+		// Add inferred info.
+		var dinftypes = inf_indv_lookup[dyn_node.id()];
+		if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
+		
+		if( ! dyn_node ){
+		    alert('id issue somewhere--refresh to see state');
+		}else{
+		    
+		    // Initial node layout settings.
+    		    var dyn_x = _vari() +
+			jQuery(graph_container_div).scrollLeft();
+    		    var dyn_y = _vari() +
+			jQuery(graph_container_div).scrollTop();
+		    dyn_node.x_init(dyn_x);
+		    dyn_node.y_init(dyn_y);
+		    
+		    // Draw it to screen.
+		    widgets.add_enode(ecore, dyn_node, aid, graph_div);
+		    
+		    // Mark it for refreshing.
+		    refresh_node_id = dyn_node.id();
+		}
+	    }
+	    
+	    // Refresh any node created or updated in the jsPlumb
+	    // physical view.
+	    if( refresh_node_id ){
+		
+		// Make node active in display.
+		var dnid = refresh_node_id;
+		var ddid = '#' + ecore.get_node_elt_id(dnid);
+		_attach_node_dblclick_ann('.demo-window');
+		_attach_node_draggable(ddid);
+		// //_make_selector_target(ddid);
+		// //_make_selector_source(ddid, '.konn');
+		// // _attach_node_draggable('.demo-window');
+		_attach_node_click_edit(".open-dialog");
+		_make_selector_target('.demo-window');
+		_make_selector_source('.demo-window', '.konn');
+		// _attach_node_click_edit(ddid);
+		// _make_selector_target(ddid);
+		// _make_selector_source(ddid, '.konn');
+		
+    		jsPlumb.repaintEverything();
+		refresh_node_id = null; // reset in case of error
+	    }
+	});
 	
 	// Now look at individuals/edges (by individual) for
 	// purging.
-	each(individuals,
-	     function(ind){
-		 var source_node = ecore.get_node_by_individual(ind);
-		 
-		 var snid = source_node.id();
-		 var src_edges = ecore.get_edges_by_source(snid);
-		 //var src_edges = ecore.get_edges_by_target(snid);
-		 
-		 // Delete all edges/connectors for said node in
-		 // model.
-		 each(src_edges,
-		      function(src_edge){
-			  ecore.remove_edge(src_edge.id());
-		      });
-		 
-		 // Now delete all edges for the node in the UI.
-		 var snid_elt = ecore.get_node_elt_id(snid);
-		 var src_conns =
-			 instance.getConnections({'source': snid_elt});
-		 each(src_conns,
-		      function(src_conn){
-			  instance.detach(src_conn);
-		      });
-		 
-		 // // Add all edges from the new individuals to the
-		 // // model.
-		 // var redges = ecore.add_edges_from_individual(ind, aid);
-		 
-		 // // Now add them to the display.
-		 // each(redges,
-		 //      function(redge){
-		 // 	  _connect_with_edge(redge);
-		 //      });
-	     });
+	each(individuals, function(ind){
+	    var source_node = ecore.get_node_by_individual(ind);
+	    
+	    var snid = source_node.id();
+	    var src_edges = ecore.get_edges_by_source(snid);
+	    //var src_edges = ecore.get_edges_by_target(snid);
+	    
+	    // Delete all edges/connectors for said node in
+	    // model.
+	    each(src_edges, function(src_edge){
+		ecore.remove_edge(src_edge.id());
+	    });
+	    
+	    // Now delete all edges for the node in the UI.
+	    var snid_elt = ecore.get_node_elt_id(snid);
+	    var src_conns = instance.getConnections({'source': snid_elt});
+	    each(src_conns, function(src_conn){
+		instance.detach(src_conn);
+	    });
+	    
+	    // // Add all edges from the new individuals to the
+	    // // model.
+	    // var redges = ecore.add_edges_from_individual(ind, aid);
+	    
+	    // // Now add them to the display.
+	    // each(redges,
+	    //      function(redge){
+	    // 	  _connect_with_edge(redge);
+	    //      });
+	});
 	// Reinitiate from all facts.
-	each(facts,
-	     function(fact){
-		 var edg = ecore.add_edge_from_fact(fact, aid);
-		 _connect_with_edge(edg);
-	     });
+	each(facts, function(fact){
+	    var edg = ecore.add_edge_from_fact(fact, aid);
+	    _connect_with_edge(edg);
+	});
 
 	// Reinitiate from all annotations.
 	var replacement_annotations = [];
-	each(raw_annotations,
-	     function(ann_kv_set){
-		 var na = new bbopx.noctua.edit.annotation(ann_kv_set);
-		 replacement_annotations.push(na);
-	     });
+	each(raw_annotations, function(ann_kv_set){
+	    var na = new bbopx.noctua.edit.annotation(ann_kv_set);
+	    replacement_annotations.push(na);
+	});
 	ecore.annotations(replacement_annotations);
     }
     
@@ -2041,7 +2029,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    
 	    // Prep layout info.
 	    var tk_items = {'objects':[]};
-	    each(data['response'], function(iid, tnl){
+	    each(data['response'], function(tnl, iid){
 		tk_items['objects'].push({
 		    'item_id': iid,
 		    'top': tnl['top'],
@@ -2105,7 +2093,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	
 	// Grab node.
 	var nset = ecore.get_nodes();
-	var nkeys = bbop.core.get_keys(nset);
+	var nkeys = us.keys(nset);
 	var node = nset[nkeys[0]];
 	if( node ){
 	    // 
