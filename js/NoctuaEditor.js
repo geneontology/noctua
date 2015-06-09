@@ -25,9 +25,12 @@ var model = require('bbop-graph-noctua');
 
 // Aliases.
 var each = us.each;
-// var noctua_graph = model.graph;
-// var noctua_node = model.node;
-// var edge = model.edge;
+var noctua_graph = model.graph;
+var noctua_node = model.node;
+var noctua_annotation = model.annotation;
+var edge = model.edge;
+//
+var widgets = bbopx.noctua.widgets;
 
 /**
  * Bootstraps a working environment for the MME client.
@@ -49,18 +52,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
-    // Aliases
-    var bme_core = bbopx.noctua.edit.core;
-    var bme_edge = bbopx.noctua.edit.edge;
-    var bme_node = bbopx.noctua.edit.node;
-    var widgets = bbopx.noctua.widgets;
-    
     // Help with strings and colors--configured separately.
     var aid = new bbop.context(amigo.data.context);
 
     // Create the core model.
     //var bbopx.noctua.edit = require('./js/bbop-mme-edit');
-    var ecore = new bme_core();
+    var ecore = new noctua_graph();
 
     // Optionally use the messaging server as an experiment.
     var barclient = null;
@@ -568,8 +565,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     function _connect_with_edge(eedge){
 
 	var sn = eedge.source();
-	var rn = eedge.relation() || 'n/a';
 	var tn = eedge.target();
+	var rn = eedge.relation() || 'n/a';
 
 	// Readable label.
 	rn = aid.readable(rn);
@@ -582,8 +579,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    var n_ev = 0;
 	    var n_other = 0;
 	    each(eanns, function(ann){
-		if( ann.property('evidence') ){ n_ev++;
-					      }else{ n_other++; }
+		if( ann.key() == 'evidence' ){
+		    n_ev++;
+		}else{				  
+		    n_other++;
+		}
 	    });
 	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
@@ -745,7 +745,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	if( raw_annotations ){
 	    var annotations = [];
 	    each(raw_annotations, function(ann_kv_set){
-		var na = new bbopx.noctua.edit.annotation(ann_kv_set);
+		var na = new noctua_annotation(ann_kv_set);
 		annotations.push(na);
 	    });
 	    ecore.annotations(annotations);
@@ -781,7 +781,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	widgets.wipe(graph_div); // rather severe
 
 	// Wipe ecore.
-	ecore = new bme_core(); // nuke it from orbit
+	ecore = new noctua_graph(); // nuke it from orbit
 
 	// Reconstruct ecore meta.
 	_rebuild_meta(model_id, annotations);
@@ -797,7 +797,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    if( inftypes ){ unode.add_types(inftypes, true); }
 	});
 	each(facts, function(fact){ // add facts
-	    ecore.add_edge_from_fact(fact, aid);
+	    ecore.add_edge_from_fact(fact);
 	});
 
 	///
@@ -807,9 +807,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	///
 
 	// Extract the gross layout.
-	var g = ecore.to_graph();
+	//var g = ecore.to_graph();
 	var r = new bbop.layout.sugiyama.render();
-	var layout = r.layout(g);
+	var layout = r.layout(ecore);
 
 	// Find the initial layout position of the layout. There might
 	// be some missing due to finding cycles in the graph, so we
@@ -1076,14 +1076,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	});
 	// Reinitiate from all facts.
 	each(facts, function(fact){
-	    var edg = ecore.add_edge_from_fact(fact, aid);
+	    var edg = ecore.add_edge_from_fact(fact);
 	    _connect_with_edge(edg);
 	});
 
 	// Reinitiate from all annotations.
 	var replacement_annotations = [];
 	each(raw_annotations, function(ann_kv_set){
-	    var na = new bbopx.noctua.edit.annotation(ann_kv_set);
+	    var na = new noctua_annotation(ann_kv_set);
 	    replacement_annotations.push(na);
 	});
 	ecore.annotations(replacement_annotations);
@@ -2236,12 +2236,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // As a use case, we want to have the title available to people in
     // their browsers.
     var mtitle = 'Untitled';
-    var title_anns = ecore.get_annotations_by_filter(function(a){
-	var ret = false;
-	if( a.property('title') ){ ret = true; }
-	return ret;
-    });
-    if( title_anns && title_anns[0] ){ mtitle = title_anns[0].property('title');}
+    var title_anns = ecore.get_annotations_by_key('title');
+    if( title_anns && title_anns[0] ){
+	mtitle = title_anns[0].value('title');
+    }
     document.title = mtitle + ' (Noctua Editor)';
 
     // Finally, we're going to put up a giant warning for people to
