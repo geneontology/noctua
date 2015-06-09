@@ -41,13 +41,6 @@ var widgets = bbopx.noctua.widgets;
  */
 var MMEnvInit = function(in_model, in_relations, in_token){
     
-    // TODO: Add this as an argument.
-    //var use_waypoints_p = true;
-    // var use_waypoints_p = false;
-    // Form is: { <sub>: <obj>: [[x1, y1], ..., [xn, yn]] }
-    // Where 1 is the initial node and n is the terminal node.
-    var waypoints = {};
-    
     var logger = new bbop_core.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
@@ -614,24 +607,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    throw new Error('unpossible glyph...is apparently possible');
 	}
 
-	// Try and see if there are waypoints.
-	var usable_waypoints = null;
-	if( waypoints[sn] && waypoints[sn][tn] ){
-	    usable_waypoints = waypoints[sn][tn];
-	}
-
     	var new_conn_args = {
 	    // remember that edge ids and elts ids are the same 
     	    'source': ecore.get_node_elt_id(sn),
     	    'target': ecore.get_node_elt_id(tn),
 	    //'label': 'foo' // works
 	    'anchor': "Continuous",
-	    // TODO/BUG: Finish Sugiyama implementation.
-	    //'connector': ["Sugiyama", { curviness: 75 } ],
-	    'connector': ["Sugiyama", {
-		'curviness': 75,
-		'waypoints': usable_waypoints
-	    } ],
+	    'connector': ["Sugiyama", { curviness: 75 } ],
             // Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    'paintStyle': {
 		strokeStyle: clr,
@@ -851,78 +833,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    en.y_init(fin_y);
 	});	
 	
-	///
-	/// Assemble (optionally used) waypoint information.
-	///
-
-	// // Add waypoint virtual nodes.
-	// each(layout['virtual_nodes'],
-	//      function(litem, index){
-	// 	 var id = litem['id'];
-	// 	 var raw_x = litem['x'];
-	// 	 var raw_y = litem['y'];
-
-	// 	 var vn = new bme_node(id, 'virtual');
-	// 	 vn.x_init(_vbox_left(raw_x));
-	// 	 vn.y_init(_vbox_top(raw_y));
-	
-	// 	 ecore.add_node(vn);
-	//      });	
-	
-	// Add additional waypoint path information to the edges.
-	// Points are either in the layout_store or they are virtual
-	// and we will generate them as we go.
-	each(layout['paths'], function(path){
-		 
-	    // Ensure the require waypoints structure using the
-	    // only two real points of reference.
-	    var nodes = path['nodes'];
-	    var sub_id = nodes[0];
-	    var obj_id = nodes[nodes.length -1];
-	    
-	    // Now iterate over all of the waypoints to make it
-	    // there.
-	    // Note that we realize that the first and last ones
-	    // will be irrelevant since we'll be relying on
-	    // jsPlumb to figure those out for us.
-	    var layout_waypoints = path['waypoints'];
-	    each(layout_waypoints, function(wi, waypoint){
-		if( wi > 0 && wi < (layout_waypoints.length -1) ){
-		    var vc = [
-			_vbox_left(waypoint['x']),
-			_vbox_top(waypoint['y'])
-		    ];
-		    
-		    // To keep the output easier, only add
-		    // new structure on need...
-		    if( ! waypoints[sub_id] ){
-			waypoints[sub_id] = {};
-		    }
-		    if( ! waypoints[sub_id][obj_id] ){
-			waypoints[sub_id][obj_id] = [];
-		    }
-		    
-		    waypoints[sub_id][obj_id].push(vc);
-		}
-	    });
-	});
-	//ll('waypoints: ' + bbop.core.dump(waypoints));
-
 	// For our intitialization/first drawing, suspend jsPlumb
 	// stuff while we get a little work done rebuilding the UI.
 	instance.doWhileSuspended(function(){
 	    
 	    // Initial render of the graph.
     	    each(ecore.get_nodes(), function(enode, enode_id){
-		// Add if a "real" node.
-    		// if( enode.existential() == 'real' ){
     		widgets.add_enode(ecore, enode, aid, graph_div);
-    		// }else{
-		//   // == 'virtual'; will not be used if no waypoints.
-		//     widgets.add_virtual_node(ecore, enode,
-		// 			      aid, graph_div);
-    		// }
     	    });
+
     	    // Now let's try to add all the edges/connections.
     	    each(ecore.all_edges(), function(eedge, eeid){
     		_connect_with_edge(eedge);
@@ -933,18 +852,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	    // Make nodes draggable.
 	    _attach_node_draggable(".demo-window");
-	    // if( use_waypoints_p ){	
-	    //     _attach_node_draggable(".waypoint");
-	    // }
 	    
 	    // Make nodes able to use edit dialog.
 	    _attach_node_click_edit('.open-dialog');
 	    
     	    // Make normal nodes availables as edge targets.
 	    _make_selector_target('.demo-window');
-    	    // if( use_waypoints_p ){ // same for waypoints/virtual nodes
-	    //     _make_selector_target('.waypoint');
-    	    // }
 	    
 	    // Make the konn class available as source from inside the
 	    // real node class elements.
