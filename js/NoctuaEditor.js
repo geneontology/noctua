@@ -651,16 +651,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var new_conn = instance.connect(new_conn_args);
 
 	// Add activity listener to the new edge.
-	new_conn.bind('dblclick',
-		      function(connection, event){
-			  //alert('edge click: ' + eedge.id());
-			  var ann_edit_modal = widgets.edit_annotations_modal;
-			  var eam = ann_edit_modal(fact_annotation_config,
-						   ecore, manager, eedge.id(),
-						   gserv, gconf);
-			  eam.show();
-		      });
-
+	new_conn.bind('dblclick', function(connection, event){
+	    //alert('edge click: ' + eedge.id());
+	    var ann_edit_modal = widgets.edit_annotations_modal;
+	    var eam = ann_edit_modal(fact_annotation_config, ecore, manager,
+				     eedge.id(), gserv, gconf);
+	    eam.show();
+	});
+	
 	// NOTE: This is necessary since these connectors are created
 	// under the covers of jsPlumb--I don't have access during
 	// creation like I do with the nodes.
@@ -769,7 +767,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // The core initial layout function.
     function _rebuild_model_and_display(model_id, individuals,
 					inferred_individuals,
-					facts, annotations){
+					facts, annotations, model_data){
 
 	ll('rebuilding from scratch');
 	
@@ -783,22 +781,26 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Wipe ecore.
 	ecore = new noctua_graph(); // nuke it from orbit
 
-	// Reconstruct ecore meta.
-	_rebuild_meta(model_id, annotations);
+	// Build on new graph.
+	ecore.load_data_base(model_data);
+	//ecore.load_data_fold_evidence(model_data);
 
-	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+	// // Reconstruct ecore meta.
+	// _rebuild_meta(model_id, annotations);
 
-	// Starting fresh, add everything coming in to the edit model.
-	each(individuals, function(indv){ // add nodes
-	    var unode = ecore.add_node_from_individual(indv);
+	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+
+	// // Starting fresh, add everything coming in to the edit model.
+	// each(individuals, function(indv){ // add nodes
+	//     var unode = ecore.add_node_from_individual(indv);
 	    
-	    // Add inferred info.
-	    var inftypes = inf_indv_lookup[unode.id()];
-	    if( inftypes ){ unode.add_types(inftypes, true); }
-	});
-	each(facts, function(fact){ // add facts
-	    ecore.add_edge_from_fact(fact);
-	});
+	//     // Add inferred info.
+	//     var inftypes = inf_indv_lookup[unode.id()];
+	//     if( inftypes ){ unode.add_types(inftypes, true); }
+	// });
+	// each(facts, function(fact){ // add facts
+	//     ecore.add_edge_from_fact(fact);
+	// });
 
 	///
 	/// We now have a well-defined edit core. Let's try and add
@@ -908,7 +910,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// For our intitialization/first drawing, suspend jsPlumb
 	// stuff while we get a little work done rebuilding the UI.
-	instance.doWhileSuspended( function(){
+	instance.doWhileSuspended(function(){
 	    
 	    // Initial render of the graph.
     	    each(ecore.get_nodes(), function(enode, enode_id){
@@ -922,33 +924,33 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		// }
     	    });
     	    // Now let's try to add all the edges/connections.
-    	    each(ecore.get_edges(), function(eedge, eeid){
+    	    each(ecore.all_edges(), function(eedge, eeid){
     		_connect_with_edge(eedge);
     	    });
 		
-		// Edit annotations on doible click.
-		_attach_node_dblclick_ann('.demo-window');
+	    // Edit annotations on doible click.
+	    _attach_node_dblclick_ann('.demo-window');
 
-		// Make nodes draggable.
-		_attach_node_draggable(".demo-window");
-		// if( use_waypoints_p ){	
-		//     _attach_node_draggable(".waypoint");
-		// }
-		
-		// Make nodes able to use edit dialog.
-		_attach_node_click_edit('.open-dialog');
-
-    		// Make normal nodes availables as edge targets.
-		_make_selector_target('.demo-window');
-    		// if( use_waypoints_p ){ // same for waypoints/virtual nodes
-		//     _make_selector_target('.waypoint');
-    		// }
-		
-		// Make the konn class available as source from inside the
-		// real node class elements.
-		_make_selector_source('.demo-window', '.konn');
-		
-    	    });
+	    // Make nodes draggable.
+	    _attach_node_draggable(".demo-window");
+	    // if( use_waypoints_p ){	
+	    //     _attach_node_draggable(".waypoint");
+	    // }
+	    
+	    // Make nodes able to use edit dialog.
+	    _attach_node_click_edit('.open-dialog');
+	    
+    	    // Make normal nodes availables as edge targets.
+	    _make_selector_target('.demo-window');
+    	    // if( use_waypoints_p ){ // same for waypoints/virtual nodes
+	    //     _make_selector_target('.waypoint');
+    	    // }
+	    
+	    // Make the konn class available as source from inside the
+	    // real node class elements.
+	    _make_selector_source('.demo-window', '.konn');
+	    
+    	});
     }
 
     // This is a very important core function. It's purpose is to
@@ -1244,7 +1246,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    _rebuild_model_and_display(mid,
 				       mindividuals,
 				       mindividuals_i,
-				       mfacts, mannotations);
+				       mfacts, mannotations, resp.data());
 	    // }
 	}
     }, 10);
@@ -1845,7 +1847,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var init_facts = model_json['facts'];
     var init_anns = model_json['annotations'] || [];
     _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
-			       init_facts, init_anns);
+			       init_facts, init_anns, model_json);
     _refresh_tables();
     // Get initial information.
     // TODO: This will be unnecessary in future versions where the 
@@ -2160,7 +2162,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	
 	// First, collect all of the part_of connections.
 	var poc = {};
-	each(ecore.get_edges(), function(edge_id){
+	each(ecore.all_edges(), function(edge_id){
 	    var edge = ecore.get_edge(edge_id);
 	    //if( edge && edge.relation() == 'part_of' ){
 	    if( edge && edge.relation() == 'BFO:0000050' ){
@@ -2238,7 +2240,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var mtitle = 'Untitled';
     var title_anns = ecore.get_annotations_by_key('title');
     if( title_anns && title_anns[0] ){
-	mtitle = title_anns[0].value('title');
+	mtitle = title_anns[0].value();
     }
     document.title = mtitle + ' (Noctua Editor)';
 
