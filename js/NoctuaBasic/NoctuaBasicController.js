@@ -3,6 +3,7 @@ var bbop = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo = require('amigo2');
 var underscore = require('underscore');
+var graph_api = require('bbop-graph-noctua');
 
 angular
   .module('noctuaBasicApp')
@@ -18,6 +19,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   var compute_shield_modal = null;
   var _shields_up = null;
   var _shields_down = null;
+  var graph = new graph_api.graph();
   $scope.selected_disease = null;
   $scope.selected_phenotype = null;
   $scope.selected_ageofonset = null;
@@ -98,6 +100,16 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
+
+      graph.load_data_base(resp.data());
+      $scope.grid_model = [];
+      var nodes = graph.get_nodes();
+      jQuery.each(nodes, function(key, value) {
+        $scope.grid_model.push({"id": key, "fake": "label"});
+      });
+      console.log(graph.get_nodes());
+      console.log($scope.grid_model);
+
       $scope.$apply();
     }, 10);
 

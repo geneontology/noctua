@@ -5,3 +5,8 @@
 .md-toast.success {
     background-color: green;
 }
+
+.myGrid {
+    width: 500px;
+    height: 250px;
+}
