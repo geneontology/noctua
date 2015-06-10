@@ -632,6 +632,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     	var new_conn = instance.connect(new_conn_args);
 
+	// Associate the connection ID with the edge ID.
+	ecore.create_edge_mapping(eedge, new_conn);
+
 	// Add activity listener to the new edge.
 	new_conn.bind('dblclick', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
@@ -704,34 +707,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
-    function _rebuild_meta(model_id, raw_annotations){
-
-	// Deal with ID(s).
-	// First and only setting of this right now.
-	// Override if there is real data.
-	if( model_id ){
-	    ecore.add_id(model_id);
-	    ll('model id from data: ' + ecore.get_id());
-	}else if( typeof(global_id) !== 'undefined' && global_id ){
-	    ecore.add_id(global_id);
-	    ll('model id from environment: ' + ecore.get_id());
-	}else{
-	    ll('model id missing');
-	    throw new Error('missing model id');
-	}
-
-	// Bring in any annotations lying around.
-	// Completely replace the old ones in the process.
-	if( raw_annotations ){
-	    var annotations = [];
-	    each(raw_annotations, function(ann_kv_set){
-		var na = new noctua_annotation(ann_kv_set);
-		annotations.push(na);
-	    });
-	    ecore.annotations(annotations);
-	}
-    }
-    
     // squeeze the inferred individual info out to id -> types
     function _squeezed_inferred(inferred_individuals){
 	var inf_indv_lookup = {}; // ids to types
@@ -767,15 +742,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	ecore.load_data_base(model_data);
 	//ecore.load_data_fold_evidence(model_data);
 
-	// // Reconstruct ecore meta.
-	// _rebuild_meta(model_id, annotations);
-
-	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
-
 	// // Starting fresh, add everything coming in to the edit model.
+	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
 	// each(individuals, function(indv){ // add nodes
-	//     var unode = ecore.add_node_from_individual(indv);
-	    
+	//     var unode = ecore.add_node_from_individual(indv);	    
 	//     // Add inferred info.
 	//     var inftypes = inf_indv_lookup[unode.id()];
 	//     if( inftypes ){ unode.add_types(inftypes, true); }
@@ -1261,7 +1231,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    var eeid = ecore.get_edge_id_by_connector_id(cid);
 	    ll('looks like edge: ' + eeid);
 	    
-	    var edge = ecore.get_edge(eeid);
+	    var edge = ecore.get_edge_by_id(eeid);
 	    manager.remove_fact(ecore.get_id(), edge.source(),
 				edge.target(), edge.relation());
 	}
@@ -2076,7 +2046,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// First, collect all of the part_of connections.
 	var poc = {};
 	each(ecore.all_edges(), function(edge_id){
-	    var edge = ecore.get_edge(edge_id);
+	    var edge = ecore.get_edge_by_id(edge_id);
 	    //if( edge && edge.relation() == 'part_of' ){
 	    if( edge && edge.relation() == 'BFO:0000050' ){
 		var conn_id =
