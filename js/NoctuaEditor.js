@@ -51,6 +51,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Create the core model.
     //var bbopx.noctua.edit = require('./js/bbop-mme-edit');
     var ecore = new noctua_graph();
+    var model_json = null;
 
     // The type of view we'll use to edit; tells which load function
     // to use.
@@ -563,7 +564,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     //
     function _delete_iae_from_ecore(indv_id){
-	ecore.remove_node(indv_id); // recursively removes
+	ecore.remove_node(indv_id, true); // recursively removes
     }
 
     function _connect_with_edge(eedge){
@@ -733,21 +734,25 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }
 
     // The core initial layout function.
-    function _rebuild_model_and_display(model_id, individuals,
-					inferred_individuals,
-					facts, annotations, model_data){
+    function _rebuild_model_and_display(model_data, preserve_p){
 
 	ll('rebuilding from scratch');
 	
 	// Wipe UI.
 	each(ecore.get_nodes(), function(en, enid){
 	    _delete_iae_from_ui(enid);
-	    _delete_iae_from_ecore(enid);
 	});
 	widgets.wipe(graph_div); // rather severe
 
-	// Wipe ecore.
-	ecore = new noctua_graph(); // nuke it from orbit
+	// Wipe ecore and structures if not attempting to preserve
+	// current data. Reasons to preserve could include switching
+	// views.
+	if( ! preserve_p ){
+	    each(ecore.get_nodes(), function(en, enid){
+		_delete_iae_from_ecore(enid);
+	    });
+	    ecore = new noctua_graph(); // nuke it from orbit
+	}
 
 	// Build on new graph.
 	if( view_type == 'basic' ){
@@ -1131,22 +1136,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// of the function as an argument once the
 	// moderator is on.
 	if( _continue_update_p(resp, man) ){
-	
-	    var mid = resp.model_id();
-	    var mindividuals = resp.individuals();
-	    var mindividuals_i = resp.inferred_individuals();
-	    var mfacts = resp.facts();
-	    var mannotations = resp.annotations();
-	
-	    // Deal with model.
-	    // if( ! mid || is_empty(mindividuals) ){
-	    //     alert('no data/individuals in inconsistent');
-	    // }else{
-	    _rebuild_model_and_display(mid,
-				       mindividuals,
-				       mindividuals_i,
-				       mfacts, mannotations, resp.data());
-	    // }
+	    model_json = resp.data();
+	    _rebuild_model_and_display(model_json);
 	}
     }, 10);
     // Update locations according to Barista after rebuild event.
@@ -1735,18 +1726,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     /// of the editor.
     ///
 
-    var model_json = in_model;
+    // First assignment, of incoming argument graph.
+    model_json = in_model;
 
     // Since we're doing this "manually", apply the prerun and postrun
     // "manually".
     _shields_up();
-    var init_mid = model_json['id'];
-    var init_indvs = model_json['individuals'];
-    var init_indvs_i = model_json['individuals_i'] || [];
-    var init_facts = model_json['facts'];
-    var init_anns = model_json['annotations'] || [];
-    _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
-			       init_facts, init_anns, model_json);
+    _rebuild_model_and_display(model_json);
     _refresh_tables();
     // Get initial information.
     // TODO: This will be unnecessary in future versions where the 
@@ -2122,11 +2108,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Switch the edit view mode.
     jQuery(view_basic_elt).click(function(){
 	view_type = 'basic';
-	// TODO: remake view
+	_shields_up();
+	_rebuild_model_and_display(model_json, true);
+	_shields_down();
     });
     jQuery(view_ev_fold_elt).click(function(){
 	view_type = 'ev_fold';
-	// TODO: remake view
+	_shields_up();
+	_rebuild_model_and_display(model_json, true);
+	_shields_down();
     });
     
     // Let the canvas (div) underneath be dragged around in an
