@@ -10,6 +10,8 @@ var source = require('vinyl-source-stream');
 var uglify = require('gulp-uglify');
 var us = require('underscore');
 var del = require('del');
+var bump = require('gulp-bump');
+//var git = require('gulp-git');
 //var watch = require('gulp-watch');
 //var watchify = require('watchify');
 //var concat = require('gulp-concat');
@@ -85,8 +87,10 @@ us.each(paths.clients, function(file, index){
     }
     
     // Define task.
-    gulp.task(taskname, function() {
-	return _client_task(file);
+    gulp.task(taskname, function(cb){
+	//return _client_task(file);
+	_client_task(file);
+	cb(null);
     });
 
 });
@@ -104,16 +108,47 @@ gulp.task('build', build_tasks);
 // });
 
 // Rerun tasks when a file changes.
-gulp.task('watch', function() {
-  gulp.watch(paths.clients, ['build']);
-  gulp.watch(paths.support, ['build']);
+gulp.task('watch', function(cb) {
+    gulp.watch(paths.clients, ['build']);
+    gulp.watch(paths.support, ['build']);
+    cb(null);
 });
 
 // 
 gulp.task('clean', function(cb) {
     del(['./deploy/*', './deploy/js/*', '!./deploy/README.org',
 	 './doc/*', '!./doc/README.org']);
+    cb(null);
 });
+
+// Release tools for patch release.
+gulp.task('release', ['patch-bump', 'publish-npm']);
+
+gulp.task('patch-bump', function(){
+    gulp.src('./package.json')
+        .pipe(bump({type: 'patch'}))
+        .pipe(gulp.dest('./'));
+});
+
+// 
+gulp.task('publish-npm', function(cb) {
+    var npm = require("npm");
+    npm.load(function (er, npm) {
+        // NPM
+        npm.commands.publish(); 
+    });
+    cb(null);
+});
+
+// gulp.task('git-tag', function(){
+//     console.log('TODO: WORK IN PROGRESS');
+//     // Make a note in the git repo.
+//     var pkg = require('./package.json');
+//     var pver = pkg.version;
+//     git.tag('go-exp-widget-' + pver, 'version message', function (err){
+//         if(err) throw err;
+//     });
+// });
 
 // gulp.task('compress', function() {
 //   return gulp.src('static/noctua-runtime.js')

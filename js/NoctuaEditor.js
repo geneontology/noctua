@@ -17,6 +17,21 @@ var bbop = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo = require('amigo2');
 
+// The new backbone libs.
+//var bbop
+var us = require('underscore');
+var bbop_core = require('bbop-core');
+var model = require('bbop-graph-noctua');
+
+// Aliases.
+var each = us.each;
+var noctua_graph = model.graph;
+var noctua_node = model.node;
+var noctua_annotation = model.annotation;
+var edge = model.edge;
+//
+var widgets = bbopx.noctua.widgets;
+
 /**
  * Bootstraps a working environment for the MME client.
  *
@@ -25,34 +40,22 @@ var amigo = require('amigo2');
  * @param {Object} in_token TODO
  */
 var MMEnvInit = function(in_model, in_relations, in_token){
-
-    // TODO: Add this as an argument.
-    //var use_waypoints_p = true;
-    // var use_waypoints_p = false;
-    // Form is: { <sub>: <obj>: [[x1, y1], ..., [xn, yn]] }
-    // Where 1 is the initial node and n is the terminal node.
-    var waypoints = {};
-
-    var logger = new bbop.logger('noctua editor');
+    
+    var logger = new bbop_core.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
-
-    // Aliases
-    var each = bbop.core.each;
-    var is_defined = bbop.core.is_defined;
-    var is_empty = bbop.core.is_empty;
-    var what_is = bbop.core.what_is;
-    var bme_core = bbopx.noctua.edit.core;
-    var bme_edge = bbopx.noctua.edit.edge;
-    var bme_node = bbopx.noctua.edit.node;
-    var widgets = bbopx.noctua.widgets;
 
     // Help with strings and colors--configured separately.
     var aid = new bbop.context(amigo.data.context);
 
     // Create the core model.
     //var bbopx.noctua.edit = require('./js/bbop-mme-edit');
-    var ecore = new bme_core();
+    var ecore = new noctua_graph();
+    var model_json = null;
+
+    // The type of view we'll use to edit; tells which load function
+    // to use.
+    var view_type = 'basic'; // or 'ev_fold' or ...
 
     // Optionally use the messaging server as an experiment.
     var barclient = null;
@@ -104,7 +107,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	//     'policy': 'mutable',
 	//     'cardinality': 'many',
 	//     'placeholder': 'Enter evidence type'
-
+	    
 	// },
 	// {
 	//     'id': 'source',
@@ -128,7 +131,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'
+	    'placeholder': 'Add comment...'		
 	}
     ];
     var instance_annotation_config = [
@@ -180,7 +183,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'
+	    'placeholder': 'Add comment...'		
 	}
     ];
     var fact_annotation_config = [
@@ -232,7 +235,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'
+	    'placeholder': 'Add comment...'		
 	}
     ];
 
@@ -288,10 +291,17 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Other contact points.
     var model_ann_id = 'menu-model-annotations';
     var model_ann_elt = '#' + model_ann_id;
+    //
     var toggle_part_of_id = 'toggle_part_of';
     var toggle_part_of_elt = '#' + toggle_part_of_id;
     var toggle_screen_id = 'toggle_screen_of';
     var toggle_screen_elt = '#' + toggle_screen_id;
+    //
+    var view_basic_id = 'view_basic';
+    var view_basic_elt = '#' + view_basic_id;
+    var view_ev_fold_id = 'view_ev_fold';
+    var view_ev_fold_elt = '#' + view_ev_fold_id;
+    //
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -345,7 +355,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var vbox_width = 5;
     var vbox_height = 5;
     function _box_top(raw_y){
-	return ((box_height + v_spacer) * raw_y) + v_spacer;
+	return ((box_height + v_spacer) * raw_y) + v_spacer;	
     }
     function _box_left(raw_x){
 	return ((box_width + h_spacer) * raw_x) + h_spacer;
@@ -378,7 +388,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
             //Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    EndpointStyles : [
-		{
+		{ 
 		    width: 15,
 		    height: 15,
 		    //strokeStyle: '#000000',
@@ -404,10 +414,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     function _set_zoom(zlvl) {
 	var btype = [ "-webkit-", "-moz-", "-ms-", "-o-", "" ];
         var scale_str = "scale(" + zlvl + ")";
-	each(btype,
-	     function(b){
-		 jQuery(graph_div).css(b + "transform", scale_str);
-	     });
+	each(btype, function(b){
+	    jQuery(graph_div).css(b + "transform", scale_str);
+	});
 	instance.setZoom(zlvl);
     };
 
@@ -490,7 +499,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
             connector:[ "Sugiyama", { curviness: 25 } ]
         });
     }
-
+    
     function _attach_node_dblclick_ann(sel){
 
 	// BUG/TODO: trial
@@ -499,11 +508,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	jQuery(sel).dblclick(
 	    function(event){
 		event.stopPropagation();
-
+		
 		//var target_elt = jQuery(event.target);
 		var target_id = jQuery(this).attr('id');
 		var enode = ecore.get_node_by_elt_id(target_id);
-		if( enode ){
+		if( enode ){		    
 		    var ann_edit_modal = widgets.edit_annotations_modal;
 		    var eam = ann_edit_modal(instance_annotation_config,
 					     ecore, manager, enode.id(),
@@ -528,7 +537,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
-		if( enode ){
+		if( enode ){		    
 		    var nedit = widgets.edit_node_modal(ecore, manager, enode,
 							in_relations, aid,
 							gserv, gconf);
@@ -555,14 +564,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     //
     function _delete_iae_from_ecore(indv_id){
-	ecore.remove_node(indv_id); // recursively removes
+	ecore.remove_node(indv_id, true); // recursively removes
     }
 
     function _connect_with_edge(eedge){
 
 	var sn = eedge.source();
-	var rn = eedge.relation() || 'n/a';
 	var tn = eedge.target();
+	var rn = eedge.relation() || 'n/a';
 
 	// Readable label.
 	rn = aid.readable(rn);
@@ -574,11 +583,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // Meta counts.
 	    var n_ev = 0;
 	    var n_other = 0;
-	    each(eanns,
-		 function(ann){
-		     if( ann.property('evidence') ){ n_ev++;
-						   }else{ n_other++; }
-		 });
+	    each(eanns, function(ann){
+		if( ann.key() == 'evidence' ){
+		    n_ev++;
+		}else{				  
+		    n_other++;
+		}
+	    });
 	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
 
@@ -608,24 +619,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    throw new Error('unpossible glyph...is apparently possible');
 	}
 
-	// Try and see if there are waypoints.
-	var usable_waypoints = null;
-	if( waypoints[sn] && waypoints[sn][tn] ){
-	    usable_waypoints = waypoints[sn][tn];
-	}
-
     	var new_conn_args = {
-	    // remember that edge ids and elts ids are the same
+	    // remember that edge ids and elts ids are the same 
     	    'source': ecore.get_node_elt_id(sn),
     	    'target': ecore.get_node_elt_id(tn),
 	    //'label': 'foo' // works
 	    'anchor': "Continuous",
-	    // TODO/BUG: Finish Sugiyama implementation.
-	    //'connector': ["Sugiyama", { curviness: 75 } ],
-	    'connector': ["Sugiyama", {
-		'curviness': 75,
-		'waypoints': usable_waypoints
-	    } ],
+	    'connector': ["Sugiyama", { curviness: 75 } ],
             // Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    'paintStyle': {
 		strokeStyle: clr,
@@ -644,17 +644,18 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     	var new_conn = instance.connect(new_conn_args);
 
-	// Add activity listener to the new edge.
-	new_conn.bind('dblclick',
-		      function(connection, event){
-			  //alert('edge click: ' + eedge.id());
-			  var ann_edit_modal = widgets.edit_annotations_modal;
-			  var eam = ann_edit_modal(fact_annotation_config,
-						   ecore, manager, eedge.id(),
-						   gserv, gconf);
-			  eam.show();
-		      });
+	// Associate the connection ID with the edge ID.
+	ecore.create_edge_mapping(eedge, new_conn);
 
+	// Add activity listener to the new edge.
+	new_conn.bind('dblclick', function(connection, event){
+	    //alert('edge click: ' + eedge.id());
+	    var ann_edit_modal = widgets.edit_annotations_modal;
+	    var eam = ann_edit_modal(fact_annotation_config, ecore, manager,
+				     eedge.id(), gserv, gconf);
+	    eam.show();
+	});
+	
 	// NOTE: This is necessary since these connectors are created
 	// under the covers of jsPlumb--I don't have access during
 	// creation like I do with the nodes.
@@ -697,7 +698,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
     }
 
-    //
+    // 
     function _inconsistency_check(resp, man){
 	ll('doing the inconsistent_p check');
 	if( resp.inconsistent_p() &&
@@ -718,85 +719,61 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
-    function _rebuild_meta(model_id, raw_annotations){
-
-	// Deal with ID(s).
-	// First and only setting of this right now.
-	// Override if there is real data.
-	if( model_id ){
-	    ecore.add_id(model_id);
-	    ll('model id from data: ' + ecore.get_id());
-	}else if( typeof(global_id) !== 'undefined' && global_id ){
-	    ecore.add_id(global_id);
-	    ll('model id from environment: ' + ecore.get_id());
-	}else{
-	    ll('model id missing');
-	    throw new Error('missing model id');
-	}
-
-	// Bring in any annotations lying around.
-	// Completely replace the old ones in the process.
-	if( raw_annotations ){
-	    var annotations = [];
-	    each(raw_annotations,
-		 function(ann_kv_set){
-		     var na = new bbopx.noctua.edit.annotation(ann_kv_set);
-		     annotations.push(na);
-		 });
-	    ecore.annotations(annotations);
-	}
-    }
-
     // squeeze the inferred individual info out to id -> types
     function _squeezed_inferred(inferred_individuals){
 	var inf_indv_lookup = {}; // ids to types
-	each(inferred_individuals, // fold in inferred type information
-	     function(indv){
-		 // Get ID.
-		 var inf_iid = indv['id'] || null;
-		 if( inf_iid ){
-		     inf_indv_lookup[inf_iid] = indv['type'] || [];
-		 }
-	     });
+	// fold in inferred type information
+	each(inferred_individuals, function(indv){
+	    // Get ID.
+	    var inf_iid = indv['id'] || null;
+	    if( inf_iid ){
+		inf_indv_lookup[inf_iid] = indv['type'] || [];
+	    }
+	});
 	return inf_indv_lookup;
     }
 
     // The core initial layout function.
-    function _rebuild_model_and_display(model_id, individuals,
-					inferred_individuals,
-					facts, annotations){
+    function _rebuild_model_and_display(model_data, preserve_p){
 
 	ll('rebuilding from scratch');
-
+	
 	// Wipe UI.
-	each(ecore.get_nodes(),
-	     function(enid, en){
-		 _delete_iae_from_ui(enid);
-		 _delete_iae_from_ecore(enid);
-	     });
+	each(ecore.get_nodes(), function(en, enid){
+	    _delete_iae_from_ui(enid);
+	});
 	widgets.wipe(graph_div); // rather severe
 
-	// Wipe ecore.
-	ecore = new bme_core(); // nuke it from orbit
+	// Wipe ecore and structures if not attempting to preserve
+	// current data. Reasons to preserve could include switching
+	// views.
+	if( ! preserve_p ){
+	    each(ecore.get_nodes(), function(en, enid){
+		_delete_iae_from_ecore(enid);
+	    });
+	    ecore = new noctua_graph(); // nuke it from orbit
+	}
 
-	// Reconstruct ecore meta.
-	_rebuild_meta(model_id, annotations);
+	// Build on new graph.
+	if( view_type == 'basic' ){
+	    ecore.load_data_base(model_data);
+	}else if( view_type == 'ev_fold' ){
+	    ecore.load_data_fold_evidence(model_data);
+	}else{
+	    throw new Error('unknown graph editor view: ' + view_type);
+	}
 
-	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
-
-	// Starting fresh, add everything coming in to the edit model.
-	each(individuals, // add nodes
-	     function(indv){
-		 var unode = ecore.add_node_from_individual(indv);
-
-		 // Add inferred info.
-		 var inftypes = inf_indv_lookup[unode.id()];
-		 if( inftypes ){ unode.add_types(inftypes, true); }
-	     });
-	each(facts, // add facts
-	     function(fact){
-		 ecore.add_edge_from_fact(fact, aid);
-	     });
+	// // Starting fresh, add everything coming in to the edit model.
+	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+	// each(individuals, function(indv){ // add nodes
+	//     var unode = ecore.add_node_from_individual(indv);	    
+	//     // Add inferred info.
+	//     var inftypes = inf_indv_lookup[unode.id()];
+	//     if( inftypes ){ unode.add_types(inftypes, true); }
+	// });
+	// each(facts, function(fact){ // add facts
+	//     ecore.add_edge_from_fact(fact);
+	// });
 
 	///
 	/// We now have a well-defined edit core. Let's try and add
@@ -805,155 +782,79 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	///
 
 	// Extract the gross layout.
-	var g = ecore.to_graph();
+	//var g = ecore.to_graph();
 	var r = new bbop.layout.sugiyama.render();
-	var layout = r.layout(g);
+	var layout = r.layout(ecore);
 
 	// Find the initial layout position of the layout. There might
 	// be some missing due to finding cycles in the graph, so we
 	// have this two-step process.
 	var layout_store = new bbopx.noctua.location_store();
-	each(layout['nodes'],
-	     function(litem, index){
-		 var id = litem['id'];
-		 var raw_x = litem['x'];
-		 var raw_y = litem['y'];
-		 var fin_x = _box_left(raw_x);
-		 var fin_y = _box_top(raw_y);
-		 layout_store.add(id, fin_x, fin_y);
-	     });
+	each(layout['nodes'], function(litem, index){
+	    var id = litem['id'];
+	    var raw_x = litem['x'];
+	    var raw_y = litem['y'];
+	    var fin_x = _box_left(raw_x);
+	    var fin_y = _box_top(raw_y);
+	    layout_store.add(id, fin_x, fin_y);
+	});
 	// Now got through all of the actual nodes.
-	each(ecore.get_nodes(),
-	     function(enid, en){
-
-		 // Try and see if we have coords; the precedence is:
-		 // historical (drop), layout, make some up.
-		 var fin_x = null;
-		 var fin_y = null;
-		 var hist_coords = historical_store.get(enid);
-		 var layout_coords = layout_store.get(enid);
-		 if( hist_coords ){
-		     fin_x = hist_coords['x'];
-		     fin_y = hist_coords['y'];
-		 }else if( layout_coords ){
-		     fin_x = layout_coords['x'];
-		     fin_y = layout_coords['y'];
-		 }else{
-		     fin_x = _vari();
-		     fin_y = _vari();
-		 }
-
-		 // Take the final coordinate and add it as a hint into
-		 // the edit node.
-		 en.x_init(fin_x);
-		 en.y_init(fin_y);
-	     });
-
-	///
-	/// Assemble (optionally used) waypoint information.
-	///
-
-	// // Add waypoint virtual nodes.
-	// each(layout['virtual_nodes'],
-	//      function(litem, index){
-	// 	 var id = litem['id'];
-	// 	 var raw_x = litem['x'];
-	// 	 var raw_y = litem['y'];
-
-	// 	 var vn = new bme_node(id, 'virtual');
-	// 	 vn.x_init(_vbox_left(raw_x));
-	// 	 vn.y_init(_vbox_top(raw_y));
-
-	// 	 ecore.add_node(vn);
-	//      });
-
-	// Add additional waypoint path information to the edges.
-	// Points are either in the layout_store or they are virtual
-	// and we will generate them as we go.
-	each(layout['paths'],
-    	     function(path){
-
-		 // Ensure the require waypoints structure using the
-		 // only two real points of reference.
-		 var nodes = path['nodes'];
-		 var sub_id = nodes[0];
-		 var obj_id = nodes[nodes.length -1];
-
-		 // Now iterate over all of the waypoints to make it
-		 // there.
-		 // Note that we realize that the first and last ones
-		 // will be irrelevant since we'll be relying on
-		 // jsPlumb to figure those out for us.
-		 var layout_waypoints = path['waypoints'];
-		 each(layout_waypoints,
-		      function(waypoint, wi){
-			  if( wi > 0 && wi < (layout_waypoints.length -1) ){
-			      var vc = [
-				  _vbox_left(waypoint['x']),
-				  _vbox_top(waypoint['y'])
-			      ];
-
-			      // To keep the output easier, only add
-			      // new structure on need...
-			      if( ! waypoints[sub_id] ){
-				  waypoints[sub_id] = {};
-			      }
-			      if( ! waypoints[sub_id][obj_id] ){
-				  waypoints[sub_id][obj_id] = [];
-			      }
-
-			      waypoints[sub_id][obj_id].push(vc);
-			  }
-		      });
-	     });
-	//ll('waypoints: ' + bbop.core.dump(waypoints));
-
+	each(ecore.get_nodes(), function(en, enid){
+	    
+	    // Try and see if we have coords; the precedence is:
+	    // historical (drop), layout, make some up.
+	    var fin_x = null;
+	    var fin_y = null;
+	    var hist_coords = historical_store.get(enid);
+	    var layout_coords = layout_store.get(enid);
+	    if( hist_coords ){
+		fin_x = hist_coords['x'];
+		fin_y = hist_coords['y'];
+	    }else if( layout_coords ){
+		fin_x = layout_coords['x'];
+		fin_y = layout_coords['y'];
+	    }else{
+		fin_x = _vari();
+		fin_y = _vari();		 
+	    }
+	    
+	    // Take the final coordinate and add it as a hint into
+	    // the edit node.
+	    en.x_init(fin_x);
+	    en.y_init(fin_y);
+	});	
+	
 	// For our intitialization/first drawing, suspend jsPlumb
 	// stuff while we get a little work done rebuilding the UI.
-	instance.doWhileSuspended(
-    	    function(){
-
-		// Initial render of the graph.
-    		each(ecore.get_nodes(),
-    		     function(enode_id, enode){
-			 // Add if a "real" node.
-    			 // if( enode.existential() == 'real' ){
-    			 widgets.add_enode(ecore, enode, aid, graph_div);
-    			 // }else{
-			 //   // == 'virtual'; will not be used if no waypoints.
-			 //     widgets.add_virtual_node(ecore, enode,
-			 // 			      aid, graph_div);
-    			 // }
-    		     });
-    		// Now let's try to add all the edges/connections.
-    		each(ecore.get_edges(),
-    		     function(eeid, eedge){
-    			 _connect_with_edge(eedge);
-    		     });
-
-		// Edit annotations on doible click.
-		_attach_node_dblclick_ann('.demo-window');
-
-		// Make nodes draggable.
-		_attach_node_draggable(".demo-window");
-		// if( use_waypoints_p ){
-		//     _attach_node_draggable(".waypoint");
-		// }
-
-		// Make nodes able to use edit dialog.
-		_attach_node_click_edit('.open-dialog');
-
-    		// Make normal nodes availables as edge targets.
-		_make_selector_target('.demo-window');
-    		// if( use_waypoints_p ){ // same for waypoints/virtual nodes
-		//     _make_selector_target('.waypoint');
-    		// }
-
-		// Make the konn class available as source from inside the
-		// real node class elements.
-		_make_selector_source('.demo-window', '.konn');
-
+	instance.doWhileSuspended(function(){
+	    
+	    // Initial render of the graph.
+    	    each(ecore.get_nodes(), function(enode, enode_id){
+    		widgets.add_enode(ecore, enode, aid, graph_div);
     	    });
+
+    	    // Now let's try to add all the edges/connections.
+    	    each(ecore.all_edges(), function(eedge, eeid){
+    		_connect_with_edge(eedge);
+    	    });
+		
+	    // Edit annotations on doible click.
+	    _attach_node_dblclick_ann('.demo-window');
+
+	    // Make nodes draggable.
+	    _attach_node_draggable(".demo-window");
+	    
+	    // Make nodes able to use edit dialog.
+	    _attach_node_click_edit('.open-dialog');
+	    
+    	    // Make normal nodes availables as edge targets.
+	    _make_selector_target('.demo-window');
+	    
+	    // Make the konn class available as source from inside the
+	    // real node class elements.
+	    _make_selector_source('.demo-window', '.konn');
+	    
+    	});
     }
 
     // This is a very important core function. It's purpose is to
@@ -965,153 +866,146 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
 
 	// Next, look at individuals/nodes for addition or updating.
-	each(individuals,
-	     function(ind){
-		 // Update node. This is preferred since
-		 // deleting it would mean that all the connections
-		 // would have to be reconstructed as well.
-		 var refresh_node_id = null;
-		 var update_node = ecore.get_node_by_individual(ind);
-		 if( update_node ){
-		     ll('update node');
-
-		     // "Update" the edit node in core by clobbering it.
-		     var unode = ecore.add_node_from_individual(ind);
-
-		     // Add inferred info.
-		     var inftypes = inf_indv_lookup[unode.id()];
-		     if( inftypes ){
-			 ll('add inftypes: ' + inftypes.length);
-			 ll('...and? ' + unode.add_types(inftypes, true));
-		     }
-
-		     // Wipe node contents; redraw node contents.
-		     widgets.update_enode(ecore, unode, aid);
-
-		     // Mark it for refreshing.
-		     refresh_node_id = unode.id();
-
-		     //alert('cannot update nodes yet; suggest refreshing');
-		 }else{
-		     ll('add node');
-
-		     // Add new node to edit core, pull it out for
-		     // some work.
-		     ecore.add_node_from_individual(ind);
-		     var dyn_node = ecore.get_node_by_individual(ind);
-
-		     // Add inferred info.
-		     var dinftypes = inf_indv_lookup[dyn_node.id()];
-		     if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
-
-		     if( ! dyn_node ){
-			 alert('id issue somewhere--refresh to see state');
-		     }else{
-
-			 // Initial node layout settings.
-    			 var dyn_x = _vari() +
-				 jQuery(graph_container_div).scrollLeft();
-    			 var dyn_y = _vari() +
-				 jQuery(graph_container_div).scrollTop();
-			 dyn_node.x_init(dyn_x);
-			 dyn_node.y_init(dyn_y);
-
-			 // Draw it to screen.
-			 widgets.add_enode(ecore, dyn_node, aid, graph_div);
-
-			 // Mark it for refreshing.
-			 refresh_node_id = dyn_node.id();
-		     }
-		 }
-
-		 // Refresh any node created or updated in the jsPlumb
-		 // physical view.
-		 if( refresh_node_id ){
-
-		     // Make node active in display.
-		     var dnid = refresh_node_id;
-		     var ddid = '#' + ecore.get_node_elt_id(dnid);
-		     _attach_node_dblclick_ann('.demo-window');
-		     _attach_node_draggable(ddid);
-		     // //_make_selector_target(ddid);
-		     // //_make_selector_source(ddid, '.konn');
-		     // // _attach_node_draggable('.demo-window');
-		     _attach_node_click_edit(".open-dialog");
-		     _make_selector_target('.demo-window');
-		     _make_selector_source('.demo-window', '.konn');
-		     // _attach_node_click_edit(ddid);
-		     // _make_selector_target(ddid);
-		     // _make_selector_source(ddid, '.konn');
-
-    		     jsPlumb.repaintEverything();
-		     refresh_node_id = null; // reset in case of error
-		 }
-	     });
-
+	each(individuals, function(ind){
+	    // Update node. This is preferred since
+	    // deleting it would mean that all the connections
+	    // would have to be reconstructed as well.
+	    var refresh_node_id = null;
+	    var update_node = ecore.get_node_by_individual(ind);
+	    if( update_node ){
+		ll('update node');
+		
+		// "Update" the edit node in core by clobbering it.
+		var unode = ecore.add_node_from_individual(ind);
+		
+		// Add inferred info.
+		var inftypes = inf_indv_lookup[unode.id()];
+		if( inftypes ){
+		    ll('add inftypes: ' + inftypes.length);
+		    ll('...and? ' + unode.add_types(inftypes, true));
+		}
+		
+		// Wipe node contents; redraw node contents.
+		widgets.update_enode(ecore, unode, aid);
+		
+		// Mark it for refreshing.
+		refresh_node_id = unode.id();
+		
+		//alert('cannot update nodes yet; suggest refreshing');
+	    }else{
+		ll('add node');
+		
+		// Add new node to edit core, pull it out for
+		// some work.
+		ecore.add_node_from_individual(ind);
+		var dyn_node = ecore.get_node_by_individual(ind);
+		
+		// Add inferred info.
+		var dinftypes = inf_indv_lookup[dyn_node.id()];
+		if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
+		
+		if( ! dyn_node ){
+		    alert('id issue somewhere--refresh to see state');
+		}else{
+		    
+		    // Initial node layout settings.
+    		    var dyn_x = _vari() +
+			jQuery(graph_container_div).scrollLeft();
+    		    var dyn_y = _vari() +
+			jQuery(graph_container_div).scrollTop();
+		    dyn_node.x_init(dyn_x);
+		    dyn_node.y_init(dyn_y);
+		    
+		    // Draw it to screen.
+		    widgets.add_enode(ecore, dyn_node, aid, graph_div);
+		    
+		    // Mark it for refreshing.
+		    refresh_node_id = dyn_node.id();
+		}
+	    }
+	    
+	    // Refresh any node created or updated in the jsPlumb
+	    // physical view.
+	    if( refresh_node_id ){
+		
+		// Make node active in display.
+		var dnid = refresh_node_id;
+		var ddid = '#' + ecore.get_node_elt_id(dnid);
+		_attach_node_dblclick_ann('.demo-window');
+		_attach_node_draggable(ddid);
+		// //_make_selector_target(ddid);
+		// //_make_selector_source(ddid, '.konn');
+		// // _attach_node_draggable('.demo-window');
+		_attach_node_click_edit(".open-dialog");
+		_make_selector_target('.demo-window');
+		_make_selector_source('.demo-window', '.konn');
+		// _attach_node_click_edit(ddid);
+		// _make_selector_target(ddid);
+		// _make_selector_source(ddid, '.konn');
+		
+    		jsPlumb.repaintEverything();
+		refresh_node_id = null; // reset in case of error
+	    }
+	});
+	
 	// Now look at individuals/edges (by individual) for
 	// purging.
-	each(individuals,
-	     function(ind){
-		 var source_node = ecore.get_node_by_individual(ind);
-
-		 var snid = source_node.id();
-		 var src_edges = ecore.get_edges_by_source(snid);
-		 //var src_edges = ecore.get_edges_by_target(snid);
-
-		 // Delete all edges/connectors for said node in
-		 // model.
-		 each(src_edges,
-		      function(src_edge){
-			  ecore.remove_edge(src_edge.id());
-		      });
-
-		 // Now delete all edges for the node in the UI.
-		 var snid_elt = ecore.get_node_elt_id(snid);
-		 var src_conns =
-			 instance.getConnections({'source': snid_elt});
-		 each(src_conns,
-		      function(src_conn){
-			  instance.detach(src_conn);
-		      });
-
-		 // // Add all edges from the new individuals to the
-		 // // model.
-		 // var redges = ecore.add_edges_from_individual(ind, aid);
-
-		 // // Now add them to the display.
-		 // each(redges,
-		 //      function(redge){
-		 // 	  _connect_with_edge(redge);
-		 //      });
-	     });
+	each(individuals, function(ind){
+	    var source_node = ecore.get_node_by_individual(ind);
+	    
+	    var snid = source_node.id();
+	    var src_edges = ecore.get_edges_by_source(snid);
+	    //var src_edges = ecore.get_edges_by_target(snid);
+	    
+	    // Delete all edges/connectors for said node in
+	    // model.
+	    each(src_edges, function(src_edge){
+		ecore.remove_edge(src_edge.id());
+	    });
+	    
+	    // Now delete all edges for the node in the UI.
+	    var snid_elt = ecore.get_node_elt_id(snid);
+	    var src_conns = instance.getConnections({'source': snid_elt});
+	    each(src_conns, function(src_conn){
+		instance.detach(src_conn);
+	    });
+	    
+	    // // Add all edges from the new individuals to the
+	    // // model.
+	    // var redges = ecore.add_edges_from_individual(ind, aid);
+	    
+	    // // Now add them to the display.
+	    // each(redges,
+	    //      function(redge){
+	    // 	  _connect_with_edge(redge);
+	    //      });
+	});
 	// Reinitiate from all facts.
-	each(facts,
-	     function(fact){
-		 var edg = ecore.add_edge_from_fact(fact, aid);
-		 _connect_with_edge(edg);
-	     });
+	each(facts, function(fact){
+	    var edg = ecore.add_edge_from_fact(fact);
+	    _connect_with_edge(edg);
+	});
 
 	// Reinitiate from all annotations.
 	var replacement_annotations = [];
-	each(raw_annotations,
-	     function(ann_kv_set){
-		 var na = new bbopx.noctua.edit.annotation(ann_kv_set);
-		 replacement_annotations.push(na);
-	     });
+	each(raw_annotations, function(ann_kv_set){
+	    var na = new noctua_annotation(ann_kv_set);
+	    replacement_annotations.push(na);
+	});
 	ecore.annotations(replacement_annotations);
     }
-
+    
     ///
     /// Manager registration and ordering.
     ///
-
+    
     // Internal registrations.
     manager.register('prerun', 'foo', _shields_up);
     manager.register('postrun', 'foo1', _inconsistency_check, 10);
     manager.register('postrun', 'foo2', _refresh_tables, 9);
     manager.register('postrun', 'foo3', _shields_down, 8);
-    manager.register('postrun', 'foo4', function(resp, man){ // experimental
-
+    manager.register('postrun', 'foo4', function(resp, man){ // experimental	
+	
 	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
 	if( barclient ){
@@ -1127,13 +1021,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
-
+    
     manager.register('warning', 'foo', function(resp, man){
 	var comment = resp.commentary() || null;
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed.\n' + comment);
     }, 10);
-
+    
     manager.register('error', 'foo', function(resp, man){
 
 	var perm_flag = "InsufficientPermissionsException";
@@ -1149,7 +1043,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		  'your operation was likely not performed.\n' + comment);
 	}
     }, 10);
-
+    
     // Remote action registrations.
     manager.register('meta', 'foo', function(resp, man){
     	//alert('Meta operation successful: ' + resp.message());
@@ -1183,7 +1077,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Only run the internal function when the filters are passed.
     var seen_packets = {};
     function _continue_update_p(resp, man, run_fun){
-
+	
 	var ret = false;
 
 	var this_packet = resp.packet_id();
@@ -1229,7 +1123,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 			//     // Otherwise, ignore it.
 			//     ll("ignoring other's query request");
 			// }
-
+			
 		    }
 		}
 	    }
@@ -1242,22 +1136,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// of the function as an argument once the
 	// moderator is on.
 	if( _continue_update_p(resp, man) ){
-
-	    var mid = resp.model_id();
-	    var mindividuals = resp.individuals();
-	    var mindividuals_i = resp.inferred_individuals();
-	    var mfacts = resp.facts();
-	    var mannotations = resp.annotations();
-
-	    // Deal with model.
-	    // if( ! mid || is_empty(mindividuals) ){
-	    //     alert('no data/individuals in inconsistent');
-	    // }else{
-	    _rebuild_model_and_display(mid,
-				       mindividuals,
-				       mindividuals_i,
-				       mfacts, mannotations);
-	    // }
+	    model_json = resp.data();
+	    _rebuild_model_and_display(model_json);
 	}
     }, 10);
     // Update locations according to Barista after rebuild event.
@@ -1277,7 +1157,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// of the function as an argument once the
 	// moderator is on.
 	if( _continue_update_p(resp, man) ){
-
+	
 	    var individuals = resp.individuals();
 	    var individuals_i = resp.inferred_individuals();
 	    var facts = resp.facts();
@@ -1305,24 +1185,24 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     ///
     /// UI event registration.
-    ///
+    ///    
 
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection", function(info, original_evt) {
-
+	
 	// If it looks like a new drag-and-drop event
 	// connection.
 	if( ! original_evt ){
 	    ll('knock-on "connection": ignoring.');
 	}else{
 	    ll('direct "connection" event.');
-
+	    
 	    // Get the necessary info from the
 	    // connection.
 	    var sn = info.sourceId;
 	    var tn = info.targetId;
-
+	    
 	    // TODO/BUG: Destroy the autogen one (I
 	    // can't make them behave as well as the
 	    // programmatic ones--need to understand:
@@ -1330,11 +1210,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // then create the programmatic one.
 	    // This connection is no longer needed.
 	    instance.detach(info.connection);
-
+	    
 	    // Create a new edge based on this info.
 	    var snode = ecore.get_node_by_elt_id(sn);
 	    var tnode = ecore.get_node_by_elt_id(tn);
-
+	    
 	    // Pop up the modal.
 	    var init_edge = widgets.add_edge_modal(ecore, manager,
 						   in_relations, aid,
@@ -1342,29 +1222,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    init_edge.show();
 	}
     });
-
+    
     // Detach event.
     instance.bind("connectionDetached", function(info, original_evt) {
-
+	
 	// Only to this for direct detachments, not
 	// knock-on effects from things like merge.
 	if( ! original_evt ){
 	    ll('knock-on "connectionDetached": ignoring.');
 	}else{
 	    ll('direct "connectionDetach" event.');
-
+	    
 	    var cid = info.connection.id;
 	    ll('there was a connection detached: ' + cid);
 	    var eeid = ecore.get_edge_id_by_connector_id(cid);
 	    ll('looks like edge: ' + eeid);
-
-	    var edge = ecore.get_edge(eeid);
+	    
+	    var edge = ecore.get_edge_by_id(eeid);
 	    manager.remove_fact(ecore.get_id(), edge.source(),
 				edge.target(), edge.relation());
 	}
     });
-
-    // TODO:
+    
+    // TODO: 
     // Would like this, since otherwise I'll have to deal with
     // decoding what is happening and possibly a race condition.
     // https://github.com/sporritt/jsPlumb/issues/157
@@ -1373,7 +1253,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	//ll('there was a connection moved: ' + cid);
     	alert('there was a "connectionMoved" event: ' + cid);
     });
-
+    
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(function(){
         jsPlumb.repaintEverything();
@@ -1486,7 +1366,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		jQuery(simple_bp_restrict_enb_auto_elt).val('');
     		jQuery(simple_bp_restrict_act_auto_elt).val('');
     		jQuery(simple_bp_restrict_occ_auto_elt).val('');
-
+		
 		// Send message to server.
 		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	    }
@@ -1582,7 +1462,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		jQuery(simple_bp_free_enb_auto_elt).val('');
     		jQuery(simple_bp_free_act_auto_elt).val('');
     		jQuery(simple_bp_free_occ_auto_elt).val('');
-
+		
 		// Send message to server.
 		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	    }
@@ -1597,7 +1477,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var simple_mf_restrict_enb_auto_val = null;
     var simple_mf_restrict_act_auto_val = null;
     var simple_mf_restrict_occ_auto_val = null;
-
+    
     // bioentity
     var simple_mf_restrict_enb_auto_args = {
     	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
@@ -1640,7 +1520,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_enb_auto.add_query_filter('document_category',
 						 'bioentity');
     simple_mf_restrict_enb_auto.set_personality('bioentity');
-
+    
     var simple_mf_restrict_act_auto =
 	    new bbop.widget.search_box(gserv, gconf,
 				       simple_mf_restrict_act_auto_id,
@@ -1651,7 +1531,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_restrict_act_auto.add_query_filter('regulates_closure_label',
     						 'molecular_function', ['*']);
     simple_mf_restrict_act_auto.set_personality('annotation');
-
+    
     var simple_mf_restrict_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf,
 				       simple_mf_restrict_occ_auto_id,
@@ -1684,7 +1564,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var enb = simple_mf_restrict_enb_auto_val || '';
     	var act = simple_mf_restrict_act_auto_val || '';
     	var occ = simple_mf_restrict_occ_auto_val || '';
-
+	
     	if( act == '' ){
     	    alert('Must select activity field from autocomplete list.');
     	}else{
@@ -1695,7 +1575,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery(simple_mf_restrict_enb_auto_elt).val('');
     	    jQuery(simple_mf_restrict_act_auto_elt).val('');
     	    jQuery(simple_mf_restrict_occ_auto_elt).val('');
-
+	    
 	    // Send message to server.
 	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	}
@@ -1760,7 +1640,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
     					     'molecular_function');
     simple_mf_free_act_auto.set_personality('ontology');
-
+    
     var simple_mf_free_occ_auto =
 	    new bbop.widget.search_box(gserv, gconf, simple_mf_free_occ_auto_id,
 				       simple_mf_free_occ_auto_args);
@@ -1778,7 +1658,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var enb = simple_mf_free_enb_auto_val || '';
     	var act = simple_mf_free_act_auto_val || '';
     	var occ = simple_mf_free_occ_auto_val || '';
-
+	
     	if( act == '' ){
     	    alert('Must select activity field from autocomplete list.');
     	}else{
@@ -1789,7 +1669,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery(simple_mf_free_enb_auto_elt).val('');
     	    jQuery(simple_mf_free_act_auto_elt).val('');
     	    jQuery(simple_mf_free_occ_auto_elt).val('');
-
+	    
 	    // Send message to server.
 	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
     	}
@@ -1811,7 +1691,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	var nz = instance.getZoom() - 0.25;
     	_set_zoom(nz);
     });
-
+    
     // Refresh button.
     // Trigger a model get and an inconsistent redraw.
     jQuery(refresh_btn_elt).click(function(){
@@ -1846,21 +1726,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     /// of the editor.
     ///
 
-    var model_json = in_model;
+    // First assignment, of incoming argument graph.
+    model_json = in_model;
 
     // Since we're doing this "manually", apply the prerun and postrun
     // "manually".
     _shields_up();
-    var init_mid = model_json['id'];
-    var init_indvs = model_json['individuals'];
-    var init_indvs_i = model_json['individuals_i'] || [];
-    var init_facts = model_json['facts'];
-    var init_anns = model_json['annotations'] || [];
-    _rebuild_model_and_display(init_mid, init_indvs, init_indvs_i,
-			       init_facts, init_anns);
+    _rebuild_model_and_display(model_json);
     _refresh_tables();
     // Get initial information.
-    // TODO: This will be unnecessary in future versions where the
+    // TODO: This will be unnecessary in future versions where the 
     // model was pulled live (standard rebuild).
     _trigger_undo_redo_lookup();
     _shields_down();
@@ -1895,12 +1770,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// // Change our user id.
 	// manager.user_token(uid);
-	//
+	// 
 	// TODO: Actually, this call could be used to paint or display with
 	// our user info beyond the token.
     }
 
-    // Catch both the regular back-and-forth, as well as the
+    // Catch both the regular back-and-forth, as well as the 
     function _on_message_update(data){
 	//function _on_message_update(data, uid, ucolor){
 
@@ -1911,7 +1786,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// Add to the top of the message list.
 	reporter.comment(data);
-
+	
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
 	//alert('someone did something');
@@ -1928,7 +1803,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    });
 	}
     }
-
+    
     function _on_clairvoyance_update(data){
 	//function _on_clairvoyance_update(id, color, top, left){
 
@@ -1973,7 +1848,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 		var iid = obj['item_id'];
 		var top = obj['top'];
-		var left = obj['left'];
+		var left = obj['left'];	
 
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
@@ -1987,7 +1862,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    // TODO: Still seems a bit slow. Tried throwing events as
 		    // well, but didn't work. This is certainly the "right"
 		    // way to do it...
-    		    //instance.repaintEverything();
+    		    //instance.repaintEverything();	
 		    instance.repaint(enelt);
 		}
 	    });
@@ -2035,20 +1910,20 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Jimmy into telekinesis format and trigger
     // _on_telekinesis_update().
     function _on_layout_response(data){
-
+	
 	//console.log('_on_layout_response:', data);
 	if( data && data['response'] ){
-
+	    
 	    // Prep layout info.
 	    var tk_items = {'objects':[]};
-	    each(data['response'], function(iid, tnl){
+	    each(data['response'], function(tnl, iid){
 		tk_items['objects'].push({
 		    'item_id': iid,
 		    'top': tnl['top'],
 		    'left': tnl['left']
 		});
 	    });
-
+	    
 	    //
 	    //console.log('tk_items:', tk_items);
 	    _on_telekinesis_update(tk_items);
@@ -2099,22 +1974,22 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	eam.show();
     });
 
-    //
+    // 
     jQuery(test_btn_elt).click(function(){
 	//alert('in progress');
-
+	
 	// Grab node.
 	var nset = ecore.get_nodes();
-	var nkeys = bbop.core.get_keys(nset);
+	var nkeys = us.keys(nset);
 	var node = nset[nkeys[0]];
 	if( node ){
-	    //
+	    // 
 	    //alert('in progress: + ' + node.id());
 	    //bbop_mme_widgets.contained_modal('shield');
 	    //var mdl = new bbop_mme_widgets.contained_modal('dialog', 'hi');
 	    var mdl = bbopx.noctua.widgets.compute_shield();
 	    mdl.show();
-
+	    
 	    // Works.
  	    // Test that destroy works.
 	    window.setTimeout(
@@ -2145,7 +2020,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	/// Individuals.
 	// axon guidance receptor activity
 	reqs.add_simple_individual('GO:0008046');
-	var mf = reqs.last_individual_id();
+	var mf = reqs.last_individual_id();    
 	// neurogenesis
 	reqs.add_simple_individual('GO:0022008');
 	var bp = reqs.last_individual_id();
@@ -2155,8 +2030,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Drd3
 	reqs.add_simple_individual('MGI:MGI:94925');
 	var gp = reqs.last_individual_id();
-
-	// Edges and evidence.
+	
+	// Edges and evidence.    
 	reqs.add_fact(mf, bp, 'part_of');
 	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
 				  mf, bp, 'part_of');
@@ -2166,32 +2041,32 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	manager.request_with(reqs, ecore.get_id());
     });
 
-    // Toggle the visibility of the part_of connectors.
+    // Toggle the visibility of the part_of connectors. 
     var viz_p = true;
     jQuery(toggle_part_of_elt).click(function(){
-
+	
 	// First, collect all of the part_of connections.
 	var poc = {};
-	each(ecore.get_edges(), function(edge_id){
-	    var edge = ecore.get_edge(edge_id);
+	each(ecore.all_edges(), function(edge_id){
+	    var edge = ecore.get_edge_by_id(edge_id);
 	    //if( edge && edge.relation() == 'part_of' ){
 	    if( edge && edge.relation() == 'BFO:0000050' ){
 		var conn_id =
 		    ecore.get_connector_id_by_edge_id(edge.id());
 		poc[conn_id] = true;
 	    }
-	});
-
+	});	    
+	
 	// Switch viz.
 	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
-
+	
 	// Toggle viz on and off.
 	each(instance.getConnections(), function(conn){
 	    if( poc[conn.id] ){
 		conn.setVisible(viz_p);
 		conn.endpoints[0].setVisible(viz_p);
 		conn.endpoints[1].setVisible(viz_p);
-
+		     
 		// Disappearing is easy, making visiable
 		// leads to artifacts.
 		if( viz_p ){
@@ -2205,21 +2080,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    }
 	});
     });
-
+    
     // Toggle the screenshot mode.
     var screen_p = false;
     jQuery(toggle_screen_elt).click(function(){
 
 	// Toggle switch.
 	if( screen_p ){ screen_p = false; }else{ screen_p = true; }
-
+	
 	// Change the styles.
 	if( screen_p ){
 	    // Remove the side.
 	    jQuery('.app-graph-container').css('margin-left', '0em');
 	    jQuery('.app-editor-bounds').css('height', '100%');
 	    jQuery('.app-table-bounds').css('height', '0%');
-	    jQuery('.app-controls').css('width', '0em');
+	    jQuery('.app-controls').css('width', '0em');		
 	}else{
 	    // Re-establish the sides.
 	    jQuery('.app-graph-container').css('margin-left', '15em');
@@ -2227,9 +2102,23 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery('.app-table-bounds').css('height', '30%');
 	    jQuery('.app-controls').css('width', '15em');
 	}
-
+	
     });
-
+    
+    // Switch the edit view mode.
+    jQuery(view_basic_elt).click(function(){
+	view_type = 'basic';
+	_shields_up();
+	_rebuild_model_and_display(model_json, true);
+	_shields_down();
+    });
+    jQuery(view_ev_fold_elt).click(function(){
+	view_type = 'ev_fold';
+	_shields_up();
+	_rebuild_model_and_display(model_json, true);
+	_shields_down();
+    });
+    
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
     bbopx.noctua.draggable_canvas(graph_container_id);
@@ -2248,12 +2137,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // As a use case, we want to have the title available to people in
     // their browsers.
     var mtitle = 'Untitled';
-    var title_anns = ecore.get_annotations_by_filter(function(a){
-	var ret = false;
-	if( a.property('title') ){ ret = true; }
-	return ret;
-    });
-    if( title_anns && title_anns[0] ){ mtitle = title_anns[0].property('title');}
+    var title_anns = ecore.get_annotations_by_key('title');
+    if( title_anns && title_anns[0] ){
+	mtitle = title_anns[0].value();
+    }
     document.title = mtitle + ' (Noctua Editor)';
 
     // Finally, we're going to put up a giant warning for people to
@@ -2317,7 +2204,7 @@ jsPlumb.ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
-
+	    
 	    // BUG: Bad, bad, bad code...
 	    // DEBUG: Path for heiko that prevents initial manager pass and
 	    // uses embedded model.
@@ -2333,17 +2220,17 @@ jsPlumb.ready(function(){
 		    new bbopx.minerva.manager(global_barista_location,
 					      global_minerva_definition_name,
 					      start_token);
-
+		
 		// Have a manager and model id, defined a success callback
 		// and try and get the full model to start the bootstrap.
 		manager.register('manager_error', 'foo', function(resp, man){
 		    alert('Early manager error (' +
 			  resp.message_type() + '): ' + resp.message());
 		}, 10);
-		manager.register('error', 'foo', function(resp, man){
+		manager.register('error', 'foo', function(resp, man){		
 		    if( ! resp.commentary() ){
 			alert('Early error (' +
-			      resp.message_type()+ '): ' +
+			      resp.message_type()+ '): ' + 
 			      resp.message());
 		    }else{
 			alert('Early error (' +
@@ -2364,7 +2251,7 @@ jsPlumb.ready(function(){
 		manager.get_model(global_id);
 		//var rr = manager.get_model(global_id);
 		//console.log('rr: ' + rr);
-
+		
 		// When all is said and done, let's also fillout the user
 		// name just for niceness. This is also a test of CORS in
 		// express.
