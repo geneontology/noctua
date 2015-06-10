@@ -52,6 +52,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     //var bbopx.noctua.edit = require('./js/bbop-mme-edit');
     var ecore = new noctua_graph();
 
+    // The type of view we'll use to edit; tells which load function
+    // to use.
+    var view_type = 'basic'; // or 'ev_fold' or ...
+
     // Optionally use the messaging server as an experiment.
     var barclient = null;
 
@@ -286,10 +290,17 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Other contact points.
     var model_ann_id = 'menu-model-annotations';
     var model_ann_elt = '#' + model_ann_id;
+    //
     var toggle_part_of_id = 'toggle_part_of';
     var toggle_part_of_elt = '#' + toggle_part_of_id;
     var toggle_screen_id = 'toggle_screen_of';
     var toggle_screen_elt = '#' + toggle_screen_id;
+    //
+    var view_basic_id = 'view_basic';
+    var view_basic_elt = '#' + view_basic_id;
+    var view_ev_fold_id = 'view_ev_fold';
+    var view_ev_fold_elt = '#' + view_ev_fold_id;
+    //
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
     var zret_btn_id = 'zoomret';
@@ -739,8 +750,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	ecore = new noctua_graph(); // nuke it from orbit
 
 	// Build on new graph.
-	ecore.load_data_base(model_data);
-	//ecore.load_data_fold_evidence(model_data);
+	if( view_type == 'basic' ){
+	    ecore.load_data_base(model_data);
+	}else if( view_type == 'ev_fold' ){
+	    ecore.load_data_fold_evidence(model_data);
+	}else{
+	    throw new Error('unknown graph editor view: ' + view_type);
+	}
 
 	// // Starting fresh, add everything coming in to the edit model.
 	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
@@ -2101,6 +2117,16 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    jQuery('.app-controls').css('width', '15em');
 	}
 	
+    });
+    
+    // Switch the edit view mode.
+    jQuery(view_basic_elt).click(function(){
+	view_type = 'basic';
+	// TODO: remake view
+    });
+    jQuery(view_ev_fold_elt).click(function(){
+	view_type = 'ev_fold';
+	// TODO: remake view
     });
     
     // Let the canvas (div) underneath be dragged around in an
