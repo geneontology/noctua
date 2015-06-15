@@ -119,7 +119,7 @@ start-barista:
 
 .PHONY: start-minerva-go
 start-minerva-go:
-	cd $(MINERVA_SERVER)/minerva-server/bin && ./build-server.sh
+	cd $(MINERVA_SERVER) && ./build-server.sh
 	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
 
 .PHONY: start-minerva-go-fast
