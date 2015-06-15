@@ -733,10 +733,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	return inf_indv_lookup;
     }
 
+    function _load_graph_with_data(d_graph, d_data, d_view_type){
+	// Build on new graph.
+	if( d_view_type == 'basic' ){
+	    d_graph.load_data_base(d_data);
+	}else if( d_view_type == 'ev_fold' ){
+	    d_graph.load_data_fold_evidence(d_data);
+	}else{
+	    throw new Error('unknown graph editor view: ' + d_view_type);
+	}	
+    }
+
     // The core initial layout function.
     function _rebuild_model_and_display(model_data, preserve_p){
 
-	ll('rebuilding from scratch');
+	ll('REBUILD from scratch');
 	
 	// Wipe UI.
 	each(ecore.get_nodes(), function(en, enid){
@@ -754,14 +765,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    ecore = new noctua_graph(); // nuke it from orbit
 	}
 
-	// Build on new graph.
-	if( view_type == 'basic' ){
-	    ecore.load_data_base(model_data);
-	}else if( view_type == 'ev_fold' ){
-	    ecore.load_data_fold_evidence(model_data);
-	}else{
-	    throw new Error('unknown graph editor view: ' + view_type);
-	}
+	// Build on whatever graph we have now.
+	_load_graph_with_data(ecore, model_data, view_type);
 
 	// // Starting fresh, add everything coming in to the edit model.
 	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
@@ -838,7 +843,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		_connect_with_edge(eedge);
     	    });
 		
-	    // Edit annotations on doible click.
+	    // Edit annotations on double click.
 	    _attach_node_dblclick_ann('.demo-window');
 
 	    // Make nodes draggable.
@@ -860,139 +865,134 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // This is a very important core function. It's purpose is to
     // update the local model and UI to be consistent with the current
     // state and the data input.
-    function _merge_from_new_data(individuals, inferred_individuals,
-				  facts, raw_annotations){
+    //
+    // Fundamentally, it adds/updates nodes, removes all edges
+    // mentioned in the updated from the core/UI, and then readds the
+    // edges with the new ones.
+    function _merge_from_new_data(model_json){
+	ll('in MERGE main');
 
-	var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+	// Create a new graph of incoming merge data.
+	var merge_in_graph = new noctua_graph();
+	_load_graph_with_data(merge_in_graph, model_json, view_type);	
 
-	// Next, look at individuals/nodes for addition or updating.
-	each(individuals, function(ind){
-	    // Update node. This is preferred since
-	    // deleting it would mean that all the connections
-	    // would have to be reconstructed as well.
-	    var refresh_node_id = null;
-	    var update_node = ecore.get_node_by_individual(ind);
-	    if( update_node ){
-		ll('update node');
-		
-		// "Update" the edit node in core by clobbering it.
-		var unode = ecore.add_node_from_individual(ind);
-		
-		// Add inferred info.
-		var inftypes = inf_indv_lookup[unode.id()];
-		if( inftypes ){
-		    ll('add inftypes: ' + inftypes.length);
-		    ll('...and? ' + unode.add_types(inftypes, true));
-		}
-		
-		// Wipe node contents; redraw node contents.
-		widgets.update_enode(ecore, unode, aid);
-		
-		// Mark it for refreshing.
-		refresh_node_id = unode.id();
-		
-		//alert('cannot update nodes yet; suggest refreshing');
-	    }else{
-		ll('add node');
-		
-		// Add new node to edit core, pull it out for
-		// some work.
-		ecore.add_node_from_individual(ind);
-		var dyn_node = ecore.get_node_by_individual(ind);
-		
-		// Add inferred info.
-		var dinftypes = inf_indv_lookup[dyn_node.id()];
-		if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
-		
-		if( ! dyn_node ){
-		    alert('id issue somewhere--refresh to see state');
+	// Suspend and restart for performance.
+	instance.doWhileSuspended(function(){
+
+	    // Next, look at individuals/nodes for addition or
+	    // updating.
+	    //var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
+	    var updatable_nodes = {};
+	    each(merge_in_graph.all_nodes(), function(ind){
+		// Update node. This is preferred since deleting it
+		// would mean that all the connections would have to
+		// be reconstructed as well.
+		var update_node = ecore.get_node(ind.id());
+		if( update_node ){
+		    ll('update node: ' + ind.id());
+		    updatable_nodes[ind.id()] = true;
+		    
+		    // "Update" the edit node in core by clobbering
+		    // it.
+		    ecore.add_node(ind);
+		    
+		    // // Add inferred info.
+		    // var inftypes = inf_indv_lookup[unode.id()];
+		    // if( inftypes ){
+		    //     ll('add inftypes: ' + inftypes.length);
+		    //     ll('...and? ' + unode.add_types(inftypes, true));
+		    // }
+		    
+		    // Wipe node contents; redraw node contents.
+		    widgets.update_enode(ecore, ind, aid);
 		}else{
+		    ll('add new node');
+		    
+		    // Add new node to edit core.
+		    ecore.add_node(ind);
+		    
+		    // Add inferred info.
+		    //var dinftypes = inf_indv_lookup[ind.id()];
+		    //if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
 		    
 		    // Initial node layout settings.
     		    var dyn_x = _vari() +
 			jQuery(graph_container_div).scrollLeft();
     		    var dyn_y = _vari() +
 			jQuery(graph_container_div).scrollTop();
-		    dyn_node.x_init(dyn_x);
-		    dyn_node.y_init(dyn_y);
+		    ind.x_init(dyn_x);
+		    ind.y_init(dyn_y);
 		    
 		    // Draw it to screen.
-		    widgets.add_enode(ecore, dyn_node, aid, graph_div);
-		    
-		    // Mark it for refreshing.
-		    refresh_node_id = dyn_node.id();
-		}
-	    }
+		    widgets.add_enode(ecore, ind, aid, graph_div);
+		}	    
+	    });
 	    
-	    // Refresh any node created or updated in the jsPlumb
-	    // physical view.
-	    if( refresh_node_id ){
+	    // Now look at edges (by individual) for purging and
+	    // reinstating--no going to try and update edges, just
+	    // clobber.
+	    each(merge_in_graph.all_nodes(), function(source_node){
+		//ll('looking at node: ' + source_node.types()[0].to_string());
+
+		// Look up what edges it has in /core/, as they will
+		// be the ones to update.
+		var snid = source_node.id();
+		var src_edges = ecore.get_edges_by_subject(snid);
 		
-		// Make node active in display.
-		var dnid = refresh_node_id;
+		// Delete all edges for said node in model. We cannot
+		// (apparently?) go from connection ID to connection
+		// easily, so removing from UI is a separate step.
+		each(src_edges, function(src_edge){
+		    // Remove from model.
+		    ecore.remove_edge(src_edge.id());
+		});
+		
+		// Now delete all connector/edges for the node in the
+		// UI.
+		var snid_elt = ecore.get_node_elt_id(snid);
+		var src_conns = instance.getConnections({'source': snid_elt});
+		each(src_conns, function(src_conn){
+		    instance.detach(src_conn);
+		});
+	    });
+	    
+	    // Now that the UI is without any possible conflicting items
+	    // (i.e. edges) have been purged from out core model, merge
+	    // the new graph into the core one.
+	    ecore.merge_in(merge_in_graph);
+
+	    ///
+	    /// Refresh any node created or updated in the jsPlumb
+	    /// physical view.
+	    ///
+	    
+	    // We previously updated/added nodes, so here just make
+	    // sure it's/they're active.
+	    each(updatable_nodes, function(val, key){
+		var dnid = key;
 		var ddid = '#' + ecore.get_node_elt_id(dnid);
-		_attach_node_dblclick_ann('.demo-window');
 		_attach_node_draggable(ddid);
 		// //_make_selector_target(ddid);
 		// //_make_selector_source(ddid, '.konn');
-		// // _attach_node_draggable('.demo-window');
-		_attach_node_click_edit(".open-dialog");
-		_make_selector_target('.demo-window');
-		_make_selector_source('.demo-window', '.konn');
 		// _attach_node_click_edit(ddid);
 		// _make_selector_target(ddid);
 		// _make_selector_source(ddid, '.konn');
-		
-    		jsPlumb.repaintEverything();
-		refresh_node_id = null; // reset in case of error
-	    }
-	});
-	
-	// Now look at individuals/edges (by individual) for
-	// purging.
-	each(individuals, function(ind){
-	    var source_node = ecore.get_node_by_individual(ind);
-	    
-	    var snid = source_node.id();
-	    var src_edges = ecore.get_edges_by_source(snid);
-	    //var src_edges = ecore.get_edges_by_target(snid);
-	    
-	    // Delete all edges/connectors for said node in
-	    // model.
-	    each(src_edges, function(src_edge){
-		ecore.remove_edge(src_edge.id());
 	    });
-	    
-	    // Now delete all edges for the node in the UI.
-	    var snid_elt = ecore.get_node_elt_id(snid);
-	    var src_conns = instance.getConnections({'source': snid_elt});
-	    each(src_conns, function(src_conn){
-		instance.detach(src_conn);
-	    });
-	    
-	    // // Add all edges from the new individuals to the
-	    // // model.
-	    // var redges = ecore.add_edges_from_individual(ind, aid);
-	    
-	    // // Now add them to the display.
-	    // each(redges,
-	    //      function(redge){
-	    // 	  _connect_with_edge(redge);
-	    //      });
-	});
-	// Reinitiate from all facts.
-	each(facts, function(fact){
-	    var edg = ecore.add_edge_from_fact(fact);
-	    _connect_with_edge(edg);
-	});
+	    // And the reest of the general ops.
+	    _attach_node_dblclick_ann('.demo-window');
+	    // // _attach_node_draggable('.demo-window');
+	    _attach_node_click_edit(".open-dialog");
+	    _make_selector_target('.demo-window');
+	    _make_selector_source('.demo-window', '.konn');
+    	    jsPlumb.repaintEverything();
 
-	// Reinitiate from all annotations.
-	var replacement_annotations = [];
-	each(raw_annotations, function(ann_kv_set){
-	    var na = new noctua_annotation(ann_kv_set);
-	    replacement_annotations.push(na);
+	    // Now that the updated edges are in the model, reinstantiate
+	    // them in the UI.
+	    each(merge_in_graph.all_edges(), function(edg){
+	    	//ll('(re)create/add the edge in UI: ' + edg.relation());
+	    	_connect_with_edge(edg);
+	    });
 	});
-	ecore.annotations(replacement_annotations);
     }
     
     ///
@@ -1153,21 +1153,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }, 8);
 
     manager.register('merge', 'foo', function(resp, man){
-	// TODO: This function should have the rest
-	// of the function as an argument once the
-	// moderator is on.
+	// TODO: This function should have the rest of the function as
+	// an argument once the moderator is on.
 	if( _continue_update_p(resp, man) ){
 	
 	    var individuals = resp.individuals();
-	    var individuals_i = resp.inferred_individuals();
-	    var facts = resp.facts();
-	    var annotations = resp.annotations();
 	    if( ! individuals ){
 		alert('no data/individuals in merge--unable to do');
 	    }else{
-		_merge_from_new_data(individuals,
-				     individuals_i,
-				     facts, annotations);
+		_merge_from_new_data(resp.data());
 	    }
 	}
     }, 10);
