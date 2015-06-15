@@ -55,7 +55,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // The type of view we'll use to edit; tells which load function
     // to use.
-    var view_type = 'basic'; // or 'ev_fold' or ...
+    var view_type = 'basic'; // or 'ev_fold' or 'go_fold' or ...
 
     // Optionally use the messaging server as an experiment.
     var barclient = null;
@@ -301,6 +301,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     var view_basic_elt = '#' + view_basic_id;
     var view_ev_fold_id = 'view_ev_fold';
     var view_ev_fold_elt = '#' + view_ev_fold_id;
+    var view_go_fold_id = 'view_go_fold';
+    var view_go_fold_elt = '#' + view_go_fold_id;
     //
     var zin_btn_id = 'zoomin';
     var zin_btn_elt = '#' + zin_btn_id;
@@ -738,6 +740,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	if( d_view_type == 'basic' ){
 	    d_graph.load_data_base(d_data);
 	}else if( d_view_type == 'ev_fold' ){
+	    d_graph.load_data_fold_evidence(d_data);
+	}else if( d_view_type == 'go_fold' ){
 	    d_graph.load_data_fold_evidence(d_data);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
@@ -2109,6 +2113,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     });
     jQuery(view_ev_fold_elt).click(function(){
 	view_type = 'ev_fold';
+	_shields_up();
+	_rebuild_model_and_display(model_json, true);
+	_shields_down();
+    });
+    jQuery(view_go_fold_elt).click(function(){
+	view_type = 'go_fold';
 	_shields_up();
 	_rebuild_model_and_display(model_json, true);
 	_shields_down();
