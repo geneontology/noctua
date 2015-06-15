@@ -906,10 +906,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    // Wipe node contents; redraw node contents.
 		    widgets.update_enode(ecore, ind, aid);
 		}else{
-		    ll('add new node');
+		    ll('add new node' + ind.id());
+		    updatable_nodes[ind.id()] = true;
 		    
 		    // Add new node to edit core.
-		    ecore.add_node(ind);
+		    ecore.add_node(ind.clone());
 		    
 		    // Add inferred info.
 		    //var dinftypes = inf_indv_lookup[ind.id()];
