@@ -377,6 +377,7 @@ var NoctuaLauncher = function(){
     		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
     		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
     		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
+    		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
     		'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
 		    '/selectize.min.js',
         '/ui-grid.min.js',

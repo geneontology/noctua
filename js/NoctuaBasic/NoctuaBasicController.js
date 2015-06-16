@@ -62,16 +62,26 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
   $scope.create = function() {
     var r = new bbopx.minerva.request_set(manager.user_token())
-    r.add_fact([r.add_individual($scope.selected_disease, model_id),
-        r.add_individual($scope.selected_phenotype, model_id),
-        has_phenotype_relation
-      ],
-      model_id);
 
-    if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
-      r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
+    var nodes = graph.get_nodes();
+
+    // fetching exising disease individual if it exists
+    var existing_disease = getExistingIndividual($scope.selected_disease, nodes)
+    if (existing_disease == null) {
+      r.add_fact([r.add_individual($scope.selected_disease, model_id),
+          r.add_individual($scope.selected_phenotype, model_id),
+          has_phenotype_relation
+        ],
+        model_id);
+    } else {
+      r.add_fact([existing_disease._id,
+          r.add_individual($scope.selected_phenotype, model_id),
+          has_phenotype_relation
+        ],
+        model_id);
     }
 
+    // Attach the metadata to the phenotype individual
     if ($scope.selected_evidence != "" && $scope.selected_evidence != null) {
       r.add_annotation_to_individual("evidence", $scope.selected_evidence, r.last_individual_id(), model_id);
     }
@@ -84,7 +94,106 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       r.add_annotation_to_individual("comment", $scope.selected_description, r.last_individual_id(), model_id);
     }
 
+    if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
+      // fetching exising age of onset individual if it exists
+      var existing_ageofonset = getExistingIndividual($scope.selected_ageofonset, nodes)
+      if (existing_ageofonset == null) {
+        r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
+      } else {
+        r.add_fact([r.last_individual_id(), existing_ageofonset._id, phenotype_ageofonset_relation], model_id);
+      }
+    }
+
     manager.request_with(r, "justdoit");
+  }
+
+  getExistingIndividual = function(id, nodes) {
+    var returnVal = null; // jQuery loop does not stop on return
+    jQuery.each(nodes, function(key, value) {
+      if (isType(id, value)) {
+        returnVal = value;
+      }
+    });
+    return returnVal;
+  }
+
+  isType = function(type, node) {
+    var types = node._types;
+    if (types.length == 1) {
+      return types[0].class_id() == type;
+    } else {
+      return false;
+    }
+  }
+
+  extract_class_id_from_node = function(node) {
+    var types = node._types;
+    if (types.length == 1) {
+      return types[0].class_id();
+    } else {
+      return "";
+    }
+  }
+
+  extract_class_label_from_node = function(node) {
+    var types = node._types;
+    if (types.length == 1) {
+      return types[0].class_label();
+    } else {
+      return "";
+    }
+  }
+
+  buildTable = function() {
+    $scope.grid_model = [];
+    var edges = graph.all_edges();
+    var has_phenotype_edges = underscore.filter(edges, function(edge) {
+      return edge._predicate_id == has_phenotype_relation;
+    });
+    var phenotype_ageofonset_edges = underscore.filter(edges, function(edge) {
+      return edge._predicate_id == phenotype_ageofonset_relation;
+    });
+
+    for (var i in has_phenotype_edges) {
+      var current_edge = has_phenotype_edges[i];
+      var edges_from_phenotype = graph.get_edges_by_subject(has_phenotype_edges[i].target());
+      var age_of_onset = ""
+      if (edges_from_phenotype.length > 0) {
+        age_of_onset_node = graph.get_node(edges_from_phenotype[0].target());
+        age_of_onset = extract_class_id_from_node(age_of_onset_node);
+      }
+
+      var disease_node = graph.get_node(current_edge.source());
+
+      var phenotype_node = graph.get_node(current_edge.target());
+      var annotations = phenotype_node._annotations;
+      console.log(phenotype_node)
+
+      var evidence = "";
+      var reference = "";
+      var description = "";
+      for (var i in annotations) {
+        var annotation = annotations[i];
+        var key = annotation._properties.key;
+        var value = annotation._properties.value;
+        if (key == "evidence") {
+          evidence = value;
+        } else if (key == "source") {
+          reference = value;
+        } else if (key == "comment") {
+          description = value;
+        }
+      }
+
+      $scope.grid_model.push({
+        "disease": extract_class_id_from_node(disease_node) + "(" + extract_class_label_from_node(disease_node) + ")",
+        "phenotype": extract_class_id_from_node(phenotype_node) + "(" + extract_class_label_from_node(phenotype_node) + ")",
+        "age of onset": age_of_onset,
+        "evidence": evidence,
+        "reference": reference,
+        "description": description
+      });
+    }
   }
 
   initializeCallbacks = function() {
@@ -102,13 +211,16 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       $scope.response_model = JSON.stringify(resp);
 
       graph.load_data_base(resp.data());
-      $scope.grid_model = [];
-      var nodes = graph.get_nodes();
-      jQuery.each(nodes, function(key, value) {
-        $scope.grid_model.push({"id": key, "fake": "label"});
-      });
-      console.log(graph.get_nodes());
-      console.log($scope.grid_model);
+      buildTable();
+
+      //jQuery.each(nodes, function(key, value) {
+      //    $scope.grid_model.push({"id": key, "fake": "label"});
+      //  });
+      //console.log(graph.get_nodes());
+      //console.log($scope.grid_model);
+
+
+      //console.log(graph.all_edges());
 
       $scope.$apply();
     }, 10);
@@ -119,6 +231,11 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
+      var tmp_graph = new graph_api.graph();
+      tmp_graph.load_data_base(resp.data());
+      graph.merge_in(tmp_graph);
+      buildTable();
+
       $scope.$apply();
     }, 10);
   }
