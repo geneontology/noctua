@@ -52,6 +52,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   }
 
+  // type is 'error' or 'success'
   var displayToast = function(type, msg) {
     $mdToast.show({
       template: '<md-toast class="md-toast ' + type + ' md-capsule">' + msg + '</md-toast>',
@@ -60,51 +61,65 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     });
   };
 
-  $scope.create = function() {
-    var r = new bbopx.minerva.request_set(manager.user_token())
-
-    var nodes = graph.get_nodes();
-
-    // fetching exising disease individual if it exists
-    var existing_disease = getExistingIndividual($scope.selected_disease, nodes)
-    if (existing_disease == null) {
-      r.add_fact([r.add_individual($scope.selected_disease, model_id),
-          r.add_individual($scope.selected_phenotype, model_id),
-          has_phenotype_relation
-        ],
-        model_id);
+  sanity_check = function() {
+    if ($scope.selected_disease == "" || $scope.selected_disease == null) {
+      displayToast('error', 'Disease cannot be empty.');
+      return false;
+    } else if ($scope.selected_phenotype == "" || $scope.selected_phenotype == null) {
+      displayToast('error', 'Phenotype cannot be empty.');
+      return false;
     } else {
-      r.add_fact([existing_disease._id,
-          r.add_individual($scope.selected_phenotype, model_id),
-          has_phenotype_relation
-        ],
-        model_id);
+      return true;
     }
+  }
 
-    // Attach the metadata to the phenotype individual
-    if ($scope.selected_evidence != "" && $scope.selected_evidence != null) {
-      r.add_annotation_to_individual("evidence", $scope.selected_evidence, r.last_individual_id(), model_id);
-    }
+  $scope.create = function() {
+    if (sanity_check()) {
+      var r = new bbopx.minerva.request_set(manager.user_token())
 
-    if ($scope.selected_reference != "" && $scope.selected_reference != null) {
-      r.add_annotation_to_individual("source", $scope.selected_reference, r.last_individual_id(), model_id);
-    }
+      var nodes = graph.get_nodes();
 
-    if ($scope.selected_description != "" && $scope.selected_description != null) {
-      r.add_annotation_to_individual("comment", $scope.selected_description, r.last_individual_id(), model_id);
-    }
-
-    if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
-      // fetching exising age of onset individual if it exists
-      var existing_ageofonset = getExistingIndividual($scope.selected_ageofonset, nodes)
-      if (existing_ageofonset == null) {
-        r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
+      // fetching exising disease individual if it exists
+      var existing_disease = getExistingIndividual($scope.selected_disease, nodes)
+      if (existing_disease == null) {
+        r.add_fact([r.add_individual($scope.selected_disease, model_id),
+            r.add_individual($scope.selected_phenotype, model_id),
+            has_phenotype_relation
+          ],
+          model_id);
       } else {
-        r.add_fact([r.last_individual_id(), existing_ageofonset._id, phenotype_ageofonset_relation], model_id);
+        r.add_fact([existing_disease._id,
+            r.add_individual($scope.selected_phenotype, model_id),
+            has_phenotype_relation
+          ],
+          model_id);
       }
-    }
 
-    manager.request_with(r, "justdoit");
+      // Attach the metadata to the phenotype individual
+      if ($scope.selected_evidence != "" && $scope.selected_evidence != null) {
+        r.add_annotation_to_individual("evidence", $scope.selected_evidence, r.last_individual_id(), model_id);
+      }
+
+      if ($scope.selected_reference != "" && $scope.selected_reference != null) {
+        r.add_annotation_to_individual("source", $scope.selected_reference, r.last_individual_id(), model_id);
+      }
+
+      if ($scope.selected_description != "" && $scope.selected_description != null) {
+        r.add_annotation_to_individual("comment", $scope.selected_description, r.last_individual_id(), model_id);
+      }
+
+      if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
+        // fetching exising age of onset individual if it exists
+        var existing_ageofonset = getExistingIndividual($scope.selected_ageofonset, nodes)
+        if (existing_ageofonset == null) {
+          r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
+        } else {
+          r.add_fact([r.last_individual_id(), existing_ageofonset._id, phenotype_ageofonset_relation], model_id);
+        }
+      }
+
+      manager.request_with(r, "justdoit");
+    }
   }
 
   getExistingIndividual = function(id, nodes) {
