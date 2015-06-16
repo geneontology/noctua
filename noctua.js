@@ -11,6 +11,7 @@
 // Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
+var mime = require('mime');
 
 // Required add-on libs.
 var bbop = require('bbop');
@@ -370,20 +371,10 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'text/html', ind);
 	});
 
-	// Cached static routes.
-	var js_re = /\.js$/;
-	var css_re = /\.css$/;
-	var html_re = /\.html$/;
 	// Routes for all static cache items.
 	each(pup_tent.cached_list(), function(thing){
-	    var ctype = null;
-	    if( js_re.test(thing) ){
-		ctype = 'text/javascript';
-	    }else if( css_re.test(thing) ){
-		ctype = 'text/css';
-	    }else if( html_re.test(thing) ){
-		ctype = 'text/html';
-	    }
+	    
+	    var ctype = mime.lookup(thing);
 	    
 	    // This will skip cached templates.
 	    if( ctype !== null ){
