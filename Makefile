@@ -32,6 +32,7 @@ GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json
 ## BBOP JS paths.
 BBOP_JS ?= ../bbop-js/
 BBOPX_JS ?= ../bbopx-js/
+BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 
 ## OWLTools paths.
 OWLTOOLS ?= ../owltools/
@@ -70,6 +71,7 @@ assemble-app:
 patch-test-js:
 	cp $(BBOP_JS)/staging/bbop.js node_modules/bbop/bbop.js
 	cp $(BBOPX_JS)/staging/bbopx.js node_modules/bbopx/bbopx.js
+	cp $(BBOP_GRAPH_NOCTUA)/lib/edit.js node_modules/bbop-graph-noctua/lib/edit.js
 
 ###
 ### Tests.
