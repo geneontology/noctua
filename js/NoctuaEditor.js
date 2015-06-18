@@ -2108,19 +2108,22 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     jQuery(view_basic_elt).click(function(){
 	view_type = 'basic';
 	_shields_up();
-	_rebuild_model_and_display(model_json, true);
+	_rebuild_model_and_display(model_json, false);
+	_refresh_tables();
 	_shields_down();
     });
     jQuery(view_ev_fold_elt).click(function(){
 	view_type = 'ev_fold';
 	_shields_up();
-	_rebuild_model_and_display(model_json, true);
+	_rebuild_model_and_display(model_json, false);
+	_refresh_tables();
 	_shields_down();
     });
     jQuery(view_go_fold_elt).click(function(){
 	view_type = 'go_fold';
 	_shields_up();
-	_rebuild_model_and_display(model_json, true);
+	_rebuild_model_and_display(model_json, false);
+	_refresh_tables();
 	_shields_down();
     });
     
