@@ -721,20 +721,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
-    // squeeze the inferred individual info out to id -> types
-    function _squeezed_inferred(inferred_individuals){
-	var inf_indv_lookup = {}; // ids to types
-	// fold in inferred type information
-	each(inferred_individuals, function(indv){
-	    // Get ID.
-	    var inf_iid = indv['id'] || null;
-	    if( inf_iid ){
-		inf_indv_lookup[inf_iid] = indv['type'] || [];
-	    }
-	});
-	return inf_indv_lookup;
-    }
-
     function _load_graph_with_data(d_graph, d_data, d_view_type){
 	// Build on new graph.
 	if( d_view_type == 'basic' ){
@@ -771,18 +757,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// Build on whatever graph we have now.
 	_load_graph_with_data(ecore, model_data, view_type);
-
-	// // Starting fresh, add everything coming in to the edit model.
-	// var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
-	// each(individuals, function(indv){ // add nodes
-	//     var unode = ecore.add_node_from_individual(indv);	    
-	//     // Add inferred info.
-	//     var inftypes = inf_indv_lookup[unode.id()];
-	//     if( inftypes ){ unode.add_types(inftypes, true); }
-	// });
-	// each(facts, function(fact){ // add facts
-	//     ecore.add_edge_from_fact(fact);
-	// });
 
 	///
 	/// We now have a well-defined edit core. Let's try and add
@@ -900,13 +874,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    // it.
 		    ecore.add_node(ind);
 		    
-		    // // Add inferred info.
-		    // var inftypes = inf_indv_lookup[unode.id()];
-		    // if( inftypes ){
-		    //     ll('add inftypes: ' + inftypes.length);
-		    //     ll('...and? ' + unode.add_types(inftypes, true));
-		    // }
-		    
 		    // Wipe node contents; redraw node contents.
 		    widgets.update_enode(ecore, ind, aid);
 		}else{
@@ -915,10 +882,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    
 		    // Add new node to edit core.
 		    ecore.add_node(ind.clone());
-		    
-		    // Add inferred info.
-		    //var dinftypes = inf_indv_lookup[ind.id()];
-		    //if( dinftypes ){ dyn_node.add_types(dinftypes, true); }
 		    
 		    // Initial node layout settings.
     		    var dyn_x = _vari() +
