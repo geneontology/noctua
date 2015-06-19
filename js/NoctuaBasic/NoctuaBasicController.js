@@ -26,6 +26,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   $scope.selected_evidence = null;
   $scope.selected_reference = null;
   $scope.selected_description = null;
+  $scope.model_title = null;
 
   $scope.response_model = null;
 
@@ -122,6 +123,25 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   }
 
+  $scope.store = function() {
+    manager.store_model(model_id);
+  }
+
+  $scope.$watch('model_title', function(newValue, oldValue) {
+    if (newValue != oldValue) {
+      if ($scope.model_title != "" && $scope.model_title != null) {
+        var r = new bbopx.minerva.request_set(manager.user_token())
+        console.log(oldValue);
+        r.remove_annotation_from_model("title", oldValue, model_id);
+        r.add_annotation_to_model("title", newValue, model_id);
+
+        manager.request_with(r, "edit_title");
+      } else {
+        displayToast("error", "Model title cannot be empty.");
+      }
+    }
+  });
+
   getExistingIndividual = function(id, nodes) {
     var returnVal = null; // jQuery loop does not stop on return
     jQuery.each(nodes, function(key, value) {
@@ -159,7 +179,24 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   }
 
-  buildTable = function() {
+  refresh_ui = function() {
+    build_table();
+    refresh_title();
+  }
+
+
+  refresh_title = function() {
+    console.log(graph.get_annotations_by_key("title"));
+    annotations = graph.get_annotations_by_key("title");
+    if (annotations.length == 0) {
+      // no title set yet
+    } else {
+      title = annotations[0].value(); // there should be only one
+      $scope.model_title = title;
+    }
+  }
+
+  build_table = function() {
     $scope.grid_model = [];
     var edges = graph.all_edges();
     var has_phenotype_edges = underscore.filter(edges, function(edge) {
@@ -201,8 +238,8 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       }
 
       $scope.grid_model.push({
-        "disease": extract_class_id_from_node(disease_node) + "(" + extract_class_label_from_node(disease_node) + ")",
-        "phenotype": extract_class_id_from_node(phenotype_node) + "(" + extract_class_label_from_node(phenotype_node) + ")",
+        "disease": extract_class_id_from_node(disease_node) + " (" + extract_class_label_from_node(disease_node) + ")",
+        "phenotype": extract_class_id_from_node(phenotype_node) + " (" + extract_class_label_from_node(phenotype_node) + ")",
         "age of onset": age_of_onset,
         "evidence": evidence,
         "reference": reference,
@@ -226,7 +263,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       $scope.response_model = JSON.stringify(resp);
 
       graph.load_data_base(resp.data());
-      buildTable();
+      refresh_ui();
 
       //jQuery.each(nodes, function(key, value) {
       //    $scope.grid_model.push({"id": key, "fake": "label"});
@@ -249,7 +286,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       var tmp_graph = new graph_api.graph();
       tmp_graph.load_data_base(resp.data());
       graph.merge_in(tmp_graph);
-      buildTable();
+      refresh_ui();
 
       $scope.$apply();
     }, 10);
@@ -257,7 +294,8 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
   initializeAutocomplete = function() {
     var gconf = new bbop.golr.conf(golr_json);
-    golr_loc = 'http://localhost:8983/solr/'; // TODO delete
+    //golr_loc = 'http://localhost:8983/solr/'; // TODO delete
+    golr_loc = 'http://geoffrey.crbs.ucsd.edu:8080/solr/golr/';
     var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);
 
     var gene_selectize = jQuery('#select_disease').solrautocomplete({
@@ -267,19 +305,18 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       required: true,
       optionDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
       itemDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
+      valueField: 'object',
+      searchField: ['object', 'object_label_searchable'],
       queryData: function(query) {
-        return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-          'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+        return 'object_category:disease AND object:*' + query.replace(':', '\\:').toUpperCase() + '*';
       },
       golrManager: golr_manager_for_disease
     });
@@ -292,19 +329,18 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       required: true,
       optionDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
       itemDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
+      valueField: 'object',
+      searchField: ['object', 'object_label_searchable'],
       queryData: function(query) {
-        return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-          'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+        return 'object_category:phenotype AND object:*' + query.replace(':', '\\:').toUpperCase() + '*';
       },
       golrManager: golr_manager_for_phenotype
     });
@@ -316,19 +352,18 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       },
       optionDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
       itemDisplay: function(item, escape) {
         return '<div>' +
-          item.id + " (" + item.annotation_class_label_searchable + ")" +
+          item.object + " (" + item.object_label_searchable + ")" +
           '</div>';
       },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
+      valueField: 'object',
+      searchField: ['object', 'object_label_searchable'],
       queryData: function(query) {
-        return 'id:*' + query.replace(':', '\\:').toUpperCase() + '*' + ' OR ' +
-          'annotation_class_label_searchable:' + '*' + query.replace(':', '\\:') + '*';
+        return 'object_category:ageofonset AND object:*' + query.replace(':', '\\:').toUpperCase() + '*';
       },
       golrManager: golr_manager_for_ageofonset
     });

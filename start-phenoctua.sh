@@ -1,12 +1,12 @@
 #bin/bash
 
 # Solr
-gnome-terminal --tab -e "bash -c 'cd ~/soft/apache-solr-3.6.2/example; java -jar start.jar';bash"
-sleep 7
+#gnome-terminal --tab -e "bash -c 'cd ~/soft/apache-solr-3.6.2/example; java -jar start.jar';bash"
+#sleep 7
 
 # Minerva
 gnome-terminal --tab -e "bash -c 'cd ~/workspace/monarch-phenote/phenote-minerva/bin; ./start-minerva.sh';bash"
-sleep 7
+sleep 100
 
 # Barista
 gnome-terminal --tab -e "bash -c 'cd ~/workspace/noctua; NODE_BIN=nodejs make start-barista';bash"

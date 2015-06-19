@@ -229,7 +229,7 @@ var NoctuaLauncher = function(){
     ///
     /// Cache and template rendering.
     ///
-    var ppaths = ['static', 'static/selectize', 'static/ui-grid', 'deploy', 'deploy/js', 'deploy/js/NoctuaBasic', 'css', 'templates'];
+    var ppaths = ['static', 'static/selectize', 'static/ui-grid', 'static/angular-xeditable', 'deploy', 'deploy/js', 'deploy/js/NoctuaBasic', 'css', 'templates'];
     var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
@@ -382,6 +382,7 @@ var NoctuaLauncher = function(){
     		'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
 		    '/selectize.min.js',
         '/ui-grid.min.js',
+        '/xeditable.min.js',
         '/bbop-widget-solr-autocomplete.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicController.js'
@@ -392,6 +393,7 @@ var NoctuaLauncher = function(){
 			'/selectize.bootstrap3.css',
 			'/selectize.custom.css',
       '/ui-grid.min.css',
+      '/xeditable.css',
 			'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
 	    ]
 	    };
