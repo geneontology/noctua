@@ -127,20 +127,42 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     manager.store_model(model_id);
   }
 
-  $scope.$watch('model_title', function(newValue, oldValue) {
-    if (newValue != oldValue) {
-      if ($scope.model_title != "" && $scope.model_title != null) {
-        var r = new bbopx.minerva.request_set(manager.user_token())
-        console.log(oldValue);
-        r.remove_annotation_from_model("title", oldValue, model_id);
-        r.add_annotation_to_model("title", newValue, model_id);
+  // $scope.$watch('model_title', function(newValue, oldValue) {
+  //   if (newValue != oldValue) {
+  //     if ($scope.model_title != "" && $scope.model_title != null) {
+  //       var r = new bbopx.minerva.request_set(manager.user_token())
+  //       console.log('old ' + oldValue);
+  //       console.log('new ' + newValue);
+  //       r.remove_annotation_from_model("title", oldValue, model_id);
+  //       r.add_annotation_to_model("title", newValue, model_id);
+  //
+  //       manager.request_with(r, "edit_title");
+  //     } else {
+  //       displayToast("error", "Model title cannot be empty.");
+  //     }
+  //   }
+  // });
 
-        manager.request_with(r, "edit_title");
-      } else {
-        displayToast("error", "Model title cannot be empty.");
-      }
-    }
-  });
+  $scope.update_title = function() {
+    var r = new bbopx.minerva.request_set(manager.user_token())
+    r.remove_annotation_from_model("title", "old", model_id);
+    r.add_annotation_to_model("title", "new", model_id);
+
+    manager.request_with(r, "edit_title");
+  }
+
+  $scope.add_title = function() {
+      var r = new bbopx.minerva.request_set(manager.user_token())
+      r.add_annotation_to_model("title", "new", model_id);
+
+      manager.request_with(r, "edit_title");
+  }
+  $scope.remove_title = function() {
+      var r = new bbopx.minerva.request_set(manager.user_token())
+      r.remove_annotation_from_model("title", "new", model_id);
+
+      manager.request_with(r, "edit_title");
+  }
 
   getExistingIndividual = function(id, nodes) {
     var returnVal = null; // jQuery loop does not stop on return

@@ -5,8 +5,10 @@
   </div>
   <div ng-controller="NoctuaBasicController" ng-init="init()">
     <div class="form-group">
-      <h3><a href="#" editable-text="model_title">{[{ model_title || "set model title" }]}</a></h3>
-      <!-- <input class="form-control" type="text" placeholder="set model title" ng-model="model_title" ng-blur="update_title()"> -->
+      <!-- <h3><a href="#" editable-text="model_title">{[{ model_title || "set model title" }]}</a></h3> -->
+      <input class="form-control" type="text" placeholder="set model title" ng-model="model_title" ng-blur="update_title()">
+      <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="add_title()">Add</button>
+      <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="remove_title()">Remove</button>
     </div>
     <div class="panel panel-default">
       <div class="panel-heading">
