@@ -695,9 +695,19 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // Update/repaint the table.
     function _refresh_tables(){
 	ll('refreshing tables/info');
+
 	widgets.repaint_info(ecore, aid, table_info_div);
 	widgets.repaint_exp_table(ecore, aid, table_exp_div);
 	widgets.repaint_edge_table(ecore, aid, table_edge_div);
+
+	// And update browser title.
+	var mtitle = 'Untitled';
+	var title_anns = ecore.get_annotations_by_key('title');
+	if( title_anns && title_anns.length == 1 ){
+	    mtitle = title_anns[0].value();
+	    //alert(mtitle);
+	}
+	document.title = mtitle + ' (Noctua Editor)';
     }
 
     // 
@@ -927,6 +937,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // Now that the UI is without any possible conflicting items
 	    // (i.e. edges) have been purged from out core model, merge
 	    // the new graph into the core one.
+	    ecore.annotations([]); // blitz our old annotations as all new will be incoming (and the merge just takes the superset)
 	    ecore.merge_in(merge_in_graph);
 
 	    ///
@@ -2104,15 +2115,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
-
-    // As a use case, we want to have the title available to people in
-    // their browsers.
-    var mtitle = 'Untitled';
-    var title_anns = ecore.get_annotations_by_key('title');
-    if( title_anns && title_anns[0] ){
-	mtitle = title_anns[0].value();
-    }
-    document.title = mtitle + ' (Noctua Editor)';
 
     // Finally, we're going to put up a giant warning for people to
     // remind them that this is alpha software.
