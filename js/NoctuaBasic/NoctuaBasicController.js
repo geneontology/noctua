@@ -110,13 +110,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
       }
 
       if ($scope.selected_ageofonset != "" && $scope.selected_ageofonset != null) {
-        // fetching exising age of onset individual if it exists
-        var existing_ageofonset = getExistingIndividual($scope.selected_ageofonset, nodes)
-        if (existing_ageofonset == null) {
-          r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
-        } else {
-          r.add_fact([r.last_individual_id(), existing_ageofonset._id, phenotype_ageofonset_relation], model_id);
-        }
+        r.add_fact([r.last_individual_id(), r.add_individual($scope.selected_ageofonset, model_id), phenotype_ageofonset_relation], model_id);
       }
 
       manager.request_with(r, "justdoit");
@@ -143,26 +137,27 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   //   }
   // });
 
-  $scope.update_title = function() {
-    var r = new bbopx.minerva.request_set(manager.user_token())
-    r.remove_annotation_from_model("title", "old", model_id);
-    r.add_annotation_to_model("title", "new", model_id);
-
-    manager.request_with(r, "edit_title");
-  }
-
-  $scope.add_title = function() {
-      var r = new bbopx.minerva.request_set(manager.user_token())
-      r.add_annotation_to_model("title", "new", model_id);
-
-      manager.request_with(r, "edit_title");
-  }
-  $scope.remove_title = function() {
-      var r = new bbopx.minerva.request_set(manager.user_token())
-      r.remove_annotation_from_model("title", "new", model_id);
-
-      manager.request_with(r, "edit_title");
-  }
+ // TODO use to expose the remove annotation bug
+  // $scope.update_title = function() {
+  //   var r = new bbopx.minerva.request_set(manager.user_token())
+  //   r.remove_annotation_from_model("title", "old", model_id);
+  //   r.add_annotation_to_model("title", "new", model_id);
+  //
+  //   manager.request_with(r, "edit_title");
+  // }
+  //
+  // $scope.add_title = function() {
+  //     var r = new bbopx.minerva.request_set(manager.user_token())
+  //     r.add_annotation_to_model("title", "new", model_id);
+  //
+  //     manager.request_with(r, "edit_title");
+  // }
+  // $scope.remove_title = function() {
+  //     var r = new bbopx.minerva.request_set(manager.user_token())
+  //     r.remove_annotation_from_model("title", "new", model_id);
+  //
+  //     manager.request_with(r, "edit_title");
+  // }
 
   getExistingIndividual = function(id, nodes) {
     var returnVal = null; // jQuery loop does not stop on return
@@ -241,7 +236,6 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
       var phenotype_node = graph.get_node(current_edge.target());
       var annotations = phenotype_node._annotations;
-      console.log(phenotype_node)
 
       var evidence = "";
       var reference = "";
@@ -286,15 +280,6 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
       graph.load_data_base(resp.data());
       refresh_ui();
-
-      //jQuery.each(nodes, function(key, value) {
-      //    $scope.grid_model.push({"id": key, "fake": "label"});
-      //  });
-      //console.log(graph.get_nodes());
-      //console.log($scope.grid_model);
-
-
-      //console.log(graph.all_edges());
 
       $scope.$apply();
     }, 10);
