@@ -381,8 +381,8 @@ var NoctuaLauncher = function(){
     		'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
     		'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
 		    '/selectize.min.js',
-        '/ui-grid.min.js',
         '/xeditable.min.js',
+        '/bs-table.min.js',
         '/bbop-widget-solr-autocomplete.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicController.js'
@@ -392,7 +392,6 @@ var NoctuaLauncher = function(){
 			'/selectize.css',
 			'/selectize.bootstrap3.css',
 			'/selectize.custom.css',
-      '/ui-grid.min.css',
       '/xeditable.css',
 			'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
 	    ]

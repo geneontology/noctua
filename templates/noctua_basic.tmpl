@@ -64,7 +64,35 @@
       </div>
 
     </div>
-    <div ui-grid="{ data: grid_model }" class="myGrid" ui-grid-resize-columns></div>
+
+    <table class="table table-hover table-bordered" bs-table>
+      <thead>
+        <tr>
+          <th ng-click="predicate='disease'; reverse=!reverse">Disease</th>
+          <th ng-click="predicate='phenotype'; reverse=!reverse">Phenotype</th>
+          <th ng-click="predicate='ageofonset'; reverse=!reverse">Age of Onset</th>
+          <th ng-click="predicate='evidence'; reverse=!reverse">Evidence</th>
+          <th ng-click="predicate='reference'; reverse=!reverse">Reference</th>
+          <th ng-click="predicate='description'; reverse=!reverse">Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="entry in grid_model | orderBy:predicate:reverse">
+          <td>{[{entry.disease}]}</td>
+          <td>{[{entry.phenotype}]}</td>
+          <td>{[{entry.ageofonset}]}</td>
+          <td>{[{entry.evidence}]}</td>
+          <td>{[{entry.reference}]}</td>
+          <td>{[{entry.description}]}</td>
+          <td class="action-column">
+            <button type="button" class="btn btn-info btn-sm" ng-click="editRow(entry)">Edit</button>
+            <button type="button" class="btn btn-info btn-sm" ng-click="deleteRow(entry)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
     {[{response_model}]}
   </div>
 

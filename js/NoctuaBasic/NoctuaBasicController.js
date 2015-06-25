@@ -27,9 +27,32 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   $scope.selected_reference = null;
   $scope.selected_description = null;
   $scope.model_title = null;
+  $scope.grid_model = [];
 
   $scope.response_model = null;
 
+  var compute_shield_modal = null;
+
+  // Block interface from taking user input while
+  // operating.
+  var _shields_up = function() {
+    if (compute_shield_modal) {
+      // Already have one.
+    } else {
+      compute_shield_modal = bbopx.noctua.widgets.compute_shield();
+      compute_shield_modal.show();
+    }
+  }
+
+  // Release interface when transaction done.
+  var _shields_down = function() {
+    if (compute_shield_modal) {
+      compute_shield_modal.destroy();
+      compute_shield_modal = null;
+    } else {
+      // None to begin with.
+    }
+  }
 
   $scope.init = function() {
     // Only roll if the env is correct.
@@ -75,6 +98,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   }
 
   $scope.create = function() {
+    _shields_up();
     if (sanity_check()) {
       var r = new bbopx.minerva.request_set(manager.user_token())
 
@@ -118,6 +142,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   }
 
   $scope.store = function() {
+    _shields_up();
     manager.store_model(model_id);
   }
 
@@ -137,7 +162,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   //   }
   // });
 
- // TODO use to expose the remove annotation bug
+  // TODO use to expose the remove annotation bug
   // $scope.update_title = function() {
   //   var r = new bbopx.minerva.request_set(manager.user_token())
   //   r.remove_annotation_from_model("title", "old", model_id);
@@ -213,6 +238,27 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   }
 
+  $scope.editRow = function(row) {
+    console.log(row);
+  }
+
+  $scope.deleteRow = function(row) {
+    _shields_up();
+    console.log(row);
+    var r = new bbopx.minerva.request_set(manager.user_token());
+
+    var edges_from_disease = graph.get_edges_by_object(row.disease_id);
+
+    if (edges_from_disease.length == 1) { // delete only if there will be no edges left
+      r.remove_individual(row.disease_id, model_id);
+    }
+    r.remove_individual(row.phenotype_id, model_id); // TODO remove annotations?
+    if (row.ageofonset_id != "") {
+      r.remove_individual(row.ageofonset_id, model_id);
+    }
+    manager.request_with(r, "remove_row");
+  }
+
   build_table = function() {
     $scope.grid_model = [];
     var edges = graph.all_edges();
@@ -225,11 +271,13 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
     for (var i in has_phenotype_edges) {
       var current_edge = has_phenotype_edges[i];
-      var edges_from_phenotype = graph.get_edges_by_subject(has_phenotype_edges[i].target());
-      var age_of_onset = ""
+      var edges_from_phenotype = graph.get_edges_by_subject(current_edge.target());
+      var age_of_onset = "";
+      var age_of_onset_id = "";
       if (edges_from_phenotype.length > 0) {
         age_of_onset_node = graph.get_node(edges_from_phenotype[0].target());
         age_of_onset = extract_class_id_from_node(age_of_onset_node);
+        age_of_onset_id = age_of_onset_node.id();
       }
 
       var disease_node = graph.get_node(current_edge.source());
@@ -253,10 +301,14 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
         }
       }
 
+
       $scope.grid_model.push({
         "disease": extract_class_id_from_node(disease_node) + " (" + extract_class_label_from_node(disease_node) + ")",
+        "disease_id": disease_node.id(),
         "phenotype": extract_class_id_from_node(phenotype_node) + " (" + extract_class_label_from_node(phenotype_node) + ")",
-        "age of onset": age_of_onset,
+        "phenotype_id": phenotype_node.id(),
+        "ageofonset": age_of_onset,
+        "ageofonset_id": age_of_onset_id,
         "evidence": evidence,
         "reference": reference,
         "description": description
@@ -268,17 +320,21 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     manager.register('error', 'errorargh', function(resp, man) {
       console.log("error");
       console.log(resp);
+      _shields_down();
       displayToast("error", resp._message);
     }, 10);
 
     manager.register('rebuild', 'foorebuild', function(resp, man) {
       console.log('rebuild');
       console.log(resp);
+      _shields_down();
       displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
 
-      graph.load_data_base(resp.data());
+      var tmp_graph = new graph_api.graph();
+      tmp_graph.load_data_base(resp.data());
+      graph = tmp_graph;
       refresh_ui();
 
       $scope.$apply();
@@ -287,6 +343,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     manager.register('merge', 'merdge', function(resp, man) {
       console.log('merge');
       console.log(resp);
+      _shields_down();
       displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
@@ -302,7 +359,8 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   initializeAutocomplete = function() {
     var gconf = new bbop.golr.conf(golr_json);
     //golr_loc = 'http://localhost:8983/solr/'; // TODO delete
-    golr_loc = 'http://geoffrey.crbs.ucsd.edu:8080/solr/golr/';
+    //golr_loc = 'http://sirius.crbs.ucsd.edu:8080/solr/golr/';
+    golr_loc = 'http://sirius.monarchinitiative.org:8080/solr/golr/';
     var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);
 
     var gene_selectize = jQuery('#select_disease').solrautocomplete({
