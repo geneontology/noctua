@@ -10,46 +10,34 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      
+
       <!-- <span class="navbar-brand">MME Editor</span> -->
       <a href="{{noctua_landing}}" class="navbar-brand">Noctua ALPHA</a>
     </div>
 
     <div class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-	
-	<!-- Help. -->
-	<!-- <p class="navbar-text"> -->
-	<li>
-	  <a id="action_help"
-	     class="navbar-link"
-	     href="https://github.com/kltm/go-mme#go-mme-editor"
-	     title="">Help</a>
-	</li>
-	<!-- </p> -->
-	
+
+        <!-- Help. -->
+        <!-- <p class="navbar-text"> -->
+        <li>
+          <a id="action_help" class="navbar-link" href="https://github.com/kltm/go-mme#go-mme-editor" title="">Help</a>
+        </li>
+        <!-- </p> -->
+
       </ul>
 
       <div class="nav navbar-right">
 
-	{{^barista_token}}
-	<!-- Login. -->
-	<a id="action_barista_login"
-	   class="btn btn-default navbar-btn"
-	   href="{{barista_login}}"
-	   title="">Login</a>
-	{{/barista_token}}
-	{{#barista_token}}
-	<!-- Logout. -->
-	<p id="user_name_info" class="navbar-text">???</p>
-	<a id="action_barista_logout"
-	   class="btn btn-default navbar-btn"
-	   href="{{barista_logout}}"
-	   title="">Logout</a>
-	{{/barista_token}}
-	
+        {{^barista_token}}
+        <!-- Login. -->
+        <a id="action_barista_login" class="btn btn-default navbar-btn" href="{{barista_login}}" title="">Login</a> {{/barista_token}} {{#barista_token}}
+        <!-- Logout. -->
+        <p id="user_name_info" class="navbar-text">???</p>
+        <a id="action_barista_logout" class="btn btn-default navbar-btn" href="{{barista_logout}}" title="">Logout</a> {{/barista_token}}
+
       </div>
-      
+
     </div>
 
   </div>
@@ -57,7 +45,7 @@
 
 <!-- Main "app". -->
 <div class="container">
-  
+
   <div class="header text-center">
     <h2>Editor Access</h2>
   </div>
@@ -71,7 +59,11 @@
     <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
     <li><a href="#export" role="tab" data-toggle="tab">Export</a></li>
     <li><a href="#about" role="tab" data-toggle="tab">About</a></li>
-    <li><a href="#danger" role="tab" data-toggle="tab"><small style="color:purple;">Danger Zone</small></a></li>
+    <li>
+      <a href="#danger" role="tab" data-toggle="tab">
+        <small style="color:purple;">Danger Zone</small>
+      </a>
+    </li>
   </ul>
 
   <!-- Tab pages. -->
@@ -81,95 +73,109 @@
     <div class="tab-pane active noctua_tab_wrapper" id="select">
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Select by ID</h3>
-	</div>
-	<div class="panel-body">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select by ID</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    Edit or view a model by selecting from the list and
-	    clicking the button.
-	  </p>
-	  
-	  <div class="form-group">
-	    <!-- <label for="select_stored_jump">Select by ID</label> -->
-	    <select id="select_stored_jump" class="form-control">
+          <p>
+            Edit or view a model by selecting from the list and clicking the button.
+          </p>
+
+          <div class="form-group">
+            <!-- <label for="select_stored_jump">Select by ID</label> -->
+            <select id="select_stored_jump" class="form-control">
               <option>n/a</option>
-	    </select>
-	  </div>
-	  <button id="select_stored_jump_button"
-		  type="submit"
-		  class="btn btn-primary">Edit/View &raquo;</button>
-	  
-	</div>
-      </div>
-      
-      <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Browse</h3>
-	</div>
-	<div class="panel-body">
+            </select>
+          </div>
+          <button id="select_stored_jump_button" type="submit" class="btn btn-primary">Edit/View &raquo;</button>
 
-	  <p>
-	    Using AmiGO 2 Labs, search a somewhat recent (once or
-	    twice a week) scan of the models created using
-	    Noctua/Minerva.
-	  </p>
-	  <p>
-	    <a type="button"
-	       class="btn btn-primary"
-	       href="http://amigo2.berkeleybop.org/amigo/search/complex_annotation">Search &raquo;</a>
-	  </p>
-	  
-	</div>
+        </div>
+
       </div>
-      
+
+      <!-- Form interface. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Form Interface</h3>
+        </div>
+        <div class="panel-body">
+
+          <p>
+            Edit or view a model by selecting from the list and clicking the button.
+          </p>
+
+          <div class="form-group">
+            <!-- <label for="select_stored_jump">Select by ID</label> -->
+            <select id="select_stored_jump_basic" class="form-control">
+              <option>n/a</option>
+            </select>
+          </div>
+          <button id="select_stored_jump_button_basic" type="submit" class="btn btn-primary">Edit/View &raquo;</button>
+          OR
+          <button id="new_jump_button_basic" type="submit" class="btn btn-primary">Create &raquo;</button>
+
+        </div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Browse</h3>
+        </div>
+        <div class="panel-body">
+
+          <p>
+            Using AmiGO 2 Labs, search a somewhat recent (once or twice a week) scan of the models created using Noctua/Minerva.
+          </p>
+          <p>
+            <a type="button" class="btn btn-primary" href="http://amigo2.berkeleybop.org/amigo/search/complex_annotation">Search &raquo;</a>
+          </p>
+
+        </div>
+      </div>
+
     </div>
 
     <!-- Create tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="create">
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Create new model from taxon</h3>
-	</div>
-	<div class="panel-body">
+        <div class="panel-heading">
+          <h3 class="panel-title">Create new model from taxon</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    You <strong>must</strong> be logged in to create a new
-	    model from a taxon.
-	  </p>	  
+          <p>
+            You
+            <strong>must</strong> be logged in to create a new model from a taxon.
+          </p>
 
-	  <div class="form-group">
-	    <!-- <label for="select_stored_jump">Select by ID</label> -->
-	    <select id="select_taxon_for_create" class="form-control">
+          <div class="form-group">
+            <!-- <label for="select_stored_jump">Select by ID</label> -->
+            <select id="select_taxon_for_create" class="form-control">
               <!-- <option>n/a</option> -->
-	    </select>
-	  </div>
+            </select>
+          </div>
 
-	  <button id="button_taxon_for_create"
-		  type="button"
-		  class="btn btn-primary">Create &raquo;</button>
+          <button id="button_taxon_for_create" type="button" class="btn btn-primary">Create &raquo;</button>
 
-	</div>
+        </div>
       </div>
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Create new model from the æther</h3>
-	</div>
-	<div class="panel-body">
+        <div class="panel-heading">
+          <h3 class="panel-title">Create new model from the æther</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    You <strong>must</strong> be logged in to create a new
-	    model.
-	  </p>	  
+          <p>
+            You
+            <strong>must</strong> be logged in to create a new model.
+          </p>
 
-	  <button id="button_nothing_for_create"
-		  type="button"
-		  class="btn btn-primary">Create &raquo;</button>
+          <button id="button_nothing_for_create" type="button" class="btn btn-primary">Create &raquo;</button>
 
-	</div>
+        </div>
       </div>
 
     </div>
@@ -178,31 +184,26 @@
     <div class="tab-pane noctua_tab_wrapper" id="import">
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Load model using ??? format</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <p>
-	    You do <strong>not</strong> want to be using this right
-	    now.
-	  </p>
+        <div class="panel-heading">
+          <h3 class="panel-title">Load model using ??? format</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    <textarea class="form-control"
-		      id="model_data_input"
-		      placeholder="???"
-		      rows="3"></textarea>
-	  </p>
-	  
-	  <p>
-	    <button id="model_data_button"
-		    type="submit"
-		    class="btn btn-primary">Load</button>
-	  </p>
-	  <!-- </form> -->
-	  
-	</div>
+          <p>
+            You do
+            <strong>not</strong> want to be using this right now.
+          </p>
+
+          <p>
+            <textarea class="form-control" id="model_data_input" placeholder="???" rows="3"></textarea>
+          </p>
+
+          <p>
+            <button id="model_data_button" type="submit" class="btn btn-primary">Load</button>
+          </p>
+          <!-- </form> -->
+
+        </div>
       </div>
 
     </div>
@@ -211,174 +212,132 @@
     <div class="tab-pane noctua_tab_wrapper" id="export">
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Export by ID</h3>
-	</div>
-	<div class="panel-body">
+        <div class="panel-heading">
+          <h3 class="panel-title">Export by ID</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    Export a model by selecting from the list and then
-	    clicking the button for the export file type that you
-	    want.
-	  </p>
-	  
-	  <div class="form-group">
-	    <!-- <label for="select_stored_jump">Select by ID</label> -->
-	    <select id="select_id_for_export" class="form-control">
+          <p>
+            Export a model by selecting from the list and then clicking the button for the export file type that you want.
+          </p>
+
+          <div class="form-group">
+            <!-- <label for="select_stored_jump">Select by ID</label> -->
+            <select id="select_id_for_export" class="form-control">
               <option>n/a</option>
-	    </select>
-	  </div>
-	  <button id="button_id_for_def_export"
-		  type="submit"
-		  class="btn btn-primary">Export OWL &raquo;</button>	  
-	  <button id="button_id_for_gaf_export"
-		  type="submit"
-		  class="btn btn-primary">Export GAF &raquo;</button>	  
-	  <button id="button_id_for_gpd_export"
-		  type="submit"
-		  class="btn btn-primary">Export GPAD &raquo;</button>	  
-	</div>
+            </select>
+          </div>
+          <button id="button_id_for_def_export" type="submit" class="btn btn-primary">Export OWL &raquo;</button>
+          <button id="button_id_for_gaf_export" type="submit" class="btn btn-primary">Export GAF &raquo;</button>
+          <button id="button_id_for_gpd_export" type="submit" class="btn btn-primary">Export GPAD &raquo;</button>
+        </div>
       </div>
-      
+
     </div>
 
     <!-- About tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="about">
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">About Noctua</h3>
-	</div>
-	<div class="panel-body">
+        <div class="panel-heading">
+          <h3 class="panel-title">About Noctua</h3>
+        </div>
+        <div class="panel-body">
 
-	  <p>
-	    TODO
-	  </p>
-	  
-	</div>
+          <p>
+            TODO
+          </p>
+
+        </div>
       </div>
-      
+
     </div>
 
     <!-- Danger Zone tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="danger">
 
-      <!-- Affiliated interfaces. -->
-      <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Other Interfaces</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <p>
-	    A (non-functioning) basic interface can be
-	    found <a href="/basic">here</a>.
-	  </p>
-	  
-	</div>
-      </div>
-
       <!-- Attempting Capella. -->
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Capella Bootstrap</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <p>
-	    Various test methods to look at how capella kick-ins
-	    behave.
-	  </p>
-	  <p>
-	    <a href="{{capella_blank}}">(blank)</a><br />
-	    <a href="{{capella_test}}">(test payload)</a>
-	  </p>
-	  
-	</div>
+        <div class="panel-heading">
+          <h3 class="panel-title">Capella Bootstrap</h3>
+        </div>
+        <div class="panel-body">
+
+          <p>
+            Various test methods to look at how capella kick-ins behave.
+          </p>
+          <p>
+            <a href="{{capella_blank}}">(blank)</a>
+            <br />
+            <a href="{{capella_test}}">(test payload)</a>
+          </p>
+
+        </div>
       </div>
 
       <!-- Cheap-and-dirty debugging wire JSON. -->
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">JSON Debugging</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <form action="/seed/json"
-		id="json-seed"
-		role="form"
-		method="POST">
-	    <p>
-	      <textarea class="form-control"
-			id="model_json_input"
-			name="json-model"
-			placeholder="???"
-			rows="3"></textarea>
-	    </p>
-	    
-	    <p>
-	      <button id="model_json_button"
-		      type="submit"
-		      class="btn btn-primary">Load</button>
-	    </p>
-	  </form>
-	  
-	</div>
+        <div class="panel-heading">
+          <h3 class="panel-title">JSON Debugging</h3>
+        </div>
+        <div class="panel-body">
+
+          <form action="/seed/json" id="json-seed" role="form" method="POST">
+            <p>
+              <textarea class="form-control" id="model_json_input" name="json-model" placeholder="???" rows="3"></textarea>
+            </p>
+
+            <p>
+              <button id="model_json_button" type="submit" class="btn btn-primary">Load</button>
+            </p>
+          </form>
+
+        </div>
       </div>
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Noctua Administration</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  <p>
-	    <a type="button"
-	       class="btn btn-primary"
-	       href="{{noctua_location}}/status">Status &raquo;</a>
-	  </p>
-	  
-	</div>
+        <div class="panel-heading">
+          <h3 class="panel-title">Noctua Administration</h3>
+        </div>
+        <div class="panel-body">
+
+          <p>
+            <a type="button" class="btn btn-primary" href="{{noctua_location}}/status">Status &raquo;</a>
+          </p>
+
+        </div>
       </div>
 
       <div class="panel panel-default">
-	<div class="panel-heading">
-	  <h3 class="panel-title">Barista Administration</h3>
-	</div>
-	<div class="panel-body">
-	  
-	  {{#barista_token}}
-	  <p>
-	    <a type="button"
-	       class="btn btn-primary"
-	       href="{{barista_users}}">Users &raquo;</a>
-	  </p>
-	  <p>
-	    <a type="button"
-	       class="btn btn-primary"
-	       href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
-	  </p>
-	  <p>
-	    <a type="button"
-	       class="btn btn-primary"
-	       href="{{barista_location}}/status">Status &raquo;</a>
-	  </p>
-	  {{/barista_token}}
-	  {{^barista_token}}
-	  <p>
-	    No admin available here--did you remember to login?
-	    <br />
-	    A configuration error is also possible.
-	  </p>
-	  {{/barista_token}}
-	  
-	</div>
+        <div class="panel-heading">
+          <h3 class="panel-title">Barista Administration</h3>
+        </div>
+        <div class="panel-body">
+
+          {{#barista_token}}
+          <p>
+            <a type="button" class="btn btn-primary" href="{{barista_users}}">Users &raquo;</a>
+          </p>
+          <p>
+            <a type="button" class="btn btn-primary" href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
+          </p>
+          <p>
+            <a type="button" class="btn btn-primary" href="{{barista_location}}/status">Status &raquo;</a>
+          </p>
+          {{/barista_token}} {{^barista_token}}
+          <p>
+            No admin available here--did you remember to login?
+            <br /> A configuration error is also possible.
+          </p>
+          {{/barista_token}}
+
+        </div>
       </div>
 
     </div>
 
-  <!-- Tabs. -->
+    <!-- Tabs. -->
   </div>
 
-<!-- Container. -->
+  <!-- Container. -->
 </div>

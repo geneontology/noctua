@@ -1,68 +1,157 @@
-<div class="container">
-  
+<div class="container" ng-app="noctuaBasicApp">
+
   <div class="header text-center">
-    <h2>Noctua Basic</h2>
+    <h2>Web Phenote</h2>
+  </div>
+  <div ng-controller="NoctuaBasicController" ng-init="init()">
+    <div class="form-group">
+      <h3><a href="#" editable-text="model_title">{[{ model_title || "set model title" }]}</a></h3>
+      <button id="save_button" type="submit" class="btn btn-primary" ng-click="store()">Store into a file</button>
+      <!-- <input class="form-control" type="text" placeholder="set model title" ng-model="model_title" ng-blur="update_title()">
+      <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="add_title()">Add</button>
+      <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="remove_title()">Remove</button> -->
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Basic Interface</h3>
+      </div>
+      <div class="panel-body">
+
+        <div class="form-group">
+          <label for="select_disease">Disease</label>
+          <div class="input-group">
+            <select class="form-control" id="select_disease" placeholder="Pick a Disease..." ng-model="selected_disease"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="select_phenotype">Phenotype</label>
+          <div class="input-group">
+            <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..." ng-model="selected_phenotype"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="select_ageofonset">Age of onset (of the phenotype)</label>
+          <div class="input-group">
+            <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..." ng-model="selected_ageofonset"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="basic_evidence_input">Evidence</label>
+          <input id="basic_evidence_input" id="select_evidence" class="form-control" type="text" placeholder="" ng-model="selected_evidence">
+        </div>
+
+        <div class="form-group">
+          <label for="basic_reference_input">Reference</label>
+          <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference">
+        </div>
+
+        <div class="form-group">
+          <label for="basic_reference_input">Description</label>
+          <input id="basic_reference_input" id="select_description" class="form-control" type="text" placeholder="" ng-model="selected_description">
+        </div>
+
+        <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create()">Add</button>
+
+        <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <div id="alert-message">hidden</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <table class="table table-hover table-bordered" bs-table>
+      <thead>
+        <tr>
+          <th ng-click="predicate='disease'; reverse=!reverse">Disease</th>
+          <th ng-click="predicate='phenotype'; reverse=!reverse">Phenotype</th>
+          <th ng-click="predicate='ageofonset'; reverse=!reverse">Age of Onset</th>
+          <th ng-click="predicate='evidence'; reverse=!reverse">Evidence</th>
+          <th ng-click="predicate='reference'; reverse=!reverse">Reference</th>
+          <th ng-click="predicate='description'; reverse=!reverse">Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="entry in grid_model | orderBy:predicate:reverse">
+          <td>{[{entry.disease}]}</td>
+          <td>{[{entry.phenotype}]}</td>
+          <td>{[{entry.ageofonset}]}</td>
+          <td>{[{entry.evidence}]}</td>
+          <td>{[{entry.reference}]}</td>
+          <td>{[{entry.description}]}</td>
+          <td class="action-column">
+            <button type="button" class="btn btn-info btn-sm" ng-click="editRow(entry)">Edit</button>
+            <button type="button" class="btn btn-info btn-sm" ng-click="deleteRow(entry)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {[{response_model}]}
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="myModalLabel">Edit</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="select_disease">Disease</label>
+              <div class="input-group">
+                <select class="form-control" id="select_disease_modal" placeholder="Pick a Disease..." ng-model="selected_disease_modal"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="select_phenotype">Phenotype</label>
+              <div class="input-group">
+                <select class="form-control" id="select_phenotype_modal" placeholder="Pick a phenotype..." ng-model="selected_phenotype_modal"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="select_ageofonset">Age of onset (of the phenotype)</label>
+              <div class="input-group">
+                <select class="form-control" id="select_ageofonset_modal" placeholder="Define the age of onset..." ng-model="selected_ageofonset_modal"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="basic_evidence_input">Evidence</label>
+              <input id="basic_evidence_input" id="select_evidence_modal" class="form-control" type="text" placeholder="" ng-model="selected_evidence_modal">
+            </div>
+
+            <div class="form-group">
+              <label for="basic_reference_input">Reference</label>
+              <input id="basic_reference_input" id="select_reference_modal" class="form-control" type="text" placeholder="" ng-model="selected_reference_modal">
+            </div>
+
+            <div class="form-group">
+              <label for="basic_reference_input">Description</label>
+              <input id="basic_reference_input" id="select_description_modal" class="form-control" type="text" placeholder="" ng-model="selected_description_modal">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">Basic Interface</h3>
-    </div>
-    <div class="panel-body">
-      
-      <div class="form-group">
-	<label for="basic_gp_input">Gene product</label>
-	<input id="basic_gp_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="???">
-      </div>
-
-      <div class="form-group">
-	<label for="basic_qualifier_input">Qualifier (optional)</label>
-	<input id="basic_qualifier_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="">
-      </div>
-
-      <div class="form-group">
-	<label for="basic_term_input">Term</label>
-	<input id="basic_term_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="GO:0022008">
-      </div>
-
-      <div class="form-group">
-	<label for="basic_evidence_input">Evidence</label>
-	<input id="basic_evidence_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="???">
-      </div>
-
-      <div class="form-group">
-	<label for="basic_reference_input">Reference</label>
-	<input id="basic_reference_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="???">
-      </div>
-
-      <div class="form-group">
-	<label for="basic_with_input">With (optional)</label>
-	<input id="basic_with_input"
-	       class="form-control"
-	       type="text"
-	       placeholder="">
-      </div>
-
-      <button id="select_stored_jump_button"
-	      type="submit"
-	      class="btn btn-primary">Input</button>
-      
-    </div>
-  </div>
 
 </div>
