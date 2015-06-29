@@ -34,7 +34,7 @@
         "bbopx": "^0.9.27",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.12",
-        "bbop-graph-noctua": "0.0.11",
+        "bbop-graph-noctua": "0.0.12",
         "class-expression": "0.0.7",
         "cors": "2.4.1",
         "bootstrap": "3.3.4",
