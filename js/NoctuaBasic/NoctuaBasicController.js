@@ -104,9 +104,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
   // TODO this should not be called on load
   $scope.$watch('model_title', function(newValue, oldValue) {
-    console.log('yoplait')
     if (newValue != oldValue) {
-      console.log('yo')
       if ($scope.model_title != "" && $scope.model_title != null) {
         var r = new bbopx.minerva.request_set(manager.user_token())
         r.remove_annotation_from_model("title", oldValue, model_id);
@@ -119,14 +117,14 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   });
 
-  getExistingIndividual = function(id, nodes) {
+  getExistingIndividualId = function(id, nodes) {
     var returnVal = null; // jQuery loop does not stop on return
     jQuery.each(nodes, function(key, value) {
       if (isType(id, value)) {
         returnVal = value;
       }
     });
-    return returnVal;
+    return returnVal._id;
   }
 
   isType = function(type, node) {
@@ -162,7 +160,6 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
   }
 
   refresh_title = function() {
-    console.log(graph.get_annotations_by_key("title"));
     annotations = graph.get_annotations_by_key("title");
     if (annotations.length == 0) {
       // no title set yet
@@ -176,13 +173,15 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     _shields_up();
     if (sanity_check()) {
       var r = new bbopx.minerva.request_set(manager.user_token());
-      requestSetForCreation(r, disease_id, phenotype_id, ageofonset_id, evidence, reference, description);
+      var nodes = graph.get_nodes();
+      // fetching exising disease individual if it exists
+      var existing_disease_id = getExistingIndividualId(disease_id, nodes)
+      requestSetForCreation(r, disease_id, phenotype_id, ageofonset_id, evidence, reference, description, existing_disease_id);
       manager.request_with(r, "create");
     }
   }
 
   $scope.editRowModal = function(row) {
-    console.log(row);
     $scope.selected_disease_modal = row.disease_id;
     $scope.selected_phenotype_modal = row.phenotype_id;
     $scope.selected_ageofonset_modal = row.ageofonset_id;
@@ -192,35 +191,55 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
     // keep them as reference for the deletion
     $scope.selected_disease_node_id_modal_previous = row.disease_node_id;
+    $scope.selected_disease_id_modal_previous = row.disease_id;
     $scope.selected_phenotype_node_id_modal_previous = row.phenotype_node_id;
     $scope.selected_ageofonset_node_id_modal_previous = row.ageofonset_node_id;
+    $
 
-    jQuery('#select_disease_modal')[0].selectize.addOption([{
+    disease_selectize = jQuery('#select_disease_modal')[0].selectize;
+    disease_selectize.clearCache("option");
+    disease_selectize.clearOptions();
+    disease_selectize.addOption([{
       "object": row.disease_id,
       "object_label_searchable": row.disease_label
     }]);
-    jQuery('#select_disease_modal')[0].selectize.setValue(row.disease_id);
+    disease_selectize.setValue(row.disease_id);
 
-    jQuery('#select_phenotype_modal')[0].selectize.addOption([{
+    phenotype_selectize = jQuery('#select_phenotype_modal')[0].selectize;
+    phenotype_selectize.clearCache("option");
+    phenotype_selectize.clearOptions();
+    phenotype_selectize.addOption([{
       "object": row.phenotype_id,
       "object_label_searchable": row.phenotype_label
     }]);
-    jQuery('#select_phenotype_modal')[0].selectize.setValue(row.phenotype_id);
+    phenotype_selectize.setValue(row.phenotype_id);
 
-    jQuery('#select_ageofonset_modal')[0].selectize.addOption([{
+    ageofonset_selectize = jQuery('#select_ageofonset_modal')[0].selectize;
+    ageofonset_selectize.clearCache("option");
+    ageofonset_selectize.clearOptions();
+    ageofonset_selectize.addOption([{
       "object": row.ageofonset_id,
       "object_label_searchable": row.ageofonset_label
     }]);
-    jQuery('#select_ageofonset_modal')[0].selectize.setValue(row.ageofonset_id);
+    ageofonset_selectize.setValue(row.ageofonset_id);
 
     jQuery('#myModal').modal();
   }
 
   $scope.editRow = function() {
-    console.log('editrow');
+    _shields_up();
+
+    var existing_disease = null;
+    if ($scope.selected_disease_id_modal_previous == $scope.selected_disease_modal) {
+      var edges_from_disease = graph.get_edges_by_subject($scope.selected_disease_node_id_modal_previous);
+      if (edges_from_disease.length > 1) { // disease is not scheduled for deletion
+        existing_disease = $scope.selected_disease_node_id_modal_previous;
+      }
+    }
+
     var r = new bbopx.minerva.request_set(manager.user_token());
     requestSetForDeletion(r, $scope.selected_disease_node_id_modal_previous, $scope.selected_phenotype_node_id_modal_previous, $scope.selected_ageofonset_node_id_modal_previous);
-    requestSetForCreation(r, $scope.selected_disease_modal, $scope.selected_phenotype_modal, $scope.selected_ageofonset_modal, $scope.selected_evidence_modal, $scope.selected_reference_modal, $scope.selected_description_modal);
+    requestSetForCreation(r, $scope.selected_disease_modal, $scope.selected_phenotype_modal, $scope.selected_ageofonset_modal, $scope.selected_evidence_modal, $scope.selected_reference_modal, $scope.selected_description_modal, existing_disease);
     manager.request_with(r, "edit_row");
   }
 
@@ -243,19 +262,15 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
     }
   }
 
-  requestSetForCreation = function(request_set, disease_id, phenotype_id, ageofonset_id, evidence, reference, description) {
-    var nodes = graph.get_nodes();
-
-    // fetching exising disease individual if it exists
-    var existing_disease = getExistingIndividual(disease_id, nodes)
-    if (existing_disease == null) {
+  requestSetForCreation = function(request_set, disease_id, phenotype_id, ageofonset_id, evidence, reference, description, existing_disease_id) {
+    if (existing_disease_id == null) {
       request_set.add_fact([request_set.add_individual(disease_id, model_id),
           request_set.add_individual(phenotype_id, model_id),
           has_phenotype_relation
         ],
         model_id);
     } else {
-      request_set.add_fact([existing_disease._id,
+      request_set.add_fact([existing_disease_id,
           request_set.add_individual(phenotype_id, model_id),
           has_phenotype_relation
         ],
@@ -388,8 +403,7 @@ function NoctuaBasicController($scope, $mdToast, $animate) {
 
   initializeAutocomplete = function() {
     var gconf = new bbop.golr.conf(golr_json);
-    //golr_loc = 'http://localhost:8983/solr/'; // TODO delete
-    //golr_loc = 'http://sirius.crbs.ucsd.edu:8080/solr/golr/';
+    //golr_loc = 'http://localhost:8983/solr/';
     golr_loc = 'http://sirius.monarchinitiative.org:8080/solr/golr/';
 
     var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);

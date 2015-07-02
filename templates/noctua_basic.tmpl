@@ -47,7 +47,7 @@
 
         <div class="form-group">
           <label for="basic_reference_input">Description</label>
-          <input id="basic_reference_input" id="select_description" class="form-control" type="text" placeholder="" ng-model="selected_description">
+          <textarea class="form-control" rows="2" ng-model="selected_description"></textarea>
         </div>
 
         <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create(selected_disease, selected_phenotype, selected_ageofonset, selected_evidence, selected_reference, selected_description)">Add</button>
