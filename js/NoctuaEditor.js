@@ -22,6 +22,7 @@ var amigo = require('amigo2');
 var us = require('underscore');
 var bbop_core = require('bbop-core');
 var model = require('bbop-graph-noctua');
+var minerva_requests = require('minerva-requests');
 
 // Aliases.
 var each = us.each;
@@ -55,14 +56,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // The type of view we'll use to edit; tells which load function
     // to use.
-    var view_type = 'basic'; // or 'ev_fold' or 'go_fold' or ...
+    //var view_type = 'basic'; // or 'ev_fold' or 'go_fold' or ...
+    var view_type = 'go_fold'; // or 'ev_fold' or 'go_fold' or ...
 
     // Optionally use the messaging server as an experiment.
     var barclient = null;
 
     // Where we move the nodes during this session.
     // BUG/TODO: Should be the domain of Barista.
-    var historical_store = new bbopx.noctua.location_store();
+    var local_position_store = new bbopx.noctua.location_store();
 
     // Events registry.
     var manager = new bbopx.minerva.manager(global_barista_location,
@@ -448,7 +450,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		//ll('stop (' + en.id() + ') at:' + t + ', ' + l);
 
 		// Keep track of where we leave it when we move it.
-		historical_store.add(en.id(), l, t);
+		local_position_store.add(en.id(), l, t);
 	    }
 	}
 
@@ -782,14 +784,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Find the initial layout position of the layout. There might
 	// be some missing due to finding cycles in the graph, so we
 	// have this two-step process.
-	var layout_store = new bbopx.noctua.location_store();
+	var minerva_position_store = new bbopx.noctua.location_store();
 	each(layout['nodes'], function(litem, index){
 	    var id = litem['id'];
 	    var raw_x = litem['x'];
 	    var raw_y = litem['y'];
 	    var fin_x = _box_left(raw_x);
 	    var fin_y = _box_top(raw_y);
-	    layout_store.add(id, fin_x, fin_y);
+	    minerva_position_store.add(id, fin_x, fin_y);
 	});
 	// Now got through all of the actual nodes.
 	each(ecore.get_nodes(), function(en, enid){
@@ -798,19 +800,25 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // historical (drop), layout, make some up.
 	    var fin_x = null;
 	    var fin_y = null;
-	    var hist_coords = historical_store.get(enid);
-	    var layout_coords = layout_store.get(enid);
-	    if( hist_coords ){
-		fin_x = hist_coords['x'];
-		fin_y = hist_coords['y'];
-	    }else if( layout_coords ){
-		fin_x = layout_coords['x'];
-		fin_y = layout_coords['y'];
+	    var local_coords = local_position_store.get(enid);
+	    var minerva_coords = minerva_position_store.get(enid);
+	    if( local_coords ){
+		fin_x = local_coords['x'];
+		fin_y = local_coords['y'];
+	    }else if( minerva_coords ){
+		fin_x = minerva_coords['x'];
+		fin_y = minerva_coords['y'];
 	    }else{
 		fin_x = _vari();
 		fin_y = _vari();		 
 	    }
 	    
+	    // Update coordinates and report them.
+	    local_position_store.add(en.id(), fin_x, fin_y);
+	    if( barclient ){
+		barclient.telekinesis(en.id(), fin_x, fin_y);
+	    }
+
 	    // Take the final coordinate and add it as a hint into
 	    // the edit node.
 	    en.x_init(fin_x);
@@ -869,7 +877,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	    // Next, look at individuals/nodes for addition or
 	    // updating.
-	    //var inf_indv_lookup = _squeezed_inferred(inferred_individuals);
 	    var updatable_nodes = {};
 	    each(merge_in_graph.all_nodes(), function(ind){
 		// Update node. This is preferred since deleting it
@@ -901,6 +908,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    ind.x_init(dyn_x);
 		    ind.y_init(dyn_y);
 		    
+		    // Update coordinates and report them.
+		    local_position_store.add(en.id(), dyn_x, dyn_y);
+		    if( barclient ){
+			barclient.telekinesis(en.id(), dyn_x, dyn_y);
+		    }
+
 		    // Draw it to screen.
 		    widgets.add_enode(ecore, ind, aid, graph_div);
 		}	    
@@ -1987,8 +2000,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	// Just a hook to an experimental method for easy access to
 	// the manager.
-	var reqs = new bbopx.minerva.request_set(manager.user_token(),
-						 'action', ecore.get_id());
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    'action', ecore.get_id());
 
 	/// Individuals.
 	// axon guidance receptor activity
