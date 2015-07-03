@@ -749,7 +749,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     // The core initial layout function.
     function _rebuild_model_and_display(model_data, preserve_p){
 
-	ll('REBUILD from scratch');
+	ll('REBUILD from scratch: ' + view_type);
 	
 	// Wipe UI.
 	each(ecore.get_nodes(), function(en, enid){
