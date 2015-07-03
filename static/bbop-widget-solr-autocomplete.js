@@ -41,11 +41,13 @@ jQuery.widget('bbop-widget.solrautocomplete', {
         if (!query.length) return callback();
 
         var customCallBack = function(res) {
+          console.log(res._raw.response.docs)
           _updateHits(res._raw.response.numFound);
           callback(res._raw.response.docs);
         };
         widgetGolrManager.register('search', 'foo', customCallBack);
         widgetGolrManager.set_query(widgetQueryData(query));
+        console.log(widgetGolrManager.get_query_url());
         widgetGolrManager.search();
 
         // jQuery.ajax({
