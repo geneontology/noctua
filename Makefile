@@ -37,7 +37,8 @@ BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 ## OWLTools paths.
 OWLTOOLS ?= ../owltools/
 MINERVA_SERVER ?= ../minerva/
-GENEONTOLOGY ?= ../geneontology/trunk/
+GENEONTOLOGY_SVN ?= /home/sjcarbon/local/src/svn/geneontology.org/trunk/
+NOCTUA_MODELS ?= /home/sjcarbon/local/src/git/noctua-models/models/
 
 ## Testing.
 TESTS = \
@@ -122,11 +123,11 @@ start-barista:
 .PHONY: start-minerva-go
 start-minerva-go:
 	cd $(MINERVA_SERVER) && ./build-server.sh
-	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
+	make start-minerva-go-fast
 
 .PHONY: start-minerva-go-fast
 start-minerva-go-fast:
-	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY)
+	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY_SVN) $(NOCTUA_MODELS)
 
 ###
 ### Gulp-based workflows.
