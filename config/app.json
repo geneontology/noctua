@@ -16,6 +16,14 @@
 	]
     },
     {
+	"id": "minerva_public_dev",
+	"target": "http://toaster.lbl.gov:6799",
+	"public": [
+	    "getRelations",
+	    "m3Batch"
+	]
+    },
+    {
 	"id": "minerva_monarch_dev",
 	"target": "http://poole.monarchinitiative.org:6800",
 	"public": [
