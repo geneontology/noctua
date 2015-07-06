@@ -122,11 +122,11 @@ var NoctuaLauncher = function(){
             console.warn('HEROKU_NODEJS');
 	}else{
 	    self.IS_ENV_LOCAL = true;
-
+	    
 	    // If Noctua host is env defined, use that, or sane default.
             self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
-            self.port = non_std_local_port;
-	    self.hostport = 'http://'+ self.ipaddress +':'+ non_std_local_port;
+            self.port = process.env.NOCTUA_PORT || non_std_local_port;
+	    self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
 
             console.warn('LOCAL_NODEJS');
 	}
