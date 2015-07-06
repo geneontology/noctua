@@ -480,6 +480,13 @@ var BaristaLauncher = function(){
 	console.log('Barista debug level taken from default: ' + barista_debug);
     }
 
+    // BTW, we 99% of the time are going to have the runloc have the
+    // same port as runport--double check this to prevent mind-numbing
+    // debugging in the future.
+    if( runloc.lastIndexOf(runport) ==  -1 ){
+	console.warn('WARNING: BARISTA_LOCATION and BARISTA_PORT seem to have different ports. Are you sure?');
+    }
+
     ///
     /// Response helper.
     ///
