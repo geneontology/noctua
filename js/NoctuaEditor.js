@@ -1699,6 +1699,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Run it off in a new tab.
 	manager.store_model(ecore.get_id());
 	//alert('This functionality has been temporarily suspended.');
+	// // New version:
+	// var reqs = new minerva_requests.request_set(manager.user_token(),
+	// 					    ecore.get_id());
+	// reqs.store_model(ecore.get_id());
+	// manager.request_with(reqs, ecore.get_id());
     });
 
     // // Help button.
