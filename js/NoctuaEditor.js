@@ -894,11 +894,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    // Wipe node contents; redraw node contents.
 		    widgets.update_enode(ecore, ind, aid);
 		}else{
-		    ll('add new node' + ind.id());
+		    ll('add new node: ' + ind.id());
 		    updatable_nodes[ind.id()] = true;
-		    
-		    // Add new node to edit core.
-		    ecore.add_node(ind.clone());
 		    
 		    // Initial node layout settings.
     		    var dyn_x = _vari() +
@@ -908,10 +905,13 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    ind.x_init(dyn_x);
 		    ind.y_init(dyn_y);
 		    
+		    // Add new node to edit core.
+		    ecore.add_node(ind);
+		    
 		    // Update coordinates and report them.
-		    local_position_store.add(en.id(), dyn_x, dyn_y);
+		    local_position_store.add(ind.id(), dyn_x, dyn_y);
 		    if( barclient ){
-			barclient.telekinesis(en.id(), dyn_x, dyn_y);
+			barclient.telekinesis(ind.id(), dyn_x, dyn_y);
 		    }
 
 		    // Draw it to screen.
