@@ -28,8 +28,12 @@ var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
+// Get some information about what we'll be folding away.
+var collapsible_relations = require('./config/collapsible_relations.json');
+console.log('Will fold: ', collapsible_relations);
+
 // The name we're using this week.
-var notw = 'Noctua';
+var notw = 'Noctua Graph Editor';
 
 ///
 /// Define the sample application.
@@ -201,6 +205,8 @@ var NoctuaLauncher = function(){
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location', value: self.barista_location },
 		{name: 'global_known_relations', value: known_relations },
+		{name: 'global_collapsible_relations',
+		 value: collapsible_relations },
 		{name: 'global_barista_token', value: barista_token }
 	    ],
 	    'pup_tent_js_libraries': [

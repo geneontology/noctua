@@ -740,8 +740,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}else if( d_view_type == 'ev_fold' ){
 	    d_graph.load_data_fold_evidence(d_data);
 	}else if( d_view_type == 'go_fold' ){
-	    var rellist = ['RO:0002333', 'BFO:0000066', 'RO:0002233'];
-	    d_graph.load_data_go_noctua(d_data, rellist);
+	    d_graph.load_data_go_noctua(d_data, global_collapsible_relations);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
 	}	
