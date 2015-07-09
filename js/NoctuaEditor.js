@@ -552,14 +552,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    });
     }
 
-    // TODO/BUG
+    // Delete all UI connections associated with node. This also
+    // triggers the "connectionDetached" event, so the edges are being
+    // removed from the model at the same time.
     function _delete_iae_from_ui(indv_id){
 
-	// Delete all UI connections associated with
-	// node. This also triggers the "connectionDetached"
-	// event, so the edges are being removed from the
-	// model at the same time.
+	// Node ID to element ID.
 	var nelt = ecore.get_node_elt_id(indv_id);
+
+	// Get rid of it's connections.
 	instance.detachAllConnections(nelt);
 
 	// Delete node from UI/model.
@@ -735,11 +736,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // Build on new graph.
     function _fold_graph_appropriately(d_graph, d_view_type){
+	// Undo whatever we've done before.
+	d_graph.unfold();
+	each([view_basic_elt, view_ev_fold_elt, view_go_fold_elt], function(elt){
+	    jQuery(elt).css("font-weight","");
+	});
+
+	// Now do it again.
 	if( d_view_type == 'basic' ){
 	    // Nothing.
+	    jQuery(view_basic_elt).css("font-weight","bold");
 	}else if( d_view_type == 'ev_fold' ){
+	    jQuery(view_ev_fold_elt).css("font-weight","bold");
 	    d_graph.fold_evidence();
 	}else if( d_view_type == 'go_fold' ){
+	    jQuery(view_go_fold_elt).css("font-weight","bold");
 	    d_graph.fold_go_noctua(global_collapsible_relations);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
@@ -747,10 +758,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     }
 
     // The core initial layout function.
-    function _rebuild_model_and_display(model_data, preserve_p){
+    function _rebuild_model_and_display(model_data){
 
-	ll('REBUILD from scratch: ' + view_type);
-	
 	// Wipe UI.
 	each(ecore.get_nodes(), function(en, enid){
 	    _delete_iae_from_ui(enid);
@@ -760,15 +769,22 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// Wipe ecore and structures if not attempting to preserve
 	// current data. Reasons to preserve could include switching
 	// views.
-	if( ! preserve_p ){
-	    each(ecore.get_nodes(), function(en, enid){
-		_delete_iae_from_ecore(enid);
-	    });
-	    ecore = new noctua_graph(); // nuke it from orbit
+	if( model_data ){
+	    ll('REBUILD from scratch: ' + view_type);	
+	    // each(ecore.get_nodes(), function(en, enid){
+	    // 	_delete_iae_from_ecore(enid);
+	    // });
+	    // Nuke it from orbit--it's the only way to be sure.
+	    ecore = new noctua_graph();
+
+	    // Build with our incoming data.
+	    ecore.load_data_basic(model_data);
+	}else{
+	    ll('REBUILD from current: ' + view_type);
+	    // Rebuild using our current data.
 	}
 
-	// Build on whatever graph we have now.
-	ecore.load_data_basic(model_data);
+	// Make sure we're in the correct graph folding state.
 	_fold_graph_appropriately(ecore, view_type);
 
 	///
@@ -868,11 +884,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     function _merge_from_new_data(model_json){
 	ll('in MERGE main');
 
-	// Create a new graph of incoming merge data, using the same
-	// folding as the main graph.
+	// Unfold the core data graph for operations with merge.
+	ecore.unfold();
+
+	// Create a new graph of incoming merge data.
 	var merge_in_graph = new noctua_graph();
 	merge_in_graph.load_data_basic(model_json);
-	_fold_graph_appropriately(merge_in_graph, view_type);
 
 	// Suspend and restart for performance.
 	instance.doWhileSuspended(function(){
@@ -921,9 +938,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		}	    
 	    });
 	    
-	    // Now look at edges (by individual) for purging and
-	    // reinstating--no going to try and update edges, just
-	    // clobber.
+	    // Now look at edges (by individual) for purging (and
+	    // reinstating later)--no going to try and update edges,
+	    // just clobber.
 	    each(merge_in_graph.all_nodes(), function(source_node){
 		
 		//ll('looking at node: ' + source_node.types()[0].to_string());
@@ -950,14 +967,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		});
 	    });
 
-	    // Snapshot the current graph for later comparison.
-	    var snapshot_ecore = ecore.clone();
-	    
+	    // Blitz our old annotations as all new will be incoming
+	    // (and the merge just takes the superset)
+	    ecore.annotations([]);
 	    // Now that the UI is without any possible conflicting items
 	    // (i.e. edges) have been purged from out core model, merge
 	    // the new graph into the core one.
-	    ecore.annotations([]); // blitz our old annotations as all new will be incoming (and the merge just takes the superset)
 	    ecore.merge_in(merge_in_graph);
+
 	    // Re-apply folding to graph.
 	    _fold_graph_appropriately(ecore, view_type);
 
@@ -966,15 +983,15 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    /// may remain after a fold-in.
 	    ///
 
-	    //var gone_nodes = [];
-	    each(ecore.all_nodes(), function(snap_node){
-		var snid = snap_node.id();
-		if( ! merge_in_graph.get_node(snid) ){
-		    //gone_nodes.push(snid);
-		    console.log("eliminating: " + snid)
-		    _delete_iae_from_ui(snid);
-		}
-	    });
+	    // //var gone_nodes = [];
+	    // each(ecore.all_nodes(), function(snap_node){
+	    // 	var snid = snap_node.id();
+	    // 	if( ! merge_in_graph.get_node(snid) ){
+	    // 	    //gone_nodes.push(snid);
+	    // 	    console.log("eliminating: " + snid)
+	    // 	    _delete_iae_from_ui(snid);
+	    // 	}
+	    // });
 
 	    ///
 	    /// Refresh any node created or updated in the jsPlumb
@@ -984,14 +1001,20 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // We previously updated/added nodes, so here just make
 	    // sure it's/they're active.
 	    each(updatable_nodes, function(val, key){
+
 		var dnid = key;
-		var ddid = '#' + ecore.get_node_elt_id(dnid);
-		_attach_node_draggable(ddid);
-		// //_make_selector_target(ddid);
-		// //_make_selector_source(ddid, '.konn');
-		// _attach_node_click_edit(ddid);
-		// _make_selector_target(ddid);
-		// _make_selector_source(ddid, '.konn');
+
+		// Only update nodes that are still "visible" after
+		// the folding.
+		if( ecore.get_node(dnid) ){
+		    var ddid = '#' + ecore.get_node_elt_id(dnid);
+		    _attach_node_draggable(ddid);
+		    // //_make_selector_target(ddid);
+		    // //_make_selector_source(ddid, '.konn');
+		    // _attach_node_click_edit(ddid);
+		    // _make_selector_target(ddid);
+		    // _make_selector_source(ddid, '.konn');
+		}
 	    });
 	    // And the reest of the general ops.
 	    _attach_node_dblclick_ann('.demo-window');
@@ -2123,21 +2146,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     jQuery(view_basic_elt).click(function(){
 	view_type = 'basic';
 	_shields_up();
-	_rebuild_model_and_display(model_json, false);
+	_rebuild_model_and_display(null);
 	_refresh_tables();
 	_shields_down();
     });
     jQuery(view_ev_fold_elt).click(function(){
 	view_type = 'ev_fold';
 	_shields_up();
-	_rebuild_model_and_display(model_json, false);
+	_rebuild_model_and_display(null);
 	_refresh_tables();
 	_shields_down();
     });
     jQuery(view_go_fold_elt).click(function(){
 	view_type = 'go_fold';
 	_shields_up();
-	_rebuild_model_and_display(model_json, false);
+	_rebuild_model_and_display(null);
 	_refresh_tables();
 	_shields_down();
     });

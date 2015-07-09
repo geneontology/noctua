@@ -408,7 +408,7 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'text/html', ind);
 	});
 
-  // Routes for all static cache items.
+	// Routes for all static cache items.
 	each(pup_tent.cached_list(), function(thing){
 
 	    var ctype = mime.lookup(thing);
