@@ -733,14 +733,14 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
     }
 
-    function _load_graph_with_data(d_graph, d_data, d_view_type){
-	// Build on new graph.
+    // Build on new graph.
+    function _fold_graph_appropriately(d_graph, d_view_type){
 	if( d_view_type == 'basic' ){
-	    d_graph.load_data_base(d_data);
+	    // Nothing.
 	}else if( d_view_type == 'ev_fold' ){
-	    d_graph.load_data_fold_evidence(d_data);
+	    d_graph.fold_evidence();
 	}else if( d_view_type == 'go_fold' ){
-	    d_graph.load_data_go_noctua(d_data, global_collapsible_relations);
+	    d_graph.fold_go_noctua(global_collapsible_relations);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
 	}	
@@ -768,7 +768,8 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	}
 
 	// Build on whatever graph we have now.
-	_load_graph_with_data(ecore, model_data, view_type);
+	ecore.load_data_basic(model_data);
+	_fold_graph_appropriately(ecore, view_type);
 
 	///
 	/// We now have a well-defined edit core. Let's try and add
@@ -777,7 +778,6 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	///
 
 	// Extract the gross layout.
-	//var g = ecore.to_graph();
 	var r = new bbop.layout.sugiyama.render();
 	var layout = r.layout(ecore);
 
@@ -868,9 +868,11 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     function _merge_from_new_data(model_json){
 	ll('in MERGE main');
 
-	// Create a new graph of incoming merge data.
+	// Create a new graph of incoming merge data, using the same
+	// folding as the main graph.
 	var merge_in_graph = new noctua_graph();
-	_load_graph_with_data(merge_in_graph, model_json, view_type);	
+	merge_in_graph.load_data_basic(model_json);
+	_fold_graph_appropriately(merge_in_graph, view_type);
 
 	// Suspend and restart for performance.
 	instance.doWhileSuspended(function(){
@@ -923,6 +925,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    // reinstating--no going to try and update edges, just
 	    // clobber.
 	    each(merge_in_graph.all_nodes(), function(source_node){
+		
 		//ll('looking at node: ' + source_node.types()[0].to_string());
 
 		// Look up what edges it has in /core/, as they will
@@ -946,12 +949,32 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		    instance.detach(src_conn);
 		});
 	    });
+
+	    // Snapshot the current graph for later comparison.
+	    var snapshot_ecore = ecore.clone();
 	    
 	    // Now that the UI is without any possible conflicting items
 	    // (i.e. edges) have been purged from out core model, merge
 	    // the new graph into the core one.
 	    ecore.annotations([]); // blitz our old annotations as all new will be incoming (and the merge just takes the superset)
 	    ecore.merge_in(merge_in_graph);
+	    // Re-apply folding to graph.
+	    _fold_graph_appropriately(ecore, view_type);
+
+	    ///
+	    /// Remove any standalone nodes from the /display/ that
+	    /// may remain after a fold-in.
+	    ///
+
+	    //var gone_nodes = [];
+	    each(ecore.all_nodes(), function(snap_node){
+		var snid = snap_node.id();
+		if( ! merge_in_graph.get_node(snid) ){
+		    //gone_nodes.push(snid);
+		    console.log("eliminating: " + snid)
+		    _delete_iae_from_ui(snid);
+		}
+	    });
 
 	    ///
 	    /// Refresh any node created or updated in the jsPlumb
