@@ -235,7 +235,7 @@ var NoctuaLauncher = function(){
     ///
     /// Cache and template rendering.
     ///
-    var ppaths = ['static', 'static/selectize', 'static/ui-grid', 'static/angular-xeditable', 'deploy', 'deploy/js', 'deploy/js/NoctuaBasic', 'css', 'templates'];
+    var ppaths = ['static', 'static/selectize', 'static/ui-grid', 'static/angular-xeditable', 'deploy', 'deploy/js', 'deploy/js/NoctuaBasic', 'css', 'templates', 'static/fonts'];
     var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
@@ -359,7 +359,7 @@ var NoctuaLauncher = function(){
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
-      var query = req.route.params['query'] || '';
+	    var query = req.route.params['query'] || '';
 
 	    //
 	    var tmpl_args = {
@@ -420,6 +420,11 @@ var NoctuaLauncher = function(){
 		    res.send(pup_tent.get(thing) );
 		});
 	    }
+	});
+	// Fonts are special!
+	self.app.get('/fonts/:file', function(req, res) {
+	    var ffile = req.route.params['file'] || '';
+	    res.redirect('/static/fonts/' + ffile);
 	});
 
 	// Other static routes.
