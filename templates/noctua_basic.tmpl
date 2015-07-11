@@ -35,9 +35,26 @@
           </div>
         </div>
 
+        <!-- <div class="form-group">
+          <label for="basic_evidence_input">Evidence</label>
+          <div ng-repeat="ev_ref in selected_ev_ref">
+            <div class="input-group">
+              <select class="form-control" id="select_evidence" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
+              <div ng-repeat="ref in ev_ref.ref track by $index">
+                <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="ref">
+              </div>
+              <div ng-click="add_reference(ev_ref)">add more reference</div>
+            </div>
+          </div>
+
+          <div ng-click="add_evidence()">add an evidence</div>
+        </div> -->
+
         <div class="form-group">
           <label for="basic_evidence_input">Evidence</label>
-          <input id="basic_evidence_input" id="select_evidence" class="form-control" type="text" placeholder="" ng-model="selected_evidence">
+          <div class="input-group">
+            <select class="form-control" id="select_evidence" placeholder="Select evidence..." ng-model="selected_evidence"></select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -127,12 +144,14 @@
 
             <div class="form-group">
               <label for="basic_evidence_input">Evidence</label>
-              <input id="basic_evidence_input" id="select_evidence_modal" class="form-control" type="text" placeholder="" ng-model="selected_evidence_modal">
+              <div class="input-group">
+                <select class="form-control" id="select_evidence_modal" placeholder="Select evidence..." ng-model="selected_evidence_modal"></select>
+              </div>
             </div>
 
             <div class="form-group">
               <label for="basic_reference_input">Reference</label>
-              <input id="basic_reference_input" id="select_reference_modal" class="form-control" type="text" placeholder="" ng-model="selected_reference_modal">
+              <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference_modal">
             </div>
 
             <div class="form-group">
