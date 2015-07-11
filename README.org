@@ -26,7 +26,7 @@
    : npm install
    : ./node_modules/.bin/gulp build
 
-   Or, if you have "./node_modules/.bin" in your paht:
+   Or, if you have "./node_modules/.bin" in your path:
 
    : npm install
    : gulp build
@@ -47,7 +47,13 @@
 
     Everybody is different, but mine is like: 
 
-    : GENEONTOLOGY="/home/sjcarbon/local/src/svn/geneontology.org/trunk/" make start-minerva-go-fast
+    : make start-minerva-go
+
+    Or, in a more granular way:
+
+    : cd ../minerva//minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/
+
+    Learn more about minerva at [[https://github.com/geneontology/minerva][here]].
 
 *** Barista
 
