@@ -126,7 +126,7 @@ var NoctuaLauncher = function(){
             console.warn('HEROKU_NODEJS');
 	}else{
 	    self.IS_ENV_LOCAL = true;
-	    
+
 	    // If Noctua host is env defined, use that, or sane default.
             self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
             self.port = process.env.NOCTUA_PORT || non_std_local_port;
@@ -416,16 +416,15 @@ var NoctuaLauncher = function(){
 	    // This will skip cached templates.
 	    if( ctype !== null ){
 		self.app.get('/' + thing, function(req, res) {
+
 		    res.setHeader('Content-Type', ctype);
 		    res.send(pup_tent.get(thing) );
 		});
 	    }
 	});
+
 	// Fonts are special!
-	self.app.get('/fonts/:file', function(req, res) {
-	    var ffile = req.route.params['file'] || '';
-	    res.redirect('/static/fonts/' + ffile);
-	});
+  self.app.use('/fonts', launcher_app.static('static/fonts'));
 
 	// Other static routes.
 	self.app.get('/images/waiting_ac.gif', function(req, res){
