@@ -505,7 +505,7 @@ var NoctuaLauncher = function(){
 	});
 
 	// DEBUG: A JSON model debugging tool for @hdietze
-	/// This path will eventually be destryed.
+	/// This path will eventually be destroyed.
 	self.app.post('/seed/json', function(req, res) {
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;

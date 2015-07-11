@@ -891,146 +891,217 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var merge_in_graph = new noctua_graph();
 	merge_in_graph.load_data_basic(model_json);
 
-	// Suspend and restart for performance.
-	instance.doWhileSuspended(function(){
-
-	    // Next, look at individuals/nodes for addition or
-	    // updating.
-	    var updatable_nodes = {};
-	    each(merge_in_graph.all_nodes(), function(ind){
-		// Update node. This is preferred since deleting it
-		// would mean that all the connections would have to
-		// be reconstructed as well.
-		var update_node = ecore.get_node(ind.id());
-		if( update_node ){
-		    ll('update node: ' + ind.id());
-		    updatable_nodes[ind.id()] = true;
-		    
-		    // "Update" the edit node in core by clobbering
-		    // it.
-		    ecore.add_node(ind);
-		    
-		    // Wipe node contents; redraw node contents.
-		    widgets.update_enode(ecore, ind, aid);
-		}else{
-		    ll('add new node: ' + ind.id());
-		    updatable_nodes[ind.id()] = true;
-		    
-		    // Initial node layout settings.
-    		    var dyn_x = _vari() +
-			jQuery(graph_container_div).scrollLeft();
-    		    var dyn_y = _vari() +
-			jQuery(graph_container_div).scrollTop();
-		    ind.x_init(dyn_x);
-		    ind.y_init(dyn_y);
-		    
-		    // Add new node to edit core.
-		    ecore.add_node(ind);
-		    
-		    // Update coordinates and report them.
-		    local_position_store.add(ind.id(), dyn_x, dyn_y);
-		    if( barclient ){
-			barclient.telekinesis(ind.id(), dyn_x, dyn_y);
-		    }
-
-		    // Draw it to screen.
-		    widgets.add_enode(ecore, ind, aid, graph_div);
-		}	    
-	    });
-	    
-	    // Now look at edges (by individual) for purging (and
-	    // reinstating later)--no going to try and update edges,
-	    // just clobber.
-	    each(merge_in_graph.all_nodes(), function(source_node){
-		
-		//ll('looking at node: ' + source_node.types()[0].to_string());
-
-		// Look up what edges it has in /core/, as they will
-		// be the ones to update.
-		var snid = source_node.id();
-		var src_edges = ecore.get_edges_by_subject(snid);
-		
-		// Delete all edges for said node in model. We cannot
-		// (apparently?) go from connection ID to connection
-		// easily, so removing from UI is a separate step.
-		each(src_edges, function(src_edge){
-		    // Remove from model.
-		    ecore.remove_edge(src_edge.id());
-		});
-		
-		// Now delete all connector/edges for the node in the
-		// UI.
-		var snid_elt = ecore.get_node_elt_id(snid);
-		var src_conns = instance.getConnections({'source': snid_elt});
-		each(src_conns, function(src_conn){
-		    instance.detach(src_conn);
-		});
-	    });
-
-	    // Blitz our old annotations as all new will be incoming
-	    // (and the merge just takes the superset)
-	    ecore.annotations([]);
-	    // Now that the UI is without any possible conflicting items
-	    // (i.e. edges) have been purged from out core model, merge
-	    // the new graph into the core one.
-	    ecore.merge_in(merge_in_graph);
-
-	    // Re-apply folding to graph.
-	    _fold_graph_appropriately(ecore, view_type);
-
-	    ///
-	    /// Remove any standalone nodes from the /display/ that
-	    /// may remain after a fold-in.
-	    ///
-
-	    // //var gone_nodes = [];
-	    // each(ecore.all_nodes(), function(snap_node){
-	    // 	var snid = snap_node.id();
-	    // 	if( ! merge_in_graph.get_node(snid) ){
-	    // 	    //gone_nodes.push(snid);
-	    // 	    console.log("eliminating: " + snid)
-	    // 	    _delete_iae_from_ui(snid);
-	    // 	}
-	    // });
-
-	    ///
-	    /// Refresh any node created or updated in the jsPlumb
-	    /// physical view.
-	    ///
-	    
-	    // We previously updated/added nodes, so here just make
-	    // sure it's/they're active.
-	    each(updatable_nodes, function(val, key){
-
-		var dnid = key;
-
-		// Only update nodes that are still "visible" after
-		// the folding.
-		if( ecore.get_node(dnid) ){
-		    var ddid = '#' + ecore.get_node_elt_id(dnid);
-		    _attach_node_draggable(ddid);
-		    // //_make_selector_target(ddid);
-		    // //_make_selector_source(ddid, '.konn');
-		    // _attach_node_click_edit(ddid);
-		    // _make_selector_target(ddid);
-		    // _make_selector_source(ddid, '.konn');
-		}
-	    });
-	    // And the reest of the general ops.
-	    _attach_node_dblclick_ann('.demo-window');
-	    // // _attach_node_draggable('.demo-window');
-	    _attach_node_click_edit(".open-dialog");
-	    _make_selector_target('.demo-window');
-	    _make_selector_source('.demo-window', '.konn');
-    	    jsPlumb.repaintEverything();
-
-	    // Now that the updated edges are in the model, reinstantiate
-	    // them in the UI.
-	    each(merge_in_graph.all_edges(), function(edg){
-	    	//ll('(re)create/add the edge in UI: ' + edg.relation());
-	    	_connect_with_edge(edg);
-	    });
+	// Since we can actually legally have an edge delete in the
+	// merge, let's go ahead and cycle through the "complete"
+	// graph and toss edges from individuals involved in the
+	// merge.
+	var involved_node = {};
+	each(merge_in_graph.all_nodes(), function(node){
+	    involved_node[node.id()] = true;
 	});
+	// Okay, now get rid of all edges that are defined by the
+	// involved nodes.
+	each(ecore.all_edges(), function(edge){
+	    if( involved_node[edge.subject_id()] &&
+		involved_node[edge.object_id()] ){
+		ecore.remove_edge_by_id(edge.id());
+	    }
+	});
+
+	// Blitz our old annotations as all new will be incoming (and
+	// the merge just takes the superset). Will be fine with fix:
+	// https://github.com/geneontology/minerva/issues/5
+	ecore.annotations([]);
+	ecore.merge_in(merge_in_graph);
+
+	// Farm it out to rebuild.
+	_rebuild_model_and_display();
+
+	///
+	/// "[P]remature optimization is the root of all evil."
+	/// -Donald Knuth
+	///
+	/// We'll come back to this if the merge ops are really
+	/// slow. In fact, maybe only go the "optimized" merge path is
+	/// the graph is structurally the same, but edge/node content
+	/// has changed.
+	///
+
+	// // Take a snapshot of the current graph.
+	// var ecore_snapshot = ecore.clone();
+
+	// // We'll also need an easy lookup of the nodes coming in with
+	// // the merge.
+	// var updatable_nodes = {};
+
+	// // Unfold the core data graph for operations with merge.
+	// ecore.unfold();
+
+	// // Create a new graph of incoming merge data.
+	// var merge_in_graph = new noctua_graph();
+	// merge_in_graph.load_data_basic(model_json);
+
+	// // Suspend and restart for performance.
+	// instance.doWhileSuspended(function(){
+
+	//     // Next, look at individuals/nodes for addition or
+	//     // updating.
+	//     each(merge_in_graph.all_nodes(), function(ind){
+	// 	// Update node. This is preferred since deleting it
+	// 	// would mean that all the connections would have to
+	// 	// be reconstructed as well.
+	// 	var update_node = ecore.get_node(ind.id());
+	// 	if( update_node ){
+	// 	    ll('update node: ' + ind.id());
+	// 	    updatable_nodes[ind.id()] = true;
+		    
+	// 	    // "Update" the edit node in core by clobbering
+	// 	    // it.
+	// 	    ecore.add_node(ind);
+		    
+	// 	    // Wipe node contents; redraw node contents.
+	// 	    widgets.update_enode(ecore, ind, aid);
+	// 	}else{
+	// 	    ll('add new node: ' + ind.id());
+	// 	    updatable_nodes[ind.id()] = true;
+		    
+	// 	    // Initial node layout settings.
+    	// 	    var dyn_x = _vari() +
+	// 		jQuery(graph_container_div).scrollLeft();
+    	// 	    var dyn_y = _vari() +
+	// 		jQuery(graph_container_div).scrollTop();
+	// 	    ind.x_init(dyn_x);
+	// 	    ind.y_init(dyn_y);
+		    
+	// 	    // Add new node to edit core.
+	// 	    ecore.add_node(ind);
+		    
+	// 	    // Update coordinates and report them.
+	// 	    local_position_store.add(ind.id(), dyn_x, dyn_y);
+	// 	    if( barclient ){
+	// 		barclient.telekinesis(ind.id(), dyn_x, dyn_y);
+	// 	    }
+
+	// 	    // Draw it to screen.
+	// 	    widgets.add_enode(ecore, ind, aid, graph_div);
+	// 	}	    
+	//     });
+	    
+	//     // Now look at edges (by individual) for purging (and
+	//     // reinstating later)--no going to try and update edges,
+	//     // just remove/clobber.
+	//     each(merge_in_graph.all_nodes(), function(source_node){
+		
+	// 	//ll('looking at node: ' + source_node.types()[0].to_string());
+
+	// 	// WARNING: We cannot (apparently?) go from connection
+	// 	// ID to connection easily, so removing from UI is a
+	// 	// separate step.
+	// 	//
+	// 	// Look up what edges it has in /core/, as they will
+	// 	// be the ones to update.
+	// 	var snid = source_node.id();
+	// 	var src_edges = ecore.get_edges_by_subject(snid);
+		
+	// 	// Delete all edges for said node in model if both the
+	// 	// source and the target appear in the updatable list.
+	// 	var connection_ids = {};
+	// 	each(src_edges, function(src_edge){
+	// 	    if( updatable_nodes(src_edge.subject_id()) &&
+	// 		updatable_nodes(src_edge.object_id()) ){
+
+	// 		// Save the connection id for later.
+	// 		var eid = src_edge.id();
+	// 		var cid = ecore.get_connector_id_by_edge_id(eid);
+	// 		connection_ids[cid] = true;
+
+	// 		// Remove the edge from reality.
+	// 		ecore.remove_edge(src_edge.id());
+	// 	    }else{
+	// 		// unrelated edge outside of the complete
+	// 		// merge subgraph
+	// 	    }
+	// 	});
+		
+	// 	// Now delete all connector/edges for the node in the
+	// 	// UI.
+	// 	var snid_elt = ecore.get_node_elt_id(snid);
+	// 	var src_conns = instance.getConnections({'source': snid_elt});
+	// 	each(src_conns, function(src_conn){
+	// 	    // Similar to the above, we only want to remove UI
+	// 	    // edges that are contained within the individuals
+	// 	    // in the subgraph.
+	// 	    if( connection_ids(src_conn) ){
+	// 		instance.detach(src_conn);
+	// 	    }else{
+	// 		// This UI edge should be preserved.
+	// 	    }
+	// 	});
+	//     });
+
+	//     // Blitz our old annotations as all new will be incoming
+	//     // (and the merge just takes the superset)
+	//     ecore.annotations([]);
+	//     // Now that the UI is without any possible conflicting items
+	//     // (i.e. edges) have been purged from out core model, merge
+	//     // the new graph into the core one.
+	//     ecore.merge_in(merge_in_graph);
+
+	//     // Re-apply folding to graph.
+	//     _fold_graph_appropriately(ecore, view_type);
+
+	//     ///
+	//     /// Remove any standalone nodes from the /display/ that
+	//     /// may remain after a fold-in; all edges should have been
+	//     /// removed previously.
+	//     ///
+
+	//     each(ecore_snapshot.all_nodes(), function(snap_node){
+	//     	var snid = snap_node.id();
+	//     	if( ! ecore.get_node(snid) ){
+	//     	    //gone_nodes.push(snid);
+	//     	    console.log("eliminating: " + snid)
+	//     	    _delete_iae_from_ui(snid);
+	//     	}
+	//     });
+
+	//     ///
+	//     /// Refresh any node created or updated in the jsPlumb
+	//     /// physical view.
+	//     ///
+	    
+	//     // We previously updated/added nodes, so here just make
+	//     // sure it's/they're active.
+	//     each(merge_in_graph.all_nodes(), function(dn){
+	// 	var dnid = dn.id();
+
+	// 	// Only update nodes that are still "visible" after
+	// 	// the folding.
+	// 	if( ecore.get_node(dnid) ){
+	// 	    var ddid = '#' + ecore.get_node_elt_id(dnid);
+	// 	    _attach_node_draggable(ddid);
+	// 	    // //_make_selector_target(ddid);
+	// 	    // //_make_selector_source(ddid, '.konn');
+	// 	    // _attach_node_click_edit(ddid);
+	// 	    // _make_selector_target(ddid);
+	// 	    // _make_selector_source(ddid, '.konn');
+	// 	}
+	//     });
+	//     // And the reest of the general ops.
+	//     _attach_node_dblclick_ann('.demo-window');
+	//     // // _attach_node_draggable('.demo-window');
+	//     _attach_node_click_edit(".open-dialog");
+	//     _make_selector_target('.demo-window');
+	//     _make_selector_source('.demo-window', '.konn');
+    	//     jsPlumb.repaintEverything();
+
+	//     // Now that the updated edges are in the model, reinstantiate
+	//     // them in the UI.
+	//     each(merge_in_graph.all_edges(), function(edg){
+	//     	//ll('(re)create/add the edge in UI: ' + edg.relation());
+	//     	_connect_with_edge(edg);
+	//     });
+	// }); // close out updating region
     }
     
     ///
