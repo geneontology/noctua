@@ -37,37 +37,42 @@
    - watch - development file monitor
    - clean - clean out /doc and /deploy
 ** Running
-*** Minerva
+*** Minerva (optional)
 
-    TODO
+    You must have a Minerva backend running somewhere and target it
+    with Barista and Noctua. In this dev example, we'll assume that
+    you need that as well. Everybody is different, but I'll give my
+    environment as an example. Start with:
 
-    Everybody is different, but mine is like: 
-    
-    : git clone git@github.com:geneontology/minerva.git
-    : cd minerva
+    : git clone https://github.com/geneontology/minerva.git
+
+    Then, in the Noctua repo:
+
     : make start-minerva-go
 
     Or, in a more granular way:
 
-    : cd ../minerva//minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/
+    : cd ../minerva/minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/
 
-    Learn more about minerva at [[https://github.com/geneontology/minerva][here]].
+    Learn more about Minerva [[https://github.com/geneontology/minerva][here]].
 
 *** Barista
-
-    TODO
 
     Everybody is different, but mine is like: 
 
     : make start-barista-dev
 
-*** Graph Editor (previously "Noctua")
+    This will startup Barista aimed at the local Minerva instance
+    running on default ports.
 
-    TODO
+*** Client/Graph Editor (previously "Noctua")
 
     Everybody is different, but mine is like: 
 
     : make start-noctua-dev
+
+    This will startup the client aimed at the local Barista instance
+    running on default ports.
 
 ** How to use demo
 *** Generating/selecting a model
