@@ -38,9 +38,7 @@
    - build - assemble the apps for running
    - watch - development file monitor
    - clean - clean out /doc and /deploy
-
 ** Running
-
 *** Minerva
 
     TODO
@@ -73,7 +71,6 @@
 
 ** How to use demo
 *** Generating/selecting a model
-
     - Models that are currently known (either in memory or file) are
       found under [Current State] > select "Usable" > [Jump]
     - To create a new model from a class and a DB, use [Wizard] >
@@ -83,7 +80,6 @@
       second section) > [Generate]; this operation may take minutes
       depending on the size of the GAF to be loaded
     - Directly loading by copy-and-paste is not currently tested
-
 *** Instances and edges
 
    - A new instance can be created by filling in the form on the left
