@@ -44,7 +44,9 @@
     TODO
 
     Everybody is different, but mine is like: 
-
+    
+    : git clone git@github.com:geneontology/minerva.git
+    : cd minerva
     : make start-minerva-go
 
     Or, in a more granular way:
@@ -148,15 +150,8 @@
    We do have people who have run the whole stack easily on OS X.
    
 *** Running Minerva
-    The main/best way to run Minerva is with the "start-go-minerva.sh"
-    script, found in the [[https://code.google.com/p/owltools/][OWLTools checkout]] (in
-    owltools/MolecularModelServer/bin). The only input parameter is
-    the root directory for the local GO-SVN checkout.
-
-    In typical setup for running Minerva, you will have to:
-
-    - Build Minerva (only required after updates): build-server.sh
-    - Start server: start-go-minerva.sh /path/to/GO-trunk
+    Consult the Minerva docs at https://github.com/geneontology/minerva
+    
 *** Running Noctua and Barista
     The most important part of getting familiar with the setup is
     understanding the options in the Makefile. As well, besides the
