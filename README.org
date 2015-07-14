@@ -1,7 +1,5 @@
 * The Noctua (Editor + Barista + Minerva) Stack
   
-  Previously the GO MME.
-
   _Current development is very rapid, so some of these docs may be out
   of date._
 
