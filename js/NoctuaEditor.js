@@ -380,6 +380,27 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	return seed + 100;
     }
 
+    function _extract_node_position(node, x_or_y){
+	var ret = null;
+
+	var hint_str = null;
+	if( x_or_y == 'x' || x_or_y == 'y' ){
+	    hint_str = 'hint-layout-' + x_or_y;
+	}
+
+	var hint_anns = node.get_annotations_by_key(hint_str);
+	if( hint_anns.length == 1 ){
+	    ret = hint_anns[0].value();
+	    //console.log('extracted coord ' + x_or_y + ': ' + ret);
+	}else if( hint_anns.length == 0 ){
+	    //console.log('no coord');	    
+	}else{
+	    //console.log('too many coord');
+	}
+	
+	return ret;
+    }
+
     ///
     /// jsPlumb preamble.
     ///
@@ -793,52 +814,58 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	/// graph.
 	///
 
-	// Extract the gross layout.
+	// Extract/create a gross fallback layout. Find the initial
+	// layout position form the layout. There might be some
+	// missing due to finding cycles in the graph, so we have this
+	// two-step process.
 	var r = new bbop.layout.sugiyama.render();
 	var layout = r.layout(ecore);
-
-	// Find the initial layout position of the layout. There might
-	// be some missing due to finding cycles in the graph, so we
-	// have this two-step process.
-	var minerva_position_store = new bbopx.noctua.location_store();
+	var fallback_position_store = new bbopx.noctua.location_store();
 	each(layout['nodes'], function(litem, index){
 	    var id = litem['id'];
 	    var raw_x = litem['x'];
 	    var raw_y = litem['y'];
 	    var fin_x = _box_left(raw_x);
 	    var fin_y = _box_top(raw_y);
-	    minerva_position_store.add(id, fin_x, fin_y);
+	    fallback_position_store.add(id, fin_x, fin_y);
+	    console.log('fallback: ' + id)
 	});
+
 	// Now got through all of the actual nodes.
-	each(ecore.get_nodes(), function(en, enid){
-	    
+	each(ecore.all_nodes(), function(en){
+	    var enid = en.id();
+
 	    // Try and see if we have coords; the precedence is:
 	    // historical (drop), layout, make some up.
 	    var fin_x = null;
 	    var fin_y = null;
 	    var local_coords = local_position_store.get(enid);
-	    var minerva_coords = minerva_position_store.get(enid);
+	    var fallback_coords = fallback_position_store.get(enid);
+	    var model_x = _extract_node_position(en, 'x');
+	    var model_y = _extract_node_position(en, 'y');
 	    if( local_coords ){
+		console.log('take local for: ' + enid)
 		fin_x = local_coords['x'];
 		fin_y = local_coords['y'];
-	    }else if( minerva_coords ){
-		fin_x = minerva_coords['x'];
-		fin_y = minerva_coords['y'];
+	    }else if( model_x != null && model_y != null ){
+		console.log('take minerva for: ' + enid)
+		fin_x = model_x;
+		fin_y = model_y;
+	    }else if( fallback_coords ){
+		console.log('take fallback for: ' + enid)
+		fin_x = fallback_coords['x'];
+		fin_y = fallback_coords['y'];
 	    }else{
+		console.log('take random for: ' + enid)
 		fin_x = _vari();
 		fin_y = _vari();		 
 	    }
 	    
-	    // Update coordinates and report them.
-	    local_position_store.add(en.id(), fin_x, fin_y);
+	    // Update coordinates and report them to others.
+	    local_position_store.add(enid, fin_x, fin_y);
 	    if( barclient ){
-		barclient.telekinesis(en.id(), fin_x, fin_y);
+		barclient.telekinesis(enid, fin_x, fin_y);
 	    }
-
-	    // Take the final coordinate and add it as a hint into
-	    // the edit node.
-	    en.x_init(fin_x);
-	    en.y_init(fin_y);
 	});	
 	
 	// For our intitialization/first drawing, suspend jsPlumb
@@ -1813,14 +1840,63 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
     // Save button.
     jQuery(save_btn_elt).click(function(){
-	// Run it off in a new tab.
-	manager.store_model(ecore.get_id());
-	//alert('This functionality has been temporarily suspended.');
-	// // New version:
-	// var reqs = new minerva_requests.request_set(manager.user_token(),
-	// 					    ecore.get_id());
-	// reqs.store_model(ecore.get_id());
-	// manager.request_with(reqs, ecore.get_id());
+
+	// Start a new request.
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+
+	// Update all of the nodes with their current local (should be
+	// most recent) positions before saving.
+	each(ecore.all_nodes(), function(node){
+	    var nid = node.id();
+
+	    // Extract the current local coord.
+	    var pos = local_position_store.get(nid);
+	    var new_x = pos['x'];
+	    var new_y = pos['y'];
+
+	    // See if there are "hint-layout-* annotations and see if
+	    // they need updating.
+	    var old_x = _extract_node_position(node, 'x');
+	    var old_y = _extract_node_position(node, 'y');
+	    // If not defined or not up-to-date, remove the old
+	    // annotations and add the new ones
+	    if( (old_x == null || old_y == null) ||
+		(new_x != old_x || new_y != old_y) ){
+
+		// If not null, remove.
+		if( old_x != null ){
+		    reqs.remove_annotation_from_individual('hint-layout-x',
+		    					   old_x, nid);
+		    //console.log('no x hint for: ' + nid);
+		}
+		if( old_y != null ){
+		    reqs.remove_annotation_from_individual('hint-layout-y',
+		    					   old_y, nid);
+		    //console.log('no y hint for: ' + nid);
+		}
+		//console.log('no y hint for: ' + nid);
+
+		// Add annotations
+		reqs.add_annotation_to_individual('hint-layout-x', new_x, nid);
+		reqs.add_annotation_to_individual('hint-layout-y', new_y, nid);
+		//console.log('hint-layout-x: ' + new_x + ', ' + nid);
+		//console.log('hint-layout-y: ' + new_y + ', ' + nid);
+	    }
+	});
+
+	// And add the actual storage.
+	reqs.store_model();
+	manager.request_with(reqs);
+
+	// // Run it off in a new tab.
+	// manager.store_model(ecore.get_id());
+	// //alert('This functionality has been temporarily suspended.');
+	// // // New version:
+	// // var reqs = new minerva_requests.request_set(manager.user_token(),
+	// // 					    ecore.get_id());
+	// // reqs.store_model(ecore.get_id());
+	// // manager.request_with(reqs, ecore.get_id());
     });
 
     // // Help button.
@@ -1961,9 +2037,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
 		if( enelt ){
-		    // ll('tkn callback: ' +
-		    //    uid + ' moved '+ iid + ': ' +
-		    //    top + ', ' + left);
+		    console.log('tkn callback: '+ iid +': '+ top +', '+ left);
+
+		    // Stick into the local store.
+		    local_position_store.add(iid, left, top);
+
+		    // Update position.
 		    jQuery('#' + enelt).css('top', top + 'px');
 		    jQuery('#' + enelt).css('left', left + 'px');
 
