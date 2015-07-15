@@ -29,19 +29,17 @@ BARISTA_PORT ?= 3400
 ## URL for users.yaml.
 GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
 
-#MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
-MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
-
 ## BBOP JS paths.
 BBOP_JS ?= ../bbop-js/
 BBOPX_JS ?= ../bbopx-js/
 BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 
-## OWLTools paths.
-OWLTOOLS ?= ../owltools/
+## Minerva paths.
 MINERVA_SERVER ?= ../minerva/
 GENEONTOLOGY_SVN ?= /home/sjcarbon/local/src/svn/geneontology.org/trunk/
 NOCTUA_MODELS ?= /home/sjcarbon/local/src/git/noctua-models/models/
+#MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
+MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
 
 ## Testing.
 TESTS = \
