@@ -1532,7 +1532,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		
 		// Send message to server.
 		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-						[occ, 'RO:0002233']]);
+						[occ, 'BFO:0000066']]);
 		manager.request_with(reqs);
     	    }
     	}
@@ -1630,7 +1630,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		
 		// Send message to server.
 		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-						[occ, 'RO:0002233']]);
+						[occ, 'BFO:0000066']]);
 		manager.request_with(reqs);
     	    }
     	}
@@ -1745,7 +1745,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    
 	    // Send message to server.
 	    var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-					    [occ, 'RO:0002233']]);
+					    [occ, 'BFO:0000066']]);
 	    manager.request_with(reqs);
     	}
     });
@@ -1841,7 +1841,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    
 	    // Send message to server.
 	    var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-					    [occ, 'RO:0002233']]);
+					    [occ, 'BFO:0000066']]);
 	    manager.request_with(reqs);
     	}
     });
