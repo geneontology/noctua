@@ -1400,6 +1400,29 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     });
 
     ///
+    /// Helpers for running the addition templates.
+    ///
+    
+    function _add_composite(base_cls, additions){
+	
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+	var new_base = reqs.add_individual(base_cls);
+	
+	// 
+	each(additions, function(pair){
+	    var cls_init = pair[0];
+	    var rel = pair[1];
+	    if( cls_init && rel ){
+		var new_add = reqs.add_individual(cls_init);
+		reqs.add_fact([new_base, new_add, rel]);
+	    }
+	});
+	
+	return reqs;
+    }	    
+    
+    ///
     /// Activate addition template for BP (restrict).
     ///
 
@@ -1508,7 +1531,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		jQuery(simple_bp_restrict_occ_auto_elt).val('');
 		
 		// Send message to server.
-		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
+						[occ, 'RO:0002233']]);
+		manager.request_with(reqs);
     	    }
     	}
     );
@@ -1604,7 +1629,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     		jQuery(simple_bp_free_occ_auto_elt).val('');
 		
 		// Send message to server.
-		manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
+						[occ, 'RO:0002233']]);
+		manager.request_with(reqs);
     	    }
     	}
     );
@@ -1717,7 +1744,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	    jQuery(simple_mf_restrict_occ_auto_elt).val('');
 	    
 	    // Send message to server.
-	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+	    var reqs = _add_composite(act, [[enb, 'RO:0002333'],
+					    [occ, 'RO:0002233']]);
+	    manager.request_with(reqs);
     	}
     });
 
@@ -1811,7 +1840,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
     	    jQuery(simple_mf_free_occ_auto_elt).val('');
 	    
 	    // Send message to server.
-	    manager.add_simple_composite(ecore.get_id(), act, enb, occ);
+	    var reqs = _add_composite(act, [[enb, 'RO:0002333'],
+					    [occ, 'RO:0002233']]);
+	    manager.request_with(reqs);
     	}
     });
 
