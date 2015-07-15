@@ -814,10 +814,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	/// graph.
 	///
 
-	// Extract/create a gross fallback layout. Find the initial
-	// layout position form the layout. There might be some
-	// missing due to finding cycles in the graph, so we have this
-	// two-step process.
+	// Extract/create a gross fallback layout, based on
+	// Sugiyama. Find the initial layout position form the
+	// layout. There might be some missing due to finding cycles
+	// in the graph, so we have this two-step process.
 	var r = new bbop.layout.sugiyama.render();
 	var layout = r.layout(ecore);
 	var fallback_position_store = new bbopx.noctua.location_store();
@@ -828,7 +828,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    var fin_x = _box_left(raw_x);
 	    var fin_y = _box_top(raw_y);
 	    fallback_position_store.add(id, fin_x, fin_y);
-	    console.log('fallback: ' + id)
+	    //console.log('fallback: ' + id)
 	});
 
 	// Now got through all of the actual nodes.
@@ -844,21 +844,21 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    var model_left = _extract_node_position(en, 'x');
 	    var model_top = _extract_node_position(en, 'y');
 	    if( local_coords ){
-		console.log('take local for: ' + enid)
 		fin_left = local_coords['x'];
 		fin_top = local_coords['y'];
+		ll('take local for: '+ enid +': '+ fin_left +', '+ fin_top);
 	    }else if( model_left != null && model_top != null ){
-		console.log('take minerva for: ' + enid)
 		fin_left = model_left;
 		fin_top = model_top;
+		ll('take minerva for: ' + enid +': '+ fin_left +', '+ fin_top);
 	    }else if( fallback_coords ){
-		console.log('take fallback for: ' + enid)
 		fin_left = fallback_coords['x'];
 		fin_top = fallback_coords['y'];
+		ll('take fallback for: ' + enid +': '+ fin_left +', '+ fin_top);
 	    }else{
-		console.log('take random for: ' + enid)
 		fin_x = _vari();
 		fin_y = _vari();		 
+		ll('take random for: ' + enid +': '+ fin_left +', '+ fin_top);
 	    }
 	    
 	    // Update coordinates and report them to others.
@@ -873,9 +873,18 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	// stuff while we get a little work done rebuilding the UI.
 	instance.doWhileSuspended(function(){
 	    
-	    // Initial render of the graph.
+	    // Initial render of nodes in the graph.
     	    each(ecore.get_nodes(), function(enode, enode_id){
-    		widgets.add_enode(ecore, enode, aid, graph_div);
+		// Will have the most up-to-date location info.
+		var left = null;
+		var top = null;
+		var local_coords = local_position_store.get(enode_id);
+		if( local_coords ){
+		    left = local_coords['x'];
+		    top = local_coords['y'];
+		}
+
+    		widgets.add_enode(ecore, enode, aid, graph_div, left, top);
     	    });
 
     	    // Now let's try to add all the edges/connections.
@@ -2038,7 +2047,7 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
 		if( enelt ){
-		    console.log('tkn callback: '+ iid +': '+ top +', '+ left);
+		    ll('tele callback: '+ iid +': '+ top +', '+ left);
 
 		    // Stick into the local store.
 		    local_position_store.add(iid, left, top);
