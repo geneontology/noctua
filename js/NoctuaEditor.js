@@ -486,12 +486,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    if( en ){
 
 		// Grab position.
-		var t = ui.position.top;
-		var l = ui.position.left;
+		var top = ui.position.top;
+		var left = ui.position.left;
 
-		//ll('dragging (' + en.id() + ') at:' + t + ', ' + l);
+		//ll('dragging (' + en.id() + ') at:' + top + ', ' + left);
 		if( barclient ){
-		    barclient.telekinesis(en.id(), t, l);
+		    barclient.telekinesis(en.id(), top, left);
 		}
 	    }
 	}
@@ -837,24 +837,24 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 
 	    // Try and see if we have coords; the precedence is:
 	    // historical (drop), layout, make some up.
-	    var fin_x = null;
-	    var fin_y = null;
+	    var fin_left = null;
+	    var fin_top = null;
 	    var local_coords = local_position_store.get(enid);
 	    var fallback_coords = fallback_position_store.get(enid);
-	    var model_x = _extract_node_position(en, 'x');
-	    var model_y = _extract_node_position(en, 'y');
+	    var model_left = _extract_node_position(en, 'x');
+	    var model_top = _extract_node_position(en, 'y');
 	    if( local_coords ){
 		console.log('take local for: ' + enid)
-		fin_x = local_coords['x'];
-		fin_y = local_coords['y'];
-	    }else if( model_x != null && model_y != null ){
+		fin_left = local_coords['x'];
+		fin_top = local_coords['y'];
+	    }else if( model_left != null && model_top != null ){
 		console.log('take minerva for: ' + enid)
-		fin_x = model_x;
-		fin_y = model_y;
+		fin_left = model_left;
+		fin_top = model_top;
 	    }else if( fallback_coords ){
 		console.log('take fallback for: ' + enid)
-		fin_x = fallback_coords['x'];
-		fin_y = fallback_coords['y'];
+		fin_left = fallback_coords['x'];
+		fin_top = fallback_coords['y'];
 	    }else{
 		console.log('take random for: ' + enid)
 		fin_x = _vari();
@@ -862,9 +862,10 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	    }
 	    
 	    // Update coordinates and report them to others.
-	    local_position_store.add(enid, fin_x, fin_y);
+	    local_position_store.add(enid, fin_left, fin_top);
 	    if( barclient ){
-		barclient.telekinesis(enid, fin_x, fin_y);
+		// Remember: telekinesis does t/l, not l/t (= x/y).
+		barclient.telekinesis(enid, fin_top, fin_left);
 	    }
 	});	
 	
