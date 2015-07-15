@@ -29,6 +29,9 @@ BARISTA_PORT ?= 3400
 ## URL for users.yaml.
 GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
 
+#MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
+MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
+
 ## BBOP JS paths.
 BBOP_JS ?= ../bbop-js/
 BBOPX_JS ?= ../bbopx-js/
@@ -127,7 +130,7 @@ start-minerva-go:
 
 .PHONY: start-minerva-go-fast
 start-minerva-go-fast:
-	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY_SVN) $(NOCTUA_MODELS)
+	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY_SVN) $(NOCTUA_MODELS) $(MINERVA_LABEL_RESOLUTION)
 
 ###
 ### Gulp-based workflows.
