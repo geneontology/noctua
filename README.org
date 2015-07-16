@@ -52,7 +52,7 @@
 
     Or, in a more granular way:
 
-    : cd ../minerva/minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/
+    : cd ../minerva/minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/ http://golr.berkeleybop.org/
 
     Learn more about Minerva [[https://github.com/geneontology/minerva][here]].
 
