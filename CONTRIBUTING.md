@@ -5,7 +5,7 @@ Thank you for taking the time to contribute. We appreciate it!
 There are two ways to contribute to this effort. The first way is to
 use this project's [Issues Page](https://github.com/geneontology/noctua/issues), 
 which we use as
-a forum to discuss both major and minor issues related to developing
+a forum to discuss major (and soon minor) issues related to developing
 the Noctua codebase. Examples of the type of issues that can be
 submitted are:
 
@@ -13,16 +13,16 @@ submitted are:
 * feature requests
 * data/library issues
 
-A second way to contribute to the project is to directly contribute
+A second way to contribute to the project is direct contribution of
 development effort. Please refer to the next section,
-[Contributions and Pull Request](#pull_request), for more details.
+[Contributions and Pull Requests](#pull_request), for more details.
 
 <a name="pull_request"></a>
 ## Contributions and Pull Requests
 
 The way to contribute development effort and code to the project is
-via GitHub pull requests. GitHub provides a nice
-[overview on how to create a pull request](https://help.github.com/articles/creating-a-pull-request).
+via GitHub pull requests. GitHub provides a nice overview on
+[how to create a pull request](https://help.github.com/articles/creating-a-pull-request).
 
 Some general rules to follow:
 
@@ -56,26 +56,7 @@ request against the master branch.
 <a name="issue_resolution"></a>
 ## Issue Resolution
 
-Once a pull request or issue have been submitted, anyone can comment
-or vote on an issue to express their opinion following the Apache
-voting system. Quick summary:
-
-- **+1** something you agree with
-- **-1** if you have a strong objection to an issue, which will be taken very seriously. A -1 vote should provide an alternative solution.
-- **+0** or **-0** for neutral comments or weak opinions.
-- It's okay to have input without voting
-- Silence gives assent
-
-A pull request with at least two **+1** votes, no **-1** votes, and
-that has been open for at least 3 days, is ready to be merged. The
-merge should be done by someone from a different organization than the
-submitter. (We sometimes waive the 3 days for cosmetic-only changes --
-use good judgment.)
-
-If an issue gets qany **-1** votes, the comments on the issue need to reach consensus before the issue can be resolved one way or the other. There isn't any strict time limit on a contentious issue.
-
-The project will strive for full consensus on everything until it runs
-into a problem with that model.
+Once a pull request or issue has been submitted, anyone can comment an issue to express their opinion. Users with the ability to manipulate the tags may also bump the "approval" tag to the next level (e.g. approval (1) -> approval (2)) or add the "dissent" tag. If an issue gets a dissent tag, there will be an attempt to reach consensus before resolving one way or the other. There isn't any strict time limit on a contentious issue. Silence is generally considered assent. The project will strive for consensus.
 
 <a name="syntax_style"></a>
 ## Syntax Style and Conventions
@@ -84,6 +65,9 @@ TODO
 
 - global variables (final user client vs lib)
 - scope and for loops
+- unit test types
+  - behave
+  - mocha/chai (non-chained)
 
 preferred:
 
