@@ -588,10 +588,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	jQuery('#' + nelt).remove();
     }
 
-    //
-    function _delete_iae_from_ecore(indv_id){
-	ecore.remove_node(indv_id, true); // recursively removes
-    }
+    // // Helper for getting rid of nodes. In all these cases, edges will
+    // // come off naturally.
+    // function _delete_iae_from_ecore(indv_id){
+    // 	// Should recursively remove direct evidence, etc.
+    // 	ecore.remove_node(indv_id, true);
+    // }
 
     function _connect_with_edge(eedge){
 
