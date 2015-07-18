@@ -35,22 +35,29 @@
           </div>
         </div>
 
-        <!-- <div class="form-group">
+        <div class="form-group">
           <label for="basic_evidence_input">Evidence</label>
-          <div ng-repeat="ev_ref in selected_ev_ref">
-            <div class="input-group">
-              <select class="form-control" id="select_evidence" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
-              <div ng-repeat="ref in ev_ref.ref track by $index">
-                <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="ref">
+        </div>
+        <div class="form-group" ng-repeat="ev_ref in selected_ev_ref_list">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="input-group">
+                <select class="form-control" id="{[{ev_ref.htmlid}]}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
               </div>
-              <div ng-click="add_reference(ev_ref)">add more reference</div>
             </div>
           </div>
+          <div class="row">
+            <div class="col-md-7 col-md-offset-3">
+              <div ng-repeat="ref in ev_ref.ref_list">
+                <input class="form-control" id="{[{ev_ref.htmlid + ref.htmlid}]}" placeholder="Select reference..." ng-model="ref.ref"></input>
+              </div>
+              <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add another reference</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list)">Add another evidence</button>
 
-          <div ng-click="add_evidence()">add an evidence</div>
-        </div> -->
-
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label for="basic_evidence_input">Evidence</label>
           <div class="input-group">
             <select class="form-control" id="select_evidence" placeholder="Select evidence..." ng-model="selected_evidence"></select>
@@ -60,14 +67,14 @@
         <div class="form-group">
           <label for="basic_reference_input">Reference</label>
           <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference">
-        </div>
+        </div> -->
 
         <div class="form-group">
           <label for="basic_reference_input">Description</label>
           <textarea class="form-control" rows="2" ng-model="selected_description"></textarea>
         </div>
 
-        <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create(selected_disease, selected_phenotype, selected_ageofonset, selected_evidence, selected_reference, selected_description)">Add</button>
+        <button id="select_stored_jump_button" type="submit" class="btn btn-primary" ng-click="create(selected_disease, selected_phenotype, selected_ageofonset, selected_ev_ref_list, selected_description)">Add</button>
 
         <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -144,6 +151,28 @@
 
             <div class="form-group">
               <label for="basic_evidence_input">Evidence</label>
+            </div>
+            <div class="form-group" ng-repeat="ev_ref in selected_ev_ref_list_modal">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="input-group">
+                    <select class="form-control" id="{[{ev_ref.htmlid}]}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-7 col-md-offset-3">
+                  <div ng-repeat="ref in ev_ref.ref_list">
+                    <input class="form-control" id="{[{ev_ref.htmlid + ref.htmlid}]}" placeholder="Select reference..." ng-model="ref.ref"></input>
+                  </div>
+                  <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add another reference</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list_modal)">Add another evidence</button>
+
+            <!-- <div class="form-group">
+              <label for="basic_evidence_input">Evidence</label>
               <div class="input-group">
                 <select class="form-control" id="select_evidence_modal" placeholder="Select evidence..." ng-model="selected_evidence_modal"></select>
               </div>
@@ -152,7 +181,7 @@
             <div class="form-group">
               <label for="basic_reference_input">Reference</label>
               <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference_modal">
-            </div>
+            </div> -->
 
             <div class="form-group">
               <label for="basic_reference_input">Description</label>
