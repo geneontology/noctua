@@ -30,8 +30,13 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
+
 //
 var widgets = bbopx.noctua.widgets;
+// And its replacement
+//var widgetry = require('file:./js/lib/widgetry.js');
+var widgetry = require('noctua-widgetry');
+//alert(widgetry);
 
 /**
  * Bootstraps a working environment for the MME client.

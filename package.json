@@ -75,7 +75,8 @@
         "jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
         "jsplumb": "./external_js/jquery.jsPlumb-1.5.5.js",
         "tablesorter": "./external_js/jquery.tablesorter.min.js",
-        "connectors-sugiyama": "./js/connectors-sugiyama.js"
+        "connectors-sugiyama": "./js/connectors-sugiyama.js",
+        "noctua-widgetry": "./js/lib/noctua-widgetry/widgetry.js"
     },
     "browserify-shim": {
         "jquery": {
