@@ -30,8 +30,13 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
+
 //
 var widgets = bbopx.noctua.widgets;
+// And its replacement
+//var widgetry = require('file:./js/lib/widgetry.js');
+var widgetry = require('noctua-widgetry');
+//alert(widgetry);
 
 /**
  * Bootstraps a working environment for the MME client.
@@ -588,10 +593,12 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	jQuery('#' + nelt).remove();
     }
 
-    //
-    function _delete_iae_from_ecore(indv_id){
-	ecore.remove_node(indv_id, true); // recursively removes
-    }
+    // // Helper for getting rid of nodes. In all these cases, edges will
+    // // come off naturally.
+    // function _delete_iae_from_ecore(indv_id){
+    // 	// Should recursively remove direct evidence, etc.
+    // 	ecore.remove_node(indv_id, true);
+    // }
 
     function _connect_with_edge(eedge){
 
