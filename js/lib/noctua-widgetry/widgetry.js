@@ -37,7 +37,7 @@ function build_token_link(url, token){
     }
     
     return new_url;
-};
+}
 
 /*
  * Function: repaint_info
@@ -95,7 +95,7 @@ function repaint_info(ecore, aid, info_div){
     // Add to display.
     jQuery(info_div).empty();
      jQuery(info_div).append(str_cache.join(' '));
-};
+}
 
 /*
  * Function: repaint_exp_table
@@ -184,7 +184,7 @@ function repaint_exp_table(ecore, aid, table_div){
 	// Make it sortable using the plugin.
 	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
     }
-};
+}
 
 /*
  * Function: repaint_edge_table
@@ -244,7 +244,7 @@ function repaint_edge_table(ecore, aid, table_div){
 	// Make it sortable using the plugin.
 	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
     }
-};
+}
 
 /*
  * Function: wipe
@@ -253,7 +253,7 @@ function repaint_edge_table(ecore, aid, table_div){
  */
 function wipe(div){
     jQuery(div).empty();
-};
+}
 
 /*
  * Function: enode_types_to_stack
@@ -270,12 +270,12 @@ function enode_types_to_stack(enode_types, aid){
 	var bpri = aid.priority(b.property_id());
 	var apri = aid.priority(a.property_id());
 	return apri - bpri;
-    };
+    }
 
     // 
     var out_stack = enode_types.sort(_sorter);
     return out_stack;
-};
+}
     
 /*
  * Function: render_node_stack
@@ -355,8 +355,8 @@ function render_node_stack(enode, aid){
 
 	// Add to top.
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
-	    '<td class="bbop-mme-stack-td"><small style="color: grey;">' 
-	    + 'evidence: ' + n_ev + '; other: ' + n_other + 
+	    '<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+	    'evidence: ' + n_ev + '; other: ' + n_other + 
 	    '</small></td></tr>';
 	enode_stack_table.add_to(trstr);
     }
@@ -370,7 +370,7 @@ function render_node_stack(enode, aid){
     }
 
     return enode_stack_table;
-};
+}
 
 /*
  * Function: add_enode
@@ -409,7 +409,7 @@ function add_enode(ecore, enode, aid, graph_div, left, top){
     // w.add_to(openann);
     
     jQuery(graph_div).append(w.to_string());
-};
+}
 
 /*
  * Function: update_enode
@@ -436,7 +436,7 @@ function update_enode(ecore, enode, aid){
     // // Box to click for annotation dialog.
     // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
     // jQuery('#' + uelt).append(openann.to_string());
-};
+}
 
 /*
  * Constructor: contained_modal
@@ -592,7 +592,7 @@ function contained_modal(type, arg_title, arg_body){
     this.destroy = function(){
 	jQuery(modal_elt).modal('hide');
     };
-};
+}
 
 /*
  * Constructor: compute_shield
@@ -627,7 +627,7 @@ function compute_shield(){
 
     var mdl = new contained_modal('shield', 'Relax', [p, pb_container]);
     return mdl;
-};
+}
 
 /*
  * Function: sorted_relation_list
@@ -673,7 +673,7 @@ function sorted_relation_list(relations, aid){
     });
 
     return rellist;
-};
+}
 
 /*
  * Constructor: add_edge_modal
@@ -766,7 +766,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
     
     // Return our final product.
     return mdl;
-};
+}
 
 /**
  * 
@@ -793,8 +793,8 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	var eid = bbop_core.uuid();
 	elt2type[eid] = item;		 
 	var acache = [];
-	acache.push('<li class="list-group-item" style="background-color: '
-		    + aid.color(item.category()) + ';">');
+	acache.push('<li class="list-group-item" style="background-color: ' +
+		    aid.color(item.category()) + ';">');
 	acache.push(type_str);
 	// if( ! item.inferred_p() ){
 	acache.push('<span id="'+ eid +
@@ -1011,7 +1011,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 
     // Return our final product.
     return mdl;
-};
+}
 
 /*
  * Constructor: edit_annotation_modal
@@ -1499,7 +1499,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
     // Return our final product.
     return mdl;
-};
+}
 
 /*
  * Constructor: reporter
@@ -1598,7 +1598,7 @@ function reporter(output_id){
 
     // Initialize.
     this.reset();
-};
+}
 
 /*
  * Function: user_check
@@ -1631,7 +1631,7 @@ function user_check(barista_loc, given_token, div_id){
 	    }
 	}
     });
-};
+}
 
 /*
  * Function: type_to_span
@@ -1652,7 +1652,7 @@ function type_to_span(in_type, color){
     }
 
     return text;
-};
+}
 
 /*
  * Function: type_to_full
@@ -1728,7 +1728,7 @@ function type_to_full(in_type, aid){
     }
 
     return text;
-};
+}
 
 ///
 /// Exportable body.
