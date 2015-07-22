@@ -5,6 +5,7 @@ var amigo = require('amigo2');
 var underscore = require('underscore');
 var graph_api = require('bbop-graph-noctua');
 var minerva_requests = require('minerva-requests');
+var angular = require('angular');
 
 angular
   .module('noctuaBasicApp')
@@ -509,8 +510,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     manager.register('rebuild', 'foorebuild', function(resp, man) {
       console.log('rebuild');
       console.log(resp);
-      _shields_down();
-      displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
 
@@ -520,13 +519,14 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       refresh_ui();
 
       $scope.$apply();
+
+      _shields_down();
+      displayToast("success", resp._message);
     }, 10);
 
     manager.register('merge', 'merdge', function(resp, man) {
       console.log('merge');
       console.log(resp);
-      _shields_down();
-      displayToast("success", resp._message);
 
       $scope.response_model = JSON.stringify(resp);
       var tmp_graph = new graph_api.graph();
@@ -535,6 +535,9 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       refresh_ui();
 
       $scope.$apply();
+
+      _shields_down();
+      displayToast("success", resp._message);
     }, 10);
   }
 
