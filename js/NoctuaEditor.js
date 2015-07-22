@@ -935,28 +935,9 @@ var MMEnvInit = function(in_model, in_relations, in_token){
 	var merge_in_graph = new noctua_graph();
 	merge_in_graph.load_data_basic(model_json);
 
-	// Since we can actually legally have an edge delete in the
-	// merge, let's go ahead and cycle through the "complete"
-	// graph and toss edges from individuals involved in the
-	// merge.
-	var involved_node = {};
-	each(merge_in_graph.all_nodes(), function(node){
-	    involved_node[node.id()] = true;
-	});
-	// Okay, now get rid of all edges that are defined by the
-	// involved nodes.
-	each(ecore.all_edges(), function(edge){
-	    if( involved_node[edge.subject_id()] &&
-		involved_node[edge.object_id()] ){
-		ecore.remove_edge_by_id(edge.id());
-	    }
-	});
-
-	// Blitz our old annotations as all new will be incoming (and
-	// the merge just takes the superset). Will be fine with fix:
-	// https://github.com/geneontology/minerva/issues/5
-	ecore.annotations([]);
-	ecore.merge_in(merge_in_graph);
+	// Run the special "dumb" merge.
+	// TODO: Replace later with an actual update.
+	ecore.merge_special(merge_in_graph);
 
 	// Farm it out to rebuild.
 	_rebuild_model_and_display();
