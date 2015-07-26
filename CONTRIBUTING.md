@@ -72,3 +72,5 @@ TODO
 preferred:
 
 - emacs indentation
+- CamelCase is generally frowned upon
+- JSHint syntax checking (preferred profile in config/jshintrc)
