@@ -531,7 +531,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       $scope.response_model = JSON.stringify(resp);
       var tmp_graph = new graph_api.graph();
       tmp_graph.load_data_basic(resp.data());
-      graph.update_with(tmp_graph);
+      graph.merge_special(tmp_graph);
       refresh_ui();
 
       $scope.$apply();
