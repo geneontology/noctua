@@ -17,21 +17,21 @@
         <div class="form-group">
           <label for="select_disease">Disease</label>
           <div class="input-group">
-            <select class="form-control" id="select_disease" placeholder="Pick a Disease..." ng-model="selected_disease"></select>
+            <select class="form-control" id="select_disease" placeholder="Pick a Disease..."></select>
           </div>
         </div>
 
         <div class="form-group">
           <label for="select_phenotype">Phenotype</label>
           <div class="input-group">
-            <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..." ng-model="selected_phenotype"></select>
+            <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..."></select>
           </div>
         </div>
 
         <div class="form-group">
           <label for="select_ageofonset">Age of onset (of the phenotype)</label>
           <div class="input-group">
-            <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..." ng-model="selected_ageofonset"></select>
+            <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..."></select>
           </div>
         </div>
 
@@ -56,6 +56,7 @@
           </div>
         </div>
         <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list)">Add another evidence</button>
+        {[{selected_ev_ref_list}]}
 
         <!-- <div class="form-group">
           <label for="basic_evidence_input">Evidence</label>
@@ -129,21 +130,21 @@
             <div class="form-group">
               <label for="select_disease">Disease</label>
               <div class="input-group">
-                <select class="form-control" id="select_disease_modal" placeholder="Pick a Disease..." ng-model="selected_disease_modal"></select>
+                <select class="form-control" id="select_disease_modal" placeholder="Pick a Disease..."></select>
               </div>
             </div>
 
             <div class="form-group">
               <label for="select_phenotype">Phenotype</label>
               <div class="input-group">
-                <select class="form-control" id="select_phenotype_modal" placeholder="Pick a phenotype..." ng-model="selected_phenotype_modal"></select>
+                <select class="form-control" id="select_phenotype_modal" placeholder="Pick a phenotype..."></select>
               </div>
             </div>
 
             <div class="form-group">
               <label for="select_ageofonset">Age of onset (of the phenotype)</label>
               <div class="input-group">
-                <select class="form-control" id="select_ageofonset_modal" placeholder="Define the age of onset..." ng-model="selected_ageofonset_modal"></select>
+                <select class="form-control" id="select_ageofonset_modal" placeholder="Define the age of onset..."></select>
               </div>
             </div>
 
@@ -168,18 +169,6 @@
               </div>
             </div>
             <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list_modal)">Add another evidence</button>
-
-            <!-- <div class="form-group">
-              <label for="basic_evidence_input">Evidence</label>
-              <div class="input-group">
-                <select class="form-control" id="select_evidence_modal" placeholder="Select evidence..." ng-model="selected_evidence_modal"></select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="basic_reference_input">Reference</label>
-              <input id="basic_reference_input" id="select_reference" class="form-control" type="text" placeholder="" ng-model="selected_reference_modal">
-            </div> -->
 
             <div class="form-group">
               <label for="basic_reference_input">Description</label>
