@@ -33,7 +33,7 @@
         "bbop": "^2.3.0",
         "bbopx": "^0.9.31",
         "bbop-core": "0.0.5",
-        "bbop-graph": "0.0.12",
+        "bbop-graph": "0.0.14",
         "bbop-graph-noctua": "0.0.17",
         "bbop-widget-solr-autocomplete": "^0.0.9",
         "class-expression": "0.0.7",

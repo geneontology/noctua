@@ -1,0 +1,20 @@
+{
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
+    "forin": true,
+    "freeze": true,
+    "funcscope": true,
+    "futurehostile": true,
+    "latedef": false,
+    "undef": true,
+    "eqnull": true,
+    "evil": true,
+    "sub": true,
+    "browser": true,
+    "browserify": true,
+    "devel": true,
+    "jquery": true,
+    "mocha": true,
+    "node": true
+}
