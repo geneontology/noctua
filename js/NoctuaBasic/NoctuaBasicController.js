@@ -534,7 +534,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-          return 'isa_partof_closure_label_searchable:disease AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          //return 'isa_partof_closure_label_searchable:disease AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:disease AND annotation_class_label_searchable:*' + query + '*';
         },
         golrManager: golr_manager_for_disease
       }
@@ -568,7 +569,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-          return 'isa_partof_closure_label_searchable:phenotype AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          //return 'isa_partof_closure_label_searchable:phenotype AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:phenotype AND annotation_class_label_searchable:*' + query + '*';
         },
         golrManager: golr_manager_for_phenotype
       }
@@ -601,7 +603,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-          return 'isa_partof_closure_label_searchable:Onset AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          //return 'isa_partof_closure_label_searchable:Onset AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:Onset AND annotation_class_label_searchable:*' + query + '*';
         },
         golrManager: golr_manager_for_ageofonset
       }
@@ -632,7 +635,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
         queryData: function(query) {
-          return 'isa_partof_closure_label_searchable:evidence AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          //return 'isa_partof_closure_label_searchable:evidence AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+            return 'isa_partof_closure_label_searchable:evidence AND annotation_class_label_searchable:*' + query + '*';
         },
         golrManager: golr_manager_for_evidence
       };
