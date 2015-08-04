@@ -1007,7 +1007,7 @@ var BaristaLauncher = function(){
 		resp = new bbopx.barista.response(resp_json);
 	    }catch(e){
 		response_okay_p = false;
-		console.log("unparsable response!");
+		console.log("unparsable response: " + jsonp);
 	    }
 
 	    // Emit to all listeners--cannot target all but call since
