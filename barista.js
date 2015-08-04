@@ -524,7 +524,10 @@ var BaristaLauncher = function(){
 
     // Spin up the main messenging server.
     var express = require('express');
+    var body_parser = require('body-parser');
     var messaging_app = express();
+    messaging_app.use(body_parser.json());
+    messaging_app.use(body_parser.urlencoded({ extended: true }));
     // 
     //messaging_app.use(express.logger());
     //messaging_app.use(express.static(__dirname));
@@ -801,6 +804,7 @@ var BaristaLauncher = function(){
 
     var http_proxy = require('http-proxy');
     var api_proxy = http_proxy.createProxyServer({});
+    // GET version.
     messaging_app.get("/api/:namespace/:call", function(req, res){ 
 
 	// TODO: Request logging hooks could be placed in here.
@@ -824,17 +828,6 @@ var BaristaLauncher = function(){
 		has_sess_p = true;
 	    }
 	}
-
-	// // TODO: Create a doctored request.
-	// // Either way, no token goes back.
-	// each(['query', 'body', 'params'],
-	// 	   function(field){
-	// 	       if( req[field] && req[field]['token'] ){
-	// 		   delete req[field]['token'];
-	// 		   req[field]['uid'] = uid;
-	// 	       }
-	// 	   });
-	// //req.url = req.url + '&uid=' + uid;
 
 	// Extract token=??? from the request URL safely
 	// and add the uri as uid.
@@ -893,9 +886,86 @@ var BaristaLauncher = function(){
 	    api_proxy.web(req, res, {
 		'target': api_loc
 	    });
-	    console.log('api xlate: ' + api_loc + req.url);
+	    console.log('api xlate (GET): ' + api_loc + req.url);
 	}
     });
+    // // POST version.
+    // messaging_app.post("/api/:namespace/:call", function(req, res){ 
+
+    // 	// TODO: Request logging hooks could be placed in here.
+    // 	//console.log('pre api req: ' + req.url);
+    // 	monitor_calls = monitor_calls +1;
+
+    // 	// Try and get a session out for use. The important thing we
+    // 	// need here is the uri to pass back to the API if session
+    // 	// and possible.
+    // 	var uuri = null;
+    // 	var has_token_p = false;
+    // 	var has_sess_p = false;
+    // 	if( req && req['body'] && req['body']['token'] ){
+    // 	    // Best attempt at extracting a UID.
+    // 	    has_token_p = true;
+    // 	    var btok = req['body']['token'];
+    // 	    var sess = sessioner.get_session_by_token(btok);
+    // 	    if( sess ){
+    // 		console.log('call using session: ', sess);
+    // 		uuri = sess.uri;
+    // 		has_sess_p = true;
+    // 	    }
+    // 	}
+
+    // 	// Extract token=??? from the request body safely and add the
+    // 	// uri as uid. I believe the heavy lifting is taken care of by
+    // 	// the express middleware.
+    // 	var new_body = req.body || {};
+    // 	delete new_body['token'];
+    // 	new_body['uid'] = uuri;
+    // 	req.body = new_body;
+
+    // 	// Do we have permissions to make the call?
+    // 	var ns = req.route.params['namespace'] || '';
+    // 	var call = req.route.params['call'] || '';
+    // 	if( ! app_guard.is_public(ns, call) && ! uuri ){
+    // 	    console.log('blocking call: ' + req.url);
+	    
+    // 	    var error_msg = 'sproing!';
+    // 	    if( has_token_p && ! has_sess_p ){
+    // 		error_msg = 'You are using a bad token; please remove it.';
+    // 	    }else{
+    // 		error_msg = 'You do not have permission for this operation.';
+    // 	    }
+
+    // 	    // Catch error here if no proper ID on non-public.
+    // 	    res.setHeader('Content-Type', 'text/json');
+    // 	    var eresp = {
+    // 		message_type: 'error',
+    // 		message: error_msg
+    // 	    };
+    // 	    var eresp_str = JSON.stringify(eresp);
+
+    // 	    // This was requested as AJAX, not CORS, so need to
+    // 	    // assemble it for the return.
+    // 	    if( req && req['body'] && req['body']['json.wrf'] ){
+    // 		var envelope = req['body']['json.wrf'];
+    // 		eresp_str = envelope + '(' + eresp_str + ');';
+    // 	    }
+
+    // 	    //var eresp = new bbopx.barista.response(eresp_seed);
+    // 	    console.log('inject response: ', eresp_str);
+    // 	    res.send(eresp_str);
+    // 	}else{
+    // 	    // Not public or user is privileged.
+    // 	    // Route the simple call to the right place.
+    // 	    //console.log('req: ', req);
+    // 	    // Clip "/api/" and the namespace.
+    // 	    var api_loc = app_guard.app_target(ns);
+    // 	    req.url = req.url.substr(ns.length + 5);
+    // 	    api_proxy.web(req, res, {
+    // 		'target': api_loc
+    // 	    });
+    // 	    console.log('api xlate (POST): ' + api_loc + req.url);
+    // 	}
+    // });
 
     // TODO: Pass certain types of responses to /all/ listening
     // clients. (TODO: eventually, just the ones on the model
@@ -921,7 +991,7 @@ var BaristaLauncher = function(){
 	    // "jQuery1910009816080028417162_1412824223034(.*);"
 	    //console.log('match: ', jsonp);
 	    var match = jsonp.match(jsonp_re);
-	    if( ! match || ! (match.length === 2) ){
+	    if( ! match || match.length !== 2 ){
 		//console.log('response: n/a');
 	    }else{
 		//console.log('response: ', match[1]);

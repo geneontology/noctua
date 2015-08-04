@@ -35,6 +35,7 @@
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.14",
         "bbop-graph-noctua": "0.0.18",
+        "body-parser": "1.13.3",
         "class-expression": "0.0.7",
         "cors": "2.4.1",
         "bootstrap": "3.3.4",
