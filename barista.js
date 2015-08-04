@@ -483,7 +483,7 @@ var BaristaLauncher = function(){
     // BTW, we 99% of the time are going to have the runloc have the
     // same port as runport--double check this to prevent mind-numbing
     // debugging in the future.
-    if( runloc.lastIndexOf(runport) ==  -1 ){
+    if( runloc.lastIndexOf(runport) ===  -1 ){
 	console.warn('WARNING: BARISTA_LOCATION and BARISTA_PORT seem to have different ports. Are you sure?');
     }
 
@@ -496,7 +496,7 @@ var BaristaLauncher = function(){
 	res.setHeader('Content-Length', body.length);
 	res.end(body);
 	return res;
-    };
+    }
 
     ///
     /// Cache and template rendering.
@@ -731,7 +731,7 @@ var BaristaLauncher = function(){
 	// Check to see if we have access to the good stuff.
 	var show_all_p = false;
 	var sess_stat = _session_status(req);
-	if( sess_stat == SESS_GOOD ){
+	if( sess_stat === SESS_GOOD ){
 	    show_all_p = true;
 	}
 
@@ -921,7 +921,7 @@ var BaristaLauncher = function(){
 	    // "jQuery1910009816080028417162_1412824223034(.*);"
 	    //console.log('match: ', jsonp);
 	    var match = jsonp.match(jsonp_re);
-	    if( ! match || ! match.length == 2 ){
+	    if( ! match || ! (match.length === 2) ){
 		//console.log('response: n/a');
 	    }else{
 		//console.log('response: ', match[1]);
