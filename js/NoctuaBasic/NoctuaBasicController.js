@@ -6,6 +6,7 @@ var underscore = require('underscore');
 var graph_api = require('bbop-graph-noctua');
 var minerva_requests = require('minerva-requests');
 var angular = require('angular');
+var solrautocomplete = require('bbop-widget-solr-autocomplete');
 
 angular
   .module('noctuaBasicApp')
@@ -22,12 +23,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   var _shields_up = null;
   var _shields_down = null;
   var graph = new graph_api.graph();
-  $scope.selected_disease = null;
-  $scope.selected_phenotype = null;
-  $scope.selected_ageofonset = null;
-  $scope.selected_evidence = null;
-  $scope.selected_reference = null;
-  $scope.selected_description = null;
   $scope.grid_model = [];
 
   $scope.response_model = null;
@@ -234,23 +229,15 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     }]);
     ageofonset_selectize.setValue(row.ageofonset_id);
 
-    // evidence_selectize = jQuery('#select_evidence_modal')[0].selectize;
-    // evidence_selectize.clearCache("option");
-    // evidence_selectize.clearOptions();
-    // underscore.map(row.evidence_metadata, function(ev) {
-    //   evidence_selectize.addOption([{
-    //     "id": ev.id,
-    //     "annotation_class_label_searchable": ev.label
-    //   }]);
-    // });
-    //
-    // evidence_selectize.setValue(evidence_ids);
-
     jQuery('#myModal').modal();
 
     underscore.map($scope.selected_ev_ref_list_modal, function(ev_ref) {
       $timeout(function() {
-        jQuery('#' + ev_ref.htmlid).solrautocomplete($scope.evidence_autocomplete_options);
+        Solrautocomplete.createSolrAutocompleteForElement('#' + ev_ref.htmlid, $scope.evidence_autocomplete_options(function(value) {
+          ev_ref.ev = value;
+          $scope.$apply();
+        }));
+        //jQuery('#' + ev_ref.htmlid).solrautocomplete($scope.evidence_autocomplete_options);
         var selectize = jQuery('#' + ev_ref.htmlid)[0].selectize;
         selectize.clearCache("option");
         selectize.clearOptions();
@@ -344,29 +331,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     }
   }
 
-  // $scope.update_ev_ref = function() {
-  //   var purged_ev_ref = underscore.filter($scope.selected_ev_ref, function(ev_ref){ return $scope.selected_evidence.indexOf(ev_ref.ev) != -1; }); //update on removed evidence
-  //   var evidences_so_far = underscore.map($scope.selected_ev_ref, function(ev_ref){ return ev_ref.ev; });
-  //   var non_added_yet_ref = underscore.filter($scope.selected_evidence, function(ev){ return evidences_so_far.indexOf(ev) == -1; }); //freshly added evidence
-  //   underscore.map(non_added_yet_ref, function(ev) {
-  //     purged_ev_ref.push({
-  //       "ev": ev
-  //     });
-  //   });
-  //   $scope.selected_ev_ref = purged_ev_ref;
-  // }
-
-  // $scope.selected_ev_ref = [];
-  // $scope.add_evidence = function() {
-  //   $scope.selected_ev_ref.push({ev:"", ref: []});
-  //
-  //   jQuery('#select_evidence').solrautocomplete($scope.$scope.evidence_autocomplete_options);
-  // }
-  //
-  // $scope.add_reference = function(ev_ref) {
-  //   ev_ref.ref.push("");
-  // }
-
   $scope.selected_ev_ref_list = [];
   $scope.add_ev = function(selected_ev_ref_list) {
     var newItemNo = selected_ev_ref_list.length + 1;
@@ -374,24 +338,27 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     selected_ev_ref_list.push({
       'htmlid': new_id
     });
-    activate_evidence_widget(new_id);
+    activate_evidence_widget(new_id, underscore.last(selected_ev_ref_list));
   };
 
-  var activate_evidence_widget = function(id) {
+
+  var activate_evidence_widget = function(id, angular_var) {
     $timeout(function() {
-      jQuery('#' + id).solrautocomplete($scope.evidence_autocomplete_options);
+      Solrautocomplete.createSolrAutocompleteForElement('#' + id, $scope.evidence_autocomplete_options(function(value) {
+        angular_var.ev = value;
+        $scope.$apply();
+      }));
       var selectize = jQuery('#' + id)[0].selectize;
       selectize.clearOptions();
     }, 150);
   }
-
 
   $scope.add_ref = function(ev_ref) {
     if (ev_ref.ref_list == null || ev_ref.ref_list == undefined) {
       ev_ref.ref_list = [];
     }
     var newItemNo = ev_ref.ref_list.length + 1;
-    var new_id = ev_ref.id + 'ref' + newItemNo;
+    var new_id = ev_ref.htmlid + 'ref' + newItemNo;
     ev_ref.ref_list.push({
       'htmlid': new_id
     });
@@ -548,107 +515,132 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     golr_loc = "http://geoffrey.crbs.ucsd.edu:8080/solr/monarchAutocomplete/"
 
     var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);
-    disease_autocomplete_options = {
-      onChange: function(value) {
-        console.log(value);
-      },
-      required: true,
-      optionDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      itemDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
-      queryData: function(query) {
-        return 'isa_partof_closure_label_searchable:disease AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
-      },
-      golrManager: golr_manager_for_disease
+    // dirty trick to make jQuery avaiable in the golrmanager's scope.
+    golr_manager_for_disease.JQ = jQuery;
+    disease_autocomplete_options = function(onChangeFunc) {
+      return {
+        onChange: onChangeFunc,
+        required: true,
+        optionDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        itemDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        valueField: 'id',
+        searchField: ['id', 'annotation_class_label_searchable'],
+        queryData: function(query) {
+          //return 'isa_partof_closure_label_searchable:disease AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:disease AND annotation_class_label_searchable:*' + query + '*';
+        },
+        golrManager: golr_manager_for_disease
+      }
     };
-    jQuery('#select_disease').solrautocomplete(disease_autocomplete_options);
-    jQuery('#select_disease_modal').solrautocomplete(disease_autocomplete_options);
+    Solrautocomplete.createSolrAutocompleteForElement('#select_disease', disease_autocomplete_options(function(value) {
+      $scope.selected_disease = value;
+      $scope.$apply();
+    }));
+    Solrautocomplete.createSolrAutocompleteForElement('#select_disease_modal', disease_autocomplete_options(function(value) {
+      $scope.selected_disease_modal = value;
+      $scope.$apply();
+    }));
 
     var golr_manager_for_phenotype = new bbop.golr.manager.jquery(golr_loc, gconf);
-    phenotype_autocomplete_options = {
-      onChange: function(value) {
-        console.log(value);
-      },
-      required: true,
-      optionDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      itemDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
-      queryData: function(query) {
-        return 'isa_partof_closure_label_searchable:phenotype AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
-      },
-      golrManager: golr_manager_for_phenotype
+    // dirty trick to make jQuery avaiable in the golrmanager's scope.
+    golr_manager_for_phenotype.JQ = jQuery;
+    phenotype_autocomplete_options = function(onChangeFunc) {
+      return {
+        onChange: onChangeFunc,
+        required: true,
+        optionDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        itemDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        valueField: 'id',
+        searchField: ['id', 'annotation_class_label_searchable'],
+        queryData: function(query) {
+          //return 'isa_partof_closure_label_searchable:phenotype AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:phenotype AND annotation_class_label_searchable:*' + query + '*';
+        },
+        golrManager: golr_manager_for_phenotype
+      }
     };
-    jQuery('#select_phenotype').solrautocomplete(phenotype_autocomplete_options);
-    jQuery('#select_phenotype_modal').solrautocomplete(phenotype_autocomplete_options);
+    Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype', phenotype_autocomplete_options(function(value) {
+      $scope.selected_phenotype = value;
+      $scope.$apply();
+    }));
+    Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype_modal', phenotype_autocomplete_options(function(value) {
+      $scope.selected_phenotype_modal = value;
+      $scope.$apply();
+    }));
 
     var golr_manager_for_ageofonset = new bbop.golr.manager.jquery(golr_loc, gconf);
-    var ageofonset_autocomplete_options = {
-      onChange: function(value) {
-        console.log(value);
-      },
-      optionDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      itemDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
-      queryData: function(query) {
-        return 'isa_partof_closure_label_searchable:Onset AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
-      },
-      golrManager: golr_manager_for_ageofonset
+    // dirty trick to make jQuery avaiable in the golrmanager's scope.
+    golr_manager_for_ageofonset.JQ = jQuery;
+    var ageofonset_autocomplete_options = function(onChangeFunc) {
+      return {
+        onChange: onChangeFunc,
+        optionDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        itemDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        valueField: 'id',
+        searchField: ['id', 'annotation_class_label_searchable'],
+        queryData: function(query) {
+          //return 'isa_partof_closure_label_searchable:Onset AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+          return 'isa_partof_closure_label_searchable:Onset AND annotation_class_label_searchable:*' + query + '*';
+        },
+        golrManager: golr_manager_for_ageofonset
+      }
     };
-    jQuery('#select_ageofonset').solrautocomplete(ageofonset_autocomplete_options);
-    jQuery('#select_ageofonset_modal').solrautocomplete(ageofonset_autocomplete_options);
-
+    Solrautocomplete.createSolrAutocompleteForElement('#select_ageofonset', ageofonset_autocomplete_options(function(value) {
+      $scope.selected_ageofonset = value;
+      $scope.$apply();
+    }));
+    Solrautocomplete.createSolrAutocompleteForElement('#select_ageofonset_modal', ageofonset_autocomplete_options(function(value) {
+      $scope.selected_ageofonset_modal = value;
+      $scope.$apply();
+    }));
 
     var golr_manager_for_evidence = new bbop.golr.manager.jquery(golr_loc, gconf);
-    $scope.evidence_autocomplete_options = {
-      onChange: function(value) {
-        console.log(value);
-      },
-      optionDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      itemDisplay: function(item, escape) {
-        return '<div>' +
-          item.id + ' (' + item.annotation_class_label_searchable + ')' +
-          '</div>';
-      },
-      valueField: 'id',
-      searchField: ['id', 'annotation_class_label_searchable'],
-      queryData: function(query) {
-        return 'isa_partof_closure_label_searchable:evidence AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
-      },
-      golrManager: golr_manager_for_evidence
-    };
-    //jQuery('#select_evidence').solrautocomplete($scope.evidence_autocomplete_options);
-    //jQuery('#select_evidence_modal').solrautocomplete($scope.evidence_autocomplete_options);
+    $scope.evidence_autocomplete_options = function(onChangeFunc) {
+      return {
+        onChange: onChangeFunc,
+        optionDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        itemDisplay: function(item, escape) {
+          return '<div>' +
+            item.id + ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
+        },
+        valueField: 'id',
+        searchField: ['id', 'annotation_class_label_searchable'],
+        queryData: function(query) {
+          //return 'isa_partof_closure_label_searchable:evidence AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
+            return 'isa_partof_closure_label_searchable:evidence AND annotation_class_label_searchable:*' + query + '*';
+        },
+        golrManager: golr_manager_for_evidence
+      };
+    }
   }
 
 
