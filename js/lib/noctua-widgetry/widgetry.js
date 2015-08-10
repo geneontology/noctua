@@ -6,7 +6,15 @@
  * @module noctua-widgetry
  */
 
+// Let jshint pass over over our external globals (browserify takes
+// care of it all).
+/* global jQuery */
+
+// Code here will be ignored by JSHint, as we are technically
+// "redefining" jQuery (although we are not).
+/* jshint ignore:start */
 var jQuery = require('jquery');
+/* jshint ignore:end */
 
 var us = require('underscore');
 var bbop_core = require('bbop-core');
@@ -17,9 +25,7 @@ var class_expression = require('class-expression');
 // Underscore aliases.
 var each = us.each;
 
-/*
- * Function: build_token_link
- *
+/**
  * "Static" function.
  *
  * For the time being, the cannonical way of building a link with a
@@ -29,7 +35,7 @@ function build_token_link(url, token){
     var new_url = url;
     
     if( token ){
-	if( new_url.indexOf('?') == -1 ){
+	if( new_url.indexOf('?') === -1 ){
 	    new_url = new_url + '?' + 'barista_token=' + token;
 	}else{
 	    new_url = new_url + '&' + 'barista_token=' + token;
@@ -39,9 +45,7 @@ function build_token_link(url, token){
     return new_url;
 }
 
-/*
- * Function: repaint_info
- *
+/**
  * Add edit model node contents to a descriptive table.
  */
 function repaint_info(ecore, aid, info_div){
@@ -53,19 +57,19 @@ function repaint_info(ecore, aid, info_div){
     // Any annotation information that came in.
     var anns = '';
     each(ecore.annotations(), function(ann){
-	if( ann.key() == 'comment' && ann.value() ){
+	if( ann.key() === 'comment' && ann.value() ){
 	    anns += '<dd>' + '<small><strong>comment</strong></small> ' +
 		ann.value() + '</dd>';
 	}
     });
-    if( anns == '' ){
+    if( anns === '' ){
 	anns = '<dd>none</dd>';
     }
 
     // Try and get a title out of the model.
     var mtitle = '???';
     var tanns = ecore.get_annotations_by_key('title');
-    if( tanns && tanns.length == 1 ){ mtitle = tanns[0].value(); }
+    if( tanns && tanns.length === 1 ){ mtitle = tanns[0].value(); }
 
     var str_cache = [
 	'<dl class="dl-horizontal">',
@@ -186,9 +190,7 @@ function repaint_exp_table(ecore, aid, table_div){
     }
 }
 
-/*
- * Function: repaint_edge_table
- *
+/**
  * Add edit model edge contents to a descriptive table.
  */
 function repaint_edge_table(ecore, aid, table_div){
@@ -246,18 +248,14 @@ function repaint_edge_table(ecore, aid, table_div){
     }
 }
 
-/*
- * Function: wipe
- *
+/**
  * Wipe out the contents of a jQuery-identified div.
  */
 function wipe(div){
     jQuery(div).empty();
 }
 
-/*
- * Function: enode_types_to_stack
- *
+/**
  * Takes a core edit node types as the argument, categorize the, order
  * them.
  */
@@ -277,9 +275,7 @@ function enode_types_to_stack(enode_types, aid){
     return out_stack;
 }
     
-/*
- * Function: render_node_stack
- *
+/**
  * ???
  */
 function render_node_stack(enode, aid){
@@ -340,13 +336,13 @@ function render_node_stack(enode, aid){
 
     // Inject meta-information if extant.
     var anns = enode.annotations();
-    if( anns.length != 0 ){
+    if( anns.length !== 0 ){
 
 	// Meta counts.
 	var n_ev = 0;
 	var n_other = 0;
 	each(anns, function(ann){
-	    if( ann.key() == 'evidence' ){
+	    if( ann.key() === 'evidence' ){
 		n_ev++;
 	    }else{
 		n_other++;
@@ -372,16 +368,14 @@ function render_node_stack(enode, aid){
     return enode_stack_table;
 }
 
-/*
- * Function: add_enode
- *
+/**
  * Add a new enode.
  */
 function add_enode(ecore, enode, aid, graph_div, left, top){
 
     // See whether or not we need to place the nodes with style.
     var style_str = '';
-    if( left != null && top != null ){
+    if( left !== null && top !== null ){
 	style_str = 'top: ' + top + 'px; ' + 'left: ' + left + 'px;';
     }
     //ll('style: ' + style_str);
@@ -411,9 +405,7 @@ function add_enode(ecore, enode, aid, graph_div, left, top){
     jQuery(graph_div).append(w.to_string());
 }
 
-/*
- * Function: update_enode
- *
+/**
  * Update the displayed contents of an enode.
  */
 function update_enode(ecore, enode, aid){
@@ -438,9 +430,7 @@ function update_enode(ecore, enode, aid){
     // jQuery('#' + uelt).append(openann.to_string());
 }
 
-/*
- * Constructor: contained_modal
- *
+/**
  * Object.
  * 
  * The contained_modal is a simple modal dialog 
@@ -453,11 +443,12 @@ function update_enode(ecore, enode, aid){
  * arg_title may be null, string, or bbop.html
  * arg_body may be null, string, or bbop.html
  * 
+ * @constructor
  */
 function contained_modal(type, arg_title, arg_body){
     
     var shield_p = false;
-    if( type && type == 'shield' ){
+    if( type && type === 'shield' ){
 	shield_p = true;
     }else{
 	// ???
@@ -516,9 +507,9 @@ function contained_modal(type, arg_title, arg_body){
     };
     var content = null;
     if( shield_p ){
-	content = new bbop.html.tag('div', content_args, [header, body]);
+	content = new bbop.html.tag('div', content_args, [header,body]);
     }else{
-	content = new bbop.html.tag('div', content_args, [header, body, footer]); 
+	content = new bbop.html.tag('div', content_args, [header,body,footer]); 
     }
 
     // Dialog contains content.
@@ -594,14 +585,14 @@ function contained_modal(type, arg_title, arg_body){
     };
 }
 
-/*
- * Constructor: compute_shield
- * 
+/**
  * Contained blocking shield for general compute activity.
  * 
  * Function that returns object.
  * 
  * TODO: make subclass?
+ * 
+ * @constructor
  */ 
 function compute_shield(){
 
@@ -619,7 +610,8 @@ function compute_shield(){
 	'aria-valuemax': '100',
 	'style': 'width: 100%'
     };
-    var pb = new bbop.html.tag('div', pb_args, '<span class="sr-only">Working...</span>');
+    var pb = new bbop.html.tag('div', pb_args,
+			       '<span class="sr-only">Working...</span>');
     var pb_container_args = {
 	'class': 'progress progress-striped active'
     };
@@ -629,9 +621,7 @@ function compute_shield(){
     return mdl;
 }
 
-/*
- * Function: sorted_relation_list
- *
+/**
  * Function that returns a sorted relation list of the form [[id, label], ...]
  * 
  * Optional boost when we don't care using the boolean "relevant" field.
@@ -655,8 +645,8 @@ function sorted_relation_list(relations, aid){
 	// Looking at the optional boolean "relevant" field, if we
 	// showed no preference in our context, give these a
 	// boost.
-	if( pr_a == 0 && a['relevant'] ){ pr_a = boost; }
-	if( pr_b == 0 && b['relevant'] ){ pr_b = boost; }
+	if( pr_a === 0 && a['relevant'] ){ pr_a = boost; }
+	if( pr_b === 0 && b['relevant'] ){ pr_b = boost; }
 	
 	return pr_b - pr_a;
     });
@@ -675,14 +665,14 @@ function sorted_relation_list(relations, aid){
     return rellist;
 }
 
-/*
- * Constructor: add_edge_modal
- * 
+/**
  * Contained shield for creating new edges between nodes.
  * 
  * Function that returns object.
  * 
  * TODO: make subclass?
+ *
+ * @constructor
  */
 function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 
@@ -708,7 +698,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	tcache.push('<input type="radio" ');
 	tcache.push('name="' + radio_name + '" ');
 	tcache.push('value="' + tmp_rel[0] +'"');
-	if( rel_ind == 0 ){
+	if( rel_ind === 0 ){
 	    tcache.push('checked>');
 	}else{
 	    tcache.push('>');
@@ -769,7 +759,6 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 }
 
 /**
- * 
  * Contained shield for editing the properties of a node (including
  * deletion).
  * 
@@ -887,7 +876,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	    
 	    manager.remove_class_expression(ecore.get_id(), tid, target_type);
 	    // // Trigger the delete.
-	    // if( target_type.type() == 'class' ){
+	    // if( target_type.type() === 'class' ){
 	    // 	manager.remove_class_expression(ecore.get_id(), tid, cid);
 	    // }else{
 	    // 	var pid = target_type.property_id();
@@ -1013,15 +1002,15 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     return mdl;
 }
 
-/*
- * Constructor: edit_annotation_modal
- * 
+/**
  * Contained shield for generically editing the annotations of an
  * identifier entity.
  * 
  * Function that returns object.
  * 
  * TODO: make subclass?
+ * 
+ * @constructor
  */
 function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				gserv, gconf){
@@ -1036,7 +1025,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     var entity = null;
     var entity_type = null;
     var entity_title = null;
-    if( ecore.get_id() == entity_id ){
+    if( ecore.get_id() === entity_id ){
 	entity = ecore;
 	entity_type = 'model';
 	entity_title = entity_id;
@@ -1069,15 +1058,15 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// We start by getting ready to check on the special case of
 	// "evidence" psuedo-annotations.
 	var is_ev_p = false;
-	if( ann_key == 'evidence' ){
+	if( ann_key === 'evidence' ){
 	    is_ev_p = true;
 	}
 
 	// Prepare args for ye olde dispatch.
 	var args = {};
-	if( entity_type == 'individual' ){
+	if( entity_type === 'individual' ){
 	    args['id'] = entity_id;
-	}else if( entity_type == 'fact' ){
+	}else if( entity_type === 'fact' ){
 	    args['source'] = entity.source();
 	    args['target'] = entity.target();
 	    args['relation'] = entity.relation();
@@ -1090,7 +1079,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// rest of the annotations another way.
 	if( is_ev_p ){ // in the case of evidence...
 
-	    if( entity_op == 'add' ){
+	    if( entity_op === 'add' ){
 		// Ensure that the argument is of the right type when
 		// attempting to add evidence.
 		if( ! ann_val['evidence_id'] || ! ann_val['source_ids'] ){
@@ -1099,11 +1088,11 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				
 		// Evidence addition is only defined for individuals
 		// and facts.
-		if( entity_type == 'individual' ){
+		if( entity_type === 'individual' ){
 		    manager.add_individual_evidence(model_id, args['id'],
 						    ann_val['evidence_id'],
 						    ann_val['source_ids']);
-		}else if( entity_type == 'fact' &&  entity_op == 'add' ){
+		}else if( entity_type === 'fact' &&  entity_op === 'add' ){
 		    manager.add_fact_evidence(model_id,
 					      args['source'],
 					      args['target'],
@@ -1124,16 +1113,16 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	}else{
 
 	    // All add/remove operations run with the same arguments.
-	    if( entity_type == 'individual' ){
-		if( entity_op == 'remove' ){
+	    if( entity_type === 'individual' ){
+		if( entity_op === 'remove' ){
 		    manager.remove_individual_annotation(
 			model_id, args['id'], ann_key, ann_val);
 		}else{
 		    manager.add_individual_annotation(
 			model_id, args['id'], ann_key, ann_val);
 		}
-	    }else if( entity_type == 'fact' ){
-		if( entity_op == 'remove' ){
+	    }else if( entity_type === 'fact' ){
+		if( entity_op === 'remove' ){
 		    manager.remove_fact_annotation(
 			model_id,
 			args['source'], args['target'], args['relation'],
@@ -1146,7 +1135,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		}
 	    }else{
 		// Models are a wee bit different, and more simple.
-		if( entity_op == 'remove' ){
+		if( entity_op === 'remove' ){
 		    manager.remove_model_annotation(model_id, ann_key, ann_val);
 		}else{
 		    manager.add_model_annotation(model_id, ann_key, ann_val);
@@ -1185,11 +1174,11 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     	    'class': 'form-control',
     	    'placeholder': placeholder
 	};
-	if( widget_type == 'textarea' ){
+	if( widget_type === 'textarea' ){
 	    text_args['type'] = 'text';
 	    text_args['rows'] = '2';
 	    anchor.text_input = new bbop.html.tag('textarea', text_args);
-	}else if( widget_type == 'text' ){
+	}else if( widget_type === 'text' ){
 	    text_args['type'] = 'text';
 	    anchor.text_input = new bbop.html.tag('input', text_args);
 	}else{ // 'source_ref'
@@ -1197,12 +1186,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    anchor.text_input = new bbop.html.tag('input', text_args);
 	    // Gets a second input.
 	    text_args['placeholder'] = placeholder_secondary;
-	    anchor.text_input_secondary = new bbop.html.tag('input', text_args);	    
+	    anchor.text_input_secondary = new bbop.html.tag('input', text_args);
 	}
 
 	// Both placed into the larger form string.
 	var form = [];
-	if( widget_type == 'textarea' ){
+	if( widget_type === 'textarea' ){
 	    form = [
 		'<div>',
 		'<div class="form-group">',
@@ -1211,7 +1200,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     		anchor.add_button.to_string(),
 		'</div>'
 	    ];
-	}else if( widget_type == 'text' ){
+	}else if( widget_type === 'text' ){
 	    form = [
     		'<div class="form-inline">',
     		'<div class="form-group">',
@@ -1267,13 +1256,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// For every one found, assemble the actual display
 		// string while storing the ids for later use.
 		var kval = ann.value();
-		if( kval.split('http://').length == 2 ){ // cheap link
+		if( kval.split('http://').length === 2 ){ // cheap link
 		    kval = '<a href="' + kval + '">' + kval + '</a>';
 		}
 		// However, evidence annotations are very different
 		// for us now, and we need to dig out the guts from
 		// elsewhere.
-		if( ann.key() == 'evidence' && ann.value_type() == 'IRI' ){
+		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
 
 		    // Setup a dummy incase we fail.
 		    kval = '???';
@@ -1294,10 +1283,11 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			// Collect annotations.
 			each(ref_ind.annotations(), function(ref_ann){
 			    var rav = ref_ann.value();
-			    if( rav.split('PMID:').length == 2 ){ // link pmids silly
+			    // link pmids silly
+			    if( rav.split('PMID:').length === 2 ){
 				var pmid = rav.split('PMID:')[1];
-				rav = '<a href="http://pmid.us/' + pmid + '">'
-				    + 'PMID:' + pmid + '</a>';
+				rav = '<a href="http://pmid.us/' + pmid + '">' +
+				    'PMID:' + pmid + '</a>';
 			    }
 			    kval += '; ' + ref_ann.key() + ': ' + rav;
 			});
@@ -1308,7 +1298,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		var kid = bbop_core.uuid();
 		
 		// Only add to action set if mutable.
-		if( ann_classes[key]['policy'] == 'mutable' ){
+		if( ann_classes[key]['policy'] === 'mutable' ){
 		    ann_classes[key]['elt2ann'][kid] = ann.id();
 		}
 
@@ -1318,7 +1308,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 		// Only add the delete UI bits if the policy says
 		// mutable.
-		if( ann_classes[key]['policy'] == 'mutable' ){
+		if( ann_classes[key]['policy'] === 'mutable' ){
 		    acache.push('<span id="'+ kid +
 				'" class="badge app-delete-mark">X</span>');
 		}
@@ -1371,14 +1361,14 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    
 	    // And add an input widget if mutable...
 	    //console.log('epol: ' + epol);
-	    if( epol && epol == 'mutable' ){
+	    if( epol && epol === 'mutable' ){
 		// ...and cardinality not one or has no items in list.
 		//console.log(' ecrd: ' + ecrd);
 		//console.log(' ehas: ' + ehas);
-		if( ecrd != 'one' || ehas == 0 ){
+		if( ecrd !== 'one' || ehas === 0 ){
 		    console.log(' widget for: ' + eid);
 		    var form_widget = null;
-		    if( ewid == 'source_ref' ){ // evidence is special
+		    if( ewid === 'source_ref' ){ // evidence is special
 			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc, eplc_b);
 		    }else{
@@ -1436,31 +1426,31 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		jQuery('#' + form.add_button.get_id()).click(function(evt){
 		    evt.stopPropagation();
 
-		    if( ann_key == 'evidence' ){
+		    if( ann_key === 'evidence' ){
 			
 			// In the case of evidence, we need to brind
 			// in the two different text items and make
 			// them into the correct object for
 			// _ann_dispatch().
-			var val = 
+			var val_a = 
 			    jQuery('#'+form.text_input.get_id()).val();
 			var val_b =
 			    jQuery('#'+form.text_input_secondary.get_id()).val();
 			
-			if( val && val != '' && val_b && val_b != '' ){
+			if( val_a && val_a !== '' && val_b && val_b !== '' ){
 			    _ann_dispatch(entity, entity_type, 'add',
 					  ecore.get_id(), ann_key,
-					  { 'evidence_id': val,
+					  { 'evidence_id': val_a,
 					    'source_ids': val_b });
 			}else{
 			    alert('need all arguments added for ' + entity_id);
 			}
 
 		    }else{
-			var val = jQuery('#' + form.text_input.get_id()).val();
-			if( val && val != '' ){
+			var val_c = jQuery('#' + form.text_input.get_id()).val();
+			if( val_c && val_c !== '' ){
 			    _ann_dispatch(entity, entity_type, 'add',
-					  ecore.get_id(), ann_key, val);
+					  ecore.get_id(), ann_key, val_c);
 			}else{
 			    alert('no ' + ann_key + ' added for ' + entity_id);
 			}
@@ -1501,12 +1491,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     return mdl;
 }
 
-/*
- * Constructor: reporter
- * 
+/**
  * Object.
  * 
  * Output formatted commentary to element.
+ *
+ * @constructor
  */
 function reporter(output_id){
 
@@ -1547,9 +1537,9 @@ function reporter(output_id){
 	var uid = null;
 	var color = null;
 	if( message ){
-	    uid = message['user_name']
-		|| message['user_email']
-		|| message['socket_id'];
+	    uid = message['user_name'] ||
+		message['user_email'] ||
+		message['socket_id'];
 	    color = message['user_color'];
 	}
 
@@ -1572,11 +1562,11 @@ function reporter(output_id){
 	var mess_type = message['message_type'] || '???';
 
 	// make a sensible message.
-	if( mess_type == 'error' ){
+	if( mess_type === 'error' ){
 	    out += mess_type + ': there was a problem: ' + mess; 
 	}else{
-	    if( sig == 'merge' || sig == 'rebuild' ){
-		if( intent == 'query' ){
+	    if( sig === 'merge' || sig === 'rebuild' ){
+		if( intent === 'query' ){
 		    out += mess_type + ': they likely refreshed';		
 		}else{		    
 		    out += 'performed  <span class="bbop-mme-message-op">' +
@@ -1600,9 +1590,7 @@ function reporter(output_id){
     this.reset();
 }
 
-/*
- * Function: user_check
- *
+/**
  * Given a token, either report a bad token ot
  *
  * Parameters: 
@@ -1633,9 +1621,7 @@ function user_check(barista_loc, given_token, div_id){
     });
 }
 
-/*
- * Function: type_to_span
- *
+/**
  * Essentially, minimal rendered as a usable span, with a color
  * option.
  */
@@ -1654,9 +1640,7 @@ function type_to_span(in_type, color){
     return text;
 }
 
-/*
- * Function: type_to_full
- *
+/**
  * A recursive writer for when we no longer care--a table that goes on
  * and on...
  */
@@ -1666,13 +1650,13 @@ function type_to_full(in_type, aid){
     var text = '[???]';
 
     var t = in_type.type();
-    if( t == 'class' ){ // if simple, the easy way out
+    if( t === 'class' ){ // if simple, the easy way out
 	text = in_type.to_string();
     }else{
 	// For everything else, we're gunna hafta do a little
 	// lifting...
 	var cache = [];
-	if( t == 'union' || t == 'intersection' ){
+	if( t === 'union' || t === 'intersection' ){
 	    
 	    // Some kind of recursion on a frame then.
 	    cache = [
@@ -1689,7 +1673,7 @@ function type_to_full(in_type, aid){
 	    var frame = in_type.frame();
 	    each(frame, function(ftype){
 		cache.push('<tr style="background-color: ' +
-		     	   aid.color(ftype.category()) + ';">'),
+		     	   aid.color(ftype.category()) + ';">');
 		cache.push('<td>');
 		// cache.push('<td style="background-color: ' +
 	     	// 		aid.color(ftype.category()) + ';">'),
@@ -1717,7 +1701,7 @@ function type_to_full(in_type, aid){
 		'<tbody>'
 	    ];
 	    cache.push('<tr style="background-color: ' +
-		       aid.color(svfce.category()) + ';"><td>'),
+		       aid.color(svfce.category()) + ';"><td>');
 	    cache.push(type_to_full(svfce, aid));
 	    cache.push('</td></tr>');
 	    cache.push('</tbody>');
@@ -1735,7 +1719,23 @@ function type_to_full(in_type, aid){
 ///
 
 module.exports = {
-
-    'edit_node_modal': edit_node_modal
-
+    'build_token_link': build_token_link,
+    'repaint_info': repaint_info,
+    'repaint_exp_table': repaint_exp_table,
+    'repaint_edge_table': repaint_edge_table,
+    'wipe': wipe,
+    'enode_types_to_stack': enode_types_to_stack,
+    'render_node_stack': render_node_stack,
+    'add_enode': add_enode,
+    'update_enode':update_enode ,
+    'contained_modal': contained_modal,
+    'compute_shield': compute_shield,
+    'sorted_relation_list': sorted_relation_list,
+    'add_edge_modal': add_edge_modal,
+    'edit_node_modal': edit_node_modal,
+    'edit_annotations_modal': edit_annotations_modal,
+    'reporter': reporter,
+    'user_check': user_check,
+    'type_to_span': type_to_span,
+    'type_to_full': type_to_full
 };
