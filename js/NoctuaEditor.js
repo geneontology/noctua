@@ -1931,28 +1931,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    var old_x = _extract_node_position(node, 'x');
 	    var old_y = _extract_node_position(node, 'y');
 	    // If not defined or not up-to-date, remove the old
-	    // annotations and add the new ones
+	    // annotations and add the new ones.
 	    if( (old_x === null || old_y === null) ||
 		(new_x !== old_x || new_y !== old_y) ){
 
-		// If not null, remove.
-		if( old_x !== null ){
-		    reqs.remove_annotation_from_individual('hint-layout-x',
-		    					   old_x, nid);
-		    //console.log('no x hint for: ' + nid);
-		}
-		if( old_y !== null ){
-		    reqs.remove_annotation_from_individual('hint-layout-y',
-		    					   old_y, nid);
-		    //console.log('no y hint for: ' + nid);
-		}
-		//console.log('no y hint for: ' + nid);
-
-		// Add annotations
-		reqs.add_annotation_to_individual('hint-layout-x', new_x, nid);
-		reqs.add_annotation_to_individual('hint-layout-y', new_y, nid);
-		//console.log('hint-layout-x: ' + new_x + ', ' + nid);
-		//console.log('hint-layout-y: ' + new_y + ', ' + nid);
+		reqs.update_annotations(node, 'hint-layout-x', new_x);
+		reqs.update_annotations(node, 'hint-layout-y', new_y);
 	    }
 	});
 
