@@ -2,11 +2,45 @@
 //// ...
 ////
 
-var jQuery = require('jquery');
-var bbop = require('bbop').bbop;
-var bbopx = require('bbopx');
-var amigo = require('amigo2');
+// Let jshint pass over over our external globals (browserify takes
+// care of it all).
+/* global jQuery */
+/* global global_barista_location */
+/* global global_minerva_definition_name */
+/* global jsPlumb */
+/* global global_barista_token */
 
+var us = require('underscore');
+var bbop = require('bbop-core');
+//var bbop = require('bbop').bbop;
+//var bbopx = require('bbopx');
+var amigo = require('amigo2');
+var bbop_legacy = require('bbop').bbop;
+
+var widgetry = require('noctua-widgetry');
+
+// Aliases
+var each = us.each;
+var is_defined = bbop.is_defined;
+var what_is = bbop.what_is;
+var uuid = bbop.uuid;
+
+// Code here will be ignored by JSHint, as we are technically
+// "redefining" jQuery (although we are not).
+/* jshint ignore:start */
+var jQuery = require('jquery');
+/* jshint ignore:end */
+
+var barista_response = require('bbop-response-barista');
+var class_expression = require('class-expression');
+var minerva_requests = require('minerva-requests');
+var noctua_model = require('bbop-graph-noctua');
+
+//
+var jquery_engine = require('bbop-rest-manager').jquery;
+var minerva_manager = require('bbop-manager-minerva');
+
+// Harumph.
 var global_known_taxons = [
     ['3702', 'Arabidopsis thaliana'],
     ['9913', 'Bos taurus'],
@@ -34,19 +68,16 @@ var MMEnvBootstrappingInit = function(user_token){
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
-    // Aliases
-    var each = bbop.core.each;
-    var is_defined = bbop.core.is_defined;
-    var what_is = bbop.core.what_is;
-
     // Events registry.
-    var manager = new bbopx.minerva.manager(global_barista_location,
-					    global_minerva_definition_name,
-					    user_token);
+    // Add manager and default callbacks to repl.
+    var engine = new jquery_engine(barista_response);
+    var manager = new minerva_manager(global_barista_location,
+				      global_minerva_definition_name,
+				      user_token, engine, 'async');
 
     // GOlr location and conf setup.
     var gserv = 'http://golr.berkeleybop.org/';
-    var gconf = new bbop.golr.conf(amigo.data.golr);
+    var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
     // Contact points for Chris's wizard.
     var select_stored_jump_id = 'select_stored_jump';
@@ -93,7 +124,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    // Already have one.
 	}else{
 	    ll('shield up');
-	    compute_shield_modal = bbopx.noctua.widgets.compute_shield();
+	    compute_shield_modal = widgetry.compute_shield();
 	    compute_shield_modal.show();
 	}
     }
@@ -109,7 +140,7 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     function _jump_to_page(page_url){
-	var newrl = bbopx.noctua.widgets.build_token_link(page_url, user_token);
+	var newrl = widgetry.build_token_link(page_url, user_token);
 	window.location.replace(newrl);
     }
 
@@ -129,30 +160,30 @@ var MMEnvBootstrappingInit = function(user_token){
     }
 
     // Internal registrations.
-    manager.register('prerun', 'foo', _shields_up);
-    manager.register('postrun', 'fooA', _shields_down, 9);
-    manager.register('manager_error', 'foo', function(resp, man){
+    manager.register('prerun', _shields_up);
+    manager.register('postrun', _shields_down, 9);
+    manager.register('manager_error', function(resp, man){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
 
     // Likely the result of unhappiness on Minerva.
-    manager.register('warning', 'foo', function(resp, man){
+    manager.register('warning', function(resp, man){
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed');
     }, 10);
 
     // Likely the result of serious unhappiness on Minerva.
-    manager.register('error', 'foo', function(resp, man){
+    manager.register('error', function(resp, man){
 
 	// Do something different if we think that this is a
 	// permissions issue.
 	var perm_flag = "InsufficientPermissionsException";
 	var token_flag = "token";
-	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
+	if( resp.message() && resp.message().indexOf(perm_flag) !== -1 ){
 	    alert('Error: it seems like you do not have permission to ' +
 		  'perform that operation. Did you remember to login?');
-	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
+	}else if( resp.message() && resp.message().indexOf(token_flag) !== -1 ){
 	    alert("Error: it seems like you have a bad token...");
 	}else{
 	    // Generic error.
@@ -172,13 +203,13 @@ var MMEnvBootstrappingInit = function(user_token){
     // data.
     // However, export also comes through this way, so we check for
     // that first.
-    manager.register('meta', 'foo', function(resp, man){
+    manager.register('meta', function(resp, man){
 
 	if( resp.export_model() ){
 
 	    //
 	    var exp = resp.export_model();
-	    var rand = bbop.core.uuid();
+	    var rand = uuid();
 	    //alert(exp);
 
 	    var enc_exp = encodeURIComponent(exp);
@@ -190,17 +221,52 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery('body').append(form_set.join(''));
 	    jQuery('#'+rand).submit();
 
-	    // var expdia = new bbopx.noctua.widgets.contained_modal(null, '<strong>Export</strong>', exp);
+	    // var expdia = new widgetry.contained_modal(null, '<strong>Export</strong>', exp);
 	    // expdia.show();
 
 	}else{
 
+	    // We'll construct a hash that looks like:
+	    // {'<MODEL_ID>' : {<ANN_KEY_1>: [VAL, VAL], <ANN_KEY_2>: [], },  }
+	    var model_to_value_hash_list = {};	    
+
+	    // Get the model meta information and sort the models by
+	    // alphabetical titles.
+	    var models_meta = resp.models_meta();
+	    var models_meta_ro = resp.models_meta_read_only();
+	    each(models_meta, function(annotations, mid){
+
+		// Ensure mid.
+		if( ! model_to_value_hash_list[mid] ){
+		    model_to_value_hash_list[mid] = {};
+		}
+
+		// Collect and bin all the annotations.
+		var key_to_value_list = {};
+		each(annotations, function(ann){
+		    var k = ann['key'];
+		    // Ensure list.
+		    if( typeof(key_to_value_list[k]) === 'undefined' ){
+			key_to_value_list[k] = [];
+		    }
+		    key_to_value_list[k].push(ann['value']);
+		});
+
+		// Attach results to model id in hash.
+		model_to_value_hash_list[mid] = key_to_value_list;
+	    });
+
+	    //console.log('meta', model_to_value_hash_list);
+
 	    // Try and probe out the best title from the data we
 	    // having there.
-	    function _get_model_title(model_id, model_meta){
-		var mtitle = model_id;
-		if( model_meta['title'] ){
-		    var tmp_title =  model_meta['title'];
+	    var _get_model_title = function(model_id){		
+
+		var mtitle = model_id; // default return
+		var hlists = model_to_value_hash_list[model_id];
+
+		if( hlists && hlists['title'] ){
+		    var tmp_title = hlists['title'].join("|");
 		    var match = tmp_title.match(uggo_string);
 		    if( ! match ){
 			mtitle = tmp_title;
@@ -208,38 +274,55 @@ var MMEnvBootstrappingInit = function(user_token){
 			mtitle = match[1];
 		    }
 		}
+
 		return mtitle;
-	    }
+	    };
 
 	    // Check if model is deprecated.
-	    function _model_deprecated_p(model_meta){
+	    var _model_deprecated_p = function(model_id){
 		var retval = false;
-		if( model_meta['deprecated'] &&
-		    ( model_meta['deprecated'] == true ||
-		      model_meta['deprecated'] == 'true' ) ){
-		    retval = true;
-		}
-		return retval;
-	    }
 
-	    // Get the model meta information and sort the models by
-	    // alphabetical titles.
-	    var model_metas = resp.models_meta();
-	    var model_meta_ids = bbop.core.get_keys(model_metas) || [];
+		var hlists = model_to_value_hash_list[model_id];
+
+		if( hlists && hlists['deprecated'] ){
+		    // Search all annotations for deprecatedness.
+		    each(hlists['deprecated'], function(entry){
+			if(entry === 'true'){
+			    retval = true;
+			}
+		    });
+		}
+
+		return retval;
+	    };
+
+	    // Check if model is modified.
+	    var _model_modified_p = function(model_id){
+		var retval = false;
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['modified-p'] &&
+		    models_meta_ro[model_id]['modified-p'] === true ){
+			
+			retval = true;
+		    }
+		
+		return retval;
+	    };
+
+	    var model_meta_ids = us.keys(models_meta) || [];
+	    //console.log(model_meta_ids);
 	    var sorted_model_meta_ids = model_meta_ids.sort(function(a, b){
-		var a_meta = model_metas[a];
-		var b_meta = model_metas[b];
-		var gt_p =
-		    _get_model_title(a, a_meta) < _get_model_title(b, b_meta);
+		var gt_p = _get_model_title(a) < _get_model_title(b);
 		var retval = 0;
 		// Std sort.
-		if( gt_p == true ){ retval = -1; }
-		else if( gt_p == false ){ retval = 1; }
+		if( gt_p === true ){ retval = -1; }
+		else if( gt_p === false ){ retval = 1; }
 		// Bad if one is deprecated.
-		if( _model_deprecated_p(a_meta) != _model_deprecated_p(b_meta) ){
-		    if( _model_deprecated_p(a_meta) ){
+		if( _model_deprecated_p(a) !== _model_deprecated_p(b)){
+		    if( _model_deprecated_p(a) ){
 			retval = 1;
-		    }else if( _model_deprecated_p(b_meta) ){
+		    }else if( _model_deprecated_p(b) ){
 			retval = -1;
 		    }
 		}
@@ -252,14 +335,20 @@ var MMEnvBootstrappingInit = function(user_token){
 	    var rep_cache = [];
 	    each(sorted_model_meta_ids, function(model_id){
 
-		var model_meta = model_metas[model_id];
+		var model_meta = models_meta[model_id];
 
-		var mtitle =  _get_model_title(model_id, model_meta);
+		var mtitle =  _get_model_title(model_id);
 
 		// Check to see if it's deprecated and highlight that
 		// fact.
-		if( _model_deprecated_p(model_meta) ){
+		if( _model_deprecated_p(model_id) ){
 		    mtitle = '[DEPRECATED] ' + mtitle;
+		}
+
+		// Check to see if it's modified and highlight that
+		// fact.
+		if( _model_modified_p(model_id) ){
+		    mtitle = mtitle + '*';
 		}
 
 		// Add to cache.
@@ -272,7 +361,6 @@ var MMEnvBootstrappingInit = function(user_token){
 
 	    jQuery("#select_stored_jump_basic").empty();
 	    jQuery("#select_stored_jump_basic").append(rep_str);
-
 
 	    // Also add this list to the export interface.
 	    jQuery(model_export_by_id_input_elt).empty();
@@ -339,7 +427,7 @@ var MMEnvBootstrappingInit = function(user_token){
     });
 
     // Likely result of a new model being built on Minerva.
-    manager.register('rebuild', 'foo', function(resp, man){
+    manager.register('rebuild', function(resp, man){
 	_generated_model(resp, man);
     }, 10);
 
@@ -401,8 +489,8 @@ jsPlumb.ready(function(){
 	// name just for niceness. This is also a test of CORS in
 	// express.
 	if( start_token ){
-	    bbopx.noctua.widgets.user_check(global_barista_location,
-					    start_token, 'user_name_info');
+	    widgetry.user_check(global_barista_location,
+				start_token, 'user_name_info');
 	}
     }
 });
