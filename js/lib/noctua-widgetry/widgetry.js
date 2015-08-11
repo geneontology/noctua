@@ -1259,40 +1259,45 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    kval = '<a href="' + kval + '">' + kval + '</a>';
 		}
 		// However, evidence annotations are very different
-		// for us now, and we need to dig out the guts from
-		// elsewhere.
+		// for us now, and we need to dig out the guts from a
+		// subgraph elsewhere.
 		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
 
 		    // Setup a dummy incase we fail.
 		    kval = '???';
 		    var ref_val = ann.value();
-		    var ref_ind = ecore.get_node(ref_val);
-		    if( ! ref_ind ){ // living free or in a referenced set
-			ref_ind =
-			    entity.get_referenced_individual_by_id(ref_val);
-		    }
-		    if( ref_ind ){
+		    var ref_sub = entity.get_referenced_subgraph_by_id(ref_val);
+		    if( ref_sub ){ // we found the subgraph
 			kval = '';
-			// Collect class expressions.
+			// Collect class expressions, just using the
+			// default profile extractor for now.
 			var c_cache = [];
-			each(ref_ind.types(), function(ce){
-			    c_cache.push(ce.to_string());
-			});
-			kval += c_cache.join('/');
-			// Collect annotations.
-			each(ref_ind.annotations(), function(ref_ann){
-			    var rav = ref_ann.value();
-			    // link pmids silly
-			    if( rav.split('PMID:').length === 2 ){
-				var pmid = rav.split('PMID:')[1];
-				rav = '<a href="http://pmid.us/' + pmid + '">' +
-				    'PMID:' + pmid + '</a>';
-			    }
-			    kval += '; ' + ref_ann.key() + ': ' + rav;
+			each(ref_sub.all_nodes(), function(ref_ind){
+			    // Collect the classes.
+			    each(ref_ind.types(), function(ref_type){
+				c_cache.push(type_to_span(ref_type));
+			    });
+			    kval += c_cache.join('/');
+			    // Collect annotations (almost certainly
+			    // had some class first, so no worries
+			    // about the dumb tag on the end).
+			    each(ref_ind.annotations(), function(ref_ann){
+				var rav = ref_ann.value();
+				// link pmids silly
+				if( rav.split('PMID:').length === 2 ){
+				    var pmid = rav.split('PMID:')[1];
+				    kval += '; <a href="http://pmid.us/' + pmid +
+					'">' + 'PMID:' + pmid + '</a>';
+				}else if( rav.split('http://').length === 2 ){
+				    kval +='; <a href="'+ rav +'">'+ rav +'</a>';
+				}else{
+				    kval += '; ' + ref_ann.key() + ': ' + rav;
+				}
+			    });
 			});
 		    }
 		}
-
+		
 		// And the annotation id for the key.
 		var kid = bbop_core.uuid();
 		
