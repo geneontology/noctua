@@ -1572,7 +1572,7 @@ function reporter(output_id){
 		    out += 'performed  <span class="bbop-mme-message-op">' +
 			intent + '</span> (' + mess + '), ' +
 			'<span class="">' +
-			'you may with to refresh' + '</span>';
+			'you may wish to refresh' + '</span>';
 		}
 	    }else{
 		out += mess_type + ': ' + mess;		
