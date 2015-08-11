@@ -14,14 +14,21 @@ var fs = require('fs');
 var mime = require('mime');
 
 // Required add-on libs.
-var bbop = require('bbop');
-var bbopx = require('bbopx');
+var bbop_legacy = require('bbop').bbop;
+//var bbopx = require('bbopx');
 var amigo = require('amigo2');
 
+var us = require('underscore');
+var bbop = require('bbop-core');
+
+var barista_response = require('bbop-response-barista');
+var minerva_requests = require('minerva-requests');
+
 // Aliases.
-var each = bbop.core.each;
-var what_is = bbop.core.what_is;
-var is_defined = bbop.core.is_defined;
+var each = us.each;
+var what_is = bbop.what_is;
+var is_defined = bbop.is_defined;
+var dump = bbop.dump;
 
 // Figure out our base and URLs we'll need to aim this locally.
 var linker = new amigo.linker();
@@ -146,7 +153,7 @@ var NoctuaLauncher = function(){
 	if( ! token_name ){ token_name = 'barista_token'; }
 
 	if( token ){
-	    if( new_url.indexOf('?') == -1 ){
+	    if( new_url.indexOf('?') === -1 ){
 		new_url = new_url + '?' + token_name + '=' + token;
 	    }else{
 		new_url = new_url + '&' + token_name + '=' + token;
@@ -225,12 +232,6 @@ var NoctuaLauncher = function(){
 				  tmpl_args, 'noctua_base.tmpl');
 	self.standard_response(res, 200, 'text/html', ret);
     };
-
-    // Generic error return.
-    function _generic_error_resp(resp, man){
-	res.setHeader('Content-Type', 'text/html');
-	res.send('failure ('+ resp.message_type() +'): '+ resp.message());
-    }
 
     ///
     /// Cache and template rendering.
@@ -336,7 +337,7 @@ var NoctuaLauncher = function(){
 		    {name: 'global_minerva_definition_name',
 		     value: self.minerva_definition_name },
 		    {name: 'global_known_relations',
-		     value: bbop.core.dump(known_relations) }
+		     value: dump(known_relations) }
 		],
 		'title': notw + ': Selection',
 		'noctua_location': self.hostport,
@@ -441,7 +442,7 @@ var NoctuaLauncher = function(){
 	});
 
 	///
-	/// High-level status overview and hearbeat
+	/// High-level status overview and heartbeat
 	///
 
 	self.app.get('/status', function(req, res) {
@@ -476,7 +477,7 @@ var NoctuaLauncher = function(){
 	// Define the GOlr request conf.
 	var server_loc = 'http://golr.berkeleybop.org/';
 	//var server_loc = 'http://localhost:8080/solr/';
-	var gconf = new bbop.golr.conf(amigo.data.golr);
+	var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
 	// Directly kick-to-edit an extant model--most things should
 	// pass through here.
@@ -487,7 +488,7 @@ var NoctuaLauncher = function(){
 	    //console.log(req.route);
 	    //console.log(req.route.params['query']);
 	    var query = req.route.params['query'] || '';
-	    if( ! query || query == '' ){
+	    if( ! query || query === '' ){
 		// Catch error here if no proper ID.
 		res.setHeader('Content-Type', 'text/html');
 		res.send('no identifier');
@@ -511,7 +512,7 @@ var NoctuaLauncher = function(){
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
 	    var jmod_str = req.body['json-model'] || '';
-	    if( ! jmod_str || jmod_str == '' ){
+	    if( ! jmod_str || jmod_str === '' ){
 		// Catch error here if no proper ID.
 		res.setHeader('Content-Type', 'text/html');
 		res.send('no json model');
@@ -588,9 +589,16 @@ var NoctuaLauncher = function(){
 		    qf_to_add.push('annotation_class:"' + ttr + '"');
 		});
 
+    // Generic error return.
+		var _generic_error_resp = function(resp, man){
+		    res.setHeader('Content-Type', 'text/html');
+		    res.send('failure (' + resp.message_type() + '): ' +
+			     resp.message());
+		};
+
 		// Define the action to perform after we resolve our
 		// terms.
-		function action_after_resolution_call(resp, man){
+		var action_after_resolution_call = function(resp, man){
 		    console.log('in success callback');
 		    if( ! resp.success() ){
 			tmpl_args.okay_p = false;
@@ -631,13 +639,13 @@ var NoctuaLauncher = function(){
 					      tmpl_args, 'noctua_base.tmpl');
 			self.standard_response(res, 200, 'text/html', ret);
 		    }
-		}
+		};
 
 		// Assemble query to get the desired minimal term
 		// information; this information then goes into the
 		// above callback, that then starts the model building
 		// process.
-		var m = new bbop.golr.manager.nodejs(server_loc, gconf);
+		var m = new bbop_legacy.golr.manager.nodejs(server_loc, gconf);
 		m.add_query_filter('document_category', 'ontology_class');
 		m.set_personality('ontology');
 		m.register('search', 'foo', action_after_resolution_call);
@@ -684,22 +692,16 @@ var NoctuaLauncher = function(){
     self.start = function() {
 	if( self.IS_ENV_HEROKU ){
 	    // Heroku seems to want a more minimal launch.
-	    self.app.listen(self.port,
-			    function() {
-				console.log('%s: Node started on %s:%d ...',
-					    Date(Date.now()),
-					    self.ipaddress || '???',
-					    self.port);
-			    });
+	    self.app.listen(self.port, function() {
+		console.log('%s: Node started on %s:%d ...',
+			    Date(Date.now()), self.ipaddress||'???', self.port);
+	    });
 	}else{
             // Start the app on the specific interface (and port).
-            self.app.listen(self.port, self.ipaddress,
-			    function() {
-				console.log('%s: Node started on %s:%d ...',
-					    Date(Date.now()),
-					    self.ipaddress,
-					    self.port);
-			    });
+            self.app.listen(self.port, self.ipaddress, function() {
+		console.log('%s: Node started on %s:%d ...',
+			    Date(Date.now()), self.ipaddress, self.port);
+	    });
 	}
     };
 };
@@ -715,9 +717,10 @@ var noctua = new NoctuaLauncher();
 // the interesting things we need from the web.
 // In this case, we're going after RO so we can pass it in once and
 // early.
-var imngr = new bbop.rest.manager.node(bbopx.barista.response);
+var imngr = new bbop_legacy.rest.manager.node(barista_response);
 imngr.register('success', 's1', function(resp, man){
-    console.log('response is: ' + bbop.core.what_is(resp));
+    console.log('response is: ' + what_is(resp));
+    //console.log('response', resp);
     var nrel = resp.relations().length;
     console.log("got " + nrel + " relations, starting initializing sequence...");
     if( nrel > 0 ){
@@ -729,7 +732,7 @@ imngr.register('success', 's1', function(resp, man){
 });
 imngr.register('error', 'e1', function(resp, man){
     //console.log('erred out: %j', resp);
-    //console.log(bbop.core.what_is(resp));
+    //console.log(what_is(resp));
     //console.log(resp._raw);
     //console.log(resp.relations());
     console.log('okay?: %j', resp.okay());
@@ -738,7 +741,7 @@ imngr.register('error', 'e1', function(resp, man){
 });
 
 // Assemble initial request to get relations for bootstrap.
-var reqs = new bbopx.minerva.request_set();
+var reqs = new minerva_requests.request_set();
 reqs.get_meta();
 var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
     '/m3Batch';
