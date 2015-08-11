@@ -51,8 +51,8 @@ function build_token_link(url, token){
 function repaint_info(ecore, aid, info_div){
 
     // Node and edge counts.
-    var nds = bbop_core.get_keys(ecore.get_nodes()) || [];
-    var eds = bbop_core.get_keys(ecore.all_edges()) || [];
+    var nds = us.keys(ecore.get_nodes()) || [];
+    var eds = us.keys(ecore.all_edges()) || [];
     
     // Any annotation information that came in.
     var anns = '';
@@ -118,7 +118,7 @@ function repaint_exp_table(ecore, aid, table_div){
     });
     // Dedupe list.
     var tmph = bbop_core.hashify(cat_list);
-    cat_list = bbop_core.get_keys(tmph);
+    cat_list = us.keys(tmph);
 
     // If we actually got something, render the table. Otherwise,
     // a message.
@@ -742,8 +742,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	// 			 'id': 'label' } ]);
 
 	// Kick off callback.	
-	manager.add_fact(ecore.get_id(), source_id,
-			 target_id, rval);
+	manager.add_fact(ecore.get_id(), source_id, target_id, rval);
 
 	// Close modal.
 	mdl.destroy();
@@ -867,7 +866,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     mdl.add_to_body(tcache.join(''));
 
     // Attach deletes to all of the listed types.
-    each(elt2type, function(elt_id, type){
+    each(elt2type, function(type, elt_id){
 	jQuery('#' + elt_id).click(function(evt){
 	    evt.stopPropagation();
 	    var target_id = evt.target.id;
@@ -1250,7 +1249,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	// Going through each of the annotation types, try and collect
 	// them from the model.
-	each(bbop_core.get_keys(ann_classes), function(key){
+	each(us.keys(ann_classes), function(key){
 	    each(entity.get_annotations_by_key(key), function(ann){
 		
 		// For every one found, assemble the actual display
@@ -1397,8 +1396,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// Now that they're all in the DOM, add any delete annotation
 	// actions. These are completely generic--all annotations can
 	// be deleted in the same fashion.
-	each(bbop_core.get_keys(ann_classes), function(ann_key){
-	    each(ann_classes[ann_key]['elt2ann'], function(elt_id, ann_id){
+	each(us.keys(ann_classes), function(ann_key){
+	    //each(ann_classes[ann_key]['elt2ann'], function(elt_id, ann_id){
+	    each(ann_classes[ann_key]['elt2ann'], function(ann_id, elt_id){
 		jQuery('#' + elt_id).click( function(evt){
 		    evt.stopPropagation();
 		    
@@ -1418,7 +1418,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	
 	// Walk through again, this time activating and annotation
 	// "add" buttons that we added.
-	each(bbop_core.get_keys(ann_classes), function(ann_key){
+	each(us.keys(ann_classes), function(ann_key){
 	    var form = ann_classes[ann_key]['widget'];
 	    console.log('ann_key: ' + ann_key, form);
 	    if( form ){ // only act if we added/defined it earlier
