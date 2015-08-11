@@ -33,7 +33,7 @@
 	"bbop": "2.3.2",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.14",
-        "bbop-graph-noctua": "0.0.18",
+        "bbop-graph-noctua": "0.0.19",
         "bbop-manager-minerva": "0.0.3",
         "bbop-rest-manager": "0.0.6",
         "bbop-response-barista": "0.0.5",
