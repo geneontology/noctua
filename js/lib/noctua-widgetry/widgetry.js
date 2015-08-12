@@ -793,52 +793,90 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	type_list.push(acache.join(''));
     });
 
-    // Generate embedded autocomplete for the relations.
-    var svf_prop_text_args = {
+    ///
+    /// Class expression input.
+    ///
+
+    // Create autocomplete box.
+    var type_add_class_text_args = {
     	'generate_id': true,
     	'type': 'text',
     	'class': 'form-control',
-    	'placeholder':
-	'Enter property to use (e.g. directly_activates, has_input)'
+    	'placeholder': 'Enter ID or complex expression'
     };
-    var svf_prop_text = new bbop.html.tag('input', svf_prop_text_args);
+    var type_add_class_text =
+	    new bbop.html.tag('input', type_add_class_text_args);
 
-    // Create autocomplete box (enabled_by).
-    var svf_class_text_args = {
-    	'generate_id': true,
-    	'type': 'text',
-    	'class': 'form-control',
-    	'placeholder': 'Enter ID or complex expression (enabled_by only)'
-    };
-    var svf_class_text = new bbop.html.tag('input', svf_class_text_args);
-
-    // Create add SVF button.
-    var add_svf_btn_args = {
+    // Create add class exp button.
+    var type_add_btn_args = {
     	'generate_id': true,
     	'type': 'button',
     	'class': 'btn btn-success'
     };
-    var add_svf_btn = new bbop.html.tag('button', add_svf_btn_args, 'Add');
+    var type_add_btn = new bbop.html.tag('button', type_add_btn_args, 'Add');
 
-    var svf_form = [
+    var type_form = [
     	'<div class="form">',
     	'<div class="form-group">',
-	svf_prop_text.to_string(),
+	type_add_class_text.to_string(),
     	'</div>',
-    	'<div class="form-group">',
-	svf_class_text.to_string(),
-    	'</div>',
-    	add_svf_btn.to_string(),
+    	type_add_btn.to_string(),
     	'</div>'
     ];
 
-    // Create delete button.
-    var del_btn_args = {
+    ///
+    /// Individual/fact bundle input.
+    ///
+
+    // Create autocomplete box (enabled_by).
+    var bundle_add_class_text_args = {
+    	'generate_id': true,
+    	'type': 'text',
+    	'class': 'form-control',
+    	'placeholder': 'Enter ID or complex expression'
+    };
+    var bundle_add_class_text =
+	    new bbop.html.tag('input', bundle_add_class_text_args);
+    // Create autocomplete box (enabled_by).
+    var bundle_add_fact_text_args = {
+    	'generate_id': true,
+    	'type': 'text',
+    	'class': 'form-control',
+    	'placeholder': 'Enter relation to connect with'
+    };
+    var bundle_add_fact_text =
+	    new bbop.html.tag('input', bundle_add_fact_text_args);
+
+    // Create add bundle button.
+    var bundle_add_btn_args = {
+    	'generate_id': true,
+    	'type': 'button',
+    	'class': 'btn btn-success'
+    };
+    var bundle_add_btn = new bbop.html.tag('button', bundle_add_btn_args, 'Add');
+
+    var bundle_form = [
+    	'<div class="form">',
+    	'<div class="form-group">',
+	bundle_add_class_text.to_string(),
+    	'</div>',
+    	'<div class="form-group">',
+	bundle_add_fact_text.to_string(),
+    	'</div>',
+    	bundle_add_btn.to_string(),
+    	'</div>'
+    ];
+
+    ///
+    /// Create delete button.
+    ///
+
+    var type_del_btn_args = {
     	'generate_id': true,
     	'type': 'button',
     	'class': 'btn btn-danger'
     };
-    var del_btn = new bbop.html.tag('button', del_btn_args, 'Delete');
+    var type_del_btn = new bbop.html.tag('button', type_del_btn_args, 'Delete');
 
     //
     var tcache = [
@@ -851,12 +889,17 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	'</p>',
 	'<h4>Add type</h4>',
 	'<p>',
-	svf_form.join(''),
+	type_form.join(''),
+	'</p>',
+	'<hr />',
+	'<h4>Add bundle (class expression & edge pair)</h4>',
+	'<p>',
+	bundle_form.join(''),
 	'</p>',
 	'<hr />',
 	'<h4>Other operations</h4>',
 	// '<p>',
-	del_btn.to_string(),
+	type_del_btn.to_string(),
 	'&nbsp;this individual'//,
 	// '</p>'
     ];
@@ -899,17 +942,17 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 		'label': rel[1] + ' ('+ rel[0] +')'
 	    });
     });
-    jQuery('#' + svf_prop_text.get_id()).autocomplete({
-	'minLength': 0,
-	'source': prop_sel_ac_list,
-	'focus': function(event, ui){
-	    jQuery('#' + svf_prop_text.get_id()).val(ui.item.value);
-	    return false;
-	},
-	select: function( event, ui ) {
-	    jQuery('#' + svf_prop_text.get_id()).val(ui.item.value);
-	    return false;
-	}
+    jQuery('#' + bundle_add_fact_text.get_id()).autocomplete({
+    	'minLength': 0,
+    	'source': prop_sel_ac_list,
+    	'focus': function(event, ui){
+    	    jQuery('#' + bundle_add_fact_text.get_id()).val(ui.item.value);
+    	    return false;
+    	},
+    	select: function( event, ui ) {
+    	    jQuery('#' + bundle_add_fact_text.get_id()).val(ui.item.value);
+    	    return false;
+    	}
     });// .autocomplete('#' + svf_prop_text.get_id()).val(ui.item.label)._renderItem = function(ul, item){
     // 	return jQuery('<li>')
     // 	    .append('<a>' + item.label + '<br />' + item.desc + '</a>')
@@ -917,20 +960,11 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     // };
 
     // Add add expression action.
-    jQuery('#' + add_svf_btn.get_id()).click(function(evt){
+    jQuery('#' + type_add_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
 	
-	var cls = jQuery('#' + svf_class_text.get_id()).val();
-	//var prp = jQuery('#' + svf_prop_select.get_id()).val();
-	var prp = jQuery('#' +  svf_prop_text.get_id()).val();
-	if( cls && prp ){
-	    // Trigger the delete--hopefully inconsistent.
-	    manager.add_class_expression(
-		ecore.get_id(), tid, class_expression.svf(cls, prp));
-	    
-	    // Wipe out modal.
-	    mdl.destroy();	    
-	}else if( cls ){
+	var cls = jQuery('#' + type_add_class_text.get_id()).val();
+	if( cls ){
 	    // Trigger the delete--hopefully inconsistent.
 	    manager.add_class_expression(ecore.get_id(), tid, cls);
 	    
@@ -942,8 +976,30 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	}
     });
     
+    // Add add bundle action.
+    jQuery('#' + bundle_add_btn.get_id()).click(function(evt){
+	evt.stopPropagation();
+	
+	var cls = jQuery('#' + bundle_add_class_text.get_id()).val();
+	var rel = jQuery('#' + bundle_add_fact_text.get_id()).val();
+	if( cls && rel ){
+
+	    var reqs = new minerva_requests.request_set(manager.user_token(),
+							ecore.get_id());
+	    var ind = reqs.add_individual(cls);
+	    reqs.add_fact([tid, ind, rel]);
+	    manager.request_with(reqs);
+
+	    // Wipe out modal.
+	    mdl.destroy();	    
+	}else{
+	    // Allow modal to remain for retry.
+	    alert('Class and relations must be defined');
+	}
+    });
+    
     // Add delete action. "tid" is the closed individual identifier.
-    jQuery('#' + del_btn.get_id()).click(function(evt){
+    jQuery('#' + type_del_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
 	
 	// Start with the main deletion target.
@@ -989,13 +1045,16 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     	'value_template': '{{entity}}',
     	'list_select_callback': function(doc){}
     };
-    var gen_auto =
-	new bbop.widget.search_box(gserv, gconf, svf_class_text.get_id(),
-				   gen_auto_args);
-    gen_auto.lite(true);
-    gen_auto.add_query_filter('document_category', 'general');
-    //gen_auto.add_query_filter('source', 'eco', ['+']);
-    gen_auto.set_personality('general');
+    var gen_auto_type = new bbop.widget.search_box(
+	gserv, gconf, type_add_class_text.get_id(), gen_auto_args);
+    gen_auto_type.lite(true);
+    gen_auto_type.add_query_filter('document_category', 'general');
+    gen_auto_type.set_personality('general');
+    var gen_auto_bundle = new bbop.widget.search_box(
+	gserv, gconf, bundle_add_class_text.get_id(), gen_auto_args);
+    gen_auto_bundle.lite(true);
+    gen_auto_bundle.add_query_filter('document_category', 'general');
+    gen_auto_bundle.set_personality('general');
 
     // Return our final product.
     return mdl;
