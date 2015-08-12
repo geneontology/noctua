@@ -289,6 +289,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var table_edge_div = '#' + table_edge_id;
     var control_id = 'main_exp_gui';
     var control_div = '#' + control_id;
+    // Ubernoodle contact points.
+    var simple_ubernoodle_auto_id = 'simple_ubernoodle_auto';
+    var simple_ubernoodle_auto_elt = '#' + simple_ubernoodle_auto_id;
+    var simple_ubernoodle_add_btn_id ='simple_ubernoodle_adder_button';
+    var simple_ubernoodle_add_btn_elt = '#' + simple_ubernoodle_add_btn_id;
     // MF (restrict) button contact points.
     var simple_mf_restrict_enb_auto_id = 'simple_mf_restrict_enb_auto';
     var simple_mf_restrict_enb_auto_elt = '#' + simple_mf_restrict_enb_auto_id;
@@ -1664,6 +1669,45 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    }
     	}
     );
+
+    ///
+    /// Activate addition template for Ubernoodle (free).
+    ///
+
+    var simple_ubernoodle_auto_val = null;
+
+    // Add general autocomplete to the input.
+    var simple_ubernoodle_auto_args = {
+    	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
+    	'value_template': '{{entity}}',
+    	'list_select_callback': function(doc){
+	    simple_ubernoodle_auto_val = doc['entity'] || null;
+	}
+    };
+    var simple_ubernoodle_auto = new bbop_legacy.widget.search_box(
+	gserv, gconf, simple_ubernoodle_auto_id, simple_ubernoodle_auto_args);
+    simple_ubernoodle_auto.lite(true);
+    simple_ubernoodle_auto.add_query_filter('document_category', 'general');
+    simple_ubernoodle_auto.set_personality('general');
+
+    // Add new remote node button.
+    jQuery(simple_ubernoodle_add_btn_elt).click(function(){
+	
+    	if( ! simple_ubernoodle_auto_val || simple_ubernoodle_auto_val === '' ){
+    	    alert('Must select something from autocomplete list.');
+    	}else{
+
+	    // Send message to server.
+	    var reqs = new minerva_requests.request_set(manager.user_token(),
+							ecore.get_id());
+	    reqs.add_individual(simple_ubernoodle_auto_val);
+	    manager.request_with(reqs);
+
+	    // Wipe controls' state, internal and external.
+	    simple_ubernoodle_auto_val = null;
+	    jQuery(simple_ubernoodle_auto_elt).val('');	    
+    	}
+    });
 
     ///
     /// Activate addition template for MF (restrict).
