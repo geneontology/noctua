@@ -361,6 +361,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // var export_btn_elt = '#' + export_btn_id;
     var save_btn_id = 'action_save';
     var save_btn_elt = '#' + save_btn_id;
+    var addprim_btn_id = 'action_add_primitive';
+    var addprim_btn_elt = '#' + addprim_btn_id;
     var ping_btn_id = 'action_ping';
     var ping_btn_elt = '#' + ping_btn_id;
     var test_btn_id = 'action_test';
@@ -2243,6 +2245,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    alert('I did nothing. You wasted two seconds. Ha!');
 		}, 2000);
 	}
+    });
+
+    // Add "naked" individual.
+    jQuery(addprim_btn_elt).click(function(){
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+	reqs.add_individual();
+	manager.request_with(reqs);	
     });
 
     // WARNING: Skunkworks for adding new things to the manager.
