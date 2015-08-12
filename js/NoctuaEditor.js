@@ -779,12 +779,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     // WARNING: response-only as written.
     function _inconsistency_check(resp, man){
-	ll('doing the inconsistent_p check');
-	if( resp.inconsistent_p() &&
+	ll('doing the inconsistent_p check: ' + ecore.inconsistent_p() );
+	if( ecore.inconsistent_p() === true &&
 	    ! jQuery(graph_container_div).hasClass('model-inconsistent') ){
 	    // Recolor the interface.
 	    jQuery(graph_container_div).addClass('model-inconsistent');
-	}else if( ! resp.inconsistent_p() &&
+	}else if( ecore.inconsistent_p() !== true &&
 		  jQuery(graph_container_div).hasClass('model-inconsistent') ){
 	    // Restore the interface coloration.
 	    jQuery(graph_container_div).removeClass('model-inconsistent');
