@@ -1679,7 +1679,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Add general autocomplete to the input.
     var simple_ubernoodle_auto_args = {
     	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
-    	'value_template': '{{entity}}',
+    	'value_template': '{{entity_label}}',
     	'list_select_callback': function(doc){
 	    simple_ubernoodle_auto_val = doc['entity'] || null;
 	}
