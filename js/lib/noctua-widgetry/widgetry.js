@@ -1002,8 +1002,11 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     jQuery('#' + type_del_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
 	
-	// Start with the main deletion target.
-	var to_delete_ids = [tid];
+	// Do NOT start with the main deletion target, just an empty
+	// list--remember that the subgraphs contain the outer
+	// individual, so we'd be adding it twice and cause errors.
+	//var to_delete_ids = [tid];
+	var to_delete_ids = [];
 
 	// Next, collect anything in the subgraph; the edges should
 	// come off naturally in Minerva.
