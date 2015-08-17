@@ -309,8 +309,8 @@ function render_node_stack(enode, aid){
     var std_types = enode.types();
     each(std_types, function(item){ _add_table_row(item); });
 
-    // Now we trick our way through to adding the types of the
-    // subgraphs.
+    // Now we trick our way through to adding the types^H^H^H^H^H
+    // absorbed subgraph nodes of the subgraphs.
     var subgraph = enode.subgraph();
     if( subgraph ){
 	var p_edges = subgraph.get_parent_edges(enode.id());
@@ -323,13 +323,29 @@ function render_node_stack(enode, aid){
 	    var rel = p_edge.relation();
 	    var rel_color = aid.color(rel);
 	    var rel_readable = aid.readable(rel);
+	    // Try and extract proof of evidence.
+	    var ev_edge_anns = p_edge.get_annotations_by_key('evidence');
 	    // Get node.
 	    var p_obj_id = p_edge.object_id();
 	    var p_node = subgraph.get_node(p_obj_id);
+	    // Try and extract proof of evidence.
+	    var ev_node_anns = p_node.get_annotations_by_key('evidence');
 
 	    // Add the edge/node combos to the table.
 	    each(p_node.types(), function(p_type){
-		_add_table_row(p_type, rel_color, rel_readable + '(', ')');
+		if( ev_edge_anns.length > 0 && ev_node_anns.length > 0 ){
+		    _add_table_row(p_type, rel_color, rel_readable + '(',
+				   '<sup>e</sup>)<sup>e</sup>');
+		}else if( ev_edge_anns.length > 0 ){
+		    _add_table_row(p_type, rel_color, rel_readable + '(',
+				   ')<sup>e</sup>');
+		}else if( ev_node_anns.length > 0 ){
+		    _add_table_row(p_type, rel_color, rel_readable + '(',
+				   '<sup>e</sup>)');
+		}else{
+		    _add_table_row(p_type, rel_color, rel_readable + '(',
+				   ')');
+		}
 	    });
 	});
     }
