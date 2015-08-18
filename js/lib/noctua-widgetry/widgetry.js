@@ -1021,7 +1021,6 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	// Do NOT start with the main deletion target, just an empty
 	// list--remember that the subgraphs contain the outer
 	// individual, so we'd be adding it twice and cause errors.
-	//var to_delete_ids = [tid];
 	var to_delete_ids = [];
 
 	// Next, collect anything in the subgraph; the edges should
@@ -1032,6 +1031,10 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	    each(sub.all_nodes(), function(n){
 		to_delete_ids.push(n.id());
 	    });
+	}else{
+	    // However, if there was no subgraph, we need to add the
+	    // original target so we delete /something/.
+	    to_delete_ids = [tid];  
 	}
 
 	// Ready a new request.
