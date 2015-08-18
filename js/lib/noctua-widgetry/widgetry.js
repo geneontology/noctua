@@ -67,7 +67,7 @@ function repaint_info(ecore, aid, info_div){
     }
 
     // Try and get a title out of the model.
-    var mtitle = '???';
+    var mtitle = '??? (title)';
     var tanns = ecore.get_annotations_by_key('title');
     if( tanns && tanns.length === 1 ){ mtitle = tanns[0].value(); }
 
@@ -1345,9 +1345,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
 
 		    // Setup a dummy incase we fail.
-		    kval = '???';
 		    var ref_val = ann.value();
 		    var ref_sub = entity.get_referenced_subgraph_by_id(ref_val);
+		    kval = '??? (evidence for ' + ref_val + ')';
 		    if( ref_sub ){ // we found the subgraph
 			kval = '';
 			// Collect class expressions, just using the
@@ -1363,17 +1363,22 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    // had some class first, so no worries
 			    // about the dumb tag on the end).
 			    each(ref_ind.annotations(), function(ref_ann){
-				var rav = ref_ann.value();
-				// link pmids silly
-				if( rav.split('PMID:').length === 2 ){
-				    var pmid = rav.split('PMID:')[1];
-				    kval += '; <a href="http://pmid.us/' + pmid +
-					'">' + 'PMID:' + pmid + '</a>';
-				}else if( rav.split('http://').length === 2 ){
-				    kval +='; <a href="'+ rav +'">'+ rav +'</a>';
-				}else{
-				    kval += '; ' + ref_ann.key() + ': ' + rav;
-				}
+				// Skip unnecessary information.
+				if(ref_ann.key() !== 'hint-layout-x' &&
+				   ref_ann.key() !== 'hint-layout-y' ){
+				       var rav = ref_ann.value();
+				       // link pmids silly
+				       if( rav.split('PMID:').length === 2 ){
+					   var pmid = rav.split('PMID:')[1];
+					   kval += '; <a href="http://pmid.us/'+
+					       pmid +'">'+ 'PMID:'+ pmid +'</a>';
+				       }else if( rav.split('http://').length === 2 ){
+					   kval +='; <a href="'+ rav +'">'+
+					       rav +'</a>';
+				       }else{
+					   kval +='; '+ ref_ann.key() +': '+ rav;
+				       }
+				   }
 			    });
 			});
 		    }
@@ -1642,10 +1647,10 @@ function reporter(output_id){
 	}
 
 	// Complicated datagram.
-	var intent = message['intention'] || '???';
-	var sig = message['signal'] || '???';
-	var mess = message['message'] || '???';
-	var mess_type = message['message_type'] || '???';
+	var intent = message['intention'] || '??? (intention)';
+	var sig = message['signal'] || '??? (signal)';
+	var mess = message['message'] || '??? (message)';
+	var mess_type = message['message_type'] || '??? (meesage_type)';
 
 	// make a sensible message.
 	if( mess_type === 'error' ){
