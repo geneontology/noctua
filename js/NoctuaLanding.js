@@ -382,11 +382,11 @@ var MMEnvBootstrappingInit = function(user_token){
 	      _jump_to_page(new_url);
 	    });
 
-      jQuery("#new_jump_button_basic").click(function(evt) {
-        to_basic_form = true;
-        manager.add_model();
+	    jQuery("#new_jump_button_basic").click(function(evt) {
+		to_basic_form = true;
+		manager.add_model();
 	    });
-
+	    
 	    // Make export interface trigger on click.
 	    jQuery(model_export_by_id_def_button_elt).click(function(evt){
 		var id = jQuery(model_export_by_id_input_elt).val();
@@ -400,8 +400,6 @@ var MMEnvBootstrappingInit = function(user_token){
 		var id = jQuery(model_export_by_id_input_elt).val();
 		manager.export_model(id, 'gpad');
 	    });
-
-	    //
 
 	    // Insert taxon info into "Create new fmodel fron taxon"
 	    // interface.

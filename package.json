@@ -36,7 +36,7 @@
         "bbop-graph-noctua": "0.0.21",
         "bbop-manager-minerva": "0.0.3",
         "bbop-rest-manager": "0.0.6",
-        "bbop-response-barista": "0.0.5",
+        "bbop-response-barista": "0.0.6",
         "body-parser": "1.13.3",
         "bbop-widget-solr-autocomplete": "^0.0.9",
         "class-expression": "0.0.8",
