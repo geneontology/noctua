@@ -505,3 +505,33 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 .bbop-mme-more-results-ul {
     border-bottom: 3px dotted;
 }
+
+.bbop-noctua-embedded-evidence-symbol-with {
+    /* background-color: green; */
+    background-color: #00AA00;
+    border: 1px #666666 solid;
+    padding-left: 1px;
+    padding-right: 1px;
+    font-family: monospace;
+    margin-left: 3px;
+}
+.bbop-noctua-embedded-evidence-symbol-with:hover {
+    background-color: #FFFFFF;
+    cursor: -webkit-zoom-in;
+    cursor: zoom-in;
+}
+
+.bbop-noctua-embedded-evidence-symbol-without {
+    /* background-color: green; */
+    /* background-color: #AAAAAA; */
+    border: 1px #666666 solid;
+    padding-left: 1px;
+    padding-right: 1px;
+    font-family: monospace;
+    margin-left: 3px;
+}
+.bbop-noctua-embedded-evidence-symbol-without:hover {
+    background-color: #FFFFFF;
+    cursor: -webkit-zoom-in;
+    cursor: zoom-in;
+}

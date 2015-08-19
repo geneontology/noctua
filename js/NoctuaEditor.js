@@ -934,7 +934,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    top = local_coords['y'];
 		}
 
-    		widgetry.add_enode(ecore, enode, aid, graph_div, left, top);
+    		widgetry.add_enode(fact_annotation_config, ecore, manager,
+				   enode, aid, graph_div, left, top,
+				   gserv, gconf);
     	    });
 
     	    // Now let's try to add all the edges/connections.

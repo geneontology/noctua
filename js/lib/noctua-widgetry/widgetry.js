@@ -276,10 +276,23 @@ function enode_types_to_stack(enode_types, aid){
 }
     
 /**
- * ???
+ * This is a silly little object that represents a node stack. It can
+ * render the stack as a string (the original non-object purpose of
+ * this little bit of code) and manager to relay the relation between
+ * random DOM IDs and underlying edges (the reason it was turned into
+ * an object).
+ *
+ * This change was made to make it possible to allow the evidence to
+ * be clicked on in the display and the edge annotation dialog (with
+ * the accompanying evidence) to come up for editing.
+ *
+ * This whole bit will change a lot with new evidence coming down the
+ * pipe.
  */
-function render_node_stack(enode, aid){
+function node_stack_object(enode, aid){
 
+    var hook_list = [];
+    
     // Create a colorful label stack into an individual table.
     var enode_stack_table = new bbop.html.tag('table',
 					      {'class':'bbop-mme-stack-table'});
@@ -333,18 +346,20 @@ function render_node_stack(enode, aid){
 
 	    // Add the edge/node combos to the table.
 	    each(p_node.types(), function(p_type){
-		if( ev_edge_anns.length > 0 && ev_node_anns.length > 0 ){
+
+		//
+		var elt_id = bbop_core.uuid();
+		var edge_id = p_edge.id();
+		hook_list.push([edge_id, elt_id]);
+		if( ev_edge_anns.length > 0 ){
+		    // In this case (which should be the only possible
+		    // case), we'll capture the ID and pair it with an
+		    // ID.
 		    _add_table_row(p_type, rel_color, rel_readable + '(',
-				   '<sup>e</sup>)<sup>e</sup>');
-		}else if( ev_edge_anns.length > 0 ){
-		    _add_table_row(p_type, rel_color, rel_readable + '(',
-				   ')<sup>e</sup>');
-		}else if( ev_node_anns.length > 0 ){
-		    _add_table_row(p_type, rel_color, rel_readable + '(',
-				   '<sup>e</sup>)');
+				   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-with">E</button></sup>');
 		}else{
 		    _add_table_row(p_type, rel_color, rel_readable + '(',
-				   ')');
+				   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-without">&nbsp;</button></sup>');
 		}
 	    });
 	});
@@ -382,13 +397,23 @@ function render_node_stack(enode, aid){
 	enode_stack_table.add_to(itcstr);
     }
 
-    return enode_stack_table;
+    // return enode_stack_table;
+    this.to_string = function(){
+	return enode_stack_table.to_string();
+    };
+
+    //
+    this.hooks = function(){
+	return hook_list;
+    };
 }
 
 /**
- * Add a new enode.
+ * Add a new enode, need a lot of extra junk to pass on to make
+ * annotation editor work, by plugging into the node stack creation
+ * object.
  */
-function add_enode(ecore, enode, aid, graph_div, left, top){
+function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, left, top, gserv, gconf){
 
     // See whether or not we need to place the nodes with style.
     var style_str = '';
@@ -404,8 +429,8 @@ function add_enode(ecore, enode, aid, graph_div, left, top){
 			       'class': 'demo-window',
 			       'style': style_str});
     
-    var enode_stack_table = render_node_stack(enode, aid);
-    w.add_to(enode_stack_table);
+    var enode_stack_table = new node_stack_object(enode, aid);
+    w.add_to(enode_stack_table.to_string());
     
     // Box to drag new connections from.	
     var konn = new bbop.html.tag('div', {'class': 'konn'});
@@ -419,7 +444,21 @@ function add_enode(ecore, enode, aid, graph_div, left, top){
     // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
     // w.add_to(openann);
     
+    // Add to display.
     jQuery(graph_div).append(w.to_string());
+
+    // 
+    each(enode_stack_table.hooks(), function(hook_pair){
+	var edge_id = hook_pair[0];
+	var element_id = hook_pair[1];
+	jQuery('#'+element_id).click(function(evt){
+	    evt.stopPropagation();
+	    
+	    var eam = edit_annotations_modal(annotation_config, ecore, manager,
+					     edge_id, gserv, gconf);
+	    eam.show();
+	});
+    });
 }
 
 /**
@@ -431,7 +470,7 @@ function update_enode(ecore, enode, aid){
     var uelt = ecore.get_node_elt_id(enode.id());
     jQuery('#' + uelt).empty();
 
-    var enode_stack_table = render_node_stack(enode, aid);
+    var enode_stack_table = new node_stack_object(enode, aid);
     jQuery('#' + uelt).append(enode_stack_table.to_string());
     
     // Box to drag new connections from.	
@@ -1817,7 +1856,7 @@ module.exports = {
     'repaint_edge_table': repaint_edge_table,
     'wipe': wipe,
     'enode_types_to_stack': enode_types_to_stack,
-    'render_node_stack': render_node_stack,
+    'node_stack_object': node_stack_object,
     'add_enode': add_enode,
     'update_enode':update_enode ,
     'contained_modal': contained_modal,
