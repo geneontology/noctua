@@ -365,11 +365,12 @@ function render_node_stack(enode, aid){
 	    }
 	});
 
-	// Add to top.
+	// Add to top. No longer need evidence count on individuals.
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
-	    '<td class="bbop-mme-stack-td"><small style="color: grey;">' +
-	    'evidence: ' + n_ev + '; other: ' + n_other + 
-	    '</small></td></tr>';
+		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+		//'evidence: ' + n_ev + '; other: ' + n_other + 
+		'annotations: ' + n_other + 
+		'</small></td></tr>';
 	enode_stack_table.add_to(trstr);
     }
     
