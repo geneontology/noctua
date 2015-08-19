@@ -2462,7 +2462,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	'Be aware that things can and will go wrong and <strong>work can be lost</strong> at any stage.',
 	'</li>',
 	'<li>',
-	'While there are many <a href="https://github.com/kltm/go-mme/issues?state=open">known issues</a>, for the time being we are mostly interested in feedback concerning the functional possibilites of the base model.',
+	'While there are many <a href="https://github.com/geneontology/noctua/issues?state=open">known issues</a>, for the time being we are mostly interested in feedback concerning the functional possibilites of the base model.',
 	'</li>',
 	'</ol>',
 	'</p>',
