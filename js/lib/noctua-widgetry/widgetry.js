@@ -376,7 +376,10 @@ function node_stack_object(enode, aid){
 	    if( ann.key() === 'evidence' ){
 		n_ev++;
 	    }else{
-		n_other++;
+		if( ann.key() !== 'hint-layout-x' &&
+		    ann.key() !== 'hint-layout-y' ){
+		    n_other++;
+		}
 	    }
 	});
 
