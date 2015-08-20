@@ -1390,7 +1390,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    // Setup a dummy incase we fail.
 		    var ref_val = ann.value();
 		    var ref_sub = entity.get_referenced_subgraph_by_id(ref_val);
-		    kval = '??? (evidence for ' + ref_val + ')';
+		    kval = '(evidence annotation for: ' + ref_val + ')';
 		    if( ref_sub ){ // we found the subgraph
 			kval = '';
 			// Collect class expressions, just using the
