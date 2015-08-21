@@ -1331,8 +1331,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    ];
 	}else if( widget_type === 'text' ){
 	    form = [
-    		//'<div class="form-inline">', // better button spacing
-    		'<div>',
+    		'<div class="form-inline">',
     		'<div class="form-group">',
 		anchor.text_input.to_string(),
     		'</div>',
@@ -1341,7 +1340,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    ];
 	}else{ // 'source_ref'
 	    form = [
-    		'<div class="form-inline">',
+    		//'<div class="form-inline">', // better button spacing
+    		'<div>',
     		'<div class="form-group">',
 		anchor.text_input.to_string(),
 		'&nbsp;',
