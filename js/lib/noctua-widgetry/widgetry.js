@@ -1356,6 +1356,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	anchor.form_string = form.join('');
     }
 
+    ///
+    /// Start main running body.
+    ///
+
     //
     var mdl = null;
     if( ! entity ){
@@ -1383,6 +1387,16 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// Going through each of the annotation types, try and collect
 	// them from the model.
 	each(us.keys(ann_classes), function(key){
+
+	    // Skip adding anything if the policy is
+	    // "read-only-optional" and there are no annotations for
+	    // it.
+	    // var anns_by_key = entity.get_annotations_by_key(key);
+	    // if( ann_classes[key]['policy'] === 'read-only-optional' &&
+	    // 	(! anns_by_key || anns_by_key.length === 0 ) ){
+	    // 	    // skip
+	    // }else{
+	    
 	    each(entity.get_annotations_by_key(key), function(ann){
 		
 		// For every one found, assemble the actual display
@@ -1395,15 +1409,15 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// for us now, and we need to dig out the guts from a
 		// subgraph elsewhere.
 		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
-
+		    
 		    // Setup a dummy incase we fail.
 		    var ref_val = ann.value();
 		    var ref_sub = entity.get_referenced_subgraph_by_id(ref_val);
 		    kval = '(evidence annotation for: ' + ref_val + ')';
 		    if( ref_sub ){ // we found the subgraph
 			kval = '';
-			// Collect class expressions, just using the
-			// default profile extractor for now.
+			// Collect class expressions, just using
+			// the default profile extractor for now.
 			var c_cache = [];
 			each(ref_sub.all_nodes(), function(ref_ind){
 			    // Collect the classes.
@@ -1428,10 +1442,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 					   kval +='; <a href="'+ rav +'">'+
 					       rav +'</a>';
 				       }else{
-					   kval +='; '+ ref_ann.key() +': '+ rav;
+					   kval +='; '+ ref_ann.key() +': '+
+					       rav;
 				       }
 				   }
 			    });
+			    
 			});
 		    }
 		}
@@ -1459,7 +1475,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		ann_classes[key]['list'].push(acache.join(''));
 	    });
 
-	    // Join whtaver is in the list together to get the display
+	    // Join wahtaver is in the list together to get the display
 	    // string.
 	    // If we didn't collect anything, it's empty.
 	    var str = '';
@@ -1468,6 +1484,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		str = '<ul class="list-group">' + str + '</ul>';
 	    }
 	    ann_classes[key]['string'] = str;
+
 	});
 
 	// TODO: Generate the final code from the created structure.
@@ -1516,7 +1533,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc,
 							    eplc_b, eplc_c);
-		    }else{
+		    }else{			
 			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc);
 		    }

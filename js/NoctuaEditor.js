@@ -197,22 +197,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    //'widget_type': 'text'
 	},
 	// {
-	//     'id': 'evidence',
-	//     'label': 'Evidence',
-	//     //'widget_type': 'text',
-	//     'widget_type': 'source_ref',
-	//     'policy': 'mutable',
-	//     'cardinality': 'many',
-	//     'placeholder': 'Enter evidence type',
-	//     'placeholder_secondary': 'Enter source'
-	// },
-	// {
-	//     'id': 'source',
-	//     'label': 'Source',
-	//     'widget_type': 'text',
-	//     'policy': 'mutable',
-	//     'cardinality': 'many',
-	//     'placeholder': 'Enter reference type'
+	//     'id': 'with',
+	//     'label': 'With',
+	//     'policy': 'read-only-optional'
+	//     //'cardinality': 'many'
+	//     //'placeholder': 'n/a!',
+	//     //'widget_type': 'text'
 	// },
 	{
 	    'id': 'comment',
