@@ -5,16 +5,12 @@
 
   More docs/API to be found [[http://geneontology.github.io/noctua][here]].
   
-  Prototype editor frontend (Noctua) and messenger server (Barista)
-  for the Gene Ontology Molecular Modal Environment server (Minerva).
-
-  It is based on BBOP(X) JS (using the AmiGO 2 environment) and
-  jsPlumb. The backend is the OWLTools Molecular Model Manager.
-  
-  While the editor is generally developed with Firefox, the user
-  experience using Chrome/Chromium is quite a bit smoother.
+  This repository contains the graphical editor frontend (Noctua) and messenger server (Barista)
+  which communicates with [[https://github.com/geneontology/minerva][Minerva]]], a service layer that
+  allows create/read/update/delete operations on an OWL Model.
 
   The current alpha instance is available at: http://noctua.berkeleybop.org
+  This instance is configured for use with the [[http://geneontology.org][Gene Ontology]] project.
 
 ** Installation
   
@@ -36,6 +32,10 @@
    - build - assemble the apps for running
    - watch - development file monitor
    - clean - clean out /doc and /deploy
+   
+   Noctua makes use of [[https://jsplumbtoolkit.com/][jsPlumb]] and [[http://github.com/berkeleybop][BBOP]] components
+   developed for [[https://github.com/geneontology/amigo/][AmiGO]].
+   
 ** Running
 *** Minerva (optional)
 
