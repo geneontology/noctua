@@ -1,4 +1,7 @@
 * The Noctua (Editor + Barista + Minerva) Stack
+
+  #+ATTR_HTML: title="Screenshot"
+  [[[http://geneontology.github.io/noctua/images/screenshot.png]]]
   
   _Current development is very rapid, so some of these docs may be out
   of date._
