@@ -255,8 +255,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type',
-	    'placeholder_secondary': 'Enter source'
+	    'placeholder': 'Enter evidence type (by ECO label)',
+	    'placeholder_secondary': 'Enter source (e.g. PMID:1234567)',
+	    'placeholder_tertiary': "Enter &quot;with&quot;; only for appropriate evidence types"
 	},
 	// {
 	//     'id': 'source',

@@ -3,8 +3,8 @@
 	"id": "minerva_local",
 	"target": "http://localhost:6800",
 	"public": [
-	    "getRelations",
-	    "m3Batch"
+	    "m3Batch",
+	    "seed/fromProcess"
 	]
     },
     {

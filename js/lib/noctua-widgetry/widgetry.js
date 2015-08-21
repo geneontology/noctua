@@ -1214,14 +1214,16 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		if( entity_type === 'individual' ){
 		    manager.add_individual_evidence(model_id, args['id'],
 						    ann_val['evidence_id'],
-						    ann_val['source_ids']);
+						    ann_val['source_ids'],
+						    ann_val['with_strs']);
 		}else if( entity_type === 'fact' &&  entity_op === 'add' ){
 		    manager.add_fact_evidence(model_id,
 					      args['source'],
 					      args['target'],
 					      args['relation'],
 					      ann_val['evidence_id'],
-					      ann_val['source_ids']);
+					      ann_val['source_ids'],
+					      ann_val['with_strs']);
 		}else{
 		    throw new Error('only fact and individual for evidence add');
 		}
@@ -1278,7 +1280,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     //
     // widget_type - "text_area", "text", or "source_ref"
     function _abstract_annotation_widget(widget_type, placeholder,
-					 placeholder_secondary){
+					 placeholder_secondary,
+					 placeholder_tertiary){
 
 	var anchor = this;
 
@@ -1310,6 +1313,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    // Gets a second input.
 	    text_args['placeholder'] = placeholder_secondary;
 	    anchor.text_input_secondary = new bbop.html.tag('input', text_args);
+	    // Gets a thirs input (with).
+	    text_args['placeholder'] = placeholder_tertiary;
+	    anchor.text_input_tertiary = new bbop.html.tag('input', text_args);
 	}
 
 	// Both placed into the larger form string.
@@ -1325,7 +1331,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    ];
 	}else if( widget_type === 'text' ){
 	    form = [
-    		'<div class="form-inline">',
+    		//'<div class="form-inline">', // better button spacing
+    		'<div>',
     		'<div class="form-group">',
 		anchor.text_input.to_string(),
     		'</div>',
@@ -1339,6 +1346,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		anchor.text_input.to_string(),
 		'&nbsp;',
 		anchor.text_input_secondary.to_string(),
+		'&nbsp;',
+		anchor.text_input_tertiary.to_string(),
     		'</div>',
     		anchor.add_button.to_string(),
     		'</div>'
@@ -1476,8 +1485,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    var epol =  entry_info['policy'];
 	    var ecrd =  entry_info['cardinality'];
 	    var eplc =  entry_info['placeholder'];
-	    // for evidence
+	    // for evidence (ref)
 	    var eplc_b = entry_info['placeholder_secondary'] || '';
+	    // for evidence (with)
+	    var eplc_c = entry_info['placeholder_tertiary'] || '';
 	    // Has?
 	    var ehas = entry_info['list'].length || 0;
 	    // UI output string.
@@ -1503,7 +1514,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    var form_widget = null;
 		    if( ewid === 'source_ref' ){ // evidence is special
 			form_widget =
-			    new _abstract_annotation_widget(ewid, eplc, eplc_b);
+			    new _abstract_annotation_widget(ewid, eplc,
+							    eplc_b, eplc_c);
 		    }else{
 			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc);
@@ -1562,29 +1574,35 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 		    if( ann_key === 'evidence' ){
 			
-			// In the case of evidence, we need to brind
+			// In the case of evidence, we need to bring
 			// in the two different text items and make
 			// them into the correct object for
-			// _ann_dispatch().
+			// _ann_dispatch(). The "with" field is an
+			// optional add-on.
 			var val_a = 
 			    jQuery('#'+form.text_input.get_id()).val();
 			var val_b =
 			    jQuery('#'+form.text_input_secondary.get_id()).val();
-			
+			var val_c =
+			    jQuery('#'+form.text_input_tertiary.get_id()).val();
+
+			// Need ECO and reference, "with" is optional
+			// for now.
 			if( val_a && val_a !== '' && val_b && val_b !== '' ){
 			    _ann_dispatch(entity, entity_type, 'add',
 					  ecore.get_id(), ann_key,
 					  { 'evidence_id': val_a,
-					    'source_ids': val_b });
+					    'source_ids': val_b,
+					    'with_strs': val_c });
 			}else{
 			    alert('need all arguments added for ' + entity_id);
 			}
 
 		    }else{
-			var val_c = jQuery('#' + form.text_input.get_id()).val();
-			if( val_c && val_c !== '' ){
+			var val_d = jQuery('#' + form.text_input.get_id()).val();
+			if( val_d && val_d !== '' ){
 			    _ann_dispatch(entity, entity_type, 'add',
-					  ecore.get_id(), ann_key, val_c);
+					  ecore.get_id(), ann_key, val_d);
 			}else{
 			    alert('no ' + ann_key + ' added for ' + entity_id);
 			}
