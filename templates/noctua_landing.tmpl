@@ -12,7 +12,7 @@
       </button>
 
       <!-- <span class="navbar-brand">MME Editor</span> -->
-      <a href="{{noctua_landing}}" class="navbar-brand">Noctua ALPHA</a>
+      <a href="{{noctua_landing}}" class="navbar-brand">Noctua Preview</a>
     </div>
 
     <div class="navbar-collapse collapse">
@@ -21,7 +21,8 @@
         <!-- Help. -->
         <!-- <p class="navbar-text"> -->
         <li>
-          <a id="action_help" class="navbar-link" href="https://github.com/kltm/go-mme#go-mme-editor" title="">Help</a>
+          <a id="action_help" class="navbar-link"
+	     href="https://github.com/geneontology/noctua" title="">Help</a>
         </li>
         <!-- </p> -->
 
@@ -56,8 +57,8 @@
       <a href="#select" role="tab" data-toggle="tab">Select</a>
     </li>
     <li><a href="#create" role="tab" data-toggle="tab">Create</a></li>
-    <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
     <li><a href="#export" role="tab" data-toggle="tab">Export</a></li>
+    <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
     <li><a href="#about" role="tab" data-toggle="tab">About</a></li>
     <li>
       <a href="#danger" role="tab" data-toggle="tab">
@@ -72,65 +73,64 @@
     <!-- Select tab. -->
     <div class="tab-pane active noctua_tab_wrapper" id="select">
 
+      <!-- Graph editor. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Graph Editor Interface</h3>
         </div>
         <div class="panel-body">
-
           <p>
-            Edit or view a model by selecting from the list and clicking the button.
+            Edit or view a model in the <strong>graph editor
+            interface</strong> by selecting from the list and clicking
+            the button.
           </p>
-
           <div class="form-group">
             <!-- <label for="select_stored_jump">Select by ID</label> -->
             <select id="select_stored_jump" class="form-control">
               <option>n/a</option>
             </select>
           </div>
-          <button id="select_stored_jump_button" type="submit" class="btn btn-primary">Edit/View &raquo;</button>
-
+          <button id="select_stored_jump_button" type="submit"
+		  class="btn btn-primary">Edit/View &raquo;</button>
         </div>
+      </div>
 
+      <!-- Browse. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Browse</h3>
+        </div>
+        <div class="panel-body">
+          <p>
+            Using AmiGO 2 Labs, search a somewhat recent (once or
+            twice a week) scan of the models created using
+            Noctua/Minerva.
+          </p>
+          <p>
+            <a type="button" class="btn btn-primary" href="http://amigo2.berkeleybop.org/amigo/search/complex_annotation">Search &raquo;</a>
+          </p>
+        </div>
       </div>
 
       <!-- Form interface. -->
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Form Interface</h3>
+          <h3 class="panel-title">Form Interface <span style="color:red;">ALPHA</span></h3>
         </div>
-        <div class="panel-body">
-
+        <div class="panel-body">	  
           <p>
-            Edit or view a model by selecting from the list and clicking the button.
+            Edit or view a model in the <strong>prototype form
+            interface UI</strong> by selecting from the list and
+            clicking the button.
           </p>
-
           <div class="form-group">
             <!-- <label for="select_stored_jump">Select by ID</label> -->
             <select id="select_stored_jump_basic" class="form-control">
               <option>n/a</option>
             </select>
           </div>
-          <button id="select_stored_jump_button_basic" type="submit" class="btn btn-primary">Edit/View &raquo;</button>
-          OR
-          <button id="new_jump_button_basic" type="submit" class="btn btn-primary">Create &raquo;</button>
-
-        </div>
-      </div>
-
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Browse</h3>
-        </div>
-        <div class="panel-body">
-
-          <p>
-            Using AmiGO 2 Labs, search a somewhat recent (once or twice a week) scan of the models created using Noctua/Minerva.
-          </p>
-          <p>
-            <a type="button" class="btn btn-primary" href="http://amigo2.berkeleybop.org/amigo/search/complex_annotation">Search &raquo;</a>
-          </p>
-
+          <button id="select_stored_jump_button_basic" type="submit"
+		  class="btn btn-primary">Edit/View &raquo;</button>
         </div>
       </div>
 
@@ -139,29 +139,7 @@
     <!-- Create tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="create">
 
-      <!-- <div class="panel panel-default"> -->
-      <!--   <div class="panel-heading"> -->
-      <!--     <h3 class="panel-title">Create new model from taxon</h3> -->
-      <!--   </div> -->
-      <!--   <div class="panel-body"> -->
-
-      <!--     <p> -->
-      <!--       You -->
-      <!--       <strong>must</strong> be logged in to create a new model from a taxon. -->
-      <!--     </p> -->
-
-      <!--     <div class="form-group"> -->
-      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
-      <!--       <select id="select_taxon_for_create" class="form-control"> -->
-      <!--         <\!-- <option>n/a</option> -\-> -->
-      <!--       </select> -->
-      <!--     </div> -->
-
-      <!--     <button id="button_taxon_for_create" type="button" class="btn btn-primary">Create &raquo;</button> -->
-
-      <!--   </div> -->
-      <!-- </div> -->
-
+      <!-- Aether panel. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Create new model from the æther</h3>
@@ -169,40 +147,51 @@
         <div class="panel-body">
 
           <p>
-            You
-            <strong>must</strong> be logged in to create a new model.
+            You <strong>must</strong> be logged in to create a new
+            model. You will jump directly to the <strong>graph editor
+            UI</strong> for the new model.
           </p>
 
-          <button id="button_nothing_for_create" type="button" class="btn btn-primary">Create &raquo;</button>
-
+          <button id="button_nothing_for_create" type="button"
+		  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
 
-    </div>
-
-    <!-- Import tab. -->
-    <div class="tab-pane noctua_tab_wrapper" id="import">
-
+      <!-- fromProcess -->
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Load model using ??? format</h3>
+          <h3 class="panel-title">Create new model from process and taxon</h3>
         </div>
         <div class="panel-body">
-
           <p>
-            You do
-            <strong>not</strong> want to be using this right now.
+            You <strong>must</strong> be logged in to create a new
+            model from a taxon. If successful, you will jump directly
+            to the <strong>graph editor UI</strong> for the new model.
           </p>
+          <div class="form-group">
+            <select id="select_protax_proc_for_create" class="form-control">
+            </select>
+            <select id="select_protax_tax_for_create" class="form-control">
+            </select>
+          </div>
+          <button id="button_taxon_for_create" type="button"
+		  class="btn btn-primary">Create &raquo;</button>
+        </div>
+      </div>
 
+      <!-- Form creation panel. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Create new model from the æther (prototype form) <span style="color:red;">ALPHA</span></h3>
+        </div>
+        <div class="panel-body">
           <p>
-            <textarea class="form-control" id="model_data_input" placeholder="???" rows="3"></textarea>
+            You <strong>must</strong> be logged in to create a new
+            model. You will jump directly to the <strong>prototype
+            form editor UI</strong> for the new model.
           </p>
-
-          <p>
-            <button id="model_data_button" type="submit" class="btn btn-primary">Load</button>
-          </p>
-          <!-- </form> -->
-
+          <button id="select_stored_create_button_basic" type="submit"
+	  	  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
 
@@ -216,17 +205,14 @@
           <h3 class="panel-title">Export by ID</h3>
         </div>
         <div class="panel-body">
-
           <p>
             Export a model by selecting from the list and then
             clicking the button for the export file type that you
             want.
           </p>
-
           <p>
 	    The curent versions saved nightly onto GitHub are <a href="https://github.com/geneontology/noctua-models/tree/master/models">available here</a>.
           </p>
-
           <div class="form-group">
             <!-- <label for="select_stored_jump">Select by ID</label> -->
             <select id="select_id_for_export" class="form-control">
@@ -236,6 +222,30 @@
           <button id="button_id_for_def_export" type="submit" class="btn btn-primary">Export OWL &raquo;</button>
           <button id="button_id_for_gaf_export" type="submit" class="btn btn-primary">Export GAF &raquo;</button>
           <button id="button_id_for_gpd_export" type="submit" class="btn btn-primary">Export GPAD &raquo;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="import">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Load model using ??? format<span style="color:red;">ALPHA</span></h3>
+        </div>
+        <div class="panel-body">
+          <p>
+            You do <strong>not</strong> want to be using this right
+            now.
+          </p>
+          <p>
+            <textarea class="form-control" id="model_data_input"
+		      placeholder="???" rows="3"></textarea>
+          </p>
+          <p>
+            <button id="model_data_button" type="submit"
+		    class="btn btn-primary">Load</button>
+          </p>
+          <!-- </form> -->
         </div>
       </div>
 
@@ -249,19 +259,16 @@
           <h3 class="panel-title">About Noctua</h3>
         </div>
         <div class="panel-body">
-
           <p>
             <a href="https://github.com/geneontology/noctua">Noctua (clients and Barista)</a>
 	    at GitHub.
             <a href="https://github.com/geneontology/minerva">Noctua (Minerva server)</a>
 	    at GitHub.
           </p>
-
           <p>
             <a href="https://github.com/geneontology/noctua/issues">Issue tracker</a>
 	    at GitHub.
           </p>
-
         </div>
       </div>
 
@@ -276,7 +283,6 @@
           <h3 class="panel-title">Capella Bootstrap</h3>
         </div>
         <div class="panel-body">
-
           <p>
             Various test methods to look at how capella kick-ins behave.
           </p>
@@ -285,7 +291,6 @@
             <br />
             <a href="{{capella_test}}">(test payload)</a>
           </p>
-
         </div>
       </div>
 
@@ -295,48 +300,50 @@
           <h3 class="panel-title">JSON Debugging</h3>
         </div>
         <div class="panel-body">
-
           <form action="/seed/json" id="json-seed" role="form" method="POST">
             <p>
-              <textarea class="form-control" id="model_json_input" name="json-model" placeholder="???" rows="3"></textarea>
+              <textarea class="form-control" id="model_json_input"
+			name="json-model" placeholder="???" rows="3"></textarea>
             </p>
-
             <p>
-              <button id="model_json_button" type="submit" class="btn btn-primary">Load</button>
+              <button id="model_json_button" type="submit"
+		      class="btn btn-primary">Load</button>
             </p>
           </form>
-
         </div>
       </div>
 
+      <!-- Client admin. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Noctua Client Administration</h3>
         </div>
         <div class="panel-body">
-
           <p>
-            <a type="button" class="btn btn-primary" href="{{noctua_location}}/status">Status &raquo;</a>
+            <a type="button" class="btn btn-primary"
+	       href="{{noctua_location}}/status">Status &raquo;</a>
           </p>
-
         </div>
       </div>
 
+      <!-- Barista admin. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Barista Administration</h3>
         </div>
         <div class="panel-body">
-
           {{#barista_token}}
           <p>
-            <a type="button" class="btn btn-primary" href="{{barista_users}}">Users &raquo;</a>
+            <a type="button" class="btn btn-primary"
+	       href="{{barista_users}}">Users &raquo;</a>
           </p>
           <p>
-            <a type="button" class="btn btn-primary" href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
+            <a type="button" class="btn btn-primary"
+	       href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
           </p>
           <p>
-            <a type="button" class="btn btn-primary" href="{{barista_location}}/status">Status &raquo;</a>
+            <a type="button" class="btn btn-primary"
+	       href="{{barista_location}}/status">Status &raquo;</a>
           </p>
           {{/barista_token}} {{^barista_token}}
           <p>
@@ -344,7 +351,6 @@
             <br /> A configuration error is also possible.
           </p>
           {{/barista_token}}
-
         </div>
       </div>
 

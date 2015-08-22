@@ -42,24 +42,24 @@ var minerva_manager = require('bbop-manager-minerva');
 
 // Harumph.
 var global_known_taxons = [
-    ['3702', 'Arabidopsis thaliana'],
-    ['9913', 'Bos taurus'],
-    ['6239', 'Caenorhabditis elegans'],
-    ['237561', 'Candida albicans (SC5314)'],
-    ['9615', 'Canis lupus familiaris'],
-    ['7955', 'Danio rerio'],
-    ['44689', 'Dictyostelium discoideum'],
-    ['7227', 'Drosophila melanogaster'],
-    ['83333', 'Escherichia coli (K-12)'],
-    ['9031', 'Gallus gallus'],
-    ['9606', 'Homo sapiens'],
-    ['10090', 'Mus musculus'],
-    ['39947', 'Oryza sativa (Japonica Group)'],
-    ['208964', 'Pseudomonas aeruginosa (PAO1)'],
-    ['10116', 'Rattus norvegicus'],
-    ['559292', 'Saccharomyces cerevisiae'],
-    ['284812', 'Schizosaccharomyces pombe'],
-    ['9823', 'Sus scrofa']
+    ['NCBITaxon:3702', 'Arabidopsis thaliana'],
+    ['NCBITaxon:9913', 'Bos taurus'],
+    ['NCBITaxon:6239', 'Caenorhabditis elegans'],
+    ['NCBITaxon:237561', 'Candida albicans (SC5314)'],
+    ['NCBITaxon:9615', 'Canis lupus familiaris'],
+    ['NCBITaxon:7955', 'Danio rerio'],
+    ['NCBITaxon:44689', 'Dictyostelium discoideum'],
+    ['NCBITaxon:7227', 'Drosophila melanogaster'],
+    ['NCBITaxon:83333', 'Escherichia coli (K-12)'],
+    ['NCBITaxon:9031', 'Gallus gallus'],
+    ['NCBITaxon:9606', 'Homo sapiens'],
+    ['NCBITaxon:10090', 'Mus musculus'],
+    ['NCBITaxon:39947', 'Oryza sativa (Japonica Group)'],
+    ['NCBITaxon:208964', 'Pseudomonas aeruginosa (PAO1)'],
+    ['NCBITaxon:10116', 'Rattus norvegicus'],
+    ['NCBITaxon:559292', 'Saccharomyces cerevisiae'],
+    ['NCBITaxon:284812', 'Schizosaccharomyces pombe'],
+    ['NCBITaxon:9823', 'Sus scrofa']
 ];
 
 var MMEnvBootstrappingInit = function(user_token){
@@ -89,19 +89,43 @@ var MMEnvBootstrappingInit = function(user_token){
     // var select_scratch_jump_button_id = 'select_scratch_jump_button';
     // var select_scratch_jump_button_elt = '#' + select_scratch_jump_button_id;
     //
+    // Form interface jump.
+    var select_stored_jump_basic_id = 'select_stored_jump_basic';
+    var select_stored_jump_basic_elt = '#' + select_stored_jump_basic_id;
+    var select_stored_jump_button_basic_id = 'select_stored_jump_button_basic';
+    var select_stored_jump_button_basic_elt =
+	    '#' + select_stored_jump_button_basic_id;
+    // Form interface creation.
+    var select_stored_create_basic_id = 'select_stored_create_basic';
+    var select_stored_create_basic_elt = '#' + select_stored_create_basic_id;
+    var select_stored_create_button_basic_id =
+	    'select_stored_create_button_basic';
+    var select_stored_create_button_basic_elt =
+	    '#' + select_stored_create_button_basic_id;
+    //
     var model_data_button_id = 'model_data_button';
     var model_data_button_elt = '#' + model_data_button_id;
     var model_data_input_id = 'model_data_input';
     var model_data_input_elt = '#' + model_data_input_id;
-    // Create new model from taxon.
-    var model_create_by_taxon_button_id = 'button_taxon_for_create';
-    var model_create_by_taxon_button_elt = '#' + model_create_by_taxon_button_id;
-    var model_create_by_taxon_input_id = 'select_taxon_for_create';
-    var model_create_by_taxon_input_elt = '#' + model_create_by_taxon_input_id;
     // Create new model from nothing.
     var model_create_by_nothing_id = 'button_nothing_for_create';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
-    // Create new model from nothing.
+    // Create new model from process and taxon.
+    var model_create_by_protax_button_id = 'button_protax_for_create';
+    var model_create_by_protax_button_elt =
+	    '#' + model_create_by_protax_button_id;
+    var model_create_by_protax_input_proc_id = 'select_protax_proc_for_create';
+    var model_create_by_protax_input_proc_elt =
+	    '#' + model_create_by_protax_input_proc_id;
+    var model_create_by_protax_input_tax_id = 'select_protax_tax_for_create';
+    var model_create_by_protax_input_tax_elt =
+	    '#' + model_create_by_protax_input_tax_id;
+    // Create new model from nothing for form.
+    var model_create_for_form_button_id = 'button_taxon_for_create';
+    var model_create_for_form_button_elt = '#' + model_create_for_form_button_id;
+    var model_create_for_form_input_id = 'select_taxon_for_create';
+    var model_create_for_form_input_elt = '#' + model_create_for_form_input_id;
+    // Export DOM hooks.
     var model_export_by_id_def_button_id = 'button_id_for_def_export';
     var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
     var model_export_by_id_gaf_button_id = 'button_id_for_gaf_export';
@@ -144,21 +168,23 @@ var MMEnvBootstrappingInit = function(user_token){
 	window.location.replace(newrl);
     }
 
-    // On any model build success, forward to the new page.
-    // var wizard_jump_term = null;
-    // var wizard_jump_db = null;
-    var to_basic_form = false;
-    function _generated_model(resp, man) {
-      var id = resp.data()['id'];
-      var new_url = "";
-      if (to_basic_form) {
-        new_url = '/basic/' + id;
-      } else {
-        new_url = '/seed/model/' + id;
-      }
-      _jump_to_page(new_url);
+    function _generate_jump_url(id, editor_type){
+	var new_url = "";
+	if( editor_type === 'basic' ){
+            new_url = '/basic/' + id;
+	}else{
+            new_url = '/seed/model/' + id;
+	}
+	return new_url;
     }
-
+    
+    // On any model build success, forward to the new page.
+    var to_editor = 'graph';
+    function _generated_model(resp, man) {
+	var id = resp.data()['id'];
+	_jump_to_page(_generate_jump_url(id, to_editor));
+    }
+    
     // Internal registrations.
     manager.register('prerun', _shields_up);
     manager.register('postrun', _shields_down, 9);
@@ -313,7 +339,9 @@ var MMEnvBootstrappingInit = function(user_token){
 	    var model_meta_ids = us.keys(models_meta) || [];
 	    //console.log(model_meta_ids);
 	    var sorted_model_meta_ids = model_meta_ids.sort(function(a, b){
-		var gt_p = _get_model_title(a) < _get_model_title(b);
+		var lc_a = _get_model_title(a).toLowerCase();
+		var lc_b = _get_model_title(b).toLowerCase();
+		var gt_p = lc_a < lc_b;
 		var retval = 0;
 		// Std sort.
 		if( gt_p === true ){ retval = -1; }
@@ -330,8 +358,7 @@ var MMEnvBootstrappingInit = function(user_token){
 		return retval;
 	    });
 
-	    // Insert model IDs into "Select by ID" interface.
-	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
+	    // Generate list for selection dropdowns.
 	    var rep_cache = [];
 	    each(sorted_model_meta_ids, function(model_id){
 
@@ -357,36 +384,31 @@ var MMEnvBootstrappingInit = function(user_token){
 		rep_cache.push('</option>');
 	    });
 	    var rep_str = rep_cache.join('');
+
+	    // Insert model IDs into "Select by ID" interface.
+	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
 	    jQuery(select_stored_jump_elt).append(rep_str);
 
-	    jQuery("#select_stored_jump_basic").empty();
-	    jQuery("#select_stored_jump_basic").append(rep_str);
+	    // Dropdown for the form select interface.
+	    jQuery(select_stored_jump_basic_elt).empty();
+	    jQuery(select_stored_jump_basic_elt).append(rep_str);
 
 	    // Also add this list to the export interface.
 	    jQuery(model_export_by_id_input_elt).empty();
 	    jQuery(model_export_by_id_input_elt).append(rep_str);
 
-	    // Make jump interface jump on click.
+	    // Make jump interface for graph jump on click.
 	    jQuery(select_stored_jump_button_elt).click(function(evt){
 		var id = jQuery(select_stored_jump_elt).val();
-		//alert('val: '+ id);
-		var new_url = '/seed/model/' + id;
-		_jump_to_page(new_url);
+		_jump_to_page(_generate_jump_url(id, 'graph'));
 	    });
 
-	    // Make jump interface jump on click.
-	    jQuery("#select_stored_jump_button_basic").click(function(evt) {
-	      var id = jQuery("#select_stored_jump_basic").val();
-	      //alert('val: '+ id);
-	      var new_url = '/basic/' + id;
-	      _jump_to_page(new_url);
+	    // Make jump interface for form jump on click.
+	    jQuery(select_stored_jump_button_basic_elt).click(function(evt) {
+	      var id = jQuery(select_stored_jump_basic_elt).val();
+	      _jump_to_page(_generate_jump_url(id, 'basic'));
 	    });
 
-	    jQuery("#new_jump_button_basic").click(function(evt) {
-		to_basic_form = true;
-		manager.add_model();
-	    });
-	    
 	    // Make export interface trigger on click.
 	    jQuery(model_export_by_id_def_button_elt).click(function(evt){
 		var id = jQuery(model_export_by_id_input_elt).val();
@@ -401,9 +423,16 @@ var MMEnvBootstrappingInit = function(user_token){
 		manager.export_model(id, 'gpad');
 	    });
 
-	    // Insert taxon info into "Create new fmodel fron taxon"
-	    // interface.
-	    jQuery(model_create_by_taxon_input_elt).empty();
+	    // Creation for form. Since default is in the callback is
+	    // "graph", goose it over to kick me to form instead.
+	    jQuery(select_stored_create_button_basic_elt).click(function(evt) {
+		to_editor = "basic";
+		manager.add_model();
+	    });
+	    
+	    // Insert process and taxon info into "Create new model
+	    // from process and taxon" interface.
+	    jQuery(model_create_by_protax_input_tax_elt).empty();
 	    var tax_cache = [];
 	    each(global_known_taxons, function(tax_pair){
 		var taxid = tax_pair[0];
@@ -413,13 +442,19 @@ var MMEnvBootstrappingInit = function(user_token){
 		tax_cache.push('</option>');
 	    });
 	    var tax_str = tax_cache.join('');
-	    jQuery(model_create_by_taxon_input_elt).append(tax_str);
+	    jQuery(model_create_by_protax_input_tax_elt).append(tax_str);
+	    
+	    // Get create-by-process/taxon ready to go.
+	    jQuery(model_create_by_protax_button_elt).click(function(evt){
 
-	    // Get create-by-taxon ready to go.
-	    jQuery(model_create_by_taxon_button_elt).click(function(evt){
-		var id = jQuery(model_create_by_taxon_input_elt).val();
-		//alert('val: ' + id);
-		manager.add_model(id, null);
+		var proc_id =jQuery(model_create_by_protax_input_proc_elt).val();
+		var tax_id = jQuery(model_create_by_protax_input_tax_elt).val();
+
+		if( proc_id && tax_id ){
+		    manager.seed_from_process(proc_id, tax_id);
+		}else{
+		    alert('ERROR: Need both process ID (GO:XXXXXXX) and taxon ID (NCBITaxon:XXXXXXX) to proceed.');
+		}
 	    });
 	}
     });

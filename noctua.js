@@ -8,6 +8,9 @@
  * : BARISTA_LOCATION=http://localhost:3400 make start-noctua
  */
 
+// Let jshint pass over over our external globals or oddities.
+/* global unescape */
+
 // Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
@@ -40,7 +43,7 @@ var collapsible_relations = require('./config/collapsible_relations.json');
 console.log('Will fold: ', collapsible_relations);
 
 // The name we're using this week.
-var notw = 'Noctua Graph Editor';
+var notw = 'Noctua (Preview)';
 
 ///
 /// Define the sample application.
@@ -360,11 +363,23 @@ var NoctuaLauncher = function(){
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
-	    var query = req.route.params['query'] || '';
+	    var model_id = req.route.params['query'] || '';
+
+	    var noctua_landing = _build_token_link(self.hostport, barista_token);
+	    var barista_login = self.barista_location + '/session' + '?return=' +
+		    self.hostport + '/basic/' + model_id;
+	    var barista_logout =
+		    _build_token_link(self.barista_location + '/session' +
+				      '?return=' + self.hostport + '/basic/' +
+				      model_id, barista_token);
 
 	    //
 	    var tmpl_args = {
 		'title': notw + ': Simple',
+		'barista_token': barista_token,
+		'noctua_landing': noctua_landing,
+		'barista_login': barista_login,
+		'barista_logout': barista_logout,
 		'pup_tent_js_variables': [
 		    {name: 'global_minerva_definition_name',
 		     value: self.minerva_definition_name },
@@ -376,33 +391,33 @@ var NoctuaLauncher = function(){
 		     value: self.barista_location },
 		    {name: 'golr_loc',
 		     value: server_loc},
-        {name: 'model_id',
-         value: query}
+		    {name: 'model_id',
+		     value: model_id}
 		],
 		'pup_tent_js_libraries': [
-        // TODO load via npm
-			  //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
-    		//'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
-    		//'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
-    		//'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
-    		//'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
-    		//'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
+		    // TODO load via npm
+		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
+    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
+    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
+    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
+    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
+    		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
 		    //'/selectize.min.js',
-        //'/xeditable.min.js',
-        //'/bs-table.min.js',
-        //'/bbop-widget-solr-autocomplete.js',
+		    //'/xeditable.min.js',
+		    //'/bs-table.min.js',
+		    //'/bbop-widget-solr-autocomplete.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
 		    '/deploy/js/NoctuaBasic/NoctuaBasicController.js'
 		],
-	    'pup_tent_css_libraries': [
-      '/css/NoctuaBasic.css',
-			'/selectize.css',
-			'/selectize.bootstrap3.css',
-			'/selectize.custom.css',
-      '/xeditable.css',
-      '/angular-material.css'
-			//'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
-	    ]
+		'pup_tent_css_libraries': [
+		    '/css/NoctuaBasic.css',
+		    '/selectize.css',
+		    '/selectize.bootstrap3.css',
+		    '/selectize.custom.css',
+		    '/xeditable.css',
+		    '/angular-material.css'
+		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
+		]
 	    };
 	    var ind = pup_tent.render('noctua_basic.tmpl',
 				      tmpl_args,
