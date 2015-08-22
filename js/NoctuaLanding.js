@@ -170,6 +170,7 @@ var MMEnvBootstrappingInit = function(user_token){
     }
     
     // On any model build success, forward to the new page.
+    // Typically a callback for rebuild.
     var to_editor = 'graph';
     function _generated_model(resp, man) {
 	var id = resp.data()['id'];
@@ -222,7 +223,9 @@ var MMEnvBootstrappingInit = function(user_token){
     // that first.
     manager.register('meta', function(resp, man){
 
+	// Got a model export.
 	if( resp.export_model() ){
+	    console.log('meta: export kick');
 
 	    //
 	    var exp = resp.export_model();
@@ -241,7 +244,15 @@ var MMEnvBootstrappingInit = function(user_token){
 	    // var expdia = new widgetry.contained_modal(null, '<strong>Export</strong>', exp);
 	    // expdia.show();
 
-	}else{
+	}else if( resp.data() && resp.data()['id'] &&
+		  us.keys(resp.data()).length === 1 ){ // got a seeding response?
+	    console.log('meta: seeding kick');
+
+	    // Kick out to the new model.
+	    _generated_model(resp, man);
+
+	}else{ // rebuild interface with general metadata
+	    console.log('meta: general rebuild');
 
 	    // We'll construct a hash that looks like:
 	    // {'<MODEL_ID>' : {<ANN_KEY_1>: [VAL, VAL], <ANN_KEY_2>: [], },  }
@@ -422,19 +433,9 @@ var MMEnvBootstrappingInit = function(user_token){
 		manager.add_model();
 	    });
 	    
-	    // // Insert process and taxon info into "Create new model
-	    // // from process and taxon" interface.
-	    // jQuery(model_create_by_protax_input_tax_elt).empty();
-	    // var tax_cache = [];
-	    // each(global_known_taxons, function(tax_pair){
-	    // 	var taxid = tax_pair[0];
-	    // 	var tname = tax_pair[1];
-	    // 	tax_cache.push('<option value="' + taxid + '">');
-	    // 	tax_cache.push(tname);
-	    // 	tax_cache.push('</option>');
-	    // });
-	    // var tax_str = tax_cache.join('');
-	    // jQuery(model_create_by_protax_input_tax_elt).append(tax_str);
+	    ///
+	    /// Make the process/taxon seeding interactive.
+	    ///
 
 	    var protax_proc_auto_val = null;
 	    var protax_tax_auto_val = null;
@@ -489,10 +490,10 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(model_create_by_protax_button_elt).click(function(evt){
 
 		if( protax_proc_auto_val && protax_tax_auto_val ){
-		    alert('You have: ' + protax_proc_auto_val +
-			  ' and ' + protax_tax_auto_val);
-		    // manager.seed_from_process(protax_proc_auto_val,
-		    // 			      protax_tax_auto_val);
+		    // alert('You have: ' + protax_proc_auto_val +
+		    // 	  ' and ' + protax_tax_auto_val);
+		    manager.seed_from_process(protax_proc_auto_val,
+		    			      protax_tax_auto_val);
 		}else{
 		    alert('ERROR: Need both process ID (GO:XXXXXXX) and ' +
 			  'taxon ID (NCBITaxon:XXXXXXX) to proceed.');
@@ -503,6 +504,7 @@ var MMEnvBootstrappingInit = function(user_token){
 
     // Likely result of a new model being built on Minerva.
     manager.register('rebuild', function(resp, man){
+	console.log('rebuild: UI kick: ' + to_editor);
 	_generated_model(resp, man);
     }, 10);
 
