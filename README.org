@@ -13,7 +13,7 @@
   allows create/read/update/delete operations on an OWL Model.
 
   The current alpha instance is available at: http://noctua.berkeleybop.org - for a toy example model,
-  see [[noctua.berkeleybop.org/seed/model/gomodel:55ad81df00000001][the scratch model]]
+  see [[http://noctua.berkeleybop.org/seed/model/gomodel:55ad81df00000001][the scratch model]]
   
   This instance is configured for use with the [[http://geneontology.org][Gene Ontology]] project.
 
