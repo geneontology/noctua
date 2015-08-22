@@ -149,7 +149,7 @@
           <p>
             You <strong>must</strong> be logged in to create a new
             model. You will jump directly to the <strong>graph editor
-            UI</strong> for the new model.
+            UI</strong> for the new empty model.
           </p>
 
           <button id="button_nothing_for_create" type="button"
@@ -166,15 +166,24 @@
           <p>
             You <strong>must</strong> be logged in to create a new
             model from a taxon. If successful, you will jump directly
-            to the <strong>graph editor UI</strong> for the new model.
+            to the <strong>graph editor UI</strong> for the new seeded
+            model.
           </p>
           <div class="form-group">
-            <select id="select_protax_proc_for_create" class="form-control">
-            </select>
-            <select id="select_protax_tax_for_create" class="form-control">
-            </select>
+	    <p>
+	      <input type="text"
+		     class="form-control"
+		     id="select_protax_proc_for_create"
+		     placeholder="GO process">
+	    </p>
+	    <p>
+	      <input type="text"
+		     class="form-control"
+		     id="select_protax_tax_for_create"
+		     placeholder="Taxon">
+	    </p>
           </div>
-          <button id="button_taxon_for_create" type="button"
+          <button id="button_protax_for_create" type="button"
 		  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
@@ -188,9 +197,9 @@
           <p>
             You <strong>must</strong> be logged in to create a new
             model. You will jump directly to the <strong>prototype
-            form editor UI</strong> for the new model.
+            form editor UI</strong> for the new empty model.
           </p>
-          <button id="select_stored_create_button_basic" type="submit"
+          <button id="create_button_basic" type="submit"
 	  	  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
@@ -230,7 +239,7 @@
     <div class="tab-pane noctua_tab_wrapper" id="import">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Load model using ??? format<span style="color:red;">ALPHA</span></h3>
+          <h3 class="panel-title">Load model using ??? format <span style="color:red;">ALPHA</span></h3>
         </div>
         <div class="panel-body">
           <p>

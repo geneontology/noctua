@@ -95,18 +95,6 @@ var MMEnvBootstrappingInit = function(user_token){
     var select_stored_jump_button_basic_id = 'select_stored_jump_button_basic';
     var select_stored_jump_button_basic_elt =
 	    '#' + select_stored_jump_button_basic_id;
-    // Form interface creation.
-    var select_stored_create_basic_id = 'select_stored_create_basic';
-    var select_stored_create_basic_elt = '#' + select_stored_create_basic_id;
-    var select_stored_create_button_basic_id =
-	    'select_stored_create_button_basic';
-    var select_stored_create_button_basic_elt =
-	    '#' + select_stored_create_button_basic_id;
-    //
-    var model_data_button_id = 'model_data_button';
-    var model_data_button_elt = '#' + model_data_button_id;
-    var model_data_input_id = 'model_data_input';
-    var model_data_input_elt = '#' + model_data_input_id;
     // Create new model from nothing.
     var model_create_by_nothing_id = 'button_nothing_for_create';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
@@ -121,10 +109,8 @@ var MMEnvBootstrappingInit = function(user_token){
     var model_create_by_protax_input_tax_elt =
 	    '#' + model_create_by_protax_input_tax_id;
     // Create new model from nothing for form.
-    var model_create_for_form_button_id = 'button_taxon_for_create';
+    var model_create_for_form_button_id = 'create_button_basic';
     var model_create_for_form_button_elt = '#' + model_create_for_form_button_id;
-    var model_create_for_form_input_id = 'select_taxon_for_create';
-    var model_create_for_form_input_elt = '#' + model_create_for_form_input_id;
     // Export DOM hooks.
     var model_export_by_id_def_button_id = 'button_id_for_def_export';
     var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
@@ -134,6 +120,11 @@ var MMEnvBootstrappingInit = function(user_token){
     var model_export_by_id_gpd_button_elt = '#'+model_export_by_id_gpd_button_id;
     var model_export_by_id_input_id = 'select_id_for_export';
     var model_export_by_id_input_elt = '#' + model_export_by_id_input_id;
+    // Importer DOM hooks.
+    var model_data_button_id = 'model_data_button';
+    var model_data_button_elt = '#' + model_data_button_id;
+    var model_data_input_id = 'model_data_input';
+    var model_data_input_elt = '#' + model_data_input_id;
 
     ///
     /// Helpers.
@@ -390,6 +381,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(select_stored_jump_elt).append(rep_str);
 
 	    // Dropdown for the form select interface.
+
 	    jQuery(select_stored_jump_basic_elt).empty();
 	    jQuery(select_stored_jump_basic_elt).append(rep_str);
 
@@ -425,35 +417,85 @@ var MMEnvBootstrappingInit = function(user_token){
 
 	    // Creation for form. Since default is in the callback is
 	    // "graph", goose it over to kick me to form instead.
-	    jQuery(select_stored_create_button_basic_elt).click(function(evt) {
+	    jQuery(model_create_for_form_button_elt).click(function(evt) {
 		to_editor = "basic";
 		manager.add_model();
 	    });
 	    
-	    // Insert process and taxon info into "Create new model
-	    // from process and taxon" interface.
-	    jQuery(model_create_by_protax_input_tax_elt).empty();
-	    var tax_cache = [];
-	    each(global_known_taxons, function(tax_pair){
-		var taxid = tax_pair[0];
-		var tname = tax_pair[1];
-		tax_cache.push('<option value="' + taxid + '">');
-		tax_cache.push(tname);
-		tax_cache.push('</option>');
-	    });
-	    var tax_str = tax_cache.join('');
-	    jQuery(model_create_by_protax_input_tax_elt).append(tax_str);
+	    // // Insert process and taxon info into "Create new model
+	    // // from process and taxon" interface.
+	    // jQuery(model_create_by_protax_input_tax_elt).empty();
+	    // var tax_cache = [];
+	    // each(global_known_taxons, function(tax_pair){
+	    // 	var taxid = tax_pair[0];
+	    // 	var tname = tax_pair[1];
+	    // 	tax_cache.push('<option value="' + taxid + '">');
+	    // 	tax_cache.push(tname);
+	    // 	tax_cache.push('</option>');
+	    // });
+	    // var tax_str = tax_cache.join('');
+	    // jQuery(model_create_by_protax_input_tax_elt).append(tax_str);
+
+	    var protax_proc_auto_val = null;
+	    var protax_tax_auto_val = null;
+
+	    // go process
+	    var protax_proc_auto_args = {
+    		'label_template':
+		'{{annotation_class_label}} ({{annotation_class}})',
+    		'value_template': '{{annotation_class_label}}',
+		'additional_results_class': 'bbop-mme-more-results-ul',
+    		'list_select_callback':
+    		function(doc){
+    		    //alert('adding: ' + doc['annotation_class_label']);
+		    protax_proc_auto_val = doc['annotation_class'] || null;
+    		}
+	    };
+	    var protax_proc_auto =
+	    	new bbop_legacy.widget.search_box(
+		    gserv, gconf, model_create_by_protax_input_proc_id,
+		    protax_proc_auto_args);
+	    protax_proc_auto.lite(true);
+	    protax_proc_auto.add_query_filter('document_category',
+					      'ontology_class');
+	    protax_proc_auto.add_query_filter('regulates_closure_label',
+    					      'biological_process');
+	    protax_proc_auto.set_personality('ontology');
 	    
+	    // taxon
+	    var protax_tax_auto_args = {
+    		'label_template':
+		'{{annotation_class_label}} ({{annotation_class}})',
+    		'value_template': '{{annotation_class_label}}',
+		'additional_results_class': 'bbop-mme-more-results-ul',
+    		'list_select_callback':
+    		function(doc){
+    		    //alert('adding: ' + doc['annotation_class_label']);
+		    protax_tax_auto_val = doc['annotation_class'] || null;
+    		}
+	    };
+	    var protax_tax_auto =
+	    	new bbop_legacy.widget.search_box(
+		    gserv, gconf, model_create_by_protax_input_tax_id,
+		    protax_tax_auto_args);
+	    protax_tax_auto.lite(true);
+	    protax_tax_auto.add_query_filter('document_category',
+					     'ontology_class');
+	    protax_tax_auto.add_query_filter('source',
+    					     'ncbi_taxonomy');
+	    protax_tax_auto.set_personality('ontology');
+
 	    // Get create-by-process/taxon ready to go.
 	    jQuery(model_create_by_protax_button_elt).click(function(evt){
 
-		var proc_id =jQuery(model_create_by_protax_input_proc_elt).val();
-		var tax_id = jQuery(model_create_by_protax_input_tax_elt).val();
-
-		if( proc_id && tax_id ){
-		    manager.seed_from_process(proc_id, tax_id);
+		if( protax_proc_auto_val && protax_tax_auto_val ){
+		    alert('You have: ' + protax_proc_auto_val +
+			  ' and ' + protax_tax_auto_val);
+		    // manager.seed_from_process(protax_proc_auto_val,
+		    // 			      protax_tax_auto_val);
 		}else{
-		    alert('ERROR: Need both process ID (GO:XXXXXXX) and taxon ID (NCBITaxon:XXXXXXX) to proceed.');
+		    alert('ERROR: Need both process ID (GO:XXXXXXX) and ' +
+			  'taxon ID (NCBITaxon:XXXXXXX) to proceed.');
 		}
 	    });
 	}
