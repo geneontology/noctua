@@ -805,7 +805,7 @@ var BaristaLauncher = function(){
     var http_proxy = require('http-proxy');
     var api_proxy = http_proxy.createProxyServer({});
     // GET version.
-    messaging_app.get("/api/:namespace/:call", function(req, res){ 
+    messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){ 
 
 	// TODO: Request logging hooks could be placed in here.
 	//console.log('pre api req: ' + req.url);
@@ -848,6 +848,8 @@ var BaristaLauncher = function(){
 	// Do we have permissions to make the call?
 	var ns = req.route.params['namespace'] || '';
 	var call = req.route.params['call'] || '';
+	var subcall = req.route.params['subcall'] || '';
+	call = call + subcall; // allow for things like seed/fromProcess
 	if( ! app_guard.is_public(ns, call) && ! uuri ){
 	    console.log('blocking call: ' + req.url);
 	    
