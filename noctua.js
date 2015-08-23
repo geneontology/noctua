@@ -42,6 +42,8 @@ var app_base = sd.app_base();
 var collapsible_relations = require('./config/collapsible_relations.json');
 console.log('Will fold: ', collapsible_relations);
 
+var golr_server_location = 'http://golr.berkeleybop.org/';
+
 // The name we're using this week.
 var notw = 'Noctua (Preview)';
 
@@ -226,7 +228,7 @@ var NoctuaLauncher = function(){
 		{name: 'global_model',
 		 value: (model_obj || null)},
 		{name: 'global_golr_server',
-		 value: 'http://golr.berkeleybop.org/'},
+		 value: golr_server_location},
 		{name: 'global_minerva_definition_name',
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location',
@@ -409,7 +411,7 @@ var NoctuaLauncher = function(){
 		    {name:'global_barista_location',
 		     value: self.barista_location },
 		    {name: 'golr_loc',
-		     value: server_loc},
+		     value: golr_server_location},
 		    {name: 'model_id',
 		     value: model_id}
 		],
@@ -509,8 +511,6 @@ var NoctuaLauncher = function(){
 	///
 
 	// Define the GOlr request conf.
-	var server_loc = 'http://golr.berkeleybop.org/';
-	//var server_loc = 'http://localhost:8080/solr/';
 	var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
 	// Directly kick-to-edit an extant model--most things should
@@ -733,7 +733,8 @@ var NoctuaLauncher = function(){
 		// information; this information then goes into the
 		// above callback, that then starts the model building
 		// process.
-		var m = new bbop_legacy.golr.manager.nodejs(server_loc, gconf);
+		var m = new bbop_legacy.golr.manager.nodejs(golr_server_location,
+							    gconf);
 		m.add_query_filter('document_category', 'ontology_class');
 		m.set_personality('ontology');
 		m.register('search', 'foo', action_after_resolution_call);
