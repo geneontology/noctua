@@ -62,6 +62,36 @@ var what_is = bbop.what_is;
 var uuid = bbop.uuid;
 
 ///
+/// Ugly decode table necessary because of "hack" load we currently do
+/// to support the three letter codes. Ask @cmungall about this.
+///
+
+// TODO
+var eco_lookup = {
+    EXP: 'ECO:0000006', //???
+    IDA: 'Inferred from Direct Assay',
+    IPI: 'Inferred from Physical Interaction',
+    IMP: 'Inferred from Mutant Phenotype',
+    IGI: 'Inferred from Genetic Interaction',
+    IEP: 'Inferred from Expression Pattern',
+    ISS: 'Inferred from Sequence or structural Similarity',
+    ISO: 'Inferred from Sequence Orthology',
+    ISA: 'Inferred from Sequence Alignment',
+    ISM: 'Inferred from Sequence Model',
+    IGC: 'Inferred from Genomic Context',
+    IBA: 'Inferred from Biological aspect of Ancestor',
+    IBD: 'Inferred from Biological aspect of Descendant',
+    IKR: 'Inferred from Key Residues',
+    IRD: 'Inferred from Rapid Divergenc',
+    RCA: 'Inferred from Reviewed Computational Analysis',
+    TAS: 'Traceable Author Statement',
+    NAS: 'Non-traceable Author Statement',
+    IC: 'Inferred by Curator',
+    ND: 'No biological Data available (ND) evidence code',
+    IEA: 'Inferred from Electronic Annotation'
+};
+
+///
 ///
 ///
 
@@ -77,16 +107,13 @@ var CompanionInit = function(user_token){
     // Events registry.
     // Add manager and default callbacks to repl.
     var engine = new jquery_engine(barista_response);
-    var manager = new minerva_manager(global_barista_location,
-				      global_minerva_definition_name,
-				      user_token, engine, 'async');
-
+    var mmanager = new minerva_manager(global_barista_location,
+				       global_minerva_definition_name,
+				       user_token, engine, 'async');
+    
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
-
-    // Contact points...
-    // ...
 
     ///
     /// Minerva/Noctua comms.
@@ -117,21 +144,21 @@ var CompanionInit = function(user_token){
     }
 
     // Internal registrations.
-    manager.register('prerun', _shields_up);
-    manager.register('postrun', _shields_down, 9);
-    manager.register('manager_error', function(resp, man){
+    mmanager.register('prerun', _shields_up);
+    mmanager.register('postrun', _shields_down, 9);
+    mmanager.register('manager_error', function(resp, man){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
 
     // Likely the result of unhappiness on Minerva.
-    manager.register('warning', function(resp, man){
+    mmanager.register('warning', function(resp, man){
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed');
     }, 10);
 
     // Likely the result of serious unhappiness on Minerva.
-    manager.register('error', function(resp, man){
+    mmanager.register('error', function(resp, man){
 
 	// Do something different if we think that this is a
 	// permissions issue.
@@ -152,17 +179,17 @@ var CompanionInit = function(user_token){
     }, 10);
 
     // ???
-    manager.register('meta', function(resp, man){
+    mmanager.register('meta', function(resp, man){
 	ll('a meta callback?');
     });
 
     // Likely result of a new model being built on Minerva.
-    manager.register('rebuild', function(resp, man){
+    mmanager.register('rebuild', function(resp, man){
 	ll('rebuild callback');
 	alert('Model rebuilt.');
     }, 10);
 
-    //manager.get_model(global_id);
+    //mmanager.get_model(global_id);
 
     ///
     /// AmiGO comms.
@@ -174,17 +201,10 @@ var CompanionInit = function(user_token){
     widget_manager.set_personality('annotation');
     widget_manager.add_query_filter('document_category',
 				    confc.document_category(), ['*']);
-
-    // // Ready the secondary ID resolution manager ().
-    // var resolution_manager =
-    // 	    new bbop_legacy.golr.manager.jquery(solr_server, gconf);
-    // resolution_manager.set_personality('annotation');
-    // resolution_manager.add_query_filter('document_category', // reuse confc
-    // 					confc.document_category(), ['*']);
-
+    
     // Attach filters to manager.
     var hargs = {
-	meta_label: 'Total pool:&nbsp;',
+	meta_label: 'Total documents:&nbsp;',
 	// free_text_placeholder:
 	// 'Input text to filter against all remaining documents',
 	'display_free_text_p': false
@@ -208,10 +228,65 @@ var CompanionInit = function(user_token){
 	    
 	    return function(event){
 		
-   		var huh = results_table.get_selected_items();
+   		var selected_ids = results_table.get_selected_items();
+   		var resp = results_table.last_response();
 
-		console.log('huh', huh);
-		console.log('rs', results_table);
+		if( ! resp || ! selected_ids || ! resp.success() ||
+		  us.isEmpty(selected_ids) ){
+		    alert('No action can be taken currently.');
+		}else{
+		    //alert('Actionable input.');
+		    
+		    // Extract the documents that we'll operate on.
+		    var docs_to_run = [];
+		    each(selected_ids, function(sid){
+			var doc = resp.get_doc(sid);
+			if( doc ){
+			    docs_to_run.push(doc);
+			}
+		    });
+		    
+		    // Assemble a batch to run.
+		    var reqs = new minerva_requests.request_set(
+			global_barista_token, global_id);
+		    each(docs_to_run, function(doc){
+			
+			// Who are we talking about?
+			var acls = doc['annotation_class'];
+			var bio = doc['bioentity'];
+			var rel = 'RO:0002333';
+			var ev = doc['evidence_type'];
+			ev = 'ECO:0000000'; // TODO/BUG
+			// Fix refs if necessary.
+			var refs = doc['reference'];
+			if( ! refs ){ // null to list
+			    refs = [];
+			}
+			if( ! us.isArray(refs) ){ // string to list
+			    refs = [refs];
+			}
+			// Fix withs if necessary.
+			var withs = doc['evidence_with'];
+			if( ! withs ){ // null to list
+			    withs = [];
+			}
+			if( ! us.isArray(withs) ){ // string to list
+			    withs = [withs];
+			}
+			
+			var sub = reqs.add_individual(acls);
+			var obj = reqs.add_individual(bio);
+			var edge = reqs.add_fact([sub, obj, rel]);
+			
+			// BUG/TODO: Cannot properly add evidence
+			// until we sort out the ECO mapping
+			// issue...but until then a 99% okay demo.
+			reqs.add_evidence(ev, refs, withs, [sub, obj, rel]);
+		    });
+
+		    // Final request action - fire and forget.
+		    mmanager.request_with(reqs);
+		}
 	    };
 	}
     };
@@ -227,11 +302,6 @@ var CompanionInit = function(user_token){
 						      confc, handler, linker,
 						      results_opts);
     
-    // // Test of the entry override.
-    // bbop.widget.display.results_table_by_class_conf_b3.prototype.process_entry = function(){
-    //     return 'foo';
-    // };
-    
     // Add pre and post run spinner (borrow filter's for now).
     widget_manager.register('prerun', 'foo', function(){
 	filters.spin_up();
@@ -239,12 +309,6 @@ var CompanionInit = function(user_token){
     widget_manager.register('postrun', 'foo', function(){
 	filters.spin_down();
     });
-    // resolution_manager.register('prerun', 'foo', function(){
-    // 	filters.spin_up();
-    // });
-    // resolution_manager.register('postrun', 'foo', function(){
-    // 	filters.spin_down();
-    // });
 
     // If we're all done, trigger initial hit.
     widget_manager.search();
@@ -264,13 +328,12 @@ jQuery(document).ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	alert('environment not ready');
     }else{
-	// Only roll if the env is correct.
-	// Will use the above variables internally (sorry).
+	// Only roll if the env is correct.  Will use the above
+	// variables internally (sorry).
 	CompanionInit(start_token);
 
-	// When all is said and done, let's also fillout the user
-	// name just for niceness. This is also a test of CORS in
-	// express.
+	// When all is said and done, let's also fillout the user name
+	// just for niceness. This is also a test of CORS in express.
 	if( start_token ){
 	    widgetry.user_check(global_barista_location,
 				start_token, 'user_name_info');

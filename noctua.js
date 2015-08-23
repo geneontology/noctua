@@ -42,7 +42,9 @@ var app_base = sd.app_base();
 var collapsible_relations = require('./config/collapsible_relations.json');
 console.log('Will fold: ', collapsible_relations);
 
-var golr_server_location = 'http://golr.berkeleybop.org/';
+//var golr_server_location = 'http://golr.berkeleybop.org/';
+// Emergency public backup.
+var golr_server_location = 'http://geneontology-golr.stanford.edu/solr/';
 
 // The name we're using this week.
 var notw = 'Noctua (Preview)';
