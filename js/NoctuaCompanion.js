@@ -183,10 +183,25 @@ var CompanionInit = function(user_token){
 	ll('a meta callback?');
     });
 
-    // Likely result of a new model being built on Minerva.
+    // Likely results of a new model being built on Minerva.
+    var success_txt = [
+	'<p>',
+	'Your operation was likely a success.',
+	'<br />',
+	'You may clear you selected items and continue.',
+	'</p>'
+    ];
+    mmanager.register('merge', function(resp, man){
+	ll('merge callback');
+	var wrn = new widgetry.contained_modal(
+	    null, '<strong>Operation a success</strong>', success_txt.join(''));
+	wrn.show();
+    }, 10);
     mmanager.register('rebuild', function(resp, man){
 	ll('rebuild callback');
-	alert('Model rebuilt.');
+	var wrn = new widgetry.contained_modal(
+	    null, '<strong>Operation a success</strong>', success_txt.join(''));
+	wrn.show();
     }, 10);
 
     //mmanager.get_model(global_id);
