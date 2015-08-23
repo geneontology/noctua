@@ -168,12 +168,19 @@ var CompanionInit = function(user_token){
     /// AmiGO comms.
     ///
     
-    // Ready the manager.
-    var search = new bbop_legacy.golr.manager.jquery(solr_server, gconf);
+    // Ready the primary widget manager.
+    var widget_manager = new bbop_legacy.golr.manager.jquery(solr_server, gconf);
     var confc = gconf.get_class('annotation');
-    search.set_personality('annotation');
-    search.add_query_filter('document_category',
-			    confc.document_category(), ['*']);
+    widget_manager.set_personality('annotation');
+    widget_manager.add_query_filter('document_category',
+				    confc.document_category(), ['*']);
+
+    // // Ready the secondary ID resolution manager ().
+    // var resolution_manager =
+    // 	    new bbop_legacy.golr.manager.jquery(solr_server, gconf);
+    // resolution_manager.set_personality('annotation');
+    // resolution_manager.add_query_filter('document_category', // reuse confc
+    // 					confc.document_category(), ['*']);
 
     // Attach filters to manager.
     var hargs = {
@@ -183,32 +190,41 @@ var CompanionInit = function(user_token){
 	'display_free_text_p': false
     };
     var filters = new bbop_legacy.widget.live_filters(
-	'input-filter-accordion', search, gconf, hargs);
+	'input-filter-accordion', widget_manager, gconf, hargs);
     filters.establish_display();
     
     // Attach pager to manager.
     var pager_opts = {
     };
-    var pager = new bbop_legacy.widget.live_pager('pager', search, pager_opts);
+    var pager = new bbop_legacy.widget.live_pager('pager', widget_manager,
+						  pager_opts);
     
-    // // Attach the results pane and download buttons to manager.
-    // var btmpl = bbop_legacy.widget.display.button_templates;
-    // var default_fields = confc.field_order_by_weight('result');
-    // var flex_download_button =
-    // 	    btmpl.flexible_download_b3('<span class="glyphicon glyphicon-download"></span> Download',// (up to '+dlimit+')',
-    // 				       dlimit,
-    // 				       default_fields,
-    // 				       'annotation',
-    // 				       gconf);
+    // Describe the button that will send macro commands to
+    // noctua/minerva.
+    var push_to_noctua_button = {
+	label: 'Add to model',
+	diabled_p: false,
+	click_function_generator: function(results_table, widget_manager){ // 
+	    
+	    return function(event){
+		
+   		var huh = results_table.get_selected_items();
+
+		console.log('huh', huh);
+		console.log('rs', results_table);
+	    };
+	}
+    };
+
     var results_opts = {
 	//'callback_priority': -200,
 	'user_buttons_div_id': pager.button_span_id(),
 	'user_buttons': [
-	    //	    flex_download_button
+	    	    push_to_noctua_button
 	]
     };
-    var results = new bbop_legacy.widget.live_results('results', search, confc,
-						      handler, linker,
+    var results = new bbop_legacy.widget.live_results('results', widget_manager,
+						      confc, handler, linker,
 						      results_opts);
     
     // // Test of the entry override.
@@ -217,15 +233,21 @@ var CompanionInit = function(user_token){
     // };
     
     // Add pre and post run spinner (borrow filter's for now).
-    search.register('prerun', 'foo', function(){
+    widget_manager.register('prerun', 'foo', function(){
 	filters.spin_up();
     });
-    search.register('postrun', 'foo', function(){
+    widget_manager.register('postrun', 'foo', function(){
 	filters.spin_down();
     });
+    // resolution_manager.register('prerun', 'foo', function(){
+    // 	filters.spin_up();
+    // });
+    // resolution_manager.register('postrun', 'foo', function(){
+    // 	filters.spin_down();
+    // });
 
     // If we're all done, trigger initial hit.
-    search.search();
+    widget_manager.search();
 };
 
 // Start the day the jQuery way.

@@ -30,7 +30,7 @@
     "dependencies": {
         "amigo2": "^2.3.0",
         "aws-sdk": "2.0.4",
-	"bbop": "2.3.2",
+	"bbop": "2.3.3",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.16",
         "bbop-graph-noctua": "0.0.23",
