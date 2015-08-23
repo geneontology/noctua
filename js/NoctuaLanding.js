@@ -5,6 +5,7 @@
 // Let jshint pass over over our external globals (browserify takes
 // care of it all).
 /* global jQuery */
+/* global global_golr_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
 /* global jsPlumb */
@@ -76,7 +77,7 @@ var MMEnvBootstrappingInit = function(user_token){
 				      user_token, engine, 'async');
 
     // GOlr location and conf setup.
-    var gserv = 'http://golr.berkeleybop.org/';
+    var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
     // Contact points for Chris's wizard.
@@ -164,7 +165,7 @@ var MMEnvBootstrappingInit = function(user_token){
 	if( editor_type === 'basic' ){
             new_url = '/basic/' + id;
 	}else{
-            new_url = '/seed/model/' + id;
+            new_url = '/editor/graph/' + id;
 	}
 	return new_url;
     }
@@ -545,7 +546,7 @@ var MMEnvBootstrappingInit = function(user_token){
 };
 
 // Start the day the jsPlumb way.
-jsPlumb.ready(function(){
+jQuery(document).ready(function(){
 
     // Try to define token.
     var start_token = null;

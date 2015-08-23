@@ -41,6 +41,7 @@
         "bbop-widget-solr-autocomplete": "^0.0.9",
         "class-expression": "0.0.9",
         "cors": "2.4.1",
+        "cytoscape": "2.4.6",
         "bootstrap": "3.3.4",
         "del": "^1.1.1",
         "express-persona": "0.1.2",

@@ -71,6 +71,17 @@
 	<!-- Should I work on plugins? -->
 	<li class="dropdown">
           <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">Workbenches <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <!-- <li><a id="open_companion" _target="blank">Annotation companion</a></li> -->
+            <li><a id="open_cytoview" target="_blank"
+		   href="/workbench/cytoview/{{model_id}}?barista_token={{barista_token}}">Cytoscape view</a></li>
+          </ul>
+	</li>
+
+	<!-- Should I work on plugins? -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
 	     data-toggle="dropdown">Plugins <b class="caret"></b></a>
           <ul class="dropdown-menu">
             <!-- <li><a href="#">Does nothing</a></li> -->
@@ -84,9 +95,9 @@
           <ul class="dropdown-menu">
             <!-- <li><a id="action_add_seed_from_process" href="#">Seed from process</a></li> -->
             <!-- <li class="divider"></li> -->
-            <li><a id="action_ping" href="#">Request contact</a></li>
-            <li><a id="action_test" href="#">Test thing</a></li>
-            <li><a id="action_shin" href="#">Try new way of doing things</a></li>
+            <li><a id="action_ping" href="#">Request contact <span style="color:red;">ALPHA</span></a></li>
+            <li><a id="action_test" href="#">Test thing <span style="color:red;">ALPHA</span></a></li>
+            <li><a id="action_shin" href="#">Try new way of doing things <span style="color:red;">ALPHA</span></a></li>
           </ul>
 	</li>
 

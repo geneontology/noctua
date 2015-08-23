@@ -19,19 +19,21 @@ var flatten = require('gulp-flatten');
 //var sourcemaps = require('gulp-sourcemaps');
 
 var paths = {
-  // WARNING: Cannot use glob for clients--I use the explicit listing
-  // to generate a dynamic browserify set.
-  clients: ['js/NoctuaEditor.js',
-    'js/NoctuaBasic/NoctuaBasicApp.js',
-    'js/NoctuaBasic/NoctuaBasicController.js',
-    'js/NoctuaLanding.js',
-    'js/BaristaLogin.js',
-    'js/BaristaLogout.js',
-    'js/BaristaSession.js'
-  ],
-  support: ['js/connectors-sugiyama.js'],
-  scripts: ['scripts/*'],
-  tests: ['tests/*.test.js']
+    // WARNING: Cannot use glob for clients--I use the explicit listing
+    // to generate a dynamic browserify set.
+    clients: ['js/NoctuaEditor.js', 
+	      'js/NoctuaLanding.js',
+	      'js/NoctuaCytoView.js',
+	      'js/NoctuaBasic/NoctuaBasicApp.js',
+	      'js/NoctuaBasic/NoctuaBasicController.js',
+	      'js/NoctuaLanding.js',
+	      'js/BaristaLogin.js',
+	      'js/BaristaLogout.js',
+	      'js/BaristaSession.js'
+	     ],
+    support: ['js/connectors-sugiyama.js'],
+    scripts: ['scripts/*'],
+    tests: ['tests/*.test.js']
 };
 
 // Build docs directory with JSDoc.

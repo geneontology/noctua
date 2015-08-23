@@ -185,52 +185,97 @@ var NoctuaLauncher = function(){
 	return res;
     };
 
-    // Assemble return doc.
-    self.bootstrap_editor = function(res, name_of_the_week,
-				     model_id,
-				     known_relations, barista_loc, barista_token,
-				     model_obj
-				     // BUG^: support for heiko's JSON debug
-				    ){
+    // Standard template arguments payload.
+    self.standard_variable_load = function(app_path, app_name, req,
+					   model_id, model_obj, additional_args){
 
-	// Assemble return doc.
-	res.setHeader('Content-Type', 'text/html');
-
+	// Try and see if we have an API token from the request.
+	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.hostport, barista_token);
-	var barista_login = barista_loc + '/session' + '?return=' +
-	    self.hostport + '/seed/model/' + model_id;
-	var barista_logout =
+	var barista_loc = self.barista_location;
+	var barista_login = null;
+	var barista_logout = null;
+	if( app_path === '' ){ // non-id based pages.
+	    barista_login = barista_loc + '/session' + '?return=' +
+		self.hostport + '/'+ app_path;
+	    barista_logout =
 		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.hostport + '/seed/model/' + model_id,
+				  self.hostport + app_path, barista_token);
+	}else{
+	    barista_login = barista_loc + '/session' + '?return=' +
+		self.hostport + '/'+ app_path + '/' + model_id;
+	    barista_logout =
+		_build_token_link(barista_loc + '/session' + '?return=' +
+				  self.hostport + app_path + '/' +
+				  model_id, barista_token);
+	}
+	var barista_users =
+		_build_token_link(self.barista_location +'/user_info',
 				  barista_token);
+	var out_known_rels = self.known_relations;
+
+	// Limit out variables in some cases.
+	if( app_path === '' || app_path === '/' ){
+	    out_known_rels = null;
+	}
+
 	var tmpl_args = {
-	    'pup_tent_css_libraries': [
-		'/NoctuaEditor.css'
-	    ],
 	    'pup_tent_js_variables': [
-		{name: 'global_id', value: model_id },
-		//{name: 'global_model', value: null },
-		{name: 'global_model', value: (model_obj || null)},
+		{name: 'global_id',
+		 value: model_id },
+		{name: 'global_model',
+		 value: (model_obj || null)},
+		{name: 'global_golr_server',
+		 value: 'http://golr.berkeleybop.org/'},
 		{name: 'global_minerva_definition_name',
 		 value: self.minerva_definition_name },
-		{name: 'global_barista_location', value: self.barista_location },
-		{name: 'global_known_relations', value: known_relations },
+		{name: 'global_barista_location',
+		 value: self.barista_location },
+		{name: 'global_known_relations',
+		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
 		 value: collapsible_relations },
 		{name: 'global_barista_token', value: barista_token }
 	    ],
-	    'pup_tent_js_libraries': [
-		self.barista_location + '/socket.io/socket.io.js',
-		'/connectors-sugiyama.js',
-		'/NoctuaEditor.js'
-	    ],
-	    'title': name_of_the_week + ' Editor',
+	    'title': notw + ' ' + app_name,
+	    'model_id': model_id,
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
+	    'barista_users': barista_users,
 	    'noctua_landing': noctua_landing,
 	    'barista_login': barista_login,
 	    'barista_logout': barista_logout
 	};
+
+	// Load in the additions.
+	each(additional_args, function(val, key){
+	    tmpl_args[key] = val;
+	});
+	
+	return tmpl_args;
+    };
+
+    // Assemble return doc.
+    self.bootstrap_editor = function(req, res, model_id, model_obj){
+
+	// Assemble return doc.
+	res.setHeader('Content-Type', 'text/html');
+
+	var tmpl_args = self.standard_variable_load(
+	    '/editor/graph', 'Editor', req, model_id, model_obj,
+	    {
+		'pup_tent_css_libraries': [
+		    '/NoctuaEditor.css'
+		],
+		'pup_tent_js_libraries': [
+		    '/jquery.jsPlumb-1.5.5.js',
+		    '/jquery.tablesorter.min.js',
+		    self.barista_location + '/socket.io/socket.io.js',
+		    '/connectors-sugiyama.js',
+		    '/NoctuaEditor.js'
+		]
+	    });
+
 	var ret = pup_tent.render('noctua_editor.tmpl',
 				  tmpl_args, 'noctua_base.tmpl');
 	self.standard_response(res, 200, 'text/html', ret);
@@ -239,7 +284,10 @@ var NoctuaLauncher = function(){
     ///
     /// Cache and template rendering.
     ///
-    var ppaths = ['static', 'static/selectize', 'deploy', 'deploy/js', 'deploy/js/NoctuaBasic', 'deploy/css', 'css', 'templates'];
+    var ppaths = ['static', 'static/selectize',
+		  'deploy', 'deploy/js',
+		  'deploy/js/NoctuaBasic', 'deploy/css',
+		  'css', 'templates'];
     var pup_tent = require('pup-tent')(ppaths);
     pup_tent.use_cache_p(false);
     pup_tent.set_common('css_libs', [
@@ -251,8 +299,6 @@ var NoctuaLauncher = function(){
 	'/jquery.js',
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
-	'/jquery.jsPlumb-1.5.5.js',
-	'/jquery.tablesorter.min.js'
     ]);
 
     ///
@@ -290,7 +336,7 @@ var NoctuaLauncher = function(){
 
     // Initialize the server (launcher_app) and create the routes and register
     // the handlers.
-    self.initializeServer = function(known_relations){
+    self.initializeServer = function(){
 
 	var launcher_app = require('express');
         self.app = launcher_app();
@@ -303,56 +349,29 @@ var NoctuaLauncher = function(){
 
 	self.app.get('/', function(req, res) {
 
-	    // Try and see if we have an API token.
-	    var barista_token = self.get_token(req);
+	    // // Capella takes a bit more care.
+	    // var capella_blank = _build_token_link(self.hostport + '/capella',
+	    // 					  barista_token);
+	    // var capella_payload = '[{"publication_id": "PMID:000000","annotation_id": "foo:0000000","terms": [ "GO:0003674", "GO:0008150"],"entities": [ "UniProtKB:P0000" ]}]';
+	    // var capella_test =
+	    // 	    _build_token_link(self.hostport + '/capella?bootstrap=' +
+	    // 			      capella_payload, barista_token);
 
-	    // Build the various links as best we can.
-	    var noctua_landing = _build_token_link(self.hostport, barista_token);
-	    var barista_login = self.barista_location + '/session' +
-		    '?return=' + self.hostport;
-	    var barista_logout =
-		_build_token_link(self.barista_location +'/session'+ '?return=' +
-				  self.hostport, barista_token);
-	    var barista_users =
-		    _build_token_link(self.barista_location +'/user_info',
-				      barista_token);
-	    // Capella takes a bit more care.
-	    var capella_blank = _build_token_link(self.hostport + '/capella',
-						  barista_token);
-	    var capella_payload = '[{"publication_id": "PMID:000000","annotation_id": "foo:0000000","terms": [ "GO:0003674", "GO:0008150"],"entities": [ "UniProtKB:P0000" ]}]';
-	    var capella_test =
-		    _build_token_link(self.hostport + '/capella?bootstrap=' +
-				      capella_payload, barista_token);
-
-	    // Libs and render.
-	    var tmpl_args = {
-		'pup_tent_css_libraries': [
-		    '/noctua_landing.css'
-		],
-		'pup_tent_js_libraries': [
-		    '/NoctuaLanding.js'
-		],
-		'pup_tent_js_variables': [
-		    {name:'global_barista_location',
-		     value: self.barista_location },
-		    {name: 'global_barista_token',
-		     value: barista_token},
-		    {name: 'global_minerva_definition_name',
-		     value: self.minerva_definition_name },
-		    {name: 'global_known_relations',
-		     value: dump(known_relations) }
-		],
-		'title': notw + ': Selection',
-		'noctua_location': self.hostport,
-		'barista_location': self.barista_location,
-		'barista_token': barista_token,
-		'noctua_landing': noctua_landing,
-		'barista_login': barista_login,
-		'barista_logout': barista_logout,
-		'barista_users': barista_users,
-		'capella_blank': capella_blank,
-		'capella_test': capella_test
-	    };
+	    var tmpl_args = self.standard_variable_load(
+		'/', 'Select', req, null, null,
+		{
+		    'pup_tent_css_libraries': [
+			'/noctua_landing.css'
+		    ],
+		    'pup_tent_js_libraries': [
+			'/NoctuaLanding.js'
+		    ],
+		    // 'capella_blank': capella_blank,
+		    // 'capella_payload': capella_payload,
+		    // 'capella_test': capella_test
+		});
+	    
+	    // Render.
 	    var o = pup_tent.render('noctua_landing.tmpl',
 				    tmpl_args,
 				    'noctua_base_landing.tmpl');
@@ -384,7 +403,7 @@ var NoctuaLauncher = function(){
 		    {name: 'global_minerva_definition_name',
 		     value: self.minerva_definition_name },
 		    {name: 'global_known_relations',
-		     value: known_relations},
+		     value: self.known_relations},
 		    {name: 'global_barista_token',
 		     value: barista_token},
 		    {name:'global_barista_location',
@@ -441,7 +460,7 @@ var NoctuaLauncher = function(){
 	});
 
 	// Fonts are special!
-  self.app.use('/fonts', launcher_app.static('static/fonts'));
+	self.app.use('/fonts', launcher_app.static('static/fonts'));
 
 	// Other static routes.
 	self.app.get('/images/waiting_ac.gif', function(req, res){
@@ -496,7 +515,7 @@ var NoctuaLauncher = function(){
 
 	// Directly kick-to-edit an extant model--most things should
 	// pass through here.
-	self.app.get('/seed/model/:query', function(req, res) {
+	self.app.get('/editor/graph/:query', function(req, res) {
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
@@ -511,15 +530,42 @@ var NoctuaLauncher = function(){
 
 		// Try and see if we have an API token.
 		var barista_token = self.get_token(req);
-		self.bootstrap_editor(res, notw, query,
-				      known_relations,
-				      self.barista_location,
-				      barista_token
-				      //null,
-				     );
+		self.bootstrap_editor(req, res, query, null);
 	    }
 	});
 
+	// View a ridonkulously large model in cytoscape.
+	self.app.get('/workbench/cytoview/:query', function(req, res) {
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    //console.log(req.route);
+	    //console.log(req.route.params['query']);
+	    var query = req.route.params['query'] || '';
+	    if( ! query || query === '' ){
+		// Catch error here if no proper ID.
+		res.setHeader('Content-Type', 'text/html');
+		res.send('no identifier');
+	    }else{
+
+	    var tmpl_args = self.standard_variable_load(
+		'/workbench/cytoview', 'CytoView', req, query, null,
+		{
+		    'pup_tent_css_libraries': [
+			'/noctua_landing.css' // meh - reuse for now
+		    ],
+		    'pup_tent_js_libraries': [
+			'/NoctuaCytoView.js'
+		    ],
+		});
+		
+		// Render.
+		var ret = pup_tent.render('noctua_cytoview.tmpl',
+					  tmpl_args, 'noctua_base_landing.tmpl');
+		self.standard_response(res, 200, 'text/html', ret);
+	    }
+	});
+	
 	// DEBUG: A JSON model debugging tool for @hdietze
 	/// This path will eventually be destroyed.
 	self.app.post('/seed/json', function(req, res) {
@@ -535,12 +581,7 @@ var NoctuaLauncher = function(){
 		var jmod = JSON.parse(jmod_str); // to obj
 
 		// No token, no editing, because this is crazy.
-		self.bootstrap_editor(res, notw, null,
-				      known_relations,
-				      self.barista_location,
-				      null,
-				      jmod
-				     );
+		self.bootstrap_editor(req, res, null, jmod);
 	    }
 	});
 
@@ -604,7 +645,7 @@ var NoctuaLauncher = function(){
 		    qf_to_add.push('annotation_class:"' + ttr + '"');
 		});
 
-    // Generic error return.
+		// Generic error return.
 		var _generic_error_resp = function(resp, man){
 		    res.setHeader('Content-Type', 'text/html');
 		    res.send('failure (' + resp.message_type() + '): ' +
@@ -693,13 +734,13 @@ var NoctuaLauncher = function(){
     // Initializes the sample application.
     self.initialize = function(known_relations){
 
-	var knw_rel = known_relations || [];
+	self.known_relations = known_relations || [];
 
         // self.setupVariables();
         self.setupTerminationHandlers();
 
         // Create the express server and routes.
-        self.initializeServer(knw_rel);
+        self.initializeServer();
     };
 
     // Start the server (starts up the sample application).

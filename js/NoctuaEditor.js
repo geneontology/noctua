@@ -10,6 +10,7 @@
 // Let jshint pass over over our external globals (browserify takes
 // care of it all).
 /* global jQuery */
+/* global global_golr_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
 /* global jsPlumb */
@@ -98,7 +99,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 				      in_token, engine, 'async');
 
     // GOlr location and conf setup.
-    var gserv = 'http://golr.berkeleybop.org/';
+    var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
     // Define what annotations are allowed to be edited where.
@@ -2294,33 +2295,33 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'Hey!');
 	mdl.show();
 
-	// Just a hook to an experimental method for easy access to
-	// the manager.
-	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    'action', ecore.get_id());
+	// // Just a hook to an experimental method for easy access to
+	// // the manager.
+	// var reqs = new minerva_requests.request_set(manager.user_token(),
+	// 					    'action', ecore.get_id());
 
-	/// Individuals.
-	// axon guidance receptor activity
-	reqs.add_simple_individual('GO:0008046');
-	var mf = reqs.last_individual_id();    
-	// neurogenesis
-	reqs.add_simple_individual('GO:0022008');
-	var bp = reqs.last_individual_id();
-	// cell part
-	reqs.add_simple_individual('GO:0004464');
-	var loc = reqs.last_individual_id();
-	// Drd3
-	reqs.add_simple_individual('MGI:MGI:94925');
-	var gp = reqs.last_individual_id();
+	// /// Individuals.
+	// // axon guidance receptor activity
+	// reqs.add_simple_individual('GO:0008046');
+	// var mf = reqs.last_individual_id();    
+	// // neurogenesis
+	// reqs.add_simple_individual('GO:0022008');
+	// var bp = reqs.last_individual_id();
+	// // cell part
+	// reqs.add_simple_individual('GO:0004464');
+	// var loc = reqs.last_individual_id();
+	// // Drd3
+	// reqs.add_simple_individual('MGI:MGI:94925');
+	// var gp = reqs.last_individual_id();
 	
-	// Edges and evidence.    
-	reqs.add_fact(mf, bp, 'part_of');
-	reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
-				  mf, bp, 'part_of');
-	reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
-	reqs.add_fact(mf, gp, 'occurs_in');
+	// // Edges and evidence.    
+	// reqs.add_fact(mf, bp, 'part_of');
+	// reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
+	// 			  mf, bp, 'part_of');
+	// reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
+	// reqs.add_fact(mf, gp, 'occurs_in');
 
-	manager.request_with(reqs, ecore.get_id());
+	// manager.request_with(reqs, ecore.get_id());
     });
 
     // Toggle the visibility of the part_of connectors. 
