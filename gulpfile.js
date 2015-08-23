@@ -24,6 +24,7 @@ var paths = {
     clients: ['js/NoctuaEditor.js', 
 	      'js/NoctuaLanding.js',
 	      'js/NoctuaCytoView.js',
+	      'js/NoctuaCompanion.js',
 	      'js/NoctuaBasic/NoctuaBasicApp.js',
 	      'js/NoctuaBasic/NoctuaBasicController.js',
 	      'js/NoctuaLanding.js',

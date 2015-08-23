@@ -534,6 +534,38 @@ var NoctuaLauncher = function(){
 	    }
 	});
 
+	// Use AmiGO to add complictated annotation sets.
+	self.app.get('/workbench/companion/:query', function(req, res) {
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    //console.log(req.route);
+	    //console.log(req.route.params['query']);
+	    var query = req.route.params['query'] || '';
+	    if( ! query || query === '' ){
+		// Catch error here if no proper ID.
+		res.setHeader('Content-Type', 'text/html');
+		res.send('no identifier');
+	    }else{
+
+	    var tmpl_args = self.standard_variable_load(
+		'/workbench/companion', 'Annotation Companion', req, query, null,
+		{
+		    'pup_tent_css_libraries': [
+			// '/noctua_landing.css' // meh - reuse for now
+		    ],
+		    'pup_tent_js_libraries': [
+			'/NoctuaCompanion.js'
+		    ],
+		});
+		
+		// Render.
+		var ret = pup_tent.render('noctua_companion.tmpl',
+					  tmpl_args, 'noctua_base_landing.tmpl');
+		self.standard_response(res, 200, 'text/html', ret);
+	    }
+	});
+	
 	// View a ridonkulously large model in cytoscape.
 	self.app.get('/workbench/cytoview/:query', function(req, res) {
 
