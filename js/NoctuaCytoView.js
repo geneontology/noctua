@@ -152,7 +152,7 @@ var CytoViewInit = function(user_token){
 
     // Likely result of a new model being built on Minerva.
     manager.register('rebuild', function(resp, man){
-	ll('rebuild callboack');
+	ll('rebuild callback');
 
 	jQuery('#'+graph_id).empty();
 
