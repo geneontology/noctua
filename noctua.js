@@ -199,15 +199,15 @@ var NoctuaLauncher = function(){
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
-	if( app_path === '' ){ // non-id based pages.
+	if( app_path === '' || app_path === '/' ){ // non-id based pages.
 	    barista_login = barista_loc + '/session' + '?return=' +
-		self.hostport + '/'+ app_path;
+		self.hostport + app_path;
 	    barista_logout =
 		_build_token_link(barista_loc + '/session' + '?return=' +
 				  self.hostport + app_path, barista_token);
 	}else{
 	    barista_login = barista_loc + '/session' + '?return=' +
-		self.hostport + '/'+ app_path + '/' + model_id;
+		self.hostport + app_path + '/' + model_id;
 	    barista_logout =
 		_build_token_link(barista_loc + '/session' + '?return=' +
 				  self.hostport + app_path + '/' +
