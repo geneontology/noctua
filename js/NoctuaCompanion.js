@@ -66,29 +66,32 @@ var uuid = bbop.uuid;
 /// to support the three letter codes. Ask @cmungall about this.
 ///
 
-// TODO
+// Lifted from:
+// https://raw.githubusercontent.com/evidenceontology/evidenceontology/master/gaf-eco-mapping.txt,
+// using all of the suggested defaults only.
 var eco_lookup = {
-    EXP: 'ECO:0000006', //???
-    IDA: 'Inferred from Direct Assay',
-    IPI: 'Inferred from Physical Interaction',
-    IMP: 'Inferred from Mutant Phenotype',
-    IGI: 'Inferred from Genetic Interaction',
-    IEP: 'Inferred from Expression Pattern',
-    ISS: 'Inferred from Sequence or structural Similarity',
-    ISO: 'Inferred from Sequence Orthology',
-    ISA: 'Inferred from Sequence Alignment',
-    ISM: 'Inferred from Sequence Model',
-    IGC: 'Inferred from Genomic Context',
-    IBA: 'Inferred from Biological aspect of Ancestor',
-    IBD: 'Inferred from Biological aspect of Descendant',
-    IKR: 'Inferred from Key Residues',
-    IRD: 'Inferred from Rapid Divergenc',
-    RCA: 'Inferred from Reviewed Computational Analysis',
-    TAS: 'Traceable Author Statement',
-    NAS: 'Non-traceable Author Statement',
-    IC: 'Inferred by Curator',
-    ND: 'No biological Data available (ND) evidence code',
-    IEA: 'Inferred from Electronic Annotation'
+    EXP: 'ECO:0000269',
+    IBA: 'ECO:0000318',
+    IBD: 'ECO:0000319',
+    IC: 'ECO:0000305',
+    IDA: 'ECO:0000314',
+    IEA: 'ECO:0000501',
+    IEP: 'ECO:0000270',
+    IGC: 'ECO:0000317',
+    IGI: 'ECO:0000316',
+    IKR: 'ECO:0000320',
+    IMP: 'ECO:0000315',
+    IMR: 'ECO:0000320',
+    IPI: 'ECO:0000353',
+    IRD: 'ECO:0000321',
+    ISA: 'ECO:0000247',
+    ISM: 'ECO:0000255',
+    ISO: 'ECO:0000266',
+    ISS: 'ECO:0000250',
+    NAS: 'ECO:0000303',
+    ND: 'ECO:0000307',
+    RCA: 'ECO:0000245',
+    TAS: 'ECO:0000304'
 };
 
 ///
@@ -270,8 +273,15 @@ var CompanionInit = function(user_token){
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
 			var rel = 'RO:0002333';
+			// Attempt at save ECO mapping.
 			var ev = doc['evidence_type'];
-			ev = 'ECO:0000000'; // TODO/BUG
+			if( eco_lookup[ev] ){
+			    // Apparently on our lookup.
+			    ev = eco_lookup[ev];
+			}else{
+			    // @cmungall's preferred default
+			    ev = 'ECO:0000305';
+			}
 			// Fix refs if necessary.
 			var refs = doc['reference'];
 			if( ! refs ){ // null to list
