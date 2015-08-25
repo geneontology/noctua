@@ -378,7 +378,7 @@ var MMEnvBootstrappingInit = function(user_token){
 		// Check to see if it's modified and highlight that
 		// fact.
 		if( _model_modified_p(model_id) ){
-		    mtitle = mtitle + '*';
+		    mtitle = '*' + mtitle + '*';
 		}
 
 		// Add to cache.

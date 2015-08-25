@@ -768,7 +768,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Tag on modification mark.
 	if( ecore.modified_p() === true ){
-	    mtitle = mtitle + '*';
+	    mtitle = '*' + mtitle + '*';
 	}
 
 	document.title = mtitle + ' (Noctua Editor)';
