@@ -11,6 +11,7 @@
 /* global global_minerva_definition_name */
 /* global jsPlumb */
 /* global global_barista_token */
+/* global global_collapsible_relations */
 
 var us = require('underscore');
 var bbop = require('bbop-core');
@@ -56,17 +57,15 @@ var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
 
 ///
-/// Layouts
-///
-
-///
-///
+/// ...
 ///
 
 var graph_id = 'cytoview';
 var graph_layout = 'cose'; // default
 var graph_fold = 'evidence'; // default
 var graph = null; // the graph itself
+var cy = null;
+var layout_opts = null;
 
 ///
 var CytoViewInit = function(user_token){
@@ -124,10 +123,13 @@ var CytoViewInit = function(user_token){
 
 	// Try and get it folded as desired.
 	if( fold === 'evidence' ){
+	    graph_fold = fold;
 	    ngraph.fold_evidence();
 	}else if( fold === 'editor' ){
-	    ngraph.fold_go_noctua();
+	    graph_fold = fold;
+	    ngraph.fold_go_noctua(global_collapsible_relations);
 	}else{
+	    graph_fold = fold;
 	    ngraph.unfold();
 	}
 
@@ -174,7 +176,9 @@ var CytoViewInit = function(user_token){
 		group: 'nodes',
 		data: {
 		    id: n.id(),
-		    label: nlbl
+		    label: nlbl,
+		    degree: (ngraph.get_child_nodes(n.id()).length * 10)+
+			ngraph.get_parent_nodes(n.id()).length
 		}
 	    });
 	});
@@ -193,14 +197,14 @@ var CytoViewInit = function(user_token){
 	});
 
 	// Get roots for algorithms that need it.
-	var roots = ngraph.get_root_nodes();
+	var roots = graph.get_root_nodes();
 	var root_ids = [];
 	each(roots, function(root){
 	    root_ids.push(root.id());
 	});
 
 	// Setup possible layouts.
-	var layout_opts = {
+	layout_opts = {
 	    'cose': {
 		name: 'cose',
 	    	padding: 10,
@@ -230,15 +234,18 @@ var CytoViewInit = function(user_token){
 	    },
 	    'circle': {
 		name: 'circle',
-		fit: true
+		fit: true,
+		sort: function(a, b){
+		    return a.data('degree') - b.data('degree');
+		}
 	    },
 	    'breadthfirst': {
 		name: 'breadthfirst',
 		directed: true,
 		fit: true,
 		//maximalAdjustments: 0,
-		circle: false,
-		roots: root_ids
+		circle: false//,
+		//roots: root_ids
 	    }
 	    // 'arbor': {
 	    // 	name: 'arbor',
@@ -248,7 +255,7 @@ var CytoViewInit = function(user_token){
 	};
 	
 	// Ramp up view.
-	var cy = cytoscape({
+	cy = cytoscape({
 	    // UI loc
 	    container: document.getElementById(graph_id),
 	    // actual renderables
@@ -375,7 +382,8 @@ var CytoViewInit = function(user_token){
 	// Go ahead and wire-up the interface.
 	jQuery("#" + "layout_selection").change(function(event){
 	    graph_layout = jQuery(this).val();
-	    _render_graph(graph, graph_layout, graph_fold);
+	    //_render_graph(graph, graph_layout, graph_fold);
+	    cy.layout(layout_opts[graph_layout]);
 	});
 	jQuery("#" + "fold_selection").change(function(event){
 	    graph_fold = jQuery(this).val();
