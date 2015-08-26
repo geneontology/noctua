@@ -46,6 +46,7 @@ console.log('Will fold: ', collapsible_relations);
 var golr_server_location = 'http://golr.berkeleybop.org/';
 // Emergency public backup.
 //var golr_server_location = 'http://geneontology-golr.stanford.edu/solr/';
+console.log('Using GOlr server at: ', golr_server_location);
 
 // The name we're using this week.
 var notw = 'Noctua (Preview)';
@@ -174,7 +175,7 @@ var NoctuaLauncher = function(){
 	    console.log('Changing Minerva definition to: ' +
 			self.minerva_definition_name + ' for openshift');
 
-            console.warn('OPENSHIFT_NODEJS');
+            console.warn('Running as: OPENSHIFT_NODEJS');
 	}else if( process.env.PORT ){
 	    self.IS_ENV_HEROKU = true;
 
@@ -190,7 +191,7 @@ var NoctuaLauncher = function(){
 	    console.log('Changing Minerva definition to: ' +
 			self.minerva_definition_name + ' for heroku');
 
-            console.warn('HEROKU_NODEJS');
+            console.warn('Running as: HEROKU_NODEJS');
 	}else{
 	    self.IS_ENV_LOCAL = true;
 
@@ -199,7 +200,7 @@ var NoctuaLauncher = function(){
             self.port = process.env.NOCTUA_PORT || non_std_local_port;
 	    self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
 
-            console.warn('LOCAL_NODEJS');
+            console.warn('Running as: LOCAL_NODEJS');
 	}
 //    };
 
@@ -871,10 +872,10 @@ var noctua = new NoctuaLauncher();
 // early.
 var imngr = new bbop_legacy.rest.manager.node(barista_response);
 imngr.register('success', 's1', function(resp, man){
-    console.log('response is: ' + what_is(resp));
+    console.log('Continue boostrap: response is: ' + what_is(resp));
     //console.log('response', resp);
     var nrel = resp.relations().length;
-    console.log("got " + nrel + " relations, starting initializing sequence...");
+    console.log("Continue bootstrap: got " + nrel + " relations, starting initializing sequence...");
     if( nrel > 0 ){
 	noctua.initialize(resp.relations());
 	noctua.start();
@@ -898,4 +899,4 @@ reqs.get_meta();
 var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
     '/m3Batch';
 var astr = imngr.action(t, reqs.callable());
-console.log("Minerva request to: " + astr);
+console.log("Started bootstrap: minerva request to: " + astr);
