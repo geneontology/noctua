@@ -61,8 +61,8 @@ var minerva_manager = require('bbop-manager-minerva');
 ///
 
 var graph_id = 'cytoview';
-var graph_layout = 'cose'; // default
-var graph_fold = 'evidence'; // default
+var graph_layout = 'breadthfirst'; // default
+var graph_fold = 'editor'; // default
 var graph = null; // the graph itself
 var cy = null;
 var layout_opts = null;
