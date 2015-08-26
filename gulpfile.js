@@ -23,8 +23,8 @@ var paths = {
     // to generate a dynamic browserify set.
     clients: ['js/NoctuaEditor.js', 
 	      'js/NoctuaLanding.js',
-	      'js/NoctuaCytoView.js',
-	      'js/NoctuaCompanion.js',
+	      'workbenches/companion/Companion.js',
+	      'workbenches/cytoview/CytoView.js',
 	      'js/NoctuaBasic/NoctuaBasicApp.js',
 	      'js/NoctuaBasic/NoctuaBasicController.js',
 	      'js/NoctuaLanding.js',

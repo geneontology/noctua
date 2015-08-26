@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{title}}</title>
+
+    <!-- CSS. -->
+    {{#pup_tent_css_libraries}}
+    <link rel="stylesheet" type="text/css" href="{{{.}}}">
+    {{/pup_tent_css_libraries}}
+    
+    <!-- JS variables. -->
+    {{#pup_tent_js_variables}}
+    <script type="text/javascript">var {{name}} = {{{value}}};</script>
+    {{/pup_tent_js_variables}}
+    
+    <!-- JS libraries. -->
+    {{#pup_tent_js_libraries}}
+    <script type="text/javascript" src="{{{.}}}"></script>
+    {{/pup_tent_js_libraries}}
+    
+  </head>
+  <!-- <body style="padding-top: 70px; padding-bottom: 70px;"> -->
+  <body>
+
+    <!-- Nav. -->
+    <!-- <div class="navbar navbar-inverse navbar-fixed-top"> -->
+    <div class="navbar navbar-inverse">
+      <div class="container bbop-bs3-override-nav-scale">
+
+	<!-- Button on collapse. -->
+	<div class="navbar-header">
+	  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+	  </button>
+
+	  <!-- <span class="navbar-brand">MME Editor</span> -->
+	  <a href="{{noctua_landing}}" class="navbar-brand">Return to Noctua Preview</a>
+	</div>
+
+	<div class="navbar-collapse collapse">
+	  <ul class="nav navbar-nav">
+
+            <!-- Help. -->
+            <!-- <p class="navbar-text"> -->
+            <li>
+              <a id="action_help" class="navbar-link"
+		 href="{{workbench_help_link}}" title="">Workbench help</a>
+            </li>
+            <!-- </p> -->
+
+	  </ul>
+
+	  <div class="nav navbar-right">
+
+            {{^barista_token}}
+            <!-- Login. -->
+            <a id="action_barista_login" class="btn btn-default navbar-btn" href="{{barista_login}}" title="">Login</a> {{/barista_token}} {{#barista_token}}
+            <!-- Logout. -->
+            <p id="user_name_info" class="navbar-text">???</p>
+            <a id="action_barista_logout" class="btn btn-default navbar-btn" href="{{barista_logout}}" title="">Logout</a> {{/barista_token}}
+
+	  </div>
+
+	</div>
+
+      </div>
+    </div>
+
+    <!-- Start workbench content. -->
+    {{&pup_tent_content}}
+    <!-- End workbench content. -->
+
+  </body>
+</html>

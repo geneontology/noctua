@@ -73,10 +73,13 @@
           <a href="#" class="dropdown-toggle"
 	     data-toggle="dropdown">Workbenches <b class="caret"></b></a>
           <ul class="dropdown-menu">
-            <li><a id="open_companion" target="_blank"
-href="/workbench/companion/{{model_id}}?barista_token={{barista_token}}">Function companion</a></li>
-            <li><a id="open_cytoview" target="_blank"
-		   href="/workbench/cytoview/{{model_id}}?barista_token={{barista_token}}">Cytoscape view</a></li>
+	    {{^noctua_workbenches}}
+	    ace
+	    {{/noctua_workbenches}}
+	    {{#noctua_workbenches}}
+            <li><a target="_blank"
+		   href="/workbench/{{{path-id}}}/{{model_id}}?barista_token={{barista_token}}">{{{menu-name}}}</a></li>
+	    {{/noctua_workbenches}}
           </ul>
 	</li>
 

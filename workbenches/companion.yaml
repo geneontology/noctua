@@ -1,0 +1,7 @@
+menu-name: "Function companion"
+page-name: "Function Companion"
+help-link: "http://github.com/geneontology/noctua/issues"
+path-id: "companion"
+body-template: 'body.tmpl'
+css: []
+javascript: ['Companion.js']

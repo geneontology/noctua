@@ -11,6 +11,9 @@
 #### : npm bin gulp
 ####
 
+## Workbenches.
+WORKBENCHES ?= 
+
 ## Variable to pass the location definition Minerva server server to
 ## the deploying app.
 MINERVA_DEFINITION ?= minerva_local
@@ -98,12 +101,12 @@ pass:
 ##
 .PHONY: start-noctua-dev
 start-noctua-dev: assemble-app
-	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
+	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
-	MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
+	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
 
 ###
 ### Commands/environment for Barista messaging server.
