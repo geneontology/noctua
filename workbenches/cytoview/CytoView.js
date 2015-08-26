@@ -56,10 +56,17 @@ var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
 
 ///
+/// Layouts
+///
+
+///
 ///
 ///
 
 var graph_id = 'cytoview';
+var graph_layout = 'cose'; // default
+var graph_fold = 'evidence'; // default
+var graph = null; // the graph itself
 
 ///
 var CytoViewInit = function(user_token){
@@ -110,56 +117,19 @@ var CytoViewInit = function(user_token){
 	}
     }
 
-    // Internal registrations.
-    manager.register('prerun', _shields_up);
-    manager.register('postrun', _shields_down, 9);
-    manager.register('manager_error', function(resp, man){
-	alert('There was a manager error (' +
-	      resp.message_type() + '): ' + resp.message());
-    }, 10);
+    function _render_graph(ngraph, layout, fold){
 
-    // Likely the result of unhappiness on Minerva.
-    manager.register('warning', function(resp, man){
-	alert('Warning: ' + resp.message() + '; ' +
-	      'your operation was likely not performed');
-    }, 10);
-
-    // Likely the result of serious unhappiness on Minerva.
-    manager.register('error', function(resp, man){
-
-	// Do something different if we think that this is a
-	// permissions issue.
-	var perm_flag = "InsufficientPermissionsException";
-	var token_flag = "token";
-	if( resp.message() && resp.message().indexOf(perm_flag) !== -1 ){
-	    alert('Error: it seems like you do not have permission to ' +
-		  'perform that operation. Did you remember to login?');
-	}else if( resp.message() && resp.message().indexOf(token_flag) !== -1 ){
-	    alert("Error: it seems like you have a bad token...");
-	}else{
-	    // Generic error.
-	    alert('Error (' +
-		  resp.message_type() + '): ' +
-		  resp.message() + '; ' +
-		  'your operation was likely not performed.');
-	}
-    }, 10);
-
-    // ???
-    manager.register('meta', function(resp, man){
-	ll('a meta callback?');
-    });
-
-    // Likely result of a new model being built on Minerva.
-    manager.register('rebuild', function(resp, man){
-	ll('rebuild callback');
-
+	// Wipe it and start again.
 	jQuery('#'+graph_id).empty();
 
-	// Noctua graph.
-	var ngraph = new noctua_graph();
-	ngraph.load_data_basic(resp.data());
-	ngraph.fold_evidence();
+	// Try and get it folded as desired.
+	if( fold === 'evidence' ){
+	    ngraph.fold_evidence();
+	}else if( fold === 'editor' ){
+	    ngraph.fold_go_noctua();
+	}else{
+	    ngraph.unfold();
+	}
 
 	// Stolen from the internal workings of widgetry.
 	// Part 1.
@@ -222,23 +192,68 @@ var CytoViewInit = function(user_token){
 	    });
 	});
 
+	// Get roots for algorithms that need it.
+	var roots = ngraph.get_root_nodes();
+	var root_ids = [];
+	each(roots, function(root){
+	    root_ids.push(root.id());
+	});
+
+	// Setup possible layouts.
+	var layout_opts = {
+	    'cose': {
+		name: 'cose',
+	    	padding: 10,
+	    	animate: false,
+	    	// animate: true,
+		// 'directed': true,
+		'fit': true
+		// //'maximalAdjustments': 0,
+		// 'circle': false,
+		// 'roots': cyroots
+	    },
+	    // 'sugiyama': {
+	    //     'name': 'grid',
+	    //     'padding': 30,
+	    //     'position': get_pos
+	    // },
+	    'random': {
+		name: 'random',
+		fit: true
+	    },
+	    'grid': {
+		name: 'grid',
+		fit: true,
+		padding: 30,
+		rows: undefined,
+		columns: undefined
+	    },
+	    'circle': {
+		name: 'circle',
+		fit: true
+	    },
+	    'breadthfirst': {
+		name: 'breadthfirst',
+		directed: true,
+		fit: true,
+		//maximalAdjustments: 0,
+		circle: false,
+		roots: root_ids
+	    }
+	    // 'arbor': {
+	    // 	name: 'arbor',
+	    // 	fit: true, // whether to fit to viewport
+	    // 	padding: 10 // fit padding
+	    // },
+	};
+	
 	// Ramp up view.
 	var cy = cytoscape({
 	    // UI loc
 	    container: document.getElementById(graph_id),
 	    // actual renderables
 	    elements: elements,
-	    layout: {
-	    	name: 'cose',
-	    	padding: 10,
-	    	animate: false
-	    	// animate: true,
-	    },
-	    // layout: {
-	    // 	name: 'arbor',
-	    // 	fit: true, // whether to fit to viewport
-	    // 	padding: 10 // fit padding
-	    // },
+	    layout: layout_opts[layout],
 	    style: [
 		{
 		    selector: 'node',
@@ -300,7 +315,72 @@ var CytoViewInit = function(user_token){
 	    zoom: 2,
 	    pan: { x: 100, y: 100 }
 	});
-	
+    }
+
+    ///
+    /// Management.
+    ///
+
+    // Internal registrations.
+    manager.register('prerun', _shields_up);
+    manager.register('postrun', _shields_down, 9);
+    manager.register('manager_error', function(resp, man){
+	alert('There was a manager error (' +
+	      resp.message_type() + '): ' + resp.message());
+    }, 10);
+
+    // Likely the result of unhappiness on Minerva.
+    manager.register('warning', function(resp, man){
+	alert('Warning: ' + resp.message() + '; ' +
+	      'your operation was likely not performed');
+    }, 10);
+
+    // Likely the result of serious unhappiness on Minerva.
+    manager.register('error', function(resp, man){
+
+	// Do something different if we think that this is a
+	// permissions issue.
+	var perm_flag = "InsufficientPermissionsException";
+	var token_flag = "token";
+	if( resp.message() && resp.message().indexOf(perm_flag) !== -1 ){
+	    alert('Error: it seems like you do not have permission to ' +
+		  'perform that operation. Did you remember to login?');
+	}else if( resp.message() && resp.message().indexOf(token_flag) !== -1 ){
+	    alert("Error: it seems like you have a bad token...");
+	}else{
+	    // Generic error.
+	    alert('Error (' +
+		  resp.message_type() + '): ' +
+		  resp.message() + '; ' +
+		  'your operation was likely not performed.');
+	}
+    }, 10);
+
+    // ???
+    manager.register('meta', function(resp, man){
+	ll('a meta callback?');
+    });
+
+    // Likely result of a new model being built on Minerva.
+    manager.register('rebuild', function(resp, man){
+	ll('rebuild callback');
+
+	// Noctua graph.
+	graph = new noctua_graph();
+	graph.load_data_basic(resp.data());
+
+	// Initial rendering of the graph.
+	_render_graph(graph, graph_layout, graph_fold);
+
+	// Go ahead and wire-up the interface.
+	jQuery("#" + "layout_selection").change(function(event){
+	    graph_layout = jQuery(this).val();
+	    _render_graph(graph, graph_layout, graph_fold);
+	});
+	jQuery("#" + "fold_selection").change(function(event){
+	    graph_fold = jQuery(this).val();
+	    _render_graph(graph, graph_layout, graph_fold);
+	});
     }, 10);
 
     manager.get_model(global_id);
@@ -319,18 +399,18 @@ jQuery(document).ready(function(){
     // Next we need a manager to try and pull in the model.
     if( typeof(global_minerva_definition_name) === 'undefined' ||
 	typeof(global_barista_location) === 'undefined' ){
-	alert('environment not ready');
-    }else{
-	// Only roll if the env is correct.
-	// Will use the above variables internally (sorry).
-	CytoViewInit(start_token);
+	    alert('environment not ready');
+	}else{
+	    // Only roll if the env is correct.
+	    // Will use the above variables internally (sorry).
+	    CytoViewInit(start_token);
 
-	// When all is said and done, let's also fillout the user
-	// name just for niceness. This is also a test of CORS in
-	// express.
-	if( start_token ){
-	    widgetry.user_check(global_barista_location,
-				start_token, 'user_name_info');
+	    // When all is said and done, let's also fillout the user
+	    // name just for niceness. This is also a test of CORS in
+	    // express.
+	    if( start_token ){
+		widgetry.user_check(global_barista_location,
+				    start_token, 'user_name_info');
+	    }
 	}
-    }
 });
