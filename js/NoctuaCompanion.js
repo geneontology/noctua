@@ -219,13 +219,14 @@ var CompanionInit = function(user_token){
     widget_manager.set_personality('annotation');
     widget_manager.add_query_filter('document_category',
 				    confc.document_category(), ['*']);
+    widget_manager.add_query_filter('aspect', 'F'); // removable
     
     // Attach filters to manager.
     var hargs = {
 	meta_label: 'Total documents:&nbsp;',
 	// free_text_placeholder:
 	// 'Input text to filter against all remaining documents',
-	'display_free_text_p': false
+	// 'display_free_text_p': false
     };
     var filters = new bbop_legacy.widget.live_filters(
 	'input-filter-accordion', widget_manager, gconf, hargs);
@@ -237,10 +238,12 @@ var CompanionInit = function(user_token){
     var pager = new bbop_legacy.widget.live_pager('pager', widget_manager,
 						  pager_opts);
     
-    // Describe the button that will send macro commands to
-    // noctua/minerva.
-    var push_to_noctua_button = {
-	label: 'Add to model',
+    // Describe the button that will attempt to compact the selected 
+    // annotations and send macro commands to noctua/minerva.
+    // The alrorithm is derived from a diagram here:
+    // https://github.com/geneontology/noctua/issues/170#issuecomment-134414048
+    var port_to_noctua_button = {
+	label: 'Import',
 	diabled_p: false,
 	click_function_generator: function(results_table, widget_manager){ // 
 	    
@@ -265,14 +268,31 @@ var CompanionInit = function(user_token){
 		    });
 		    
 		    // Assemble a batch to run.
-		    var reqs = new minerva_requests.request_set(
-			global_barista_token, global_id);
+		    var acls_set_f = {};
+		    var acls_set_p = {};
+		    var acls_set_c = {};
 		    each(docs_to_run, function(doc){
 			
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
-			var rel = 'RO:0002333';
+			// Using aspect, place the information under a
+			// paricular aspect grouping.
+			var aspect = doc['aspect'];
+			var acls_set = null;
+			//var rel = null;
+			if( aspect === 'F' ){
+			    acls_set = acls_set_f;
+			    //rel = 'RO:0002333'; // enabled_by
+			}else if( aspect === 'P' ){
+			    acls_set = acls_set_p;
+			    //rel = 'RO:0002233'; // has_input
+			}else{ // C
+			    acls_set = acls_set_c;
+			    //rel = 'BFO:0000066'; // occurs_in
+			}
+			// 'BFO:0000050'; // part_of
+
 			// Attempt at save ECO mapping.
 			var ev = doc['evidence_type'];
 			if( eco_lookup[ev] ){
@@ -298,17 +318,62 @@ var CompanionInit = function(user_token){
 			if( ! us.isArray(withs) ){ // string to list
 			    withs = [withs];
 			}
+
+			// Okay, try and compact this down as much as
+			// possible. First, select which aspect
+			// grouping it's in, then ensure structure.
+			if( ! acls_set[acls] ){
+			    acls_set[acls] = {};
+			}
+			if( ! acls_set[acls][bio] ){
+			    //acls_set[acls][bio] = {};
+			    acls_set[acls][bio] = [];
+			}
+			// if( ! acls_set[acls][bio][rel] ){
+			//     acls_set[acls][bio][rel] = [];
+			// }
+			// Add on the evidence.
+			//acls_set[acls][bio][rel].push({
+			acls_set[acls][bio].push({
+			    ev: ev,
+			    refs: refs,
+			    withs: withs
+			});
+		    });
+			
+		    // Now let's actually assemble the requests for
+		    // the run.
+		    var reqs = new minerva_requests.request_set(
+			global_barista_token, global_id);
+
+		    // A slightly harder algorithm here. Everything
+		    // starts from F, no matter what.
+		    each(acls_set_f, function(bio_set, acls){
 			
 			var sub = reqs.add_individual(acls);
-			var obj = reqs.add_individual(bio);
-			var edge = reqs.add_fact([sub, obj, rel]);
-			
-			// BUG/TODO: Cannot properly add evidence
-			// until we sort out the ECO mapping
-			// issue...but until then a 99% okay demo.
-			reqs.add_evidence(ev, refs, withs, [sub, obj, rel]);
-		    });
 
+			each(bio_set, function(ev_list, bio){
+
+			    var obj = reqs.add_individual(bio);
+			    var edge = reqs.add_fact([sub, obj, 'RO:0002333']);
+			    
+			    each(ev_list, function(ev_set){
+				
+				// Recover.
+				var ev = ev_set['ev'];
+				var refs = ev_set['refs'];
+				var withs = ev_set['withs'];
+				
+				// Tag on the final evidence.
+				reqs.add_evidence(ev, refs, withs,
+						  [sub, obj, 'RO:0002333']);
+			    });
+			});
+
+			// ???
+			
+		    });
+		    
 		    // Final request action - fire and forget.
 		    mmanager.request_with(reqs);
 		}
@@ -320,7 +385,8 @@ var CompanionInit = function(user_token){
 	//'callback_priority': -200,
 	'user_buttons_div_id': pager.button_span_id(),
 	'user_buttons': [
-	    	    push_to_noctua_button
+	    port_to_noctua_button//,
+	    //model_into_noctua_button
 	]
     };
     var results = new bbop_legacy.widget.live_results('results', widget_manager,
