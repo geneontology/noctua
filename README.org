@@ -11,7 +11,7 @@
   More docs/API to be found [[http://geneontology.github.io/noctua][here]].
   
   This repository contains the graphical editor frontend (Noctua) and messenger server (Barista)
-  which communicates with [[https://github.com/geneontology/minerva][Minerva]]], a service layer that
+  which communicates with [[https://github.com/geneontology/minerva][Minerva]], a service layer that
   allows create/read/update/delete operations on an OWL Model.
 
   The current preview instance is available at: http://noctua.berkeleybop.org - for a toy example model,
