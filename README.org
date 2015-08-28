@@ -2,6 +2,9 @@
 
   #+ATTR_HTML: title="Screenshot"
   [[http://geneontology.github.io/noctua/images/screenshot.png]]
+
+  #+ATTR_HTML: title="Demo"  
+  https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4
   
   _Current development is very rapid, so some of these docs may be out
   of date._
