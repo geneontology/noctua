@@ -31,6 +31,7 @@
         "amigo2": "^2.4.0",
         "aws-sdk": "2.0.4",
 	"bbop": "2.4.0",
+	"bbopx": "0.9.31",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.16",
         "bbop-graph-noctua": "0.0.23",
