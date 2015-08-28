@@ -19,8 +19,9 @@ var cors = require('cors');
 
 // Required add-on libs.
 var bbop = require('bbop');
-var bbopx = require('bbopx');
+//var bbopx = require('bbopx');
 var amigo = require('amigo2');
+var bar_response = require('bbop-response-barista');
 
 // Aliases.
 var each = bbop.core.each;
@@ -1006,7 +1007,8 @@ var BaristaLauncher = function(){
 	    try{
 		//console.log(jsonp);
 		var resp_json = JSON.parse(jsonp);
-		resp = new bbopx.barista.response(resp_json);
+		//resp = new bbopx.barista.response(resp_json);
+		resp = new bar_response(resp_json);
 	    }catch(e){
 		response_okay_p = false;
 		console.log("unparsable response: " + jsonp);
