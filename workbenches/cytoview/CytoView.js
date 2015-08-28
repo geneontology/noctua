@@ -122,6 +122,7 @@ var CytoViewInit = function(user_token){
 	jQuery('#'+graph_id).empty();
 
 	// Try and get it folded as desired.
+	ngraph.unfold();
 	if( fold === 'evidence' ){
 	    graph_fold = fold;
 	    ngraph.fold_evidence();
@@ -130,7 +131,6 @@ var CytoViewInit = function(user_token){
 	    ngraph.fold_go_noctua(global_collapsible_relations);
 	}else{
 	    graph_fold = fold;
-	    ngraph.unfold();
 	}
 
 	// Stolen from the internal workings of widgetry.
