@@ -43,7 +43,9 @@ var app_base = sd.app_base();
 var collapsible_relations = require('./config/collapsible_relations.json');
 console.log('Will fold: ', collapsible_relations);
 
-var golr_server_location = 'http://golr.berkeleybop.org/';
+//var golr_server_location = 'http://golr.berkeleybop.org/';
+// Local testing.
+var golr_server_location = 'http://localhost:8080/solr/';
 // Emergency public backup.
 //var golr_server_location = 'http://geneontology-golr.stanford.edu/solr/';
 console.log('Using GOlr server at: ', golr_server_location);

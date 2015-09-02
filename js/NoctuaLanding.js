@@ -510,11 +510,6 @@ var MMEnvBootstrappingInit = function(user_token){
     }, 10);
 
     ///
-    /// Activate autocomplete in input boxes.
-    /// Add the local responders.
-    ///
-
-    ///
     /// Activate UI buttons.
     ///
 
@@ -543,6 +538,38 @@ var MMEnvBootstrappingInit = function(user_token){
     ///
 
     manager.get_meta();
+
+    ///
+    /// Activate autocomplete in input boxes.
+    /// Add the local responders.
+    ///
+
+    // noctua meta
+    var input_golr_auto_val = null;
+    var input_golr_auto_args = {
+    	'label_template': '{{annotation_unit_label}}',
+    	'value_template': '{{annotation_unit_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul',
+    	'list_select_callback':
+    	function(doc){
+	    input_golr_auto_val = doc['annotation_unit'] || null;
+    	    var iga = input_golr_auto_val || '';
+    	    if( ! input_golr_auto_val ){
+    		alert('Must properly select from list.');
+	    }else{
+		
+		_jump_to_page(_generate_jump_url(input_golr_auto_val.slice(-16),
+						 to_editor));
+	    }
+    	}
+    };
+    var input_golr_auto =
+	    new bbop_legacy.widget.search_box(gserv, gconf,
+					      'input_golr_jump',
+					      input_golr_auto_args);
+    input_golr_auto.lite(true);
+    input_golr_auto.add_query_filter('document_category', 'noctua_model_meta');
+    input_golr_auto.set_personality('noctua_model_meta');
 };
 
 // Start the day the jsPlumb way.
