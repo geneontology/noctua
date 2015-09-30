@@ -18,6 +18,9 @@ var querystring = require('querystring');
 var crypto = require('crypto');
 var cors = require('cors');
 
+var repl = require('repl');
+var net = require('net');
+
 // Required add-on libs.
 var bbop = require('bbop');
 //var bbopx = require('bbopx');
@@ -428,7 +431,7 @@ var Sessioner = function(auth_list){
 // Bring in metadata that will be used for identifying
 // user. Spin-up session manager.
 // Written as separate function to 
-function _setup_session(fname){
+function setup_session(fname){
 
     //var auth_str = fs.readFileSync(fname);
     //var auth_list = JSON.parse(auth_str);
@@ -437,12 +440,15 @@ function _setup_session(fname){
     return new Sessioner(auth_list);
 }
 //var sessioner = _setup_session('./config/users.json');
-var sessioner = _setup_session('./config/users.yaml');
+var sessioner = setup_session('./config/users.yaml');
 
 // BUG/TODO/DEBUG: create an always user so I don't go crazy when
 // reloading Barista during experiments..
 // Will need to go at some point, or be more subtle.
-sessioner.create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
+function create_bogus_session(email, token, name, uri){
+    sessioner.create_bogus_session(email, token, name, uri);
+}
+create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
@@ -462,7 +468,52 @@ var BaristaLauncher = function(){
     // Monitor some stats.
     var monitor_messages = 0;
     var monitor_calls = 0;
-    
+
+    ///
+    /// Setup a REPL system.
+    ///
+
+    // Only do this if in the environment.
+    var barreport = process.env.BARISTA_REPL_PORT;
+    if( barreport ){
+	// Fix to number.
+	barreport = parseInt(barreport);
+
+	//console.log('Starting Barista REPL server...');
+	net.createServer(function (socket) {
+	    
+	    console.log('Create a Barista REPL server for an incoming client.');
+	
+	    // Start up the server.
+	    var repl_run = repl.start({
+		prompt:
+		'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ',
+		input: socket,
+		output: socket,
+		terminal: true,
+		useGlobal: true
+	    });
+	    
+	    // On sign-off.
+	    repl_run.on('exit', function () {
+		console.log('Closing a Barista REPL server.');
+		socket.end();
+	    });
+
+	    // Add context to server.
+	    repl_run.context['socket'] = socket;
+	    repl_run.context['sessioner'] = sessioner;
+	    repl_run.context['setup_session'] = setup_session;
+	    repl_run.context['create_bogus_session'] = create_bogus_session;
+	    repl_run.context['get_sessions'] = sessioner.get_sessions;
+	    repl_run.context['delete_session_by_email'] =
+		sessioner.delete_session_by_email;
+	    repl_run.context['delete_session_by_token'] =
+		sessioner.delete_session_by_token;
+	    
+	}).listen(barreport);
+    }    
+
     ///
     /// Process CLI environmental variables.
     ///
@@ -1254,3 +1305,4 @@ var BaristaLauncher = function(){
 
 // 
 var barista = new BaristaLauncher();
+

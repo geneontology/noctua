@@ -28,6 +28,7 @@ NOCTUA_HOST ?= 127.0.0.1
 
 ## Variable to define the port that Barista starts on.
 BARISTA_PORT ?= 3400
+BARISTA_REPL_PORT ?= 9090
 MINERVA_PORT ?= 6800
 
 ## URL for users.yaml.
@@ -116,11 +117,11 @@ start-noctua:
 
 .PHONY: start-barista-dev
 start-barista-dev: assemble-app
-	BARISTA_PORT=$(BARISTA_PORT) $(NODE_BIN) barista.js
+	BARISTA_PORT=$(BARISTA_PORT) BARISTA_REPL_PORT=$(BARISTA_REPL_PORT) $(NODE_BIN) barista.js
 
 .PHONY: start-barista
 start-barista:
-	BARISTA_PORT=$(BARISTA_PORT) $(NODE_BIN) barista.js
+	BARISTA_PORT=$(BARISTA_PORT) BARISTA_REPL_PORT=$(BARISTA_REPL_PORT) $(NODE_BIN) barista.js
 
 ###
 ### Commands/environment for Minerva data server.
