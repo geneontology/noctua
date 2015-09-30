@@ -28,9 +28,11 @@ NOCTUA_HOST ?= 127.0.0.1
 
 ## Variable to define the port that Barista starts on.
 BARISTA_PORT ?= 3400
+MINERVA_PORT ?= 6800
 
 ## URL for users.yaml.
-GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
+#GO_USER_METADATA_FILE ?= 'https://s3.amazonaws.com/go-public/metadata/users.json'
+GENEONTOLOGY_CATALOG ?= ~/local/src/svn/geneontology.org/trunk/ontology/extensions/catalog-v001.xml
 
 ## BBOP JS paths.
 BBOP_JS ?= ../bbop-js/
@@ -126,12 +128,7 @@ start-barista:
 
 .PHONY: start-minerva-go
 start-minerva-go:
-	cd $(MINERVA_SERVER) && ./build-server.sh
-	make start-minerva-go-fast
-
-.PHONY: start-minerva-go-fast
-start-minerva-go-fast:
-	cd $(MINERVA_SERVER)/minerva-server/bin && ./start-go-minerva.sh $(GENEONTOLOGY_SVN) $(NOCTUA_MODELS) $(MINERVA_LABEL_RESOLUTION)
+	java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-request-logging --slme-elk --skip-class-id-validation --golr-labels $(MINERVA_LABEL_RESOLUTION) -c $(GENEONTOLOGY_CATALOG) -g http://purl.obolibrary.org/obo/go/extensions/go-lego.owl --set-important-relation-parent http://purl.obolibrary.org/obo/LEGOREL_0000000 -f $(NOCTUA_MODELS) --port $(MINERVA_PORT)
 
 ###
 ### Gulp-based workflows.
