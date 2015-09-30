@@ -12,6 +12,7 @@
 // Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
+var yaml = require('yamljs');
 var url = require('url');
 var querystring = require('querystring');
 var crypto = require('crypto');
@@ -279,9 +280,10 @@ var Sessioner = function(auth_list){
 	if( uinf ){
 	    if( uinf['uri'] &&
 		uinf['authorizations'] &&
-		uinf['authorizations']['minerva-go'] ){
-		    ret = true;
-		}
+		uinf['authorizations']['noctua-go'] &&
+		uinf['authorizations']['noctua-go']['allow-edit'] ){
+		ret = true;
+	    }
 	}
 
 	return ret;
@@ -425,9 +427,17 @@ var Sessioner = function(auth_list){
 
 // Bring in metadata that will be used for identifying
 // user. Spin-up session manager.
-var auth_str = fs.readFileSync('./config/users.json');
-var auth_list = JSON.parse(auth_str);
-var sessioner = new Sessioner(auth_list);
+// Written as separate function to 
+function _setup_session(fname){
+
+    //var auth_str = fs.readFileSync(fname);
+    //var auth_list = JSON.parse(auth_str);
+    var auth_list = yaml.load(fname);
+
+    return new Sessioner(auth_list);
+}
+//var sessioner = _setup_session('./config/users.json');
+var sessioner = _setup_session('./config/users.yaml');
 
 // BUG/TODO/DEBUG: create an always user so I don't go crazy when
 // reloading Barista during experiments..
