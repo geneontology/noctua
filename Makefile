@@ -42,7 +42,6 @@ BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 
 ## Minerva paths.
 MINERVA_SERVER ?= ../minerva/
-GENEONTOLOGY_SVN ?= /home/sjcarbon/local/src/svn/geneontology.org/trunk/
 NOCTUA_MODELS ?= /home/sjcarbon/local/src/git/noctua-models/models/
 #MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
 MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
