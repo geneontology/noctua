@@ -543,6 +543,11 @@ var NoctuaLauncher = function(){
 	    // Probably use _path_cache(key).
 	    res.sendfile('static/waiting_ac.gif');
 	});
+	self.app.get('/images/ui-bg_flat_100_ffffff_40x100.png', function(req, res){
+	    res.setHeader('Content-Type', 'image/png');
+	    // BUG/TODO: See above.
+	    res.sendfile('static/waiting_ac.gif');
+	});
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
 	self.app.get('/favicon.ico', function(req, res){
