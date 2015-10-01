@@ -203,7 +203,7 @@ var NoctuaLauncher = function(){
 	    self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
 	    // This allows the links available to be optionally
 	    // different than the literal operating address of noctua.
-	    self.frontend = process.env.NOCTUA_FRONTEND || self.hostport;
+	    self.frontend = process.env.NOCTUA_LOCATION || self.hostport;
 
             console.warn('Running as: LOCAL_NODEJS');
 	}
@@ -570,6 +570,7 @@ var NoctuaLauncher = function(){
 		'okay': true,
 		'date': (new Date()).toJSON(),
 		'location': self.frontend,
+		'listening': self.hostport,
 		'offerings': [
 		    {
 			'name': 'external_kicks',
