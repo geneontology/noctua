@@ -29,7 +29,7 @@
 //// Requires custom document type for GOlr.
 //// amigo/metadata/noctua-model-meta-config.yaml
 //// 
-//// Usage: node epione.js --monitor A/B --golr http://localhost:8080/solr --users C/D
+//// Usage: node epione.js --monitor A/B/ --golr http://localhost:8080/solr --user C/D
 ////
 //// Note that the currently used FAM is a little slow, taking on the
 //// order of seconds.
@@ -236,13 +236,19 @@ function _file_to_payload(fname){
 	    id: document_category + '_' + mid,
 	    document_category: document_category,
 	    annotation_unit: mid,
+	    //?//annotation_unit_searchable: mid,
 	    annotation_unit_label: title,
+	    annotation_unit_label_searchable: title,
 	    contributor: clabels,
+	    contributor_searchable: clabels,
 	    model_date: model_date,
+	    model_date_searchable: model_date,
 	    model_state: state, 
+	    //?//model_state_searchable: state, 
 	    // TODO: Do not load comments until upstream is fixed:
 	    // See ticket: https://github.com/geneontology/noctua/issues/182
-	    comment: comment
+	    comment: comment,
+	    comment_searchable: comment
 	    //comment: blob['comment']
 	};
 
