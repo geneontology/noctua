@@ -44,6 +44,7 @@ BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 MINERVA_SERVER ?= ../minerva/
 NOCTUA_MODELS ?= /home/sjcarbon/local/src/git/noctua-models/models/
 #MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
+GOLR_SERVER ?= 'http://golr.berkeleybop.org/'
 MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
 
 ## Testing.
@@ -103,12 +104,12 @@ pass:
 ##
 .PHONY: start-noctua-dev
 start-noctua-dev: assemble-app
-	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
+	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) GOLR_SERVER=$(GOLR_SERVER) $(NODE_BIN) noctua.js
 
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
-	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) $(NODE_BIN) noctua.js
+	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) GOLR_SERVER=$(GOLR_SERVER) $(NODE_BIN) noctua.js
 
 ###
 ### Commands/environment for Barista messaging server.
