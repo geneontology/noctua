@@ -201,6 +201,9 @@ var NoctuaLauncher = function(){
             self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
             self.port = process.env.NOCTUA_PORT || non_std_local_port;
 	    self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
+	    // This allows the links available to be optionally
+	    // different than the literal operating address of noctua.
+	    self.frontend = process.env.NOCTUA_FRONTEND || self.hostport;
 
             console.warn('Running as: LOCAL_NODEJS');
 	}
@@ -251,22 +254,22 @@ var NoctuaLauncher = function(){
 
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
-	var noctua_landing = _build_token_link(self.hostport, barista_token);
+	var noctua_landing = _build_token_link(self.frontend, barista_token);
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
 	if( app_path === '' || app_path === '/' ){ // non-id based pages.
 	    barista_login = barista_loc + '/session' + '?return=' +
-		self.hostport + app_path;
+		self.frontend + app_path;
 	    barista_logout =
 		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.hostport + app_path, barista_token);
+				  self.frontend + app_path, barista_token);
 	}else{
 	    barista_login = barista_loc + '/session' + '?return=' +
-		self.hostport + app_path + '/' + model_id;
+		self.frontend + app_path + '/' + model_id;
 	    barista_logout =
 		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.hostport + app_path + '/' +
+				  self.frontend + app_path + '/' +
 				  model_id, barista_token);
 	}
 	var barista_users =
@@ -424,11 +427,11 @@ var NoctuaLauncher = function(){
 	self.app.get('/', function(req, res) {
 
 	    // // Capella takes a bit more care.
-	    // var capella_blank = _build_token_link(self.hostport + '/capella',
+	    // var capella_blank = _build_token_link(self.frontend + '/capella',
 	    // 					  barista_token);
 	    // var capella_payload = '[{"publication_id": "PMID:000000","annotation_id": "foo:0000000","terms": [ "GO:0003674", "GO:0008150"],"entities": [ "UniProtKB:P0000" ]}]';
 	    // var capella_test =
-	    // 	    _build_token_link(self.hostport + '/capella?bootstrap=' +
+	    // 	    _build_token_link(self.frontend + '/capella?bootstrap=' +
 	    // 			      capella_payload, barista_token);
 
 	    var tmpl_args = self.standard_variable_load(
@@ -458,12 +461,12 @@ var NoctuaLauncher = function(){
 	    var barista_token = self.get_token(req);
 	    var model_id = req.route.params['query'] || '';
 
-	    var noctua_landing = _build_token_link(self.hostport, barista_token);
+	    var noctua_landing = _build_token_link(self.frontend, barista_token);
 	    var barista_login = self.barista_location + '/session' + '?return=' +
-		    self.hostport + '/basic/' + model_id;
+		    self.frontend + '/basic/' + model_id;
 	    var barista_logout =
 		    _build_token_link(self.barista_location + '/session' +
-				      '?return=' + self.hostport + '/basic/' +
+				      '?return=' + self.frontend + '/basic/' +
 				      model_id, barista_token);
 
 	    //
@@ -566,7 +569,7 @@ var NoctuaLauncher = function(){
 		'name': 'Noctua',
 		'okay': true,
 		'date': (new Date()).toJSON(),
-		'location': self.hostport,
+		'location': self.frontend,
 		'offerings': [
 		    {
 			'name': 'external_kicks',
@@ -853,13 +856,13 @@ var NoctuaLauncher = function(){
 	if( self.IS_ENV_HEROKU ){
 	    // Heroku seems to want a more minimal launch.
 	    self.app.listen(self.port, function() {
-		console.log('%s: Node started on %s:%d ...',
+		console.log('%s: Node started (heroku) on %s:%d ...',
 			    Date(Date.now()), self.ipaddress||'???', self.port);
 	    });
 	}else{
             // Start the app on the specific interface (and port).
             self.app.listen(self.port, self.ipaddress, function() {
-		console.log('%s: Node started on %s:%d ...',
+		console.log('%s: Node started (custom) on %s:%d ...',
 			    Date(Date.now()), self.ipaddress, self.port);
 	    });
 	}
