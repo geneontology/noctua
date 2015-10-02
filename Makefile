@@ -42,7 +42,7 @@ BBOP_GRAPH_NOCTUA ?= ../bbop-graph-noctua/
 
 ## Minerva paths.
 MINERVA_SERVER ?= ../minerva/
-NOCTUA_MODELS ?= /home/sjcarbon/local/src/git/noctua-models/models/
+NOCTUA_MODELS ?= ../noctua-models/models/
 #MINERVA_LABEL_RESOLUTION ?= 'http://geneontology.org'
 GOLR_SERVER ?= 'http://golr.berkeleybop.org/'
 MINERVA_LABEL_RESOLUTION ?= 'http://golr.berkeleybop.org/'
@@ -63,16 +63,6 @@ NODE_BIN ?= node
 refresh-metadata:
 	wget --no-check-certificate $(GO_USER_METADATA_FILE) && mv users.json config/
 
-## Note, last two are useful for ultra-fast prototyping, bypassing the
-## necessary NPM steps for the server code.
-.PHONY: assemble-app
-assemble-app:
-#	cd $(BBOP_JS) && make bundle
-#	cd $(BBOPX_JS) && make bundle
-	cd
-#	cp $(BBOP_JS)/staging/bbop.js static/
-#	cp $(BBOPX_JS)/staging/bbopx.js static/
-
 ## Note, these two are useful for ultra-fast prototyping, bypassing the
 ## necessary NPM steps for the server code.
 .PHONY: patch-test-js
@@ -88,7 +78,7 @@ patch-test-js:
 ## Have to do a little something with basename to make sure we can
 ## deal with the odd pre-bbop namespacey modules.
 .PHONY: test $(TESTS)
-test: assemble-app $(TESTS)
+test: $(TESTS)
 $(TESTS):
 	echo "trying: $@"
 	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(basename $(@F)) -f $(@D)/$(@F)
@@ -101,11 +91,6 @@ pass:
 ### Commands/environment for Noctua application server.
 ###
 
-##
-.PHONY: start-noctua-dev
-start-noctua-dev: assemble-app
-	WORKBENCHES=$(WORKBENCHES) MINERVA_DEFINITION=$(MINERVA_DEFINITION) BARISTA_LOCATION=$(BARISTA_LOCATION) GOLR_SERVER=$(GOLR_SERVER) $(NODE_BIN) noctua.js
-
 ## Start without copying bbop-js over.
 .PHONY: start-noctua
 start-noctua:
@@ -114,10 +99,6 @@ start-noctua:
 ###
 ### Commands/environment for Barista messaging server.
 ###
-
-.PHONY: start-barista-dev
-start-barista-dev: assemble-app
-	BARISTA_PORT=$(BARISTA_PORT) BARISTA_REPL_PORT=$(BARISTA_REPL_PORT) $(NODE_BIN) barista.js
 
 .PHONY: start-barista
 start-barista:
