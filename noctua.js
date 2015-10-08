@@ -5,17 +5,20 @@
  *
  * A server that will render GO graphs into jsPlumb.
  *
- * : BARISTA_LOCATION=http://localhost:3400 make start-noctua
+ * : node noctua.js -c "RO:0002333 BFO:0000066 RO:0002233 RO:0002488" -g http://golr.geneontology.org/solr/ -b http://localhost:3400 -m minerva_local
  */
 
 // Let jshint pass over over our external globals or oddities.
 /* global unescape */
+/* global parseInt */
 
 // Required shareable Node libs.
 var mustache = require('mustache');
 var fs = require('fs');
+var tilde = require('expand-home-dir');
 var yaml = require('yamljs');
 var mime = require('mime');
+var url = require('url');
 
 // Required add-on libs.
 var bbop_legacy = require('bbop').bbop;
@@ -28,31 +31,90 @@ var bbop = require('bbop-core');
 var barista_response = require('bbop-response-barista');
 var minerva_requests = require('minerva-requests');
 
+///
+/// Helpers.
+///
+
+function _die(str){
+    console.error(str);
+    process.exit(-1);
+}
+
+function _tilde_expand(ufile){
+    return tilde(ufile);
+}
+
+function _tilde_expand_list(list){
+    return us.map(list, function(ufile){
+	//console.log('ufile: ' + ufile);
+	return tilde(ufile);
+    });
+}
+
 // Aliases.
 var each = us.each;
 var what_is = bbop.what_is;
 var is_defined = bbop.is_defined;
 var dump = bbop.dump;
 
+///
+/// CLI arguments and runtime environment.
+///
+
+// CLI handling.
+var argv = require('minimist')(process.argv.slice(2));
+
+// Collapsible relations.
+var collapsible_raw =
+	argv['c'] || argv['collapsible-relations'] || '';
+// GOlr server.
+var golr_server_location =
+	argv['g'] || argv['golr'] || 'http://golr.geneontology.org/solr/';
+// Barista server.
+var barloc =
+	argv['b'] || argv['barista'] || 'http://barista.berkeleybop.org/';
+// Main minerva app definition.
+var min_def_name =
+	argv['m'] || argv['minerva-definition'] || 'minerva_public';
+// Work benches; will check and process a little later.
+// Default to local workbenches.
+var workbench_maybe_raw =
+	argv['w'] || argv['workbenches'] || './workbenches/';
+// Noctua's real location.
+var noctua_location =
+	argv['s'] || argv['noctua-self'] || 'http://localhost:8910';
+// Noctua's self/public location (optional).
+var noctua_frontend = argv['p'] || argv['noctua-public'];
+
+// Process strings to usable lists.
+var collapsible_relations = collapsible_raw.split(/\s+/) || [];
+var workbench_maybe_dirs = workbench_maybe_raw.split(/\s+/) || [];
+
+console.log('Will fold: ', collapsible_relations);
+console.log('Using GOlr lookup server at: ', golr_server_location);
+console.log('Barista location: ' + barloc);
+console.log('Minerva definition name: ' + min_def_name);
+
+
 // Figure out our base and URLs we'll need to aim this locally.
 var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
-// Get some information about what we'll be folding away.
-var collapsible_relations = require('./config/collapsible_relations.json');
-console.log('Will fold: ', collapsible_relations);
+// // Pull in our configuration.
+// var config = yaml.load('./startup.yaml');
 
-// Widget server.
-var golr_server_location = 'http://golr.berkeleybop.org/';
-if( process.env.GOLR_SERVER && process.env.GOLR_SERVER !== '' ){
-    golr_server_location = process.env.GOLR_SERVER;
-}
+// // Get some information about what we'll be folding away.
+// var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
+// console.log('Will fold: ', collapsible_relations);
+
+// // Widget server.
+// var golr_server_location = config['GOLR_LOOKUP_URL'].value;
 
 // Local testing.
 // Emergency public backup.
 //var golr_server_location = 'http://geneontology-golr.stanford.edu/solr/';
-console.log('Using GOlr server at: ', golr_server_location);
+// console.log('Using GOlr lookup server at: ', golr_server_location);
 
 // The name we're using this week.
 var notw = 'Noctua (Preview)';
@@ -74,78 +136,53 @@ var NoctuaLauncher = function(){
 
     // Get the location(s) of the workbench plugins.
     var workbenches = [];
-    process.env.WORKBENCHES = 'workbenches'; // TODO: we're internal for now...
-    if( process.env.WORKBENCHES ){
+    each(workbench_maybe_dirs, function(dir){
+	//console.log('dir', dir);
 
-	var raw_w = process.env.WORKBENCHES;
-	if( raw_w ){
-
-	    // Break the incoming string along the whitespace.
-	    var maybe_dirs = raw_w.split(/\s+/);
-	    each(maybe_dirs, function(dir){
-		//console.log('dir', dir);
-
-		// Look at all of the listed directories.
-		var files = fs.readdirSync(dir);
-		//console.log('files', files);
-
-		// Only try to scan the YAML files in those
-		// directories.
-		each(files, function(file){
-		    //console.log('file', file);
-		    
-		    var suf = '.yaml';
-		    if( file.indexOf(suf, file.length - suf.length) !== -1 ){
+	// Look at all of the listed directories.
+	var files = fs.readdirSync(dir);
+	//console.log('files', files);
+	
+	// Only try to scan the YAML files in those
+	// directories.
+	each(files, function(file){
+	    //console.log('file', file);
+	    
+	    var suf = '.yaml';
+	    if( file.indexOf(suf, file.length - suf.length) !== -1 ){
+		
+		// Check that the file looks right.
+		var wb = yaml.load(dir + '/' + file);
+		if( wb['menu-name'] && wb['page-name'] &&
+		    wb['help-link'] && wb['path-id'] &&
+		    wb['body-template'] &&
+		    wb['css'] && wb['javascript'] ){
 			
-			// Check that the file looks right.
-			var wb = yaml.load(dir + '/' + file);
-			if( wb['menu-name'] && wb['page-name'] &&
-			    wb['help-link'] && wb['path-id'] &&
-			    wb['body-template'] &&
-			    wb['css'] && wb['javascript'] ){
-				
-		            // Add the base file location of the wb.
-		            wb['base-location'] = dir;
-				
-			    // Load workbench for later.
-			    workbenches.push(wb);
-			    console.log(
-				'Added workbench ('+ wb['path-id']+ '): '+ file);
-			}else{
-			    console.log('Rejected workbench: ' + file);
-			}
+		        // Add the base file location of the wb.
+		        wb['base-location'] = dir;
+			
+			// Load workbench for later.
+			workbenches.push(wb);
+			console.log(
+			    'Added workbench ('+ wb['path-id']+ '): '+ file);
+		    }else{
+			console.log('Rejected workbench: ' + file);
 		    }
-		});
-	    });
-	}	
-    }
+	    }
+	});
+    });
     if( us.isEmpty(workbenches) ){
 	console.log('No workbenches defined.');
     }
+
+    // Apply external to interal variables.
     self.workbenches = workbenches;
-
-    // Barista.
-    var barloc = 'http://localhost:3400';
-    //var barloc_public = 'http://toaster.lbl.gov:3400';
-    var barloc_public = 'http://barista.berkeleybop.org'; // BUG: tmp chris fix
-    if( process.env.BARISTA_LOCATION ){
-	barloc = process.env.BARISTA_LOCATION;
-	console.log('Barista location taken from environment: ' + barloc);
-    }else{
-	console.log('Barista location taken from default: ' + barloc);
-    }
+    // Barista location setting.
+    //var barloc = config['BARISTA_LOOKUP_URL'].value;
     self.barista_location = barloc;
-
     // Initial setup of which minerva definition to use (to pass to
     // barista for translation).
-    var min_def_name = 'minerva_localhost';
-    var min_def_name_public = 'minerva_public'; // used in remote deployments
-    if( process.env.MINERVA_DEFINITION ){
-	min_def_name = process.env.MINERVA_DEFINITION;
-	console.log('Minerva definition name from environment: ' + min_def_name);
-    }else{
-	console.log('Minerva definition name from default: ' + min_def_name);
-    }
+    //    var min_def_name = config['DEFAULT_APP_DEFINITION'].value;
     self.minerva_definition_name = min_def_name;
 
     ///
@@ -157,62 +194,59 @@ var NoctuaLauncher = function(){
     // Set up server IP address and port # using env variables/defaults.
     // WARNING: Port stuff gets weird:
     // https://www.openshift.com/forums/openshift/nodejs-websockets-sockjs-and-other-client-hostings
-    // self.setupVariables = function() {
+//    var noctua_location = config['NOCTUA_LOCATION'].value;
 
-	var non_std_local_port = 8910;
-
-	self.IS_ENV_OPENSHIFT = false;
-	self.IS_ENV_HEROKU = false;
-	self.IS_ENV_LOCAL = false;
-
-	if( process.env.OPENSHIFT_APP_DNS ){
-	    self.IS_ENV_OPENSHIFT = true;
-
-	    // Try and setup hostname and port as best we can.
-            self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-            self.port = process.env.OPENSHIFT_NODEJS_PORT;
-	    self.hostport = 'http://' + process.env.OPENSHIFT_APP_DNS;
-
-	    // Also, we need to use the public version or minerva or badness.
-	    self.barista_location = barloc_public;
-	    self.minerva_definition_name = min_def_name_public;
-	    console.log('Changing Barista location  to: ' +
-			self.barista_location + ' for openshift');
-	    console.log('Changing Minerva definition to: ' +
-			self.minerva_definition_name + ' for openshift');
-
-            console.warn('Running as: OPENSHIFT_NODEJS');
-	}else if( process.env.PORT ){
+    self.IS_ENV_OPENSHIFT = false;
+    self.IS_ENV_HEROKU = false;
+    self.IS_ENV_LOCAL = false;
+    
+    if( process.env.OPENSHIFT_APP_DNS ){
+	self.IS_ENV_OPENSHIFT = true;
+	
+	// Try and setup hostname and port as best we can.
+        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
+        self.port = process.env.OPENSHIFT_NODEJS_PORT;
+	self.hostport = 'http://' + process.env.OPENSHIFT_APP_DNS;
+	
+	// Also, we need to use the public version or minerva or badness.
+	//self.barista_location = barloc_public;
+	console.log('Changing Barista location  to: ' +
+		    self.barista_location + ' for openshift');
+	console.log('Changing Minerva definition to: ' +
+		    self.minerva_definition_name + ' for openshift');
+	
+        console.log('Running as: OPENSHIFT_NODEJS');
+    }else if( process.env.PORT ){
 	    self.IS_ENV_HEROKU = true;
-
-	    // Try and setup port as best we can.
-            self.port = process.env.PORT || non_std_local_port;
-	    self.hostport = '';
-
-	    // Also, we need to use the public version or minerva or badness.
-	    self.barista_location = barloc_public;
-	    self.minerva_definition_name = min_def_name_public;
-	    console.log('Changing Barista location  to: ' +
-			self.barista_location + ' for heroku');
-	    console.log('Changing Minerva definition to: ' +
-			self.minerva_definition_name + ' for heroku');
-
-            console.warn('Running as: HEROKU_NODEJS');
-	}else{
-	    self.IS_ENV_LOCAL = true;
-
-	    // If Noctua host is env defined, use that, or sane default.
-            self.ipaddress =  process.env.NOCTUA_HOST || '127.0.0.1';
-            self.port = process.env.NOCTUA_PORT || non_std_local_port;
-	    self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
-	    // This allows the links available to be optionally
-	    // different than the literal operating address of noctua.
-	    self.frontend = process.env.NOCTUA_LOCATION || self.hostport;
-
-            console.warn('Running as: LOCAL_NODEJS');
-	}
-//    };
-
+	
+	// Try and setup port as best we can.
+        self.port = process.env.PORT || 8910; // why this default?
+	self.hostport = '';
+	
+	// Also, we need to use the public version or minerva or badness.
+	//self.barista_location = barloc_public;
+	console.log('Changing Barista location  to: ' +
+		    self.barista_location + ' for heroku');
+	console.log('Changing Minerva definition to: ' +
+		    self.minerva_definition_name + ' for heroku');
+	
+        console.log('Running as: HEROKU_NODEJS');
+    }else{
+	self.IS_ENV_LOCAL = true;
+	
+	// If Noctua host is env defined, use that, or sane default.
+	var u = url.parse(noctua_location);
+        self.ipaddress =  u.hostname || '127.0.0.1';
+        self.port = u.port;
+	self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
+	
+        console.log('Running as: LOCAL_NODEJS');
+    }
+    // This allows the links available to be optionally
+    // different than the literal operating address of noctua.
+    self.frontend = noctua_frontend || self.hostport;
+    console.log('Detected frontend: ' + self.frontend);
+    
     // Attempt to intelligently add a token to an input URL.
     // BUG: This code is repeated in
     // bbop_mme_widgets.build_token_link().

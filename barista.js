@@ -6,7 +6,7 @@
 ////  static/messenger.html
 ////  node_modules/socket.io/
 ////
-//// BARISTA_PORT=3400 make start-barista
+//// : node barista.js --self http://localhost:3400
 ////
 
 // Required shareable Node libs.
@@ -14,12 +14,14 @@ var mustache = require('mustache');
 var fs = require('fs');
 var yaml = require('yamljs');
 var url = require('url');
+var us = require('underscore');
 var querystring = require('querystring');
 var crypto = require('crypto');
 var cors = require('cors');
 
 var repl = require('repl');
 var net = require('net');
+var url = require('url');
 
 // Required add-on libs.
 var bbop = require('bbop');
@@ -27,13 +29,20 @@ var bbop = require('bbop');
 var amigo = require('amigo2');
 var bar_response = require('bbop-response-barista');
 
+///
+/// Helpers.
+///
+
+function _die(message){
+    console.error('EPIONE: ' + message);
+    process.exit(-1);
+}
+
 // Aliases.
 var each = bbop.core.each;
 var what_is = bbop.core.what_is;
 var is_defined = bbop.core.is_defined;
 var clone =  bbop.core.clone;
-
-var notw = 'Barista';
 
 ///
 /// REs to compile once.
@@ -46,6 +55,34 @@ var jsonp_re = /^jQuery[\d\_]+\((.*)\)$/;
 var js_re = /\.js$/;
 var css_re = /\.css$/;
 var html_re = /\.html$/;
+
+///
+/// CLI arguments and runtime environment.
+///
+
+var notw = 'Barista';
+
+// CLI handling.
+var argv = require('minimist')(process.argv.slice(2));
+
+// Optional repl port.
+var barreport = argv['r'] || argv['repl-port'] || null;
+if( ! barreport ){
+    console.log('Will not run REPL.');
+}else{
+    console.log('Will run REPL at: ' + barreport);
+}
+
+// Where Barista thinks it is in the world.
+var runloc = argv['s'] || argv['self'] || 'http://localhost:3400';
+console.log('Barista location: ' + runloc);
+var u = url.parse(runloc);
+var runport = u.port || 80; // be expicit about ports
+
+// Debug level.
+var barista_debug = argv['d'] || argv['debug'] || 0;
+if( barista_debug ){ barista_debug = parseInt(barista_debug); }
+console.log('Barista debug level: ' + barista_debug);
 
 ///
 /// ModelCubby: per-model message caching management.
@@ -433,8 +470,6 @@ var Sessioner = function(auth_list){
 // Written as separate function to 
 function setup_session(fname){
 
-    //var auth_str = fs.readFileSync(fname);
-    //var auth_list = JSON.parse(auth_str);
     var auth_list = yaml.load(fname);
 
     return new Sessioner(auth_list);
@@ -452,9 +487,12 @@ create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
-var app_str = fs.readFileSync('./config/app.json');
-var app_list = JSON.parse(app_str);
-var app_guard = new AppGuard(app_list);
+var sconf = yaml.load('./startup.yaml');
+var app_defs = sconf['APP_DEFINITIONS'].value;
+if( ! app_defs || us.isEmpty(app_defs) ){
+    _die();
+}
+var app_guard = new AppGuard(sconf['APP_DEFINITIONS'].value);
 
 // Start the model cubby.
 var cubby = new ModelCubby();
@@ -474,7 +512,7 @@ var BaristaLauncher = function(){
     ///
 
     // Only do this if in the environment.
-    var barreport = process.env.BARISTA_REPL_PORT;
+    //var barreport = process.env.BARISTA_REPL_PORT;
     if( barreport ){
 	// Fix to number.
 	barreport = parseInt(barreport);
@@ -513,41 +551,6 @@ var BaristaLauncher = function(){
 	    
 	}).listen(barreport);
     }    
-
-    ///
-    /// Process CLI environmental variables.
-    ///
-
-    var runport = 3400; // default val
-    // This, while seemingly redundant, is necessary to get absolutely
-    // the correct audience for Persona.
-    var runloc = 'http://localhost:' + runport; // default val
-    var barista_debug = 0; // default val
-    if( process.env.BARISTA_PORT ){
-	runport = process.env.BARISTA_PORT;
-	console.log('Barista server port taken from environment: ' + runport);
-    }else{
-	console.log('Barista server port taken from default: ' + runport);
-    }
-    if( process.env.BARISTA_LOCATION ){
-	runloc = process.env.BARISTA_LOCATION;
-	console.log("Barista's Persona audience will be: " + runloc);
-    }else{
-	console.log("Barista's Persona audience will default to: " + runloc);
-    }
-    if( process.env.BARISTA_DEBUG ){
-	barista_debug = process.env.BARISTA_DEBUG;
-	console.log('Barista debug level taken from env: ' + barista_debug);
-    }else{
-	console.log('Barista debug level taken from default: ' + barista_debug);
-    }
-
-    // BTW, we 99% of the time are going to have the runloc have the
-    // same port as runport--double check this to prevent mind-numbing
-    // debugging in the future.
-    if( runloc.lastIndexOf(runport) ===  -1 ){
-	console.warn('WARNING: BARISTA_LOCATION and BARISTA_PORT seem to have different ports. Are you sure?');
-    }
 
     ///
     /// Response helper.
