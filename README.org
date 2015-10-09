@@ -44,39 +44,50 @@
    developed for [[https://github.com/geneontology/amigo/][AmiGO]].
    
 ** Running
+
+   Before you do anything, you'll need to create a startup.yaml that will define
+   your environment. There are examples available in config/startup.yaml.*.
+   For example, for local noctua-only development, you could try:
+
+   : cp config/startup.yaml.noctua-dev ./startup.yaml
+
+   For more information about the configuration examples, see [[https://github.com/geneontology/noctua/tree/master/config#configurations][here]].
+
+   The the gulpfile.js and the startup.yaml are not necessary to run the 
+   services, they merely wrap getting the different variables coordinated
+   for the command line options for each of the services.
+
 *** Minerva (optional)
 
     You must have a Minerva backend running somewhere and target it
     with Barista and Noctua. In this dev example, we'll assume that
     you need that as well. Everybody is different, but I'll give my
-    environment as an example. Start with:
+    local dev environment as an example. Minerva is packaged with the
+    noctua repo.
 
-    : git clone https://github.com/geneontology/minerva.git
+    : gulp run-minerva
 
-    Then, in the Noctua repo:
-
-    : make start-minerva-go
-
-    Or, in a more granular way:
-
-    : cd ../minerva/minerva-server/bin && ./start-go-minerva.sh /home/sjcarbon/local/src/svn/geneontology.org/trunk/ /home/sjcarbon/local/src/git/noctua-models/models/ http://golr.berkeleybop.org/
+    This would run minerva as defined in your startup.yaml, probably
+    defaulting to port 6800.
 
     Learn more about Minerva [[https://github.com/geneontology/minerva][here]].
 
-*** Barista
+*** Barista (optional)
 
-    Everybody is different, but mine is like: 
+    Everybody is different, but depending on you local startup.yaml default,
+    if can be as simple as:
 
-    : make start-barista-dev
+    : gulp run-barista
 
     This will startup Barista aimed at the local Minerva instance
     running on default ports.
 
 *** Client/Graph Editor (previously "Noctua")
 
-    Everybody is different, but mine is like: 
+    Everybody is different, but depending on you local startup.yaml default,
+    if can be as simple as:
 
-    : make start-noctua-dev
+    : gulp run-noctua
 
     This will startup the client aimed at the local Barista instance
     running on default ports.
