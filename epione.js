@@ -486,11 +486,12 @@ each(user_entries, function(entry){
 // Set the actual target.
 var u = url.parse(golr_location);
 var client_opts = {
-    hostname: u.hostname,
+    solrVersion: '3.6',
+    host: u.hostname,
     port: u.port,
     path: u.path
 };
-// ll(client_opts);
+//ll(client_opts);
 var solr_client = solr.createClient(client_opts);
 //var solr_client = solr.createClient(u.hostname, u.port, '', u.path);
 
