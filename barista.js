@@ -73,9 +73,13 @@ if( ! barreport ){
     console.log('Will run REPL at: ' + barreport);
 }
 
+// Where the world thinks Barista is.
+var publoc = argv['p'] || argv['public'] || 'http://localhost:3400';
+console.log('Barista location (public/persona): ' + publoc);
+
 // Where Barista thinks it is in the world.
 var runloc = argv['s'] || argv['self'] || 'http://localhost:3400';
-console.log('Barista location: ' + runloc);
+console.log('Barista location (self): ' + runloc);
 var u = url.parse(runloc);
 var runport = u.port || 80; // be expicit about ports
 
@@ -603,7 +607,7 @@ var BaristaLauncher = function(){
     messaging_app.use(express.session({secret: 'notverysecret'}));
     // Must match client browser's address bar.
     var persona_opts = {
-	audience: runloc,
+	audience: publoc,
 
 	// Internal function to run if remote login was susseccful or
 	// a session remains open.
@@ -737,6 +741,7 @@ var BaristaLauncher = function(){
 	    'name': 'Barista',
 	    'date': (new Date()).toJSON(),
 	    'location': runloc,
+	    'public': publoc,
 	    'offerings': [
 		{
 		    'name': 'sessions',

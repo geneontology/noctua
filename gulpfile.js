@@ -262,6 +262,7 @@ gulp.task('run-minerva', shell.task(_run_cmd(
 gulp.task('run-barista', shell.task(_run_cmd(
     ['node', 'barista.js',
      '--debug', 0,
+     '--public', barista_lookup_url,
      '--self', barista_location,
      '--repl-port', barista_repl_port
     ]
