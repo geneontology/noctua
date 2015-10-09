@@ -68,11 +68,11 @@ var argv = require('minimist')(process.argv.slice(2));
 var each = us.each;
 
 function ll(arg1){
-    console.log('epione: ', arg1); 
+    console.log('epione [' + (new Date()).toJSON() + ']: ', arg1); 
 }
 
 function _die(message){
-    console.error('EPIONE: ' + message);
+    console.error('EPIONE [' + (new Date()).toJSON() + ']: ' + message);
     process.exit(-1);
 }
 
