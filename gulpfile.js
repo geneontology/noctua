@@ -282,7 +282,7 @@ gulp.task('run-noctua', shell.task(_run_cmd(
     ]
 )));
 
-//node barista.js --self http://localhost:3400
+// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --user /home/swdev/local/src/git/go-site/metadata/users.yaml                                                        
 gulp.task('run-epione', shell.task(_run_cmd(
     ['node', 'epione.js',
      '--user', './config/users.yaml',
