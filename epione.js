@@ -29,7 +29,7 @@
 //// Requires custom document type for GOlr.
 //// amigo/metadata/noctua-model-meta-config.yaml
 //// 
-//// Usage: node epione.js --monitor A/B/ --golr http://localhost:8080/solr --user C/D
+//// Usage: node epione.js --monitor A/B/ --golr http://localhost:8080/solr --users C/D
 ////
 //// Note that the currently used FAM is a little slow, taking on the
 //// order of seconds.
@@ -454,14 +454,14 @@ if( ! golr_location ){
 }
 
 // Pull in and keyify the contributor information.
-var user_fname = argv['u'] || argv['user'];
+var user_fname = argv['u'] || argv['users'];
 if( ! user_fname ){
-    _die('Option (u|user) is required.');
+    _die('Option (u|users) is required.');
 
     // Make sure extant, etc.
     var fstats = fs.statSync(user_fname);
     if( ! fstats.isFile() ){
-	_die('Option (u|user) is not a file: ' + user_fname);
+	_die('Option (u|users) is not a file: ' + user_fname);
     }
 }else{
     ll('Will pull user info from: ' + user_fname);
