@@ -36,8 +36,12 @@ MINERVA_LOCATION:
   type: url
   value: http://toaster.lbl.gov:6800
 ## File locations.
+USER_DATA:
+  comment: The location of the known users for the system (GO metadata users.yaml style).
+  type: directory
+  value: ~/local/src/git/go-site/metadata/users.yaml
 NOCTUA_MODELS:
-  comment: Mark the AmiGO site as BETA (triggers some changes in variables and installed features).
+  comment: The directory of the noctua models to use and monitor.
   type: directory
   value: ~/local/src/git/noctua-models/models/
 GENEONTOLOGY_CATALOG:
@@ -64,10 +68,6 @@ DEFAULT_APP_DEFINITION:
   type: string
   value: minerva_public
 ## Barista variables.
-BARISTA_REPL_PORT:
-  comment: The port to start the Barista REPL on. If not defined, will not start listener.
-  type: number
-  value: null
 APP_DEFINITIONS:
   comment: A list of resources that Barista will allow public access to.
   type: list
