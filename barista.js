@@ -32,8 +32,12 @@ var bar_response = require('bbop-response-barista');
 /// Helpers.
 ///
 
+function ll(arg1){
+    console.log('barista [' + (new Date()).toJSON() + ']: ', arg1); 
+}
+
 function _die(message){
-    console.error('EPIONE: ' + message);
+    console.error('BARISTA [' + (new Date()).toJSON() + ']: ' + message);
     process.exit(-1);
 }
 
@@ -64,28 +68,34 @@ var notw = 'Barista';
 // CLI handling.
 var argv = require('minimist')(process.argv.slice(2));
 
-// // Optional repl port.
-// var barreport = argv['r'] || argv['repl-port'] || null;
-// if( ! barreport ){
-//     console.log('Will not run REPL.');
-// }else{
-//     console.log('Will run REPL at: ' + barreport);
-// }
-
 // Where the world thinks Barista is.
 var publoc = argv['p'] || argv['public'] || 'http://localhost:3400';
-console.log('Barista location (public/persona): ' + publoc);
+ll('Barista location (public/persona): ' + publoc);
 
 // Where Barista thinks it is in the world.
 var runloc = argv['s'] || argv['self'] || 'http://localhost:3400';
-console.log('Barista location (self): ' + runloc);
+ll('Barista location (self): ' + runloc);
 var u = url.parse(runloc);
 var runport = u.port || 80; // be expicit about ports
+
+// Pull in and keyify the contributor information.
+var user_fname = argv['u'] || argv['users'];
+if( ! user_fname ){
+    _die('Option (u|users) is required.');
+
+    // Make sure extant, etc.
+    var fstats = fs.statSync(user_fname);
+    if( ! fstats.isFile() ){
+	_die('Option (u|users) is not a file: ' + user_fname);
+    }
+}else{
+    ll('Will pull user info from: ' + user_fname);
+}
 
 // Debug level.
 var barista_debug = argv['d'] || argv['debug'] || 0;
 if( barista_debug ){ barista_debug = parseInt(barista_debug); }
-console.log('Barista debug level: ' + barista_debug);
+ll('Barista debug level: ' + barista_debug);
 
 ///
 /// ModelCubby: per-model message caching management.
@@ -132,7 +142,7 @@ var ModelCubby = function(){
 
 	// Add to data bundle.
 	cubby[model][namespace][key] = value;
-	//console.log('cubby dropoff: '+ key + ', ', value);
+	//ll('cubby dropoff: '+ key + ', ', value);
 	
 	return ret;
     };
@@ -144,7 +154,7 @@ var ModelCubby = function(){
 	var ret = {};
 
 	// Give non-empty answer only if defined.
-	//console.log('data: ', cubby);
+	//ll('data: ', cubby);
 	if( typeof(cubby[model]) !== 'undefined' &&
 	    typeof(cubby[model][namespace]) !== 'undefined' ){
 	    ret = cubby[model][namespace];
@@ -468,17 +478,15 @@ var Sessioner = function(auth_list){
 /// Session/authorization handling.
 ///
 
-// Bring in metadata that will be used for identifying
-// user. Spin-up session manager.
-// Written as separate function to 
+// Bring in metadata that will be used for identifying user. Spin-up
+// session manager. Written as separate function to make the REPL easier
 function setup_session(fname){
 
     var auth_list = yaml.load(fname);
 
     return new Sessioner(auth_list);
 }
-//var sessioner = _setup_session('./config/users.json');
-var sessioner = setup_session('./config/users.yaml');
+var sessioner = setup_session(user_fname);
 
 // BUG/TODO/DEBUG: create an always user so I don't go crazy when
 // reloading Barista during experiments..
@@ -518,7 +526,7 @@ var BaristaLauncher = function(){
     // Wee helper.
     function rlog(context, out){
 	context.log(out);
-	console.log(out);
+	ll(out);
     }
 
     //var pmt = 'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ';
@@ -672,25 +680,27 @@ var BaristaLauncher = function(){
 	// a session remains open.
 	verifyResponse: function(err, req, res, email){
 
-	    console.log('user has authenticated through persona: ' + email);
+	    ll('user has authenticated through persona: ' + email);
 
 	    // First, we need to establish a session. Check if this
 	    // email address already has a session associated with
 	    // it. If so, don't bother creating a new one.
 	    var sess = sessioner.get_session_by_email(email);
 	    if( sess ){
-		console.log('recovered session: ', sess);
+		ll('recovered session:');
+		ll(sess);
 	    }else{
 		// Not already there, so let's see if we can create
 		// one from scratch.
 		sess = sessioner.create_session_by_email(email);
 		if( sess ){
 		    // Create new user session.
-		    console.log('created new session: ', sess);
+		    ll('created new session:');
+		    ll(sess);
 		}else{
 		    // Cannot create, so some kind of authorization
 		    // issue.
-		    console.log('login fail; unknown/unauthorized user: '+email);
+		    ll('login fail; unknown/unauthorized user: ' + email);
 		    res.json({status: "failure",
 			      email: email,
 			      reason:"unknown/unauthorized (check users.json)"});
@@ -698,7 +708,7 @@ var BaristaLauncher = function(){
 		}
 	    }
 
-	    console.log('session success (' + sess.email + '): ' + sess.token);
+	    ll('session success (' + sess.email + '): ' + sess.token);
 
 	    // Adjust this client/server session.
 	    req.session.authorized = true;
@@ -724,7 +734,7 @@ var BaristaLauncher = function(){
 		if( req.session.authorized ){
 		    // Adjust this client/server session.
 		    req.session.authorized = null;
-		    console.log('logout: nulled authorization');
+		    ll('logout: nulled authorization');
 		    did_something_p = true;
 		}
 
@@ -737,17 +747,17 @@ var BaristaLauncher = function(){
 		    // Remove from internal session system.
 		    sessioner.delete_session_by_email(email);
 
-		    console.log('logout: Barista delete ('+ email +'): '+ token);
+		    ll('logout: Barista delete ('+ email +'): '+ token);
 		    did_something_p = true;
 		}
 	    }
 
 	    if( ! did_something_p ){
-		console.log('logout: nothing to do');
+		ll('logout: nothing to do');
 	    }
 
 	    // We did what we could, get out of here.
-	    console.log('logout: success');
+	    ll('logout: success');
 	    res.json({status: "okay"});
 	}
     };
@@ -804,7 +814,7 @@ var BaristaLauncher = function(){
     // General use--no need for a&a.
     messaging_app.get('/status', function(req, res) {
 
-	console.log('process heartbeat request');
+	ll('process heartbeat request');
 
 	var monitor_sessions = sessioner.get_sessions().length;
 
@@ -856,15 +866,14 @@ var BaristaLauncher = function(){
 	    sess = sessioner.get_session_by_token(barista_token);
 	    if( sess ){
 		ret = SESS_GOOD;
-		console.log('barista session token: ' + barista_token);
+		ll('barista session token: ' + barista_token);
 	    }else{
 		ret = SESS_BAD_TOKEN;
-		console.log('non-session (old/bad?) token, ignore: ' +
-			    barista_token);
+		ll('non-session (old/bad?) token, ignore: ' + barista_token);
 	    }
 	}else{
 	    ret = SESS_NO_TOKEN;
-	    console.log('no token');
+	    ll('no token');
 	}
 
 	return ret;
@@ -911,7 +920,7 @@ var BaristaLauncher = function(){
 
 	// 
 	var fin = JSON.stringify(ret_obj);
-	console.log('got user info for: ', fin['uri']);
+	ll('got user info for:' + fin['uri']);
 	_standard_response(res, 200, 'application/json', fin);
     });
     
@@ -950,7 +959,7 @@ var BaristaLauncher = function(){
     messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){ 
 
 	// TODO: Request logging hooks could be placed in here.
-	//console.log('pre api req: ' + req.url);
+	//ll('pre api req: ' + req.url);
 	monitor_calls = monitor_calls +1;
 
 	// Try and get a session out for use. The important thing we
@@ -965,7 +974,8 @@ var BaristaLauncher = function(){
 	    var btok = req['query']['token'];
 	    var sess = sessioner.get_session_by_token(btok);
 	    if( sess ){
-		console.log('call using session: ', sess);
+		ll('call using session');
+		ll(sess);
 		uuri = sess.uri;
 		has_sess_p = true;
 	    }
@@ -981,7 +991,7 @@ var BaristaLauncher = function(){
 	// second according to real life.
 	url_obj['query'] = querystring.encode(q_obj);
 	url_obj['search'] = '?' + querystring.encode(q_obj);
-	//console.log('q_obj: ', q_obj);
+	//ll('q_obj: ', q_obj);
 	// Eliminate confounding fields to make sure it
 	// parses out the one we modified.
 	//delete url_obj['search'];
@@ -993,7 +1003,7 @@ var BaristaLauncher = function(){
 	var subcall = req.route.params['subcall'] || '';
 	call = call + subcall; // allow for things like seed/fromProcess
 	if( ! app_guard.is_public(ns, call) && ! uuri ){
-	    console.log('blocking call: ' + req.url);
+	    ll('blocking call: ' + req.url);
 	    
 	    var error_msg = 'sproing!';
 	    if( has_token_p && ! has_sess_p ){
@@ -1018,26 +1028,27 @@ var BaristaLauncher = function(){
 	    }
 
 	    //var eresp = new bbopx.barista.response(eresp_seed);
-	    console.log('inject response: ', eresp_str);
+	    ll('inject response:');
+	    ll(eresp_str);
 	    res.send(eresp_str);
 	}else{
 	    // Not public or user is privileged.
 	    // Route the simple call to the right place.
-	    //console.log('req: ', req);
+	    //ll('req: ', req);
 	    // Clip "/api/" and the namespace.
 	    var api_loc = app_guard.app_target(ns);
 	    req.url = req.url.substr(ns.length + 5);
 	    api_proxy.web(req, res, {
 		'target': api_loc
 	    });
-	    console.log('api xlate (GET): ' + api_loc + req.url);
+	    ll('api xlate (GET): ' + api_loc + req.url);
 	}
     });
     // // POST version.
     // messaging_app.post("/api/:namespace/:call", function(req, res){ 
 
     // 	// TODO: Request logging hooks could be placed in here.
-    // 	//console.log('pre api req: ' + req.url);
+    // 	//ll('pre api req: ' + req.url);
     // 	monitor_calls = monitor_calls +1;
 
     // 	// Try and get a session out for use. The important thing we
@@ -1052,7 +1063,7 @@ var BaristaLauncher = function(){
     // 	    var btok = req['body']['token'];
     // 	    var sess = sessioner.get_session_by_token(btok);
     // 	    if( sess ){
-    // 		console.log('call using session: ', sess);
+    // 		ll('call using session: ', sess);
     // 		uuri = sess.uri;
     // 		has_sess_p = true;
     // 	    }
@@ -1070,7 +1081,7 @@ var BaristaLauncher = function(){
     // 	var ns = req.route.params['namespace'] || '';
     // 	var call = req.route.params['call'] || '';
     // 	if( ! app_guard.is_public(ns, call) && ! uuri ){
-    // 	    console.log('blocking call: ' + req.url);
+    // 	    ll('blocking call: ' + req.url);
 	    
     // 	    var error_msg = 'sproing!';
     // 	    if( has_token_p && ! has_sess_p ){
@@ -1095,19 +1106,19 @@ var BaristaLauncher = function(){
     // 	    }
 
     // 	    //var eresp = new bbopx.barista.response(eresp_seed);
-    // 	    console.log('inject response: ', eresp_str);
+    // 	    ll('inject response: ', eresp_str);
     // 	    res.send(eresp_str);
     // 	}else{
     // 	    // Not public or user is privileged.
     // 	    // Route the simple call to the right place.
-    // 	    //console.log('req: ', req);
+    // 	    //ll('req: ', req);
     // 	    // Clip "/api/" and the namespace.
     // 	    var api_loc = app_guard.app_target(ns);
     // 	    req.url = req.url.substr(ns.length + 5);
     // 	    api_proxy.web(req, res, {
     // 		'target': api_loc
     // 	    });
-    // 	    console.log('api xlate (POST): ' + api_loc + req.url);
+    // 	    ll('api xlate (POST): ' + api_loc + req.url);
     // 	}
     // });
 
@@ -1133,12 +1144,12 @@ var BaristaLauncher = function(){
 	    // NOTE: Assuming either jQuery JSONP action JSON via CORS
 	    // or similar.
 	    // "jQuery1910009816080028417162_1412824223034(.*);"
-	    //console.log('match: ', jsonp);
+	    //ll('match: ', jsonp);
 	    var match = jsonp.match(jsonp_re);
 	    if( ! match || match.length !== 2 ){
-		//console.log('response: n/a');
+		//ll('response: n/a');
 	    }else{
-		//console.log('response: ', match[1]);
+		//ll('response: ', match[1]);
 		jsonp = match[1];
 	    }
 
@@ -1146,13 +1157,13 @@ var BaristaLauncher = function(){
 	    var response_okay_p = true;
 	    var resp = null;
 	    try{
-		//console.log(jsonp);
+		//ll(jsonp);
 		var resp_json = JSON.parse(jsonp);
 		//resp = new bbopx.barista.response(resp_json);
 		resp = new bar_response(resp_json);
 	    }catch(e){
 		response_okay_p = false;
-		console.log("unparsable response: " + jsonp);
+		ll("unparsable response: " + jsonp);
 	    }
 
 	    // Emit to all listeners--cannot target all but call since
@@ -1163,21 +1174,21 @@ var BaristaLauncher = function(){
 	    // before--similar to the current model filtering. Ish.
 	    if( response_okay_p && resp && resp.okay() && resp.model_id() ){
 		if( resp.intention() !== 'action' ){
-		    console.log("Skip broadcast of message (non-action).");
+		    ll("Skip broadcast of message (non-action).");
 		}else if( resp.signal() === 'merge' ){
-		    console.log("Broadcast merge.");
+		    ll("Broadcast merge.");
 		    sio.sockets.emit('relay', {'class': 'merge',
 					       'model_id': resp.model_id(),
 					       'packet_id': resp.packet_id(),
 					       'data': resp.raw()});
 		}else if( resp.signal() === 'rebuild' ){
-		    console.log("Broadcast rebuild.");
+		    ll("Broadcast rebuild.");
 		    sio.sockets.emit('relay', {'class': 'rebuild',
 					       'model_id': resp.model_id(),
 					       'packet_id': resp.packet_id(),
 					       'data': resp.raw()});
 		}else{
-		    console.log("Skip broadcast of message (different signal).");
+		    ll("Skip broadcast of message (different signal).");
 		}
 	    }
 	});
@@ -1188,8 +1199,8 @@ var BaristaLauncher = function(){
     // error thrown reporting: "Error: socket hang up".
     api_proxy.on('error', function (error, req, res) {
 	// Report...
-	console.log('We have problem! Maybe a timeout error against Minerva?', 
-		    error);
+	ll('We have problem! Maybe a timeout error against Minerva?');
+	ll(error);
 	// ..then handle.
 	// TODO: Wait until we have more experience with this before
 	// we handle--obviously only the originating users needs to
@@ -1238,7 +1249,7 @@ var BaristaLauncher = function(){
 	    var ret = false;
 
 	    var in_token = data['token'];
-	    //console.log('messenger data: ', data);
+	    //ll('messenger data: ', data);
 	    var sess = sessioner.get_session_by_token(in_token);
 	    if( sess ){
 		ret = true;
@@ -1290,7 +1301,7 @@ var BaristaLauncher = function(){
 
 	//
 	socket.on('relay', function(data){
-	    //console.log('srv tele: ' + data);
+	    //ll('srv tele: ' + data);
 	    monitor_messages = monitor_messages +1;
 
 	    // Only really get involved if the user is logged in.
@@ -1302,7 +1313,7 @@ var BaristaLauncher = function(){
 		// Skim object location and update cubby layout
 		// information when screen items are moving via
 		// telekinesis by logged-in users.
-		//console.log('relay: ', data);
+		//ll('relay: ', data);
 		if( data['class'] === 'telekinesis' ){
 		    var mid = data['model_id'];
 		    var obs = data['objects'];
@@ -1318,11 +1329,11 @@ var BaristaLauncher = function(){
 					cubby.dropoff(mid, 'layout', iid,
 						      {'top': itop,
 						       'left': ileft});
-					// console.log('cubby m: ',
+					// ll('cubby m: ',
 					// 	    cubby.model_count());
-					// console.log('cubby ns: ',
+					// ll('cubby ns: ',
 					// 	    cubby.namespace_count(mid));
-					// console.log('cubby ks: ',
+					// ll('cubby ks: ',
 					// 	    cubby.key_count(mid,
 					//          'layout'));
 				    }
@@ -1334,13 +1345,13 @@ var BaristaLauncher = function(){
 	
 	//
 	socket.on('query', function(data){
-	    //console.log('srv tele: ' + data);
+	    //ll('srv tele: ' + data);
 	    monitor_messages = monitor_messages +1;
 
 	    // TODO: Respond to client query.
 	    // Pong it back.
-	    //console.log('PROCESSING', socket_id);
-	    //console.log('PROCESSING', socket);
+	    //ll('PROCESSING', socket_id);
+	    //ll('PROCESSING', socket);
 	    // Send message back to just the sending client.
 	    // TODO: I feel there has to be a better way of doing this.
 	    if( sio.sockets.sockets[socket_id] ){
@@ -1358,8 +1369,7 @@ var BaristaLauncher = function(){
 
 			// Send back.
 			sio.sockets.sockets[socket_id].emit('query', data);
-			console.log('respond to query from ' +
-				    socket_id);// + ' with:', data);
+			ll('respond to query from '+socket_id);// +'with:',data);
 		    }
 		}
 	    }
@@ -1367,7 +1377,7 @@ var BaristaLauncher = function(){
 	
 	// Disconnect info.
 	socket.on('disconnect', function(){
-	    console.log('srv disconnect');
+	    ll('srv disconnect');
 	    // TODO: find a way to report disconnecting from a
 	    // specific model or user--might have to wait for using
 	    // channels.
