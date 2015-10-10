@@ -237,13 +237,13 @@ var minerva_port = url.parse(minerva_location).port || 80;
 
 // 
 var noctua_models = config['NOCTUA_MODELS'].value;
+var user_data = config['USER_DATA'].value;
 var geneontology_catalog = config['GENEONTOLOGY_CATALOG'].value;
 var workbench_dirs = config['WORKBENCHES'].value;
 var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
 var collapsible_relations_str = collapsible_relations.join(' ');
 var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
-var barista_repl_port = config['BARISTA_REPL_PORT'].value || '';
 // NOTE: Allowing barista to slurp up startup.yaml itself to get the
 // application definitions.
 
@@ -262,9 +262,9 @@ gulp.task('run-minerva', shell.task(_run_cmd(
 gulp.task('run-barista', shell.task(_run_cmd(
     ['node', 'barista.js',
      '--debug', 0,
+     '--users', user_data,
      '--public', barista_lookup_url,
-     '--self', barista_location,
-     '--repl-port', barista_repl_port
+     '--self', barista_location
     ]
 )));
 
@@ -282,10 +282,10 @@ gulp.task('run-noctua', shell.task(_run_cmd(
     ]
 )));
 
-// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --user /home/swdev/local/src/git/go-site/metadata/users.yaml                                                        
+// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml                                                        
 gulp.task('run-epione', shell.task(_run_cmd(
     ['node', 'epione.js',
-     '--user', './config/users.yaml',
+     '--users', user_data,
      '--monitor', noctua_models,
      '--golr', golr_location
     ]
