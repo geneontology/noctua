@@ -19,9 +19,8 @@ var querystring = require('querystring');
 var crypto = require('crypto');
 var cors = require('cors');
 
-var repl = require('repl');
-var net = require('net');
 var url = require('url');
+var vantage = require('vantage')();
 
 // Required add-on libs.
 var bbop = require('bbop');
@@ -512,49 +511,104 @@ var BaristaLauncher = function(){
     var monitor_calls = 0;
 
     ///
-    /// Setup a REPL system.
+    /// Setup a REPL system first--we'll be running the app out of
+    /// here.
     ///
 
-    // Only do this if in the environment.
-    //var barreport = process.env.BARISTA_REPL_PORT;
-    if( barreport ){
-	// Fix to number.
-	barreport = parseInt(barreport);
+    // Wee helper.
+    function rlog(context, out){
+	context.log(out);
+	console.log(out);
+    }
 
-	//console.log('Starting Barista REPL server...');
-	net.createServer(function (socket) {
-	    
-	    console.log('Create a Barista REPL server for an incoming client.');
+    //var pmt = 'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ';
+    vantage.delimiter('barista@' + ':');
+
+    // Not my problem, not my use case--try and get rid of it.
+    var vnt_cmd = vantage.find('vantage');
+    if( vnt_cmd ){ 
+	vnt_cmd.hidden();
+	vnt_cmd.remove();
+    }
+
+    // Refresh.
+    var rld_cmd = vantage.command('refresh [filename]');
+    rld_cmd.description("Refresh/reload a users.yaml file for the Sessioner.");
+    rld_cmd.action(function(args, cb){
+	var fname = args.filename;
 	
-	    // Start up the server.
-	    var repl_run = repl.start({
-		prompt:
-		'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ',
-		input: socket,
-		output: socket,
-		terminal: true,
-		useGlobal: true
-	    });
-	    
-	    // On sign-off.
-	    repl_run.on('exit', function () {
-		console.log('Closing a Barista REPL server.');
-		socket.end();
-	    });
+	var new_sessioner = null;
+	try {
+	    new_sessioner = setup_session(fname);
+	}catch(e){
+	    rlog(this, 'Failed to load: ' + fname);
+	}
+	
+	if( new_sessioner ){
+	    sessioner = new_sessioner;
+	    rlog(this, '(Re)loaded: ' + fname);
+	}
+	
+	cb();
+    });
 
-	    // Add context to server.
-	    repl_run.context['socket'] = socket;
-	    repl_run.context['sessioner'] = sessioner;
-	    repl_run.context['setup_session'] = setup_session;
-	    repl_run.context['create_bogus_session'] = create_bogus_session;
-	    repl_run.context['get_sessions'] = sessioner.get_sessions;
-	    repl_run.context['delete_session_by_email'] =
-		sessioner.delete_session_by_email;
-	    repl_run.context['delete_session_by_token'] =
-		sessioner.delete_session_by_token;
-	    
-	}).listen(barreport);
-    }    
+    // Setup bogus session.
+    var bog_cmd = vantage.command('bogus [email] [token] [name] [uri]');
+    bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved.");
+    bog_cmd.action(function(args, cb){
+	var email = args.email;
+	var token = args.token;
+	var name = args.name || '???';
+	var uri = args.uri;
+	
+	if( ! email || ! token || ! name || ! uri ){
+	    rlog(this, 'Cannot create bogus session with given info.' );
+	}else{
+	    sessioner.create_bogus_session(email, token, name, uri);
+	    rlog(this, 'Created bogus session with given info.' );
+	}
+	
+	cb();
+    });
+    
+    var get_cmd = vantage.command('list');
+    get_cmd.description("List all current sessions.");
+    get_cmd.action(function(args, cb){
+	
+	var all_sess = sessioner.get_sessions();
+	rlog(this, all_sess);
+	
+	cb();
+    });
+    
+    var delt_cmd = vantage.command('delete token [token]');
+    delt_cmd.description("Delete a session by token.");
+    delt_cmd.action(function(args, cb){
+	var token = args.token;
+	if( token ){
+	    var tf = sessioner.delete_session_by_token(token);
+	    rlog(this, 'Deleted session by token: ' + tf);
+	}
+	cb();
+    });
+
+    var dele_cmd = vantage.command('delete email [email]');
+    dele_cmd.description("Delete a session by email address.");
+    dele_cmd.action(function(args, cb){
+	var email = args.email;
+	if( email ){
+	    var tf = sessioner.delete_session_by_email(email);
+	    rlog(this, 'Deleted session by email: ' + tf);
+	}	
+	cb();
+    });
+
+    // NOTE/TODO: May want to add configurable firewall stuff later.
+    // https://github.com/dthree/vantage/blob/master/examples/server/server.js
+    //vantage.firewall.policy('REJECT');
+    //vantage.firewall.accept('192.168.0.0/16');
+    //vantage.firewall.reject('10.40.50.24/32');
+    //vantage.firewall.accept('10.0.0.0/8');
 
     ///
     /// Response helper.
@@ -697,7 +751,9 @@ var BaristaLauncher = function(){
     // Server creation and socket.io addition.
     var messaging_server = require('http').createServer(messaging_app);
     var sio = require('socket.io').listen(messaging_server);
-    messaging_server.listen(runport);
+    // Run app server through vantage to get vantage goodies.
+    // messaging_server.listen(runport);
+    vantage.listen(messaging_app, runport);
 
     ///
     /// Cached static routes.
