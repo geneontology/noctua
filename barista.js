@@ -64,13 +64,13 @@ var notw = 'Barista';
 // CLI handling.
 var argv = require('minimist')(process.argv.slice(2));
 
-// Optional repl port.
-var barreport = argv['r'] || argv['repl-port'] || null;
-if( ! barreport ){
-    console.log('Will not run REPL.');
-}else{
-    console.log('Will run REPL at: ' + barreport);
-}
+// // Optional repl port.
+// var barreport = argv['r'] || argv['repl-port'] || null;
+// if( ! barreport ){
+//     console.log('Will not run REPL.');
+// }else{
+//     console.log('Will run REPL at: ' + barreport);
+// }
 
 // Where the world thinks Barista is.
 var publoc = argv['p'] || argv['public'] || 'http://localhost:3400';
@@ -603,12 +603,17 @@ var BaristaLauncher = function(){
 	cb();
     });
 
-    // NOTE/TODO: May want to add configurable firewall stuff later.
-    // https://github.com/dthree/vantage/blob/master/examples/server/server.js
-    //vantage.firewall.policy('REJECT');
-    //vantage.firewall.accept('192.168.0.0/16');
-    //vantage.firewall.reject('10.40.50.24/32');
-    //vantage.firewall.accept('10.0.0.0/8');
+    // // Veeery basic auth, just to keep the riff-raff out.
+    // // BUG: Although in the docs, this does not seem to yet be supported...
+    // vantage.auth("basic", {
+    // 	"users": [
+    // 	    {user: "kltm", pass:"123"}
+    // 	],
+    // 	"retry": 3,
+    // 	"retryTime": 500,
+    // 	"deny": 1,
+    // 	"unlockTime": 3000
+    // });
 
     ///
     /// Response helper.
@@ -754,6 +759,17 @@ var BaristaLauncher = function(){
     // Run app server through vantage to get vantage goodies.
     // messaging_server.listen(runport);
     vantage.listen(messaging_app, runport);
+
+    // Can only be invoked after "listen", so we're down here.
+    // NOTE/TODO: May want to add configurable firewall stuff later.
+    // https://github.com/dthree/vantage/blob/master/examples/server/server.js
+    vantage.firewall.policy('REJECT');
+    vantage.firewall.accept(
+    	['127', '0', '0', '1'].join('.')); // here
+    vantage.firewall.accept(
+    	['192', '168', '0', '0'].join('.'), 16); // home/local
+    vantage.firewall.accept(
+    	['131', '243', '0', '0'].join('.'), 16); // lbl-bbop
 
     ///
     /// Cached static routes.
