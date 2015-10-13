@@ -92,6 +92,21 @@ if( ! user_fname ){
     ll('Will pull user info from: ' + user_fname);
 }
 
+// Try and see if we run the optional repl port.
+var barista_repl_port = null;
+var barista_repl_port_raw = argv['r'] || argv['repl'] || null;
+if( barista_repl_port_raw ){
+    var raw_port = parseInt(barista_repl_port_raw);
+    if( raw_port && isNaN(raw_port) === false ){
+	barista_repl_port = raw_port;
+	ll('Barista REPL will listen (locally) at: ' + barista_repl_port);
+    }else{
+	ll('Unable to parse Bariata REPL: ' + barista_repl_port_raw);
+    }
+}else{
+    ll('Barista will not run REPL.');
+}
+
 // Debug level.
 var barista_debug = argv['d'] || argv['debug'] || 0;
 if( barista_debug ){ barista_debug = parseInt(barista_debug); }
@@ -529,99 +544,116 @@ var BaristaLauncher = function(){
 	ll(out);
     }
 
-    //var pmt = 'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ';
-    vantage.delimiter('barista@' + ':');
+    // Optional REPL setup.
+    if( barista_repl_port){
 
-    // Not my problem, not my use case--try and get rid of it.
-    var vnt_cmd = vantage.find('vantage');
-    if( vnt_cmd ){ 
-	vnt_cmd.hidden();
-	vnt_cmd.remove();
+	//var pmt = 'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ';
+	vantage.delimiter('barista@' + ':');
+
+	// Not my problem, not my use case--try and get rid of it.
+	var vnt_cmd = vantage.find('vantage');
+	if( vnt_cmd ){ 
+	    vnt_cmd.hidden();
+	    vnt_cmd.remove();
+	}
+	
+	// Refresh.
+	var rld_cmd = vantage.command('refresh [filename]');
+	rld_cmd.description("Refresh/reload users.yaml file for the Sessioner.");
+	rld_cmd.action(function(args, cb){
+	    var fname = args.filename;
+	    
+	    var new_sessioner = null;
+	    try {
+		new_sessioner = setup_session(fname);
+	    }catch(e){
+		rlog(this, 'Failed to load: ' + fname);
+	    }
+	    
+	    if( new_sessioner ){
+		sessioner = new_sessioner;
+		rlog(this, '(Re)loaded: ' + fname);
+	    }
+	    
+	    cb();
+	});
+	
+	// Setup bogus session.
+	var bog_cmd = vantage.command('bogus [email] [token] [name] [uri]');
+	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved.");
+	bog_cmd.action(function(args, cb){
+	    var email = args.email;
+	    var token = args.token;
+	    var name = args.name || '???';
+	    var uri = args.uri;
+	    
+	    if( ! email || ! token || ! name || ! uri ){
+		rlog(this, 'Cannot create bogus session with given info.' );
+	    }else{
+		sessioner.create_bogus_session(email, token, name, uri);
+		rlog(this, 'Created bogus session with given info.' );
+	    }
+	    
+	    cb();
+	});
+	
+	var get_cmd = vantage.command('list');
+	get_cmd.description("List all current sessions.");
+	get_cmd.action(function(args, cb){
+	    
+	    var all_sess = sessioner.get_sessions();
+	    rlog(this, all_sess);
+	    
+	    cb();
+	});
+	
+	var delt_cmd = vantage.command('delete token [token]');
+	delt_cmd.description("Delete a session by token.");
+	delt_cmd.action(function(args, cb){
+	    var token = args.token;
+	    if( token ){
+		var tf = sessioner.delete_session_by_token(token);
+		rlog(this, 'Deleted session by token: ' + tf);
+	    }
+	    cb();
+	});
+	
+	var dele_cmd = vantage.command('delete email [email]');
+	dele_cmd.description("Delete a session by email address.");
+	dele_cmd.action(function(args, cb){
+	    var email = args.email;
+	    if( email ){
+		var tf = sessioner.delete_session_by_email(email);
+		rlog(this, 'Deleted session by email: ' + tf);
+	    }	
+	    cb();
+	});
+	
+	// // Veeery basic auth, just to keep the riff-raff out.
+	// // BUG: Although in the docs, this does not seem to
+	// // yet be supported...
+	// vantage.auth("basic", {
+	// 	"users": [
+	// 	    {user: "kltm", pass:"123"}
+	// 	],
+	// 	"retry": 3,
+	// 	"retryTime": 500,
+	// 	"deny": 1,
+	// 	"unlockTime": 3000
+	// });
+	
+	// Can only be invoked after "listen", so we're down here.
+	// NOTE/TODO: May want to add configurable firewall stuff later.
+	// https://github.com/dthree/vantage/blob/master/examples/server/server.js
+	vantage.listen(barista_repl_port);
+	vantage.firewall.policy('REJECT');
+	vantage.firewall.accept(
+		['127', '0', '0', '1'].join('.')); // here
+	vantage.firewall.accept(
+		['192', '168', '0', '0'].join('.'), 16); // home/local
+	vantage.firewall.accept(
+		['131', '243', '0', '0'].join('.'), 16); // lbl-bbop	
     }
-
-    // Refresh.
-    var rld_cmd = vantage.command('refresh [filename]');
-    rld_cmd.description("Refresh/reload a users.yaml file for the Sessioner.");
-    rld_cmd.action(function(args, cb){
-	var fname = args.filename;
-	
-	var new_sessioner = null;
-	try {
-	    new_sessioner = setup_session(fname);
-	}catch(e){
-	    rlog(this, 'Failed to load: ' + fname);
-	}
-	
-	if( new_sessioner ){
-	    sessioner = new_sessioner;
-	    rlog(this, '(Re)loaded: ' + fname);
-	}
-	
-	cb();
-    });
-
-    // Setup bogus session.
-    var bog_cmd = vantage.command('bogus [email] [token] [name] [uri]');
-    bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved.");
-    bog_cmd.action(function(args, cb){
-	var email = args.email;
-	var token = args.token;
-	var name = args.name || '???';
-	var uri = args.uri;
-	
-	if( ! email || ! token || ! name || ! uri ){
-	    rlog(this, 'Cannot create bogus session with given info.' );
-	}else{
-	    sessioner.create_bogus_session(email, token, name, uri);
-	    rlog(this, 'Created bogus session with given info.' );
-	}
-	
-	cb();
-    });
-    
-    var get_cmd = vantage.command('list');
-    get_cmd.description("List all current sessions.");
-    get_cmd.action(function(args, cb){
-	
-	var all_sess = sessioner.get_sessions();
-	rlog(this, all_sess);
-	
-	cb();
-    });
-    
-    var delt_cmd = vantage.command('delete token [token]');
-    delt_cmd.description("Delete a session by token.");
-    delt_cmd.action(function(args, cb){
-	var token = args.token;
-	if( token ){
-	    var tf = sessioner.delete_session_by_token(token);
-	    rlog(this, 'Deleted session by token: ' + tf);
-	}
-	cb();
-    });
-
-    var dele_cmd = vantage.command('delete email [email]');
-    dele_cmd.description("Delete a session by email address.");
-    dele_cmd.action(function(args, cb){
-	var email = args.email;
-	if( email ){
-	    var tf = sessioner.delete_session_by_email(email);
-	    rlog(this, 'Deleted session by email: ' + tf);
-	}	
-	cb();
-    });
-
-    // // Veeery basic auth, just to keep the riff-raff out.
-    // // BUG: Although in the docs, this does not seem to yet be supported...
-    // vantage.auth("basic", {
-    // 	"users": [
-    // 	    {user: "kltm", pass:"123"}
-    // 	],
-    // 	"retry": 3,
-    // 	"retryTime": 500,
-    // 	"deny": 1,
-    // 	"unlockTime": 3000
-    // });
 
     ///
     /// Response helper.
@@ -767,19 +799,7 @@ var BaristaLauncher = function(){
     var messaging_server = require('http').createServer(messaging_app);
     var sio = require('socket.io').listen(messaging_server);
     // Run app server through vantage to get vantage goodies.
-    // messaging_server.listen(runport);
-    vantage.listen(messaging_app, runport);
-
-    // Can only be invoked after "listen", so we're down here.
-    // NOTE/TODO: May want to add configurable firewall stuff later.
-    // https://github.com/dthree/vantage/blob/master/examples/server/server.js
-    vantage.firewall.policy('REJECT');
-    vantage.firewall.accept(
-    	['127', '0', '0', '1'].join('.')); // here
-    vantage.firewall.accept(
-    	['192', '168', '0', '0'].join('.'), 16); // home/local
-    vantage.firewall.accept(
-    	['131', '243', '0', '0'].join('.'), 16); // lbl-bbop
+    messaging_server.listen(runport);
 
     ///
     /// Cached static routes.

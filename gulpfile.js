@@ -235,6 +235,9 @@ var minerva_location = config['MINERVA_LOCATION'].value;
 
 var minerva_port = url.parse(minerva_location).port || 80;
 
+// Optional.
+var barista_repl_port = config['BARISTA_REPL_PORT'].value;
+
 // 
 var noctua_models = config['NOCTUA_MODELS'].value;
 var user_data = config['USER_DATA'].value;
@@ -264,7 +267,8 @@ gulp.task('run-barista', shell.task(_run_cmd(
      '--debug', 0,
      '--users', user_data,
      '--public', barista_lookup_url,
-     '--self', barista_location
+     '--self', barista_location,
+     '--repl', barista_repl_port
     ]
 )));
 
