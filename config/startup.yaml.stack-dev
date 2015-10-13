@@ -67,6 +67,10 @@ DEFAULT_APP_DEFINITION:
   type: string
   value: minerva_local
 ## Barista variables.
+BARISTA_REPL_PORT:
+  comment: The port to start the Barista REPL on. If not defined, will not start listener.
+  type: number
+  value: 9090
 APP_DEFINITIONS:
   comment: A list of resources that Barista will allow public access to.
   type: list
