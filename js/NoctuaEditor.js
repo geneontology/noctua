@@ -67,7 +67,7 @@ var widgetry = require('noctua-widgetry');
  */
 var MMEnvInit = function(model_json, in_relations, in_token){
 
-    //console.log('model_json', model_json);
+    //ll('model_json', model_json);
     
     var logger = new bbop.logger('noctua editor');
     logger.DEBUG = true;
@@ -423,11 +423,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var hint_anns = node.get_annotations_by_key(hint_str);
 	if( hint_anns.length === 1 ){
 	    ret = hint_anns[0].value();
-	    //console.log('extracted coord ' + x_or_y + ': ' + ret);
+	    //ll('extracted coord ' + x_or_y + ': ' + ret);
 	}else if( hint_anns.length === 0 ){
-	    //console.log('no coord');	    
+	    //ll('no coord');	    
 	}else{
-	    //console.log('too many coord');
+	    //ll('too many coord');
 	}
 	
 	return ret;
@@ -790,7 +790,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     // See what the undo/redo listing looks like.
     function _trigger_undo_redo_lookup(){
-	if( manager.user_token() ){ // only try if logged-in; priv op
+	if( ! manager.user_token() ){ // only try if logged-in; priv op
+	    ll('skip undo/redo lookup due to lack of standing');
+	}else{
 	    manager.get_model_undo_redo(ecore.get_id());
 	}
     }
@@ -868,7 +870,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    var fin_x = _box_left(raw_x);
 	    var fin_y = _box_top(raw_y);
 	    fallback_position_store.add(id, fin_x, fin_y);
-	    //console.log('fallback: ' + id)
+	    //ll('fallback: ' + id)
 	});
 
 	// Now got through all of the actual nodes.
@@ -1120,7 +1122,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	//     	var snid = snap_node.id();
 	//     	if( ! ecore.get_node(snid) ){
 	//     	    //gone_nodes.push(snid);
-	//     	    console.log("eliminating: " + snid)
+	//     	    ll("eliminating: " + snid)
 	//     	    _delete_iae_from_ui(snid);
 	//     	}
 	//     });
@@ -1169,7 +1171,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     ///
     
     // Internal registrations.
+    var postruns = 0;
+    ll('add internal callback registrations');
     manager.register('prerun', _shields_up);
+    manager.register('postrun', function(a, b){ // DEBUGGING
+	postruns++;
+	ll('in postrun #' + postruns + '');
+    }, 11);
     manager.register('postrun', _inconsistency_check, 10);
     manager.register('postrun', _refresh_tables, 9);
     manager.register('postrun', _shields_down, 8);
@@ -1312,13 +1320,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Update locations according to Barista after rebuild event.
     manager.register('rebuild', function(){
 	if( barclient ){
+	    ll('get layout (rebuild)');
 	    barclient.get_layout();
 	}
     }, 9);
     manager.register('rebuild', function(){
 	// Update undo/redo info.
+	ll('start get-undo-redo (manager/rebuild)');
 	_trigger_undo_redo_lookup();
-	//console.log('merge get-undo-redo');
     }, 8);
 
     manager.register('merge', function(resp, man){
@@ -1337,13 +1346,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Update locations according to Barista after merge event.
     manager.register('merge', function(){
 	if( barclient ){
+	    ll('get layout (merge)');
 	    barclient.get_layout();
 	}
     }, 9);
     manager.register('merge', function(){
 	// Update undo/redo info.
+	ll('start get-undo-redo (manager/merge)');
 	_trigger_undo_redo_lookup();
-	//console.log('merge get-undo-redo');
     }, 8);
 
     ///
@@ -2010,10 +2020,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // "manually".
     _shields_up();
     _rebuild_model_and_display(model_json);
+    ll('refresh tables (startup)');
     _refresh_tables();
     // Get initial information.
     // TODO: This will be unnecessary in future versions where the 
     // model was pulled live (standard rebuild).
+    ll('start get-undo-redo (startup)');
     _trigger_undo_redo_lookup();
     _shields_down();
 
@@ -2156,34 +2168,34 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var mid = data['model_id'];
 	var dresp = data['data'];
 	var bar_resp = new barista_response(dresp);
-
+	
 	// // First, make sure we haven't seen this message before.
 	// if( _continue_update_p(bar_resp, manager) ){
-
-	    // We can make some assumptions for now that since it came out
-	    // of Barista that it is good and clean.
-	    if( bar_resp.intention() !== 'action' ){
-		// Skip.
-		ll('skipping message resp w/intent: ' + bar_resp.intention());
+	
+	// We can make some assumptions for now that since it came out
+	// of Barista that it is good and clean.
+	if( bar_resp.intention() !== 'action' ){
+	    // Skip.
+	    ll('MSG: skipping message resp w/intent: ' + bar_resp.intention());
+	}else{
+	    // TODO/BUG: Might be easier if we had a wrapping of
+	    // _on_nominal_success() with with pre-/post-run within
+	    // the manager itself.
+	    if( bar_resp.signal() === 'merge' ){
+		ll('MSG: try to update model from message as merge');
+		manager.apply_callbacks('prerun', [manager]);
+		manager.apply_callbacks('merge', [bar_resp, manager]);
+		manager.apply_callbacks('postrun', [bar_resp, manager]);
+	    }else if( bar_resp.signal() === 'rebuild' ){
+		ll('MSG: try to update model from message as rebuild');
+		manager.apply_callbacks('prerun', [manager]);
+		manager.apply_callbacks('rebuild', [bar_resp, manager]);
+		manager.apply_callbacks('postrun', [bar_resp, manager]);
 	    }else{
-		// TODO/BUG: Might be easier if we had a wrapping of
-		// _on_nominal_success() with with pre-/post-run within
-		// the manager itself.
-		if( bar_resp.signal() === 'merge' ){
-		    ll('try to update model from message as merge');
-		    manager.apply_callbacks('prerun', [manager]);
-		    manager.apply_callbacks('merge', [bar_resp, manager]);
-		    manager.apply_callbacks('postrun', [bar_resp, manager]);
-		}else if( bar_resp.signal() === 'rebuild' ){
-		    ll('try to update model from message as rebuild');
-		    manager.apply_callbacks('prerun', [manager]);
-		    manager.apply_callbacks('rebuild', [bar_resp, manager]);
-		    manager.apply_callbacks('postrun', [bar_resp, manager]);
-		}else{
-		    // Skip.
-		    ll('skipping message resp w/sig: ' + bar_resp.signal());
-		}
+		// Skip.
+		ll('MSG: skipping message resp w/sig: ' + bar_resp.signal());
 	    }
+	}
 	// }
     }
 
@@ -2191,7 +2203,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // _on_telekinesis_update().
     function _on_layout_response(data){
 	
-	//console.log('_on_layout_response:', data);
+	//ll('_on_layout_response:', data);
 	if( data && data['response'] ){
 	    
 	    // Prep layout info.
@@ -2205,7 +2217,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    });
 	    
 	    //
-	    //console.log('tk_items:', tk_items);
+	    //ll('tk_items:', tk_items);
 	    _on_telekinesis_update(tk_items);
 	}
     }
@@ -2234,6 +2246,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// Playing with barista queries. This will trigger soon after
 	// the first initialization layout is accomplished. Also look
 	// in merge and redraw routines.
+	ll('get layout (initial)');
 	barclient.get_layout();
     }
 
@@ -2466,7 +2479,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 ///
 /// TODO: It would be good to have a general standard registry set so
 /// that the bits here and above share the same registry code. Or
-/// maybe I can just apss the manager in?
+/// maybe I can just pass the manager in?
 ///
 
 // Start the day the jsPlumb way.
@@ -2497,17 +2510,18 @@ jsPlumb.ready(function(){
 		// This manager bootstraps the editor by fetching the
 		// model out of Minerva.
 		var engine = new jquery_engine(barista_response);
-		var manager = new minerva_manager(global_barista_location,
-						  global_minerva_definition_name,
-						  start_token, engine, 'async');
+		var init_manager =
+		    new minerva_manager(global_barista_location,
+					global_minerva_definition_name,
+					start_token, engine, 'async');
 		
 		// Have a manager and model id, defined a success callback
 		// and try and get the full model to start the bootstrap.
-		manager.register('manager_error', function(resp, man){
+		init_manager.register('manager_error', function(resp, man){
 		    alert('Early manager error (' +
 			  resp.message_type() + '): ' + resp.message());
 		}, 10);
-		manager.register('error', function(resp, man){		
+		init_manager.register('error', function(resp, man){		
 		    if( ! resp.commentary() ){
 			alert('Early error (' +
 			      resp.message_type()+ '): ' + 
@@ -2519,7 +2533,7 @@ jsPlumb.ready(function(){
 			      resp.commentary());
 		    }
 		}, 10);
-		manager.register('rebuild', function(resp, man){
+		init_manager.register('rebuild', function(resp, man){
 		    //alert('in');
 		    // Replace placeholder at top level for debug.
 		    //global_model = resp.data();
@@ -2528,9 +2542,9 @@ jsPlumb.ready(function(){
 			      global_known_relations,
 			      start_token);
 		});
-		manager.get_model(global_id);
+		init_manager.get_model(global_id);
 		//var rr = manager.get_model(global_id);
-		//console.log('rr: ' + rr);
+		//ll('rr: ' + rr);
 		
 		// When all is said and done, let's also fillout the user
 		// name just for niceness. This is also a test of CORS in
