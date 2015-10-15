@@ -587,7 +587,12 @@ var NoctuaLauncher = function(){
 	self.app.get('/images/ui-bg_flat_100_ffffff_40x100.png', function(req, res){
 	    res.setHeader('Content-Type', 'image/png');
 	    // BUG/TODO: See above.
-	    res.sendfile('static/waiting_ac.gif');
+	    res.sendfile('static/ui-bg_flat_100_ffffff_40x100.png');
+	});
+	self.app.get('/images/ui-bg_flat_75_d0ffee_40x100.png', function(req, res){
+	    res.setHeader('Content-Type', 'image/png');
+	    // BUG/TODO: See above.
+	    res.sendfile('static/ui-bg_flat_75_d0ffee_40x100.png');
 	});
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
