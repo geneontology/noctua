@@ -1170,6 +1170,64 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     /// Manager registration and ordering.
     ///
     
+    // Only run major internal functions when the filters are passed.
+    var seen_packets = {};
+    //function _continue_update_p(resp, man, run_fun){
+    function _continue_update_p(resp, man){
+	
+	var ret = false;
+
+	var this_packet = resp.packet_id();
+	if( this_packet ){
+	    if( seen_packets[this_packet] ){
+		// Skip this update.
+		ll('skip seen packet: ' + this_packet);
+	    }else{
+		// Add packet and continue.
+		seen_packets[this_packet] = true;
+
+		// Only run things that are intended actions.
+		var r_int = resp.intention();
+		ll('new packet: ' + this_packet + ', intent: ' + r_int);
+		if( r_int === 'action' ){
+
+		    // Only run things that require modification.
+		    var r_sig = resp.signal();
+		    if( r_sig === 'merge' || r_sig === 'rebuild' ){
+
+			ret = true;
+
+			// Currently, since running from all users, unecessary.
+			// // Need to extract our own ID from the manager.
+			// var my_uid = man.user_token();
+			// // Let's do some checking.
+			// var r_uid = resp.user_id();
+			// ll(['uid: ', r_uid, ', sig: ',
+			//     r_sig, ', int: ' ,r_int].join(''));
+			// // BUG/TODO: This will always be wrong since
+			// // we cannot compare tokens to ids.
+			// if( r_uid === my_uid ){
+			//     // Always run things I requested.
+			//     ll('TODO: running own request');
+			//     //run_fun(resp, man);
+			// }else if( r_int !== 'query' ){
+			//     // Run other people's requests as long as
+			//     // they are not
+			//     // queries.
+			//     ll("TODO: running other's non-query request");
+			//     //run_fun(resp, man);
+			// }else{
+			//     // Otherwise, ignore it.
+			//     ll("ignoring other's query request");
+			// }
+			
+		    }
+		}
+	    }
+	}
+	return ret;
+    }
+
     // Internal registrations.
     var postruns = 0;
     ll('add internal callback registrations');
@@ -1251,110 +1309,48 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	}
     }, 10);
 
-    // Only run the internal function when the filters are passed.
-    var seen_packets = {};
-    function _continue_update_p(resp, man, run_fun){
-	
-	var ret = false;
-
-	var this_packet = resp.packet_id();
-	if( this_packet ){
-	    if( seen_packets[this_packet] ){
-		// Skip this update.
-		ll('skip seen packet: ' + this_packet);
-	    }else{
-		// Add packet and continue.
-		seen_packets[this_packet] = true;
-
-		// Only run things that are intended actions.
-		var r_int = resp.intention();
-		ll('new packet: ' + this_packet + ', intent: ' + r_int);
-		if( r_int === 'action' ){
-
-		    // Only run things that require modification.
-		    var r_sig = resp.signal();
-		    if( r_sig === 'merge' || r_sig === 'rebuild' ){
-
-			ret = true;
-
-			// Currently, since running from all users, unecessary.
-			// // Need to extract our own ID from the manager.
-			// var my_uid = man.user_token();
-			// // Let's do some checking.
-			// var r_uid = resp.user_id();
-			// ll(['uid: ', r_uid, ', sig: ',
-			//     r_sig, ', int: ' ,r_int].join(''));
-			// // BUG/TODO: This will always be wrong since
-			// // we cannot compare tokens to ids.
-			// if( r_uid === my_uid ){
-			//     // Always run things I requested.
-			//     ll('TODO: running own request');
-			//     //run_fun(resp, man);
-			// }else if( r_int !== 'query' ){
-			//     // Run other people's requests as long as
-			//     // they are not
-			//     // queries.
-			//     ll("TODO: running other's non-query request");
-			//     //run_fun(resp, man);
-			// }else{
-			//     // Otherwise, ignore it.
-			//     ll("ignoring other's query request");
-			// }
-			
-		    }
-		}
-	    }
-	}
-	return ret;
-    }
-
     manager.register('rebuild', function(resp, man){
-	// TODO: This function should have the rest
-	// of the function as an argument once the
-	// moderator is on.
 	if( _continue_update_p(resp, man) ){
+	    ll('rebuild display (manager/rebuild)');
 	    model_json = resp.data();
 	    _rebuild_model_and_display(model_json);
+
+	    // Update locations according to Barista after rebuild
+	    // event.
+	    if( barclient ){
+		ll('get layout (manager/rebuild)');
+		barclient.get_layout();
+	    }
+
+	    // Update undo/redo info.
+	    ll('start get-undo-redo (manager/rebuild)');
+	    _trigger_undo_redo_lookup();
 	}
     }, 10);
-    // Update locations according to Barista after rebuild event.
-    manager.register('rebuild', function(){
-	if( barclient ){
-	    ll('get layout (rebuild)');
-	    barclient.get_layout();
-	}
-    }, 9);
-    manager.register('rebuild', function(){
-	// Update undo/redo info.
-	ll('start get-undo-redo (manager/rebuild)');
-	_trigger_undo_redo_lookup();
-    }, 8);
 
     manager.register('merge', function(resp, man){
-	// TODO: This function should have the rest of the function as
-	// an argument once the moderator is on.
 	if( _continue_update_p(resp, man) ){
 	
 	    var individuals = resp.individuals();
 	    if( ! individuals ){
 		alert('no data/individuals in merge--unable to do');
 	    }else{
+		ll('merge display (manager/rebuild)');
 		_merge_from_new_data(resp.data());
 	    }
+
+	    // Update locations according to Barista after merge
+	    // event.
+	    if( barclient ){
+		ll('get layout (manager/merge)');
+		barclient.get_layout();
+	    }
+
+	    // Update undo/redo info.
+	    ll('start get-undo-redo (manager/merge)');
+	    _trigger_undo_redo_lookup();
 	}
     }, 10);
-    // Update locations according to Barista after merge event.
-    manager.register('merge', function(){
-	if( barclient ){
-	    ll('get layout (merge)');
-	    barclient.get_layout();
-	}
-    }, 9);
-    manager.register('merge', function(){
-	// Update undo/redo info.
-	ll('start get-undo-redo (manager/merge)');
-	_trigger_undo_redo_lookup();
-    }, 8);
 
     ///
     /// UI event registration.
@@ -2142,7 +2138,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
 		if( enelt ){
-		    ll('tele callback: '+ iid +': '+ top +', '+ left);
+		    //ll('tele callback: '+ iid +': '+ top +', '+ left);
 
 		    // Stick into the local store.
 		    local_position_store.add(iid, left, top);
@@ -2238,9 +2234,21 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	barclient.register('message', 'c', _on_message_update);
 	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
 	barclient.register('telekinesis', 'e', _on_telekinesis_update);
-	barclient.register('merge', 'f', _on_model_update);
-	barclient.register('rebuild', 'g', _on_model_update);
-	barclient.register('query', 'h', _on_layout_response);
+	barclient.register('merge', 'f', function(a,b){
+	    console.log('barista/merge');
+	    _on_model_update(a,b);
+	});
+	//_on_model_update);
+	barclient.register('rebuild', 'g', function(a,b){
+	    console.log('barista/rebuild');
+	    _on_model_update(a,b);
+	});
+	//_on_model_update);
+	barclient.register('query', 'h', function(a,b){
+	    console.log('bar/query');
+	    _on_layout_response(a,b);
+	});
+	//_on_layout_response);
 	barclient.connect(ecore.get_id());
 
 	// Playing with barista queries. This will trigger soon after
@@ -2248,6 +2256,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// in merge and redraw routines.
 	ll('get layout (initial)');
 	barclient.get_layout();
+
+	// // DEBUG: Remove before commit.
+	// ll('DESTROYING WORKING BARISTA CLIENT!!!');
+	// barclient = null;
     }
 
     //
