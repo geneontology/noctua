@@ -13,6 +13,7 @@
 /* global parseInt */
 
 // Required shareable Node libs.
+var md = require('markdown');
 var mustache = require('mustache');
 var fs = require('fs');
 var tilde = require('expand-home-dir');
@@ -117,7 +118,7 @@ var app_base = sd.app_base();
 // console.log('Using GOlr lookup server at: ', golr_server_location);
 
 // The name we're using this week.
-var notw = 'Noctua (Preview)';
+var notw = 'Noctua (Beta)';
 
 ///
 /// Define the sample application.
@@ -472,8 +473,12 @@ var NoctuaLauncher = function(){
 	    // 	    _build_token_link(self.frontend + '/capella?bootstrap=' +
 	    // 			      capella_payload, barista_token);
 
+	    // Grab markdown renderable file.
+	    var landing_raw = fs.readFileSync('./LANDING.md').toString();
+	    var landing_md = md.markdown.toHTML(landing_raw);
+
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Select', req, null, null,
+		'/', 'Landing', req, null, null,
 		{
 		    'pup_tent_css_libraries': [
 			'/noctua_landing.css'
@@ -481,11 +486,12 @@ var NoctuaLauncher = function(){
 		    'pup_tent_js_libraries': [
 			'/NoctuaLanding.js'
 		    ],
+		    'landing_html': landing_md
 		    // 'capella_blank': capella_blank,
 		    // 'capella_payload': capella_payload,
 		    // 'capella_test': capella_test
 		});
-	    
+
 	    // Render.
 	    var o = pup_tent.render('noctua_landing.tmpl',
 				    tmpl_args,

@@ -1,23 +1,18 @@
 * The Noctua (Editor + Barista + Minerva) Stack
 
-  #+ATTR_HTML: title="Screenshot"
-  [[http://geneontology.github.io/noctua/images/screenshot.png]]
-
-  [[https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4][Demo]]
+  Welcome to the starting point of the developer and technical
+  documentation. If you are a user looking for more information about
+  Noctua, please see the main [[http://noctua.berkeleybop.org][site]].
   
-  _Current development is very rapid, so some of these docs may be out
-  of date._
+  (*Current development is very rapid, so some of these docs may be out
+  of date.*)
 
-  More docs/API to be found [[http://geneontology.github.io/noctua][here]].
-  
   This repository contains the graphical editor frontend (Noctua) and messenger server (Barista)
   which communicates with [[https://github.com/geneontology/minerva][Minerva]], a service layer that
   allows create/read/update/delete operations on an OWL Model.
 
-  The current preview instance is available at: http://noctua.berkeleybop.org - for a toy example model,
-  see [[http://noctua.berkeleybop.org/editor/graph/gomodel:55ad81df00000001][the scratch model]].
-  
-  This instance is configured for use with the [[http://geneontology.org][Gene Ontology]] project.
+  The current preview instance is available at: http://noctua.berkeleybop.org;
+  for a toy example model, see [[http://noctua.berkeleybop.org/editor/graph/gomodel:55ad81df00000001][the scratch model]].
 
 ** Installation
   
@@ -167,39 +162,3 @@
    +so we're hoping this is fairly flexible.+
 
    We do have people who have run the whole stack easily on OS X.
-   
-*** Running Minerva
-    Consult the Minerva docs at https://github.com/geneontology/minerva
-    
-*** Running Noctua and Barista
-    The most important part of getting familiar with the setup is
-    understanding the options in the Makefile. As well, besides the
-    environmental variables, there are a couple of important files for
-    configuration:
-
-    - config/app.json
-    - config/users.json
-
-    These are the backend mapping configuration and user authorization
-    files respectively.
-
-    Also, remember that Noctua cannot be run successfully until both
-    Minerva and Barista are running.
-
-    Also remember that Barista and Noctua are designed to be very
-    flexible about where they are pointing, so that configurations
-    like cloud -> server -> another server and perfectly fine. It is
-    important to look at the initial output of all the server to know
-    who that are trying to talk to and where they are--it is all
-    configurable, you just need the right option.
-**** Local testing
-     make start-barista
-     make start-noctua
-**** Local testing with copies of BBOP JS and BBOPX JS
-     make start-barista-dev
-     make start-noctua-dev
-**** OpenShift (currently noctua.js only)
-     git push openshift master
-     (currently at: http://go-genkisugi.rhcloud.com/)
-**** Heroku (currently noctua.js only)
-     TODO
