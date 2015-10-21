@@ -2450,40 +2450,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
-
-    // Finally, we're going to put up a giant warning for people to
-    // remind them that this is alpha software.
-    var wrn_txt = [
-	'<p>',
-	'Please understand the following before experimenting with Noctua.',
-	'</p>',
-	'<p>',
-	'<ol>',
-	'<li>',
-	'If you wish to save or continue your model later, you should regularly click <strong>[Model] > [Save]</strong>, which will save the model to disk on the server (and eventually saving to GitHub).',
-	'</li>',
-	'<li>',
-	'Remember that other people can edit your work.',
-	'</li>',
-	'<li>',
-	'Be aware that things can and will go wrong and <strong>work can be lost</strong> at any stage.',
-	'</li>',
-	'<li>',
-	'While there are many <a href="https://github.com/geneontology/noctua/issues?state=open">known issues</a>, for the time being we are mostly interested in feedback concerning the functional possibilites of the base model.',
-	'</li>',
-	'</ol>',
-	'</p>',
-	'<p>',
-	'</p>',
-	'<p>',
-	'</p>',
-	'<p>',
-	'</p>'
-    ];
-    var wrn = new widgetry.contained_modal(null,
-					   '<strong>Read before using</strong>',
-					   wrn_txt.join(''));
-    wrn.show();
 };
 
 ///
