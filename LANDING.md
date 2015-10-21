@@ -7,7 +7,7 @@ Development and technical documentation can be found on the [GitHub repository](
   
 Please start with the [video demo](https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4).
   
-![Noctua screenshot](http://geneontology.github.io/noctua/images/screenshot.png)
+![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
 
 ## How to use the beta
 
