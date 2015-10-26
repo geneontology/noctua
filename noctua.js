@@ -136,7 +136,9 @@ var NoctuaLauncher = function(){
     ///
 
     // Get the location(s) of the workbench plugins.
-    var workbenches = [];
+    var workbenches_universal = [];
+    var workbenches_model = [];
+    var workbenches_individual = [];
     each(workbench_maybe_dirs, function(dir){
 	//console.log('dir', dir);
 
@@ -156,28 +158,45 @@ var NoctuaLauncher = function(){
 		var wb = yaml.load(dir + '/' + file);
 		if( wb['menu-name'] && wb['page-name'] &&
 		    wb['help-link'] && wb['path-id'] &&
-		    wb['body-template'] &&
+		    wb['type'] && wb['body-template'] &&
 		    wb['css'] && wb['javascript'] ){
 			
-		        // Add the base file location of the wb.
+			// Add the base file location of the wb.
 		        wb['base-location'] = dir;
 			
 			// Load workbench for later.
-			workbenches.push(wb);
-			console.log(
-			    'Added workbench ('+ wb['path-id']+ '): '+ file);
+			if( wb['type'] === 'universal' ){
+			    workbenches_universal.push(wb);
+			    console.log(
+				'Added workbench (u: '+wb['path-id']+'): '+file);
+			}else if( wb['type'] === 'model' ){
+			    workbenches_model.push(wb);
+			    console.log(
+				'Added workbench (m: '+wb['path-id']+'): '+file);
+			}else if( wb['type'] === 'individual' ){
+			    workbenches_individual.push(wb);
+			    console.log(
+				'Added workbench (i: '+wb['path-id']+'): '+file);
+			}else{
+			    console.log('Rejected workbench (type): ' + file);
+			}
 		    }else{
 			console.log('Rejected workbench: ' + file);
 		    }
 	    }
 	});
     });
-    if( us.isEmpty(workbenches) ){
-	console.log('No workbenches defined.');
-    }
 
-    // Apply external to interal variables.
-    self.workbenches = workbenches;
+    // Apply external to internal variables.
+    var all_workbenches = workbenches_universal.concat(workbenches_model).concat(workbenches_individual);
+    if( us.isEmpty(all_workbenches) ){
+	console.log('No workbenches defined.');
+    }else{
+	console.log(all_workbenches.length + ' workbenches defined.');
+    }
+    // self.workbenches_universal = workbenches_universal;
+    // self.workbenches_model = workbenches_model;
+    // self.workbenches_individual = workbenches_individual;
     // Barista location setting.
     //var barloc = config['BARISTA_LOOKUP_URL'].value;
     self.barista_location = barloc;
@@ -289,7 +308,8 @@ var NoctuaLauncher = function(){
 
     // Standard template arguments payload.
     self.standard_variable_load = function(app_path, app_name, req,
-					   model_id, model_obj, additional_args){
+					   model_id, model_obj, node_id_list,
+					   additional_args){
 
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
@@ -325,6 +345,8 @@ var NoctuaLauncher = function(){
 	    'pup_tent_js_variables': [
 		{name: 'global_id',
 		 value: model_id },
+		{name: 'global_node_id_list',
+		 value: node_id_list },
 		{name: 'global_model',
 		 value: (model_obj || null)},
 		{name: 'global_golr_server',
@@ -342,13 +364,16 @@ var NoctuaLauncher = function(){
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
+	    'node_id_list': node_id_list,
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
 	    'noctua_landing': noctua_landing,
 	    'barista_login': barista_login,
 	    'barista_logout': barista_logout,
-	    'noctua_workbenches': workbenches
+	    'noctua_workbenches_universal': workbenches_universal,
+	    'noctua_workbenches_model': workbenches_model,
+	    'noctua_workbenches_individual': workbenches_individual
 	};
 
 	// Load in the additions.
@@ -366,7 +391,7 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 
 	var tmpl_args = self.standard_variable_load(
-	    '/editor/graph', 'Editor', req, model_id, model_obj,
+	    '/editor/graph', 'Editor', req, model_id, model_obj, null,
 	    {
 		'pup_tent_css_libraries': [
 		    '/NoctuaEditor.css'
@@ -395,7 +420,7 @@ var NoctuaLauncher = function(){
     // Add the paths for the workbench plugins. The workbench JS will
     // get compiled into the deploy directory, but we still need to
     // pickup the templates and keep them ready.
-    each(workbenches, function(wb){
+    each(all_workbenches, function(wb){
     	// We know these are good.
     	var path_id = wb['path-id'];
     	// var css_list = wb['css'];
@@ -478,7 +503,7 @@ var NoctuaLauncher = function(){
 	    var landing_md = md.markdown.toHTML(landing_raw);
 
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Landing', req, null, null,
+		'/', 'Landing', req, null, null, null,
 		{
 		    'pup_tent_css_libraries': [
 			'/noctua_landing.css'
@@ -664,12 +689,13 @@ var NoctuaLauncher = function(){
 	    }
 	});
 
-	// Bring in all the detected workbenches.
-	each(workbenches, function(wb){
+	// Realize all the detected workbenches.
+	each(all_workbenches, function(wb){
 
 	    // We know these are good.
 	    var menu_name = wb['menu-name'];
 	    var page_name = wb['page-name'];
+	    var wbtype = wb['type'];
 	    var help_link = wb['help-link'];
 	    var path_id = wb['path-id'];
 	    var body_template = wb['body-template'];
@@ -677,48 +703,48 @@ var NoctuaLauncher = function(){
 	    var js_list = wb['javascript'];
 	    var base_location = wb['base-location'];
 
-	    self.app.get('/workbench/' + path_id +'/:query', function(req, res){
+	    self.app.get('/workbench/' + path_id +'/:model?', function(req, res){
 
 		monitor_internal_kicks = monitor_internal_kicks + 1;
 
+		// Pull arguments out of the route and query.
 		//console.log(req.route);
 		//console.log(req.route.params['query']);
-		var query = req.route.params['query'] || '';
-		if( ! query || query === '' ){
-		    // Catch error here if no proper ID.
-		    res.setHeader('Content-Type', 'text/html');
-		    res.send('no identifier');
-		}else{
-		    
-		    // Make sure to map the plugin assets to the right
-		    // location.
-		    //var home = path_id + '/';
-		    var home = base_location +'/' + path_id + '/';
-		    var css_home = '/' + base_location +'/' + path_id + '/';
-		    var js_home = '/deploy/'+ base_location +'/'+ path_id +'/';
-		    var final_css = [];
-		    each(css_list, function(css){
-			final_css.push(css_home + css);
-		    });
-		    var final_js = [];
-		    each(js_list, function(js){
-			final_js.push(js_home + js);
-		    });
-
-		    var tmpl_args = self.standard_variable_load(
-			'/workbench/' + path_id, page_name, req, query, null,
-			{
-			    'pup_tent_css_libraries': final_css,
-			    'pup_tent_js_libraries': final_js,
-			    'workbench_help_link': help_link
-			});
-		
-		    // Render.
-		    var ret = pup_tent.render(home + body_template,
-					      tmpl_args,
-					      'noctua_base_workbench.tmpl');
-		    self.standard_response(res, 200, 'text/html', ret);
+		var model = req.route.params['model'] || null; // model
+		var node_ids = req.query['node_id'] || null; // individual
+		if( node_ids && ! us.isArray(node_ids) ){
+		    node_ids = [node_ids];
 		}
+		//console.log('node_ids:', node_ids);
+		    
+		// Make sure to map the plugin assets to the right
+		// location.
+		//var home = path_id + '/';
+		var home = base_location +'/' + path_id + '/';
+		var css_home = '/' + base_location +'/' + path_id + '/';
+		var js_home = '/deploy/'+ base_location +'/'+ path_id +'/';
+		var final_css = [];
+		each(css_list, function(css){
+		    final_css.push(css_home + css);
+		});
+		var final_js = [];
+		each(js_list, function(js){
+		    final_js.push(js_home + js);
+		});
+		
+		var tmpl_args = self.standard_variable_load(
+		    '/workbench/' + path_id,
+		    page_name, req, model, null, node_ids,
+		    {
+			'pup_tent_css_libraries': final_css,
+			'pup_tent_js_libraries': final_js,
+			'workbench_help_link': help_link
+		    });
+		
+		// Render.
+		var ret = pup_tent.render(home + body_template, tmpl_args,
+					  'noctua_base_workbench.tmpl');
+		self.standard_response(res, 200, 'text/html', ret);
 	    });
 	});
 	
