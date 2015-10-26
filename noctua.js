@@ -360,7 +360,13 @@ var NoctuaLauncher = function(){
 		{name: 'global_collapsible_relations',
 		 value: collapsible_relations },
 		{name: 'global_barista_token',
-		 value: barista_token }
+		 value: barista_token },
+		{name: 'global_workbenches_universal',
+		 value: workbenches_universal },
+		{name: 'global_workbenches_model',
+		 value: workbenches_model },
+		{name: 'global_workbenches_individual',
+		 value: workbenches_individual }
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
