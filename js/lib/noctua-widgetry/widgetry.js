@@ -826,7 +826,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
  *
  * @constructor
  */
-function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
+function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iworkbenches){
     
     // Start with ID.
     var tid = enode.id();
@@ -927,9 +927,29 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
     ];
 
     ///
+    /// Create section for individual-level plugins/workbenches.
     /// Create delete button.
     ///
 
+    // Workbench link/buttons.
+    var workbench_buttons = [];
+    var type_wb_btn_args = {
+    	'generate_id': true,
+    	'type': 'button',
+	'target': '_blank',
+    	'class': 'btn btn-success'
+    };
+    each(iworkbenches, function(wb){
+	var path_id = wb['path-id'];
+	var href = '/workbench/'+ path_id +'/'+ ecore.id() +
+	    '?node_id='+ encodeURIComponent(tid);
+	type_wb_btn_args['href'] = href;
+	var type_wb_btn =
+	    new bbop.html.tag('a', type_wb_btn_args, wb['menu-name']);
+	workbench_buttons.push(type_wb_btn.to_string());
+    });
+
+    // Delete button.
     var type_del_btn_args = {
     	'generate_id': true,
     	'type': 'button',
@@ -958,6 +978,8 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf){
 	'<hr />',
 	'<h4>Other operations</h4>',
 	// '<p>',
+	workbench_buttons.join(''),
+	'<hr />',
 	type_del_btn.to_string(),
 	'&nbsp;this individual'//,
 	// '</p>'
