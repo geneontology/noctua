@@ -600,7 +600,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 			widgetry.edit_node_modal(ecore, manager, enode,
 						 in_relations, aid,
 						 gserv, gconf,
-						 global_workbenches_individual);
+						 global_workbenches_individual,
+						 in_token);
 		    nedit.show();
 		}else{
 		    alert('Could not find related element.');
