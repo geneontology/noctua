@@ -68,18 +68,18 @@
           </ul>
 	</li>
 
-	<!-- Should I work on plugins? -->
+	<!-- Workbenches/plugins? -->
 	<li class="dropdown">
           <a href="#" class="dropdown-toggle"
-	     data-toggle="dropdown">Workbenches <b class="caret"></b></a>
+	     data-toggle="dropdown">Workbenches<b class="caret"></b></a>
           <ul class="dropdown-menu">
-	    {{^noctua_workbenches}}
-	    ace
-	    {{/noctua_workbenches}}
-	    {{#noctua_workbenches}}
+	    {{^noctua_workbenches_model}}
+	    No model workbenches found.
+	    {{/noctua_workbenches_model}}
+	    {{#noctua_workbenches_model}}
             <li><a target="_blank"
 		   href="/workbench/{{{path-id}}}/{{model_id}}?barista_token={{barista_token}}">{{{menu-name}}}</a></li>
-	    {{/noctua_workbenches}}
+	    {{/noctua_workbenches_model}}
           </ul>
 	</li>
 
