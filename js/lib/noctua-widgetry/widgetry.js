@@ -826,7 +826,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
  *
  * @constructor
  */
-function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iworkbenches){
+function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iworkbenches, user_token){
     
     // Start with ID.
     var tid = enode.id();
@@ -943,6 +943,9 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	var path_id = wb['path-id'];
 	var href = '/workbench/'+ path_id +'/'+ ecore.id() +
 	    '?node_id='+ encodeURIComponent(tid);
+	if( user_token ){ // if have login, keep in
+	    href = href + '&barista_token=' + user_token;
+	}
 	type_wb_btn_args['href'] = href;
 	var type_wb_btn =
 	    new bbop.html.tag('a', type_wb_btn_args, wb['menu-name']);
