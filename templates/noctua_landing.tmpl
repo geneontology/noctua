@@ -60,6 +60,7 @@
     <li><a href="#select" role="tab" data-toggle="tab">Edit</a></li>
     <li><a href="#export" role="tab" data-toggle="tab">Export</a></li>
     <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
+    <li><a href="#workbenches" role="tab" data-toggle="tab">Workbenches</a></li>
     <li><a href="#about" role="tab" data-toggle="tab">About</a></li>
     <li>
       <a href="#danger" role="tab" data-toggle="tab">
@@ -243,7 +244,6 @@
 
     </div>
 
-
     <!-- Export tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="export">
 
@@ -293,6 +293,30 @@
 		    class="btn btn-primary">Load</button>
           </p>
           <!-- </form> -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Universal workbenches tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="workbenches">
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Workbenches</h3>
+        </div>
+        <div class="panel-body">
+	  {{^noctua_workbenches_universal}}
+          <p>
+	    No universal workbenches found.
+          </p>
+	  {{/noctua_workbenches_universal}}
+	  {{#noctua_workbenches_universal}}
+          <p>
+	    <a target="_blank"
+	       href="/workbench/{{{path-id}}}?barista_token={{barista_token}}">{{{menu-name}}}</a>
+	  </p>
+	  {{/noctua_workbenches_universal}}
         </div>
       </div>
 
