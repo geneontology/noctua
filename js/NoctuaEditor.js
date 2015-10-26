@@ -19,6 +19,7 @@
 /* global global_id */
 /* global global_model */
 /* global global_known_relations */
+/* global global_workbenches_individual */
 
 // Code here will be ignored by JSHint, as we are technically
 // "redefining" jQuery (although we are not).
@@ -595,9 +596,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
 		if( enode ){		    
-		    var nedit = widgetry.edit_node_modal(ecore, manager, enode,
-							in_relations, aid,
-							gserv, gconf);
+		    var nedit =
+			widgetry.edit_node_modal(ecore, manager, enode,
+						 in_relations, aid,
+						 gserv, gconf,
+						 global_workbenches_individual);
 		    nedit.show();
 		}else{
 		    alert('Could not find related element.');
