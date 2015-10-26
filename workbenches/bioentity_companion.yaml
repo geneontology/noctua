@@ -1,0 +1,8 @@
+menu-name: "Bioentity companion"
+page-name: "Bioentity Companion"
+type: "individual"
+help-link: "http://github.com/geneontology/noctua/issues"
+path-id: "bioentity_companion"
+body-template: 'body.tmpl'
+css: []
+javascript: ['BioentityCompanion.js']
