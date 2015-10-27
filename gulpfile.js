@@ -251,7 +251,7 @@ var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
 // application definitions.
 
 gulp.task('run-minerva', shell.task(_run_cmd(
-    ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-request-logging --slme-elk --skip-class-id-validation',
+    ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-request-logging --slme-elk',
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
      '--golr-labels', golr_lookup_url,
