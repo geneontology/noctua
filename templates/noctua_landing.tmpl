@@ -160,27 +160,58 @@
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
-      <!-- Graph editor. -->
+      <!-- Selection table test. -->
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Graph Editor Interface</h3>
+          <h3 class="panel-title">Selection table</h3>
         </div>
         <div class="panel-body">
-          <p>
-            Edit or view a model in the <strong>graph editor
-            interface</strong> by selecting from the list and clicking
-            the button.
-          </p>
-          <div class="form-group">
-            <!-- <label for="select_stored_jump">Select by ID</label> -->
-            <select id="select_stored_jump" class="form-control">
-              <option>n/a</option>
-            </select>
-          </div>
-          <button id="select_stored_jump_button" type="submit"
-		  class="btn btn-primary">Edit/View &raquo;</button>
+
+	  <table id="model-selection" class="display"
+		 width="100%" cellspacing="0">
+            <thead>
+              <tr>
+		<th>Title</th>
+		<th>Deprecated</th>
+		<th>Modified</th>
+		<th>Edit</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+		<th>Title</th>
+		<th>Deprecated</th>
+		<th>Modified</th>
+		<th>Edit</th>
+              </tr>
+            </tfoot>
+            <tbody id="model-selection-data"></tbody>
+	  </table>
+
         </div>
       </div>
+
+      <!-- <\!-- Graph editor. -\-> -->
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">Graph Editor Interface</h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body"> -->
+      <!--     <p> -->
+      <!--       Edit or view a model in the <strong>graph editor -->
+      <!--       interface</strong> by selecting from the list and clicking -->
+      <!--       the button. -->
+      <!--     </p> -->
+      <!--     <div class="form-group"> -->
+      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+      <!--       <select id="select_stored_jump" class="form-control"> -->
+      <!--         <option>n/a</option> -->
+      <!--       </select> -->
+      <!--     </div> -->
+      <!--     <button id="select_stored_jump_button" type="submit" -->
+      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
+      <!--   </div> -->
+      <!-- </div> -->
 
       <!-- Browse. -->
       <div class="panel panel-default">
@@ -381,22 +412,6 @@
 		      class="btn btn-primary">Load</button>
             </p>
           </form>
-        </div>
-      </div>
-
-      <!-- Selection table. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Selection table</h3>
-        </div>
-        <div class="panel-body">
-          <p>
-            Experimental selection table to replace the current one.
-          </p>
-          <p>
-	    <div id="exp_selection_table">
-	    </div>
-          </p>
         </div>
       </div>
 

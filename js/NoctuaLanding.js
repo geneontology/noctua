@@ -82,7 +82,7 @@ var MMEnvBootstrappingInit = function(user_token){
 
     // Contact points for Chris's wizard.
     var select_stored_jump_id = 'select_stored_jump';
-    var select_stored_jump_elt = '#' + select_stored_jump_id;
+    // var select_stored_jump_elt = '#' + select_stored_jump_id;
     var select_stored_jump_button_id = 'select_stored_jump_button';
     var select_stored_jump_button_elt = '#' + select_stored_jump_button_id;
     // var select_scratch_jump_id = 'select_scratch_jump';
@@ -388,12 +388,58 @@ var MMEnvBootstrappingInit = function(user_token){
 	    });
 	    var rep_str = rep_cache.join('');
 
-	    // Insert model IDs into "Select by ID" interface.
-	    jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
-	    jQuery(select_stored_jump_elt).append(rep_str);
+	    // Generate table contents.
+	    var table_cache = [];
+	    each(sorted_model_meta_ids, function(model_id){
+
+		var tr_cache = [];
+
+		//var model_meta = models_meta[model_id];
+		
+		var mtitle =  _get_model_title(model_id);
+		tr_cache.push(mtitle);
+
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( _model_deprecated_p(model_id) ){
+		    tr_cache.push(':(');
+		}else{
+		    tr_cache.push('');
+		}
+
+		// Check to see if it's modified and highlight that
+		// fact.
+		if( _model_modified_p(model_id) ){
+		    tr_cache.push('*');
+		}else{
+		    tr_cache.push('');
+		}
+
+		// Button/link as edit.
+		var bstr =
+		    '<a class="btn btn-primary" href="' +
+		    _generate_jump_url(model_id, 'graph') +
+		    '">Graph</a>';// +
+//		    '&nbsp;' +
+		    // '<a class="btn btn-primary" href="' +
+		    // _generate_jump_url(model_id, 'basic') +
+		    // '">Form</a>';
+		tr_cache.push(bstr);
+
+		// Add to cache.
+		var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
+		table_cache.push(tr_str);
+	    });
+	    var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+	    jQuery('#model-selection-data').empty();
+	    jQuery('#model-selection-data').append(table_str);
+	    jQuery('#model-selection').DataTable();
+
+	    // // Insert model IDs into "Select by ID" interface.
+	    // jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
+	    // jQuery(select_stored_jump_elt).append(rep_str);
 
 	    // Dropdown for the form select interface.
-
 	    jQuery(select_stored_jump_basic_elt).empty();
 	    jQuery(select_stored_jump_basic_elt).append(rep_str);
 
@@ -401,11 +447,11 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(model_export_by_id_input_elt).empty();
 	    jQuery(model_export_by_id_input_elt).append(rep_str);
 
-	    // Make jump interface for graph jump on click.
-	    jQuery(select_stored_jump_button_elt).click(function(evt){
-		var id = jQuery(select_stored_jump_elt).val();
-		_jump_to_page(_generate_jump_url(id, 'graph'));
-	    });
+	    // // Make jump interface for graph jump on click.
+	    // jQuery(select_stored_jump_button_elt).click(function(evt){
+	    // 	var id = jQuery(select_stored_jump_elt).val();
+	    // 	_jump_to_page(_generate_jump_url(id, 'graph'));
+	    // });
 
 	    // Make jump interface for form jump on click.
 	    jQuery(select_stored_jump_button_basic_elt).click(function(evt) {

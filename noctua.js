@@ -512,9 +512,11 @@ var NoctuaLauncher = function(){
 		'/', 'Landing', req, null, null, null,
 		{
 		    'pup_tent_css_libraries': [
+			'jquery.dataTables.min.css',
 			'/noctua_landing.css'
 		    ],
 		    'pup_tent_js_libraries': [
+			'jquery.dataTables.min.js',
 			'/NoctuaLanding.js'
 		    ],
 		    'landing_html': landing_md

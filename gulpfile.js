@@ -70,8 +70,8 @@ var paths = {
 	      'workbenches/bioentity_companion/BioentityCompanion.js',
 	      'workbenches/companion/Companion.js',
 	      'workbenches/cytoview/CytoView.js',
-	      'js/NoctuaBasic/NoctuaBasicApp.js',
-	      'js/NoctuaBasic/NoctuaBasicController.js',
+	      // 'js/NoctuaBasic/NoctuaBasicApp.js',
+	      // 'js/NoctuaBasic/NoctuaBasicController.js',
 	      'js/BaristaLogin.js',
 	      'js/BaristaLogout.js',
 	      'js/BaristaSession.js'
