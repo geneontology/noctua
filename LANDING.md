@@ -15,6 +15,10 @@ The current preview instance is available here; for a toy example model, see [on
   
 This instance is configured for use with the [Gene Ontology](http://geneontology.org) project.
 
+## GO Curator Documentation
+
+An early draft of [LEGO Documentation for GO curators](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) is available.
+
 ### Generating/selecting a model
 
 * Models that are currently known (either in memory or file) are found under [Current State] > select "Usable" > [Jump]
@@ -57,3 +61,4 @@ not mentioned here or in the tracker, please contact Seth, Heiko, or Chris.
 * Sometimes, when editing an instance, the relations (edges) will fall out of sync; either move nearby instances or refresh the model
 * The endpoint scheme is reversed between creation and instantiation
 * TODO, etc.
+
