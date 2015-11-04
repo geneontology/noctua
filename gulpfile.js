@@ -17,6 +17,7 @@ var url = require('url');
 var tilde = require('expand-home-dir');
 var bump = require('gulp-bump');
 var flatten = require('gulp-flatten');
+var request = require('request');
 //var git = require('gulp-git');
 //var watch = require('gulp-watch');
 //var watchify = require('watchify');
@@ -29,6 +30,25 @@ var flatten = require('gulp-flatten');
 function _die(str){
     console.error(str);
     process.exit(-1);
+}
+
+// Ping server; used during certain commands.
+function _ping_count(){
+
+    if( count_url && typeof(count_url) === 'string' && count_url !== '' ){
+
+	request({
+	    url: count_url
+	}, function(error, response, body){
+	    if( error || response.statusCode !== 200 ){
+		console.log('Unable to ping: ' + count_url);
+	    }else{
+		console.log('Pinged: ' + count_url);
+	    }
+	});
+    }else{
+	console.log('Will not ping home.');
+    }
 }
 
 function _tilde_expand(ufile){
@@ -250,6 +270,17 @@ var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
 // NOTE: Allowing barista to slurp up startup.yaml itself to get the
 // application definitions.
 
+// Execute by default; variable must be present and empty to stop.
+var count_url =
+	'https://s3-us-west-1.amazonaws.com/go-noctua-usage-master/ping.json';
+if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
+    count_url = config['NOCTUA_COUNTER_URL'].value;
+}
+
+// Execute counter.
+_ping_count();
+
+// Mineva runner.
 gulp.task('run-minerva', shell.task(_run_cmd(
     ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-request-logging --slme-elk',
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
