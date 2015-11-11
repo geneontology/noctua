@@ -9,11 +9,11 @@
 GOLR_LOOKUP_URL:
   comment: The public location of the GOlr server ask information from.
   type: url
-  value: http://golr.berkeleybop.org/
+  value: http://noctua-golr.berkeleybop.org/
 GOLR_LOCATION:
   comment: The actual unprotected location of the GOlr server to load to (if different from GOLR_SERVER_LOOKUP).
   type: url
-  value: http://golr.berkeleybop.org/
+  value: http://amigo-dev-golr.berkeleybop.org/
 BARISTA_LOOKUP_URL:
   comment: Define where Noctua looks for Barista.
   type: url
