@@ -28,9 +28,9 @@
         "npm": ">= 2.7.4"
     },
     "dependencies": {
-        "amigo2": "^2.4.0",
+        "amigo2": "2.4.3",
         "aws-sdk": "2.0.4",
-	"bbop": "2.4.0",
+	"bbop": "2.4.3",
 	"bbopx": "0.9.31",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.16",
