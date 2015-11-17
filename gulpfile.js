@@ -282,7 +282,7 @@ _ping_count();
 
 // Mineva runner.
 gulp.task('run-minerva', shell.task(_run_cmd(
-    ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-request-logging --slme-elk',
+    ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-golr-url-logging --use-request-logging --slme-elk',
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
      '--golr-labels', golr_lookup_url,
