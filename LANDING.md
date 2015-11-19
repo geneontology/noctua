@@ -3,11 +3,19 @@
 ...to the general public face of Noctua. _Current development is
 very rapid, so some of these docs may be out of date._
 
-Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
-  
-Please start with the [video demo](https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4).
-  
+Noctua is a web-based tool for collaborative editing of *models* of
+biological processes.
+
 ![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
+
+## Quickstart
+
+ * *Noctua Users*
+    * Start with the [video demo](https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4)
+    * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft)
+    * For general tool usage, see the instructions below
+ * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
+ * *Bioinformaticians* -- See the [Noctua models repository](http://github.com/geneontology/noctua-modules) for access to the underlying models and explanation of the OWL representation
 
 ## How to use the beta
 
