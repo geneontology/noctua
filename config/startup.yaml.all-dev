@@ -6,8 +6,12 @@
 ####
 ---
 ## Fiddly location URL variables.
+GOLR_SEEDING_LOOKUP_URL:
+  comment: The public location of the GOlr server ask information from about seeding, etc. If not defined, the gulpfile will likely just use GOLR_LOOKUP_URL instead.
+  type: url
+  value: http://golr.berkeleybop.org/
 GOLR_LOOKUP_URL:
-  comment: The public location of the GOlr server ask information from.
+  comment: The public location of the GOlr server to ask information from for autocomplete, etc.
   type: url
   value: http://localhost:8080/solr/
 GOLR_LOCATION:
