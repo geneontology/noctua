@@ -243,6 +243,11 @@ try {
 
 // Lookup/public locations.
 var golr_lookup_url = config['GOLR_LOOKUP_URL'].value;
+var golr_seeding_lookup_url = golr_lookup_url;
+if( config['GOLR_SEEDING_LOOKUP_URL'] &&
+    config['GOLR_SEEDING_LOOKUP_URL'].value ){
+	golr_seeding_lookup_url = config['GOLR_SEEDING_LOOKUP_URL'].value;
+}
 var noctua_lookup_url = config['NOCTUA_LOOKUP_URL'].value;
 var barista_lookup_url = config['BARISTA_LOOKUP_URL'].value;
 
@@ -286,6 +291,7 @@ gulp.task('run-minerva', shell.task(_run_cmd(
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
      '--golr-labels', golr_lookup_url,
+     '--golr-seed', golr_seeding_lookup_url,
      '-c', geneontology_catalog,
      '-f', noctua_models,
      '--port', minerva_port
