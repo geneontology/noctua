@@ -15,7 +15,7 @@ biological processes.
     * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
- * *Bioinformaticians* -- See the [Noctua models repository](http://github.com/geneontology/noctua-modules) for access to the underlying models and explanation of the OWL representation
+ * *Bioinformaticians* -- See the [Noctua models repository](http://github.com/geneontology/noctua-models) for access to the underlying models and explanation of the OWL representation
 
 ## How to use the beta
 
