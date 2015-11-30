@@ -3,7 +3,7 @@
 ////
 
 var gulp = require('gulp');
-var jsdoc = require("gulp-jsdoc");
+//var jsdoc = require("gulp-jsdoc");
 var mocha = require('gulp-mocha');
 var shell = require('gulp-shell');
 var browserify = require('browserify');
@@ -105,11 +105,11 @@ var paths = {
 /// Build tasks.
 ///
 
-// Build docs directory with JSDoc.
-gulp.task('doc', function() {
-  gulp.src(paths.clients, paths.scripts)
-    .pipe(jsdoc('./doc'));
-});
+// // Build docs directory with JSDoc.
+// gulp.task('doc', function() {
+//   gulp.src(paths.clients, paths.scripts)
+//     .pipe(jsdoc('./doc'));
+// });
 
 // Testing with mocha/chai.
 // NOTE: I'm using chai here.
