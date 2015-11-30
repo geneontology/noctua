@@ -1,0 +1,8 @@
+<VirtualHost *:80>
+    ServerName {{ barista_hostname }}
+    ServerAdmin webmaster@localhost    
+    ProxyPreserveHost On
+    ProxyRequests Off
+    ProxyPass / http://localhost:3400/
+    ProxyPassReverse / http://localhost:3400
+</VirtualHost> 

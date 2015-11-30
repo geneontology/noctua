@@ -1,0 +1,27 @@
+---
+- hosts: remote-deployments
+  remote_user: ubuntu
+  sudo: yes
+  vars:
+    remote_user: ubuntu
+    amigo_hostname: amigo-geneva.berkeleybop.io
+    barista_hostname: barista-geneva.berkeleybop.io
+    minerva_hostname: minerva-geneva.berkeleybop.io
+    noctua_hostname: noctua-geneva.berkeleybop.io
+  ## Bring system into something usable.
+  tasks:
+    ## Initial setup.
+    ## Get all of the standard packages we want into play for pretty
+    ## much any system.
+    - include: tasks/packages-std.yaml
+    ## System maintenance (now that we at least have our standard packages).
+    - include: tasks/system-admin.yaml
+    ## Get all of the Noctua/Minerva specific packages.
+    - include: tasks/packages-noctua.yaml
+    ## Setup the git repos and the Noctua environment.
+    - include: tasks/env.yaml
+    # ## Run the services 
+    # - include: tasks/spin-up.yaml
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted

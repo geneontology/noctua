@@ -1,0 +1,32 @@
+###
+### Additional packages for Noctua.
+###
+---
+###
+### Node.js; 4.x
+### Picked out of: curl -sL https://deb.nodesource.com/setup_4.x
+###
+## Get nodesource key.
+- name: node repo key
+  apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key state=present
+## Get nodejs repo, then recent version.
+- name: get nodejs repo
+  apt_repository: repo='deb https://deb.nodesource.com/node_4.x trusty main'
+- name: install nodejs
+  apt: pkg=nodejs state=present
+# ###
+# ### Jetty8 for local golr installation.
+# ###
+# - name: install jetty8
+#   apt: pkg=jetty8 state=present
+###
+### Supervisord/apache/etc.--we'll need system control.
+###
+- name: install other noctua packages
+  apt: pkg={{ item }} state=present
+  with_items:
+    - supervisor
+    - apache2
+    - apache2-utils
+    - libapache2-mod-proxy-html
+    - libapache2-mod-macro

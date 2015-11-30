@@ -1,0 +1,33 @@
+###
+### Things that need to be done first.
+###
+---
+###
+### Refresh system.
+###
+- name: update repos
+  apt: update_cache=yes cache_valid_time=3600
+- name: upgrade server
+  apt: upgrade=full
+###
+### Add base packages.
+###
+## Repo control.
+- name: install basic packages
+  apt: pkg={{ item }} state=present
+  with_items:
+    - build-essential
+    - di
+    - curl
+    - emacs24-nox
+    - emacs24-el
+    - git
+    - kwalify
+    - less
+    - make
+    - mg
+    - openssh-client
+    - openssh-server
+    - ntpdate
+    - nscd
+    - subversion

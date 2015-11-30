@@ -1,0 +1,8 @@
+<VirtualHost *:80>
+    ServerName {{ noctua_hostname }}
+    ServerAdmin webmaster@localhost    
+    ProxyPreserveHost On
+    ProxyRequests Off
+    ProxyPass / http://localhost:8910/
+    ProxyPassReverse / http://localhost:8910
+</VirtualHost> 

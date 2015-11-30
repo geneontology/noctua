@@ -1,0 +1,8 @@
+<VirtualHost *:80>
+    ServerName {{ minerva_hostname }}
+    ServerAdmin webmaster@localhost    
+    ProxyPreserveHost On
+    ProxyRequests Off
+    ProxyPass / http://localhost:6800/
+    ProxyPassReverse / http://localhost:6800
+</VirtualHost> 

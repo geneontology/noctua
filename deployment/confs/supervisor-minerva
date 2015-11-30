@@ -1,0 +1,17 @@
+[program:minerva]
+directory=/home/{{ remote_user }}/local/src/git/noctua
+command=bash -c "./node_modules/.bin/gulp run-minerva"
+autostart=true
+autorestart=true
+startsecs=120
+startretries=3
+stopwaitsecs=60
+redirect_stderr=true
+stdout_logfile=/tmp/minerva.log
+stderr_logfile=/tmp/minerva-err.log
+stdout_logfile_maxbytes=150MB
+stderr_logfile_maxbytes=150MB
+stdout_logfile_backups=0
+stderr_logfile_backups=0
+user={{ remote_user }}
+environment=HOME=/home/{{ remote_user }}
