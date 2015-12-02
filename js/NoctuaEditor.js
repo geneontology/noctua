@@ -11,6 +11,7 @@
 // care of it all).
 /* global jQuery */
 /* global global_golr_server */
+/* global global_golr_neo_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
 /* global jsPlumb */
@@ -101,6 +102,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     // GOlr location and conf setup.
     var gserv = global_golr_server;
+    var gserv_neo = global_golr_neo_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
     // Define what annotations are allowed to be edited where.
@@ -1459,22 +1461,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     /// Activate addition template for BP (restrict).
     ///
 
+    // The base settings for bioentity autocomplete.
+    var base_enb_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class_label}}',
+	'additional_results_class': 'bbop-mme-more-results-ul'
+    };
+
     // Storage for the actual selected identifiers.
     var simple_bp_restrict_enb_auto_val = null;
     var simple_bp_restrict_act_auto_val = null;
     var simple_bp_restrict_occ_auto_val = null;
 
     // bioentity
-    var simple_bp_restrict_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
-    	'value_template': '{{bioentity_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
+    var simple_bp_restrict_enb_auto_args = us.clone(base_enb_auto_args);
+    simple_bp_restrict_enb_auto_args['list_select_callback'] =
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_bp_restrict_enb_auto_val = doc['bioentity'] || null;
-    	}
-    };
+	    simple_bp_restrict_enb_auto_val = doc['annotation_class'] || null;
+    	};
+
     // molecular function
     var simple_bp_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
@@ -1498,14 +1504,18 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	}
     };
 
+    // Remember that we're using NEO for this now.
     var simple_bp_restrict_enb_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
 					  simple_bp_restrict_enb_auto_id,
 					  simple_bp_restrict_enb_auto_args);
     simple_bp_restrict_enb_auto.lite(true);
     simple_bp_restrict_enb_auto.add_query_filter('document_category',
-						 'bioentity');
-    simple_bp_restrict_enb_auto.set_personality('bioentity');
+						 'ontology_class');
+    // Root is CHEBI:23367 ! molecular entity.
+    simple_bp_restrict_enb_auto.add_query_filter('regulates_closure',
+    						 'CHEBI:23367', ['*']);
+    simple_bp_restrict_enb_auto.set_personality('ontology');
 
     var simple_bp_restrict_act_auto =
 	new bbop_legacy.widget.search_box(gserv, gconf,
@@ -1581,16 +1591,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var simple_bp_free_occ_auto_val = null;
 
     // bioentity
-    var simple_bp_free_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
-    	'value_template': '{{bioentity_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
+    var simple_bp_free_enb_auto_args = us.clone(base_enb_auto_args);
+    simple_bp_free_enb_auto_args['list_select_callback'] =
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_bp_free_enb_auto_val = doc['bioentity'] || null;
-    	}
-    };
+	    simple_bp_free_enb_auto_val = doc['annotation_class'] || null;
+    	};
+
     // molecular function
     var simple_bp_free_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
@@ -1615,12 +1622,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     };
 
     var simple_bp_free_enb_auto =
-	    new bbop_legacy.widget.search_box(gserv, gconf,
+	    new bbop_legacy.widget.search_box(gserv_neo, gconf,
 					      simple_bp_free_enb_auto_id,
 					      simple_bp_free_enb_auto_args);
     simple_bp_free_enb_auto.lite(true);
-    simple_bp_free_enb_auto.add_query_filter('document_category', 'bioentity');
-    simple_bp_free_enb_auto.set_personality('bioentity');
+    simple_bp_free_enb_auto.add_query_filter('document_category',
+					     'ontology_class');
+    // Root is CHEBI:23367 ! molecular entity.
+    simple_bp_free_enb_auto.add_query_filter('regulates_closure',
+    					     'CHEBI:23367', ['*']);
+    simple_bp_free_enb_auto.set_personality('ontology');
 
     var simple_bp_free_act_auto =
 	new bbop_legacy.widget.search_box(gserv, gconf,
@@ -1721,16 +1732,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var simple_mf_restrict_occ_auto_val = null;
     
     // bioentity
-    var simple_mf_restrict_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
-    	'value_template': '{{bioentity_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
+    var simple_mf_restrict_enb_auto_args = us.clone(base_enb_auto_args);
+    simple_mf_restrict_enb_auto_args['list_select_callback'] =
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_mf_restrict_enb_auto_val = doc['bioentity'] || null;
-    	}
-    };
+	    simple_mf_restrict_enb_auto_val = doc['annotation_class'] || null;
+    	};
+
     // molecular function
     var simple_mf_restrict_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
@@ -1755,13 +1763,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     };
 
     var simple_mf_restrict_enb_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
 					  simple_mf_restrict_enb_auto_id,
 					  simple_mf_restrict_enb_auto_args);
     simple_mf_restrict_enb_auto.lite(true);
     simple_mf_restrict_enb_auto.add_query_filter('document_category',
-						 'bioentity');
-    simple_mf_restrict_enb_auto.set_personality('bioentity');
+						 'ontology_class');
+    // Root is CHEBI:23367 ! molecular entity.
+    simple_mf_restrict_enb_auto.add_query_filter('regulates_closure',
+    						 'CHEBI:23367', ['*']);
+    simple_mf_restrict_enb_auto.set_personality('ontology');
     
     var simple_mf_restrict_act_auto =
 	new bbop_legacy.widget.search_box(gserv, gconf,
@@ -1835,16 +1846,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var simple_mf_free_occ_auto_val = null;
 
     // bioentity
-    var simple_mf_free_enb_auto_args = {
-    	'label_template': '{{bioentity_label}} ({{bioentity}}/{{taxon_label}})',
-    	'value_template': '{{bioentity_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
+    var simple_mf_free_enb_auto_args = us.clone(base_enb_auto_args);
+    simple_mf_free_enb_auto_args['list_select_callback'] =
     	function(doc){
     	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_mf_free_enb_auto_val = doc['bioentity'] || null;
-    	}
+	    simple_mf_free_enb_auto_val = doc['annotation_class'] || null;
     };
+
     // molecular function
     var simple_mf_free_act_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
@@ -1869,12 +1877,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     };
 
     var simple_mf_free_enb_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
 					  simple_mf_free_enb_auto_id,
 					  simple_mf_free_enb_auto_args);
     simple_mf_free_enb_auto.lite(true);
-    simple_mf_free_enb_auto.add_query_filter('document_category', 'bioentity');
-    simple_mf_free_enb_auto.set_personality('bioentity');
+    simple_mf_free_enb_auto.add_query_filter('document_category',
+					     'ontology_class');
+    // Root is CHEBI:23367 ! molecular entity.
+    simple_mf_free_enb_auto.add_query_filter('regulates_closure',
+    					     'CHEBI:23367', ['*']);
+    simple_mf_free_enb_auto.set_personality('ontology');
 
     var simple_mf_free_act_auto =
 	new bbop_legacy.widget.search_box(gserv, gconf,
