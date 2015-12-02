@@ -20,11 +20,11 @@ GOLR_LOCATION:
 BARISTA_LOOKUP_URL:
   comment: Define where Noctua looks for Barista.
   type: url
-  value: http://localhost:3400
+  value: http://{{ barista_hostname }}
 BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
-  value: http://{{ barista_hostname }}
+  value: http://localhost:3400
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
