@@ -70,7 +70,9 @@ var collapsible_raw =
 	argv['c'] || argv['collapsible-relations'] || '';
 // GOlr server.
 var golr_server_location =
-	argv['g'] || argv['golr'] || 'http://golr.geneontology.org/solr/';
+	argv['g'] || argv['golr'] || 'http://golr.geneontology.org/';
+var golr_neo_server_location =
+	argv['n'] || argv['golr-neo'] || 'http://noctua-golr.geneontology.org/';
 // Barista server.
 var barloc =
 	argv['b'] || argv['barista'] || 'http://barista.berkeleybop.org/';
@@ -93,6 +95,7 @@ var workbench_maybe_dirs = workbench_maybe_raw.split(/\s+/) || [];
 
 console.log('Will fold: ', collapsible_relations);
 console.log('Using GOlr lookup server at: ', golr_server_location);
+console.log('Using GOlr NEO lookup server at: ', golr_neo_server_location);
 console.log('Barista location: ' + barloc);
 console.log('Minerva definition name: ' + min_def_name);
 
@@ -101,21 +104,6 @@ console.log('Minerva definition name: ' + min_def_name);
 var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
-
-// // Pull in our configuration.
-// var config = yaml.load('./startup.yaml');
-
-// // Get some information about what we'll be folding away.
-// var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
-// console.log('Will fold: ', collapsible_relations);
-
-// // Widget server.
-// var golr_server_location = config['GOLR_LOOKUP_URL'].value;
-
-// Local testing.
-// Emergency public backup.
-//var golr_server_location = 'http://geneontology-golr.stanford.edu/solr/';
-// console.log('Using GOlr lookup server at: ', golr_server_location);
 
 // The name we're using this week.
 var notw = 'Noctua (Beta)';
@@ -351,6 +339,8 @@ var NoctuaLauncher = function(){
 		 value: (model_obj || null)},
 		{name: 'global_golr_server',
 		 value: golr_server_location},
+		{name: 'global_golr_neo_server',
+		 value: golr_neo_server_location},
 		{name: 'global_minerva_definition_name',
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location',
@@ -560,10 +550,12 @@ var NoctuaLauncher = function(){
 		     value: self.known_relations},
 		    {name: 'global_barista_token',
 		     value: barista_token},
-		    {name:'global_barista_location',
+		    {name: 'global_barista_location',
 		     value: self.barista_location },
-		    {name: 'golr_loc',
+		    {name: 'global_golr_server',
 		     value: golr_server_location},
+		    {name: 'global_golr_neo_server',
+		     value: golr_neo_server_location},
 		    {name: 'model_id',
 		     value: model_id}
 		],

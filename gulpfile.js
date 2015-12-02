@@ -243,11 +243,7 @@ try {
 
 // Lookup/public locations.
 var golr_lookup_url = config['GOLR_LOOKUP_URL'].value;
-var golr_seeding_lookup_url = golr_lookup_url;
-if( config['GOLR_SEEDING_LOOKUP_URL'] &&
-    config['GOLR_SEEDING_LOOKUP_URL'].value ){
-	golr_seeding_lookup_url = config['GOLR_SEEDING_LOOKUP_URL'].value;
-}
+var golr_neo_lookup_url = config['GOLR_NEO_LOOKUP_URL'].value;
 var noctua_lookup_url = config['NOCTUA_LOOKUP_URL'].value;
 var barista_lookup_url = config['BARISTA_LOOKUP_URL'].value;
 
@@ -290,8 +286,8 @@ gulp.task('run-minerva', shell.task(_run_cmd(
     ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-golr-url-logging --use-request-logging --slme-elk',
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-     '--golr-labels', golr_lookup_url,
-     '--golr-seed', golr_seeding_lookup_url,
+     '--golr-labels', golr_neo_lookup_url,
+     '--golr-seed', golr_lookup_url,
      '-c', geneontology_catalog,
      '-f', noctua_models,
      '--port', minerva_port
@@ -313,6 +309,7 @@ gulp.task('run-barista', shell.task(_run_cmd(
 gulp.task('run-noctua', shell.task(_run_cmd(
     ['node', 'noctua.js',
      '--golr', golr_lookup_url,
+     '--golr-neo', golr_neo_lookup_url,
      '--barista', barista_lookup_url,
      '--noctua-public', noctua_lookup_url,
      '--noctua-self', noctua_location,
