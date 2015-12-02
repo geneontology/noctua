@@ -1,17 +1,16 @@
-[program:noctua]
+[program:epione]
 directory=/home/{{ remote_user }}/local/src/git/noctua
-# May need to time minerva startup for this.
-command=bash -c "./node_modules/.bin/gulp run-noctua"
+command=bash -c "./node_modules/.bin/gulp run-epione"
 autostart=true
 autorestart=true
 startsecs=20
 startretries=3
-stopwaitsecs=10
+stopwaitsecs=5
 stopsignal=KILL
 killasgroup=true
 redirect_stderr=true
-stdout_logfile=/tmp/noctua.log
-stderr_logfile=/tmp/noctua-err.log
+stdout_logfile=/tmp/epione.log
+stderr_logfile=/tmp/epione-err.log
 stdout_logfile_maxbytes=150MB
 stderr_logfile_maxbytes=150MB
 stdout_logfile_backups=0
