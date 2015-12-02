@@ -7,6 +7,7 @@
 /* global jQuery */
 /* global global_id */
 /* global global_golr_server */
+/* global global_golr_neo_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
 /* global jsPlumb */
@@ -42,11 +43,10 @@ var minerva_manager = require('bbop-manager-minerva');
 
 // Items for running the old AmiGO stuff.
 var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
-var sd = new amigo.data.server();
+var gserv = global_golr_server;
 var defs = new amigo.data.definitions();
 var handler = new amigo.handler();
 var linker = new amigo.linker();
-var solr_server = global_golr_server;
 //var dlimit = defs.download_limit();
 var dlimit = 1000;
 
@@ -115,7 +115,6 @@ var CompanionInit = function(user_token){
 				       user_token, engine, 'async');
     
     // GOlr location and conf setup.
-    var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
     ///
@@ -214,7 +213,7 @@ var CompanionInit = function(user_token){
     ///
     
     // Ready the primary widget manager.
-    var widget_manager = new bbop_legacy.golr.manager.jquery(solr_server, gconf);
+    var widget_manager = new bbop_legacy.golr.manager.jquery(gserv, gconf);
     var confc = gconf.get_class('annotation');
     widget_manager.set_personality('annotation');
     widget_manager.add_query_filter('document_category',
