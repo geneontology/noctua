@@ -489,9 +489,9 @@ var MinervaBootstrapping = function(user_token){
 		table_cache.push(tr_str);
 	    });
 	    var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
-	    // jQuery('#model-selection-data').empty();
-	    // jQuery('#model-selection-data').append(table_str);
-	    // jQuery('#model-selection').DataTable();
+	    jQuery('#model-selection-data').empty();
+	    jQuery('#model-selection-data').append(table_str);
+	    jQuery('#model-selection').DataTable();
 
 	    // // Insert model IDs into "Select by ID" interface.
 	    // jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
@@ -643,37 +643,37 @@ var MinervaBootstrapping = function(user_token){
 
     manager.get_meta();
 
-    ///
-    /// Activate autocomplete in input boxes.
-    /// Add the local responders.
-    ///
+    // ///
+    // /// Activate autocomplete in input boxes.
+    // /// Add the local responders.
+    // ///
 
-    // noctua meta
-    var input_golr_auto_val = null;
-    var input_golr_auto_args = {
-    	'label_template': '{{annotation_unit_label}}',
-    	'value_template': '{{annotation_unit_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-	    input_golr_auto_val = doc['annotation_unit'] || null;
-    	    var iga = input_golr_auto_val || '';
-    	    if( ! input_golr_auto_val ){
-    		alert('Must properly select from list.');
-	    }else{
+    // // noctua meta
+    // var input_golr_auto_val = null;
+    // var input_golr_auto_args = {
+    // 	'label_template': '{{annotation_unit_label}}',
+    // 	'value_template': '{{annotation_unit_label}}',
+    // 	'additional_results_class': 'bbop-mme-more-results-ul',
+    // 	'list_select_callback':
+    // 	function(doc){
+    // 	    input_golr_auto_val = doc['annotation_unit'] || null;
+    // 	    var iga = input_golr_auto_val || '';
+    // 	    if( ! input_golr_auto_val ){
+    // 		alert('Must properly select from list.');
+    // 	    }else{
 		
-		_jump_to_page(_generate_jump_url(input_golr_auto_val.slice(-16),
-						 to_editor));
-	    }
-    	}
-    };
-    var input_golr_auto =
-	    new bbop_legacy.widget.search_box(gserv, gconf,
-					      'input_golr_jump',
-					      input_golr_auto_args);
-    input_golr_auto.lite(true);
-    input_golr_auto.add_query_filter('document_category', 'noctua_model_meta');
-    input_golr_auto.set_personality('noctua_model_meta');
+    // 		_jump_to_page(_generate_jump_url(input_golr_auto_val.slice(-16),
+    // 						 to_editor));
+    // 	    }
+    // 	}
+    // };
+    // var input_golr_auto =
+    // 	    new bbop_legacy.widget.search_box(gserv, gconf,
+    // 					      'input_golr_jump',
+    // 					      input_golr_auto_args);
+    // input_golr_auto.lite(true);
+    // input_golr_auto.add_query_filter('document_category', 'noctua_model_meta');
+    // input_golr_auto.set_personality('noctua_model_meta');
 };
 
 // Using all new libraries--no legacy!

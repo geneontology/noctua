@@ -160,37 +160,6 @@
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
-      <!-- Selection table test. -->
-      <!-- <div class="panel panel-default"> -->
-      <!--   <div class="panel-heading"> -->
-      <!--     <h3 class="panel-title">Selection table</h3> -->
-      <!--   </div> -->
-      <!--   <div class="panel-body"> -->
-
-      <!-- 	  <table id="model-selection" class="display" -->
-      <!-- 		 width="100%" cellspacing="0"> -->
-      <!--       <thead> -->
-      <!--         <tr> -->
-      <!-- 		<th>Title</th> -->
-      <!-- 		<th>Modified</th> -->
-      <!-- 		<th>Deprecated</th> -->
-      <!-- 		<th>Edit</th> -->
-      <!--         </tr> -->
-      <!--       </thead> -->
-      <!--       <tfoot> -->
-      <!--         <tr> -->
-      <!-- 		<th>Title</th> -->
-      <!-- 		<th>Modified</th> -->
-      <!-- 		<th>Deprecated</th> -->
-      <!-- 		<th>Edit</th> -->
-      <!--         </tr> -->
-      <!--       </tfoot> -->
-      <!--       <tbody id="model-selection-data"></tbody> -->
-      <!-- 	  </table> -->
-
-      <!--   </div> -->
-      <!-- </div> -->
-
       <!-- GOlr selection table test. -->
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -282,25 +251,25 @@
       </div>
 
       <!-- Select. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Select</h3>
-        </div>
-        <div class="panel-body">
-          <p>
-	    Search current listing of saved models by typing.
-          </p>
-          <div class="form-group">
-            <!-- <label for="select_stored_jump">Select by ID</label> -->
-            <input id="input_golr_jump"
-		   type="text"
-		   class="form-control"
-		   placeholder="chris scratch" />
-          </div>
-          <button id="input_golr_jump_button" type="submit"
-		  class="btn btn-primary">Edit/View &raquo;</button>
-        </div>
-      </div>
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">Select</h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body"> -->
+      <!--     <p> -->
+      <!-- 	    Search current listing of saved models by typing. -->
+      <!--     </p> -->
+      <!--     <div class="form-group"> -->
+      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+      <!--       <input id="input_golr_jump" -->
+      <!-- 		   type="text" -->
+      <!-- 		   class="form-control" -->
+      <!-- 		   placeholder="chris scratch" /> -->
+      <!--     </div> -->
+      <!--     <button id="input_golr_jump_button" type="submit" -->
+      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
+      <!--   </div> -->
+      <!-- </div> -->
 
       <!-- Form interface. -->
       <div class="panel panel-default">
@@ -504,6 +473,37 @@
             <br /> A configuration error is also possible.
           </p>
           {{/barista_token}}
+        </div>
+      </div>
+
+      <!-- Selection table test. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">In-memory model overview</h3>
+        </div>
+        <div class="panel-body">
+
+      	  <table id="model-selection" class="display"
+      		 width="100%" cellspacing="0">
+            <thead>
+              <tr>
+      		<th>Title</th>
+      		<th>Modified</th>
+      		<th>Deprecated</th>
+      		<th>Edit</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+      		<th>Title</th>
+      		<th>Modified</th>
+      		<th>Deprecated</th>
+      		<th>Edit</th>
+              </tr>
+            </tfoot>
+            <tbody id="model-selection-data"></tbody>
+      	  </table>
+
         </div>
       </div>
 
