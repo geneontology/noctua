@@ -41,6 +41,7 @@ var golr_location = null;
 // Std utils.
 var fs = require('fs');
 var us = require('underscore');
+var ustr = require('underscore.string');
 //var Q = require('q');
 var yaml = require('yamljs');
 var url = require('url');
@@ -489,7 +490,7 @@ var client_opts = {
     solrVersion: '3.6',
     host: u.hostname,
     port: u.port,
-    path: u.path
+    path: ustr(u.path).rtrim('/').value()
 };
 //ll(client_opts);
 var solr_client = solr.createClient(client_opts);
