@@ -183,10 +183,22 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	{
 	    'id': 'deprecated',
 	    'label': 'Deprecated',
-	    'widget_type': 'text',
+	    'widget_type': 'dropdown',
 	    'policy': 'mutable',
 	    'cardinality': 'one',
-	    'placeholder': 'false'
+	    'placeholder': 'false',
+	    'options': [
+		{
+		    'label': 'True (model is deprecated)',
+		    'identifier': 'true',
+		    'comment': 'Considered Good, always exported.'
+		},
+		{
+		    'label': 'False (default; model is good)',
+		    'identifier': 'false',
+		    'comment': 'Considered Bad never exported.'
+		}
+	    ]
 	},
 	{
 	    'id': 'comment',
