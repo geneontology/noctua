@@ -32,14 +32,20 @@ var uuid = bbop.uuid;
 var jQuery = require('jquery');
 /* jshint ignore:end */
 
-var barista_response = require('bbop-response-barista');
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
 var noctua_model = require('bbop-graph-noctua');
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
+//
 var minerva_manager = require('bbop-manager-minerva');
+var barista_response = require('bbop-response-barista');
+//
+var golr_manager = require('bbop-manager-golr');
+var golr_conf = require('golr-conf');
+var golr_response = require('bbop-response-golr');
+
 
 // Harumph.
 var global_known_taxons = [
@@ -63,9 +69,9 @@ var global_known_taxons = [
     ['NCBITaxon:9823', 'Sus scrofa']
 ];
 
-var MMEnvBootstrappingInit = function(user_token){
+var MinervaBootstrapping = function(user_token){
 
-    var logger = new bbop.logger('mme bsi');
+    var logger = new bbop.logger('min bstr');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
@@ -307,6 +313,59 @@ var MMEnvBootstrappingInit = function(user_token){
 		return mtitle;
 	    };
 
+	    // Check if model is modified.
+	    var _model_contributor_list = function(model_id){
+		var retlist = [];
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['contributor'] ){
+
+		    each(models_meta_ro[model_id]['contributor'], function(l){
+			retlist.push(l);
+		    });
+		}
+		
+		return retlist;
+	    };
+
+	    //
+	    var _model_state = function(model_id){
+		var retval = '???';
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['model_state'] ){
+		    retval = models_meta_ro[model_id]['model_state'];
+		}
+		
+		return retval;
+	    };
+
+	    //
+	    var _model_date = function(model_id){
+		var retval = '???';
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['model_date'] ){
+		    retval = models_meta_ro[model_id]['model_date'];
+		}
+		
+		return retval;
+	    };
+
+	    // Check if model is modified.
+	    var _model_modified_p = function(model_id){
+		var retval = false;
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['modified-p'] &&
+		    models_meta_ro[model_id]['modified-p'] === true ){
+			
+			retval = true;
+		    }
+		
+		return retval;
+	    };
+
 	    // Check if model is deprecated.
 	    var _model_deprecated_p = function(model_id){
 		var retval = false;
@@ -322,20 +381,6 @@ var MMEnvBootstrappingInit = function(user_token){
 		    });
 		}
 
-		return retval;
-	    };
-
-	    // Check if model is modified.
-	    var _model_modified_p = function(model_id){
-		var retval = false;
-
-		if( models_meta_ro && models_meta_ro[model_id] &&
-		    models_meta_ro[model_id]['modified-p'] &&
-		    models_meta_ro[model_id]['modified-p'] === true ){
-			
-			retval = true;
-		    }
-		
 		return retval;
 	    };
 
@@ -395,22 +440,35 @@ var MMEnvBootstrappingInit = function(user_token){
 		var tr_cache = [];
 
 		//var model_meta = models_meta[model_id];
-		
+
+		// Title.
 		var mtitle =  _get_model_title(model_id);
 		tr_cache.push(mtitle);
 
-		// Check to see if it's deprecated and highlight that
-		// fact.
-		if( _model_deprecated_p(model_id) ){
-		    tr_cache.push(':(');
-		}else{
-		    tr_cache.push('');
-		}
+		// // Contributors.
+		// var clist = _model_contributor_list(model_id);
+		// tr_cache.push(clist.join(', '));
+
+		// // State.
+		// var state = _model_state(model_id);
+		// tr_cache.push(state);
+
+		// // Date.
+		// var date = _model_date(model_id);
+		// tr_cache.push(date);
 
 		// Check to see if it's modified and highlight that
 		// fact.
 		if( _model_modified_p(model_id) ){
 		    tr_cache.push('*');
+		}else{
+		    tr_cache.push('');
+		}
+
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( _model_deprecated_p(model_id) ){
+		    tr_cache.push(':(');
 		}else{
 		    tr_cache.push('');
 		}
@@ -431,9 +489,9 @@ var MMEnvBootstrappingInit = function(user_token){
 		table_cache.push(tr_str);
 	    });
 	    var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
-	    jQuery('#model-selection-data').empty();
-	    jQuery('#model-selection-data').append(table_str);
-	    jQuery('#model-selection').DataTable();
+	    // jQuery('#model-selection-data').empty();
+	    // jQuery('#model-selection-data').append(table_str);
+	    // jQuery('#model-selection').DataTable();
 
 	    // // Insert model IDs into "Select by ID" interface.
 	    // jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
@@ -618,6 +676,81 @@ var MMEnvBootstrappingInit = function(user_token){
     input_golr_auto.set_personality('noctua_model_meta');
 };
 
+// Using all new libraries--no legacy!
+var AmiGOBootstrapping = function(user_token){
+
+    var logger = new bbop.logger('amg bstr');
+    logger.DEBUG = true;
+    function ll(str){ logger.kvetch(str); }
+
+    // GOlr location and conf setup.
+    var gserv = global_golr_server;
+    var gconf = new golr_conf.conf(amigo.data.golr);
+
+    // Events registry.
+    // Get all 'noctua_model_meta'.
+    var engine = new jquery_engine(golr_response);
+    engine.method('GET');
+    engine.use_jsonp(true);
+    var manager = new golr_manager(gserv, gconf, engine, 'async');
+    var confc = gconf.get_class('noctua_model_meta');
+    manager.set_personality('noctua_model_meta');
+    manager.add_query_filter('document_category',
+			     confc.document_category(), ['*']);    
+    manager.set_results_count(1000);
+
+    // On search, report 
+    manager.register('search', function(resp, man){
+
+        //console.log(resp);
+	var table_cache = [];
+	each(resp.documents(), function(doc){
+
+	    console.log(doc);
+
+	    var tr_cache = [];
+	    
+            var model_id = 'gomodel:' + doc['annotation_unit'].substr(-16);
+
+	    var title = doc['annotation_unit_label'] || '???';
+	    tr_cache.push(title);
+
+	    var contrib_list = doc['contributor'] || [];
+	    tr_cache.push(contrib_list.join(', '));
+
+            var state = doc['model_state'] || '???';
+	    tr_cache.push(state);
+
+            var date = doc['model_date'] || '???';
+	    tr_cache.push(date);
+
+	    // Button/link as edit.
+	    function _generate_jump_url(id, editor_type){
+		var new_url = "";
+		if( editor_type === 'basic' ){
+		    new_url = '/basic/' + id;
+		}else{
+		    new_url = '/editor/graph/' + id;
+		}
+		return new_url;
+	    }
+	    var bstr = '<a class="btn btn-primary" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'">Graph</a>';
+	    tr_cache.push(bstr);
+	    
+	    // Add to cache.
+	    var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
+	    table_cache.push(tr_str);
+	});
+	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+	jQuery('#model-golr-selection-data').empty();
+	jQuery('#model-golr-selection-data').append(table_str);
+	jQuery('#model-golr-selection').DataTable();
+	
+    });
+    var p = manager.search();
+
+};
+
 // Start the day the jsPlumb way.
 jQuery(document).ready(function(){
 
@@ -634,7 +767,10 @@ jQuery(document).ready(function(){
     }else{
 	// Only roll if the env is correct.
 	// Will use the above variables internally (sorry).
-	MMEnvBootstrappingInit(start_token);
+	MinervaBootstrapping(start_token);
+
+	// Things to build from talking to a GOlr.
+	AmiGOBootstrapping(start_token);
 
 	// When all is said and done, let's also fillout the user
 	// name just for niceness. This is also a test of CORS in
