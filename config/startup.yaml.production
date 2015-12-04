@@ -10,7 +10,7 @@
 GOLR_LOOKUP_URL:
   comment: The public location of the GOlr server ask information from about seeding, etc.
   type: url
-  value: http://golr.berkeleybop.org/
+  value: http://amigo-dev-golr.berkeleybop.org/
 GOLR_NEO_LOOKUP_URL:
   comment: The public location of the NEO GOlr server to ask information from for autocomplete, etc.
   type: url
@@ -18,7 +18,7 @@ GOLR_NEO_LOOKUP_URL:
 GOLR_LOCATION:
   comment: The actual unprotected location of the GOlr server to load to (if different from GOLR_LOOKUP_URL).
   type: url
-  value: http://oven.lbl.gov:8080/solr
+  value: http://stove.lbl.gov:8080/solr
 BARISTA_LOOKUP_URL:
   comment: Define where Noctua looks for Barista.
   type: url
