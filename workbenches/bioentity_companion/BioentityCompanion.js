@@ -46,11 +46,8 @@ var minerva_manager = require('bbop-manager-minerva');
 // Items for running the old AmiGO stuff.
 var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 var gserv = global_golr_server;
-var defs = new amigo.data.definitions();
 var handler = new amigo.handler();
 var linker = new amigo.linker();
-//var dlimit = defs.download_limit();
-var dlimit = 1000;
 
 // Aliases
 var each = us.each;

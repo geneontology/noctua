@@ -56,9 +56,9 @@
     <li class="active">
       <a href="#overview" role="tab" data-toggle="tab">Overview</a>
     </li>
+    <li><a href="#select" role="tab" data-toggle="tab">Select</a></li>
     <li><a href="#create" role="tab" data-toggle="tab">Create</a></li>
-    <li><a href="#select" role="tab" data-toggle="tab">Edit</a></li>
-    <li><a href="#export" role="tab" data-toggle="tab">Export</a></li>
+    <!-- <li><a href="#export" role="tab" data-toggle="tab">Export</a></li> -->
     <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
     <li><a href="#workbenches" role="tab" data-toggle="tab">Workbenches</a></li>
     <li><a href="#about" role="tab" data-toggle="tab">About</a></li>
@@ -87,6 +87,144 @@
     </div>
     
     
+    <!-- Select tab. -->
+    <div class="tab-pane noctua_tab_wrapper" id="select">
+
+      <!-- GOlr selection table test. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Selection table</h3>
+        </div>
+        <div class="panel-body">
+
+	  <table id="model-golr-selection" class="display"
+		 width="100%" cellspacing="0">
+            <thead>
+              <tr>
+		<th>Title</th>
+		<th>Contributor(s)</th>
+		<th>State</th>
+		<th>Date</th>
+		<!-- <th>Modified</th> -->
+		<!-- <th>Deprecated</th> -->
+		<th>Operations</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+		<th>Title</th>
+		<th>Contributor(s)</th>
+		<th>State</th>
+		<th>Date</th>
+		<!-- <th>Modified</th> -->
+		<!-- <th>Deprecated</th> -->
+		<th>Operations</th>
+              </tr>
+            </tfoot>
+            <tbody id="model-golr-selection-data"></tbody>
+	  </table>
+
+        </div>
+      </div>
+
+      <!-- <\!-- GOlr selection test. -\-> -->
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">GOlr selection</h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body"> -->
+
+      <!-- 	  <div id="input-filter-accordion"></div> -->
+      <!-- 	  <div id="pager"></div> -->
+      <!-- 	  <div id="results"></div> -->
+
+      <!--   </div> -->
+      <!-- </div> -->
+
+      <!-- <\!-- Graph editor. -\-> -->
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">Graph Editor Interface</h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body"> -->
+      <!--     <p> -->
+      <!--       Edit or view a model in the <strong>graph editor -->
+      <!--       interface</strong> by selecting from the list and clicking -->
+      <!--       the button. -->
+      <!--     </p> -->
+      <!--     <div class="form-group"> -->
+      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+      <!--       <select id="select_stored_jump" class="form-control"> -->
+      <!--         <option>n/a</option> -->
+      <!--       </select> -->
+      <!--     </div> -->
+      <!--     <button id="select_stored_jump_button" type="submit" -->
+      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
+      <!--   </div> -->
+      <!-- </div> -->
+
+      <!-- Browse. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Browse</h3>
+        </div>
+        <div class="panel-body">
+          <p>
+            Using AmiGO 2 Labs, search a somewhat recent (once or
+            twice a week) scan of the models created using
+            Noctua/Minerva.
+          </p>
+          <p>
+            <a type="button" class="btn btn-primary" href="http://tomodachi.berkeleybop.org/amigo/search/model_annotation">Search &raquo;</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Select. -->
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">Select</h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body"> -->
+      <!--     <p> -->
+      <!-- 	    Search current listing of saved models by typing. -->
+      <!--     </p> -->
+      <!--     <div class="form-group"> -->
+      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+      <!--       <input id="input_golr_jump" -->
+      <!-- 		   type="text" -->
+      <!-- 		   class="form-control" -->
+      <!-- 		   placeholder="chris scratch" /> -->
+      <!--     </div> -->
+      <!--     <button id="input_golr_jump_button" type="submit" -->
+      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
+      <!--   </div> -->
+      <!-- </div> -->
+
+      <!-- <\!-- Form interface. -\-> -->
+      <!-- <div class="panel panel-default"> -->
+      <!--   <div class="panel-heading"> -->
+      <!--     <h3 class="panel-title">Form Interface <span style="color:red;">ALPHA</span></h3> -->
+      <!--   </div> -->
+      <!--   <div class="panel-body">	   -->
+      <!--     <p> -->
+      <!--       Edit or view a model in the <strong>prototype form -->
+      <!--       interface UI</strong> by selecting from the list and -->
+      <!--       clicking the button. -->
+      <!--     </p> -->
+      <!--     <div class="form-group"> -->
+      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+      <!--       <select id="select_stored_jump_basic" class="form-control"> -->
+      <!--         <option>n/a</option> -->
+      <!--       </select> -->
+      <!--     </div> -->
+      <!--     <button id="select_stored_jump_button_basic" type="submit" -->
+      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
+      <!--   </div> -->
+      <!-- </div> -->
+
+    </div>
+
     <!-- Create tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="create">
       
@@ -157,152 +295,35 @@
 
     </div>
 
-    <!-- Select tab. -->
-    <div class="tab-pane noctua_tab_wrapper" id="select">
-
-      <!-- Selection table test. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Selection table</h3>
-        </div>
-        <div class="panel-body">
-
-	  <table id="model-selection" class="display"
-		 width="100%" cellspacing="0">
-            <thead>
-              <tr>
-		<th>Title</th>
-		<th>Deprecated</th>
-		<th>Modified</th>
-		<th>Edit</th>
-              </tr>
-            </thead>
-            <tfoot>
-              <tr>
-		<th>Title</th>
-		<th>Deprecated</th>
-		<th>Modified</th>
-		<th>Edit</th>
-              </tr>
-            </tfoot>
-            <tbody id="model-selection-data"></tbody>
-	  </table>
-
-        </div>
-      </div>
-
-      <!-- <\!-- Graph editor. -\-> -->
-      <!-- <div class="panel panel-default"> -->
-      <!--   <div class="panel-heading"> -->
-      <!--     <h3 class="panel-title">Graph Editor Interface</h3> -->
-      <!--   </div> -->
-      <!--   <div class="panel-body"> -->
-      <!--     <p> -->
-      <!--       Edit or view a model in the <strong>graph editor -->
-      <!--       interface</strong> by selecting from the list and clicking -->
-      <!--       the button. -->
-      <!--     </p> -->
-      <!--     <div class="form-group"> -->
-      <!--       <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
-      <!--       <select id="select_stored_jump" class="form-control"> -->
-      <!--         <option>n/a</option> -->
-      <!--       </select> -->
-      <!--     </div> -->
-      <!--     <button id="select_stored_jump_button" type="submit" -->
-      <!-- 		  class="btn btn-primary">Edit/View &raquo;</button> -->
-      <!--   </div> -->
-      <!-- </div> -->
-
-      <!-- Browse. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Browse</h3>
-        </div>
-        <div class="panel-body">
-          <p>
-            Using AmiGO 2 Labs, search a somewhat recent (once or
-            twice a week) scan of the models created using
-            Noctua/Minerva.
-          </p>
-          <p>
-            <a type="button" class="btn btn-primary" href="http://amigo2.berkeleybop.org/amigo/search/model_annotation">Search &raquo;</a>
-          </p>
-        </div>
-      </div>
-
-      <!-- Select. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Select</h3>
-        </div>
-        <div class="panel-body">
-          <p>
-	    Search current listing of saved models by typing.
-          </p>
-          <div class="form-group">
-            <!-- <label for="select_stored_jump">Select by ID</label> -->
-            <input id="input_golr_jump"
-		   type="text"
-		   class="form-control"
-		   placeholder="chris scratch" />
-          </div>
-          <button id="input_golr_jump_button" type="submit"
-		  class="btn btn-primary">Edit/View &raquo;</button>
-        </div>
-      </div>
-
-      <!-- Form interface. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Form Interface <span style="color:red;">ALPHA</span></h3>
-        </div>
-        <div class="panel-body">	  
-          <p>
-            Edit or view a model in the <strong>prototype form
-            interface UI</strong> by selecting from the list and
-            clicking the button.
-          </p>
-          <div class="form-group">
-            <!-- <label for="select_stored_jump">Select by ID</label> -->
-            <select id="select_stored_jump_basic" class="form-control">
-              <option>n/a</option>
-            </select>
-          </div>
-          <button id="select_stored_jump_button_basic" type="submit"
-		  class="btn btn-primary">Edit/View &raquo;</button>
-        </div>
-      </div>
-
-    </div>
 
     <!-- Export tab. -->
-    <div class="tab-pane noctua_tab_wrapper" id="export">
+    <!-- <div class="tab-pane noctua_tab_wrapper" id="export"> -->
 
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Export by ID</h3>
-        </div>
-        <div class="panel-body">
-          <p>
-            Export a model by selecting from the list and then
-            clicking the button for the export file type that you
-            want.
-          </p>
-          <p>
-	    The curent versions saved nightly onto GitHub are <a href="https://github.com/geneontology/noctua-models/tree/master/models">available here</a>.
-          </p>
-          <div class="form-group">
-            <!-- <label for="select_stored_jump">Select by ID</label> -->
-            <select id="select_id_for_export" class="form-control">
-              <option>n/a</option>
-            </select>
-          </div>
-          <button id="button_id_for_def_export" type="submit" class="btn btn-primary">Export OWL &raquo;</button>
-          <button id="button_id_for_gaf_export" type="submit" class="btn btn-primary">Export GAF &raquo;</button>
-          <button id="button_id_for_gpd_export" type="submit" class="btn btn-primary">Export GPAD &raquo;</button>
-        </div>
-      </div>
-    </div>
+    <!--   <div class="panel panel-default"> -->
+    <!--     <div class="panel-heading"> -->
+    <!--       <h3 class="panel-title">Export by ID</h3> -->
+    <!--     </div> -->
+    <!--     <div class="panel-body"> -->
+    <!--       <p> -->
+    <!--         Export a model by selecting from the list and then -->
+    <!--         clicking the button for the export file type that you -->
+    <!--         want. -->
+    <!--       </p> -->
+    <!--       <p> -->
+    <!-- 	    The curent versions saved nightly onto GitHub are <a href="https://github.com/geneontology/noctua-models/tree/master/models">available here</a>. -->
+    <!--       </p> -->
+    <!--       <div class="form-group"> -->
+    <!--         <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
+    <!--         <select id="select_id_for_export" class="form-control"> -->
+    <!--           <option>n/a</option> -->
+    <!--         </select> -->
+    <!--       </div> -->
+    <!--       <button id="button_id_for_def_export" type="submit" class="btn btn-primary">Export OWL &raquo;</button> -->
+    <!--       <button id="button_id_for_gaf_export" type="submit" class="btn btn-primary">Export GAF &raquo;</button> -->
+    <!--       <button id="button_id_for_gpd_export" type="submit" class="btn btn-primary">Export GPAD &raquo;</button> -->
+    <!--     </div> -->
+    <!--   </div> -->
+    <!-- </div> -->
 
     <!-- Import tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="import">
@@ -453,6 +474,37 @@
             <br /> A configuration error is also possible.
           </p>
           {{/barista_token}}
+        </div>
+      </div>
+
+      <!-- Selection table test. -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">In-memory model overview</h3>
+        </div>
+        <div class="panel-body">
+
+      	  <table id="model-selection" class="display"
+      		 width="100%" cellspacing="0">
+            <thead>
+              <tr>
+      		<th>Title</th>
+      		<th>Modified</th>
+      		<th>Deprecated</th>
+      		<th>Edit</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+      		<th>Title</th>
+      		<th>Modified</th>
+      		<th>Deprecated</th>
+      		<th>Edit</th>
+              </tr>
+            </tfoot>
+            <tbody id="model-selection-data"></tbody>
+      	  </table>
+
         </div>
       </div>
 

@@ -32,14 +32,20 @@ var uuid = bbop.uuid;
 var jQuery = require('jquery');
 /* jshint ignore:end */
 
-var barista_response = require('bbop-response-barista');
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
 var noctua_model = require('bbop-graph-noctua');
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
+//
 var minerva_manager = require('bbop-manager-minerva');
+var barista_response = require('bbop-response-barista');
+//
+var golr_manager = require('bbop-manager-golr');
+var golr_conf = require('golr-conf');
+var golr_response = require('bbop-response-golr');
+
 
 // Harumph.
 var global_known_taxons = [
@@ -63,9 +69,9 @@ var global_known_taxons = [
     ['NCBITaxon:9823', 'Sus scrofa']
 ];
 
-var MMEnvBootstrappingInit = function(user_token){
+var MinervaBootstrapping = function(user_token){
 
-    var logger = new bbop.logger('mme bsi');
+    var logger = new bbop.logger('min bstr');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
 
@@ -112,15 +118,15 @@ var MMEnvBootstrappingInit = function(user_token){
     // Create new model from nothing for form.
     var model_create_for_form_button_id = 'create_button_basic';
     var model_create_for_form_button_elt = '#' + model_create_for_form_button_id;
-    // Export DOM hooks.
-    var model_export_by_id_def_button_id = 'button_id_for_def_export';
-    var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
-    var model_export_by_id_gaf_button_id = 'button_id_for_gaf_export';
-    var model_export_by_id_gaf_button_elt = '#'+model_export_by_id_gaf_button_id;
-    var model_export_by_id_gpd_button_id = 'button_id_for_gpd_export';
-    var model_export_by_id_gpd_button_elt = '#'+model_export_by_id_gpd_button_id;
-    var model_export_by_id_input_id = 'select_id_for_export';
-    var model_export_by_id_input_elt = '#' + model_export_by_id_input_id;
+    // // Export DOM hooks.
+    // var model_export_by_id_def_button_id = 'button_id_for_def_export';
+    // var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
+    // var model_export_by_id_gaf_button_id = 'button_id_for_gaf_export';
+    // var model_export_by_id_gaf_button_elt = '#'+model_export_by_id_gaf_button_id;
+    // var model_export_by_id_gpd_button_id = 'button_id_for_gpd_export';
+    // var model_export_by_id_gpd_button_elt = '#'+model_export_by_id_gpd_button_id;
+    // var model_export_by_id_input_id = 'select_id_for_export';
+    // var model_export_by_id_input_elt = '#' + model_export_by_id_input_id;
     // Importer DOM hooks.
     var model_data_button_id = 'model_data_button';
     var model_data_button_elt = '#' + model_data_button_id;
@@ -307,6 +313,59 @@ var MMEnvBootstrappingInit = function(user_token){
 		return mtitle;
 	    };
 
+	    // Check if model is modified.
+	    var _model_contributor_list = function(model_id){
+		var retlist = [];
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['contributor'] ){
+
+		    each(models_meta_ro[model_id]['contributor'], function(l){
+			retlist.push(l);
+		    });
+		}
+		
+		return retlist;
+	    };
+
+	    //
+	    var _model_state = function(model_id){
+		var retval = '???';
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['model_state'] ){
+		    retval = models_meta_ro[model_id]['model_state'];
+		}
+		
+		return retval;
+	    };
+
+	    //
+	    var _model_date = function(model_id){
+		var retval = '???';
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['model_date'] ){
+		    retval = models_meta_ro[model_id]['model_date'];
+		}
+		
+		return retval;
+	    };
+
+	    // Check if model is modified.
+	    var _model_modified_p = function(model_id){
+		var retval = false;
+
+		if( models_meta_ro && models_meta_ro[model_id] &&
+		    models_meta_ro[model_id]['modified-p'] &&
+		    models_meta_ro[model_id]['modified-p'] === true ){
+			
+			retval = true;
+		    }
+		
+		return retval;
+	    };
+
 	    // Check if model is deprecated.
 	    var _model_deprecated_p = function(model_id){
 		var retval = false;
@@ -322,20 +381,6 @@ var MMEnvBootstrappingInit = function(user_token){
 		    });
 		}
 
-		return retval;
-	    };
-
-	    // Check if model is modified.
-	    var _model_modified_p = function(model_id){
-		var retval = false;
-
-		if( models_meta_ro && models_meta_ro[model_id] &&
-		    models_meta_ro[model_id]['modified-p'] &&
-		    models_meta_ro[model_id]['modified-p'] === true ){
-			
-			retval = true;
-		    }
-		
 		return retval;
 	    };
 
@@ -395,22 +440,35 @@ var MMEnvBootstrappingInit = function(user_token){
 		var tr_cache = [];
 
 		//var model_meta = models_meta[model_id];
-		
+
+		// Title.
 		var mtitle =  _get_model_title(model_id);
 		tr_cache.push(mtitle);
 
-		// Check to see if it's deprecated and highlight that
-		// fact.
-		if( _model_deprecated_p(model_id) ){
-		    tr_cache.push(':(');
-		}else{
-		    tr_cache.push('');
-		}
+		// // Contributors.
+		// var clist = _model_contributor_list(model_id);
+		// tr_cache.push(clist.join(', '));
+
+		// // State.
+		// var state = _model_state(model_id);
+		// tr_cache.push(state);
+
+		// // Date.
+		// var date = _model_date(model_id);
+		// tr_cache.push(date);
 
 		// Check to see if it's modified and highlight that
 		// fact.
 		if( _model_modified_p(model_id) ){
 		    tr_cache.push('*');
+		}else{
+		    tr_cache.push('');
+		}
+
+		// Check to see if it's deprecated and highlight that
+		// fact.
+		if( _model_deprecated_p(model_id) ){
+		    tr_cache.push(':(');
 		}else{
 		    tr_cache.push('');
 		}
@@ -443,9 +501,9 @@ var MMEnvBootstrappingInit = function(user_token){
 	    jQuery(select_stored_jump_basic_elt).empty();
 	    jQuery(select_stored_jump_basic_elt).append(rep_str);
 
-	    // Also add this list to the export interface.
-	    jQuery(model_export_by_id_input_elt).empty();
-	    jQuery(model_export_by_id_input_elt).append(rep_str);
+	    // // Also add this list to the export interface.
+	    // jQuery(model_export_by_id_input_elt).empty();
+	    // jQuery(model_export_by_id_input_elt).append(rep_str);
 
 	    // // Make jump interface for graph jump on click.
 	    // jQuery(select_stored_jump_button_elt).click(function(evt){
@@ -459,19 +517,19 @@ var MMEnvBootstrappingInit = function(user_token){
 	      _jump_to_page(_generate_jump_url(id, 'basic'));
 	    });
 
-	    // Make export interface trigger on click.
-	    jQuery(model_export_by_id_def_button_elt).click(function(evt){
-		var id = jQuery(model_export_by_id_input_elt).val();
-		manager.export_model(id);
-	    });
-	    jQuery(model_export_by_id_gaf_button_elt).click(function(evt){
-		var id = jQuery(model_export_by_id_input_elt).val();
-		manager.export_model(id, 'gaf');
-	    });
-	    jQuery(model_export_by_id_gpd_button_elt).click(function(evt){
-		var id = jQuery(model_export_by_id_input_elt).val();
-		manager.export_model(id, 'gpad');
-	    });
+	    // // Make export interface trigger on click.
+	    // jQuery(model_export_by_id_def_button_elt).click(function(evt){
+	    // 	var id = jQuery(model_export_by_id_input_elt).val();
+	    // 	manager.export_model(id);
+	    // });
+	    // jQuery(model_export_by_id_gaf_button_elt).click(function(evt){
+	    // 	var id = jQuery(model_export_by_id_input_elt).val();
+	    // 	manager.export_model(id, 'gaf');
+	    // });
+	    // jQuery(model_export_by_id_gpd_button_elt).click(function(evt){
+	    // 	var id = jQuery(model_export_by_id_input_elt).val();
+	    // 	manager.export_model(id, 'gpad');
+	    // });
 
 	    // Creation for form. Since default is in the callback is
 	    // "graph", goose it over to kick me to form instead.
@@ -585,37 +643,177 @@ var MMEnvBootstrappingInit = function(user_token){
 
     manager.get_meta();
 
-    ///
-    /// Activate autocomplete in input boxes.
-    /// Add the local responders.
-    ///
+};
 
-    // noctua meta
-    var input_golr_auto_val = null;
-    var input_golr_auto_args = {
-    	'label_template': '{{annotation_unit_label}}',
-    	'value_template': '{{annotation_unit_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-	    input_golr_auto_val = doc['annotation_unit'] || null;
-    	    var iga = input_golr_auto_val || '';
-    	    if( ! input_golr_auto_val ){
-    		alert('Must properly select from list.');
-	    }else{
-		
-		_jump_to_page(_generate_jump_url(input_golr_auto_val.slice(-16),
-						 to_editor));
+// Using all new libraries--no legacy!
+var AmiGOBootstrapping = function(user_token){
+
+    var logger = new bbop.logger('amg bstr');
+    logger.DEBUG = true;
+    function ll(str){ logger.kvetch(str); }
+
+    // GOlr location and conf setup.
+    var gserv = global_golr_server;
+    var gconf = new golr_conf.conf(amigo.data.golr);
+
+    var compute_shield_modal = null;
+
+    // Block interface from taking user input while
+    // operating.
+    function _shields_up(){
+	if( compute_shield_modal ){
+	    // Already have one.
+	}else{
+	    ll('shield up');
+	    compute_shield_modal = widgetry.compute_shield();
+	    compute_shield_modal.show();
+	}
+    }
+    // Release interface when transaction done.
+    function _shields_down(){
+	if( compute_shield_modal ){
+	    ll('shield down');
+	    compute_shield_modal.destroy();
+	    compute_shield_modal = null;
+	}else{
+	    // None to begin with.
+	}
+    }
+
+    // Comms to minerva.
+    // Add manager and default callbacks to repl.
+    var min_engine = new jquery_engine(barista_response);
+    var min_manager = new minerva_manager(global_barista_location,
+					  global_minerva_definition_name,
+					  user_token, min_engine, 'async');
+    min_manager.register('prerun', _shields_up);
+    min_manager.register('postrun', _shields_down, 9);
+    min_manager.register('meta', function(resp, man){
+
+	// Got a model export.
+	if( resp.export_model() ){
+	    console.log('meta: export kick');
+	    
+	    //
+	    var exp = resp.export_model();
+	    var rand = uuid();
+	    //alert(exp);
+
+	    var enc_exp = encodeURIComponent(exp);
+	    var form_set = [
+		'<form id="'+ rand +'" method="POST" action="/action/display">',
+		'<input type="hidden" name="thing" value="'+ enc_exp +'">',
+		'</form>'
+	    ];
+	    jQuery('body').append(form_set.join(''));
+	    jQuery('#'+rand).submit();
+
+	    // var expdia = new widgetry.contained_modal(null, '<strong>Export</strong>', exp);
+	    // expdia.show();
+	}else{
+	    alert('honestly not sure what we should do here...ask seth');
+	}
+    });
+
+    // Events registry.
+    // Get all 'noctua_model_meta'.
+    var engine = new jquery_engine(golr_response);
+    engine.method('GET');
+    engine.use_jsonp(true);
+    var manager = new golr_manager(gserv, gconf, engine, 'async');
+    var confc = gconf.get_class('noctua_model_meta');
+    manager.set_personality('noctua_model_meta');
+    manager.add_query_filter('document_category',
+			     confc.document_category(), ['*']);    
+    manager.set_results_count(1000);
+
+    // On search, report 
+    manager.register('search', function(resp, man){
+
+        //console.log(resp);
+
+	// TODO/BUG: Doing this cheap and quick (meeting in two days,
+	// other stuff to do) since we don't have a framework, or even
+	// bbop.html, available. Manually track buttons by UUIDs.
+	var button_info = {};
+	var table_cache = [];
+	each(resp.documents(), function(doc){
+
+	    //console.log(doc);
+
+	    var tr_cache = [];
+	    
+            var model_id = 'gomodel:' + doc['annotation_unit'].substr(-16);
+
+	    var title = doc['annotation_unit_label'] || '???';
+	    tr_cache.push(title);
+
+	    var contrib_list = doc['contributor'] || [];
+	    tr_cache.push(contrib_list.join(', '));
+
+            var state = doc['model_state'] || '???';
+	    tr_cache.push(state);
+
+            var date = doc['model_date'] || '???';
+	    tr_cache.push(date);
+
+	    // Button/link as edit.
+	    function _generate_jump_url(id, editor_type){
+		var new_url = "";
+		if( editor_type === 'basic' ){
+		    new_url = '/basic/' + id;
+		}else{
+		    new_url = '/editor/graph/' + id;
+		}
+		return new_url;
 	    }
-    	}
-    };
-    var input_golr_auto =
-	    new bbop_legacy.widget.search_box(gserv, gconf,
-					      'input_golr_jump',
-					      input_golr_auto_args);
-    input_golr_auto.lite(true);
-    input_golr_auto.add_query_filter('document_category', 'noctua_model_meta');
-    input_golr_auto.set_personality('noctua_model_meta');
+
+	    // Create the GAF button.
+	    var gaf_export_id = uuid().replace('-', '');
+	    var owl_export_id = uuid().replace('-', '');
+	    button_info[model_id] = {
+		gaf_export: gaf_export_id,
+		owl_export: owl_export_id
+	    };
+
+	    // Cram all the buttons in.
+	    var bstrs = [
+		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
+		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
+		'<a id="' + gaf_export_id + '" class="btn btn-primary btn-xs" href="#" role="button">GAF</a>',
+		'<a id="' + owl_export_id + '" class="btn btn-primary btn-xs" href="#" role="button">OWL</a>'
+	    ];
+	    tr_cache.push(bstrs.join(' '));
+	    
+	    // Add to cache.
+	    var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
+	    table_cache.push(tr_str);
+	});
+	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+	jQuery('#model-golr-selection-data').empty();
+	jQuery('#model-golr-selection-data').append(table_str);
+
+	// Now that we're attached to the DOM, go ahead and make the
+	// buttons active. See WARNING/TODO above.
+	each(button_info, function(buttons, mid){
+
+	    // GAF.
+	    jQuery('#'+ buttons['gaf_export']).click(function(evt){
+		min_manager.export_model(mid, 'gaf');
+	    });
+
+	    // OWL.
+	    jQuery('#'+ buttons['owl_export']).click(function(evt){
+		min_manager.export_model(mid);
+	    });
+
+	});
+
+	// Make the tables real nice.
+	jQuery('#model-golr-selection').DataTable();
+    });
+    var p = manager.search();
+
 };
 
 // Start the day the jsPlumb way.
@@ -634,7 +832,10 @@ jQuery(document).ready(function(){
     }else{
 	// Only roll if the env is correct.
 	// Will use the above variables internally (sorry).
-	MMEnvBootstrappingInit(start_token);
+	MinervaBootstrapping(start_token);
+
+	// Things to build from talking to a GOlr.
+	AmiGOBootstrapping(start_token);
 
 	// When all is said and done, let's also fillout the user
 	// name just for niceness. This is also a test of CORS in

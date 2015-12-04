@@ -85,17 +85,24 @@ function _run_cmd_list(commands){
 var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
-    clients: ['js/NoctuaEditor.js', 
-	      'js/NoctuaLanding.js',
-	      'workbenches/bioentity_companion/BioentityCompanion.js',
-	      'workbenches/companion/Companion.js',
-	      'workbenches/cytoview/CytoView.js',
-	      // 'js/NoctuaBasic/NoctuaBasicApp.js',
-	      // 'js/NoctuaBasic/NoctuaBasicController.js',
-	      'js/BaristaLogin.js',
-	      'js/BaristaLogout.js',
-	      'js/BaristaSession.js'
-	     ],
+    'core_noctua_clients': [
+	'js/NoctuaEditor.js', 
+	'js/NoctuaLanding.js'
+	// 'js/NoctuaBasic/NoctuaBasicApp.js',
+	// 'js/NoctuaBasic/NoctuaBasicController.js',
+    ],
+    'core_barista_clients': [
+	'js/BaristaLogin.js',
+	'js/BaristaLogout.js',
+	'js/BaristaSession.js'
+    ],
+    'core_workbench_clients': [
+	// A temporary place for internal workspaces.
+	'workbenches/bioentity_companion/BioentityCompanion.js',
+	'workbenches/companion/Companion.js',
+	'workbenches/cytoview/CytoView.js',
+	'workbenches/mmcc/MMCC.js'
+    ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
     tests: ['tests/*.test.js']
@@ -143,59 +150,72 @@ gulp.task('copy-css-from-npm-deps', function() {
     .pipe(gulp.dest('./deploy/css'));
 });
 
+// See what browserify-shim is up to.
+//process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
+// Browser runtime environment construction.
+function _client_compile_task(file) {
+    return browserify(file)
+    // not in npm, don't need in browser
+	.exclude('ringo/httpclient')
+	.bundle()
+    // desired output filename to vinyl-source-stream
+	.pipe(source(file))
+	.pipe(gulp.dest('./deploy/'));
+}
+
 // Build the clients as best we can.
-var build_tasks = [
+var base_build_tasks = [
   'ready-non-commonjs-libs',
   'copy-css-from-npm-deps'
 ];
+
 // Dynamically define tasks.
-us.each(paths.clients, function(file, index) {
-
-  var taskname = 'build-client_' + file;
-
-  // Add to task list.
-  build_tasks.push(taskname);
-
-  // See what browserify-shim is up to.
-  //process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
-
-  // Browser runtime environment construction.
-  function _client_task(file) {
-    return browserify(file)
-      // not in npm, don't need in browser
-      .exclude('ringo/httpclient')
-      .bundle()
-      // desired output filename to vinyl-source-stream
-      .pipe(source(file))
-      .pipe(gulp.dest('./deploy/'));
-  }
-
-  // Define task.
-  gulp.task(taskname, function(cb) {
-    //return _client_task(file);
-    _client_task(file);
-    cb(null);
-  });
-
+var noctua_build_tasks = us.clone(base_build_tasks);
+us.each(paths.core_noctua_clients, function(file, index) {
+    var taskname = 'build-client_' + file;
+    noctua_build_tasks.push(taskname);
+    gulp.task(taskname, function(cb){
+	_client_compile_task(file);
+	cb(null);
+    });
+});
+var noctua_build_tasks = us.clone(base_build_tasks);
+us.each(paths.core_noctua_clients, function(file, index) {
+    var taskname = 'build-client_' + file;
+    noctua_build_tasks.push(taskname);
+    gulp.task(taskname, function(cb){
+	_client_compile_task(file);
+	cb(null);
+    });
+});
+var barista_build_tasks = us.clone(base_build_tasks);
+us.each(paths.core_barista_clients, function(file, index) {
+    var taskname = 'build-client_' + file;
+    barista_build_tasks.push(taskname);
+    gulp.task(taskname, function(cb){
+	_client_compile_task(file);
+	cb(null);
+    });
+});
+var workbench_build_tasks = us.clone(base_build_tasks);
+us.each(paths.core_workbench_clients, function(file, index) {
+    var taskname = 'build-client_' + file;
+    workbench_build_tasks.push(taskname);
+    gulp.task(taskname, function(cb){
+	_client_compile_task(file);
+	cb(null);
+    });
 });
 
-gulp.task('build', build_tasks);
-//     'build-client-landing',
-//     'build-client-editor'
-// ]);
-
-// gulp.task('build-client-landing', function() {
-//     return _client_task('./js/NoctuaLanding.js');
-// });
-// gulp.task('build-client-editor', function() {
-//     return _client_task('./js/NoctuaEditor.js');
-// });
+gulp.task('build', us.union(noctua_build_tasks));
 
 // Rerun tasks when a file changes.
 gulp.task('watch', function(cb) {
-  gulp.watch(paths.clients, ['build']);
-  gulp.watch(paths.support, ['build']);
-  cb(null);
+    gulp.watch(paths.core_noctua_clients, noctua_build_tasks);
+    gulp.watch(paths.core_barista_clients, barista_build_tasks);
+    gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
+    //gulp.watch(paths.support, ['build']);
+    cb(null);
 });
 
 //

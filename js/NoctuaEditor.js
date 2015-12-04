@@ -135,11 +135,33 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	{
 	    'id': 'state',
 	    'label': 'Annotation state',
-	    'widget_type': 'text',
-	    //'policy': 'mutable',
-	    'policy': 'read-only',
+	    'widget_type': 'dropdown',
+	    'policy': 'mutable',
+	    //'policy': 'read-only',
 	    'cardinality': 'one',
-	    'placeholder': 'false'
+	    'placeholder': 'development', // acts as default select here
+	    'options': [
+		{
+		    'label': 'production',
+		    'identifier': 'production',
+		    'comment': 'Considered Good, always exported.'
+		},
+		{
+		    'label': 'review',
+		    'identifier': 'review',
+		    'comment': 'Between production and development, may still be exported in data, but has possibly been flagged (in a manual or automated process) or is just setting out from development for the first time.'
+		},
+		{
+		    'label': 'development',
+		    'identifier': 'development',
+		    'comment': 'The model is a work in progress, would only be exported in development environments; the standard initial state (public).'
+		},
+		{
+		    'label': 'closed',
+		    'identifier': 'closed',
+		    'comment': 'Editable, but never exported.'
+		}
+	    ]
 	},
 	// {
 	//     'id': 'evidence',
@@ -161,10 +183,22 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	{
 	    'id': 'deprecated',
 	    'label': 'Deprecated',
-	    'widget_type': 'text',
+	    'widget_type': 'dropdown',
 	    'policy': 'mutable',
 	    'cardinality': 'one',
-	    'placeholder': 'false'
+	    'placeholder': 'false',
+	    'options': [
+		{
+		    'label': 'True (model is deprecated)',
+		    'identifier': 'true',
+		    'comment': 'Considered Good, always exported.'
+		},
+		{
+		    'label': 'False (default; model is good)',
+		    'identifier': 'false',
+		    'comment': 'Considered Bad never exported.'
+		}
+	    ]
 	},
 	{
 	    'id': 'comment',

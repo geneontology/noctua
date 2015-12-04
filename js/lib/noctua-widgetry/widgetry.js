@@ -861,7 +861,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     	'generate_id': true,
     	'type': 'text',
     	'class': 'form-control',
-    	'placeholder': 'Enter ID or complex expression'
+    	'placeholder': 'Enter ID by selecting from dropdown'
     };
     var type_add_class_text =
 	    new bbop.html.tag('input', type_add_class_text_args);
@@ -892,7 +892,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     	'generate_id': true,
     	'type': 'text',
     	'class': 'form-control',
-    	'placeholder': 'Enter ID or complex expression'
+    	'placeholder': 'Enter ID by selecting from dropdown'
     };
     var bundle_add_class_text =
 	    new bbop.html.tag('input', bundle_add_class_text_args);
@@ -1339,7 +1339,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     // widget_type - "text_area", "text", or "source_ref"
     function _abstract_annotation_widget(widget_type, placeholder,
 					 placeholder_secondary,
-					 placeholder_tertiary){
+					 placeholder_tertiary, dd_options){
 
 	var anchor = this;
 
@@ -1365,6 +1365,29 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	}else if( widget_type === 'text' ){
 	    text_args['type'] = 'text';
 	    anchor.text_input = new bbop.html.tag('input', text_args);
+	}else if( widget_type === 'dropdown' ){
+
+	    // Jimmy in options for select
+	    var optlist = [];
+	    each(dd_options, function(dddef){
+
+		//
+		var opt_args = {
+		    'alt': (dddef['comment'] || ''), // comment is optional
+		    'value': dddef['identifier']
+		};
+
+		// Select one if identified in placeholder.
+		if( placeholder && placeholder === dddef['identifier'] ){
+		    opt_args['selected'] = 'selected';
+		}
+
+		var opt = new bbop.html.tag('option', opt_args, dddef['label']);
+		optlist.push(opt);
+	    });
+	    //text_args['type'] = 'text';
+	    anchor.text_input = new bbop.html.tag('select', text_args, optlist);
+
 	}else{ // 'source_ref'
 	    text_args['type'] = 'text';
 	    anchor.text_input = new bbop.html.tag('input', text_args);
@@ -1388,6 +1411,15 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		'</div>'
 	    ];
 	}else if( widget_type === 'text' ){
+	    form = [
+    		'<div class="form-inline">',
+    		'<div class="form-group">',
+		anchor.text_input.to_string(),
+    		'</div>',
+    		anchor.add_button.to_string(),
+    		'</div>'
+	    ];
+	}else if( widget_type === 'dropdown' ){
 	    form = [
     		'<div class="form-inline">',
     		'<div class="form-group">',
@@ -1560,6 +1592,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    var epol =  entry_info['policy'];
 	    var ecrd =  entry_info['cardinality'];
 	    var eplc =  entry_info['placeholder'];
+	    var eopt =  entry_info['options'] || [];
 	    // for evidence (ref)
 	    var eplc_b = entry_info['placeholder_secondary'] || '';
 	    // for evidence (with)
@@ -1591,9 +1624,11 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			form_widget =
 			    new _abstract_annotation_widget(ewid, eplc,
 							    eplc_b, eplc_c);
-		    }else{			
+		    }else{
 			form_widget =
-			    new _abstract_annotation_widget(ewid, eplc);
+			    new _abstract_annotation_widget(ewid, eplc,
+							    null, null,
+							    eopt);
 		    }
 
 		    // Add to the literal output.
