@@ -946,10 +946,43 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	if( user_token ){ // if have login, keep in
 	    href = href + '&barista_token=' + user_token;
 	}
-	type_wb_btn_args['href'] = href;
-	var type_wb_btn =
-	    new bbop.html.tag('a', type_wb_btn_args, wb['menu-name']);
-	workbench_buttons.push(type_wb_btn.to_string());
+        // Special handling for bioentity companion
+        if ('Bioentity companion' == wb['menu-name']) {
+            //console.log("Going to create specific menu items");
+            var sub = enode.subgraph();
+            if (sub) {
+            var enb_pnodes = sub.get_parent_nodes(tid, 'RO:0002333');       // Any enabled- by
+                if (1 == enb_pnodes.length) {           // Only handle 1 for now
+            
+                    // Create a separate button for each of the aspects - Already done in function companion
+                    type_wb_btn_args['href'] = href + '&aspect=F';
+                    var type_wb_btn_f =
+                        new bbop.html.tag('a', type_wb_btn_args, " Add Molecular Function " + wb['menu-name']);
+                    workbench_buttons.push(type_wb_btn_f.to_string() + " <hr/>");
+
+                    // Can have any number of process
+                     type_wb_btn_args['href'] = href + '&aspect=P';
+                    var type_wb_btn_p =
+                        new bbop.html.tag('a', type_wb_btn_args, " Add Biological Process " + wb['menu-name']);
+                    workbench_buttons.push(type_wb_btn_p.to_string() + " <hr/>");
+                    
+                    // Only if there are no cellular components since, there can only be 1 cellular component
+                    var oi_pnodes = sub.get_parent_nodes(tid, 'BFO:0000066');
+                    if (0 == oi_pnodes.length) {
+                        type_wb_btn_args['href'] = href + '&aspect=C';
+                        var type_wb_btn_c =
+                            new bbop.html.tag('a', type_wb_btn_args, "Add Cellular Component " + wb['menu-name']);
+                        workbench_buttons.push(type_wb_btn_c.to_string() + " <hr/>");
+                    }
+                }
+            }
+        }
+        else {
+            type_wb_btn_args['href'] = href;
+            var type_wb_btn =
+                new bbop.html.tag('a', type_wb_btn_args, wb['menu-name']);
+            workbench_buttons.push(type_wb_btn.to_string());
+        }
     });
 
     // Delete button.

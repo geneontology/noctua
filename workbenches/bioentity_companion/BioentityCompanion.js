@@ -58,7 +58,7 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
-var each = us.each;
+//var each = us.each;
 var is_defined = bbop.is_defined;
 var what_is = bbop.what_is;
 var uuid = bbop.uuid;
@@ -95,6 +95,12 @@ var eco_lookup = {
     RCA: 'ECO:0000245',
     TAS: 'ECO:0000304'
 };
+
+function getURLParameter(name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null;
+};
+
+var uid;
 
 ///
 ///
@@ -144,10 +150,18 @@ var BioCompanionBootstrap = function(user_token){
 		var sub = ind.subgraph();
 		if( sub ){
 
-		    // Get enabled_by nodes. Scan the types to see if
+                    // Search for function
+                    var aspectType = 'RO:0002333';  // enabled by
+
+                    // Get nodes. Scan the types to see if
 		    // there is anything easily available and
 		    // interesting.
- 		    var enb_pnodes = sub.get_parent_nodes(nid, 'RO:0002333');
+ 		    var enb_pnodes = sub.get_parent_nodes(nid, aspectType);
+                    if (1 != enb_pnodes.length) {
+                        console.log("Number of gene products is " + enb_pnodes.length);
+                        window.close();
+                        return;
+                    }
 		    each(enb_pnodes, function(e){
 
 			var ts = e.types();			
@@ -160,7 +174,7 @@ var BioCompanionBootstrap = function(user_token){
 	}
 
 	// We got what we could--start up.
-	BioCompanionInit(user_token, bioentity_ids);
+	BioCompanionInit(user_token, bioentity_ids, nid);
 
     }).done();
 
@@ -168,7 +182,7 @@ var BioCompanionBootstrap = function(user_token){
 
 // Build the user interface with the information extracted from
 // BioCompanionBootstrap.
-var BioCompanionInit = function(user_token, bioentity_ids){
+var BioCompanionInit = function(user_token, bioentity_ids, nid){
 
     ll('init startup');
 
@@ -178,6 +192,9 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     var mmanager = new minerva_manager(global_barista_location,
 				       global_minerva_definition_name,
 				       user_token, engine, 'async');
+                                       
+    uid = nid;
+    //console.log("Dealing with node id " + uid);
     
     ///
     /// Minerva/Noctua comms.
@@ -279,8 +296,12 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     var confc = gconf.get_class('annotation');
     widget_manager.set_personality('annotation');
     widget_manager.add_query_filter('document_category',
-				    confc.document_category(), ['*']);    
-    widget_manager.add_query_filter('aspect', 'F'); // removable
+				    confc.document_category(), ['*']);
+                                    
+    var requestedAspect = getURLParameter('aspect');
+    if ('F' == requestedAspect || 'P' == requestedAspect || 'C' == requestedAspect) {
+        widget_manager.add_query_filter('aspect', requestedAspect); // removable    
+    }
     each(bioentity_ids, function(bid){
 	widget_manager.add_query_filter('bioentity', bid); // removable
     });
@@ -340,6 +361,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
+
 			// Using aspect, place the information under a
 			// paricular aspect grouping.
 			var aspect = doc['aspect'];
@@ -409,17 +431,71 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 		    // the run.
 		    var reqs = new minerva_requests.request_set(
 			global_barista_token, global_id);
+                    
+                    // Process
+                    each(acls_set_p, function(bio_set, acls) {
+                       var sub = reqs.add_individual(acls);
+                       
+                       var obj = uid;
+                       var edge = reqs.add_fact([obj, sub, 'BFO:0000050']);
+                       
+			each(bio_set, function(ev_list, bio){
+
+                            var edge = reqs.add_fact([obj, sub,'BFO:0000050']);     // part of 
+			    
+			    each(ev_list, function(ev_set){
+				
+				// Recover.
+				var ev = ev_set['ev'];
+				var refs = ev_set['refs'];
+				var withs = ev_set['withs'];
+				
+				// Tag on the final evidence.
+				reqs.add_evidence(ev, refs, withs,
+						  [obj, sub, 'BFO:0000050']);
+			    });
+			});
+                    });
+                    
+                    // Cellular component
+                    if (us.size(acls_set_c) > 1) {
+                        alert("Cannot add more than one occurs in cellular location");
+                        return;
+                    }
+                    each(acls_set_c, function(bio_set, acls) {
+                       var sub = reqs.add_individual(acls);
+                       
+                       var obj = uid;
+                       var edge = reqs.add_fact([obj, sub, 'BFO:0000066']);
+                       
+			each(bio_set, function(ev_list, bio){
+
+                            var edge = reqs.add_fact([obj, sub,'BFO:0000066']);     // occurs in 
+			    
+			    each(ev_list, function(ev_set){
+				
+				// Recover.
+				var ev = ev_set['ev'];
+				var refs = ev_set['refs'];
+				var withs = ev_set['withs'];
+				
+				// Tag on the final evidence.
+				reqs.add_evidence(ev, refs, withs,
+						  [obj, sub, 'BFO:0000066']);
+			    });
+			});
+                    });
 
 		    // A slightly harder algorithm here. Everything
 		    // starts from F, no matter what.
 		    each(acls_set_f, function(bio_set, acls){
-			
+			// acls is the mf GO term we are adding.  System will create an individual with this go term type
 			var sub = reqs.add_individual(acls);
 
 			each(bio_set, function(ev_list, bio){
-
+                            // bio is a gene product object we are adding
 			    var obj = reqs.add_individual(bio);
-			    var edge = reqs.add_fact([sub, obj, 'RO:0002333']);
+			    var edge = reqs.add_fact([sub, obj, 'RO:0002333']);     // sub is enabled by obj
 			    
 			    each(ev_list, function(ev_set){
 				
