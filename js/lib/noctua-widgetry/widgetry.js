@@ -1131,7 +1131,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     
     // Add general autocomplete to the input.
     var gen_auto_args = {
-    	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
+    	'label_template':'{{entity_label}} ({{entity}})',
     	'value_template': '{{entity}}',
     	'list_select_callback': function(doc){}
     };

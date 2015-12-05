@@ -6,6 +6,7 @@
 // care of it all).
 /* global jQuery */
 /* global global_golr_server */
+/* global global_golr_neo_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
 /* global jsPlumb */
@@ -47,27 +48,27 @@ var golr_conf = require('golr-conf');
 var golr_response = require('bbop-response-golr');
 
 
-// Harumph.
-var global_known_taxons = [
-    ['NCBITaxon:3702', 'Arabidopsis thaliana'],
-    ['NCBITaxon:9913', 'Bos taurus'],
-    ['NCBITaxon:6239', 'Caenorhabditis elegans'],
-    ['NCBITaxon:237561', 'Candida albicans (SC5314)'],
-    ['NCBITaxon:9615', 'Canis lupus familiaris'],
-    ['NCBITaxon:7955', 'Danio rerio'],
-    ['NCBITaxon:44689', 'Dictyostelium discoideum'],
-    ['NCBITaxon:7227', 'Drosophila melanogaster'],
-    ['NCBITaxon:83333', 'Escherichia coli (K-12)'],
-    ['NCBITaxon:9031', 'Gallus gallus'],
-    ['NCBITaxon:9606', 'Homo sapiens'],
-    ['NCBITaxon:10090', 'Mus musculus'],
-    ['NCBITaxon:39947', 'Oryza sativa (Japonica Group)'],
-    ['NCBITaxon:208964', 'Pseudomonas aeruginosa (PAO1)'],
-    ['NCBITaxon:10116', 'Rattus norvegicus'],
-    ['NCBITaxon:559292', 'Saccharomyces cerevisiae'],
-    ['NCBITaxon:284812', 'Schizosaccharomyces pombe'],
-    ['NCBITaxon:9823', 'Sus scrofa']
-];
+// // Harumph.
+// var global_known_taxons = [
+//     ['NCBITaxon:3702', 'Arabidopsis thaliana'],
+//     ['NCBITaxon:9913', 'Bos taurus'],
+//     ['NCBITaxon:6239', 'Caenorhabditis elegans'],
+//     ['NCBITaxon:237561', 'Candida albicans (SC5314)'],
+//     ['NCBITaxon:9615', 'Canis lupus familiaris'],
+//     ['NCBITaxon:7955', 'Danio rerio'],
+//     ['NCBITaxon:44689', 'Dictyostelium discoideum'],
+//     ['NCBITaxon:7227', 'Drosophila melanogaster'],
+//     ['NCBITaxon:83333', 'Escherichia coli (K-12)'],
+//     ['NCBITaxon:9031', 'Gallus gallus'],
+//     ['NCBITaxon:9606', 'Homo sapiens'],
+//     ['NCBITaxon:10090', 'Mus musculus'],
+//     ['NCBITaxon:39947', 'Oryza sativa (Japonica Group)'],
+//     ['NCBITaxon:208964', 'Pseudomonas aeruginosa (PAO1)'],
+//     ['NCBITaxon:10116', 'Rattus norvegicus'],
+//     ['NCBITaxon:559292', 'Saccharomyces cerevisiae'],
+//     ['NCBITaxon:284812', 'Schizosaccharomyces pombe'],
+//     ['NCBITaxon:9823', 'Sus scrofa']
+// ];
 
 var MinervaBootstrapping = function(user_token){
 

@@ -99,7 +99,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var local_position_store = new bbopx.noctua.location_store();
 
     // Events registry.
-    // Add manager and default callbacks to repl.
+    // Add manager and default callbacks to minerva/barista.
     var engine = new jquery_engine(barista_response);
     var manager = new minerva_manager(global_barista_location,
 				      global_minerva_definition_name,
@@ -640,7 +640,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    var nedit =
 			widgetry.edit_node_modal(ecore, manager, enode,
 						 in_relations, aid,
-						 gserv, gconf,
+						 gserv_neo, gconf,
 						 global_workbenches_individual,
 						 in_token);
 		    nedit.show();
@@ -1728,14 +1728,15 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     // Add general autocomplete to the input.
     var simple_ubernoodle_auto_args = {
-    	'label_template':'{{entity_label}} ({{entity}}/{{category}})',
+    	'label_template':'{{entity_label}} ({{entity}})',
     	'value_template': '{{entity_label}}',
     	'list_select_callback': function(doc){
 	    simple_ubernoodle_auto_val = doc['entity'] || null;
 	}
     };
     var simple_ubernoodle_auto = new bbop_legacy.widget.search_box(
-	gserv, gconf, simple_ubernoodle_auto_id, simple_ubernoodle_auto_args);
+	gserv_neo, gconf, simple_ubernoodle_auto_id,
+	simple_ubernoodle_auto_args);
     simple_ubernoodle_auto.lite(true);
     simple_ubernoodle_auto.add_query_filter('document_category', 'general');
     simple_ubernoodle_auto.set_personality('general');
