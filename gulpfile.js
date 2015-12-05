@@ -207,7 +207,9 @@ us.each(paths.core_workbench_clients, function(file, index) {
     });
 });
 
-gulp.task('build', us.union(noctua_build_tasks));
+gulp.task('build', us.union(noctua_build_tasks,
+			    barista_build_tasks,
+			    workbench_build_tasks));
 
 // Rerun tasks when a file changes.
 gulp.task('watch', function(cb) {
