@@ -98,10 +98,10 @@ var paths = {
     ],
     'core_workbench_clients': [
 	// A temporary place for internal workspaces.
+	//'workbenches/mmcc/MMCC.js',
 	'workbenches/bioentity_companion/BioentityCompanion.js',
 	'workbenches/companion/Companion.js',
-	'workbenches/cytoview/CytoView.js',
-	'workbenches/mmcc/MMCC.js'
+	'workbenches/cytoview/CytoView.js'
     ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
