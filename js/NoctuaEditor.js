@@ -60,6 +60,11 @@ var edge = model.edge;
 var widgetry = require('noctua-widgetry');
 //alert(widgetry);
 
+// Want a "global" shield to help deal with bridging the initial
+// minerva contact load.
+var compute_shield_modal = null;
+
+
 /**
  * Bootstraps a working environment for the MME client.
  *
@@ -765,8 +770,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     ///
     /// Callback helpers and manager registration.
     ///
-
-    var compute_shield_modal = null;
 
     // Block interface from taking user input while
     // operating.
@@ -2534,6 +2537,11 @@ jsPlumb.ready(function(){
 		MMEnvInit(global_model, global_known_relations, null);
 
 	    }else{
+
+		// This may take a minute, so let's do an initial
+		// shield while people wait.
+		compute_shield_modal = widgetry.compute_shield();
+		compute_shield_modal.show();
 
 		// This manager bootstraps the editor by fetching the
 		// model out of Minerva.
