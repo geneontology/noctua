@@ -273,8 +273,9 @@ var noctua_location = config['NOCTUA_LOCATION'].value;
 var barista_location = config['BARISTA_LOCATION'].value;
 var minerva_location = config['MINERVA_LOCATION'].value;
 
-
+// Minerva.
 var minerva_port = url.parse(minerva_location).port || 80;
+var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
@@ -303,7 +304,13 @@ _ping_count();
 
 // Mineva runner.
 gulp.task('run-minerva', shell.task(_run_cmd(
-    ['java -Xmx4G -cp ./java/lib/minerva-cli.jar org.geneontology.minerva.server.StartUpTool --use-golr-url-logging --use-request-logging --slme-elk',
+    ['java',
+     '-Xmx' + minerva_max_mem + 'G',
+     '-cp', './java/lib/minerva-cli.jar',
+     'org.geneontology.minerva.server.StartUpTool',
+     '--use-golr-url-logging',
+     '--use-request-logging',
+     '--slme-elk',
      '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
      '--golr-labels', golr_neo_lookup_url,
