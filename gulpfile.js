@@ -98,7 +98,7 @@ var paths = {
     ],
     'core_workbench_clients': [
 	// A temporary place for internal workspaces.
-	//'workbenches/mmcc/MMCC.js',
+	'workbenches/mmcc/MMCC.js',
 	'workbenches/bioentity_companion/BioentityCompanion.js',
 	'workbenches/companion/Companion.js',
 	'workbenches/cytoview/CytoView.js'
