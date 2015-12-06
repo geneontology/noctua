@@ -56,7 +56,7 @@ WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
   value:
-    - './workbenches'
+    - 'workbenches'
 ## JVM preferences.
 MINERVA MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
