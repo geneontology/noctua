@@ -195,8 +195,17 @@ jQuery(document).ready(function(){
 	    var reqs = new minerva_requests.request_set(global_barista_token,
 							global_id);
 
+	    // Collect as SVFs.
+	    var bio_svfs = [];
+	    each(bioac.values(), function(bid){
+		var bce = new class_expression();
+		bce.as_svf('BFO:0000051', bid);
+		bio_svfs.push(bce);
+	    });
+
+	    // All as intersection with complex.
 	    var ce = new class_expression();
-	    ce.as_set('intersection', compac.values().concat(bioac.values()));
+	    ce.as_set('intersection', compac.values().concat(bio_svfs));
 
 	    reqs.add_individual(ce);
 
