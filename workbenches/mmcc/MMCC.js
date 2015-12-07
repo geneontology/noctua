@@ -126,7 +126,7 @@ var createNEOBioAC = function(element_id){
 	    new golr_manager(global_golr_neo_server, gconf, engine, 'async');
     manager.set_personality('ontology');
     manager.add_query_filter('document_category', 'ontology_class', ['*']);
-    //manager.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
+    manager.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
 
     var items = {};
 
