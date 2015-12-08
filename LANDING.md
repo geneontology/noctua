@@ -11,7 +11,7 @@ biological processes.
 ## Quickstart
 
  * *Noctua Users*
-    * Start with the [video demo](https://www.dropbox.com/sh/36ds0rgpmxgzfdi/AABm_TKBG6i0mKThItSMGVxka?preview=noctua-go-demo-intro.mp4)
+    * Start with the [video demo](https://goo.gl/5emVn4)
     * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
