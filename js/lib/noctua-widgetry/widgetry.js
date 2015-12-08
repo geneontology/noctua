@@ -917,10 +917,10 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     var bundle_form = [
     	'<div class="form">',
     	'<div class="form-group">',
-	bundle_add_class_text.to_string(),
+	bundle_add_fact_text.to_string(),
     	'</div>',
     	'<div class="form-group">',
-	bundle_add_fact_text.to_string(),
+	bundle_add_class_text.to_string(),
     	'</div>',
     	bundle_add_btn.to_string(),
     	'</div>'
