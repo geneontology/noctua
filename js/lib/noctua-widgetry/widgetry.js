@@ -974,7 +974,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	type_form.join(''),
 	'</p>',
 	'<hr />',
-	'<h4>Add bundle (class expression & edge pair)</h4>',
+	'<h4>Add edge & class expression</h4>',
 	'<p>',
 	bundle_form.join(''),
 	'</p>',
