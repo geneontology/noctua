@@ -67,10 +67,11 @@ COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.
   type: list
   value:
-    - RO:0002333
-    - BFO:0000066
     - RO:0002233
+    - RO:0002234
+    - RO:0002333
     - RO:0002488
+    - BFO:0000066
 ## Other service definitions.
 DEFAULT_APP_DEFINITION:
   comment: The application profile to use at startup.
