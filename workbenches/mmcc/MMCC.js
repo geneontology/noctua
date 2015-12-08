@@ -214,7 +214,8 @@ jQuery(document).ready(function(){
 	    var bio_svfs = [];
 	    each(bioac.values(), function(bid){
 		var bce = new class_expression();
-		bce.as_svf('RO:0002180', bid);
+		bce.as_svf('BFO:0000051', bid);
+		//bce.as_svf('RO:0002180', bid);
 		bio_svfs.push(bce);
 	    });
 
@@ -236,6 +237,13 @@ jQuery(document).ready(function(){
 	    //alert('submitted:' + bioac.values().join(', '));
 	}
     });
+
+    // When all is said and done, let's also fillout the user name
+    // just for niceness. This is also a test of CORS in express.
+    if( global_barista_token ){
+	widgetry.user_check(global_barista_location,
+			    global_barista_token, 'user_name_info');
+    }
 });
 
 ///
