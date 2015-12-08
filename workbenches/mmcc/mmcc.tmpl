@@ -8,16 +8,17 @@
   <div class="panel panel-default">
 
     <div class="panel-heading">
-      <h3 class="panel-title">1: Enter desired protein complex</h3>
+      <h3 class="panel-title">1: Enter desired bioentities</h3>
     </div>
 
     <div class="panel-body">
       
       <p>
-	Input and select a single protein complex.
+	Input and select one or more gene products before going on to
+	"2".
       </p>
 
-      <p><input id="select-term"></input></p>
+      <p><input id="select-bio" type="text"></input></p>
 
     </div>
   </div>
@@ -25,17 +26,17 @@
   <div class="panel panel-default">
 
     <div class="panel-heading">
-      <h3 class="panel-title">2: Enter desired bioentities</h3>
+      <h3 class="panel-title">2: Accept default protein complex or choose another</h3>
     </div>
 
     <div class="panel-body">
       
       <p>
-	Input and select one or more gene products before going on to
-	"3".
+	Either accept the default "protein complex" and move on to
+	"3", or delete and select another protein complex.
       </p>
 
-      <p><input id="select-bio" type="text"></input></p>
+      <p><input id="select-term" value="protein complex"></input></p>
 
     </div>
   </div>

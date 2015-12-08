@@ -62,60 +62,6 @@ var minerva_manager = require('bbop-manager-minerva');
 /// ...
 ///
 
-var createComplexAC = function(element_id){
-
-    // GOlr manager.
-    var engine = new jquery_engine(golr_response);
-    engine.use_jsonp(true);
-    var gconf = new golr_conf.conf(amigo.data.golr);
-    var manager =
-	    new golr_manager(global_golr_server, gconf, engine, 'async');
-    manager.set_personality('ontology');
-    manager.add_query_filter('document_category', 'ontology_class', ['*']);
-    manager.add_query_filter('regulates_closure', 'GO:0032991', ['*']);
-
-    var items = {};
-
-    var selectized = jQuery('#' + element_id).selectize({
-	valueField: 'annotation_class',
-	labelField: 'annotation_class_label',
-	searchField: 'annotation_class_label',
-	create: false,
-	render: {
-            option: function(item, escape) {
-		return '<div>' +
-		    escape(item['annotation_class_label']) + ' (' +
-		    escape(item['annotation_class']) + ')' +
-		    '</div>';
-            }
-	},
-	load: function(query, callback) {
-	    // At least a length of 3 to operate.
-            if( ! query.length || query.length < 3 ){
-		return callback();
-	    }
-	    
-	    manager.set_query(query);
-            manager.search().then(function(resp){
-		callback(resp.documents() || []);
-            }).done();
-	},
-	onItemAdd: function(value, $item){
-	    items[value] = true;
-	},
-	onItemRemove: function(value){
-	    delete items[value];
-	}
-    });
-
-    
-    this.values = function(){
-	return us.keys(items);
-    };
-
-    
-};
-
 var createNEOBioAC = function(element_id){
 
     // GOlr manager.
@@ -134,6 +80,7 @@ var createNEOBioAC = function(element_id){
 	valueField: 'annotation_class',
 	labelField: 'annotation_class_label',
 	searchField: 'annotation_class_label',
+	closeAfterSelect: true,
 	create: false,
 	render: {
             option: function(item, escape) {
@@ -146,24 +93,29 @@ var createNEOBioAC = function(element_id){
 
 	load: function(query, callback) {
 	    // At least a length of 3 to operate.
-            if( ! query.length || query.length < 3 ){
-		return callback();
-	    }
+            // if( ! query.length || query.length < 3 ){
+	    // 	return callback();
+	    // }
 	    
-	    manager.set_query(query);
+	    manager.set_comfy_query(query);
             manager.search().then(function(resp){
 		callback(resp.documents() || []);
             }).done();
 	},
-	// onType: function(){
-	//     selectized[0].selectize.clearCache("option");
-	//     selectized[0].selectize.clearOptions();
-	// },
+	onType: function(){
+	    selectized[0].selectize.clearCache("option");
+	    selectized[0].selectize.clearOptions();
+	},
 	onItemAdd: function(value, $item){
 	    items[value] = true;
 	},
 	onItemRemove: function(value){
 	    delete items[value];
+	},
+	onInitialize: function(){
+	    if( jQuery('#' + element_id).val() ){
+		items[jQuery('#' + element_id).val()] = true;
+	    }
 	}
     });
 
@@ -175,19 +127,82 @@ var createNEOBioAC = function(element_id){
     
 };
 
+var createComplexAC = function(element_id){
+
+    // GOlr manager.
+    var engine = new jquery_engine(golr_response);
+    engine.use_jsonp(true);
+    var gconf = new golr_conf.conf(amigo.data.golr);
+    var manager =
+	    new golr_manager(global_golr_server, gconf, engine, 'async');
+    manager.set_personality('ontology');
+    manager.add_query_filter('document_category', 'ontology_class', ['*']);
+    // macromolecular complex
+    //manager.add_query_filter('regulates_closure', 'GO:0032991', ['*']);
+    // protein complex
+    manager.add_query_filter('regulates_closure', 'GO:0043234', ['*']);
+
+    var items = {};
+
+    var selectized = jQuery('#' + element_id).selectize({
+	valueField: 'annotation_class',
+	labelField: 'annotation_class_label',
+	searchField: 'annotation_class_label',
+	create: false,
+	render: {
+            option: function(item, escape) {
+		return '<div>' +
+		    escape(item['annotation_class_label']) + ' (' +
+		    escape(item['annotation_class']) + ')' +
+		    '</div>';
+            }
+	},
+	load: function(query, callback) {
+	    // At least a length of 3 to operate.
+            // if( ! query.length || query.length < 3 ){
+	    // 	return callback();
+	    // }
+	    
+	    manager.set_comfy_query(query);
+            manager.search().then(function(resp){
+		callback(resp.documents() || []);
+            }).done();
+	},
+	onItemAdd: function(value, $item){
+	    items[value] = true;
+	},
+	onItemRemove: function(value){
+	    delete items[value];
+	},
+	onInitialize: function(){
+	    if( jQuery('#' + element_id).val() ){
+		items[jQuery('#' + element_id).val()] = true;
+	    }
+	}
+    });
+
+    
+    this.values = function(){
+	return us.keys(items);
+    };
+
+    
+};
+
+
 // Start the day the jQuery way.
 jQuery(document).ready(function(){
     //jQuery('#select').selectize({});
 
     console.log('mmcc ready');
  
-    var compac = new createComplexAC('select-term');
     var bioac = new createNEOBioAC('select-bio');
+    var compac = new createComplexAC('select-term');
 
     jQuery('#submit').click(function(){
 
 	if( compac.values().length !== 1 ){
-	    alert('You must enter and select one protein complex.');
+	    alert('You must enter and select *one* protein complex.');
 	}else if( bioac.values().length === 0 ){
 	    alert('You must enter and select one or more bioentities.');
 	}else{
@@ -199,13 +214,20 @@ jQuery(document).ready(function(){
 	    var bio_svfs = [];
 	    each(bioac.values(), function(bid){
 		var bce = new class_expression();
-		bce.as_svf('BFO:0000051', bid);
+		bce.as_svf('RO:0002180', bid);
 		bio_svfs.push(bce);
 	    });
 
+	    // We know we have just one, convert it if it is the
+	    // default value.
+	    var cp = compac.values()[0];
+	    if( cp === 'protein complex' ){
+		cp = 'GO:0043234';
+	    }
+
 	    // All as intersection with complex.
 	    var ce = new class_expression();
-	    ce.as_set('intersection', compac.values().concat(bio_svfs));
+	    ce.as_set('intersection', [cp].concat(bio_svfs));
 
 	    reqs.add_individual(ce);
 
