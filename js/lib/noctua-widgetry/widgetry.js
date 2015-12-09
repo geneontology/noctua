@@ -892,31 +892,33 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     var ind_list = [];
     //console.log('enode', enode);
     var sub = enode.subgraph();
-    each(sub.all_nodes(), function(snode){
-
-    	var snid = snode.id();
-
-	if( snid !== tid ){
-
-    	    var eid = bbop_core.uuid();
-    	    elt2ind[eid] = snid;
-
-	    var scache = [];
-	    each(snode.types(), function(stype){
-		scache.push(type_to_span(stype));
-	    });
-	    var slabel = scache.join(' / ') || '<none>'; 
+    if( sub ){
+	each(sub.all_nodes(), function(snode){
 	    
-    	    var acache = [];
-    	    acache.push('<li class="list-group-item">');
-    	    acache.push(slabel);
-    	    acache.push('<span id="'+ eid +
-    			'" class="badge app-delete-mark">X</span>');
-    	    acache.push('<div class="clearfix"></div>');
-    	    acache.push('</li>');
-    	    ind_list.push(acache.join(''));
-	}
-    });
+    	    var snid = snode.id();
+	    
+	    if( snid !== tid ){
+		
+    		var eid = bbop_core.uuid();
+    		elt2ind[eid] = snid;
+		
+		var scache = [];
+		each(snode.types(), function(stype){
+		    scache.push(type_to_span(stype));
+		});
+		var slabel = scache.join(' / ') || '<none>'; 
+		
+    		var acache = [];
+    		acache.push('<li class="list-group-item">');
+    		acache.push(slabel);
+    		acache.push('<span id="'+ eid +
+    			    '" class="badge app-delete-mark">X</span>');
+    		acache.push('<div class="clearfix"></div>');
+    		acache.push('</li>');
+    		ind_list.push(acache.join(''));
+	    }
+	});
+    }
 
     ///
     /// Individual/fact bundle input.
