@@ -80,7 +80,7 @@ var createNEOBioAC = function(element_id){
 	valueField: 'annotation_class',
 	labelField: 'annotation_class_label',
 	searchField: 'annotation_class_label',
-	closeAfterSelect: true,
+	//closeAfterSelect: true,
 	create: false,
 	render: {
             option: function(item, escape) {
