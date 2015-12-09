@@ -1619,6 +1619,130 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     );
 
     ///
+    /// Activate addition template for annoton.
+    ///
+
+    // The base settings for bioentity autocomplete.
+    var base_annoton_auto_args = {
+    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	'value_template': '{{annotation_class}}',
+	'additional_results_class': 'bbop-mme-more-results-ul'
+    };
+
+    // Storage for the actual selected identifiers.
+    var annoton_eb_auto_val = null;
+    var annoton_mf_auto_val = null;
+    var annoton_bp_auto_val = null;
+    var annoton_cc_auto_val = null;
+
+    // bioentity
+    var annoton_eb_auto_args = us.clone(base_annoton_auto_args);
+    // annoton_eb_auto_args['list_select_callback'] =
+    // 	function(doc){
+    // 	    annoton_eb_auto_val = doc['annotation_class'] || null;
+    // 	};
+
+    // biological process
+    var annoton_bp_auto_args = us.clone(base_annoton_auto_args);
+    // annoton_bp_auto_args['list_select_callback'] =
+    // 	function(doc){
+    // 	    annoton_bp_auto_val = doc['annotation_class'] || null;
+    // 	};
+    
+    // molecular function
+    var annoton_mf_auto_args = us.clone(base_annoton_auto_args);
+    // annoton_mf_auto_args['list_select_callback'] =
+    // 	function(doc){
+    // 	    annoton_mf_auto_val = doc['annotation_class'] || null;
+    // 	};
+    
+    // cellular component
+    var annoton_cc_auto_args = us.clone(base_annoton_auto_args);
+    // annoton_bp_auto_args['list_select_callback'] =
+    // 	function(doc){
+    // 	    annoton_bp_auto_val = doc['annotation_class'] || null;
+    // 	};
+    
+    // Remember that we're using NEO for this now.
+    var annoton_eb_auto =
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
+					  'annoton_eb_auto',
+					  annoton_eb_auto_args);
+    annoton_eb_auto.lite(true);
+    annoton_eb_auto.add_query_filter('document_category', 'ontology_class');
+    // Root is CHEBI:23367 ! molecular entity.
+    annoton_eb_auto.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
+    annoton_eb_auto.set_personality('ontology');
+
+    var annoton_mf_auto =
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
+					  'annoton_mf_auto',
+					  annoton_mf_auto_args);
+    annoton_mf_auto.lite(true);
+    annoton_mf_auto.add_query_filter('document_category', 'ontology_class');
+    annoton_mf_auto.add_query_filter('regulates_closure',
+				     'GO:0003674', ['*']);
+    annoton_mf_auto.set_personality('ontology');
+
+    var annoton_bp_auto =
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
+					  'annoton_bp_auto',
+					  annoton_bp_auto_args);
+    annoton_bp_auto.lite(true);
+    annoton_bp_auto.add_query_filter('document_category', 'ontology_class');
+    annoton_bp_auto.add_query_filter('regulates_closure',
+				     'GO:0008150', ['*']);
+    annoton_bp_auto.set_personality('ontology');
+
+    var annoton_cc_auto =
+	new bbop_legacy.widget.search_box(gserv_neo, gconf,
+					  'annoton_bp_auto',
+					  annoton_bp_auto_args);
+    annoton_cc_auto.lite(true);
+    annoton_cc_auto.add_query_filter('document_category', 'ontology_class');
+    annoton_cc_auto.add_query_filter('regulates_closure',
+				     'GO:0005575', ['*']);
+    annoton_cc_auto.set_personality('ontology');
+
+    // Add new remote node button.
+    jQuery('#' + 'annoton_adder_button').click(
+    	function(){
+    	    var eb = jQuery('#' + 'annoton_eb_auto').val() || '';
+    	    var mf = jQuery('#' + 'annoton_mf_auto').val() || 'GO:0003674';
+    	    var bp = jQuery('#' + 'annoton_bp_auto').val() || 'GO:0008150';
+    	    var cc = jQuery('#' + 'annoton_cc_auto').val() || 'GO:0005575';
+
+    	    if( eb === '' ){
+    		alert('You must at least select a bioentity.');
+    	    }else{
+		
+		// Ready new super request.
+		var reqs = new minerva_requests.request_set(manager.user_token(),
+							    ecore.get_id());
+
+		var ind_eb = reqs.add_individual(eb);
+		var ind_mf = reqs.add_individual(mf);
+		var ind_bp = reqs.add_individual(bp);
+		var ind_cc = reqs.add_individual(cc);
+		reqs.add_fact([ind_mf, ind_eb, 'RO:0002333']);
+		reqs.add_fact([ind_mf, ind_bp, 'BFO:0000050']);
+		reqs.add_fact([ind_mf, ind_cc, 'BFO:0000066']);
+		manager.request_with(reqs);
+
+		// Finally, wipe controls' state, internal and external.
+		annoton_eb_auto_val = null;
+		annoton_mf_auto_val = null;
+		annoton_bp_auto_val = null;
+		annoton_cc_auto_val = null;
+		jQuery('#' + 'annoton_eb_auto').val('');
+		jQuery('#' + 'annoton_mf_auto').val('');
+		jQuery('#' + 'annoton_bp_auto').val('');
+		jQuery('#' + 'annoton_cc_auto').val('');
+    	    }
+    	}
+    );
+
+    ///
     /// Activate addition template for BP (free).
     ///
 
