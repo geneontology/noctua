@@ -1680,8 +1680,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 					  annoton_mf_auto_args);
     annoton_mf_auto.lite(true);
     annoton_mf_auto.add_query_filter('document_category', 'ontology_class');
-    annoton_mf_auto.add_query_filter('regulates_closure',
-				     'GO:0003674', ['*']);
+    annoton_mf_auto.add_query_filter('regulates_closure_label',
+				     'molecular_function', ['*']);
     annoton_mf_auto.set_personality('ontology');
 
     var annoton_bp_auto =
@@ -1690,18 +1690,18 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 					  annoton_bp_auto_args);
     annoton_bp_auto.lite(true);
     annoton_bp_auto.add_query_filter('document_category', 'ontology_class');
-    annoton_bp_auto.add_query_filter('regulates_closure',
-				     'GO:0008150', ['*']);
+    annoton_bp_auto.add_query_filter('regulates_closure_label',
+				     'biological_process', ['*']);
     annoton_bp_auto.set_personality('ontology');
 
     var annoton_cc_auto =
 	new bbop_legacy.widget.search_box(gserv_neo, gconf,
-					  'annoton_bp_auto',
-					  annoton_bp_auto_args);
+					  'annoton_cc_auto',
+					  annoton_cc_auto_args);
     annoton_cc_auto.lite(true);
     annoton_cc_auto.add_query_filter('document_category', 'ontology_class');
-    annoton_cc_auto.add_query_filter('regulates_closure',
-				     'GO:0005575', ['*']);
+    annoton_cc_auto.add_query_filter('regulates_closure_label',
+				     'cellular_component', ['*']);
     annoton_cc_auto.set_personality('ontology');
 
     // Add new remote node button.
