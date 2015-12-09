@@ -884,6 +884,41 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     ];
 
     ///
+    /// Create section for deleting folded elements.
+    ///
+
+    // Create a list of folded individuals to delete.
+    var elt2ind = {};
+    var ind_list = [];
+    //console.log('enode', enode);
+    var sub = enode.subgraph();
+    each(sub.all_nodes(), function(snode){
+
+    	var snid = snode.id();
+
+	if( snid !== tid ){
+
+    	    var eid = bbop_core.uuid();
+    	    elt2ind[eid] = snid;
+
+	    var scache = [];
+	    each(snode.types(), function(stype){
+		scache.push(type_to_span(stype));
+	    });
+	    var slabel = scache.join(' / ') || '<none>'; 
+	    
+    	    var acache = [];
+    	    acache.push('<li class="list-group-item">');
+    	    acache.push(slabel);
+    	    acache.push('<span id="'+ eid +
+    			'" class="badge app-delete-mark">X</span>');
+    	    acache.push('<div class="clearfix"></div>');
+    	    acache.push('</li>');
+    	    ind_list.push(acache.join(''));
+	}
+    });
+
+    ///
     /// Individual/fact bundle input.
     ///
 
@@ -974,6 +1009,13 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	type_form.join(''),
 	'</p>',
 	'<hr />',
+	'<h4>Sub-nodes</h4>',
+	'<p>',
+	'<ul class="list-group">',
+	ind_list.join('') || '<li class="list-group-item">none</li>',
+	'</ul>',
+	'</p>',
+	'<hr />',
 	'<h4>Add edge & class expression</h4>',
 	'<p>',
 	bundle_form.join(''),
@@ -1010,6 +1052,22 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	    // 					cid, target_type);
 	    // }
 	    // Wipe out modal.
+	    mdl.destroy();
+	});
+    });
+
+    // Attach deletes to all of the listed sub-nodes.
+    each(elt2ind, function(ind_id, elt_id){
+	jQuery('#' + elt_id).click(function(evt){
+	    evt.stopPropagation();
+	    var target_id = evt.target.id;
+	    var iid = elt2ind[target_id];	    
+
+	    // Ready a new request.
+	    var reqs = new minerva_requests.request_set(manager.user_token(),
+							ecore.get_id());
+	    reqs.remove_individual(iid);
+	    manager.request_with(reqs);
 	    mdl.destroy();
 	});
     });
