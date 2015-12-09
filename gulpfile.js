@@ -290,6 +290,10 @@ var workbench_dirs = config['WORKBENCHES'].value;
 var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
 var collapsible_relations_str = collapsible_relations.join(' ');
+var collapsible_reverse_relations =
+	config['COLLAPSIBLE_REVERSE_RELATIONS'].value;
+var collapsible_reverse_relations_str =
+	collapsible_reverse_relations.join(' ');
 var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
 // NOTE: Allowing barista to slurp up startup.yaml itself to get the
 // application definitions.
@@ -345,7 +349,9 @@ gulp.task('run-noctua', shell.task(_run_cmd(
      '--minerva-definition', def_app_def,
      // Lists need to be quoted.
      '--workbenches', '"' + workbench_dirs_str + '"',
-     '--collapsible-relations', '"' + collapsible_relations_str + '"'
+     '--collapsible-relations', '"' + collapsible_relations_str + '"',
+     '--collapsible-reverse-relations', '"' +
+     collapsible_reverse_relations_str + '"'
     ]
 )));
 
