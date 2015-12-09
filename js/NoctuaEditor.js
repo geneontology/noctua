@@ -81,6 +81,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     function ll(str){ logger.kvetch(str); }
 
     // Help with strings and colors--configured separately.
+    // // BUG/TODO: Some fixes for Paul as going upstream today is still
+    // // fiddly--would like to spin this out as a separate package.
+    // amigo.data.context['RO:0002411']['priority'] = 1;
+    // amigo.data.context['RO:0002413']['priority'] = 1;
+    // console.log(amigo.data.context);
+    // // Instantiate.
     var aid = new bbop_legacy.context(amigo.data.context);
 
     // Create the core model.
@@ -328,15 +334,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var simple_ubernoodle_auto_elt = '#' + simple_ubernoodle_auto_id;
     var simple_ubernoodle_add_btn_id ='simple_ubernoodle_adder_button';
     var simple_ubernoodle_add_btn_elt = '#' + simple_ubernoodle_add_btn_id;
-    // MF (restrict) button contact points.
-    var simple_mf_restrict_enb_auto_id = 'simple_mf_restrict_enb_auto';
-    var simple_mf_restrict_enb_auto_elt = '#' + simple_mf_restrict_enb_auto_id;
-    var simple_mf_restrict_act_auto_id = 'simple_mf_restrict_act_auto';
-    var simple_mf_restrict_act_auto_elt = '#' + simple_mf_restrict_act_auto_id;
-    var simple_mf_restrict_occ_auto_id = 'simple_mf_restrict_occ_auto';
-    var simple_mf_restrict_occ_auto_elt = '#' + simple_mf_restrict_occ_auto_id;
-    var simple_mf_restrict_add_btn_id = 'simple_mf_restrict_adder_button';
-    var simple_mf_restrict_add_btn_elt = '#' + simple_mf_restrict_add_btn_id;
     // MF (free form) button contact points.
     var simple_mf_free_enb_auto_id = 'simple_mf_free_enb_auto';
     var simple_mf_free_enb_auto_elt = '#' + simple_mf_free_enb_auto_id;
@@ -346,18 +343,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var simple_mf_free_occ_auto_elt = '#' + simple_mf_free_occ_auto_id;
     var simple_mf_free_add_btn_id = 'simple_mf_free_adder_button';
     var simple_mf_free_add_btn_elt = '#' + simple_mf_free_add_btn_id;
-    // BP (restrict) button contact points.
-    var simple_bp_restrict_enb_auto_id = 'simple_bp_restrict_enb_auto';
-    var simple_bp_restrict_enb_auto_elt = '#' + simple_bp_restrict_enb_auto_id;
-    var simple_bp_restrict_act_auto_id = 'simple_bp_restrict_act_auto';
-    var simple_bp_restrict_act_auto_elt = '#' + simple_bp_restrict_act_auto_id;
-    var simple_bp_restrict_occ_auto_id = 'simple_bp_restrict_occ_auto';
-    var simple_bp_restrict_occ_auto_elt = '#' + simple_bp_restrict_occ_auto_id;
-    var simple_bp_restrict_add_btn_id = 'simple_bp_restrict_adder_button';
-    var simple_bp_restrict_add_btn_elt = '#' + simple_bp_restrict_add_btn_id;
     // BP (free form) button contact points.
-    var simple_bp_free_enb_auto_id = 'simple_bp_free_enb_auto';
-    var simple_bp_free_enb_auto_elt = '#' + simple_bp_free_enb_auto_id;
+    // var simple_bp_free_enb_auto_id = 'simple_bp_free_enb_auto';
+    // var simple_bp_free_enb_auto_elt = '#' + simple_bp_free_enb_auto_id;
     var simple_bp_free_act_auto_id = 'simple_bp_free_act_auto';
     var simple_bp_free_act_auto_elt = '#' + simple_bp_free_act_auto_id;
     var simple_bp_free_occ_auto_id = 'simple_bp_free_occ_auto';
@@ -1494,129 +1482,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	return reqs;
     }	    
     
-    ///
-    /// Activate addition template for BP (restrict).
-    ///
-
     // The base settings for bioentity autocomplete.
     var base_enb_auto_args = {
     	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class_label}}',
 	'additional_results_class': 'bbop-mme-more-results-ul'
     };
-
-    // Storage for the actual selected identifiers.
-    var simple_bp_restrict_enb_auto_val = null;
-    var simple_bp_restrict_act_auto_val = null;
-    var simple_bp_restrict_occ_auto_val = null;
-
-    // bioentity
-    var simple_bp_restrict_enb_auto_args = us.clone(base_enb_auto_args);
-    simple_bp_restrict_enb_auto_args['list_select_callback'] =
-    	function(doc){
-    	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_bp_restrict_enb_auto_val = doc['annotation_class'] || null;
-    	};
-
-    // molecular function
-    var simple_bp_restrict_act_auto_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_bp_restrict_act_auto_val = doc['annotation_class'] || null;
-    	}
-    };
-    // location/occurs_in
-    var simple_bp_restrict_occ_auto_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_bp_restrict_occ_auto_val = doc['annotation_class'] || null;
-    	}
-    };
-
-    // Remember that we're using NEO for this now.
-    var simple_bp_restrict_enb_auto =
-	new bbop_legacy.widget.search_box(gserv_neo, gconf,
-					  simple_bp_restrict_enb_auto_id,
-					  simple_bp_restrict_enb_auto_args);
-    simple_bp_restrict_enb_auto.lite(true);
-    simple_bp_restrict_enb_auto.add_query_filter('document_category',
-						 'ontology_class');
-    // Root is CHEBI:23367 ! molecular entity.
-    simple_bp_restrict_enb_auto.add_query_filter('regulates_closure',
-    						 'CHEBI:23367', ['*']);
-    simple_bp_restrict_enb_auto.set_personality('ontology');
-
-    var simple_bp_restrict_act_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
-					  simple_bp_restrict_act_auto_id,
-					  simple_bp_restrict_act_auto_args);
-    simple_bp_restrict_act_auto.lite(true);
-    simple_bp_restrict_act_auto.add_query_filter('document_category',
-						 'annotation', ['*']);
-    simple_bp_restrict_act_auto.add_query_filter('regulates_closure_label',
-    						 'biological_process', ['*']);
-    simple_bp_restrict_act_auto.set_personality('annotation');
-
-    var simple_bp_restrict_occ_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
-					  simple_bp_restrict_occ_auto_id,
-					  simple_bp_restrict_occ_auto_args);
-    simple_bp_restrict_occ_auto.lite(true);
-    simple_bp_restrict_occ_auto.add_query_filter('document_category',
-						 'annotation', ['*']);
-    simple_bp_restrict_occ_auto.add_query_filter('aspect', 'F', ['-', '*']);
-    simple_bp_restrict_occ_auto.add_query_filter('aspect', 'P', ['-', '*']);
-    simple_bp_restrict_occ_auto.set_personality('annotation');
-
-    // After properly inputting the enb, take the value enb value and
-    // add it to the filter; remove/clear otherwise.
-    jQuery(simple_bp_restrict_enb_auto_elt).focusout(function(){
-	var enb = simple_bp_restrict_enb_auto_val || '';
-	if( ! enb || enb === '' ){
-	    //
-	    ll('removing the mf (restrict) restriction: ' + enb);
-	    simple_bp_restrict_act_auto.reset_query_filters();
-	    simple_bp_restrict_occ_auto.reset_query_filters();
-	}else{
-	    ll('adding: the mf (restrict) restriction: ' + enb);
-	    simple_bp_restrict_act_auto.add_query_filter('bioentity', enb);
-	    simple_bp_restrict_occ_auto.add_query_filter('bioentity', enb);
-	}
-    });
-
-    // Add new remote node button.
-    jQuery(simple_bp_restrict_add_btn_elt).click(
-    	function(){
-    	    var enb = simple_bp_restrict_enb_auto_val || '';
-    	    var act = simple_bp_restrict_act_auto_val || '';
-    	    var occ = simple_bp_restrict_occ_auto_val || '';
-
-    	    if( act === '' ){
-    		alert('Must select activity field from autocomplete list.');
-    	    }else{
-		// Wipe controls' state, internal and external.
-		simple_bp_restrict_enb_auto_val = null;
-    		simple_bp_restrict_act_auto_val = null;
-    		simple_bp_restrict_occ_auto_val = null;
-		jQuery(simple_bp_restrict_enb_auto_elt).val('');
-    		jQuery(simple_bp_restrict_act_auto_elt).val('');
-    		jQuery(simple_bp_restrict_occ_auto_elt).val('');
-		
-		// Send message to server.
-		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-						[occ, 'BFO:0000066']]);
-		manager.request_with(reqs);
-    	    }
-    	}
-    );
 
     ///
     /// Activate addition template for annoton.
@@ -1747,17 +1618,17 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     ///
 
     // Storage for the actual selected identifiers.
-    var simple_bp_free_enb_auto_val = null;
+    //var simple_bp_free_enb_auto_val = null;
     var simple_bp_free_act_auto_val = null;
     var simple_bp_free_occ_auto_val = null;
 
-    // bioentity
-    var simple_bp_free_enb_auto_args = us.clone(base_enb_auto_args);
-    simple_bp_free_enb_auto_args['list_select_callback'] =
-    	function(doc){
-    	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_bp_free_enb_auto_val = doc['annotation_class'] || null;
-    	};
+    // // bioentity
+    // var simple_bp_free_enb_auto_args = us.clone(base_enb_auto_args);
+    // simple_bp_free_enb_auto_args['list_select_callback'] =
+    // 	function(doc){
+    // 	    //alert('adding: ' + doc['bioentity_label']);
+    // 	    simple_bp_free_enb_auto_val = doc['annotation_class'] || null;
+    // 	};
 
     // molecular function
     var simple_bp_free_act_auto_args = {
@@ -1782,17 +1653,17 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	}
     };
 
-    var simple_bp_free_enb_auto =
-	    new bbop_legacy.widget.search_box(gserv_neo, gconf,
-					      simple_bp_free_enb_auto_id,
-					      simple_bp_free_enb_auto_args);
-    simple_bp_free_enb_auto.lite(true);
-    simple_bp_free_enb_auto.add_query_filter('document_category',
-					     'ontology_class');
-    // Root is CHEBI:23367 ! molecular entity.
-    simple_bp_free_enb_auto.add_query_filter('regulates_closure',
-    					     'CHEBI:23367', ['*']);
-    simple_bp_free_enb_auto.set_personality('ontology');
+    // var simple_bp_free_enb_auto =
+    // 	    new bbop_legacy.widget.search_box(gserv_neo, gconf,
+    // 					      simple_bp_free_enb_auto_id,
+    // 					      simple_bp_free_enb_auto_args);
+    // simple_bp_free_enb_auto.lite(true);
+    // simple_bp_free_enb_auto.add_query_filter('document_category',
+    // 					     'ontology_class');
+    // // Root is CHEBI:23367 ! molecular entity.
+    // simple_bp_free_enb_auto.add_query_filter('regulates_closure',
+    // 					     'CHEBI:23367', ['*']);
+    // simple_bp_free_enb_auto.set_personality('ontology');
 
     var simple_bp_free_act_auto =
 	new bbop_legacy.widget.search_box(gserv, gconf,
@@ -1821,7 +1692,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Add new remote node button.
     jQuery(simple_bp_free_add_btn_elt).click(
     	function(){
-    	    var enb = simple_bp_free_enb_auto_val || '';
+    	    //var enb = simple_bp_free_enb_auto_val || '';
     	    var act = simple_bp_free_act_auto_val || '';
     	    var occ = simple_bp_free_occ_auto_val || '';
 
@@ -1829,16 +1700,17 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     		alert('Must select activity field from autocomplete list.');
     	    }else{
 		// Wipe controls' state, internal and external.
-		simple_bp_free_enb_auto_val = null;
+		//simple_bp_free_enb_auto_val = null;
     		simple_bp_free_act_auto_val = null;
     		simple_bp_free_occ_auto_val = null;
-		jQuery(simple_bp_free_enb_auto_elt).val('');
+		//jQuery(simple_bp_free_enb_auto_elt).val('');
     		jQuery(simple_bp_free_act_auto_elt).val('');
     		jQuery(simple_bp_free_occ_auto_elt).val('');
 		
 		// Send message to server.
-		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-						[occ, 'BFO:0000066']]);
+		// var reqs = _add_composite(act, [[enb, 'RO:0002333'],
+		// 				[occ, 'BFO:0000066']]);
+		var reqs = _add_composite(act, [[occ, 'BFO:0000066']]);
 		manager.request_with(reqs);
     	    }
     	}
@@ -1881,120 +1753,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    // Wipe controls' state, internal and external.
 	    simple_ubernoodle_auto_val = null;
 	    jQuery(simple_ubernoodle_auto_elt).val('');	    
-    	}
-    });
-
-    ///
-    /// Activate addition template for MF (restrict).
-    ///
-
-    // Storage for the actual selected identifiers.
-    var simple_mf_restrict_enb_auto_val = null;
-    var simple_mf_restrict_act_auto_val = null;
-    var simple_mf_restrict_occ_auto_val = null;
-    
-    // bioentity
-    var simple_mf_restrict_enb_auto_args = us.clone(base_enb_auto_args);
-    simple_mf_restrict_enb_auto_args['list_select_callback'] =
-    	function(doc){
-    	    //alert('adding: ' + doc['bioentity_label']);
-	    simple_mf_restrict_enb_auto_val = doc['annotation_class'] || null;
-    	};
-
-    // molecular function
-    var simple_mf_restrict_act_auto_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_mf_restrict_act_auto_val = doc['annotation_class'] || null;
-    	}
-    };
-    // location/occurs_in
-    var simple_mf_restrict_occ_auto_args = {
-    	'label_template': '{{annotation_class_label}} ({{annotation_class}})',
-    	'value_template': '{{annotation_class_label}}',
-	'additional_results_class': 'bbop-mme-more-results-ul',
-    	'list_select_callback':
-    	function(doc){
-    	    //alert('adding: ' + doc['annotation_class_label']);
-	    simple_mf_restrict_occ_auto_val = doc['annotation_class'] || null;
-    	}
-    };
-
-    var simple_mf_restrict_enb_auto =
-	new bbop_legacy.widget.search_box(gserv_neo, gconf,
-					  simple_mf_restrict_enb_auto_id,
-					  simple_mf_restrict_enb_auto_args);
-    simple_mf_restrict_enb_auto.lite(true);
-    simple_mf_restrict_enb_auto.add_query_filter('document_category',
-						 'ontology_class');
-    // Root is CHEBI:23367 ! molecular entity.
-    simple_mf_restrict_enb_auto.add_query_filter('regulates_closure',
-    						 'CHEBI:23367', ['*']);
-    simple_mf_restrict_enb_auto.set_personality('ontology');
-    
-    var simple_mf_restrict_act_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
-					  simple_mf_restrict_act_auto_id,
-					  simple_mf_restrict_act_auto_args);
-    simple_mf_restrict_act_auto.lite(true);
-    simple_mf_restrict_act_auto.add_query_filter('document_category',
-						 'annotation', ['*']);
-    simple_mf_restrict_act_auto.add_query_filter('regulates_closure_label',
-    						 'molecular_function', ['*']);
-    simple_mf_restrict_act_auto.set_personality('annotation');
-    
-    var simple_mf_restrict_occ_auto =
-	new bbop_legacy.widget.search_box(gserv, gconf,
-					  simple_mf_restrict_occ_auto_id,
-					  simple_mf_restrict_occ_auto_args);
-    simple_mf_restrict_occ_auto.lite(true);
-    simple_mf_restrict_occ_auto.add_query_filter('document_category',
-						 'annotation', ['*']);
-    simple_mf_restrict_occ_auto.add_query_filter('aspect', 'F', ['-', '*']);
-    simple_mf_restrict_occ_auto.add_query_filter('aspect', 'P', ['-', '*']);
-    simple_mf_restrict_occ_auto.set_personality('annotation');
-
-    // After properly inputting the enb, take the value enb value and
-    // add it to the filter; remove/clear otherwise.
-    jQuery(simple_mf_restrict_enb_auto_elt).focusout(function(){
-	var enb = simple_mf_restrict_enb_auto_val || '';
-	if( ! enb || enb === '' ){
-	    //
-	    ll('removing the mf (restrict) restriction: ' + enb);
-	    simple_mf_restrict_act_auto.reset_query_filters();
-	    simple_mf_restrict_occ_auto.reset_query_filters();
-	}else{
-	    ll('adding: the mf (restrict) restriction: ' + enb);
-	    simple_mf_restrict_act_auto.add_query_filter('bioentity', enb);
-	    simple_mf_restrict_occ_auto.add_query_filter('bioentity', enb);
-	}
-    });
-
-    // Add new remote node button.
-    jQuery(simple_mf_restrict_add_btn_elt).click(function(){
-    	var enb = simple_mf_restrict_enb_auto_val || '';
-    	var act = simple_mf_restrict_act_auto_val || '';
-    	var occ = simple_mf_restrict_occ_auto_val || '';
-	
-    	if( act === '' ){
-    	    alert('Must select activity field from autocomplete list.');
-    	}else{
-	    // Wipe controls' state, internal and external.
-	    simple_mf_restrict_enb_auto_val = null;
-    	    simple_mf_restrict_act_auto_val = null;
-    	    simple_mf_restrict_occ_auto_val = null;
-	    jQuery(simple_mf_restrict_enb_auto_elt).val('');
-    	    jQuery(simple_mf_restrict_act_auto_elt).val('');
-    	    jQuery(simple_mf_restrict_occ_auto_elt).val('');
-	    
-	    // Send message to server.
-	    var reqs = _add_composite(act, [[enb, 'RO:0002333'],
-					    [occ, 'BFO:0000066']]);
-	    manager.request_with(reqs);
     	}
     });
 
