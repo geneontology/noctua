@@ -61,7 +61,20 @@ The bulk of major issues and feature requests are handled by the
 tracker (https://github.com/geneontology/noctua/issues). If something is
 not mentioned here or in the tracker, please contact Seth, Heiko, or Chris.
 
+* When editing large models, you may reach a point where almost anything you do will cause an error and hang (refresh to get back to where you were); if you want to make sure your model is saved, contact Seth [#151](https://github.com/geneontology/noctua/issues/151)
 * Sometimes, when moving instance or relations near a boundary, the relations will fall out of sync; either move nearby instances or refresh the model
 * Sometimes, when editing an instance, the relations (edges) will fall out of sync; either move nearby instances or refresh the model
-* The endpoint scheme is reversed between creation and instantiation
-* TODO, etc.
+
+## Troubleshooting
+
+* Newer versions of Chrome and Firefox are supported, Safari is not supported
+* You need to have cookies allowed in your browser (for Persona)
+* Ad-blockers have been known to cause problems, please use a clean browser profile
+* You cannot save unless you have a title.
+* You cannot delete.
+* When weird things happen, this is pretty much what you should try:
+ * Refresh your page
+ * "Hard" refresh your page (probably by pressing "shift" or something when you refresh; the idea is to try and flush your cache, getting things freshly from the server)
+ * Are you logged in? Are you sure? Try logging out and logging back in again--a bad session can cause all sorts of interesting things
+ * Try going back to the main landing page, finding your model again, and trying again
+ * Try contacting Seth, Chris, or Heiko

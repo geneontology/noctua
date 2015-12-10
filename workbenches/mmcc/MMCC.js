@@ -80,7 +80,6 @@ var createNEOBioAC = function(element_id){
 	valueField: 'annotation_class',
 	labelField: 'annotation_class_label',
 	searchField: 'annotation_class_label',
-	//closeAfterSelect: true,
 	create: false,
 	render: {
             option: function(item, escape) {
@@ -102,10 +101,10 @@ var createNEOBioAC = function(element_id){
 		callback(resp.documents() || []);
             }).done();
 	},
-	onType: function(){
-	    selectized[0].selectize.clearCache("option");
-	    selectized[0].selectize.clearOptions();
-	},
+	// onType: function(){
+	//     selectized[0].selectize.clearCache("option");
+	//     selectized[0].selectize.clearOptions();
+	// },
 	onItemAdd: function(value, $item){
 	    items[value] = true;
 	},
@@ -207,18 +206,6 @@ jQuery(document).ready(function(){
 	    alert('You must enter and select one or more bioentities.');
 	}else{
 
-	    var reqs = new minerva_requests.request_set(global_barista_token,
-							global_id);
-
-	    // Collect as SVFs.
-	    var bio_svfs = [];
-	    each(bioac.values(), function(bid){
-		var bce = new class_expression();
-		bce.as_svf('BFO:0000051', bid);
-		//bce.as_svf('RO:0002180', bid);
-		bio_svfs.push(bce);
-	    });
-
 	    // We know we have just one, convert it if it is the
 	    // default value.
 	    var cp = compac.values()[0];
@@ -226,11 +213,19 @@ jQuery(document).ready(function(){
 		cp = 'GO:0043234';
 	    }
 
-	    // All as intersection with complex.
-	    var ce = new class_expression();
-	    ce.as_set('intersection', [cp].concat(bio_svfs));
+	    var reqs = new minerva_requests.request_set(global_barista_token,
+							global_id);
 
-	    reqs.add_individual(ce);
+	    // All as link in to complex.
+	    //var ce = new class_expression();
+	    //ce.as_set('intersection', [cp].concat(bio_svfs));
+	    var complex_ind_id = reqs.add_individual(cp);
+
+	    // Collect as has_parts.
+	    each(bioac.values(), function(bid){
+		var bind = reqs.add_individual(bid);
+		reqs.add_fact([bind, complex_ind_id, 'BFO:0000051']);
+	    });
 
 	    sendRequestToMinerva(reqs);
 
@@ -263,9 +258,6 @@ function sendRequestToMinerva(request_set){
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gconf = new golr_conf.conf(amigo.data.golr);
-
-    // Contact points...
-    // ...
 
     ///
     /// Helpers.

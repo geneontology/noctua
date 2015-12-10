@@ -17,6 +17,7 @@
 /* global jsPlumb */
 /* global global_barista_token */
 /* global global_collapsible_relations */
+/* global global_collapsible_reverse_relations */
 /* global global_id */
 /* global global_model */
 /* global global_known_relations */
@@ -845,7 +846,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    d_graph.fold_evidence();
 	}else if( d_view_type === 'go_fold' ){
 	    jQuery(view_go_fold_elt).css("font-weight","bold");
-	    d_graph.fold_go_noctua(global_collapsible_relations);
+	    d_graph.fold_go_noctua(global_collapsible_relations,
+				   global_collapsible_reverse_relations);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
 	}	

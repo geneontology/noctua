@@ -68,6 +68,8 @@ var argv = require('minimist')(process.argv.slice(2));
 // Collapsible relations.
 var collapsible_raw =
 	argv['c'] || argv['collapsible-relations'] || '';
+var collapsible_reverse_raw =
+	argv['r'] || argv['collapsible-reverse-relations'] || '';
 // GOlr server.
 var golr_server_location =
 	argv['g'] || argv['golr'] || 'http://golr.geneontology.org/';
@@ -91,9 +93,11 @@ var noctua_frontend = argv['p'] || argv['noctua-public'];
 
 // Process strings to usable lists.
 var collapsible_relations = collapsible_raw.split(/\s+/) || [];
+var collapsible_reverse_relations = collapsible_reverse_raw.split(/\s+/) || [];
 var workbench_maybe_dirs = workbench_maybe_raw.split(/\s+/) || [];
 
 console.log('Will fold: ', collapsible_relations);
+console.log('Will fold (reverse): ', collapsible_reverse_relations);
 console.log('Using GOlr lookup server at: ', golr_server_location);
 console.log('Using GOlr NEO lookup server at: ', golr_neo_server_location);
 console.log('Barista location: ' + barloc);
@@ -349,6 +353,8 @@ var NoctuaLauncher = function(){
 		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
 		 value: collapsible_relations },
+		{name: 'global_collapsible_reverse_relations',
+		 value: collapsible_reverse_relations },
 		{name: 'global_barista_token',
 		 value: barista_token },
 		{name: 'global_workbenches_universal',
