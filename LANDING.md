@@ -11,11 +11,16 @@ biological processes.
 ## Quickstart
 
  * *Noctua Users*
-    * Start with the [video demo](https://goo.gl/5emVn4)
-    * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft)
+    * Start with the [video demos](https://vimeo.com/channels/Noctua), such as the [editing example](https://vimeo.com/channels/noctua/148780879)
+    * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
  * *Bioinformaticians and Systems Biologists* -- See the [Noctua models repository](http://github.com/geneontology/noctua-models) for access to the underlying models and explanation of the OWL representation
+ * *Biologists and end-users* -- We are working on a number of ways to make the models easier to search and to use in data interpretation
+    * [Embeddable widgets for adding to existing database websites](https://github.com/geneontology/noctua/issues/221)
+    * Browsing of models and annotons in AmiGO. Currently only available in labs. Choose "Select/Browse" on the landing page
+    * Network-based enrichment analysis
+    * Check back on this site throughout 2016 to see progress!
 
 ## How to use the beta
 
@@ -36,9 +41,6 @@ This instance is configured for use with the [Gene Ontology](http://geneontology
 * Double clicking edges and instances allows the editing of evidence and comments
 * Clicking on the green box upper-left of an instance allows you to view and edit the instance type information
 * By dragging the blue circle in the upper-right of an instance to anywhere on a different instance will allow you to create a relation between the two
-* A complex expression can be added by opening the instance type editor and
-* Selecting: enabled_by
-* Entering an expression of the form: "GO:0043234 and ('has part' some UniProtKB:P0002) and ('has part' some UniProtKB:P0003)"
    
 ### Models
 
@@ -67,7 +69,7 @@ not mentioned here or in the tracker, please contact Seth, Heiko, or Chris.
 
 ## Troubleshooting
 
-* Newer versions of Chrome and Firefox are supported, Safari is not supported
+* Newer versions of Chrome and Firefox are supported, __Safari is not supported__
 * You need to have cookies allowed in your browser (for Persona)
 * Ad-blockers have been known to cause problems, please use a clean browser profile
 * You cannot save unless you have a title.
