@@ -482,9 +482,12 @@ var NoctuaLauncher = function(){
     self.initializeServer = function(){
 
 	var launcher_app = require('express');
+	var body_parser = require('body-parser');
         self.app = launcher_app();
 	// Middleware needed for POST and browserid
-        self.app.use(launcher_app.bodyParser());
+        //self.app.use(launcher_app.bodyParser());
+	self.app.use(body_parser.json());
+	self.app.use(body_parser.urlencoded({ extended: true }));
 
 	///
 	/// Static routes.
