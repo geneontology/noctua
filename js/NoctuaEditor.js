@@ -800,6 +800,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	}
 
 	// Tag on modification mark.
+	ll('modified-p: ' + ecore.modified_p());
 	if( ecore.modified_p() === true ){
 	    mtitle = '*' + mtitle + '*';
 	}
@@ -1926,15 +1927,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// And add the actual storage.
 	reqs.store_model();
 	manager.request_with(reqs);
-
-	// // Run it off in a new tab.
-	// manager.store_model(ecore.get_id());
-	// //alert('This functionality has been temporarily suspended.');
-	// // // New version:
-	// // var reqs = new minerva_requests.request_set(manager.user_token(),
-	// // 					    ecore.get_id());
-	// // reqs.store_model(ecore.get_id());
-	// // manager.request_with(reqs, ecore.get_id());
     });
 
     // // Help button.
@@ -2247,7 +2239,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	}
     });
 
-    // WARNING: Skunkworks for adding new things to the manager.
+
+    ///
+    /// WARNING: Skunkworks for adding new things to the manager.
+    ///
+
+    // Simple save.
+    jQuery('#' + 'action_save_wo_layout').click(function(){
+
+	// Simple save request.
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+
+	// TODO: need to update minerva-requests/lib/requests.js so
+	// that "store" is an action.
+        var store_req = new minerva_requests.request('model', 'store');
+        reqs.add(store_req, 'action');
+
+	manager.request_with(reqs);
+    });
+
     // Start with an empty model as we run through this.
     // TODO/BUG: DO_NOT_USE_THIS.
     jQuery(exp_btn_elt).click(function(){
