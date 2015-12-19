@@ -28,6 +28,10 @@ var bbop = require('bbop');
 var amigo = require('amigo2');
 var bar_response = require('bbop-response-barista');
 
+// We will require our own http client for proxying POST requests with
+// modifications.
+var http = require('http');
+
 ///
 /// Helpers.
 ///
@@ -692,15 +696,7 @@ var BaristaLauncher = function(){
 
     // Spin up the main messenging server.
     var express = require('express');
-    var body_parser = require('body-parser');
     var messaging_app = express();
-    messaging_app.use(body_parser.json());
-    messaging_app.use(body_parser.urlencoded({ extended: true }));
-    // 
-    //messaging_app.use(express.logger());
-    //messaging_app.use(express.static(__dirname));
-    messaging_app.use(express.json());
-    messaging_app.use(express.urlencoded());
     messaging_app.use(express.cookieParser());
     messaging_app.use(cors());
     messaging_app.use(express.session({secret: 'notverysecret'}));
@@ -819,11 +815,10 @@ var BaristaLauncher = function(){
 	     
 	     // This will skip cached templates.
 	     if( ctype !== null ){
-		 messaging_app.get('/' + thing, 
-				   function(req, res) {
-				       res.setHeader('Content-Type', ctype);
-				       res.send(pup_tent.get(thing) );
-				   });
+		 messaging_app.get('/' + thing, function(req, res) {
+		     res.setHeader('Content-Type', ctype);
+		     res.send(pup_tent.get(thing) );
+		 });
 	     }
 	 });
 
@@ -972,37 +967,156 @@ var BaristaLauncher = function(){
     ///
     /// API proxy.
     ///
+    /// Unfortunately, due to problems upstream outside our control,
+    /// we are unable to do the obvious thing here. In the case of
+    /// trying to proxy GET requests, we use the (now hated)
+    /// http-proxy package, taking the incoming request, making a
+    /// couple of checks against it and changes to it, and then pass
+    /// it on http-proxy to be taken care of.
+    ///
+    /// However, in the case of POST requests containing bodies, due
+    /// upstream issues like and surrounding
+    /// https://github.com/nodejitsu/node-http-proxy/issues/180 , we
+    /// cannot examine and modify the body and have the proxy work
+    /// (just hangs, or gives errors, or something) in a reliable and
+    /// robust way. We tried all of the suggest solutions, and some of
+    /// our own, with varying degrees of success, but the unpleasant
+    /// outcome of this is that we are just going have to manually
+    /// proxy requests ourselves using the http client. This is more
+    /// complicated and has more overhead, but is more tracable,
+    /// robust, and we have complete control without fighting with the
+    /// various middlewares.
+    ///
+    /// TODO: In the future, if this works out, we may just switch the
+    /// GET off of the api_proxy and just do manual for it as
+    /// well--that will save us some code repetition and make it all a
+    /// little more readable.
+    ///
 
+    // Generic function for notifying listeners of some events.
+    function _notify_listeners(json_string){
+
+	// Now what should we do with the JSON? Check it.
+	var response_okay_p = true;
+	var resp = null;
+	try{
+	    //ll(jsonp);
+	    var resp_json = JSON.parse(json_string);
+	    //resp = new bbopx.barista.response(resp_json);
+	    resp = new bar_response(resp_json);
+	}catch(e){
+	    response_okay_p = false;
+	    ll("unparsable response: " + json_string);
+	}
+
+	// Emit to all listeners--cannot target all but call since
+	// this was not done over messaging in the first place
+	// (api proxy).
+	// For filtering, there is a unique ID from Minerva so
+	// that they can block messages they've heard
+	// before--similar to the current model filtering. Ish.
+	if( response_okay_p && resp && resp.okay() && resp.model_id() ){
+	    if( resp.intention() !== 'action' ){
+		ll("Skip broadcast of message (non-action).");
+	    }else if( resp.signal() === 'merge' ){
+		ll("Broadcast merge.");
+		sio.sockets.emit('relay', {'class': 'merge',
+					   'model_id': resp.model_id(),
+					   'packet_id': resp.packet_id(),
+					   'data': resp.raw()});
+	    }else if( resp.signal() === 'rebuild' ){
+		ll("Broadcast rebuild.");
+		sio.sockets.emit('relay', {'class': 'rebuild',
+					   'model_id': resp.model_id(),
+					   'packet_id': resp.packet_id(),
+					   'data': resp.raw()});
+	    }else{
+		ll("Skip broadcast of message (different signal).");
+	    }
+	}
+
+	return response_okay_p;
+    }
+
+    // NOTE: Assuming either jQuery JSONP action JSON via CORS
+    // or similar.
+    // "jQuery1910009816080028417162_1412824223034(.*);"
+    // Returns either the original string (no match) or the match in a
+    // jQuery jsonp regexp.
+    function _extract_json_from_jsonp( jsonp ){
+
+	//ll('match: ', jsonp);
+	var match = jsonp.match(jsonp_re);
+	if( ! match || match.length !== 2 ){
+	    //ll('response: n/a');
+	}else{
+	    //ll('response: ', match[1]);
+	    jsonp = match[1];
+	}
+
+	return jsonp;
+    }
+
+    // Generic messages on a generic error.
+    function _proxy_error(error_obj, error_msg, req, res){
+	// Report...
+	ll('We have proxy problem! Maybe a timeout error against Minerva? ' + 
+	   error_msg);
+	ll(error_obj);
+	// ..then handle.
+	// TODO: Wait until we have more experience with this before
+	// we handle--obviously only the originating users needs to
+	// know.
+	// var resp = new bbopx.barista.response({});
+	// resp.message_type('error');
+	// resp.message('We have problem! Maybe a timeout error against Minerva?');
+	// 	    sio.sockets.emit('relay', {'class': 'rebuild',
+	// 				       'model_id': resp.model_id(),
+	// 				       'packet_id': resp.packet_id(),
+	// 				       'data': resp.raw()});
+    }
+
+    // GET version proxy--this is the use of the http-proxy package.
     var http_proxy = require('http-proxy');
     var api_proxy = http_proxy.createProxyServer({});
-    // GET version.
     messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){ 
 
 	// TODO: Request logging hooks could be placed in here.
 	//ll('pre api req: ' + req.url);
 	monitor_calls = monitor_calls +1;
 
-	// Try and get a session out for use. The important thing we
-	// need here is the uri to pass back to the API if session
-	// and possible.
-	var uuri = null;
+	// Extract the arguments one way or another. The end product
+	// is to try and get a session out for use. The important
+	// thing we need here is the uri to pass back to the API if
+	// session and possible.
 	var has_token_p = false;
 	var has_sess_p = false;
+	var uuri = null;
+
+	// Token extraction.
+	var attempt_token = null;
 	if( req && req['query'] && req['query']['token'] ){
+	    attempt_token = req['query']['token'];
+	}
+	// Try to resolve to token into known sessions.
+	if( attempt_token ){
+	    ll('looks like a token was attempted');
+
 	    // Best attempt at extracting a UID.
 	    has_token_p = true;
-	    var btok = req['query']['token'];
-	    var sess = sessioner.get_session_by_token(btok);
+	    var sess = sessioner.get_session_by_token(attempt_token);
 	    if( sess ){
-		ll('call using session');
+		ll('call using session:');
 		ll(sess);
 		uuri = sess.uri;
 		has_sess_p = true;
+	    }else{
+		ll('no token was attempted');
 	    }
 	}
 
-	// Extract token=??? from the request URL safely
-	// and add the uri as uid.
+	// Extract token=??? from the request URL safely and add the
+	// uri as uid.
 	var url_obj = url.parse(req.url);
 	var q_obj = querystring.parse(url_obj['query']);
 	delete q_obj['token'];
@@ -1040,9 +1154,10 @@ var BaristaLauncher = function(){
 	    };
 	    var eresp_str = JSON.stringify(eresp);
 
-	    // This was requested as AJAX, not CORS, so need to
+	    // If this was requested as AJAX, not CORS, need to
 	    // assemble it for the return.
 	    if( req && req['query'] && req['query']['json.wrf'] ){
+		ll('adjust for AJAX call (GET)');
 		var envelope = req['query']['json.wrf'];
 		eresp_str = envelope + '(' + eresp_str + ');';
 	    }
@@ -1051,96 +1166,21 @@ var BaristaLauncher = function(){
 	    ll('inject response:');
 	    ll(eresp_str);
 	    res.send(eresp_str);
+
 	}else{
+
 	    // Not public or user is privileged.
 	    // Route the simple call to the right place.
-	    //ll('req: ', req);
 	    // Clip "/api/" and the namespace.
 	    var api_loc = app_guard.app_target(ns);
 	    req.url = req.url.substr(ns.length + 5);
+	    ll('api xlate (GET): [' + api_loc + ']' + req.url);
 	    api_proxy.web(req, res, {
-		'target': api_loc
+		'target': api_loc,
+		//'changeOrigin': true
 	    });
-	    ll('api xlate (GET): ' + api_loc + req.url);
 	}
     });
-    // // POST version.
-    // messaging_app.post("/api/:namespace/:call", function(req, res){ 
-
-    // 	// TODO: Request logging hooks could be placed in here.
-    // 	//ll('pre api req: ' + req.url);
-    // 	monitor_calls = monitor_calls +1;
-
-    // 	// Try and get a session out for use. The important thing we
-    // 	// need here is the uri to pass back to the API if session
-    // 	// and possible.
-    // 	var uuri = null;
-    // 	var has_token_p = false;
-    // 	var has_sess_p = false;
-    // 	if( req && req['body'] && req['body']['token'] ){
-    // 	    // Best attempt at extracting a UID.
-    // 	    has_token_p = true;
-    // 	    var btok = req['body']['token'];
-    // 	    var sess = sessioner.get_session_by_token(btok);
-    // 	    if( sess ){
-    // 		ll('call using session: ', sess);
-    // 		uuri = sess.uri;
-    // 		has_sess_p = true;
-    // 	    }
-    // 	}
-
-    // 	// Extract token=??? from the request body safely and add the
-    // 	// uri as uid. I believe the heavy lifting is taken care of by
-    // 	// the express middleware.
-    // 	var new_body = req.body || {};
-    // 	delete new_body['token'];
-    // 	new_body['uid'] = uuri;
-    // 	req.body = new_body;
-
-    // 	// Do we have permissions to make the call?
-    // 	var ns = req.route.params['namespace'] || '';
-    // 	var call = req.route.params['call'] || '';
-    // 	if( ! app_guard.is_public(ns, call) && ! uuri ){
-    // 	    ll('blocking call: ' + req.url);
-	    
-    // 	    var error_msg = 'sproing!';
-    // 	    if( has_token_p && ! has_sess_p ){
-    // 		error_msg = 'You are using a bad token; please remove it.';
-    // 	    }else{
-    // 		error_msg = 'You do not have permission for this operation.';
-    // 	    }
-
-    // 	    // Catch error here if no proper ID on non-public.
-    // 	    res.setHeader('Content-Type', 'text/json');
-    // 	    var eresp = {
-    // 		message_type: 'error',
-    // 		message: error_msg
-    // 	    };
-    // 	    var eresp_str = JSON.stringify(eresp);
-
-    // 	    // This was requested as AJAX, not CORS, so need to
-    // 	    // assemble it for the return.
-    // 	    if( req && req['body'] && req['body']['json.wrf'] ){
-    // 		var envelope = req['body']['json.wrf'];
-    // 		eresp_str = envelope + '(' + eresp_str + ');';
-    // 	    }
-
-    // 	    //var eresp = new bbopx.barista.response(eresp_seed);
-    // 	    ll('inject response: ', eresp_str);
-    // 	    res.send(eresp_str);
-    // 	}else{
-    // 	    // Not public or user is privileged.
-    // 	    // Route the simple call to the right place.
-    // 	    //ll('req: ', req);
-    // 	    // Clip "/api/" and the namespace.
-    // 	    var api_loc = app_guard.app_target(ns);
-    // 	    req.url = req.url.substr(ns.length + 5);
-    // 	    api_proxy.web(req, res, {
-    // 		'target': api_loc
-    // 	    });
-    // 	    ll('api xlate (POST): ' + api_loc + req.url);
-    // 	}
-    // });
 
     // TODO: Pass certain types of responses to /all/ listening
     // clients. (TODO: eventually, just the ones on the model
@@ -1156,61 +1196,16 @@ var BaristaLauncher = function(){
 	    chunks.push(jsonp_partial);
 	});
 	// When we got it all, assemble it, remove the jQuery JSONP
-	// wrapper
+	// wrapper.
 	proxyRes.on('end', function(){
 
-	    var jsonp = chunks.join('');
+	    var possibly_jsonp = chunks.join('');
 
-	    // NOTE: Assuming either jQuery JSONP action JSON via CORS
-	    // or similar.
-	    // "jQuery1910009816080028417162_1412824223034(.*);"
-	    //ll('match: ', jsonp);
-	    var match = jsonp.match(jsonp_re);
-	    if( ! match || match.length !== 2 ){
-		//ll('response: n/a');
-	    }else{
-		//ll('response: ', match[1]);
-		jsonp = match[1];
-	    }
+	    // Try and get something useful to pass to listening clients.
+	    var json_string = _extract_json_from_jsonp(possibly_jsonp);
 
-	    // Now what should we do with the JSON? Check it.
-	    var response_okay_p = true;
-	    var resp = null;
-	    try{
-		//ll(jsonp);
-		var resp_json = JSON.parse(jsonp);
-		//resp = new bbopx.barista.response(resp_json);
-		resp = new bar_response(resp_json);
-	    }catch(e){
-		response_okay_p = false;
-		ll("unparsable response: " + jsonp);
-	    }
-
-	    // Emit to all listeners--cannot target all but call since
-	    // this was not done over messaging in the first place
-	    // (api proxy).
-	    // For filtering, there is a unique ID from Minerva so
-	    // that they can block messages they've heard
-	    // before--similar to the current model filtering. Ish.
-	    if( response_okay_p && resp && resp.okay() && resp.model_id() ){
-		if( resp.intention() !== 'action' ){
-		    ll("Skip broadcast of message (non-action).");
-		}else if( resp.signal() === 'merge' ){
-		    ll("Broadcast merge.");
-		    sio.sockets.emit('relay', {'class': 'merge',
-					       'model_id': resp.model_id(),
-					       'packet_id': resp.packet_id(),
-					       'data': resp.raw()});
-		}else if( resp.signal() === 'rebuild' ){
-		    ll("Broadcast rebuild.");
-		    sio.sockets.emit('relay', {'class': 'rebuild',
-					       'model_id': resp.model_id(),
-					       'packet_id': resp.packet_id(),
-					       'data': resp.raw()});
-		}else{
-		    ll("Skip broadcast of message (different signal).");
-		}
-	    }
+	    // Notify listeners of model.
+	    _notify_listeners(json_string);
 	});
     });
 
@@ -1218,20 +1213,173 @@ var BaristaLauncher = function(){
     // where the ontologies slow minerva down enough that I get an
     // error thrown reporting: "Error: socket hang up".
     api_proxy.on('error', function (error, req, res) {
-	// Report...
-	ll('We have problem! Maybe a timeout error against Minerva?');
-	ll(error);
-	// ..then handle.
-	// TODO: Wait until we have more experience with this before
-	// we handle--obviously only the originating users needs to
-	// know.
-	// var resp = new bbopx.barista.response({});
-	// resp.message_type('error');
-	// resp.message('We have problem! Maybe a timeout error against Minerva?');
-	// 	    sio.sockets.emit('relay', {'class': 'rebuild',
-	// 				       'model_id': resp.model_id(),
-	// 				       'packet_id': resp.packet_id(),
-	// 				       'data': resp.raw()});
+	_proxy_error(error, 'api_proxy proxy error', req, res);
+    });
+
+    // POST version.
+    messaging_app.post("/api/:namespace/:call/:subcall?", function(req, res){ 
+
+	// TODO: Request logging hooks could be placed in here.
+	//ll('pre api req: ' + req.url);
+	monitor_calls = monitor_calls +1;
+
+	// Collect the full POST body (if there is one) before
+	// proceeding.
+	var full_body ='';
+	req.on('data', function(chunk) {
+	    full_body += chunk.toString();
+	});
+	req.on('end', function() {
+	    ll("Received body data: " + full_body);
+	    
+	    var decoded_body = querystring.parse(full_body) || {};
+	    console.log(api_loc);
+	    console.log(decoded_body);
+	    
+	    // Extract the arguments one way or another. The end
+	    // product is to try and get a session out for use. The
+	    // important thing we need here is the uri to pass back to
+	    // the API if session and possible.
+	    var has_token_p = false;
+	    var has_sess_p = false;
+	    var uuri = null;
+
+	    var attempt_token = null;
+	    if( decoded_body && decoded_body['token'] ){
+	        attempt_token = decoded_body['token'];
+	        ll('looks like POST');
+	    }
+	    // Try to resolve to token into known sessions.
+	    if( attempt_token ){
+		ll('looks like a token was attempted');
+		
+		// Best attempt at extracting a UID.
+		has_token_p = true;
+		var sess = sessioner.get_session_by_token(attempt_token);
+		if( sess ){
+		    ll('call using session:');
+		    ll(sess);
+		    uuri = sess.uri;
+		    has_sess_p = true;
+		}else{
+		    ll('no token was attempted');
+		}
+	    }
+
+	    // Extract token=??? from the request body safely and add
+	    // the uri as uid.
+	    decoded_body['uid'] = uuri;
+	    delete decoded_body['token'];
+
+	    // Do we have permissions to make the call?
+	    var ns = req.route.params['namespace'] || '';
+	    var call = req.route.params['call'] || '';
+	    var subcall = req.route.params['subcall'] || '';
+	    call = call + subcall; // allow for things like seed/fromProcess
+	    if( ! app_guard.is_public(ns, call) && ! uuri ){
+		ll('blocking call: ' + req.url);
+		
+		var error_msg = 'sproing!';
+		if( has_token_p && ! has_sess_p ){
+		    error_msg = 'You are using a bad token; please remove it.';
+		}else{
+		    error_msg = 'You do not have permission for this operation.';
+		}
+		
+		// Catch error here if no proper ID on non-public.
+		res.setHeader('Content-Type', 'text/json');
+		var eresp = {
+		    message_type: 'error',
+		    message: error_msg
+		};
+		var eresp_str = JSON.stringify(eresp);
+
+		// If this was requested as AJAX, not CORS, need to
+		// assemble it for the return.
+		if( decoded_body && decoded_body['json.wrf'] ){
+		    ll('adjust for AJAX call (POST)');
+		    var envelope = decoded_body['json.wrf'];
+		    eresp_str = envelope + '(' + eresp_str + ');';
+		}
+
+		//var eresp = new bbopx.barista.response(eresp_seed);
+		ll('inject response:');
+		ll(eresp_str);
+		res.send(eresp_str);
+
+	    }else{
+
+		// Not public or user is privileged.
+		// Route the simple call to the right place.
+		//ll('req: ', req);
+		// Clip "/api/" and the namespace.
+		var api_loc = app_guard.app_target(ns);
+		req.url = req.url.substr(ns.length + 5);
+		ll('api xlate (POST): [' + api_loc + ']' + req.url);
+		//ll(req.url);
+		//ll(req);
+		//ll(decoded_body);
+
+		// Okay, @#$@#$@. The proxy server simply will not
+		// work the way we want (see:
+		// https://github.com/nodejitsu/node-http-proxy/issues/180),
+		// so write our own @#$@#%#$^% client to proxy.
+
+		var proxy_url = url.parse(api_loc);
+		var proxy_port = proxy_url.port || 80;
+
+		var post_data = querystring.stringify(decoded_body);
+		var options = {
+		    hostname: proxy_url.hostname,
+		    port: proxy_port,
+		    path: req.url,
+		    method: 'POST',
+		    headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'Content-Length': post_data.length
+		    }
+		};
+		
+		var proxy_req = http.request(options, function(proxy_res) {
+
+		    //console.log('status: '+proxy_res.statusCode);
+		    //console.log('headers: '+JSON.stringify(proxy_res.headers));
+		    proxy_res.setEncoding('utf8');
+
+		    var proxied_body = '';
+		    proxy_res.on('data', function (chunk) {
+			proxied_body += chunk.toString();
+		    });
+		    proxy_res.on('end', function() {
+			//console.log('BODY: ' + proxied_body);
+			//console.log('No more data in response.');
+
+			// Notify any listeners.
+			var json_string = _extract_json_from_jsonp(proxied_body);
+			_notify_listeners(json_string);
+
+			// Well, three down, but we're finally
+			// here. Send our data back up to the top.
+			res.setHeader('Content-Type', 'application/json');
+			res.send(proxied_body);
+		    });
+		});
+		
+		proxy_req.on('error', function(e) {
+		    _proxy_error(e, 'result proxy problem: ' + e.message,
+				 req, res);
+		});
+		
+		// End by writing data to request body.
+		proxy_req.write(post_data);
+		proxy_req.end();
+	    }
+	});
+
+	/// A little something in case of error.
+	req.on('error', function(e) {
+	    _proxy_error(e, 'POST proxy problem: ' + e.message, req, res);
+	});
     });
 
     ///
@@ -1337,28 +1485,27 @@ var BaristaLauncher = function(){
 		if( data['class'] === 'telekinesis' ){
 		    var mid = data['model_id'];
 		    var obs = data['objects'];
-		    if( typeof(mid) !== 'undefined' && 
-			typeof(obs) === 'object' ){
-			    each(obs, function(ob){
-				var iid = ob['item_id'];
-				var itop = ob['top'];
-				var ileft = ob['left'];
-				if( typeof(iid) !== 'undefined' &&
-				    typeof(itop) !== 'undefined' &&
-				    typeof(ileft) !== 'undefined' ){
-					cubby.dropoff(mid, 'layout', iid,
-						      {'top': itop,
-						       'left': ileft});
-					// ll('cubby m: ',
-					// 	    cubby.model_count());
-					// ll('cubby ns: ',
-					// 	    cubby.namespace_count(mid));
-					// ll('cubby ks: ',
-					// 	    cubby.key_count(mid,
-					//          'layout'));
-				    }
-			    });
-			}
+		    if(typeof(mid) !== 'undefined' && typeof(obs) === 'object'){
+			each(obs, function(ob){
+			    var iid = ob['item_id'];
+			    var itop = ob['top'];
+			    var ileft = ob['left'];
+			    if( typeof(iid) !== 'undefined' &&
+				typeof(itop) !== 'undefined' &&
+				typeof(ileft) !== 'undefined' ){
+				cubby.dropoff(mid, 'layout', iid,
+					      {'top': itop,
+					       'left': ileft});
+				// ll('cubby m: ',
+				// 	    cubby.model_count());
+				// ll('cubby ns: ',
+				// 	    cubby.namespace_count(mid));
+				// ll('cubby ks: ',
+				// 	    cubby.key_count(mid,
+				//          'layout'));
+			    }
+			});
+		    }
 		}
 	    }
 	});
@@ -1415,4 +1562,3 @@ var BaristaLauncher = function(){
 
 // 
 var barista = new BaristaLauncher();
-
