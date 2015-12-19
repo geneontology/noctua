@@ -108,6 +108,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Events registry.
     // Add manager and default callbacks to minerva/barista.
     var engine = new jquery_engine(barista_response);
+    engine.method('POST');
     var manager = new minerva_manager(global_barista_location,
 				      global_minerva_definition_name,
 				      in_token, engine, 'async');
@@ -2431,6 +2432,7 @@ jsPlumb.ready(function(){
 		// This manager bootstraps the editor by fetching the
 		// model out of Minerva.
 		var engine = new jquery_engine(barista_response);
+		engine.method('POST');
 		var init_manager =
 		    new minerva_manager(global_barista_location,
 					global_minerva_definition_name,
