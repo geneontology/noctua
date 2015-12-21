@@ -20,20 +20,7 @@
    of the tooling is built around that and should install easily with:
 
    : npm install
-   : ./node_modules/.bin/gulp build
 
-   Or, if you have "./node_modules/.bin" in your path:
-
-   : npm install
-   : gulp build
-
-   Tha available gulp tasks are:
-
-   - doc - build the docs, available in doc/
-   - test - need more here
-   - build - assemble the apps for running
-   - watch - development file monitor
-   - clean - clean out /doc and /deploy
    
    Noctua makes use of [[https://jsplumbtoolkit.com/][jsPlumb]] and [[http://github.com/berkeleybop][BBOP]] components
    developed for [[https://github.com/geneontology/amigo/][AmiGO]].
@@ -48,9 +35,26 @@
 
    For more information about the configuration examples, see [[https://github.com/geneontology/noctua/tree/master/config#configurations][here]].
 
+   After configuring your startup, run `gulp build`:
+
+   : ./node_modules/.bin/gulp build
+
+   Or, if you have "./node_modules/.bin" in your path:
+
+   : gulp build
+
    The the gulpfile.js and the startup.yaml are not necessary to run the 
    services, they merely wrap getting the different variables coordinated
    for the command line options for each of the services.
+
+   Tha available gulp tasks are:
+
+   - doc - build the docs, available in doc/
+   - test - need more here
+   - build - assemble the apps for running
+   - watch - development file monitor
+   - clean - clean out /doc and /deploy
+
 
 *** Minerva (optional)
 
