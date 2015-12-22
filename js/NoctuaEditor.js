@@ -214,6 +214,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    ]
 	},
 	{
+	    'id': 'template',
+	    'label': 'Use as template',
+	    'widget_type': 'dropdown',
+	    'policy': 'mutable',
+	    'cardinality': 'one',
+	    'placeholder': 'false',
+	    'options': [
+		{
+		    'label': 'True (model is a template)',
+		    'identifier': 'true',
+		    'comment': 'Can be copied form workbench, but no longer edited.'
+		},
+		{
+		    'label': 'False (default; model is not a template)',
+		    'identifier': 'false',
+		    'comment': 'Edited as normal.'
+		}
+	    ]
+	},
+	{
 	    'id': 'comment',
 	    'label': 'Comment',
 	    'widget_type': 'textarea',
@@ -988,6 +1008,27 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    _make_selector_source('.demo-window', '.konn');
 	    
     	});
+
+	// As our final act, we will make some changes to the display
+	// depending on the model annotations. Specifically, whether
+	// or not this looks like a template.
+	var template_p = false;
+	var tanns = ecore.get_annotations_by_key('template');
+	if( us.isArray(tanns) && tanns.length === 1 ){
+	    var tann = tanns[0].value();
+	    if( tann && tann === 'true' ){
+		//document.title = 'TEMPLATE: ' + document.title;
+		template_p = true;
+	    }
+	}
+	if( template_p ){
+	    jQuery('.app-graph-container').css('margin-left', '0em');
+	    jQuery('.app-controls').css('width', '0em');
+	}else{
+	    jQuery('.app-graph-container').css('margin-left', '15em');
+	    jQuery('.app-controls').css('width', '15em');
+	}
+
     }
 
     // This is a very important core function. It's purpose is to
