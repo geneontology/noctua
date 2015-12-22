@@ -28,7 +28,7 @@
 
 .app-graph-container {
     overflow: auto;
-    background-color: #FFEBCD;
+    background-color: #ffebcd;
     margin-left: 15em;
     padding-top: 0.25em;
     padding-bottom: 0.25em;
@@ -79,6 +79,15 @@
 
 .app-table-container {
     padding: 3px;
+}
+
+.app-template-announce {
+    font-size: 2em;
+    left: 50px;
+    opacity: 0.5;
+    position: absolute;
+    top: 75px;
+    z-index: 10
 }
 
 /*
@@ -366,7 +375,8 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 
 .bbop-mme-stack-td {
     border: 1px solid #eeeeee;
-    word-break: break-word; /* to get chrome a little nicer */ 
+    /* word-break: break-all; */
+    word-break: break-word; /* to get chrome a little nicer */
 }
 
 .bbop-mme-new-info {
