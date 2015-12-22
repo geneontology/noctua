@@ -70,12 +70,14 @@ COLLAPSIBLE_RELATIONS:
     - RO:0002234
     - RO:0002333
     - RO:0002488
+    ## occurs_in
     - BFO:0000066
+    ## has_part
+    - BFO:0000051
 COLLAPSIBLE_REVERSE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse, with the edges flowing the other direction.
   type: list
-  value:
-    - BFO:0000051
+  value: []
 ## Other service definitions.
 DEFAULT_APP_DEFINITION:
   comment: The application profile to use at startup.
