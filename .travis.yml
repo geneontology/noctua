@@ -4,8 +4,12 @@ node_js:
 before_script:
   - npm install
 script:
+  - cp config/startup.yaml.stack-dev ./startup.yaml
   - ./node_modules/.bin/gulp build
   - ./node_modules/.bin/gulp test
+branches:
+  only:
+    - master
 notifications:
   email:
     - sjcarbon@lbl.gov
