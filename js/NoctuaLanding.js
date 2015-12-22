@@ -681,41 +681,6 @@ var AmiGOBootstrapping = function(user_token){
 	}
     }
 
-    // Comms to minerva.
-    // Add manager and default callbacks to repl.
-    var min_engine = new jquery_engine(barista_response);
-    var min_manager = new minerva_manager(global_barista_location,
-					  global_minerva_definition_name,
-					  user_token, min_engine, 'async');
-    min_manager.register('prerun', _shields_up);
-    min_manager.register('postrun', _shields_down, 9);
-    min_manager.register('meta', function(resp, man){
-
-	// Got a model export.
-	if( resp.export_model() ){
-	    console.log('meta: export kick');
-	    
-	    //
-	    var exp = resp.export_model();
-	    var rand = uuid();
-	    //alert(exp);
-
-	    var enc_exp = encodeURIComponent(exp);
-	    var form_set = [
-		'<form id="'+ rand +'" method="POST" action="/action/display">',
-		'<input type="hidden" name="thing" value="'+ enc_exp +'">',
-		'</form>'
-	    ];
-	    jQuery('body').append(form_set.join(''));
-	    jQuery('#'+rand).submit();
-
-	    // var expdia = new widgetry.contained_modal(null, '<strong>Export</strong>', exp);
-	    // expdia.show();
-	}else{
-	    alert('honestly not sure what we should do here...ask seth');
-	}
-    });
-
     // Events registry.
     // Get all 'noctua_model_meta'.
     var engine = new jquery_engine(golr_response);
@@ -769,20 +734,12 @@ var AmiGOBootstrapping = function(user_token){
 		return new_url;
 	    }
 
-	    // Create the GAF button.
-	    var gaf_export_id = uuid().replace('-', '');
-	    var owl_export_id = uuid().replace('-', '');
-	    button_info[model_id] = {
-		gaf_export: gaf_export_id,
-		owl_export: owl_export_id
-	    };
-
 	    // Cram all the buttons in.
 	    var bstrs = [
 		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
 		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
-		'<a id="' + gaf_export_id + '" class="btn btn-primary btn-xs" href="#" role="button">GAF</a>',
-		'<a id="' + owl_export_id + '" class="btn btn-primary btn-xs" href="#" role="button">OWL</a>'
+		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
+		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
 	    ];
 	    tr_cache.push(bstrs.join(' '));
 	    
@@ -793,22 +750,6 @@ var AmiGOBootstrapping = function(user_token){
 	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
 	jQuery('#model-golr-selection-data').empty();
 	jQuery('#model-golr-selection-data').append(table_str);
-
-	// Now that we're attached to the DOM, go ahead and make the
-	// buttons active. See WARNING/TODO above.
-	each(button_info, function(buttons, mid){
-
-	    // GAF.
-	    jQuery('#'+ buttons['gaf_export']).click(function(evt){
-		min_manager.export_model(mid, 'gaf');
-	    });
-
-	    // OWL.
-	    jQuery('#'+ buttons['owl_export']).click(function(evt){
-		min_manager.export_model(mid);
-	    });
-
-	});
 
 	// Make the tables real nice.
 	jQuery('#model-golr-selection').DataTable();
