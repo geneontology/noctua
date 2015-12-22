@@ -92,9 +92,9 @@ var createNEOBioAC = function(element_id){
 
 	load: function(query, callback) {
 	    // At least a length of 3 to operate.
-            // if( ! query.length || query.length < 3 ){
-	    // 	return callback();
-	    // }
+            if( ! query.length ){
+	    	return callback();
+	    }
 	    
 	    manager.set_comfy_query(query);
             manager.search().then(function(resp){
@@ -158,9 +158,9 @@ var createComplexAC = function(element_id){
 	},
 	load: function(query, callback) {
 	    // At least a length of 3 to operate.
-            // if( ! query.length || query.length < 3 ){
-	    // 	return callback();
-	    // }
+            if( ! query.length ){
+	    	return callback();
+	    }
 	    
 	    manager.set_comfy_query(query);
             manager.search().then(function(resp){
@@ -224,7 +224,7 @@ jQuery(document).ready(function(){
 	    // Collect as has_parts.
 	    each(bioac.values(), function(bid){
 		var bind = reqs.add_individual(bid);
-		reqs.add_fact([bind, complex_ind_id, 'BFO:0000051']);
+		reqs.add_fact([complex_ind_id, bind, 'BFO:0000051']);
 	    });
 
 	    sendRequestToMinerva(reqs);
