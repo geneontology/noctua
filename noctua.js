@@ -32,6 +32,10 @@ var bbop = require('bbop-core');
 var barista_response = require('bbop-response-barista');
 var minerva_requests = require('minerva-requests');
 
+// Extra manager stuff for exports.
+var node_engine = require('bbop-rest-manager').node;
+var minerva_manager = require('bbop-manager-minerva');
+
 ///
 /// Helpers.
 ///
@@ -926,6 +930,79 @@ var NoctuaLauncher = function(){
 	    //res.setHeader('Content-Type', 'text/owl');
 	    res.setHeader('Content-Type', 'text/plain');
 	    res.send(unescape(mstr));
+	});
+	
+	// Downloads for the impatient.
+	self.app.get('/download/:model/:format?', function(req, res){
+
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+	    
+	    // Listing of known download formats.
+	    var known_formats = ['owl', 'gaf', 'gpad'];
+
+	    //console.log(req.route);
+	    //console.log(req.route.params['query']);
+	    var model_id = req.route.params['model'] || '';
+	    var format = req.route.params['format'] || 'owl';
+	    if( ! model_id || model_id === '' ){
+		// Catch error here if no proper ID.
+		res.status(404);
+		res.setHeader('Content-Type', 'text/plain');
+		res.send('no model identifier');
+	    }else if( ! format ){
+		// Catch error here if no format.
+		res.status(404);
+		res.setHeader('Content-Type', 'text/plain');
+		res.send('no format identifier');
+	    }else if( us.indexOf(known_formats, format) === -1 ){
+		// Catch error here if no known format.
+		res.status(404);
+		res.setHeader('Content-Type', 'text/plain');
+		res.send('no known format identifier: ' + format);
+	    }else{
+		
+		// Okay, we've got probably good input. Grab model for
+		// export with fresh manager.
+		var ex_engine = new node_engine(barista_response);
+		var ex_manager =
+			new minerva_manager(self.barista_location,
+					    self.minerva_definition_name,
+					    null, ex_engine, 'async');
+		
+		// First, error callbacks.
+		ex_manager.register('error', function(resp, man){
+		    res.status(400);
+		    res.setHeader('Content-Type', 'text/plain');
+		    res.send('apparently could not resolve model');
+		});
+		ex_manager.register('manager_error', function(resp, man){
+		    res.status(400);
+		    res.setHeader('Content-Type', 'text/plain');
+		    res.send('comms issues for this model');
+		});
+		
+		// Possible success callback.
+		ex_manager.register('meta', function(resp, man){
+	    	    // Export error.
+	    	    if( ! resp.export_model() ){
+			res.status(400);
+			res.setHeader('Content-Type', 'text/plain');
+			res.send('exported not working?');
+		    }else{
+			var exp = resp.export_model();
+			res.setHeader('Content-Type', 'text/plain');
+			res.send(exp);		    
+		    }
+		});
+		
+		// Trigger export, owl is default.
+		if( format === 'owl' ){
+	    	    ex_manager.export_model(model_id);
+		}else{
+		    // All other formats.
+	    	    ex_manager.export_model(model_id, format);
+		}
+	    }
 	});
     };
 
