@@ -358,26 +358,28 @@ function node_stack_object(enode, aid){
 		}
 		var x_node = subgraph.get_node(x_ent_id);
 		// Try and extract proof of evidence.
-		var ev_node_anns = x_node.get_annotations_by_key('evidence');
+		if( x_node ){
+		    var ev_node_anns = x_node.get_annotations_by_key('evidence');
 
-		// Add the edge/node combos to the table.
-		each(x_node.types(), function(x_type){
+		    // Add the edge/node combos to the table.
+		    each(x_node.types(), function(x_type){
 
-		    //
-		    var elt_id = bbop_core.uuid();
-		    var edge_id = x_edge.id();
-		    hook_list.push([edge_id, elt_id]);
-		    if( ev_edge_anns.length > 0 ){
-			// In this case (which should be the only possible
-			// case), we'll capture the ID and pair it with an
-			// ID.
-			_add_table_row(x_type, rel_color, rel_readable + '(',
-				       ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-with">E</button></sup>');
-		    }else{
-			_add_table_row(x_type, rel_color, rel_readable + '(',
-				       ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-without">&nbsp;</button></sup>');
-		    }
-		});
+			//
+			var elt_id = bbop_core.uuid();
+			var edge_id = x_edge.id();
+			hook_list.push([edge_id, elt_id]);
+			if( ev_edge_anns.length > 0 ){
+			    // In this case (which should be the only possible
+			    // case), we'll capture the ID and pair it with an
+			    // ID.
+			    _add_table_row(x_type, rel_color, rel_readable + '(',
+					   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-with">E</button></sup>');
+			}else{
+			    _add_table_row(x_type, rel_color, rel_readable + '(',
+					   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-without">&nbsp;</button></sup>');
+			}
+		    });
+		}
 	    });
 	};
 
