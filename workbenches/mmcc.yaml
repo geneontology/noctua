@@ -4,5 +4,5 @@ type: "model"
 help-link: "http://github.com/geneontology/noctua/issues"
 path-id: "mmcc"
 body-template: 'mmcc.tmpl'
-css: ['selectize.css', 'selectize.bootstrap3.css']
+css: ['selectize.bootstrap3.css', 'override-selectize.css']
 javascript: ['MMCC.js']

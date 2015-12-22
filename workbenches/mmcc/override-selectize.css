@@ -1,0 +1,20 @@
+.selectize-control.golrauto::before {
+    -moz-transition: opacity 0.5s;
+    -webkit-transition: opacity 0.5s;
+    transition: opacity 0.5s;
+    content: ' ';
+    z-index: 2;
+    position: absolute;
+    display: block;
+    top: 12px;
+    right: 34px;
+    width: 16px;
+    height: 16px;
+    /* background: url(/static/spinner.gif); */
+    background: url(/images/waiting_ac.gif);
+    background-size: 16px 16px;
+    opacity: 0;
+}
+.selectize-control.golrauto.loading::before {
+    opacity: 1.0;
+}

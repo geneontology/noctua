@@ -9,6 +9,7 @@
 /* global global_golr_server */
 /* global global_barista_location */
 /* global global_minerva_definition_name */
+/* global global_golr_neo_server */
 /* global jsPlumb */
 /* global global_barista_token */
 /* global global_collapsible_relations */
