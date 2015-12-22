@@ -1,0 +1,14 @@
+language: node
+node_js:
+  "0.12"
+# install:
+#   - gem install kwalify
+before_script:
+  - npm install -g gulp
+script:
+  - gulp build
+  - gulp test
+notifications:
+  email:
+    - sjcarbon@lbl.gov
+    - cjmungall@lbl.gov
