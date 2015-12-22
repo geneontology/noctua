@@ -1,11 +1,11 @@
 language: node
 node_js:
   "0.12"
-before_script:
-  - npm install -g gulp
+# before_script:
+#   - npm install -g gulp
 script:
-  - gulp build
-  - gulp test
+  - ./node_modules/.bin/gulp build
+  - ./node_modules/.bin/gulp test
 notifications:
   email:
     - sjcarbon@lbl.gov
