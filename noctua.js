@@ -92,8 +92,14 @@ var noctua_location =
 var noctua_frontend = argv['p'] || argv['noctua-public'];
 
 // Process strings to usable lists.
-var collapsible_relations = collapsible_raw.split(/\s+/) || [];
-var collapsible_reverse_relations = collapsible_reverse_raw.split(/\s+/) || [];
+var collapsible_relations = [];
+if( collapsible_raw ){
+    collapsible_relations = collapsible_raw.split(/\s+/) || [];
+}
+var collapsible_reverse_relations = [];
+if( collapsible_reverse_raw ){
+    collapsible_reverse_relations = collapsible_reverse_raw.split(/\s+/) || [];
+}
 var workbench_maybe_dirs = workbench_maybe_raw.split(/\s+/) || [];
 
 console.log('Will fold: ', collapsible_relations);

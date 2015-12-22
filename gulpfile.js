@@ -339,20 +339,28 @@ gulp.task('run-barista', shell.task(_run_cmd(
 )));
 
 //node noctua.js -c "RO:0002333 BFO:0000066 RO:0002233 RO:0002488" -g http://golr.geneontology.org/solr/ -b http://localhost:3400 -m minerva_local
+var noctua_run_list = [
+    'node', 'noctua.js',
+    '--golr', golr_lookup_url,
+    '--golr-neo', golr_neo_lookup_url,
+    '--barista', barista_lookup_url,
+    '--noctua-public', noctua_lookup_url,
+    '--noctua-self', noctua_location,
+    '--minerva-definition', def_app_def,
+    // Lists need to be quoted.
+    '--workbenches', '"' + workbench_dirs_str + '"'
+];
+// The relations are variable.
+if( collapsible_relations_str ){
+    noctua_run_list.push('--collapsible-relations');
+    noctua_run_list.push('"' + collapsible_relations_str + '"');
+}
+if( collapsible_reverse_relations_str ){
+    noctua_run_list.push('--collapsible-reverse-relations');
+    noctua_run_list.push('"' + collapsible_reverse_relations_str + '"');
+}
 gulp.task('run-noctua', shell.task(_run_cmd(
-    ['node', 'noctua.js',
-     '--golr', golr_lookup_url,
-     '--golr-neo', golr_neo_lookup_url,
-     '--barista', barista_lookup_url,
-     '--noctua-public', noctua_lookup_url,
-     '--noctua-self', noctua_location,
-     '--minerva-definition', def_app_def,
-     // Lists need to be quoted.
-     '--workbenches', '"' + workbench_dirs_str + '"',
-     '--collapsible-relations', '"' + collapsible_relations_str + '"',
-     '--collapsible-reverse-relations', '"' +
-     collapsible_reverse_relations_str + '"'
-    ]
+    noctua_run_list
 )));
 
 // node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml                                                        
