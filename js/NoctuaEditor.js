@@ -1021,12 +1021,25 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		template_p = true;
 	    }
 	}
+	// BUG/TODO: This all needs to be abstracted into the
+	// widgetry.js in a more systematic way so that we can do
+	// group controlling a little better in the UI.
 	if( template_p ){
 	    jQuery('.app-graph-container').css('margin-left', '0em');
 	    jQuery('.app-controls').css('width', '0em');
+	    //
+	    jQuery('.open-dialog').css('width', '0');
+	    jQuery('.konn').css('width', '0');
+	    jQuery('.app-graph-container').css('background-color', '#e2e2e2');
+	    jQuery('#template_announce_div').removeClass('hidden');	    
 	}else{
 	    jQuery('.app-graph-container').css('margin-left', '15em');
 	    jQuery('.app-controls').css('width', '15em');
+	    //
+	    jQuery('.open-dialog').css('width', '1em');
+	    jQuery('.konn').css('width', '1em');
+	    jQuery('.app-graph-container').css('background-color', '#ffebcd');
+	    jQuery('#template_announce_div').addClass('hidden');	    
 	}
 
     }
