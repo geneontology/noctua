@@ -661,7 +661,7 @@ var AmiGOBootstrapping = function(user_token){
 			     confc.document_category(), ['*']);    
     manager.set_results_count(1000);
 
-    // On search, report 
+    // On search, report.
     manager.register('search', function(resp, man){
 
         //console.log(resp);
