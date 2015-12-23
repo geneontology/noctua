@@ -477,12 +477,8 @@ var MinervaBootstrapping = function(user_token){
 		// Button/link as edit.
 		var bstr =
 		    '<a class="btn btn-primary" href="' +
-		    _generate_jump_url(model_id, 'graph') +
-		    '">Graph</a>';// +
-//		    '&nbsp;' +
-		    // '<a class="btn btn-primary" href="' +
-		    // _generate_jump_url(model_id, 'basic') +
-		    // '">Form</a>';
+			_generate_jump_url(model_id, 'graph') +
+			'">Graph</a>';
 		tr_cache.push(bstr);
 
 		// Add to cache.
@@ -494,43 +490,15 @@ var MinervaBootstrapping = function(user_token){
 	    jQuery('#model-selection-data').append(table_str);
 	    jQuery('#model-selection').DataTable();
 
-	    // // Insert model IDs into "Select by ID" interface.
-	    // jQuery(select_stored_jump_elt).empty(); // Clear interfaces.
-	    // jQuery(select_stored_jump_elt).append(rep_str);
-
 	    // Dropdown for the form select interface.
 	    jQuery(select_stored_jump_basic_elt).empty();
 	    jQuery(select_stored_jump_basic_elt).append(rep_str);
-
-	    // // Also add this list to the export interface.
-	    // jQuery(model_export_by_id_input_elt).empty();
-	    // jQuery(model_export_by_id_input_elt).append(rep_str);
-
-	    // // Make jump interface for graph jump on click.
-	    // jQuery(select_stored_jump_button_elt).click(function(evt){
-	    // 	var id = jQuery(select_stored_jump_elt).val();
-	    // 	_jump_to_page(_generate_jump_url(id, 'graph'));
-	    // });
 
 	    // Make jump interface for form jump on click.
 	    jQuery(select_stored_jump_button_basic_elt).click(function(evt) {
 	      var id = jQuery(select_stored_jump_basic_elt).val();
 	      _jump_to_page(_generate_jump_url(id, 'basic'));
 	    });
-
-	    // // Make export interface trigger on click.
-	    // jQuery(model_export_by_id_def_button_elt).click(function(evt){
-	    // 	var id = jQuery(model_export_by_id_input_elt).val();
-	    // 	manager.export_model(id);
-	    // });
-	    // jQuery(model_export_by_id_gaf_button_elt).click(function(evt){
-	    // 	var id = jQuery(model_export_by_id_input_elt).val();
-	    // 	manager.export_model(id, 'gaf');
-	    // });
-	    // jQuery(model_export_by_id_gpd_button_elt).click(function(evt){
-	    // 	var id = jQuery(model_export_by_id_input_elt).val();
-	    // 	manager.export_model(id, 'gpad');
-	    // });
 
 	    // Creation for form. Since default is in the callback is
 	    // "graph", goose it over to kick me to form instead.
