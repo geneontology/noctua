@@ -1332,12 +1332,20 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     manager.register('postrun', _shields_down, 8);
     manager.register('postrun', function(resp, man){ // experimental	
 
-	// May need to handle the reasoner changing.
-	ll('reasoner-p: ' + resp.reasoner_p());
-	if( resp.reasoner_p() ){
-	    jQuery('.app-graph-container').css('background-color', '#999999');
-	}else{
-	    jQuery('.app-graph-container').css('background-color', '#ffebcd');
+	// May need to handle the reasoner changing, but ignore
+	// chatter from meta--only rebuilds and merges.
+	if( resp.signal() === 'rebuild' || resp.signal() === 'merge' ){
+
+	    ll('reasoner-p: ' + resp.reasoner_p());
+	    if( resp.reasoner_p() ){
+		jQuery('.app-graph-container').css('background-color',
+						   '#999999');
+		jQuery(toggle_reasoner_elt).prop('checked', true);
+	    }else{
+		jQuery('.app-graph-container').css('background-color',
+						   '#ffebcd');
+		jQuery(toggle_reasoner_elt).prop('checked', false);
+	    }
 	}
 
 	// TODO: Still need this?
