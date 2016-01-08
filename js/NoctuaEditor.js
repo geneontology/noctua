@@ -2354,21 +2354,18 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     });
 
     // Toggle the visibility of the part_of connectors. 
-    var viz_p = true;
+    var viz_p = true; // obviously, start visible
     jQuery(toggle_part_of_elt).click(function(){
 	
 	// First, collect all of the part_of connections.
 	var poc = {};
-	each(ecore.all_edges(), function(edge_id){
-	    var edge = ecore.get_edge_by_id(edge_id);
-	    //if( edge && edge.relation() === 'part_of' ){
+	each(ecore.all_edges(), function(edge){
 	    if( edge && edge.relation() === 'BFO:0000050' ){
-		var conn_id =
-		    ecore.get_connector_id_by_edge_id(edge.id());
+		var conn_id = ecore.get_connector_id_by_edge_id(edge.id());
 		poc[conn_id] = true;
 	    }
-	});	    
-	
+	});
+
 	// Switch viz.
 	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
 	
