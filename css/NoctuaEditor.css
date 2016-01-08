@@ -545,3 +545,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     cursor: -webkit-zoom-in;
     cursor: zoom-in;
 }
+
+.bbop-noctua-menu-checkbox {
+    margin-left: 1em;
+}
