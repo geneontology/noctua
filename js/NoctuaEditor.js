@@ -382,6 +382,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var toggle_part_of_elt = '#' + toggle_part_of_id;
     var toggle_screen_id = 'toggle_screen_of';
     var toggle_screen_elt = '#' + toggle_screen_id;
+    var toggle_reasoner_id = 'action_use_reasoner';
+    var toggle_reasoner_elt = '#' + toggle_reasoner_id;
     //
     var view_basic_id = 'view_basic';
     var view_basic_elt = '#' + view_basic_id;
@@ -1329,7 +1331,15 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     manager.register('postrun', _refresh_tables, 9);
     manager.register('postrun', _shields_down, 8);
     manager.register('postrun', function(resp, man){ // experimental	
-	
+
+	// May need to handle the reasoner changing.
+	ll('reasoner-p: ' + resp.reasoner_p());
+	if( resp.reasoner_p() ){
+	    jQuery('.app-graph-container').css('background-color', '#999999');
+	}else{
+	    jQuery('.app-graph-container').css('background-color', '#ffebcd');
+	}
+
 	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
 	if( barclient ){
@@ -1524,7 +1534,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     function _add_composite(base_cls, additions){
 	
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id());
+						    ecore.get_id(),
+						    use_reasoner_p);
 	var new_base = reqs.add_individual(base_cls);
 	
 	// 
@@ -1647,7 +1658,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		
 		// Ready new super request.
 		var reqs = new minerva_requests.request_set(manager.user_token(),
-							    ecore.get_id());
+							    ecore.get_id(),
+							    use_reasoner_p);
 
 		var ind_eb = reqs.add_individual(eb);
 		var ind_mf = reqs.add_individual(mf);
@@ -1804,7 +1816,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	    // Send message to server.
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
-							ecore.get_id());
+							ecore.get_id(),
+							use_reasoner_p);
 	    reqs.add_individual(simple_ubernoodle_auto_val);
 	    manager.request_with(reqs);
 
@@ -1935,7 +1948,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Trigger a model get and an inconsistent redraw.
     jQuery(refresh_btn_elt).click(function(){
 	ll('starting refresh of model: ' + ecore.get_id());
-	manager.get_model(ecore.get_id());
+	//manager.get_model(ecore.get_id());
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id(),
+						    use_reasoner_p);
+        reqs.get_model();
+        manager.request_with(reqs);
     });
 
     // // Export button.
@@ -1952,7 +1970,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Start a new request.
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id());
+						    ecore.get_id(),
+						    use_reasoner_p);
 
 	// Update all of the nodes with their current local (should be
 	// most recent) positions before saving.
@@ -2303,7 +2322,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Simple save request.
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id());
+						    ecore.get_id(),
+						    use_reasoner_p);
 
 	// TODO: need to update minerva-requests/lib/requests.js so
 	// that "store" is an action.
@@ -2388,6 +2408,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		}
 	    }
 	});
+    });
+    
+    // Toggle the use of the reasoner.
+    var use_reasoner_p = false;
+    jQuery(toggle_reasoner_elt).click(function(){
+
+	// Pull the current state of the checkbox and put that into
+	// the global.
+	var checked_p = jQuery(toggle_reasoner_elt).prop('checked');
+	if( typeof(checked_p) === 'boolean' ){
+	    use_reasoner_p = checked_p;
+
+	    // Refresh, using the current reasoner state.
+	    //manager.get_model(ecore.get_id());
+	    var reqs = new minerva_requests.request_set(manager.user_token(),
+							ecore.get_id(),
+							use_reasoner_p);
+            reqs.get_model();
+            manager.request_with(reqs);
+	}
     });
     
     // Toggle the screenshot mode.
