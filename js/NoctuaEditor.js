@@ -59,7 +59,6 @@ var edge = model.edge;
 
 // And its replacement
 var widgetry = require('noctua-widgetry');
-//alert(widgetry);
 
 // Want a "global" shield to help deal with bridging the initial
 // minerva contact load.
@@ -1334,12 +1333,18 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// but ignore chatter from meta--only rebuilds and merges.
 	if( resp.signal() === 'rebuild' || resp.signal() === 'merge' ){
 
-	    ll('reasoner-p: ' + resp.reasoner_p());
+	    ll('reasoner-p now reads as: ' + resp.reasoner_p());
 	    if( resp.reasoner_p() ){
+		// Set the manager to the correct value.
+		manager.use_reasoner_p(true);
+		// A little decoration.
 		jQuery('.app-graph-container').css('background-color',
 						   '#999999');
 		jQuery(toggle_reasoner_elt).prop('checked', true);
 	    }else{
+		// Set the manager to the correct value.
+		manager.use_reasoner_p(false);
+		// A little decoration.
 		jQuery('.app-graph-container').css('background-color',
 						   '#ffebcd');
 		jQuery(toggle_reasoner_elt).prop('checked', false);
@@ -1544,8 +1549,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     function _add_composite(base_cls, additions){
 	
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id(),
-						    use_reasoner_p);
+						    ecore.get_id());
 	var new_base = reqs.add_individual(base_cls);
 	
 	// 
@@ -1668,8 +1672,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		
 		// Ready new super request.
 		var reqs = new minerva_requests.request_set(manager.user_token(),
-							    ecore.get_id(),
-							    use_reasoner_p);
+							    ecore.get_id());
 
 		var ind_eb = reqs.add_individual(eb);
 		var ind_mf = reqs.add_individual(mf);
@@ -1826,8 +1829,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	    // Send message to server.
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
-							ecore.get_id(),
-							use_reasoner_p);
+							ecore.get_id());
 	    reqs.add_individual(simple_ubernoodle_auto_val);
 	    manager.request_with(reqs);
 
@@ -1960,8 +1962,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	ll('starting refresh of model: ' + ecore.get_id());
 	//manager.get_model(ecore.get_id());
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id(),
-						    use_reasoner_p);
+						    ecore.get_id());
         reqs.get_model();
         manager.request_with(reqs);
     });
@@ -1980,8 +1981,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Start a new request.
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id(),
-						    use_reasoner_p);
+						    ecore.get_id());
 
 	// Update all of the nodes with their current local (should be
 	// most recent) positions before saving.
@@ -2335,8 +2335,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Simple save request.
 	var reqs = new minerva_requests.request_set(manager.user_token(),
-						    ecore.get_id(),
-						    use_reasoner_p);
+						    ecore.get_id());
 
 	// TODO: need to update minerva-requests/lib/requests.js so
 	// that "store" is an action.
@@ -2431,13 +2430,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// the global.
 	var checked_p = jQuery(toggle_reasoner_elt).prop('checked');
 	if( typeof(checked_p) === 'boolean' ){
+
+	    ll('reasoner-p has been changed to: ' + checked_p);
 	    use_reasoner_p = checked_p;
+
+	    manager.use_reasoner_p(use_reasoner_p);
 
 	    // Refresh, using the current reasoner state.
 	    //manager.get_model(ecore.get_id());
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
-							ecore.get_id(),
-							use_reasoner_p);
+							ecore.get_id());
             reqs.get_model();
             manager.request_with(reqs);
 	}
