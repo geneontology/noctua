@@ -1279,40 +1279,39 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 		// Only run things that are intended actions.
 		var r_int = resp.intention();
-		ll('new packet: ' + this_packet + ', intent: ' + r_int);
-		if( r_int === 'action' ){
+		var r_sig = resp.signal();
+		// Only run things that require modification: this
+		// will be actions (with merges and rebuilds) or
+		// rebuilds, possibly from use of reasoner (where the
+		// signal might have been query).
+		if( ( r_int === 'action' && r_sig === 'merge' ) ||
+		    r_sig === 'rebuild' ){
 
-		    // Only run things that require modification.
-		    var r_sig = resp.signal();
-		    if( r_sig === 'merge' || r_sig === 'rebuild' ){
+		    ret = true;
 
-			ret = true;
-
-			// Currently, since running from all users, unecessary.
-			// // Need to extract our own ID from the manager.
-			// var my_uid = man.user_token();
-			// // Let's do some checking.
-			// var r_uid = resp.user_id();
-			// ll(['uid: ', r_uid, ', sig: ',
-			//     r_sig, ', int: ' ,r_int].join(''));
-			// // BUG/TODO: This will always be wrong since
-			// // we cannot compare tokens to ids.
-			// if( r_uid === my_uid ){
-			//     // Always run things I requested.
-			//     ll('TODO: running own request');
-			//     //run_fun(resp, man);
-			// }else if( r_int !== 'query' ){
-			//     // Run other people's requests as long as
-			//     // they are not
-			//     // queries.
-			//     ll("TODO: running other's non-query request");
-			//     //run_fun(resp, man);
-			// }else{
-			//     // Otherwise, ignore it.
-			//     ll("ignoring other's query request");
-			// }
-			
-		    }
+		    // Currently, since running from all users, unecessary.
+		    // // Need to extract our own ID from the manager.
+		    // var my_uid = man.user_token();
+		    // // Let's do some checking.
+		    // var r_uid = resp.user_id();
+		    // ll(['uid: ', r_uid, ', sig: ',
+		    //     r_sig, ', int: ' ,r_int].join(''));
+		    // // BUG/TODO: This will always be wrong since
+		    // // we cannot compare tokens to ids.
+		    // if( r_uid === my_uid ){
+		    //     // Always run things I requested.
+		    //     ll('TODO: running own request');
+		    //     //run_fun(resp, man);
+		    // }else if( r_int !== 'query' ){
+		    //     // Run other people's requests as long as
+		    //     // they are not
+		    //     // queries.
+		    //     ll("TODO: running other's non-query request");
+		    //     //run_fun(resp, man);
+		    // }else{
+		    //     // Otherwise, ignore it.
+		    //     ll("ignoring other's query request");
+		    // }		    
 		}
 	    }
 	}
@@ -1329,11 +1328,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     }, 11);
     manager.register('postrun', _inconsistency_check, 10);
     manager.register('postrun', _refresh_tables, 9);
-    manager.register('postrun', _shields_down, 8);
-    manager.register('postrun', function(resp, man){ // experimental	
+    manager.register('postrun', function(resp, man){
 
-	// May need to handle the reasoner changing, but ignore
-	// chatter from meta--only rebuilds and merges.
+	// May need to handle the reasoner changing from some sourse,
+	// but ignore chatter from meta--only rebuilds and merges.
 	if( resp.signal() === 'rebuild' || resp.signal() === 'merge' ){
 
 	    ll('reasoner-p: ' + resp.reasoner_p());
@@ -1347,6 +1345,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		jQuery(toggle_reasoner_elt).prop('checked', false);
 	    }
 	}
+
+    }, 9);
+    manager.register('postrun', _shields_down, 8);
+    manager.register('postrun', function(resp, man){ // experimental	
 
 	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
@@ -2181,10 +2183,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// if( _continue_update_p(bar_resp, manager) ){
 	
 	// We can make some assumptions for now that since it came out
-	// of Barista that it is good and clean.
-	if( bar_resp.intention() !== 'action' ){
+	// of Barista that it is good and clean. If not an action, we
+	// want to ignore, unless it looks like somebody is using the
+	// reasoner, which will force the rebuild flag no matter what.
+	if(bar_resp.intention() !== 'action' && bar_resp.signal() !== 'rebuild'){
 	    // Skip.
-	    ll('MSG: skipping message resp w/intent: ' + bar_resp.intention());
+	    ll('MSG: skipping message resp with intent: "'+
+	       bar_resp.intention() +'" and signal "'+ bar_resp.signal() +'".');
 	}else{
 	    // TODO/BUG: Might be easier if we had a wrapping of
 	    // _on_nominal_success() with with pre-/post-run within
@@ -2247,17 +2252,17 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
 	barclient.register('telekinesis', 'e', _on_telekinesis_update);
 	barclient.register('merge', 'f', function(a,b){
-	    console.log('barista/merge');
+	    console.log('barista/merge response');
 	    _on_model_update(a,b);
 	});
 	//_on_model_update);
 	barclient.register('rebuild', 'g', function(a,b){
-	    console.log('barista/rebuild');
+	    console.log('barista/rebuild response');
 	    _on_model_update(a,b);
 	});
 	//_on_model_update);
 	barclient.register('query', 'h', function(a,b){
-	    console.log('bar/query');
+	    console.log('barista/query response');
 	    _on_layout_response(a,b);
 	});
 	//_on_layout_response);
