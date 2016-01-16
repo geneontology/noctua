@@ -50,15 +50,17 @@ var minerva_requests = require('minerva-requests');
 var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
 
+// Get a localized layout system to test.
+
+// A local separated lib to handle the (semi-)seperable UI widgets.
+var widgetry = require('noctua-widgetry');
+
 // Aliases.
 var each = us.each;
 var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
-
-// And its replacement
-var widgetry = require('noctua-widgetry');
 
 // Want a "global" shield to help deal with bridging the initial
 // minerva contact load.
