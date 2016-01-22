@@ -55,6 +55,9 @@ var minerva_manager = require('bbop-manager-minerva');
 // A local separated lib to handle the (semi-)seperable UI widgets.
 var widgetry = require('noctua-widgetry');
 
+// And the layouts!
+var layout_engine = require('bbop-layout');
+
 // Aliases.
 var each = us.each;
 var noctua_graph = model.graph;
@@ -918,8 +921,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// Sugiyama. Find the initial layout position form the
 	// layout. There might be some missing due to finding cycles
 	// in the graph, so we have this two-step process.
-	var r = new bbop_legacy.layout.sugiyama.render();
-	var layout = r.layout(ecore);
+	var r = new layout_engine();
+	// Use cytoscape.js's run "inverse".
+	var layout = r.render(ecore, 'breadthfirst', {'inverse': true});
 	var fallback_position_store = new bbopx.noctua.location_store();
 	each(layout['nodes'], function(litem, index){
 	    var id = litem['id'];
