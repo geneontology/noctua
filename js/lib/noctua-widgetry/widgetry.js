@@ -259,7 +259,7 @@ function wipe(div){
  * Takes a core edit node types as the argument, categorize the, order
  * them.
  */
-function enode_types_to_stack(enode_types, aid){
+function enode_types_to_ordered_stack(enode_types, aid){
 	
     // Sort the types within the stack according to the known
     // type priorities.
@@ -859,7 +859,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     // capture their information for further editing.
     var elt2type = {};
     var type_list = [];
-    each(enode_types_to_stack(enode.types(), aid), function(item){
+    each(enode_types_to_ordered_stack(enode.types(), aid), function(item){
 	var type_str = type_to_full(item, aid);
 	var eid = bbop_core.uuid();
 	elt2type[eid] = item;		 
@@ -1943,11 +1943,12 @@ function type_to_span(in_type, color){
     var text = null;
 
     var min = in_type.to_string();
+    var more = in_type.to_string_plus();
     if( color ){
 	text = '<span ' + 'style="background-color: ' + color + ';" ' +
-	    'alt="' + min + '" ' + 'title="' + min +'">' + min + '</span>';
+	    'alt="' + more + '" ' + 'title="' + more +'">' + min + '</span>';
     }else{
-	text = '<span alt="' + min + '" title="' + min +'">' + min + '</span>';
+	text = '<span alt="' + more + '" title="' + more +'">' + min + '</span>';
     }
 
     return text;
@@ -1964,7 +1965,7 @@ function type_to_full(in_type, aid){
 
     var t = in_type.type();
     if( t === 'class' ){ // if simple, the easy way out
-	text = in_type.to_string();
+	text = in_type.to_string_plus();
     }else{
 	// For everything else, we're gunna hafta do a little
 	// lifting...
@@ -2037,7 +2038,7 @@ module.exports = {
     'repaint_exp_table': repaint_exp_table,
     'repaint_edge_table': repaint_edge_table,
     'wipe': wipe,
-    'enode_types_to_stack': enode_types_to_stack,
+    'enode_types_to_ordered_stack': enode_types_to_ordered_stack,
     'node_stack_object': node_stack_object,
     'add_enode': add_enode,
     'update_enode':update_enode ,

@@ -43,7 +43,7 @@
         "bbop-response-golr": "0.0.5",
         "body-parser": "1.13.3",
         "bbop-widget-solr-autocomplete": "^0.0.9",
-        "class-expression": "0.0.9",
+        "class-expression": "0.0.10",
         "cors": "2.4.1",
         "cytoscape": "2.4.6",
         "bootstrap": "3.3.4",
