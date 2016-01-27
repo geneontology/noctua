@@ -217,26 +217,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		}
 	    ]
 	},
-	// {
-	//     'id': 'template',
-	//     'label': 'Use as template',
-	//     'widget_type': 'dropdown',
-	//     'policy': 'mutable',
-	//     'cardinality': 'one',
-	//     'placeholder': 'false',
-	//     'options': [
-	// 	{
-	// 	    'label': 'True (model is a template)',
-	// 	    'identifier': 'true',
-	// 	    'comment': 'Can be copied form workbench, but no longer edited.'
-	// 	},
-	// 	{
-	// 	    'label': 'False (default; model is not a template)',
-	// 	    'identifier': 'false',
-	// 	    'comment': 'Edited as normal.'
-	// 	}
-	//     ]
-	// },
+	{
+	    'id': 'template',
+	    'label': 'Use as template',
+	    'widget_type': 'dropdown',
+	    'policy': 'mutable',
+	    'cardinality': 'one',
+	    'placeholder': 'false',
+	    'options': [
+		{
+		    'label': 'True (model is a template)',
+		    'identifier': 'true',
+		    'comment': 'Can be copied form workbench, but no longer edited.'
+		},
+		{
+		    'label': 'False (default; model is not a template)',
+		    'identifier': 'false',
+		    'comment': 'Edited as normal.'
+		}
+	    ]
+	},
 	{
 	    'id': 'comment',
 	    'label': 'Comment',
