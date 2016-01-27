@@ -177,6 +177,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    'label': 'closed',
 		    'identifier': 'closed',
 		    'comment': 'Editable, but never exported.'
+		},
+		{
+		    'label': 'delete',
+		    'identifier': 'delete',
+		    'comment': 'Never exported, request for irrevocable deletion.'
 		}
 	    ]
 	},
