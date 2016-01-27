@@ -333,9 +333,19 @@ var MinervaBootstrapping = function(user_token){
 	    var _model_state = function(model_id){
 		var retval = '???';
 
-		if( models_meta_ro && models_meta_ro[model_id] &&
-		    models_meta_ro[model_id]['model_state'] ){
-		    retval = models_meta_ro[model_id]['model_state'];
+		var hlists = model_to_value_hash_list[model_id];
+		if( hlists && hlists['state'] ){
+		    var valcache = [];
+		    // Search all annotations for state.
+		    each(hlists['state'], function(entry){
+			if(entry){
+			    valcache.push(entry);
+			}
+		    });
+		    // 
+		    if( valcache.length > 0 ){
+			retval = valcache.join(', ');
+		    }
 		}
 		
 		return retval;
@@ -364,6 +374,24 @@ var MinervaBootstrapping = function(user_token){
 			retval = true;
 		    }
 		
+		return retval;
+	    };
+
+	    // Check if model is a template.
+	    var _model_template_p = function(model_id){
+		var retval = false;
+
+		var hlists = model_to_value_hash_list[model_id];
+
+		if( hlists && hlists['template'] ){
+		    // Search all annotations for templateness.
+		    each(hlists['template'], function(entry){
+			if(entry === 'true'){
+			    retval = true;
+			}
+		    });
+		}
+
 		return retval;
 	    };
 
@@ -450,10 +478,6 @@ var MinervaBootstrapping = function(user_token){
 		// var clist = _model_contributor_list(model_id);
 		// tr_cache.push(clist.join(', '));
 
-		// // State.
-		// var state = _model_state(model_id);
-		// tr_cache.push(state);
-
 		// // Date.
 		// var date = _model_date(model_id);
 		// tr_cache.push(date);
@@ -462,6 +486,18 @@ var MinervaBootstrapping = function(user_token){
 		// fact.
 		if( _model_modified_p(model_id) ){
 		    tr_cache.push('*');
+		}else{
+		    tr_cache.push('');
+		}
+
+		// State.
+		var state = _model_state(model_id);
+		tr_cache.push(state);
+
+		// Check to see if it's a template and highlight that
+		// fact.
+		if( _model_template_p(model_id) ){
+		    tr_cache.push('TEMPLATE');
 		}else{
 		    tr_cache.push('');
 		}
