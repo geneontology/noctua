@@ -1,6 +1,6 @@
-# Welcome...
+# Introduction
 
-...to the general public face of Noctua. _Current development is
+Welcome to the general public face of Noctua. _Current development is
 very rapid, so some of these docs may be out of date._
 
 ![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
