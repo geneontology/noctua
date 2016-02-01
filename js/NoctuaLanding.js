@@ -777,7 +777,7 @@ var AmiGOBootstrapping = function(user_token){
 
 	// Make the tables real nice. Sort by date.
 	jQuery('#model-golr-selection').DataTable({"order": [[3, "desc"],
-							     [0, "desc"]]});
+							     [0, "asc"]]});
     });
     var p = manager.search();
 
