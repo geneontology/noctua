@@ -3,9 +3,6 @@
 ...to the general public face of Noctua. _Current development is
 very rapid, so some of these docs may be out of date._
 
-Noctua is a web-based tool for collaborative editing of *models* of
-biological processes.
-
 ![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
 
 ## Quickstart
