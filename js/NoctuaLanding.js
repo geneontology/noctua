@@ -751,12 +751,31 @@ var AmiGOBootstrapping = function(user_token){
 	    var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
 	    table_cache.push(tr_str);
 	});
-	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+
+	// Sort on date.
+	var sorted_table_cache = table_cache.sort(function(a, b){
+
+	    var title_a = a[3];
+	    var title_b = b[3];
+	    
+	    var ret = 0;
+
+	    if( title_a < title_b ){
+		ret = -1;
+	    }else if( title_a > title_b ){
+		ret = 1;
+	    }
+
+	    return ret;
+	});
+
+	// Create the table string and add.
+	var table_str = '<tr>' + sorted_table_cache.join('</tr><tr>') + '</tr>';
 	jQuery('#model-golr-selection-data').empty();
 	jQuery('#model-golr-selection-data').append(table_str);
 
-	// Make the tables real nice. Sort on date in 4th column.
-	jQuery('#model-golr-selection').DataTable({"order": [[4, "desc"]]});
+	// Make the tables real nice.
+	jQuery('#model-golr-selection').DataTable();
     });
     var p = manager.search();
 
