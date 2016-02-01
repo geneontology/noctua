@@ -776,7 +776,8 @@ var AmiGOBootstrapping = function(user_token){
 	jQuery('#model-golr-selection-data').append(table_str);
 
 	// Make the tables real nice. Sort by date.
-	jQuery('#model-golr-selection').DataTable({"order": [[3, "desc"]]});
+	jQuery('#model-golr-selection').DataTable({"order": [[3, "desc"],
+							     [0, "desc"]]});
     });
     var p = manager.search();
 
