@@ -755,14 +755,14 @@ var AmiGOBootstrapping = function(user_token){
 	// Sort on date.
 	var sorted_table_cache = table_cache.sort(function(a, b){
 
-	    var title_a = a[3];
-	    var title_b = b[3];
+	    var str_a = a[3];
+	    var str_b = b[3];
 	    
 	    var ret = 0;
 
-	    if( title_a < title_b ){
+	    if( str_a < str_b ){
 		ret = -1;
-	    }else if( title_a > title_b ){
+	    }else if( str_a > str_b ){
 		ret = 1;
 	    }
 
