@@ -20,6 +20,7 @@ var tilde = require('expand-home-dir');
 var yaml = require('yamljs');
 var mime = require('mime');
 var url = require('url');
+var querystring = require('querystring');
 
 // Required add-on libs.
 var bbop_legacy = require('bbop').bbop;
@@ -789,136 +790,251 @@ var NoctuaLauncher = function(){
 	    }
 	});
 
-	// Try to bootstrap coming in from Capella. After the model is
-	// confirmed generated, go through the usual model/seed path.
-	self.app.get('/capella', function(req, res) {
+	/// I believe that this is all legacy now--we have runners
+	/// that can do this without resorting to pumping the
+	/// information out to a JS client. All-server should now be
+	/// possible.
+	//
+	// // Try to bootstrap coming in from Capella. After the model is
+	// // confirmed generated, go through the usual model/seed path.
+	// self.app.get('/capella', function(req, res) {
 
-	    // Let us know that we tried.
-	    monitor_external_kicks = monitor_external_kicks + 1;
+	//     // Let us know that we tried.
+	//     monitor_external_kicks = monitor_external_kicks + 1;
 
-	    // Start working through what we have incoming.
-	    var payload_str = req.query['bootstrap'] || null;
-	    console.log('payload_str: ', payload_str);
-	    var payload = JSON.parse(payload_str); // to obj
+	//     // Start working through what we have incoming.
+	//     var payload_str = req.query['bootstrap'] || null;
+	//     console.log('payload_str: ', payload_str);
+	//     var payload = JSON.parse(payload_str); // to obj
 
-	    // Since we want to reuse the same templates, even on
-	    // serious errors, we are going to get some setup done up
-	    // front.
-	    var tmpl_args = {
-		'pup_tent_js_variables': [
-		    {name: 'global_minerva_definition_name',
-		     value: self.minerva_definition_name },
-		    {name: 'global_barista_location',
-		     value: self.barista_location },
-		    {name: 'global_model',
-		     value: null },
-		    {name: 'global_barista_token',
-		     value:  self.get_token(req) },
-		    {name: 'global_payload',
-		     value: payload }
-		],
-		'pup_tent_js_libraries': [
-		    '/NoctuaCapella.js'
-		],
-		'title': notw + ': Capella'
-		//'messaging_server_location': barista_loc
+	//     // Since we want to reuse the same templates, even on
+	//     // serious errors, we are going to get some setup done up
+	//     // front.
+	//     var tmpl_args = {
+	// 	'pup_tent_js_variables': [
+	// 	    {name: 'global_minerva_definition_name',
+	// 	     value: self.minerva_definition_name },
+	// 	    {name: 'global_barista_location',
+	// 	     value: self.barista_location },
+	// 	    {name: 'global_model',
+	// 	     value: null },
+	// 	    {name: 'global_barista_token',
+	// 	     value:  self.get_token(req) },
+	// 	    {name: 'global_payload',
+	// 	     value: payload }
+	// 	],
+	// 	'pup_tent_js_libraries': [
+	// 	    '/NoctuaCapella.js'
+	// 	],
+	// 	'title': notw + ': Capella'
+	// 	//'messaging_server_location': barista_loc
+	//     };
+
+	//     // Start possible outputs.
+	//     if( ! payload ){
+	// 	// Catch error here if no proper ID.
+	// 	tmpl_args.okay_p = false;
+	// 	tmpl_args.message = 'No proper bootstrap argument.';
+	// 	var ret = pup_tent.render('noctua_capella.tmpl', tmpl_args,
+	// 				  'noctua_base.tmpl');
+	// 	self.standard_response(res, 200, 'text/html', ret);
+	//     }else{
+
+	// 	console.log('payload: ', payload);
+
+	// 	// Collect the terms to resolve--we need the aspects
+	// 	// of the IDs to progress.
+	// 	var terms_to_resolve = [];
+	// 	each(payload, function(pi){
+	// 	    if( pi['terms'] ){
+	// 		terms_to_resolve = terms_to_resolve.concat(pi['terms']);
+	// 	    }
+	// 	});
+	// 	var qf_to_add = [];
+	// 	each(terms_to_resolve, function(ttr){
+	// 	    qf_to_add.push('annotation_class:"' + ttr + '"');
+	// 	});
+
+	// 	// Generic error return.
+	// 	var _generic_error_resp = function(resp, man){
+	// 	    res.setHeader('Content-Type', 'text/html');
+	// 	    res.send('failure (' + resp.message_type() + '): ' +
+	// 		     resp.message());
+	// 	};
+
+	// 	// Define the action to perform after we resolve our
+	// 	// terms.
+	// 	var action_after_resolution_call = function(resp, man){
+	// 	    console.log('in success callback');
+	// 	    if( ! resp.success() ){
+	// 		tmpl_args.okay_p = false;
+	// 		tmpl_args.message =
+	// 		    'Bad docs: "' + payload_str + '".';
+	// 		var ret = pup_tent.render('noctua_capella.tmpl',
+	// 					  tmpl_args, 'noctua_base.tmpl');
+	// 		self.standard_response(res, 200, 'text/html', ret);
+	// 	    }else{
+	// 		// console.log('in success callback else');
+
+	// 		// Map terms to aspect.
+	// 		var t2a = {};
+	// 		each(resp.documents(), function(d){
+	// 		    var ac = d['annotation_class'];
+	// 		    var s = d['source'];
+	// 		    if( ac && s ){ t2a[ac] = s; }
+	// 		});
+	// 		console.log('t2a: ', t2a);
+
+	// 		// Add some variable to signal the JS to make
+	// 		// the attempt to communicate with Minerva and
+	// 		// then forward.
+	// 		tmpl_args['pup_tent_js_variables'].push(
+	// 		    {name:'global_attempt_creation_p',
+	// 		     value: true });
+	// 		tmpl_args['pup_tent_js_variables'].push(
+	// 		    {name:'global_payload',
+	// 		     value: payload });
+	// 		tmpl_args['pup_tent_js_variables'].push(
+	// 		    {name:'global_term2aspect',
+	// 		     value: t2a });
+
+	// 		// Final template.
+	// 		tmpl_args.okay_p = true;
+	// 		tmpl_args.message = 'Trying to spin up a new model...';
+	// 		ret = pup_tent.render('noctua_capella.tmpl',
+	// 				      tmpl_args, 'noctua_base.tmpl');
+	// 		self.standard_response(res, 200, 'text/html', ret);
+	// 	    }
+	// 	};
+
+	// 	// Assemble query to get the desired minimal term
+	// 	// information; this information then goes into the
+	// 	// above callback, that then starts the model building
+	// 	// process.
+	// 	var m = new bbop_legacy.golr.manager.nodejs(golr_server_location,
+	// 						    gconf);
+	// 	m.add_query_filter('document_category', 'ontology_class');
+	// 	m.set_personality('ontology');
+	// 	m.register('search', 'foo', action_after_resolution_call);
+	// 	m.register('error', 'bar', _generic_error_resp);
+	// 	m.set('fq', qf_to_add.join(' OR '));
+	// 	// Apparently need score to make it "success".
+	// 	m.set('fl', 'id,annotation_class,source,score');
+	// 	m.search();
+	// 	console.log('resolve query: ', m.get_query_url());
+	//     }
+	// });
+
+	// Local logger for while we work this out.
+	var ll = function(str){
+	    console.log('tractorbeam ['+ (new Date()).toJSON() +']: ', str);
+	};
+	
+	// A function to send a fail response to a client without
+	// bothering barista/minerva with requests we know ain't gunna
+	// work.
+	var pre_fail = function(res, message, comment){
+	    // Headers.
+	    res.status(404);
+	    res.setHeader('Content-Type', 'application/json');
+	    
+	    // Fake bbop-response-barista response as above.
+	    var fail_resp = {
+		"message-type": "error",
+		"message": message,
+		"commentary": comment
 	    };
+	    res.send(JSON.stringify(fail_resp));
+	};
 
-	    // Start possible outputs.
-	    if( ! payload ){
-		// Catch error here if no proper ID.
-		tmpl_args.okay_p = false;
-		tmpl_args.message = 'No proper bootstrap argument.';
-		var ret = pup_tent.render('noctua_capella.tmpl', tmpl_args,
-					  'noctua_base.tmpl');
-		self.standard_response(res, 200, 'text/html', ret);
-	    }else{
-
-		console.log('payload: ', payload);
-
-		// Collect the terms to resolve--we need the aspects
-		// of the IDs to progress.
-		var terms_to_resolve = [];
-		each(payload, function(pi){
-		    if( pi['terms'] ){
-			terms_to_resolve = terms_to_resolve.concat(pi['terms']);
-		    }
-		});
-		var qf_to_add = [];
-		each(terms_to_resolve, function(ttr){
-		    qf_to_add.push('annotation_class:"' + ttr + '"');
-		});
-
-		// Generic error return.
-		var _generic_error_resp = function(resp, man){
-		    res.setHeader('Content-Type', 'text/html');
-		    res.send('failure (' + resp.message_type() + '): ' +
-			     resp.message());
-		};
-
-		// Define the action to perform after we resolve our
-		// terms.
-		var action_after_resolution_call = function(resp, man){
-		    console.log('in success callback');
-		    if( ! resp.success() ){
-			tmpl_args.okay_p = false;
-			tmpl_args.message =
-			    'Bad docs: "' + payload_str + '".';
-			var ret = pup_tent.render('noctua_capella.tmpl',
-						  tmpl_args, 'noctua_base.tmpl');
-			self.standard_response(res, 200, 'text/html', ret);
-		    }else{
-			// console.log('in success callback else');
-
-			// Map terms to aspect.
-			var t2a = {};
-			each(resp.documents(), function(d){
-			    var ac = d['annotation_class'];
-			    var s = d['source'];
-			    if( ac && s ){ t2a[ac] = s; }
-			});
-			console.log('t2a: ', t2a);
-
-			// Add some variable to signal the JS to make
-			// the attempt to communicate with Minerva and
-			// then forward.
-			tmpl_args['pup_tent_js_variables'].push(
-			    {name:'global_attempt_creation_p',
-			     value: true });
-			tmpl_args['pup_tent_js_variables'].push(
-			    {name:'global_payload',
-			     value: payload });
-			tmpl_args['pup_tent_js_variables'].push(
-			    {name:'global_term2aspect',
-			     value: t2a });
-
-			// Final template.
-			tmpl_args.okay_p = true;
-			tmpl_args.message = 'Trying to spin up a new model...';
-			ret = pup_tent.render('noctua_capella.tmpl',
-					      tmpl_args, 'noctua_base.tmpl');
-			self.standard_response(res, 200, 'text/html', ret);
-		    }
-		};
-
-		// Assemble query to get the desired minimal term
-		// information; this information then goes into the
-		// above callback, that then starts the model building
-		// process.
-		var m = new bbop_legacy.golr.manager.nodejs(golr_server_location,
-							    gconf);
-		m.add_query_filter('document_category', 'ontology_class');
-		m.set_personality('ontology');
-		m.register('search', 'foo', action_after_resolution_call);
-		m.register('error', 'bar', _generic_error_resp);
-		m.set('fq', qf_to_add.join(' OR '));
-		// Apparently need score to make it "success".
-		m.set('fl', 'id,annotation_class,source,score');
-		m.search();
-		console.log('resolve query: ', m.get_query_url());
-	    }
+	// Offer POST, not GET.
+	self.app.get('/tractorbeam', function(req, res){
+	    ll('attempt to GET tractorbeam');
+	    pre_fail(res, "no GET endpoint", "try POST instead of GET");
 	});
+	self.app.post('/tractorbeam', function(req, res){
 
+	    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    // BUG/TODO: This doesn't work because we're already using
+	    // a body parser...?
+	    // Collect the full POST body (if there is one) before
+	    // proceeding.
+	    // var full_body ='';
+	    // req.on('data', function(chunk) {
+	    // 	full_body += chunk.toString();
+	    // });
+	    // req.on('end', function() {
+	    // 	console.log("Received body data: " + full_body);
+		// // Chunks to object.
+		// var decoded_body = querystring.parse(full_body) || {};
+		// console.log('decoded body', decoded_body);
+	    
+	    var decoded_body = req.body || {};
+
+	    if( us.isEmpty(decoded_body) ){
+		pre_fail(res, "no POST data", "meh");
+	    }else if( ! decoded_body['token'] ){
+		pre_fail(res, "no token in POST data", "meh");
+	    }else{
+		
+	        ll('looks like we can make minerva attempt');
+	        var cap_token = decoded_body['token'];
+		
+		// Collect additional input, create request.
+		var rs = new minerva_requests.request_set();
+
+		// Also, if there is a model id number, us that,
+		// otherwise we'll be creating a new model.
+		var model_id = null;
+		if( decoded_body['model_id'] ){
+		    model_id = decoded_body['model_id'];
+		}else{
+		    rs.add_model();
+		    // TODO: need other things here? title?
+		}
+
+		// TODO: pull other data, assemble model.
+
+		// // Fake bbop-response-barista response as above.
+		// var good_resp = {
+		//     "message-type":"error",
+		//     "message":"got to a good point",
+		//     "commentary":"yay!"
+		// };
+		// res.send(JSON.stringify(good_resp));
+		
+		// Okay, we've got probably good input. Grab model
+		// for export with fresh manager.
+		var cap_engine = new node_engine(barista_response);
+		var cap_manager =
+			new minerva_manager(self.barista_location,
+					    self.minerva_definition_name,
+					    cap_token, cap_engine, 'async');
+		
+		// First, error callbacks.
+		cap_manager.register('error', function(resp, man){
+		    pre_fail(res, 'apparently could not resolve model', 'n/a');
+		});
+		cap_manager.register('manager_error', function(resp, man){
+		    pre_fail(res, 'comms issues for this model', 'n/a');
+		});
+		
+		// Possible success callback--return response
+		// straight?
+		cap_manager.register('meta', function(resp, man){
+		    //res.status(200);
+		    res.setHeader('Content-Type', 'application/json');
+		    res.send(JSON.stringify(resp.raw()));
+		});
+		
+		// Trigger capella manager.
+		//cap_manager.with_request(rs);
+		cap_manager.get_meta();
+	    }
+	    //});
+	});
+	
 	// Test export handler.
 	self.app.post('/action/display', function(req, res) {
 
