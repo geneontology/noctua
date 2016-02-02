@@ -452,7 +452,7 @@ var NoctuaLauncher = function(){
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
     ]);
-    //console.log('pup_tent', pup_tent.cached_list());
+    //console.log('pup_tent', pup_tent.cached_list().sort());
 
     ///
     /// Termination functions.
@@ -628,22 +628,25 @@ var NoctuaLauncher = function(){
 	self.app.use('/fonts', launcher_app.static('static/fonts'));
 
 	// Other static routes.
-	self.app.get('/images/waiting_ac.gif', function(req, res){
-	    res.setHeader('Content-Type', 'image/gif');
-	    // BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.
-	    // Probably use _path_cache(key).
-	    res.sendfile('static/waiting_ac.gif');
+	// BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.
+	// Probably use _path_cache(key).
+	var static_images = [ // BUG/TODO: Hack.
+	    ['waiting_ac.gif', 'gif'],
+	    ['ui-bg_flat_100_ffffff_40x100.png', 'png'],
+	    ['ui-bg_flat_75_d0ffee_40x100.png', 'png'],
+	    ['sort_asc.png', 'png'],
+	    ['sort_desc.png', 'png'],
+	    ['sort_both.png', 'png']
+	];
+	each(static_images, function(item){
+	    var fname = item[0];
+	    var type = item[1];
+	    self.app.get('/images/' + fname, function(req, res){
+		res.setHeader('Content-Type', 'image/' + type);
+		res.sendfile('static/' + fname);
+	    });
 	});
-	self.app.get('/images/ui-bg_flat_100_ffffff_40x100.png', function(req, res){
-	    res.setHeader('Content-Type', 'image/png');
-	    // BUG/TODO: See above.
-	    res.sendfile('static/ui-bg_flat_100_ffffff_40x100.png');
-	});
-	self.app.get('/images/ui-bg_flat_75_d0ffee_40x100.png', function(req, res){
-	    res.setHeader('Content-Type', 'image/png');
-	    // BUG/TODO: See above.
-	    res.sendfile('static/ui-bg_flat_75_d0ffee_40x100.png');
-	});
+
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
 	self.app.get('/favicon.ico', function(req, res){
