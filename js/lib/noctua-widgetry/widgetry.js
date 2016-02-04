@@ -1023,14 +1023,14 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	workbench_buttons.push(type_wb_btn.to_string());
     });
 
-    // // Clone button.
-    // var type_clone_btn_args = {
-    // 	'generate_id': true,
-    // 	'type': 'button',
-    // 	'class': 'btn btn-success'
-    // };
-    // var type_clone_btn =
-    // 	new bbop.html.tag('button', type_clone_btn_args, 'Clone');
+    // Clone button.
+    var type_clone_btn_args = {
+    	'generate_id': true,
+    	'type': 'button',
+    	'class': 'btn btn-success'
+    };
+    var type_clone_btn =
+	new bbop.html.tag('button', type_clone_btn_args, 'Clone');
 
     // Delete button.
     var type_del_btn_args = {
