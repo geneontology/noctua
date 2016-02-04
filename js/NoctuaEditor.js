@@ -671,6 +671,30 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    });
     }
 
+    // function _attach_node_click_clone(sel){
+
+    // 	// Add this event to whatever we got called in.
+    // 	jQuery(sel).unbind('click');
+    // 	jQuery(sel).click(
+    // 	    function(evnt){
+    // 		evnt.stopPropagation();
+
+    // 		// Resolve the event into the edit core node.
+    // 		var target_elt = jQuery(evnt.target);
+    // 		var parent_elt = target_elt.parent();
+    // 		var parent_id = parent_elt.attr('id');
+    // 		var enode = ecore.get_node_by_elt_id(parent_id);
+    // 		if( ! enode ){
+    // 		    alert('Could not find related element.');
+    // 		}else{
+    // 		    alert('Will clone!');
+
+    // 		    // Assemble copy and send off.
+		    
+    // 		}
+    // 	    });
+    // }
+
     // Delete all UI connections associated with node. This also
     // triggers the "connectionDetached" event, so the edges are being
     // removed from the model at the same time.
@@ -1012,6 +1036,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    // Make nodes able to use edit dialog.
 	    _attach_node_click_edit('.open-dialog');
 	    
+	    // // Make nodes able to clone themselves.
+	    // _attach_node_click_clone('.clone-entity');
+	    
     	    // Make normal nodes availables as edge targets.
 	    _make_selector_target('.demo-window');
 	    
@@ -1041,6 +1068,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    jQuery('.app-controls').css('width', '0em');
 	    //
 	    jQuery('.open-dialog').css('width', '0');
+	    //jQuery('.cloner').css('width', '0');
 	    jQuery('.konn').css('width', '0');
 	    jQuery('.app-graph-container').css('background-color', '#e2e2e2');
 	    jQuery('#template_announce_div').removeClass('hidden');	    
@@ -1049,6 +1077,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    jQuery('.app-controls').css('width', '15em');
 	    //
 	    jQuery('.open-dialog').css('width', '1em');
+	    //jQuery('.cloner').css('width', '1em');
 	    jQuery('.konn').css('width', '1em');
 	    jQuery('.app-graph-container').css('background-color', '#ffebcd');
 	    jQuery('#template_announce_div').addClass('hidden');	    

@@ -306,10 +306,31 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
     -moz-transition:-moz-box-shadow 0.25s ease-in;
     transition:box-shadow 0.25s ease-in;
+    padding: 0 0; /* override bootstrap 3 padding for compaction */
 }
 .open-dialog:hover {
     box-shadow: 0px 0px 6px black;
 }
+
+/* /\* clone individual button *\/ */
+/* .clone-entity { */
+/*     position: absolute; */
+/*     bottom: 37%; */
+/*     top: 25px; */
+/*     left: 5px; */
+/*     width: 1em; */
+/*     height: 1em; */
+/*     background-color: #CCCCCC; */
+/*     cursor: pointer; */
+/*     box-shadow: 0px 0px 2px black; */
+/*     -webkit-transition:-webkit-box-shadow 0.25s ease-in; */
+/*     -moz-transition:-moz-box-shadow 0.25s ease-in; */
+/*     transition:box-shadow 0.25s ease-in; */
+/*     padding: 0 0; /\* override bootstrap 3 padding for compaction *\/ */
+/* } */
+/* .clone-entity:hover { */
+/*     box-shadow: 0px 0px 6px black; */
+/* } */
 
 .mme-type-table {
     margin-bottom: 5px;

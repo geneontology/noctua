@@ -464,8 +464,13 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
     w.add_to(konn);
     
     // Box to click for edit dialog.
-    var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
+    var opend = new bbop.html.tag('button', {'class': 'open-dialog btn btn-default',
+					     'title': 'Open edit dialog'});
     w.add_to(opend);
+    
+    // // Box to clone individual.
+    // var cloner = new bbop.html.tag('button', {'class': 'clone-entity'});
+    // w.add_to(cloner);
     
     // // Box to click for annotation dialog.
     // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
@@ -504,9 +509,14 @@ function update_enode(ecore, enode, aid){
     var konn = new bbop.html.tag('div', {'class': 'konn'});
     jQuery('#' + uelt).append(konn.to_string());
     
-    // Box to drag new connections from.	
-    var opend = new bbop.html.tag('div', {'class': 'open-dialog'});
+    // Box to open the edit dialog.	
+    var opend = new bbop.html.tag('button', {'class': 'open-dialog',
+					     'title': 'Open edit dialog'});
     jQuery('#' + uelt).append(opend.to_string());
+
+    // // Box to clone individual.
+    // var cloner = new bbop.html.tag('button', {'class': 'clone-entity'});
+    // jQuery('#' + uelt).append(cloner.to_string());
 
     // // Box to click for annotation dialog.
     // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
