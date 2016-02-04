@@ -1023,6 +1023,15 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	workbench_buttons.push(type_wb_btn.to_string());
     });
 
+    // // Clone button.
+    // var type_clone_btn_args = {
+    // 	'generate_id': true,
+    // 	'type': 'button',
+    // 	'class': 'btn btn-success'
+    // };
+    // var type_clone_btn =
+    // 	new bbop.html.tag('button', type_clone_btn_args, 'Clone');
+
     // Delete button.
     var type_del_btn_args = {
     	'generate_id': true,
@@ -1058,12 +1067,12 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	'</p>',
 	'<hr />',
 	'<h4>Other operations</h4>',
-	// '<p>',
-	workbench_buttons.join(''),
+	type_clone_btn.to_string(),
+	' &nbsp; ',
+	workbench_buttons.join(' '),
 	'<hr />',
 	type_del_btn.to_string(),
-	'&nbsp;this individual'//,
-	// '</p>'
+	'&nbsp;this individual'
     ];
 
     // Setup base modal.
@@ -1174,6 +1183,96 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	    // Allow modal to remain for retry.
 	    alert('Class and relations must be defined');
 	}
+    });
+    
+    // Add clone action. "tid" is the closed individual identifier.
+    jQuery('#' + type_clone_btn.get_id()).click(function(evt){
+	evt.stopPropagation();
+
+	// Function that add an individual and its type to a request,
+	// the returns the new individual's id.
+	var add_with_types = function (reqs, individual){
+
+	    var itypes = individual.types();
+	    var cloned_ind_id = null;
+	    each(itypes, function(t, index){
+		if( index === 0 ){
+		    cloned_ind_id = reqs.add_individual(t);
+		}else{
+		    reqs.add_type_to_individual(t, cloned_ind_id);
+		}
+	    });
+
+	    return cloned_ind_id;
+	};
+
+	// Ready a new request.
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+
+	// Add the individual itself to the request.
+	var ind = ecore.get_node(tid);
+	var cloned_ind_id = add_with_types(reqs, ind);
+
+	// Next, collect anything in the subgraph.
+	var subgr = ind.subgraph();
+	if( subgr ){
+
+	    console.log(subgr);
+
+	    // Iterate over all of the edges; this will prevent adding
+	    // the base node again.
+	    each(subgr.all_edges(), function(e){
+
+		var sid = e.subject_id();
+		var oid = e.object_id();
+		var pid = e.predicate_id();
+
+		console.log(sid, oid, pid);
+
+		if( sid === tid ){ // clone subject direction
+
+		    console.log('sub', sid, oid, pid);
+
+		    // Clone node.
+		    var o_node = subgr.get_node(oid);
+		    if( o_node ){
+			var cloned_ob_id = add_with_types(reqs, o_node);
+		    
+			// Clone edge.
+			reqs.add_fact([cloned_ind_id, cloned_ob_id, pid]);
+		    }
+
+		}else if( oid === tid ){ // clone object direction
+
+		    console.log('ob', sid, oid, pid);
+		    
+		    // Clone node.
+		    var s_node = subgr.get_node(sid);
+		    if( s_node ){
+			var cloned_sub_id = add_with_types(reqs, s_node);
+
+			// Clone edge.
+			reqs.add_fact([cloned_sub_id, cloned_ind_id, pid]);
+		    }
+		}
+	    });
+	}
+
+	// Next, collect any surrounding edges, link the new top-level
+	// clone to the originals.
+	each(ecore.get_edges_by_subject(tid), function(e){
+	    reqs.add_fact([cloned_ind_id, e.object_id(), e.predicate_id()]);
+	});
+	each(ecore.get_edges_by_object(tid), function(e){
+	    reqs.add_fact([e.subject_id(), cloned_ind_id, e.predicate_id()]);
+	});
+
+	// Trigger the clone--hopefully consistent.
+	manager.request_with(reqs);
+	
+	// Wipe out modal.
+	mdl.destroy();
     });
     
     // Add delete action. "tid" is the closed individual identifier.
