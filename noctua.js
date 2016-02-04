@@ -977,7 +977,7 @@ var NoctuaLauncher = function(){
 		    req.body['thing'] ||
 		    '???';
 	    //console.log('display thing: ' + mstr);
-
+	    
 	    // Assemble return doc.
 	    //res.setHeader('Content-Type', 'text/owl');
 	    res.setHeader('Content-Type', 'text/plain');
