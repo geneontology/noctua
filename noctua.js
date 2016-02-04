@@ -974,63 +974,143 @@ var NoctuaLauncher = function(){
 
 	    if( us.isEmpty(decoded_body) ){
 		pre_fail(res, "no POST data", "meh");
-	    }else if( ! decoded_body['token'] ){
-		pre_fail(res, "no token in POST data", "meh");
+	    }else if( ! decoded_body['barista_token'] ){
+		pre_fail(res, "no barista_token in POST data", "meh");
 	    }else{
-		
+
+		// We first need to extract this:
+		// https://github.com/geneontology/noctua/issues/147
+		// {
+		//     "model_id": "gomodel:01234567", 
+		//     "barista_token": "sdlkjslkjd",
+		//     "database_id" : "UniProtKB:A0A005",
+		//     "evidence_id" : "ECO:0000314",
+		//     "class_id" : "GO:0050689",
+		//     "reference_id" : "PMID:666333",
+		//     "textspresso_id" : "XXX:YYYYYYY",
+		//     "comments" : ["foo", "bar"]
+		// }
+
 	        ll('looks like we can make minerva attempt');
-	        var cap_token = decoded_body['token'];
-		
-		// Collect additional input, create request.
-		var rs = new minerva_requests.request_set();
+	        var cap_token = decoded_body['barista_token'];
+		ll('with token: ' + cap_token);
 
 		// Also, if there is a model id number, us that,
 		// otherwise we'll be creating a new model.
 		var model_id = null;
 		if( decoded_body['model_id'] ){
 		    model_id = decoded_body['model_id'];
-		}else{
-		    rs.add_model();
-		    // TODO: need other things here? title?
 		}
 
-		// TODO: pull other data, assemble model.
+		// GP/entity.
+		var gpid = null;
+		if( decoded_body['database_id'] ){
+		    gpid = decoded_body['database_id'];
+		}
 
-		// // Fake bbop-response-barista response as above.
-		// var good_resp = {
-		//     "message-type":"error",
-		//     "message":"got to a good point",
-		//     "commentary":"yay!"
-		// };
-		// res.send(JSON.stringify(good_resp));
+		// Evidence.
+		var evid = null;
+		if( decoded_body['evidence_id'] ){
+		    evid = decoded_body['evidence_id'];
+		}
+
+		// Class/term.
+		var clsid = null;
+		if( decoded_body['class_id'] ){
+		    clsid = decoded_body['class_id'];
+		}
+
+		// Class/term.
+		var refid = null;
+		if( decoded_body['reference_id'] ){
+		    refid = decoded_body['reference_id'];
+		}
+
+		// External ID.
+		var txpid = null;
+		if( decoded_body['external_id'] ){
+		    txpid = decoded_body['external_id'];
+		}
+
+		// Comments, list of strings.
+		var comments = [];
+		if( decoded_body['comments'] ){
+		    var cmts = decoded_body['comments'];
+
+		    if( us.isArray(cmts) ){
+			comments = cmts;
+		    }else if( us.isString(cmts) ){
+			comments.push(cmts);
+		    }
+		}
+
+		// TODO/BUG: For now, toss the textspresso id into
+		// comments for experimentation.
+		if( txpid ){
+		    comments.push(txpid);
+		}
 		
-		// Okay, we've got probably good input. Grab model
-		// for export with fresh manager.
-		var cap_engine = new node_engine(barista_response);
-		var cap_manager =
-			new minerva_manager(self.barista_location,
-					    self.minerva_definition_name,
-					    cap_token, cap_engine, 'async');
-		
-		// First, error callbacks.
-		cap_manager.register('error', function(resp, man){
-		    pre_fail(res, 'apparently could not resolve model', 'n/a');
-		});
-		cap_manager.register('manager_error', function(resp, man){
-		    pre_fail(res, 'comms issues for this model', 'n/a');
-		});
-		
-		// Possible success callback--return response
-		// straight?
-		cap_manager.register('meta', function(resp, man){
-		    //res.status(200);
-		    res.setHeader('Content-Type', 'application/json');
-		    res.send(JSON.stringify(resp.raw()));
-		});
-		
-		// Trigger capella manager.
-		//cap_manager.with_request(rs);
-		cap_manager.get_meta();
+		// Double check we're clear, then go.
+		if( ! refid || ! clsid || ! evid || ! gpid ){
+		    pre_fail(res, 'insufficient arg data to continue', 'n/a');
+		}else{
+		    
+		    // Okay, we've got probably good input. Grab model
+		    // for export with fresh manager.
+		    var cap_engine = new node_engine(barista_response);
+		    var cap_manager =
+			    new minerva_manager(self.barista_location,
+						self.minerva_definition_name,
+						cap_token, cap_engine, 'async');
+		    //null, cap_engine, 'async');
+		    
+		    // First, error callbacks.
+		    cap_manager.register('error', function(resp, man){
+			pre_fail(res, 'could not resolve model: ' +
+				 JSON.stringify(resp.raw()), 'n/a');
+		    });
+		    cap_manager.register('manager_error', function(resp, man){
+			pre_fail(res, 'comms issues for this model: ' +
+				 JSON.stringify(resp.raw()), 'n/a');
+		    });
+		    
+		    // Possible success callback--return response
+		    // straight?
+		    cap_manager.register('merge', function(resp, man){
+			res.setHeader('Content-Type', 'application/json');
+			res.send(JSON.stringify(resp.raw()));
+		    });
+		    cap_manager.register('rebuild', function(resp, man){
+			res.setHeader('Content-Type', 'application/json');
+			res.send(JSON.stringify(resp.raw()));
+		    });
+		    
+		    // We might build our own model.
+		    var rs = null;
+		    if( ! model_id ){
+			rs = new minerva_requests.request_set(cap_token);
+			rs.add_model();
+		    }else{
+			rs = new minerva_requests.request_set(cap_token,
+							      model_id);
+		    }
+
+		    // Assemble rich annoton.
+		    var ind1 = rs.add_individual(clsid);
+		    var ind2 = rs.add_individual(gpid);
+		    var f1 = rs.add_fact([ind1, ind2, 'RO:0002333']);
+                    //rs.add_svf_expression(gpid, 'RO:0002333');	
+		    var ev1 = rs.add_evidence(evid, [refid], [],
+					      [ind1, ind2, 'RO:0002333']);
+
+		    // BUG/TODO: temporarily store comments here.
+		    rs.add_annotation_to_fact('comment', comments, null, f1);
+					      
+
+		    // Trigger capella manager.
+		    ll('request_with: ' + JSON.stringify(rs.structure()));
+		    cap_manager.request_with(rs);
+		}
 	    }
 	    //});
 	});
