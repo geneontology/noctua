@@ -23,9 +23,8 @@ var url = require('url');
 var querystring = require('querystring');
 
 // Required add-on libs.
-var bbop_legacy = require('bbop').bbop;
-//var bbopx = require('bbopx');
 var amigo = require('amigo2');
+var golr_conf = require('golr-conf');
 
 var us = require('underscore');
 var bbop = require('bbop-core');
@@ -678,7 +677,7 @@ var NoctuaLauncher = function(){
 	///
 
 	// Define the GOlr request conf.
-	var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
+	var gconf = new golr_conf.conf(amigo.data.golr);
 
 	// Directly kick-to-edit an extant model--most things should
 	// pass through here.
@@ -1093,40 +1092,40 @@ var NoctuaLauncher = function(){
 /// Main.
 ///
 
-// Deliver the prototype JS MME application to the client.
-var noctua = new NoctuaLauncher();
-
 // Setup calls: don't finalize the startup until we pull the rest of
-// the interesting things we need from the web.
-// In this case, we're going after RO so we can pass it in once and
-// early.
-var imngr = new bbop_legacy.rest.manager.node(barista_response);
-imngr.register('success', 's1', function(resp, man){
+// the interesting things we need from the server first.
+var init_engine = new node_engine(barista_response);
+var init_manager = new minerva_manager(barloc, min_def_name,
+				       null, init_engine, 'async');
+
+init_manager.register('meta', function(resp, man){
+
     console.log('Continue boostrap: response is: ' + what_is(resp));
-    //console.log('response', resp);
+    //console.log('response', resp.raw());
     var nrel = resp.relations().length;
-    console.log("Continue bootstrap: got " + nrel + " relations, starting initializing sequence...");
+    console.log("Continue bootstrap: got " + nrel +
+		" relations, starting initializing sequence...");
+
     if( nrel > 0 ){
+	// Deliver the prototype JS MME application to the client.
+	var noctua = new NoctuaLauncher();
 	noctua.initialize(resp.relations());
 	noctua.start();
     }else{
 	console.error('failure: no relations on initialization response');
     }
+    
 });
-imngr.register('error', 'e1', function(resp, man){
-    //console.log('erred out: %j', resp);
-    //console.log(what_is(resp));
-    //console.log(resp._raw);
-    //console.log(resp.relations());
+init_manager.register('manager_error', function(resp, man){
+    console.log('okay?: %j', resp.okay());
+    console.log('message type: %j', resp.message_type());
+    console.log('message: %j', resp.message());
+});
+init_manager.register('error', function(resp, man){
     console.log('okay?: %j', resp.okay());
     console.log('message type: %j', resp.message_type());
     console.log('message: %j', resp.message());
 });
 
-// Assemble initial request to get relations for bootstrap.
-var reqs = new minerva_requests.request_set();
-reqs.get_meta();
-var t = noctua.barista_location + '/api/' + noctua.minerva_definition_name +
-    '/m3Batch';
-var astr = imngr.action(t, reqs.callable());
-console.log("Started bootstrap: minerva request to: " + astr);
+init_manager.get_meta();
+console.log("Started bootstrap with meta minerva request.");
