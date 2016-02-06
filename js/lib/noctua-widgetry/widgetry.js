@@ -464,17 +464,17 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
     w.add_to(konn);
     
     // Box to click for edit dialog.
-    var opend = new bbop.html.tag('button', {'class': 'open-dialog btn btn-default',
-					     'title': 'Open edit dialog'});
+    var opend = new bbop.html.tag('button',
+				  {'class': 'open-dialog btn btn-default',
+				   'title': 'Open edit annoton dialog'});
     w.add_to(opend);
     
-    // // Box to clone individual.
-    // var cloner = new bbop.html.tag('button', {'class': 'clone-entity'});
-    // w.add_to(cloner);
-    
-    // // Box to click for annotation dialog.
-    // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
-    // w.add_to(openann);
+    // Box to open annotation dialog.
+    var openann = new bbop.html.tag('button',
+				    {'class':
+				     'open-annotation-dialog btn btn-default',
+				     'title': 'Open annotation dialog'});
+    w.add_to(openann);
     
     // Add to display.
     jQuery(graph_div).append(w.to_string());
@@ -510,17 +510,17 @@ function update_enode(ecore, enode, aid){
     jQuery('#' + uelt).append(konn.to_string());
     
     // Box to open the edit dialog.	
-    var opend = new bbop.html.tag('button', {'class': 'open-dialog',
-					     'title': 'Open edit dialog'});
+    var opend = new bbop.html.tag('button',
+				  {'class': 'open-dialog btn btn-default',
+				   'title': 'Open edit annoton dialog'});
     jQuery('#' + uelt).append(opend.to_string());
 
-    // // Box to clone individual.
-    // var cloner = new bbop.html.tag('button', {'class': 'clone-entity'});
-    // jQuery('#' + uelt).append(cloner.to_string());
-
-    // // Box to click for annotation dialog.
-    // var openann = new bbop.html.tag('div', {'class': 'open-annotation-dialog'});
-    // jQuery('#' + uelt).append(openann.to_string());
+    // Box to open annotation dialog.
+    var openann = new bbop.html.tag('button',
+				    {'class':
+				     'open-annotation-dialog btn btn-default',
+				     'title': 'Open annotation dialog'});
+    jQuery('#' + uelt).append(openann.to_string());
 }
 
 /**

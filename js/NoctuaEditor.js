@@ -39,7 +39,6 @@ var bbopx = require('bbopx');
 var amigo = require('amigo2');
 
 // The new backbone libs.
-//var bbop
 var us = require('underscore');
 var bbop = require('bbop-core');
 var model = require('bbop-graph-noctua');
@@ -620,30 +619,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
         });
     }
     
-    function _attach_node_dblclick_ann(sel){
-
-	// BUG/TODO: trial
-	// Add activity listener to the new edge.
-	jQuery(sel).unbind('dblclick');
-	jQuery(sel).dblclick(
-	    function(event){
-		event.stopPropagation();
-		
-		//var target_elt = jQuery(event.target);
-		var target_id = jQuery(this).attr('id');
-		var enode = ecore.get_node_by_elt_id(target_id);
-		if( enode ){		    
-		    var ann_edit_modal = widgetry.edit_annotations_modal;
-		    var eam = ann_edit_modal(instance_annotation_config,
-					     ecore, manager, enode.id(),
-					     gserv, gconf);
-		    eam.show();
-		}else{
-		    alert('Could not find related test element.');
-		}
-	    });
-    }
-
     function _attach_node_click_edit(sel){
 
 	// Add this event to whatever we got called in.
@@ -657,7 +632,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
-		if( enode ){		    
+		if( ! enode ){		    
+		    alert('Could not find related element.');
+		}else{
 		    var nedit =
 			widgetry.edit_node_modal(ecore, manager, enode,
 						 in_relations, aid,
@@ -665,35 +642,34 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 						 global_workbenches_individual,
 						 in_token);
 		    nedit.show();
-		}else{
-		    alert('Could not find related element.');
 		}
 	    });
     }
 
-    // function _attach_node_click_clone(sel){
+    function _attach_node_click_annotation_edit(sel){
 
-    // 	// Add this event to whatever we got called in.
-    // 	jQuery(sel).unbind('click');
-    // 	jQuery(sel).click(
-    // 	    function(evnt){
-    // 		evnt.stopPropagation();
+    	// Add this event to whatever we got called in.
+    	jQuery(sel).unbind('click');
+    	jQuery(sel).click(
+    	    function(evnt){
+    		evnt.stopPropagation();
 
-    // 		// Resolve the event into the edit core node.
-    // 		var target_elt = jQuery(evnt.target);
-    // 		var parent_elt = target_elt.parent();
-    // 		var parent_id = parent_elt.attr('id');
-    // 		var enode = ecore.get_node_by_elt_id(parent_id);
-    // 		if( ! enode ){
-    // 		    alert('Could not find related element.');
-    // 		}else{
-    // 		    alert('Will clone!');
-
-    // 		    // Assemble copy and send off.
-		    
-    // 		}
-    // 	    });
-    // }
+    		// Resolve the event into the edit core node.
+		var target_elt = jQuery(evnt.target);
+		var parent_elt = target_elt.parent();
+		var parent_id = parent_elt.attr('id');
+		var enode = ecore.get_node_by_elt_id(parent_id);
+		if( ! enode ){
+		    alert('Could not find related test element.');
+		}else{
+		    var ann_edit_modal = widgetry.edit_annotations_modal;
+		    var eam = ann_edit_modal(instance_annotation_config,
+					     ecore, manager, enode.id(),
+					     gserv, gconf);
+		    eam.show();
+		}
+    	    });
+    }
 
     // Delete all UI connections associated with node. This also
     // triggers the "connectionDetached" event, so the edges are being
@@ -740,7 +716,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    n_other++;
 		}
 	    });
-	    rn += ' <small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
+	    rn +=
+	    '&nbsp;<small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
 
 	// Try and detect the proper edge type.
@@ -769,6 +746,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    throw new Error('unpossible glyph...is apparently possible');
 	}
 
+	var openann_edge_str = '<button class="open-annotation-dialog-edge btn btn-default" title="Open annotation dialog"></button>';
     	var new_conn_args = {
 	    // remember that edge ids and elts ids are the same 
     	    'source': ecore.get_node_elt_id(sn),
@@ -782,7 +760,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		lineWidth: 5
 	    },
 	    'overlays': [ // does not!?
-		["Label", {'label': rn,
+		["Label", {'label': openann_edge_str + '&nbsp;' + rn,
 			   'location': 0.5,
 			   'cssClass': "aLabel",
 			   'id': 'label' } ]
@@ -798,7 +776,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	ecore.create_edge_mapping(eedge, new_conn);
 
 	// Add activity listener to the new edge.
-	new_conn.bind('dblclick', function(connection, event){
+	new_conn.bind('click', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
 	    var ann_edit_modal = widgetry.edit_annotations_modal;
 	    var eam = ann_edit_modal(fact_annotation_config, ecore, manager,
@@ -1027,9 +1005,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     		_connect_with_edge(eedge);
     	    });
 		
-	    // Edit annotations on double click.
-	    _attach_node_dblclick_ann('.demo-window');
-
 	    // Make nodes draggable.
 	    _attach_node_draggable(".demo-window");
 	    
@@ -1037,7 +1012,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    _attach_node_click_edit('.open-dialog');
 	    
 	    // // Make nodes able to clone themselves.
-	    // _attach_node_click_clone('.clone-entity');
+	    _attach_node_click_annotation_edit('.open-annotation-dialog');
 	    
     	    // Make normal nodes availables as edge targets.
 	    _make_selector_target('.demo-window');
