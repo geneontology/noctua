@@ -123,7 +123,7 @@ var app_base = sd.app_base();
 var notw = 'Noctua (Beta)';
 
 ///
-/// Define the sample application.
+/// Define the loadable application.
 ///
 
 var NoctuaLauncher = function(){
