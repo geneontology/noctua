@@ -98,6 +98,7 @@ var paths = {
     ],
     'core_workbench_clients': [
 	// A temporary place for internal workspaces.
+	//'workbenches/copy_in_model/CopyInModel.js',
 	'workbenches/mmcc/MMCC.js',
 	'workbenches/bioentity_companion/BioentityCompanion.js',
 	'workbenches/companion/Companion.js',
@@ -285,7 +286,8 @@ var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 // 
 var noctua_models = config['NOCTUA_MODELS'].value;
 var user_data = config['USER_DATA'].value;
-var geneontology_catalog = config['GENEONTOLOGY_CATALOG'].value;
+var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
+var ontology_catalog = config['ONTOLOGY_CATALOG'].value;
 var workbench_dirs = config['WORKBENCHES'].value;
 var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
@@ -308,7 +310,7 @@ if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
 // Execute counter.
 _ping_count();
 
-// Mineva runner.
+// Minerva runner.
 gulp.task('run-minerva', shell.task(_run_cmd(
     ['java',
      '-Xmx' + minerva_max_mem + 'G',
@@ -317,11 +319,28 @@ gulp.task('run-minerva', shell.task(_run_cmd(
      '--use-golr-url-logging',
      '--use-request-logging',
      '--slme-elk',
-     '-g', 'http://purl.obolibrary.org/obo/go/extensions/go-lego.owl',
+     '-g', ontology_list,
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
      '--golr-labels', golr_neo_lookup_url,
      '--golr-seed', golr_lookup_url,
-     '-c', geneontology_catalog,
+     '-c', ontology_catalog,
+     '-f', noctua_models,
+     '--port', minerva_port
+    ]
+)));
+
+// Minerva runner without a lookup.
+gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
+    ['java',
+     '-Xmx' + minerva_max_mem + 'G',
+     '-cp', './java/lib/minerva-cli.jar',
+     'org.geneontology.minerva.server.StartUpTool',
+     '--use-golr-url-logging',
+     '--use-request-logging',
+     '--slme-elk',
+     '-g', ontology_list,
+     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+     '-c', ontology_catalog,
      '-f', noctua_models,
      '--port', minerva_port
     ]
