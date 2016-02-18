@@ -7,7 +7,7 @@
 // Std utils.
 var us = require('underscore');
 var fs = require('fs');
-//var path = require('path');
+var path = require('path');
 
 ///
 /// Helpers and aliases.
@@ -20,7 +20,7 @@ function ll(arg1){
 }
 
 function _die(message){
-    console.error('GNS [' + (new Date()).toJSON() + ']: ' + message);
+    console.error('npm-package_spy.js ['+ (new Date()).toJSON() +']: '+ message);
     process.exit(-1);
 }
 
@@ -44,25 +44,38 @@ if( ! start_dir ){
 
 function package_iterator(dir, funct){
     
-    each( fs.readdirSync(dir), function(file){
+    //ll(dir);
+    var ndir = path.resolve(dir);
+    //ll(ndir);
+
+    each( fs.readdirSync(ndir), function(file){
 	
-	var stats = fs.statSync(file);
-	if( stats.isDirectory() ){
-	    //ll('has dir: ' + file);
-	    
-	    var package_json_fname = file + '/package.json';
-	    if( fs.existsSync(package_json_fname) ){
-		//ll('has package.json: ' + file);
+	//ll(file);
+	var nfile = ndir + '/' + file;
+
+	if( fs.existsSync(nfile) ){
+	    var stats = fs.statSync(nfile);
+	    if( stats.isDirectory() ){
+		//ll('has dir: ' + nfile);
 		
-		//var obj = require(package_json_fname);
-		var obj_str = fs.readFileSync(package_json_fname);
-		var obj = JSON.parse(obj_str);
-		
-		funct(obj);
+		var package_json_fname = nfile + '/package.json';
+		if( fs.existsSync(package_json_fname) ){
+		    //ll('has package.json: ' + file);
+		    
+		    //var obj = require(package_json_fname);
+		    var obj_str = fs.readFileSync(package_json_fname);
+		    var obj = JSON.parse(obj_str);
+		    
+		    funct(obj);
+		}
 	    }
 	}
     });
 }
+
+///
+/// Main.
+///
 
 // Scan to get current package versions.
 var package_version = {};
