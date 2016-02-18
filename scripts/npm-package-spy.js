@@ -66,7 +66,7 @@ function package_iterator(dir, funct){
 		    var obj_str = fs.readFileSync(package_json_fname);
 		    var obj = JSON.parse(obj_str);
 		    
-		    funct(obj);
+		    funct(obj, package_json_fname);
 		}
 	    }
 	}
@@ -79,7 +79,7 @@ function package_iterator(dir, funct){
 
 // Scan to get current package versions.
 var package_version = {};
-package_iterator(start_dir, function(obj){
+package_iterator(start_dir, function(obj, fname){
     if( obj['name'] &&  obj['version'] ){
 	//ll(obj['name'] + ' @ ' + obj['version'] );
 	package_version[obj['name']] = obj['version'];
@@ -87,7 +87,7 @@ package_iterator(start_dir, function(obj){
 });
 
 // Re-scan and complain about out-of-sync versions.
-package_iterator(start_dir, function(obj){
+package_iterator(start_dir, function(obj, fname){
 
     if( obj['name'] && obj['dependencies'] ){
 	
@@ -96,14 +96,14 @@ package_iterator(start_dir, function(obj){
 	    
 	    if( package_version[package] ){
 		if( package_version[package] !== version ){
-		    complaints.push( package + ': ' + version + ' -> ' +
+		    complaints.push( package + ': ' + version + ' ?-> ' +
 				     package_version[package]);
 		}
 	    }
 	});
 	
 	if( ! us.isEmpty(complaints) ){
-	    console.log('In ' + obj['name'] + '...');
+	    console.log('In ' + obj['name'] + ' ('+ fname +')...');
 	    console.log('   ' + complaints.join("\n   "));
 	}
     }
