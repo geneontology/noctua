@@ -74,7 +74,7 @@ function _run_cmd_list(commands){
 	final_list.push('echo \'' + cmd + '\'');
 	final_list.push(cmd);
     });
-    
+
     return final_list;
 }
 
@@ -86,10 +86,9 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'core_noctua_clients': [
-	'js/NoctuaEditor.js', 
-	'js/NoctuaLanding.js'
-	// 'js/NoctuaBasic/NoctuaBasicApp.js',
-	// 'js/NoctuaBasic/NoctuaBasicController.js',
+	'js/NoctuaEditor.js',
+	'js/NoctuaLanding.js',
+	'js/NoctuaBasic/NoctuaBasicApp.js'
     ],
     'core_barista_clients': [
 	'js/BaristaLogin.js',
@@ -155,7 +154,21 @@ gulp.task('copy-css-from-npm-deps', function() {
 //process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
 // Browser runtime environment construction.
 function _client_compile_task(file) {
-    return browserify(file)
+  var b = browserify(file);
+
+  if (file === 'js/NoctuaBasic/NoctuaBasicApp.js') {
+    // Need to manually apply global=true transform here
+    // Setting this in package.json FAILS for jquery when require()-ed via
+    // another file that has been require()-ed...no idea why
+    // See: https://github.com/thlorenz/browserify-shim/issues/143
+    b.transform('browserify-shim', {
+        global: true
+    });
+  }
+
+//  return browserify(file)
+  return b
+
     // not in npm, don't need in browser
 	.exclude('ringo/httpclient')
 	.bundle()
@@ -283,7 +296,7 @@ var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
-// 
+//
 var noctua_models = config['NOCTUA_MODELS'].value;
 var user_data = config['USER_DATA'].value;
 var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
@@ -382,7 +395,7 @@ gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list
 )));
 
-// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml                                                        
+// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml
 gulp.task('run-epione', shell.task(_run_cmd(
     ['node', 'epione.js',
      '--users', user_data,

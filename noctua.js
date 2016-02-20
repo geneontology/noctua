@@ -579,8 +579,7 @@ var NoctuaLauncher = function(){
 		    //'/xeditable.min.js',
 		    //'/bs-table.min.js',
 		    //'/bbop-widget-solr-autocomplete.js',
-		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
-		    '/deploy/js/NoctuaBasic/NoctuaBasicController.js'
+		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js'
 		],
 		'pup_tent_css_libraries': [
 		    '/css/NoctuaBasic.css',
@@ -1075,13 +1074,13 @@ var NoctuaLauncher = function(){
 	if( self.IS_ENV_HEROKU ){
 	    // Heroku seems to want a more minimal launch.
 	    self.app.listen(self.port, function() {
-		console.log('%s: Node started (heroku) on %s:%d ...',
+		console.log('%s: Node started (heroku) on http://%s:%d ...',
 			    Date(Date.now()), self.ipaddress||'???', self.port);
 	    });
 	}else{
             // Start the app on the specific interface (and port).
             self.app.listen(self.port, self.ipaddress, function() {
-		console.log('%s: Node started (custom) on %s:%d ...',
+		console.log('%s: Node started (custom) on http://%s:%d ...',
 			    Date(Date.now()), self.ipaddress, self.port);
 	    });
 	}
@@ -1100,7 +1099,7 @@ var init_manager = new minerva_manager(barloc, min_def_name,
 
 init_manager.register('meta', function(resp, man){
 
-    console.log('Continue boostrap: response is: ' + what_is(resp));
+    console.log('Continue bootstrap: response is: ' + what_is(resp));
     //console.log('response', resp.raw());
     var nrel = resp.relations().length;
     console.log("Continue bootstrap: got " + nrel +

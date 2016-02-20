@@ -5,8 +5,8 @@ var amigo = require('amigo2');
 var underscore = require('underscore');
 var graph_api = require('bbop-graph-noctua');
 var minerva_requests = require('minerva-requests');
-var angular = require('angular');
 var solrautocomplete = require('bbop-widget-solr-autocomplete');
+var angular = require('angular');
 
 angular
   .module('noctuaBasicApp')
@@ -288,6 +288,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   requestSetForCreation = function(request_set, disease_id, phenotype_id, ageofonset_id, evidence_reference, description, existing_disease_id) {
+    console.log('requestSetForCreation', arguments);
+
     var phenotype_tmp_id = request_set.add_individual(phenotype_id);
     if (existing_disease_id == null) {
       request_set.add_fact([request_set.add_individual(disease_id),
@@ -512,7 +514,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     var gconf = new bbop.golr.conf(golr_json);
     //golr_loc = 'http://localhost:8983/solr/';
     //golr_loc = 'http://sirius.monarchinitiative.org:8080/solr/golr/';
-    golr_loc = "http://geoffrey.crbs.ucsd.edu:8080/solr/monarchAutocomplete/"
+    //golr_loc = "http://geoffrey.crbs.ucsd.edu:8080/solr/monarchAutocomplete/"
+    golr_loc = 'http://solr-dev.monarchinitiative.org/solr/monarchAutocomplete/';
 
     var golr_manager_for_disease = new bbop.golr.manager.jquery(golr_loc, gconf);
     // dirty trick to make jQuery avaiable in the golrmanager's scope.

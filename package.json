@@ -128,16 +128,6 @@
         },
         "jsplumb": {
             "exports": "global:jsPlumb"
-        },
-        "bs-table": {
-            "depends": [
-                "angular"
-            ]
-        },
-        "angular-xeditable": {
-            "depends": [
-                "angular"
-            ]
         }
     },
     "bundleDependencies": [],
