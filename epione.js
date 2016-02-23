@@ -68,6 +68,8 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var each = us.each;
 
+var quote_re = /\\\"/gi;
+
 function ll(arg1){
     console.log('epione [' + (new Date()).toJSON() + ']: ', arg1); 
 }
@@ -85,7 +87,8 @@ var matcher = {
     date: /\<http\:\/\/purl\.org\/dc\/elements\/1\.1\/date\>\ \"([^]*)\"\^\^xsd\:string/,
     contributor: /\<http\:\/\/purl\.org\/dc\/elements\/1\.1\/contributor\>\ \"([^]*)\"\^\^xsd\:string/,
     state: /\<http\:\/\/geneontology\.org\/lego\/modelstate\>\ \"([^]*)\"\^\^xsd\:string/,
-    comment: /rdfs\:comment\ \"([^]*)\"\^\^xsd\:string/
+    comment: /rdfs\:comment\ \"([^]*)\"\^\^xsd\:string/,
+    owl_blob_json: /\<http\:\/\/geneontology\.org\/lego\/json\-model\>\ \"([^]*)\"\^\^xsd\:string/
 /* jshint ignore:end */
 };
 var match_types = us.keys(matcher);
@@ -220,6 +223,16 @@ function _file_to_payload(fname){
 	    comment = blob['comment'].join(' / ');
 	}
 
+	// Just the one, hopefully.
+	var owl_blob_json = null;
+	if( blob['owl_blob_json'] && blob['owl_blob_json'][0] ){
+	    //ll( blob['owl_blob_json'][0] );
+	    // Get rid of extra escaping that slips in.
+	    //owl_blob_json = blob['owl_blob_json'][0];
+	    owl_blob_json = blob['owl_blob_json'][0].replace(quote_re, '"');
+	    //ll( owl_blob_json );
+	}
+
 	var title = '???';
 	if( blob['title'] ){
 	    title = blob['title'].join(', ');
@@ -249,8 +262,9 @@ function _file_to_payload(fname){
 	    // TODO: Do not load comments until upstream is fixed:
 	    // See ticket: https://github.com/geneontology/noctua/issues/182
 	    comment: comment,
-	    comment_searchable: comment
-	    //comment: blob['comment']
+	    comment_searchable: comment,
+	    // Models.
+	    owl_blob_json: owl_blob_json
 	};
 
 	//ll(deliverable);
