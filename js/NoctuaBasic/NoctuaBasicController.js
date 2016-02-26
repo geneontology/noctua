@@ -25,6 +25,17 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   var graph = new graph_api.graph();
   $scope.grid_model = [];
 
+  $scope.selected_disease = null;
+  $scope.selected_disease_modal = null;
+  $scope.selected_phenotype = null;
+  $scope.selected_phenotype_modal = null;
+  $scope.selected_ageofonset = null;
+  $scope.selected_ageofonset_modal = null;
+  $scope.selected_ev_ref_list = null;
+  $scope.selected_ev_ref_list_modal = null;
+  $scope.selected_description = null;
+  $scope.selected_description_modal = null;
+
   $scope.response_model = null;
 
   var compute_shield_modal = null;
@@ -115,6 +126,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   });
 
   getExistingIndividualId = function(id, nodes) {
+    console.log('getExistingIndividualId', id, nodes);
     var hit = null; // jQuery loop does not stop on return
     jQuery.each(nodes, function(key, value) {
       if (isType(id, value)) {
@@ -171,6 +183,12 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   $scope.create = function(disease_id, phenotype_id, ageofonset_id, evidence_reference, description) {
+    console.log('create disease_id:', disease_id);
+    console.log('create phenotype_id:', phenotype_id);
+    console.log('create ageofonset_id:', ageofonset_id);
+    console.log('create evidence_reference:', evidence_reference);
+    console.log('create description:', description);
+
     _shields_up();
     if (sanity_check()) {
       var r = new minerva_requests.request_set(manager.user_token(), model_id);
@@ -235,7 +253,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       $timeout(function() {
         Solrautocomplete.createSolrAutocompleteForElement('#' + ev_ref.htmlid, $scope.evidence_autocomplete_options(function(value) {
           ev_ref.ev = value;
-          $scope.$apply();
         }));
         //jQuery('#' + ev_ref.htmlid).solrautocomplete($scope.evidence_autocomplete_options);
         var selectize = jQuery('#' + ev_ref.htmlid)[0].selectize;
@@ -307,14 +324,14 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     if (evidence_reference != "" && evidence_reference != null && evidence_reference.length != 0) {
       underscore.map(evidence_reference, function(ev_ref) {
         var evidence_tmp_id = request_set.add_individual(ev_ref.ev);
-        request_set.add_annotation_to_individual("evidence", evidence_tmp_id, phenotype_tmp_id);
+        request_set.add_annotation_to_individual("evidence", evidence_tmp_id, null, phenotype_tmp_id);
         var ref_list = ev_ref.ref_list;
         if (ref_list != "" && ref_list != null && ref_list.length != 0) {
           underscore.map(ref_list, function(ref) {
             // TODO create a proper individual when it'll supported by Minerva and Noctua
             //var ref_tmp_id = request_set.add_individual(ref.ref);
             //request_set.add_annotation_to_individual("source", ref_tmp_id, evidence_tmp_id);
-            request_set.add_annotation_to_individual("source", ref.ref, evidence_tmp_id);
+            request_set.add_annotation_to_individual("source", ref.ref, null, evidence_tmp_id);
           });
         }
       });
@@ -325,7 +342,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     // }
 
     if (description != "" && description != null) {
-      request_set.add_annotation_to_individual("comment", description, phenotype_tmp_id);
+      request_set.add_annotation_to_individual("comment", description, null, phenotype_tmp_id);
     }
 
     if (ageofonset_id != "" && ageofonset_id != null) {
@@ -348,7 +365,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     $timeout(function() {
       Solrautocomplete.createSolrAutocompleteForElement('#' + id, $scope.evidence_autocomplete_options(function(value) {
         angular_var.ev = value;
-        $scope.$apply();
       }));
       var selectize = jQuery('#' + id)[0].selectize;
       selectize.clearOptions();
@@ -544,12 +560,14 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       }
     };
     Solrautocomplete.createSolrAutocompleteForElement('#select_disease', disease_autocomplete_options(function(value) {
-      $scope.selected_disease = value;
-      $scope.$apply();
+      console.log('Solrautocomplete selected_disease:', value);
+      $scope.$apply(function () {
+        $scope.selected_disease = value;
+      });
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_disease_modal', disease_autocomplete_options(function(value) {
+      console.log('Solrautocomplete selected_disease_modal:', value);
       $scope.selected_disease_modal = value;
-      $scope.$apply();
     }));
 
     var golr_manager_for_phenotype = new bbop.golr.manager.jquery(golr_loc, gconf);
@@ -584,7 +602,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype_modal', phenotype_autocomplete_options(function(value) {
       $scope.selected_phenotype_modal = value;
-      $scope.$apply();
     }));
 
     var golr_manager_for_ageofonset = new bbop.golr.manager.jquery(golr_loc, gconf);
@@ -618,7 +635,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_ageofonset_modal', ageofonset_autocomplete_options(function(value) {
       $scope.selected_ageofonset_modal = value;
-      $scope.$apply();
     }));
 
     var golr_manager_for_evidence = new bbop.golr.manager.jquery(golr_loc, gconf);

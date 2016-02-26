@@ -1002,7 +1002,7 @@ var BaristaLauncher = function(){
 	try{
 	    //ll(jsonp);
 	    var resp_json = JSON.parse(json_string);
-	    //resp = new bbopx.barista.response(resp_json);
+		// ll('barista.RESPONSE:\n' + JSON.stringify(resp_json, null, 2));
 	    resp = new bar_response(resp_json);
 	}catch(e){
 	    response_okay_p = false;
@@ -1175,6 +1175,11 @@ var BaristaLauncher = function(){
 	    var api_loc = app_guard.app_target(ns);
 	    req.url = req.url.substr(ns.length + 5);
 	    ll('api xlate (GET): [' + api_loc + ']' + req.url);
+	    // var urlObj = url.parse(req.url, true).query;
+	    // if (urlObj.requests) {
+	    // 	urlObj.requests = JSON.parse(urlObj.requests);
+	    // }
+	    // ll('barista.GET:\n' + JSON.stringify(urlObj, null, 2));
 	    api_proxy.web(req, res, {
 		'target': api_loc,
 		//'changeOrigin': true
