@@ -406,6 +406,7 @@ var NoctuaLauncher = function(){
 	    '/editor/graph', 'Editor', req, model_id, model_obj, null,
 	    {
 		'pup_tent_css_libraries': [
+		    '/toastr.css',
 		    '/NoctuaEditor.css'
 		],
 		'pup_tent_js_libraries': [
@@ -513,6 +514,7 @@ var NoctuaLauncher = function(){
 		'/', 'Landing', req, null, null, null,
 		{
 		    'pup_tent_css_libraries': [
+			'/toastr.css',
 			'jquery.dataTables.min.css',
 			'/noctua_landing.css'
 		    ],

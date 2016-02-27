@@ -33,6 +33,9 @@ var uuid = bbop.uuid;
 var jQuery = require('jquery');
 /* jshint ignore:end */
 
+var notify_minerva = require('toastr'); // notifications
+var notify_amigo = require('toastr'); // notifications
+
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
 var noctua_model = require('bbop-graph-noctua');
@@ -186,8 +189,14 @@ var MinervaBootstrapping = function(user_token){
     }
     
     // Internal registrations.
-    manager.register('prerun', _shields_up);
-    manager.register('postrun', _shields_down, 9);
+    manager.register('prerun', function(){
+	//_shields_up();
+	notify_minerva.info("Getting meta-information from Minerva...");
+    });
+    manager.register('postrun', function(){
+	//_shields_down();
+	notify_minerva.clear();
+    });
     manager.register('manager_error', function(resp, man){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
@@ -698,6 +707,12 @@ var AmiGOBootstrapping = function(user_token){
     manager.set_results_count(1000);
 
     // On search, report.
+    manager.register('prerun', function(){
+	notify_amigo.info('Updating meta-information from AmiGO...');
+    });
+    manager.register('postrun', function(a, b){
+	notify_amigo.clear();
+    });
     manager.register('search', function(resp, man){
 
         //console.log(resp);

@@ -53,6 +53,7 @@ var minerva_manager = require('bbop-manager-minerva');
 
 // A local separated lib to handle the (semi-)seperable UI widgets.
 var widgetry = require('noctua-widgetry');
+var notify_barista = require('toastr'); // notifications
 
 // And the layouts!
 var layout_engine = require('bbop-layout');
@@ -699,8 +700,19 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var tn = eedge.target();
 	var rn = eedge.relation() || 'n/a';
 
-	// Readable label.
-	rn = aid.readable(rn);
+	// Readable label, try context aid first.
+	var readable_rn = aid.readable(rn);
+	// If context aid doesn't work, see if it comes with a label.
+	if( readable_rn === rn && typeof(eedge.label) === 'function' ){
+	    var label_rn = eedge.label();
+	    if( label_rn !== rn ){
+		rn = label_rn; // use label
+	    }
+	}else{
+	    rn = readable_rn; // use context
+	}
+
+	// Try changing the color with context.
 	var clr = aid.color(rn);
 
 	// Append if there are comments, etc.
@@ -1039,23 +1051,33 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// widgetry.js in a more systematic way so that we can do
 	// group controlling a little better in the UI.
 	if( template_p ){
-	    jQuery('.app-graph-container').css('margin-left', '0em');
+	    // Side app panel.
 	    jQuery('.app-controls').css('width', '0em');
 	    //
-	    jQuery('.open-dialog').css('width', '0');
+	    each(['.open-dialog',
+		  '.open-annotation-dialog',
+		  '.open-annotation-dialog-edge'], function(cls){
+		jQuery(cls).addClass('hidden');
+	    });
 	    //jQuery('.cloner').css('width', '0');
 	    jQuery('.konn').css('width', '0');
-	    jQuery('.app-graph-container').css('background-color', '#e2e2e2');
-	    jQuery('#template_announce_div').removeClass('hidden');	    
+	    jQuery('#template_announce_div').removeClass('hidden');
+	    jQuery('#main_exp_graph_container').addClass('app-graph-container-as-template');
+	    jQuery('#main_exp_graph_container').removeClass('app-graph-container');
 	}else{
-	    jQuery('.app-graph-container').css('margin-left', '15em');
+	    // Side app panel.
 	    jQuery('.app-controls').css('width', '15em');
 	    //
-	    jQuery('.open-dialog').css('width', '1em');
+	    each(['.open-dialog',
+		  '.open-annotation-dialog',
+		  '.open-annotation-dialog-edge'], function(cls){
+		jQuery(cls).removeClass('hidden');
+	    });
 	    //jQuery('.cloner').css('width', '1em');
 	    jQuery('.konn').css('width', '1em');
-	    jQuery('.app-graph-container').css('background-color', '#ffebcd');
 	    jQuery('#template_announce_div').addClass('hidden');	    
+	    jQuery('#main_exp_graph_container').addClass('app-graph-container');
+	    jQuery('#main_exp_graph_container').removeClass('app-graph-container-as-template');
 	}
 
     }
@@ -1449,6 +1471,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    if( barclient ){
 		ll('get layout (manager/rebuild)');
 		barclient.get_layout();
+		notify_barista.info('Updating layout from server...');
 	    }
 
 	    // Update undo/redo info.
@@ -1473,6 +1496,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    if( barclient ){
 		ll('get layout (manager/merge)');
 		barclient.get_layout();
+		notify_barista.info('Updating layout from server...');
 	    }
 
 	    // Update undo/redo info.
@@ -2248,6 +2272,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    //ll('tk_items:', tk_items);
 	    _on_telekinesis_update(tk_items);
 	}
+
+	// Remove the currently used notify.
+	notify_barista.clear();
     }
 
     if( typeof(global_barista_location) === 'undefined'  ){
@@ -2288,6 +2315,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// in merge and redraw routines.
 	ll('get layout (initial)');
 	barclient.get_layout();
+	notify_barista.info('Initializing layout from server...');
 
 	// // DEBUG: Remove before commit.
 	// ll('DESTROYING WORKING BARISTA CLIENT!!!');
