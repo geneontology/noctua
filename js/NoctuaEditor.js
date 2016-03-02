@@ -49,11 +49,15 @@ var minerva_requests = require('minerva-requests');
 var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
 
+// Barista (telekinesis, etc.) communication.
+var barista_client = require('bbop-client-barista');
+
 // Get a localized layout system to test.
 
 // A local separated lib to handle the (semi-)seperable UI widgets.
 var widgetry = require('noctua-widgetry');
-var notify_barista = require('toastr'); // notifications
+var notify_barista = require('toastr'); // regular notifications
+var broadcast_barista = require('toastr'); // broadcast notifications
 
 // And the layouts!
 var layout_engine = require('bbop-layout');
@@ -2142,6 +2146,59 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	}
     }
     
+    // Catch incoming broadcast messages.
+    function _on_broadcast_update(data){
+
+	//
+	if( data && data['message'] ){
+	    if( data['message_type'] === 'warning' ){
+
+		// Require user interaction to close.
+		broadcast_barista.options = {
+		    "closeButton": true,
+		    "debug": false,
+		    "newestOnTop": false,
+		    "progressBar": false,
+		    "positionClass": "toast-top-right",
+		    "preventDuplicates": false,
+		    "onclick": null,
+		    "showDuration": "0",
+		    "hideDuration": "0",
+		    "timeOut": "0",
+		    "extendedTimeOut": "0",
+		    "showEasing": "swing",
+		    "hideEasing": "linear",
+		    "showMethod": "fadeIn",
+		    "hideMethod": "fadeOut"
+		};
+		broadcast_barista.warning( data['message'], 'WARNING');
+
+	    }else{
+
+		// Require user interaction to close.
+		broadcast_barista.options = {
+		    "closeButton": false,
+		    "debug": false,
+		    "newestOnTop": false,
+		    "progressBar": false,
+		    "positionClass": "toast-top-right",
+		    "preventDuplicates": false,
+		    "onclick": null,
+		    "showDuration": "300",
+		    "hideDuration": "1000",
+		    "timeOut": "5000",
+		    "extendedTimeOut": "1000",
+		    "showEasing": "swing",
+		    "hideEasing": "linear",
+		    "showMethod": "fadeIn",
+		    "hideMethod": "fadeOut"
+		};
+		broadcast_barista.info( data['message'], 'Broadcast message');
+
+	    }
+	}
+    }
+    
     function _on_clairvoyance_update(data){
 	//function _on_clairvoyance_update(id, color, top, left){
 
@@ -2287,23 +2344,24 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// NOTE/WARNING/TODO: that these are part of the old bbopx-js
 	// lib and use the old registry.
 	ll('try setup for messaging at: ' + global_barista_location);
-	barclient = new bbopx.barista.client(global_barista_location, in_token);
-	barclient.register('connect', 'a', _on_connect);
-	barclient.register('initialization', 'b', _on_initialization);
-	barclient.register('message', 'c', _on_message_update);
-	barclient.register('clairvoyance', 'd', _on_clairvoyance_update);
-	barclient.register('telekinesis', 'e', _on_telekinesis_update);
-	barclient.register('merge', 'f', function(a,b){
+	barclient = new barista_client(global_barista_location, in_token);
+	barclient.register('connect', _on_connect);
+	barclient.register('initialization', _on_initialization);
+	barclient.register('message', _on_message_update);
+	barclient.register('broadcast', _on_broadcast_update);
+	barclient.register('clairvoyance', _on_clairvoyance_update);
+	barclient.register('telekinesis', _on_telekinesis_update);
+	barclient.register('merge', function(a,b){
 	    console.log('barista/merge response');
 	    _on_model_update(a,b);
 	});
 	//_on_model_update);
-	barclient.register('rebuild', 'g', function(a,b){
+	barclient.register('rebuild', function(a,b){
 	    console.log('barista/rebuild response');
 	    _on_model_update(a,b);
 	});
 	//_on_model_update);
-	barclient.register('query', 'h', function(a,b){
+	barclient.register('query', function(a,b){
 	    console.log('barista/query response');
 	    _on_layout_response(a,b);
 	});

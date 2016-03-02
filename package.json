@@ -32,6 +32,7 @@
         "aws-sdk": "2.0.4",
 	"bbop": "2.4.3",
 	"bbopx": "0.9.31",
+        "bbop-client-barista": "0.0.5",
         "bbop-core": "0.0.5",
         "bbop-graph": "0.0.17",
         "bbop-graph-noctua": "0.0.27",
