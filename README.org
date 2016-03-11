@@ -21,7 +21,6 @@
 
    : npm install
 
-   
    Noctua makes use of [[https://jsplumbtoolkit.com/][jsPlumb]] and [[http://github.com/berkeleybop][BBOP]] components
    developed for [[https://github.com/geneontology/amigo/][AmiGO]].
    
@@ -91,6 +90,20 @@
     This will startup the client aimed at the local Barista instance
     running on default ports.
 
+** Development documentation
+   
+   The full developer documentation currently cuts across a decent
+   swath of different projects. An overview could start like:
+
+   - JS API Minerva/Barista request manager:
+     https://github.com/berkeleybop/bbop-manager-minerva
+   - JS API Minerva request objects/protocol:
+     https://github.com/berkeleybop/minerva-requests
+   - Minerva request API gross concepts:
+     https://github.com/berkeleybop/bbop-manager-minerva/wiki/MinervaRequestAPI
+   - Example client project:
+     https://github.com/geneontology/noctua-repl
+
 ** How to use demo
 *** Generating/selecting a model
     - Models that are currently known (either in memory or file) are
@@ -144,7 +157,7 @@
       try reseting your model--the space you can use will grow with
       it.
 
-** Known Issues
+** Known issues
 
    The bulk of major issues and feature requests are handled by the
    tracker (https://github.com/geneontology/noctua/issues). If something is
