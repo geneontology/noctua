@@ -9,3 +9,29 @@
 .myGrid {
     width: 1150px;
 }
+
+table#association-table {
+	font-size: 0.9em;
+  padding: 3px;
+  margin: 1px;
+}
+
+table#association-table thead tr th,
+table#association-table tbody tr td {
+  word-break:break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  padding: 3px;
+  margin: 1px;
+}
+
+table#association-table thead tr th,
+table#association-table tbody tr td {
+  word-break:break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  padding: 3px;
+  margin: 1px;
+}
+
+

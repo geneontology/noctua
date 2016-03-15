@@ -132,6 +132,13 @@ var SessionInit = function(){
 	    xhr.send();
 	}
     });    
+
+    // Now that the id.watch is configured, make an explicit id.request()
+    // to cause Persona to do its magic.
+    // This appears to be necessary for Safari or any other browser which uses
+    // the Persona shim that supports the navigator.id feature.
+    //
+    // navigator.id.request();
 };
 
 // Go.
