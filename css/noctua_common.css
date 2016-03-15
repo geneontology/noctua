@@ -1,0 +1,71 @@
+.branding-logo-monarch {
+    background-image: url("images/monarch_logo.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height:30px !important;
+    width:60px !important;
+    margin: 0 !important;
+    margin-left:-8px !important;
+    margin-top:10px !important;
+    padding: 0 !important;
+}
+
+.branding-monarch {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: lightcyan !important;
+    margin:0;
+    padding:0;
+}
+
+
+/* Adds GO logo */
+
+.navbar-brand.branding-logo-go {
+	background-image: url("images/go_logo.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height:40px !important;
+    width:40px !important;
+    margin:0 !important;
+    padding:0 !important;
+    margin: 5px 0 0 5px !important;
+    border: 2px solid lightgray;
+    border-radius:40px;
+}
+
+.branding-go {
+    margin: -1px 0 -5px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+
+nav#navbar.navbar .navbar-brand {
+    height: 36px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+nav#navbar.navbar {
+    border-radius: 0;
+    padding-left:10px;
+}
+
+nav#navbar.navbar .navbar-header {
+    border-radius: 0;
+    padding:0;
+    margin:0;
+}
+
+nav#navbar.navbar span.user_name_info {
+    color: powderblue;
+}
+
+nav#navbar.navbar .navbar-collapse {
+    border-radius: 0;
+    padding:0;
+    margin:0;
+}
+

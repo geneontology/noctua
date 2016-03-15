@@ -1,7 +1,5 @@
-<!-- Nav. -->
-<!-- <div class="navbar navbar-inverse navbar-fixed-top"> -->
-<div class="navbar navbar-inverse">
-  <div class="container bbop-bs3-override-nav-scale">
+<nav id="navbar" class="navbar navbar-inverse navbar-static-top">
+  <div class="container-fluid">
 
     <!-- Button on collapse. -->
     <div class="navbar-header">
@@ -11,141 +9,177 @@
         <span class="icon-bar"></span>
       </button>
 
-      <!-- <span class="navbar-brand">MME Editor</span> -->
-      <a href="{{noctua_landing}}" class="navbar-brand">Noctua</a>
+      <a
+        href="#overview" role="tab" data-toggle="tab"
+        class="overview_trigger navbar-brand branding-logo-{{noctua_context}}">&nbsp;
+      </a>
     </div>
 
-    <div class="navbar-collapse collapse">
+    <div class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
-
-        <!-- Help. -->
-        <!-- <p class="navbar-text"> -->
-        <li>
-          <a id="action_help" class="navbar-link"
-	     href="https://github.com/geneontology/noctua" title="">Help</a>
+        <li class="navbar-tab">
+          <a href="#overview" role="tab" data-toggle="tab" class="overview_trigger branding-{{noctua_context}}">
+            {{noctua_branding}}
+          </a>
         </li>
-        <!-- </p> -->
+
+        {{#noctua_dev_tabs}}
+        <li class="navbar-tab"><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
+        <li class="navbar-tab"><a href="#create" role="tab" data-toggle="tab">Create</a></li>
+        {{/noctua_dev_tabs}}
+
+
+        {{#noctua_dev_tabs}}
+        <!-- <li><a href="#export" role="tab" data-toggle="tab">Export</a></li> -->
+        <li class="navbar-tab"><a href="#import" role="tab" data-toggle="tab">Import</a></li>
+        <li class="navbar-tab"><a href="#workbenches" role="tab" data-toggle="tab">Workbenches</a></li>
+        {{/noctua_dev_tabs}}
+
+        {{#noctua_dev_tabs}}
+        <li class="navbar-tab">
+          <a href="#danger" role="tab" data-toggle="tab">
+            <small style="color:orange;">Danger Zone</small>
+          </a>
+        </li>
+        {{/noctua_dev_tabs}}
 
       </ul>
 
-      <div class="nav navbar-right">
+      <ul class="nav navbar-nav navbar-right">
+        <li id="about_trigger" class="navbar-tab">
+          <a href="#about" role="tab" data-toggle="tab">About</a>
+        </li>
+
+        <li>
+        <span class="navbar-text user_name_info">
+          <span id="user_name_info">
+          </span>
+          &nbsp;&nbsp;&nbsp;
+        </span>
+        </li>
 
         {{^barista_token}}
-        <!-- Login. -->
-        <a id="action_barista_login" class="btn btn-default navbar-btn" href="{{barista_login}}" title="">Login</a> {{/barista_token}} {{#barista_token}}
-        <!-- Logout. -->
-        <p id="user_name_info" class="navbar-text">???</p>
-        <a id="action_barista_logout" class="btn btn-default navbar-btn" href="{{barista_logout}}" title="">Logout</a> {{/barista_token}}
-
-      </div>
+        <li>
+        <button id="action_barista_login"
+          class="btn btn-default navbar-btn"
+          onclick="window.location.href='{{barista_login}}'; return false;"
+          title="Login">
+          Login
+        </button>
+        </li>
+        {{/barista_token}}
+        {{#barista_token}}
+        <li>
+        <span class="navbar-text user_name_info">
+          <span id="user_name_info">
+          </span>
+          &nbsp;&nbsp;&nbsp;
+        </span>
+        </li>
+        <li>
+          <button
+            onclick="window.location.href='{{barista_logout}}'; return false;"
+            type="button"
+            class="btn btn-default navbar-btn">
+            Logout
+          </button>
+        </li>
+        {{/barista_token}}
+        <li>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </li>
+      </ul>
 
     </div>
 
   </div>
-</div>
+</nav>
 
 <!-- Main "app". -->
 <div class="container">
 
-  <div class="header text-center">
-    <h2>Noctua</h2>
-  </div>
-
-  <!-- Tab tabs. -->
-  <ul class="nav nav-tabs" role="tablist">
-    <li class="active">
-      <a href="#overview" role="tab" data-toggle="tab">Overview</a>
-    </li>
-    <li><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
-    <li><a href="#create" role="tab" data-toggle="tab">Create</a></li>
-    <!-- <li><a href="#export" role="tab" data-toggle="tab">Export</a></li> -->
-    <li><a href="#import" role="tab" data-toggle="tab">Import</a></li>
-    <li><a href="#workbenches" role="tab" data-toggle="tab">Workbenches</a></li>
-    <li><a href="#about" role="tab" data-toggle="tab">About</a></li>
-    <li>
-      <a href="#danger" role="tab" data-toggle="tab">
-        <small style="color:purple;">Danger Zone</small>
-      </a>
-    </li>
-  </ul>
-
   <!-- Tab pages. -->
   <div class="tab-content">
-    
+
     <!-- Overview tab. -->
-    <div class="tab-pane active noctua_tab_wrapper" id="overview">
-      
-      <!-- LANDING.md. -->
+    <div class="tab-pane noctua_tab_wrapper active" id="overview">
+
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Welcome</h3>
+          <h3 class="panel-title">Welcome to {{{noctua_branding}}}
+          </h3>
+          <a
+            id="learn_more_trigger"
+            class="btn btn-success btn-sm"
+            type="button"
+            style="float:right;margin-top:-23px;"
+            xdata-toggle="tab"
+            href="#about"
+            xrole="tab">
+            Learn More...
+          </a>
         </div>
         <div class="panel-body">
-
-	  <p>
-	  Noctua is a web-based tool for collaborative editing of
-	  models of biological processes.
-	  </p>
-
-	  <!-- Collapser -->
-	  <button class="btn btn-primary"
-		  type="button"
-		  data-toggle="collapse"
-		  data-target="#collapsee"
-		  aria-expanded="false"
-		  aria-controls="collapsee">
-	    Learn more...
-	  </button>
-
-	  <!-- Collapsee -->
-	  <div id="collapsee" class="collapse">
-	    {{{landing_html}}}
-          </div>
-
+          {{{landing_html}}}
+          {{#barista_token}}
+            <button id="create_button_basic" type="submit"
+                    class="col-xs-5 btn btn-primary">
+              Create Model via Form
+            </button>
+            <button id="button_nothing_for_create" type="submit"
+                    class="col-xs-5 btn btn-primary pull-right">Create Model via Graph</button>
+          {{/barista_token}}
+          {{^barista_token}}
+            <p>
+            You must
+            <a id="action_barista_login" href="{{barista_login}}" title="Login">Login</a>
+            to create or edit models. Models may be viewed without login.
+            </p>
+          {{/barista_token}}
         </div>
-
       </div>
 
       <!-- GOlr selection table test. -->
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Selection table</h3>
+          <h3 class="panel-title">Find Existing Models</h3>
         </div>
-        <div class="panel-body">
 
-	  <table id="model-golr-selection" class="display"
-		 width="100%" cellspacing="0">
+        <div class="panel-body" style="padding:10px 0 10px 0;margin:0;">
+          <table id="model-golr-selection" class="table table-striped"
+                 width="100%" cellspacing="0">
             <thead>
               <tr>
-		<th>Title</th>
-		<th>Contributor(s)</th>
-		<th>State</th>
-		<th>Date</th>
-		<!-- <th>Modified</th> -->
-		<!-- <th>Deprecated</th> -->
-		<th>Operations</th>
+                <th>Title</th>
+                <th>Contributor(s)</th>
+                <th>State</th>
+                <th>Date</th>
+                <!-- <th>Modified</th> -->
+                <!-- <th>Deprecated</th> -->
+                <th>Operations</th>
               </tr>
             </thead>
             <tfoot>
               <tr>
-		<th>Title</th>
-		<th>Contributor(s)</th>
-		<th>State</th>
-		<th>Date</th>
-		<!-- <th>Modified</th> -->
-		<!-- <th>Deprecated</th> -->
-		<th>Operations</th>
+                <th>Title</th>
+                <th>Contributor(s)</th>
+                <th>State</th>
+                <th>Date</th>
+                <!-- <th>Modified</th> -->
+                <!-- <th>Deprecated</th> -->
+                <th>Operations</th>
               </tr>
             </tfoot>
             <tbody id="model-golr-selection-data"></tbody>
-	  </table>
+          </table>
 
         </div>
       </div>
 
     </div>
-    
-    
+
+
+    {{#noctua_dev_tabs}}
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
@@ -167,28 +201,30 @@
       </div>
 
     </div>
+    {{/noctua_dev_tabs}}
+
 
     <!-- Create tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="create">
-      
+
       <!-- Aether panel. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Create new model from the æther</h3>
         </div>
         <div class="panel-body">
-	  
+
           <p>
             You <strong>must</strong> be logged in to create a new
             model. You will jump directly to the <strong>graph editor
               UI</strong> for the new empty model.
           </p>
-	  
+
           <button id="button_nothing_for_create" type="button"
-		  class="btn btn-primary">Create &raquo;</button>
+                  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
-      
+
       <!-- fromProcess -->
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -202,21 +238,21 @@
             model.
           </p>
           <div class="form-group">
-	    <p>
-	      <input type="text"
-		     class="form-control"
-		     id="select_protax_proc_for_create"
-		     placeholder="GO process">
-	    </p>
-	    <p>
-	      <input type="text"
-		     class="form-control"
-		     id="select_protax_tax_for_create"
-		     placeholder="Taxon">
-	    </p>
+            <p>
+              <input type="text"
+                     class="form-control"
+                     id="select_protax_proc_for_create"
+                     placeholder="GO process">
+            </p>
+            <p>
+              <input type="text"
+                     class="form-control"
+                     id="select_protax_tax_for_create"
+                     placeholder="Taxon">
+            </p>
           </div>
           <button id="button_protax_for_create" type="button"
-		  class="btn btn-primary">Create &raquo;</button>
+                  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
 
@@ -232,12 +268,14 @@
             form editor UI</strong> for the new empty model.
           </p>
           <button id="create_button_basic" type="submit"
-	  	  class="btn btn-primary">Create &raquo;</button>
+                  class="btn btn-primary">Create &raquo;</button>
         </div>
       </div>
 
     </div>
+    {{#noctua_dev_tabs}}
 
+    {{/noctua_dev_tabs}}
 
     <!-- Export tab. -->
     <!-- <div class="tab-pane noctua_tab_wrapper" id="export"> -->
@@ -253,7 +291,7 @@
     <!--         want. -->
     <!--       </p> -->
     <!--       <p> -->
-    <!-- 	    The curent versions saved nightly onto GitHub are <a href="https://github.com/geneontology/noctua-models/tree/master/models">available here</a>. -->
+    <!--            The curent versions saved nightly onto GitHub are <a href="https://github.com/geneontology/noctua-models/tree/master/models">available here</a>. -->
     <!--       </p> -->
     <!--       <div class="form-group"> -->
     <!--         <\!-- <label for="select_stored_jump">Select by ID</label> -\-> -->
@@ -268,6 +306,7 @@
     <!--   </div> -->
     <!-- </div> -->
 
+    {{#noctua_dev_tabs}}
     <!-- Import tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="import">
       <div class="panel panel-default">
@@ -281,17 +320,20 @@
           </p>
           <p>
             <textarea class="form-control" id="model_data_input"
-		      placeholder="???" rows="3"></textarea>
+                      placeholder="???" rows="3"></textarea>
           </p>
           <p>
             <button id="model_data_button" type="submit"
-		    class="btn btn-primary">Load</button>
+                    class="btn btn-primary">Load</button>
           </p>
           <!-- </form> -->
         </div>
       </div>
 
     </div>
+    {{/noctua_dev_tabs}}
+
+    {{#noctua_dev_tabs}}
 
     <!-- Universal workbenches tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="workbenches">
@@ -301,44 +343,65 @@
           <h3 class="panel-title">Workbenches</h3>
         </div>
         <div class="panel-body">
-	  {{^noctua_workbenches_universal}}
+          {{^noctua_workbenches_universal}}
           <p>
-	    No universal workbenches found.
+            No universal workbenches found.
           </p>
-	  {{/noctua_workbenches_universal}}
-	  {{#noctua_workbenches_universal}}
+          {{/noctua_workbenches_universal}}
+          {{#noctua_workbenches_universal}}
           <p>
-	    <a target="_blank"
-	       href="/workbench/{{{path-id}}}?barista_token={{barista_token}}">{{{menu-name}}}</a>
-	  </p>
-	  {{/noctua_workbenches_universal}}
+            <a target="_blank"
+               href="/workbench/{{{path-id}}}?barista_token={{barista_token}}">{{{menu-name}}}</a>
+          </p>
+          {{/noctua_workbenches_universal}}
         </div>
       </div>
 
     </div>
+    {{/noctua_dev_tabs}}
 
     <!-- About tab. -->
-    <div class="tab-pane noctua_tab_wrapper" id="about">
+    <div role="tabpanel" class="tab-pane noctua_tab_wrapper" id="about">
 
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">About Noctua</h3>
+          <h3 class="panel-title">About {{noctua_branding}}</h3>
+        </div>
+        <div class="panel-body">
+        {{{about_html}}}
+        </div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Welcome to {{noctua_branding}}</h3>
+        </div>
+        <div class="panel-body">
+        {{{landing_html}}}
+        </div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">{{noctua_branding}} Resources</h3>
         </div>
         <div class="panel-body">
           <p>
             <a href="https://github.com/geneontology/noctua">Noctua (clients and Barista)</a>
-	    at GitHub.
+      at GitHub.
             <a href="https://github.com/geneontology/minerva">Noctua (Minerva server)</a>
-	    at GitHub.
+      at GitHub.
           </p>
           <p>
             <a href="https://github.com/geneontology/noctua/issues">Issue tracker</a>
-	    at GitHub.
+      at GitHub.
           </p>
         </div>
       </div>
 
     </div>
+
+    {{#noctua_dev_tabs}}
 
     <!-- Danger Zone tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="danger">
@@ -369,11 +432,11 @@
           <form action="/seed/json" id="json-seed" role="form" method="POST">
             <p>
               <textarea class="form-control" id="model_json_input"
-			name="json-model" placeholder="???" rows="3"></textarea>
+                        name="json-model" placeholder="???" rows="3"></textarea>
             </p>
             <p>
               <button id="model_json_button" type="submit"
-		      class="btn btn-primary">Load</button>
+                      class="btn btn-primary">Load</button>
             </p>
           </form>
         </div>
@@ -387,7 +450,7 @@
         <div class="panel-body">
           <p>
             <a type="button" class="btn btn-primary"
-	       href="{{noctua_location}}/status">Status &raquo;</a>
+               href="{{noctua_location}}/status">Status &raquo;</a>
           </p>
         </div>
       </div>
@@ -401,15 +464,15 @@
           {{#barista_token}}
           <p>
             <a type="button" class="btn btn-primary"
-	       href="{{barista_users}}">Users &raquo;</a>
+               href="{{barista_users}}">Users &raquo;</a>
           </p>
           <p>
             <a type="button" class="btn btn-primary"
-	       href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
+               href="{{barista_location}}/user_info_by_token/123">API &raquo;</a>
           </p>
           <p>
             <a type="button" class="btn btn-primary"
-	       href="{{barista_location}}/status">Status &raquo;</a>
+               href="{{barista_location}}/status">Status &raquo;</a>
           </p>
           {{/barista_token}} {{^barista_token}}
           <p>
@@ -427,35 +490,36 @@
         </div>
         <div class="panel-body">
 
-      	  <table id="model-selection" class="display"
-      		 width="100%" cellspacing="0">
+          <table id="model-selection" class="display"
+                 width="100%" cellspacing="0">
             <thead>
               <tr>
-      		<th>Title</th>
-      		<th>Modified</th>
-      		<th>State</th>
-      		<th>Template</th>
-      		<th>Deprecated</th>
-      		<th>Edit</th>
+                <th>Title</th>
+                <th>Modified</th>
+                <th>State</th>
+                <th>Template</th>
+                <th>Deprecated</th>
+                <th>Edit</th>
               </tr>
             </thead>
             <tfoot>
               <tr>
-      		<th>Title</th>
-      		<th>Modified</th>
-      		<th>State</th>
-      		<th>Template</th>
-      		<th>Deprecated</th>
-      		<th>Edit</th>
+                <th>Title</th>
+                <th>Modified</th>
+                <th>State</th>
+                <th>Template</th>
+                <th>Deprecated</th>
+                <th>Edit</th>
               </tr>
             </tfoot>
             <tbody id="model-selection-data"></tbody>
-      	  </table>
+          </table>
 
         </div>
       </div>
 
     </div>
+    {{/noctua_dev_tabs}}
 
     <!-- Tabs. -->
   </div>
