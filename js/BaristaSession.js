@@ -12,7 +12,7 @@ var amigo = require('amigo2');
 ///
 
 var SessionInit = function(){
-    
+
     var logger = new bbop.logger('session');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
@@ -51,7 +51,7 @@ var SessionInit = function(){
 	    xhr.addEventListener("loadend", function(e) {
 
 		// First thing, stop the spinner.
-		jQuery('#verify-process').hide();		    
+		jQuery('#verify-process').hide();
 
 		// Default failures.
 		var data = JSON.parse(this.responseText);
@@ -65,7 +65,7 @@ var SessionInit = function(){
 
 		    // We're in the clear and the user is in the system.
 		    ll("You are logged in as: " + data.email + '/' + data.token);
-			
+
 		    // Build up interface.
 		    jQuery('#logged-in-name').append(data.nickname);
 		    jQuery('#logged-in-email').append(data.email);
@@ -117,9 +117,23 @@ var SessionInit = function(){
 		jQuery('#logged-out').removeClass('hidden');
 
 		ll("You are logged out of Persona");
-		
+
 		// Add the return button if it was rendered.
 		if( jQuery('#return-trip-logout').length ){
+			// We are logged out. The barista_token should be removed
+			// from the URL we use for the Return button.
+			//
+		    var findPattern = /(.*)([&?])(barista_token=[a-z0-9]+)(.*)/;
+		    var findResult = findPattern.exec(global_barista_return);
+
+		    if (findResult) {
+		    	if (findResult[2] === '?' && findResult[4].length === 0) {
+		    		findResult[2] = '';
+		    	}
+			    global_barista_return =
+			    	findResult[1] + findResult[2] + findResult[4];
+			}
+
 		    var rurl = global_barista_return;
 		    ll("bind logout return event to: " + rurl);
 		    // jQuery('#return-trip-logout').click(function(e){
@@ -131,14 +145,24 @@ var SessionInit = function(){
 	    });
 	    xhr.send();
 	}
-    });    
+    });
 
-    // Now that the id.watch is configured, make an explicit id.request()
-    // to cause Persona to do its magic.
-    // This appears to be necessary for Safari or any other browser which uses
-    // the Persona shim that supports the navigator.id feature.
     //
-    // navigator.id.request();
+    // When logging in, the MacOSX Safari browser gets a Cross-origin request
+    // error because Persona is HTTPS and Noctua is HTTP. The result is that
+    // the opening of the Persona login dialog fails.
+    // By explicitly using navigator.id.request and .logout, everything works great.
+    // Tested on Safari, Chrome, and Firefox.
+    //
+
+    var tokenPattern = 'barista_token=';
+    var tokenIndex = global_barista_return.indexOf(tokenPattern);
+    if (tokenIndex < 0) {
+	    navigator.id.request();
+	}
+	else {
+	    navigator.id.logout();
+	}
 };
 
 // Go.

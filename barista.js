@@ -985,7 +985,6 @@ var BaristaLauncher = function(){
 	if( req.query && req.query['return'] ){
 	    ret = req.query['return'];
 	}
-	
 	var tmpl_args = {
 	    'pup_tent_js_variables': [
 		{'name': 'global_barista_return', 'value': ret }

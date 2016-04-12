@@ -324,22 +324,20 @@ var NoctuaLauncher = function(){
 	if( app_path === '' || app_path === '/' ){ // non-id based pages.
 	    barista_login = barista_loc + '/session' + '?return=' +
 		self.frontend + app_path;
+	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
+	    // determining whether to use ? or &
 	    barista_logout =
-		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.frontend + app_path, barista_token);
+		barista_loc + '/session' + '?return=' +
+		_build_token_link(self.frontend + app_path, barista_token);
 	}else{
 	    barista_login = barista_loc + '/session' + '?return=' +
 		self.frontend + app_path + '/' + model_id;
+	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
+	    // determining whether to use ? or &
 	    barista_logout =
-		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.frontend + app_path + '/' +
-				  model_id, barista_token);
+		barista_loc + '/session' + '?return=' +
+		_build_token_link(self.frontend + app_path + '/' + model_id, barista_token);
 	}
-	console.log('#    svl barista_token:', barista_token);
-	console.log('#    svl noctua_landing:', noctua_landing);
-	console.log('#    svl app_path:', app_path);
-	console.log('#    svl barista_login:', barista_login);
-	console.log('#    svl barista_logout:', barista_logout);
 
 	var barista_users =
 		_build_token_link(self.barista_location +'/user_info',

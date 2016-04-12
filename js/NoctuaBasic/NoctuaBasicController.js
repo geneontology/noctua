@@ -13,8 +13,9 @@ angular
   .module('noctuaBasicApp')
   .controller('NoctuaBasicController', NoctuaBasicController);
 
-function NoctuaBasicController($scope, $animate, $timeout, toastr) {
+function NoctuaBasicController($scope, $animate, $timeout, toastr, $window) {
   $scope.toastr = toastr;
+  $scope.$window = $window;
   var phenotype_ageofonset_relation = "RO:0002488";
   var has_phenotype_relation = "BFO:0000051";
 
@@ -42,7 +43,7 @@ function NoctuaBasicController($scope, $animate, $timeout, toastr) {
 
   $scope.editingTitle = false;
   $scope.newTitle = null;
-  $scope.modelTitle = 'Untitled Model';
+  $scope.modelTitle = undefined;
 
   var compute_shield_modal = null;
 
@@ -86,6 +87,7 @@ function NoctuaBasicController($scope, $animate, $timeout, toastr) {
       typeof(global_barista_location) === 'undefined') {
       alert('environment not ready');
     } else {
+      _shields_up();
       manager = new bbopx.minerva.manager(global_barista_location,
         global_minerva_definition_name,
         user_token);
@@ -215,6 +217,7 @@ function NoctuaBasicController($scope, $animate, $timeout, toastr) {
     annotations = graph.get_annotations_by_key("title");
     if (annotations.length == 0) {
       // no title set yet
+      $scope.editingTitle = true;
     } else {
       title = annotations[0].value(); // there should be only one
       $scope.modelTitle = title;
@@ -222,7 +225,7 @@ function NoctuaBasicController($scope, $animate, $timeout, toastr) {
   }
 
   $scope.isValidModel = function () {
-    return  $scope.modelTitle !== 'Untitled Model' &&
+    return  $scope.modelTitle && $scope.modelTitle.length > 0 &&
             $scope.grid_model.length > 0;
   };
 
@@ -340,10 +343,12 @@ function NoctuaBasicController($scope, $animate, $timeout, toastr) {
   }
 
   $scope.deleteRow = function(disease_node_id, phenotype_node_id, ageofonset_node_id) {
-    _shields_up();
-    var r = new minerva_requests.request_set(manager.user_token(), model_id);
-    requestSetForDeletion(r, disease_node_id, phenotype_node_id, ageofonset_node_id);
-    manager.request_with(r, "remove_row");
+    if ($scope.$window.confirm('Are you sure you want to delete this entry?')) {
+      _shields_up();
+      var r = new minerva_requests.request_set(manager.user_token(), model_id);
+      requestSetForDeletion(r, disease_node_id, phenotype_node_id, ageofonset_node_id);
+      manager.request_with(r, "remove_row");
+    }
   }
 
   requestSetForDeletion = function(request_set, disease_node_id, phenotype_node_id, ageofonset_node_id) {
