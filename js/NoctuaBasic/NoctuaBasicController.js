@@ -7,12 +7,15 @@ var graph_api = require('bbop-graph-noctua');
 var minerva_requests = require('minerva-requests');
 var solrautocomplete = require('bbop-widget-solr-autocomplete');
 var angular = require('angular');
+var widgetry = require('noctua-widgetry');
 
 angular
   .module('noctuaBasicApp')
   .controller('NoctuaBasicController', NoctuaBasicController);
 
-function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
+function NoctuaBasicController($scope, $animate, $timeout, toastr, $window) {
+  $scope.toastr = toastr;
+  $scope.$window = $window;
   var phenotype_ageofonset_relation = "RO:0002488";
   var has_phenotype_relation = "BFO:0000051";
 
@@ -31,12 +34,16 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   $scope.selected_phenotype_modal = null;
   $scope.selected_ageofonset = null;
   $scope.selected_ageofonset_modal = null;
-  $scope.selected_ev_ref_list = null;
+  $scope.selected_ev_ref_list = [];
   $scope.selected_ev_ref_list_modal = null;
   $scope.selected_description = null;
   $scope.selected_description_modal = null;
 
   $scope.response_model = null;
+
+  $scope.editingTitle = false;
+  $scope.newTitle = null;
+  $scope.modelTitle = undefined;
 
   var compute_shield_modal = null;
 
@@ -67,6 +74,12 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     // Try to define token.
     if (global_barista_token) {
       user_token = global_barista_token;
+      $scope.user_token = user_token;
+
+      if( user_token ){
+          widgetry.user_check(global_barista_location,
+            user_token, 'user_name_info');
+      }
     }
 
     // Next we need a manager to try and pull in the model.
@@ -74,6 +87,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       typeof(global_barista_location) === 'undefined') {
       alert('environment not ready');
     } else {
+      _shields_up();
       manager = new bbopx.minerva.manager(global_barista_location,
         global_minerva_definition_name,
         user_token);
@@ -84,20 +98,22 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   // type is 'error' or 'success'
-  var displayToast = function(type, msg) {
-    $mdToast.show({
-      template: '<md-toast class="md-toast ' + type + ' md-capsule">' + msg + '</md-toast>',
-      hideDelay: 5000,
-      position: 'bottom'
-    });
+  $scope.displayToast = function(type, msg) {
+    var toastrFuncMap = {
+      success: $scope.toastr.success,
+      error: $scope.toastr.error
+    };
+    var toastrFunc = toastrFuncMap[type];
+    toastrFunc(msg, msg);
   };
+
 
   sanity_check = function() {
     if ($scope.selected_disease == "" || $scope.selected_disease == null) {
-      displayToast('error', 'Disease cannot be empty.');
+      $scope.displayToast('error', 'Disease cannot be empty.');
       return false;
     } else if ($scope.selected_phenotype == "" || $scope.selected_phenotype == null) {
-      displayToast('error', 'Phenotype cannot be empty.');
+      $scope.displayToast('error', 'Phenotype cannot be empty.');
       return false;
     } else {
       return true;
@@ -105,28 +121,50 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   $scope.store = function() {
+    // $scope.setTitle($scope.modelTitle);
     _shields_up();
     manager.store_model(model_id);
     _shields_down();
-  }
+  };
 
-  // TODO this should not be called on load
-  $scope.$watch('model_title', function(newValue, oldValue) {
-    if (newValue != oldValue) {
-      if ($scope.model_title != "" && $scope.model_title != null) {
-        var r = new minerva_requests.request_set(manager.user_token(), model_id)
-        r.remove_annotation_from_model("title", oldValue);
-        r.add_annotation_to_model("title", newValue);
+  $scope.editTitle = function(newTitle) {
+    $scope.newTitle = $scope.modelTitle;
+    $scope.editingTitle = true;
+  };
 
-        manager.request_with(r, "edit_title");
-      } else {
-        displayToast("error", "Model title cannot be empty.");
-      }
+  $scope.cancelEditTitle = function(newTitle) {
+    $scope.editingTitle = false;
+  };
+
+  $scope.setTitle = function(newTitle) {
+    if ($scope.modelTitle !== newTitle) {
+      _shields_up();
+      var r = new minerva_requests.request_set(manager.user_token(), model_id)
+      r.remove_annotation_from_model("title", $scope.modelTitle);
+      r.add_annotation_to_model("title", newTitle);
+
+      manager.request_with(r, "edit_title");
+      _shields_down();
     }
-  });
+    $scope.editingTitle = false;
+  };
+
+  // // TODO this should not be called on load
+  // $scope.$watch('modelTitle', function(newValue, oldValue) {
+  //   if (manager.user_token() && newValue != oldValue) {
+  //     if ($scope.modelTitle != "" && $scope.modelTitle != null) {
+  //       var r = new minerva_requests.request_set(manager.user_token(), model_id)
+  //       r.remove_annotation_from_model("title", oldValue);
+  //       r.add_annotation_to_model("title", newValue);
+
+  //       manager.request_with(r, "edit_title");
+  //     } else {
+  //       $scope.displayToast("error", "Model title cannot be empty.");
+  //     }
+  //   }
+  // });
 
   getExistingIndividualId = function(id, nodes) {
-    console.log('getExistingIndividualId', id, nodes);
     var hit = null; // jQuery loop does not stop on return
     jQuery.each(nodes, function(key, value) {
       if (isType(id, value)) {
@@ -170,24 +208,42 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   refresh_ui = function() {
     build_table();
     refresh_title();
+    if ($scope.user_token) {
+      $scope.ensure_ev($scope.selected_ev_ref_list);
+    }
   }
 
   refresh_title = function() {
     annotations = graph.get_annotations_by_key("title");
     if (annotations.length == 0) {
       // no title set yet
+      $scope.editingTitle = true;
     } else {
       title = annotations[0].value(); // there should be only one
-      $scope.model_title = title;
+      $scope.modelTitle = title;
     }
   }
 
-  $scope.create = function(disease_id, phenotype_id, ageofonset_id, evidence_reference, description) {
-    console.log('create disease_id:', disease_id);
-    console.log('create phenotype_id:', phenotype_id);
-    console.log('create ageofonset_id:', ageofonset_id);
-    console.log('create evidence_reference:', evidence_reference);
-    console.log('create description:', description);
+  $scope.isValidModel = function () {
+    return  $scope.modelTitle && $scope.modelTitle.length > 0 &&
+            $scope.grid_model.length > 0;
+  };
+
+
+  $scope.isValidAssociation = function () {
+    return  $scope.selected_disease &&
+            $scope.selected_phenotype &&
+            $scope.selected_ageofonset &&
+            // $scope.selected_ev_ref_list.length > 0 &&
+            $scope.selected_description;
+  };
+
+  $scope.create = function() {
+    var disease_id = $scope.selected_disease;
+    var phenotype_id = $scope.selected_phenotype;
+    var ageofonset_id = $scope.selected_ageofonset;
+    var evidence_reference = $scope.selected_ev_ref_list;
+    var description = $scope.selected_description;
 
     _shields_up();
     if (sanity_check()) {
@@ -196,7 +252,8 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       // fetching exising disease individual if it exists
       var existing_disease_id = getExistingIndividualId(disease_id, nodes)
       requestSetForCreation(r, disease_id, phenotype_id, ageofonset_id, evidence_reference, description, existing_disease_id);
-      manager.request_with(r, "create");
+      var result = manager.request_with(r, "create");
+
     } else {
       _shields_down();
     }
@@ -286,10 +343,12 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   $scope.deleteRow = function(disease_node_id, phenotype_node_id, ageofonset_node_id) {
-    _shields_up();
-    var r = new minerva_requests.request_set(manager.user_token(), model_id);
-    requestSetForDeletion(r, disease_node_id, phenotype_node_id, ageofonset_node_id);
-    manager.request_with(r, "remove_row");
+    if ($scope.$window.confirm('Are you sure you want to delete this entry?')) {
+      _shields_up();
+      var r = new minerva_requests.request_set(manager.user_token(), model_id);
+      requestSetForDeletion(r, disease_node_id, phenotype_node_id, ageofonset_node_id);
+      manager.request_with(r, "remove_row");
+    }
   }
 
   requestSetForDeletion = function(request_set, disease_node_id, phenotype_node_id, ageofonset_node_id) {
@@ -305,8 +364,6 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   requestSetForCreation = function(request_set, disease_id, phenotype_id, ageofonset_id, evidence_reference, description, existing_disease_id) {
-    console.log('requestSetForCreation', arguments);
-
     var phenotype_tmp_id = request_set.add_individual(phenotype_id);
     if (existing_disease_id == null) {
       request_set.add_fact([request_set.add_individual(disease_id),
@@ -360,11 +417,30 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     activate_evidence_widget(new_id, underscore.last(selected_ev_ref_list));
   };
 
+  $scope.ensure_ev = function(selected_ev_ref_list) {
+    if (selected_ev_ref_list.length === 0) {
+      $scope.add_ev(selected_ev_ref_list);
+    }
+  };
+
+  $scope.lookup_ev_by_id = function(ev_id) {
+    var result = null;
+    underscore.each($scope.selected_ev_ref_list, function(ev_ref) {
+      if (ev_ref.ev === ev_id) {
+        result = ev_ref;
+      }
+    });
+    return result;
+  };
 
   var activate_evidence_widget = function(id, angular_var) {
     $timeout(function() {
       Solrautocomplete.createSolrAutocompleteForElement('#' + id, $scope.evidence_autocomplete_options(function(value) {
         angular_var.ev = value;
+        if (value && value.length > 0) {
+          var ev = $scope.lookup_ev_by_id(angular_var.ev);
+          $scope.add_ref(ev);
+        }
       }));
       var selectize = jQuery('#' + id)[0].selectize;
       selectize.clearOptions();
@@ -485,28 +561,34 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
   }
 
   initializeCallbacks = function() {
+
+    manager.register('manager_error', 'manager_errorx', function(resp, man){
+      console.log("manager_error");
+      console.log(resp);
+      console.log(man);
+      _shields_down();
+      $scope.displayToast("error", resp._message);
+    }, 10);
+
     manager.register('error', 'errorargh', function(resp, man) {
       console.log("error");
       console.log(resp);
       _shields_down();
-      displayToast("error", resp._message);
+      $scope.displayToast("error", resp._message);
     }, 10);
 
-    manager.register('rebuild', 'foorebuild', function(resp, man) {
-      console.log('rebuild');
-      console.log(resp);
 
+    manager.register('rebuild', 'foorebuild', function(resp, man) {
       $scope.response_model = JSON.stringify(resp);
 
       var tmp_graph = new graph_api.graph();
       tmp_graph.load_data_basic(resp.data());
       graph = tmp_graph;
-      refresh_ui();
 
-      $scope.$apply();
+      $scope.$apply(refresh_ui);
 
       _shields_down();
-      displayToast("success", resp._message);
+      // $scope.displayToast("success", resp._message);
     }, 10);
 
     manager.register('merge', 'merdge', function(resp, man) {
@@ -517,12 +599,26 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       var tmp_graph = new graph_api.graph();
       tmp_graph.load_data_basic(resp.data());
       graph.merge_special(tmp_graph);
-      refresh_ui();
 
-      $scope.$apply();
+      // var disease_selectize = jQuery('#select_disease')[0].selectize;
+      // disease_selectize.clear(true);
+      // $scope.selected_disease = null;
+
+      var phenotype_selectize = jQuery('#select_phenotype')[0].selectize;
+      phenotype_selectize.clear(true);
+      $scope.selected_phenotype = null;
+
+      var ageofonset_selectize = jQuery('#select_ageofonset')[0].selectize;
+      ageofonset_selectize.clear(true);
+      $scope.selected_ageofonset = null;
+
+      $scope.selected_ev_ref_list = [];
+      $scope.selected_description = null;
+
+      $scope.$apply(refresh_ui);
 
       _shields_down();
-      displayToast("success", resp._message);
+      $scope.displayToast("success", resp._message);
     }, 10);
   }
 
@@ -560,13 +656,11 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
       }
     };
     Solrautocomplete.createSolrAutocompleteForElement('#select_disease', disease_autocomplete_options(function(value) {
-      console.log('Solrautocomplete selected_disease:', value);
-      $scope.$apply(function () {
+      // $scope.$apply(function () {
         $scope.selected_disease = value;
-      });
+      // });
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_disease_modal', disease_autocomplete_options(function(value) {
-      console.log('Solrautocomplete selected_disease_modal:', value);
       $scope.selected_disease_modal = value;
     }));
 
@@ -598,7 +692,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     };
     Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype', phenotype_autocomplete_options(function(value) {
       $scope.selected_phenotype = value;
-      $scope.$apply();
+      // $scope.$apply();
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype_modal', phenotype_autocomplete_options(function(value) {
       $scope.selected_phenotype_modal = value;
@@ -631,7 +725,7 @@ function NoctuaBasicController($scope, $mdToast, $animate, $timeout) {
     };
     Solrautocomplete.createSolrAutocompleteForElement('#select_ageofonset', ageofonset_autocomplete_options(function(value) {
       $scope.selected_ageofonset = value;
-      $scope.$apply();
+      // $scope.$apply();
     }));
     Solrautocomplete.createSolrAutocompleteForElement('#select_ageofonset_modal', ageofonset_autocomplete_options(function(value) {
       $scope.selected_ageofonset_modal = value;

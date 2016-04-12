@@ -154,6 +154,7 @@ gulp.task('copy-css-from-npm-deps', function() {
 //process.env.BROWSERIFYSHIM_DIAGNOSTICS = 1;
 // Browser runtime environment construction.
 function _client_compile_task(file) {
+  console.log('client_compile_task', file);
   var b = browserify(file);
 
   if (file === 'js/NoctuaBasic/NoctuaBasicApp.js') {
@@ -189,19 +190,10 @@ us.each(paths.core_noctua_clients, function(file, index) {
     var taskname = 'build-client_' + file;
     noctua_build_tasks.push(taskname);
     gulp.task(taskname, function(cb){
-	_client_compile_task(file);
-	cb(null);
+	   return _client_compile_task(file);
     });
 });
-var noctua_build_tasks = us.clone(base_build_tasks);
-us.each(paths.core_noctua_clients, function(file, index) {
-    var taskname = 'build-client_' + file;
-    noctua_build_tasks.push(taskname);
-    gulp.task(taskname, function(cb){
-	_client_compile_task(file);
-	cb(null);
-    });
-});
+
 var barista_build_tasks = us.clone(base_build_tasks);
 us.each(paths.core_barista_clients, function(file, index) {
     var taskname = 'build-client_' + file;
@@ -211,6 +203,7 @@ us.each(paths.core_barista_clients, function(file, index) {
 	cb(null);
     });
 });
+
 var workbench_build_tasks = us.clone(base_build_tasks);
 us.each(paths.core_workbench_clients, function(file, index) {
     var taskname = 'build-client_' + file;
@@ -227,7 +220,8 @@ gulp.task('build', us.union(noctua_build_tasks,
 
 // Rerun tasks when a file changes.
 gulp.task('watch', function(cb) {
-    gulp.watch(paths.core_noctua_clients, noctua_build_tasks);
+    var basic_client_files = paths.core_noctua_clients.concat('js/NoctuaBasic/NoctuaBasicController.js');
+    gulp.watch(basic_client_files, noctua_build_tasks);
     gulp.watch(paths.core_barista_clients, barista_build_tasks);
     gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
     //gulp.watch(paths.support, ['build']);
@@ -297,6 +291,7 @@ var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
 //
+var noctua_context = config['NOCTUA_CONTEXT'] ? config['NOCTUA_CONTEXT'].value : 'go';
 var noctua_models = config['NOCTUA_MODELS'].value;
 var user_data = config['USER_DATA'].value;
 var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
@@ -323,9 +318,7 @@ if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
 // Execute counter.
 _ping_count();
 
-// Minerva runner.
-gulp.task('run-minerva', shell.task(_run_cmd(
-    ['java',
+var minerva_opts = ['java',
      '-Xmx' + minerva_max_mem + 'G',
      '-cp', './java/lib/minerva-cli.jar',
      'org.geneontology.minerva.server.StartUpTool',
@@ -339,8 +332,18 @@ gulp.task('run-minerva', shell.task(_run_cmd(
      '-c', ontology_catalog,
      '-f', noctua_models,
      '--port', minerva_port
-    ]
+    ];
+
+if (noctua_context === 'monarch') {
+    minerva_opts.push('--monarch-labels', golr_neo_lookup_url);
+    minerva_opts.push('--skip-class-id-validation');
+}
+
+// Minerva runner.
+gulp.task('run-minerva', shell.task(_run_cmd(
+    minerva_opts
 )));
+
 
 // Minerva runner without a lookup.
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
@@ -376,6 +379,7 @@ var noctua_run_list = [
     '--golr', golr_lookup_url,
     '--golr-neo', golr_neo_lookup_url,
     '--barista', barista_lookup_url,
+    '--noctua-context', noctua_context,
     '--noctua-public', noctua_lookup_url,
     '--noctua-self', noctua_location,
     '--minerva-definition', def_app_def,

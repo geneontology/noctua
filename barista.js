@@ -17,7 +17,6 @@ var url = require('url');
 var us = require('underscore');
 var querystring = require('querystring');
 var crypto = require('crypto');
-var cors = require('cors');
 
 var url = require('url');
 var vantage = require('vantage')();
@@ -111,10 +110,16 @@ if( barista_repl_port_raw ){
     ll('Barista will not run REPL.');
 }
 
-// Debug level.
+// Debug level barista_debug
 var barista_debug = argv['d'] || argv['debug'] || 0;
 if( barista_debug ){ barista_debug = parseInt(barista_debug); }
 ll('Barista debug level: ' + barista_debug);
+
+if (barista_debug > 0) {
+	// Execute this before require('socket.io')
+	// Alternatively, set DEBUG='socket.io:*' via the shell environment.
+	process.env['DEBUG'] = process.env['DEBUG'] + ' xsocket.io:*';
+}
 
 ///
 /// ModelCubby: per-model message caching management.
@@ -694,12 +699,35 @@ var BaristaLauncher = function(){
 	// '/bbopx.js',
 	// '/amigo2.js']);
 
+
     // Spin up the main messenging server.
+    // http://expressjs.com/en/guide/migrating-4.html
     var express = require('express');
     var messaging_app = express();
-    messaging_app.use(express.cookieParser());
+
+    var errorHandler = require('errorhandler');
+    messaging_app.use(errorHandler());
+
+    var morgan = require('morgan');
+    messaging_app.use(morgan('dev'));
+
+    var cookieParser = require('cookie-parser');
+    messaging_app.use(cookieParser());  // Must be placed after more specific route defs
+
+	var cors = require('cors');
     messaging_app.use(cors());
-    messaging_app.use(express.session({secret: 'notverysecret'}));
+
+    messaging_app.set('port', runport);
+
+    // https://github.com/expressjs/session#options
+    var session = require('express-session');
+    var session_options = {
+    	secret: 'notverysecret',
+    	resave: false,
+    	saveUninitialized: false
+    };
+    messaging_app.use(session(session_options));
+
     // Must match client browser's address bar.
     var persona_opts = {
 	audience: publoc,
@@ -753,7 +781,6 @@ var BaristaLauncher = function(){
 
 	// Code to run when the user has or is logged out.
 	logoutResponse: function(err, req, res) {
-
 	    // Destroy as much of the session information as we can.
 	    var did_something_p = false;
 	    if( req && req.session ){
@@ -789,13 +816,25 @@ var BaristaLauncher = function(){
 	    res.json({status: "okay"});
 	}
     };
-    require("express-persona")(messaging_app, persona_opts);
+    var express_persona = require('express-persona');
+    express_persona(messaging_app, persona_opts);
+
+
+    // Middleware that defines routes should be here, so that more-specific
+    // route defs above have priority
 
     // Server creation and socket.io addition.
-    var messaging_server = require('http').createServer(messaging_app);
-    var sio = require('socket.io').listen(messaging_server);
+    var messaging_server = http.createServer(messaging_app);
+
+    // This initial require() of socket.io respects the process.env
+    // variable DEBUG (see the processing of the barista_debug value above).
+    //
+    var socketio = require('socket.io');
+    var sio = socketio.listen(messaging_server);
     // Run app server through vantage to get vantage goodies.
-    messaging_server.listen(runport);
+    messaging_server.listen(messaging_app.get('port'), function(){
+      console.log('Express server listening on port ' + messaging_app.get('port'));
+    });
 
     ///
     /// Cached static routes.
@@ -923,7 +962,7 @@ var BaristaLauncher = function(){
     messaging_app.get('/user_info_by_token/:token', function(req, res) {
 	
 	// Do we have permissions to make the call?
-	var token = req.route.params['token'] || null;
+	var token = req.params['token'] || null;
 	var sess = sessioner.get_session_by_token(token);
 
 	var ret_obj = {};
@@ -946,7 +985,6 @@ var BaristaLauncher = function(){
 	if( req.query && req.query['return'] ){
 	    ret = req.query['return'];
 	}
-	
 	var tmpl_args = {
 	    'pup_tent_js_variables': [
 		{'name': 'global_barista_return', 'value': ret }
@@ -1020,13 +1058,13 @@ var BaristaLauncher = function(){
 		ll("Skip broadcast of message (non-action).");
 	    }else if( resp.signal() === 'merge' ){
 		ll("Broadcast merge.");
-		sio.sockets.emit('relay', {'class': 'merge',
+		sio.emit('relay', {'class': 'merge',
 					   'model_id': resp.model_id(),
 					   'packet_id': resp.packet_id(),
 					   'data': resp.raw()});
 	    }else if( resp.signal() === 'rebuild' ){
 		ll("Broadcast rebuild.");
-		sio.sockets.emit('relay', {'class': 'rebuild',
+		sio.emit('relay', {'class': 'rebuild',
 					   'model_id': resp.model_id(),
 					   'packet_id': resp.packet_id(),
 					   'data': resp.raw()});
@@ -1070,7 +1108,7 @@ var BaristaLauncher = function(){
 	// var resp = new bbopx.barista.response({});
 	// resp.message_type('error');
 	// resp.message('We have problem! Maybe a timeout error against Minerva?');
-	// 	    sio.sockets.emit('relay', {'class': 'rebuild',
+	// 	    sio.emit('relay', {'class': 'rebuild',
 	// 				       'model_id': resp.model_id(),
 	// 				       'packet_id': resp.packet_id(),
 	// 				       'data': resp.raw()});
@@ -1078,13 +1116,22 @@ var BaristaLauncher = function(){
 
     // GET version proxy--this is the use of the http-proxy package.
     var http_proxy = require('http-proxy');
-    var api_proxy = http_proxy.createProxyServer({});
+    var api_proxy_opts = {
+		changeOrigin: true,
+		xfwd: true
+		// prependPath: false,
+    };
+    var api_proxy = http_proxy.createProxyServer(api_proxy_opts);
     messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){ 
 
 	// TODO: Request logging hooks could be placed in here.
 	//ll('pre api req: ' + req.url);
 	monitor_calls = monitor_calls +1;
 
+	// console.log('####req.url:', req.url);
+	// console.log('####req.query:', req.query);
+	// console.log('####req.query.token:', req.query.token);
+	// console.log('####req.params:', req.params);
 	// Extract the arguments one way or another. The end product
 	// is to try and get a session out for use. The important
 	// thing we need here is the uri to pass back to the API if
@@ -1111,8 +1158,11 @@ var BaristaLauncher = function(){
 		uuri = sess.uri;
 		has_sess_p = true;
 	    }else{
-		ll('no token was attempted');
+		ll('token was not found');
 	    }
+	}
+	else{
+	    ll('no token was attempted');
 	}
 
 	// Extract token=??? from the request URL safely and add the
@@ -1132,9 +1182,9 @@ var BaristaLauncher = function(){
 	req.url = url.format(url_obj);
 
 	// Do we have permissions to make the call?
-	var ns = req.route.params['namespace'] || '';
-	var call = req.route.params['call'] || '';
-	var subcall = req.route.params['subcall'] || '';
+	var ns = req.params['namespace'] || '';
+	var call = req.params['call'] || '';
+	var subcall = req.params['subcall'] || '';
 	call = call + subcall; // allow for things like seed/fromProcess
 	if( ! app_guard.is_public(ns, call) && ! uuri ){
 	    ll('blocking call: ' + req.url);
@@ -1181,11 +1231,11 @@ var BaristaLauncher = function(){
 	    // }
 	    // ll('barista.GET:\n' + JSON.stringify(urlObj, null, 2));
 	    api_proxy.web(req, res, {
-		'target': api_loc,
-		//'changeOrigin': true
+		'target': api_loc
 	    });
 	}
     });
+
 
     // TODO: Pass certain types of responses to /all/ listening
     // clients. (TODO: eventually, just the ones on the model
@@ -1196,6 +1246,7 @@ var BaristaLauncher = function(){
 	// response, so we have to assemble it ourselves.
 	var chunks = [];
 	proxyRes.on('data', function(chunk){
+
     	    //var util = require('util');
 	    var jsonp_partial = chunk.toString();
 	    chunks.push(jsonp_partial);
@@ -1213,6 +1264,12 @@ var BaristaLauncher = function(){
 	    _notify_listeners(json_string);
 	});
     });
+
+    // Uncomment this for debugging proxy requests.
+    // api_proxy.on('proxyReq', function(proxyReq, req, res, options) {
+    // 	console.log('proxyReq:', req.url, req.query, req.params, req.headers, options);
+    // });
+
 
     // Not everything in life has happy endings. I've run into cases
     // where the ontologies slow minerva down enough that I get an
@@ -1277,9 +1334,9 @@ var BaristaLauncher = function(){
 	    delete decoded_body['token'];
 
 	    // Do we have permissions to make the call?
-	    var ns = req.route.params['namespace'] || '';
-	    var call = req.route.params['call'] || '';
-	    var subcall = req.route.params['subcall'] || '';
+	    var ns = req.params['namespace'] || '';
+	    var call = req.params['call'] || '';
+	    var subcall = req.params['subcall'] || '';
 	    call = call + subcall; // allow for things like seed/fromProcess
 	    if( ! app_guard.is_public(ns, call) && ! uuri ){
 		ll('blocking call: ' + req.url);
@@ -1323,7 +1380,7 @@ var BaristaLauncher = function(){
 		ll('api xlate (POST): [' + api_loc + ']' + req.url);
 		//ll(req.url);
 		//ll(req);
-		//ll(decoded_body);
+		// ll(decoded_body);
 
 		// Okay, @#$@#$@. The proxy server simply will not
 		// work the way we want (see:
@@ -1399,10 +1456,13 @@ var BaristaLauncher = function(){
 
     // TODO: Turn on recommended production settings when in production.
     // https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO#wiki-recommended-production-settings
-    sio.enable('browser client minification');
-    sio.enable('browser client etag');
-    sio.enable('browser client gzip');
-    sio.set('log level', barista_debug);
+    // sio.enable('browser client minification');
+    // sio.enable('browser client etag');
+    // sio.enable('browser client gzip');
+    // sio.set('log level', barista_debug);
+    // Above sio.enable/set calls are no longer supported by socket.io
+    // See: http://stackoverflow.com/questions/30793779/run-app-on-newest-versions-of-socket-io-gratter-than-1-0
+    // See: http://socket.io/docs/migrating-from-0-9/
 
     // This would eventually be information delivered by the
     // authentication system.

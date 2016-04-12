@@ -1,3 +1,26 @@
 .noctua_tab_wrapper {
-    padding: 2.5em;
+    margin: 0;
+    padding: 0;
 }
+
+
+table#model-golr-selection {
+    margin: 0;
+    padding: 0;
+}
+
+table#model-golr-selection thead tr th,
+table#model-golr-selection tbody tr td {
+  word-break:break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+table#model-selection thead tr th,
+table#model-selection tbody tr td {
+  word-break:break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+

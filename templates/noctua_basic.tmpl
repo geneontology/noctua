@@ -1,7 +1,7 @@
-<!-- Nav. -->
-<!-- <div class="navbar navbar-inverse navbar-fixed-top"> -->
-<div class="navbar navbar-inverse">
-  <div class="container bbop-bs3-override-nav-scale">
+{{=<% %>=}}
+
+<nav id="navbar" class="navbar navbar-inverse xnavbar-fixed-top">
+  <div class="container-fluid">
 
     <!-- Button on collapse. -->
     <div class="navbar-header">
@@ -11,217 +11,351 @@
         <span class="icon-bar"></span>
       </button>
 
-      <!-- <span class="navbar-brand">MME Editor</span> -->
-      <a href="{{noctua_landing}}" class="navbar-brand">Noctua Preview</a>
+
+      <a
+        href="<%noctua_landing%>"
+        class="navbar-brand branding-logo-<%noctua_context%>">
+        &nbsp;
+      </a>
     </div>
 
     <div class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
+        <li class="navbar-tab active">
+          <a
+        <%#barista_token%>
+            href="/?barista_token=<%barista_token%>"
+        <%/barista_token%>
+        <%^barista_token%>
+            href="/"
+        <%/barista_token%>
+            class="branding-<%noctua_context%>">
+            <%noctua_branding%>
+          </a>
+        </li>
 
         <!-- Help. -->
-        <!-- <p class="navbar-text"> -->
-        <li>
-          <a id="action_help" class="navbar-link"
-	     href="https://github.com/geneontology/noctua" title="">Help</a>
+        <li id="about_trigger" class="navbar-tab">
+          <a
+            href="<%noctua_landing%>#about">
+              About
+          </a>
         </li>
-        <!-- </p> -->
-
       </ul>
 
       <div class="nav navbar-right">
-
-        {{^barista_token}}
+        <%^barista_token%>
         <!-- Login. -->
-        <a id="action_barista_login" class="btn btn-default navbar-btn" href="{{barista_login}}" title="">Login</a> {{/barista_token}} {{#barista_token}}
+        <a id="action_barista_login" class="btn btn-default navbar-btn" href="<%barista_login%>" title="">Login</a>
+        <%/barista_token%>
+        <%#barista_token%>
         <!-- Logout. -->
-        <p id="user_name_info" class="navbar-text">???</p>
-        <a id="action_barista_logout" class="btn btn-default navbar-btn" href="{{barista_logout}}" title="">Logout</a> {{/barista_token}}
-
+        <span class="user_name_info">
+          <span id="user_name_info">
+          </span>
+          &nbsp;&nbsp;
+        </span>
+        <a id="action_barista_logout" class="btn btn-default navbar-btn" href="<%barista_logout%>" title="">Logout</a>
+        <%/barista_token%>
+        &nbsp;&nbsp;
       </div>
 
     </div>
-
   </div>
-</div>
+</nav>
 
-<div class="container" ng-app="noctuaBasicApp">
-
-  <div class="header text-center">
-    <h2>Abstract Form Interface Prototype</h2>
-  </div>
+<div id="noctua-app" class="container" ng-app="noctuaBasicApp">
   <div ng-controller="NoctuaBasicController" ng-init="init()">
-    <div class="form-group">
-      <h3><a href="#" editable-text="model_title">{[{ model_title || "click here to set a title" }]}</a></h3>
-      <button id="save_button" type="submit" class="btn btn-primary" ng-click="store()">Store into a file</button>
+
+    <div ng-hide="response_model">
+      <br>
+      <hr>
+      <h1 class="text-center">Loading Model...</h1>
+      <hr>
     </div>
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">Basic Interface</h3>
-      </div>
-      <div class="panel-body">
 
-        <div class="form-group">
-          <label for="select_disease">Disease</label>
-          <div class="input-group">
-            <select class="form-control" id="select_disease" placeholder="Pick a Disease..."></select>
-          </div>
+    <div ng-hide="!response_model">
+      <div class="row well well-sm">
+        <div
+          ng-hide="!editingTitle"
+          class="col-xs-8">
+          <input
+            autofocus
+            ng-model="newTitle"
+            type="text"
+            class="form-control"
+            id="modelTitle"
+            placeholder="Title your model">
         </div>
-
-        <div class="form-group">
-          <label for="select_phenotype">Phenotype</label>
-          <div class="input-group">
-            <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..."></select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="select_ageofonset">Age of onset (of the phenotype)</label>
-          <div class="input-group">
-            <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..."></select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="basic_evidence_input">Evidence</label>
-        </div>
-        <div class="form-group" ng-repeat="ev_ref in selected_ev_ref_list">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="input-group">
-                <select class="form-control" id="{[{ev_ref.htmlid}]}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-7 col-md-offset-3">
-              <div ng-repeat="ref in ev_ref.ref_list">
-                <input class="form-control" id="{[{ev_ref.htmlid + ref.htmlid}]}" placeholder="Select reference..." ng-model="ref.ref"></input>
-              </div>
-              <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add another reference</button>
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list)">Add another evidence</button>
-
-        <div class="form-group">
-          <label for="basic_reference_input">Description</label>
-          <textarea class="form-control" rows="2" ng-model="selected_description"></textarea>
-        </div>
-
-        <button
-          id="select_stored_jump_button"
-          type="submit"
-          class="btn btn-primary"
-          ng-click="create(selected_disease, selected_phenotype, selected_ageofonset, selected_ev_ref_list, selected_description)">
-          Add
-        </button>
-
-        <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+        <div
+          ng-hide="!editingTitle"
+          class="col-xs-2">
+          <button
+            type="button"
+            class="btn btn-warning"
+            ng-disabled="!(modelTitle && modelTitle.length > 0)"
+            ng-click="cancelEditTitle()">
+            Cancel
           </button>
-          <div id="alert-message">hidden</div>
         </div>
+        <div
+          ng-hide="!editingTitle"
+          class="col-xs-2">
+          <button
+            ng-disabled="!(newTitle && newTitle.length > 0)"
+            type="button" class="btn btn-success" ng-click="setTitle(newTitle)">
+            Save Title
+          </button>
+        </div>
+        <div
+          ng-hide="editingTitle"
+          class="col-xs-8">
+          <h4>
+            {{modelTitle}}
+          </h4>
+        </div>
+
+        <%#barista_token%>
+        <div
+          ng-hide="editingTitle"
+          class="col-xs-4">
+          <button
+            type="button" class="btn btn-primary" ng-click="editTitle()">
+            Change Title
+          </button>
+        </div>
+        <%/barista_token%>
 
       </div>
 
-    </div>
+      <div class="row well well-sm">
+      <%#barista_token%>
+        <div class="col-xs-3">
+          <button
+            ng-disabled="!isValidModel()"
+            id="save_button"
+            type="button"
+            class="btn btn-success"
+            ng-click="store()">
+            Save Model
+          </button>
+        </div>
+        <div class="col-xs-3">
+          <button ng-disabled="true" id="delete_button" type="button" class="btn btn-warning" ng-click="delete()">
+            <s>Delete Model</s>
+          </button>
+        </div>
+      <%/barista_token%>
+        <div class="col-xs-3">
+          <button ng-disabled="true" id="export_owl" type="button" class="btn btn-primary" ng-click="editGraph()">
+            <s>View Graph</s>
+          </button>
+        </div>
+        <div class="col-xs-3">
+          <button ng-disabled="true" id="export_owl" type="button" class="btn btn-primary" ng-click="export('OWL')">
+            <s>Export OWL</s>
+          </button>
+        </div>
+      </div>
 
-    <table class="table table-hover table-bordered" bs-table>
-      <thead>
-        <tr>
-          <th ng-click="predicate='disease'; reverse=!reverse">Disease</th>
-          <th ng-click="predicate='phenotype'; reverse=!reverse">Phenotype</th>
-          <th ng-click="predicate='ageofonset'; reverse=!reverse">Age of Onset</th>
-          <th ng-click="predicate='evidence'; reverse=!reverse">Evidence</th>
-          <th ng-click="predicate='reference'; reverse=!reverse">Reference</th>
-          <th ng-click="predicate='description'; reverse=!reverse">Description</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="entry in grid_model | orderBy:predicate:reverse">
-          <td>{[{entry.disease}]}</td>
-          <td>{[{entry.phenotype}]}</td>
-          <td>{[{entry.ageofonset}]}</td>
-          <td>{[{entry.evidence}]}</td>
-          <td>{[{entry.reference}]}</td>
-          <td>{[{entry.description}]}</td>
-          <td class="action-column">
-            <button type="button" class="btn btn-info btn-sm" ng-click="editRowModal(entry)">Edit</button>
-            <button type="button" class="btn btn-info btn-sm" ng-click="deleteRow(entry.disease_node_id, entry.phenotype_node_id, entry.ageofonset_node_id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
 
-    <!-- Modal -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title" id="myModalLabel">Edit</h4>
+      <%#barista_token%>
+      <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <span class="panel-title">Add New Association</span>
           </div>
-          <div class="modal-body">
-            <div class="form-group">
+          <div class="panel-body row">
+            <div class="form-group col-xs-12">
               <label for="select_disease">Disease</label>
               <div class="input-group">
-                <select class="form-control" id="select_disease_modal" placeholder="Pick a Disease..."></select>
+                <select class="form-control" id="select_disease" placeholder="Pick a Disease..."></select>
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group col-xs-12">
               <label for="select_phenotype">Phenotype</label>
               <div class="input-group">
-                <select class="form-control" id="select_phenotype_modal" placeholder="Pick a phenotype..."></select>
+                <select class="form-control" id="select_phenotype" placeholder="Pick a phenotype..."></select>
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group col-xs-12">
               <label for="select_ageofonset">Age of onset (of the phenotype)</label>
               <div class="input-group">
-                <select class="form-control" id="select_ageofonset_modal" placeholder="Define the age of onset..."></select>
+                <select class="form-control" id="select_ageofonset" placeholder="Define the age of onset..."></select>
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group col-xs-12">
               <label for="basic_evidence_input">Evidence</label>
             </div>
-            <div class="form-group" ng-repeat="ev_ref in selected_ev_ref_list_modal">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="input-group">
-                    <select class="form-control" id="{[{ev_ref.htmlid}]}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-7 col-md-offset-3">
-                  <div ng-repeat="ref in ev_ref.ref_list">
-                    <input class="form-control" id="{[{ev_ref.htmlid + ref.htmlid}]}" placeholder="Select reference..." ng-model="ref.ref"></input>
-                  </div>
-                  <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add another reference</button>
-                </div>
-              </div>
-            </div>
-            <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list_modal)">Add another evidence</button>
 
-            <div class="form-group">
-              <label for="basic_reference_input">Description</label>
-              <textarea class="form-control" rows="2" ng-model="selected_description_modal"></textarea>
+            <div class="well well-sm form-group col-xs-12" ng-repeat="ev_ref in selected_ev_ref_list">
+              <div class="row">
+                <div class="col-xs-9">
+                  <div xclass="input-group">
+                    <select class="form-control" id="{{ev_ref.htmlid}}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
+                  </div>
+                </div>
+
+                <div class="form-group col-xs-3">
+                  <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list)">Add evidence</button>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-9">
+                  <div ng-repeat="ref in ev_ref.ref_list">
+                    <input class="form-control" id="{{ev_ref.htmlid + ref.htmlid}}" placeholder="Enter supporting reference" ng-model="ref.ref"></input>
+                  </div>
+                </div>
+                <div class="col-xs-3">
+                <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add reference</button>
+                </div>
+              </div>
             </div>
+
+            <div class="form-group col-xs-12">
+              <label for="basic_reference_input">Description</label>
+              <textarea class="form-control" rows="2" ng-model="selected_description"></textarea>
+            </div>
+
+            <div class="form-group col-xs-12">
+              <button
+                ng-disabled="!isValidAssociation()"
+                id="select_stored_jump_button"
+                type="button"
+                class="btn btn-primary"
+                ng-click="create()">
+                Add
+              </button>
+            </div>
+
+            <div id="alert-wrapper" class="alert alert-info alert-dismissible" role="alert" style="display: none;">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <div id="alert-message">hidden</div>
+            </div>
+
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="editRow()">Save changes</button>
+
+        </div>
+      </div>
+      <%/barista_token%>
+
+
+      <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <span class="panel-title">Associations</span>
+          </div>
+          <div class="pre-scrollable">
+            <table id="association-table" class="table table-hover table-bordered"
+              style="table-layout:fixed;">
+              <thead>
+                <tr>
+                  <th ng-click="predicate='disease'; reverse=!reverse">Disease</th>
+                  <th ng-click="predicate='phenotype'; reverse=!reverse">Phenotype</th>
+                  <th ng-click="predicate='ageofonset'; reverse=!reverse">Age of Onset</th>
+                  <th ng-click="predicate='evidence'; reverse=!reverse">Evidence</th>
+                  <th ng-click="predicate='reference'; reverse=!reverse">Reference</th>
+                  <th ng-click="predicate='description'; reverse=!reverse">Description</th>
+          <%#barista_token%>
+                  <th>Actions</th>
+          <%/barista_token%>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="entry in grid_model | orderBy:predicate:reverse">
+                  <td>{{entry.disease}}</td>
+                  <td>{{entry.phenotype}}</td>
+                  <td>{{entry.ageofonset}}</td>
+                  <td>{{entry.evidence[0]}}</td>
+                  <td>{{entry.reference}}</td>
+                  <td>{{entry.description}}</td>
+          <%#barista_token%>
+                  <td class="action-column">
+                    <button type="button" class="btn btn-block btn-success btn-xs" ng-click="editRowModal(entry)">Edit</button>
+                    <button ng-disabled="true" type="button" class="btn btn-block btn-success btn-xs" ng-click="duplicateRowModal(entry)"><s>Duplicate</s></button>
+                    <button type="button" class="btn btn-block btn-warning btn-xs" ng-click="deleteRow(entry.disease_node_id, entry.phenotype_node_id, entry.ageofonset_node_id)">Delete</button>
+                  </td>
+          <%/barista_token%>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- Modal -->
+      <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">Edit</h4>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="select_disease">Disease</label>
+                <div class="input-group">
+                  <select class="form-control" id="select_disease_modal" placeholder="Pick a Disease..."></select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="select_phenotype">Phenotype</label>
+                <div class="input-group">
+                  <select class="form-control" id="select_phenotype_modal" placeholder="Pick a phenotype..."></select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="select_ageofonset">Age of onset (of the phenotype)</label>
+                <div class="input-group">
+                  <select class="form-control" id="select_ageofonset_modal" placeholder="Define the age of onset..."></select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="basic_evidence_input">Evidence</label>
+              </div>
+              <div class="form-group" ng-repeat="ev_ref in selected_ev_ref_list_modal">
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="input-group">
+                      <select class="form-control" id="{{ev_ref.htmlid}}" placeholder="Select evidence..." ng-model="ev_ref.ev"></select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-7 col-md-offset-3">
+                    <div ng-repeat="ref in ev_ref.ref_list">
+                      <input class="form-control" id="{{ev_ref.htmlid + ref.htmlid}}" placeholder="Select reference..." ng-model="ref.ref"></input>
+                    </div>
+                    <button class="btn btn-secondary" ng-click="add_ref(ev_ref)">Add another reference</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-secondary" ng-click="add_ev(selected_ev_ref_list_modal)">Add another evidence</button>
+
+              <div class="form-group">
+                <label for="basic_reference_input">Description</label>
+                <textarea class="form-control" rows="2" ng-model="selected_description_modal"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="editRow()">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- ng-hide -->
   </div>
 
 
