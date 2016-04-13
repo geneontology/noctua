@@ -667,10 +667,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		if( ! enode ){
 		    alert('Could not find related test element.');
 		}else{
-		    var ann_edit_modal = widgetry.edit_annotations_modal;
-		    var eam = ann_edit_modal(instance_annotation_config,
-					     ecore, manager, enode.id(),
-					     gserv, gconf);
+		    var edit_ann_modal = widgetry.edit_annotations_modal;
+		    var eam = edit_ann_modal(instance_annotation_config, ecore,
+					     manager, enode.id(), gserv, gconf);
 		    eam.show();
 		}
     	    });
@@ -794,8 +793,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// Add activity listener to the new edge.
 	new_conn.bind('click', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
-	    var ann_edit_modal = widgetry.edit_annotations_modal;
-	    var eam = ann_edit_modal(fact_annotation_config, ecore, manager,
+	    var edit_ann_modal = widgetry.edit_annotations_modal;
+	    var eam = edit_ann_modal(fact_annotation_config, ecore, manager,
 				     eedge.id(), gserv, gconf);
 	    eam.show();
 	});
@@ -2393,10 +2392,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     //
     jQuery(model_ann_elt).click(function(){
-	var ann_edit_modal = widgetry.edit_annotations_modal;
-	var eam = ann_edit_modal(model_annotation_config,
-				 ecore, manager, ecore.get_id(),
-				 gserv, gconf);
+	var edit_ann_modal = widgetry.edit_annotations_modal;
+	var eam = edit_ann_modal(model_annotation_config, ecore, manager,
+				 ecore.get_id(), gserv, gconf);
 	eam.show();
     });
 
