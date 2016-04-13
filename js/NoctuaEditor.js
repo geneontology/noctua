@@ -68,6 +68,9 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
+//
+var edit_ann_modal = widgetry.edit_annotations_modal;
+var edit_node_modal = widgetry.edit_node_modal;
 
 // Want a "global" shield to help deal with bridging the initial
 // minerva contact load.
@@ -640,12 +643,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		if( ! enode ){		    
 		    alert('Could not find related element.');
 		}else{
-		    var nedit =
-			widgetry.edit_node_modal(ecore, manager, enode,
-						 in_relations, aid,
-						 gserv_neo, gconf,
-						 global_workbenches_individual,
-						 in_token);
+		    var nedit = edit_node_modal(ecore, manager, enode,
+						in_relations, aid,
+						gserv_neo, gconf,
+						global_workbenches_individual,
+						in_token);
 		    nedit.show();
 		}
 	    });
@@ -667,7 +669,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		if( ! enode ){
 		    alert('Could not find related test element.');
 		}else{
-		    var edit_ann_modal = widgetry.edit_annotations_modal;
 		    var eam = edit_ann_modal(instance_annotation_config, ecore,
 					     manager, enode.id(), gserv, gconf);
 		    eam.show();
@@ -793,7 +794,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// Add activity listener to the new edge.
 	new_conn.bind('click', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
-	    var edit_ann_modal = widgetry.edit_annotations_modal;
 	    var eam = edit_ann_modal(fact_annotation_config, ecore, manager,
 				     eedge.id(), gserv, gconf);
 	    eam.show();
@@ -2392,7 +2392,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     //
     jQuery(model_ann_elt).click(function(){
-	var edit_ann_modal = widgetry.edit_annotations_modal;
 	var eam = edit_ann_modal(model_annotation_config, ecore, manager,
 				 ecore.get_id(), gserv, gconf);
 	eam.show();
