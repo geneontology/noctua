@@ -1503,6 +1503,55 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	var anchor = this;
 
+	///
+	/// Detection and button generation for evidence cloning.
+	///
+
+	// Extract evidence profiles in the current graph.
+	// Check to see if we're in the special evidence mode :(
+	var all_evidence_profiles = [];
+	if( dd_options && dd_options['special'] === 'evidence' ){
+
+	    var over_graph = dd_options['graph'];
+	    if( over_graph ){
+
+		// Clone out, just in case.
+		over_graph = over_graph.clone(); // use the clone
+
+		// Make sure we're in the proper single-folded mode.
+		over_graph.unfold();
+		over_graph.fold_evidence();
+
+		us.each(over_graph.all_edges(), function(e){
+		    var profs = e.get_referenced_subgraph_profiles();
+		    if( profs && profs.length > 0 ){
+			us.each(profs, function(p){
+			    all_evidence_profiles.push(p);
+			});
+		    }
+		});
+	    }
+	}
+
+	// Create clone button.
+	var clone_btn_args = {
+    	    'generate_id': true,
+    	    'type': 'button',
+    	    'class': 'btn' // plain
+	};
+	if( all_evidence_profiles.length === 0 ){
+	    clone_btn_args['disabled'] =  'disabled';
+	}
+	anchor.clone_button =
+	    new bbop.html.tag('button', clone_btn_args, 'Clone other');
+
+	// As well, we'll need the evidence profiles for later.
+	anchor.evidence_profiles = all_evidence_profiles;
+
+	///
+	/// Main collection segements.
+	///
+
 	// Create add button.
 	var add_btn_args = {
     	    'generate_id': true,
@@ -1600,6 +1649,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		anchor.text_input_tertiary.to_string(),
     		'</div>',
     		anchor.add_button.to_string(),
+		'&nbsp;',
+    		anchor.clone_button.to_string(),
     		'</div>'
 	    ];
 	}
@@ -1697,7 +1748,6 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				       }
 				   }
 			    });
-			    
 			});
 		    }
 		}
@@ -1781,14 +1831,14 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    console.log(' widget for: ' + eid);
 		    var form_widget = null;
 		    if( ewid === 'source_ref' ){ // evidence is special
-			form_widget =
-			    new _abstract_annotation_widget(ewid, eplc,
-							    eplc_b, eplc_c);
+			form_widget = new _abstract_annotation_widget(
+			    ewid, eplc, eplc_b, eplc_c, {
+				'special': 'evidence',
+				'graph': ecore
+			    });
 		    }else{
-			form_widget =
-			    new _abstract_annotation_widget(ewid, eplc,
-							    null, null,
-							    eopt);
+			form_widget = new _abstract_annotation_widget(
+			    ewid, eplc, null, null, eopt);
 		    }
 
 		    // Add to the literal output.
@@ -1836,9 +1886,137 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// "add" buttons that we added.
 	each(us.keys(ann_classes), function(ann_key){
 	    var form = ann_classes[ann_key]['widget'];
-	    console.log('ann_key: ' + ann_key, form);
+	    //console.log('ann_key: ' + ann_key, form);
 	    if( form ){ // only act if we added/defined it earlier
-		
+
+		// Clone button add.
+		if( form.evidence_profiles.length > 0 ){
+
+    		    jQuery('#' + form.clone_button.get_id()).click(function(evt){
+
+			// Assemble a little display from each
+			// evidence profile for display.
+			var cln_line_cache = {};
+			var ce_cache = {};
+			us.each(form.evidence_profiles, function(prof){
+
+			    // Mine out class expressions..
+			    var cln_ce_str = [];
+			    var cln_ce = [];
+			    us.each(prof.class_expressions, function(ce){
+				cln_ce.push(ce.class_id());
+				cln_ce_str.push(ce.to_string_plus());
+				//console.log(ce);
+				ce_cache[ce.class_id()] = true;
+			    });
+			    
+			    // Mine out source and with.
+			    var cln_src = [];
+			    var cln_with = [];
+			    //console.log(prof.annotations.length);
+			    us.each(prof.annotations, function(ann){
+				if( ann.key() === 'with' ){
+				    cln_with.push(ann.value());
+				}
+				if( ann.key() === 'source' ){
+				    cln_src.push(ann.value());
+				}
+				//console.log(ann);
+			    });
+
+			    // Store and add to display.
+			    // BUG/TODO: Locking to single sized for now.
+			    var uniq = cln_ce_str.join('/') + '_' +
+				cln_src.join('/') + '_' +
+				cln_with.join(' / ');
+			    //console.log('uniq', uniq);
+			    if( cln_ce_str.length === 1 &&
+			    	cln_src.length > 0 ){
+				
+				// Create add button.
+				var cln_btn_args = {
+    				    'generate_id': true,
+    				    'type': 'button',
+    				    'class': 'btn btn-success'
+				};
+				var cln_btn = new bbop.html.tag(
+				    'button', cln_btn_args,'Add');
+
+				// Avoid dupes.
+				var line = [
+				    cln_ce_str.join(' / '),
+				    cln_src.join(' / '),
+				    cln_with.join(' / '),
+				    cln_btn.to_string(),
+				];
+				// console.log('line', line);
+				// Uniquify and store thinks we'll
+				// need for the action later.
+				cln_line_cache[uniq] = {
+				    'line': line,
+				    'button': cln_btn,
+				    'class_expressions': cln_ce,
+				    'sources': cln_src,
+				    'withs': cln_with
+				};
+			    }
+			});
+
+			var cln_tbl = new bbop.html.table(
+			    ['Class expression(s)','Source(s)','With','Action'],
+			    us.map(us.values(cln_line_cache), function(store){
+				return store['line'];
+			    }),
+			    {'generate_id': true,
+			     'class': ['table',
+				       'table-bordered',
+				       'table-hover',
+				       'table-condensed'].join(' ')});
+
+			// Launch widget.
+			var cdl = new contained_modal('dialog',
+						      'Clone evidence to: ' +
+						      entity_title);
+			cdl.add_to_body(cln_tbl.to_string());
+			cdl.show();
+
+			///
+			/// Now that it's in the DOM, add actions to
+			/// the buttons.
+			///
+
+			// Make buttons from cache.
+			us.each(us.values(cln_line_cache), function(store){
+
+			    // 
+			    var cln_btn = store['button'];
+			    var cln_ce = store['class_expressions'];
+			    var cln_src = store['sources'];
+			    var cln_with = store['withs'] || []; // nil p?
+			    
+			    jQuery('#'+cln_btn.get_id()).click(function(evt){
+
+				// BUG/TODO: class express still
+				// locked to the first.
+				// var line = [
+				//     cln_ce.join(' / '),
+				//     cln_src.join(' / '),
+				//     cln_with.join(' / ')].join('; ');
+				//console.log('pre-action line',line);
+				_ann_dispatch(entity, entity_type, 'add',
+					      ecore.get_id(), ann_key,
+					      { 'evidence_id': cln_ce[0],
+						'source_ids': cln_src,
+						'with_strs': cln_with });
+				cdl.destroy();
+				mdl.destroy();
+			    });
+			});
+
+    		    });
+		}
+
+		// The typical add button.
 		jQuery('#' + form.add_button.get_id()).click(function(evt){
 		    evt.stopPropagation();
 
