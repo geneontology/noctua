@@ -7,8 +7,9 @@
 /* global jQuery */
 /* global global_golr_server */
 /* global global_golr_neo_server */
-/* global global_barista_location */
 /* global global_minerva_definition_name */
+/* global global_barista_location */
+/* global global_noctua_context */
 /* global jsPlumb */
 /* global global_barista_token */
 
@@ -179,7 +180,7 @@ var MinervaBootstrapping = function(user_token){
 	}
 	return new_url;
     }
-    
+
     // On any model build success, forward to the new page.
     // Typically a callback for rebuild.
     var to_editor = 'graph';
@@ -187,7 +188,7 @@ var MinervaBootstrapping = function(user_token){
 	var id = resp.data()['id'];
 	_jump_to_page(_generate_jump_url(id, to_editor));
     }
-    
+
     // Internal registrations.
     manager.register('prerun', function(){
 	//_shields_up();
@@ -239,7 +240,6 @@ var MinervaBootstrapping = function(user_token){
     // However, export also comes through this way, so we check for
     // that first.
     manager.register('meta', function(resp, man){
-
 	// Got a model export.
 	if( resp.export_model() ){
 	    console.log('meta: export kick');
@@ -269,11 +269,9 @@ var MinervaBootstrapping = function(user_token){
 	    _generated_model(resp, man);
 
 	}else{ // rebuild interface with general metadata
-	    console.log('meta: general rebuild');
-
 	    // We'll construct a hash that looks like:
 	    // {'<MODEL_ID>' : {<ANN_KEY_1>: [VAL, VAL], <ANN_KEY_2>: [], },  }
-	    var model_to_value_hash_list = {};	    
+	    var model_to_value_hash_list = {};
 
 	    // Get the model meta information and sort the models by
 	    // alphabetical titles.
@@ -301,11 +299,9 @@ var MinervaBootstrapping = function(user_token){
 		model_to_value_hash_list[mid] = key_to_value_list;
 	    });
 
-	    //console.log('meta', model_to_value_hash_list);
-
 	    // Try and probe out the best title from the data we
 	    // having there.
-	    var _get_model_title = function(model_id){		
+	    var _get_model_title = function(model_id){
 
 		var mtitle = model_id; // default return
 		var hlists = model_to_value_hash_list[model_id];
@@ -327,14 +323,15 @@ var MinervaBootstrapping = function(user_token){
 	    var _model_contributor_list = function(model_id){
 		var retlist = [];
 
-		if( models_meta_ro && models_meta_ro[model_id] &&
-		    models_meta_ro[model_id]['contributor'] ){
-
-		    each(models_meta_ro[model_id]['contributor'], function(l){
-			retlist.push(l);
-		    });
+		if( models_meta && models_meta[model_id]){
+			each(models_meta[model_id], function(row) {
+				if (row.key === 'contributor') {
+					var url = '<a href=' + row.value + ' target="blank">' + row.value + '</a>';
+					retlist.push(url);
+				}
+			});
 		}
-		
+
 		return retlist;
 	    };
 
@@ -351,12 +348,12 @@ var MinervaBootstrapping = function(user_token){
 			    valcache.push(entry);
 			}
 		    });
-		    // 
+		    //
 		    if( valcache.length > 0 ){
 			retval = valcache.join(', ');
 		    }
 		}
-		
+
 		return retval;
 	    };
 
@@ -364,11 +361,14 @@ var MinervaBootstrapping = function(user_token){
 	    var _model_date = function(model_id){
 		var retval = '???';
 
-		if( models_meta_ro && models_meta_ro[model_id] &&
-		    models_meta_ro[model_id]['model_date'] ){
-		    retval = models_meta_ro[model_id]['model_date'];
+		if( models_meta && models_meta[model_id] ){
+		    each(models_meta[model_id], function(row) {
+		    	if (row.key === 'date') {
+		    		retval = row.value;
+		    	}
+		    });
 		}
-		
+
 		return retval;
 	    };
 
@@ -379,10 +379,10 @@ var MinervaBootstrapping = function(user_token){
 		if( models_meta_ro && models_meta_ro[model_id] &&
 		    models_meta_ro[model_id]['modified-p'] &&
 		    models_meta_ro[model_id]['modified-p'] === true ){
-			
+
 			retval = true;
 		    }
-		
+
 		return retval;
 	    };
 
@@ -471,70 +471,112 @@ var MinervaBootstrapping = function(user_token){
 	    });
 	    var rep_str = rep_cache.join('');
 
-	    // Generate table contents.
-	    var table_cache = [];
-	    each(sorted_model_meta_ids, function(model_id){
+	    if (sorted_model_meta_ids.length > 0) {
+		    // Generate table contents.
+		    var table_cache = [];
+		    var landing_table_cache = [];
+		    each(sorted_model_meta_ids, function(model_id){
 
-		var tr_cache = [];
+			var tr_cache = [];
+			var landing_tr_cache = [];
 
-		//var model_meta = models_meta[model_id];
+			//var model_meta = models_meta[model_id];
 
-		// Title.
-		var mtitle =  _get_model_title(model_id);
-		tr_cache.push(mtitle);
+			// Title.
+			var mtitle =  _get_model_title(model_id);
+			tr_cache.push(mtitle);
+			landing_tr_cache.push(mtitle);
 
-		// // Contributors.
-		// var clist = _model_contributor_list(model_id);
-		// tr_cache.push(clist.join(', '));
+			// // Contributors.
+			var clist = _model_contributor_list(model_id);
+			landing_tr_cache.push(clist.join(', '));
 
-		// // Date.
-		// var date = _model_date(model_id);
-		// tr_cache.push(date);
+			var state = _model_state(model_id);
+	        	landing_tr_cache.push(state);
 
-		// Check to see if it's modified and highlight that
-		// fact.
-		if( _model_modified_p(model_id) ){
-		    tr_cache.push('*');
-		}else{
-		    tr_cache.push('');
-		}
+			// // Date.
+			var date = _model_date(model_id);
+			landing_tr_cache.push(date);
 
-		// State.
-		var state = _model_state(model_id);
-		tr_cache.push(state);
+			// Check to see if it's modified and highlight that
+			// fact.
+			if( _model_modified_p(model_id) ){
+			    tr_cache.push('*');
+			}else{
+			    tr_cache.push('');
+			}
 
-		// Check to see if it's a template and highlight that
-		// fact.
-		if( _model_template_p(model_id) ){
-		    tr_cache.push('TEMPLATE');
-		}else{
-		    tr_cache.push('');
-		}
+			// State.
+			tr_cache.push(state);
 
-		// Check to see if it's deprecated and highlight that
-		// fact.
-		if( _model_deprecated_p(model_id) ){
-		    tr_cache.push(':(');
-		}else{
-		    tr_cache.push('');
-		}
+			// Check to see if it's a template and highlight that
+			// fact.
+			if( _model_template_p(model_id) ){
+			    tr_cache.push('TEMPLATE');
+			}else{
+			    tr_cache.push('');
+			}
 
-		// Button/link as edit.
-		var bstr =
-		    '<a class="btn btn-primary" href="' +
-			_generate_jump_url(model_id, 'graph') +
-			'">Graph</a>';
-		tr_cache.push(bstr);
+			// Check to see if it's deprecated and highlight that
+			// fact.
+			if( _model_deprecated_p(model_id) ){
+			    tr_cache.push(':(');
+			}else{
+			    tr_cache.push('');
+			}
 
-		// Add to cache.
-		var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
-		table_cache.push(tr_str);
-	    });
-	    var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
-	    jQuery('#model-selection-data').empty();
-	    jQuery('#model-selection-data').append(table_str);
-	    jQuery('#model-selection').DataTable();
+			// Button/link as edit.
+			var bstr =
+			    '<a class="btn btn-primary" href="' +
+				widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +
+				'">Graph</a>';
+			tr_cache.push(bstr);
 
+	        	    // Button/link as edit.
+	        	function _generate_jump_url(id, editor_type){
+	        		var new_url = "";
+	        		if( editor_type === 'basic' ){
+	        		    new_url = '/basic/' + id;
+	        		}else{
+	        		    new_url = '/editor/graph/' + id;
+	        		}
+	        		return new_url;
+	        	}
+
+	        	// Cram all the buttons in.
+	        	var bstrs = [];
+		    	if (global_noctua_context === 'monarch') {
+	        		bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button">Form</a>');
+	        	}
+	    		bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
+		    	if (global_noctua_context === 'go') {
+	        		bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
+	        	}
+	        	bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button" target="_blank">OWL</a>');
+	        	landing_tr_cache.push(bstrs.join(' '));
+
+			// Add to cache.
+			var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
+			var landing_tr_str = '<td>' + landing_tr_cache.join('</td><td>') + '</td>';
+			table_cache.push(tr_str);
+			landing_table_cache.push(landing_tr_str);
+		    });
+		    var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+		    jQuery('#model-selection-data').empty();
+		    jQuery('#model-selection-data').append(table_str);
+		    jQuery('#model-selection').DataTable({autoWidth:false});
+
+		    if (global_noctua_context === 'monarch') {
+			    var landing_table_str = '<tr>' + landing_table_cache.join('</tr><tr>') + '</tr>';
+		            jQuery('#model-golr-selection-data').empty();
+		            jQuery('#model-golr-selection-data').append(landing_table_str);
+		    	    // jQuery('#model-golr-selection').DataTable({autoWidth:false});
+		            // Make the tables real nice. Sort by date.
+		            jQuery('#model-golr-selection').DataTable(
+		                    {autoWidth: true, "order": [[3, "desc"], [0, "asc"]]});
+
+		    }
+	    }
 	    // Dropdown for the form select interface.
 	    jQuery(select_stored_jump_basic_elt).empty();
 	    jQuery(select_stored_jump_basic_elt).append(rep_str);
@@ -551,7 +593,7 @@ var MinervaBootstrapping = function(user_token){
 		to_editor = "basic";
 		manager.add_model();
 	    });
-	    
+
 	    ///
 	    /// Make the process/taxon seeding interactive.
 	    ///
@@ -581,7 +623,7 @@ var MinervaBootstrapping = function(user_token){
 	    protax_proc_auto.add_query_filter('regulates_closure_label',
     					      'biological_process');
 	    protax_proc_auto.set_personality('ontology');
-	    
+
 	    // taxon
 	    var protax_tax_auto_args = {
     		'label_template':
@@ -635,6 +677,32 @@ var MinervaBootstrapping = function(user_token){
     // because we want to model the (not yet) return of current
     // species from Minerva.
 
+    // Active learn-more button.
+    var learn_more_trigger_elt = '#learn_more_trigger';
+    var learn_more_trigger_target_elt = '#about_trigger > a';
+    jQuery(learn_more_trigger_elt).click(function(evt){
+		evt.stopPropagation();
+		evt.preventDefault();
+		jQuery('.navbar-nav li.active').removeClass('active');
+		jQuery('.tab-content div.active').removeClass('active');
+	    jQuery(learn_more_trigger_target_elt).tab('show');
+    });
+
+    jQuery('.overview_trigger').click(function(evt){
+		evt.stopPropagation();
+		evt.preventDefault();
+		jQuery('.navbar-nav li.active').removeClass('active');
+		jQuery('.tab-content div.active').removeClass('active');
+	   	jQuery(this).tab('show');
+    });
+
+	var tabId = location.hash; // will look something like "#h-02"
+	if (tabId == '#about') {
+		jQuery(learn_more_trigger_elt).tab('show'); // this will fired only when url get hash
+	}
+	var path = window.location.pathname + window.location.search;
+	history.replaceState({}, document.title, path);
+
     // Active create-from-nothing.
     jQuery(model_create_by_nothing_elt).click(function(evt){
 	evt.stopPropagation();
@@ -656,11 +724,10 @@ var MinervaBootstrapping = function(user_token){
     ///
 
     manager.get_meta();
-
 };
 
 // Using all new libraries--no legacy!
-var AmiGOBootstrapping = function(user_token){
+var loadLandingTableFromGOLR = function(user_token){
 
     var logger = new bbop.logger('amg bstr');
     logger.DEBUG = true;
@@ -703,7 +770,7 @@ var AmiGOBootstrapping = function(user_token){
     var confc = gconf.get_class('noctua_model_meta');
     manager.set_personality('noctua_model_meta');
     manager.add_query_filter('document_category',
-			     confc.document_category(), ['*']);    
+			     confc.document_category(), ['*']);
     manager.set_results_count(1000);
 
     // On search, report.
@@ -715,72 +782,76 @@ var AmiGOBootstrapping = function(user_token){
     });
     manager.register('search', function(resp, man){
 
-        //console.log(resp);
+        console.log(resp);
 
 	// TODO/BUG: Doing this cheap and quick (meeting in two days,
 	// other stuff to do) since we don't have a framework, or even
 	// bbop.html, available. Manually track buttons by UUIDs.
 	var button_info = {};
 	var table_cache = [];
-	each(resp.documents(), function(doc){
+        var docs = resp.documents();
 
-	    //console.log(doc);
+        if (docs.length > 0) {
+        	each(docs, function(doc){
 
-	    var tr_cache = [];
-	    
-            var model_id = 'gomodel:' + doc['annotation_unit'].substr(-16);
+        	    //console.log(doc);
 
-	    var title = doc['annotation_unit_label'] || '???';
-	    tr_cache.push(title);
+        	    var tr_cache = [];
 
-	    var contrib_list = doc['contributor'] || [];
-	    tr_cache.push(contrib_list.join(', '));
+                    var model_id = 'gomodel:' + doc['annotation_unit'].substr(-16);
 
-            var state = doc['model_state'] || '???';
-	    tr_cache.push(state);
+        	    var title = doc['annotation_unit_label'] || '???';
+        	    tr_cache.push(title);
 
-            var date = doc['model_date'] || '???';
-	    tr_cache.push(date);
+        	    var contrib_list = doc['contributor'] || [];
+        	    tr_cache.push(contrib_list.join(', '));
 
-	    // Button/link as edit.
-	    function _generate_jump_url(id, editor_type){
-		var new_url = "";
-		if( editor_type === 'basic' ){
-		    new_url = '/basic/' + id;
-		}else{
-		    new_url = '/editor/graph/' + id;
-		}
-		return new_url;
-	    }
+                    var state = doc['model_state'] || '???';
+        	    tr_cache.push(state);
 
-	    // Cram all the buttons in.
-	    var bstrs = [
-		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
-		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
-		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
-		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
-	    ];
-	    tr_cache.push(bstrs.join(' '));
-	    
-	    // Add to cache.
-	    var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
-	    table_cache.push(tr_str);
-	});
-	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
-	jQuery('#model-golr-selection-data').empty();
-	jQuery('#model-golr-selection-data').append(table_str);
+                    var date = doc['model_date'] || '???';
+        	    tr_cache.push(date);
 
-	// Make the tables real nice. Sort by date.
-	jQuery('#model-golr-selection').DataTable({"order": [[3, "desc"],
-							     [0, "asc"]]});
+        	    // Button/link as edit.
+        	    function _generate_jump_url(id, editor_type){
+        		var new_url = "";
+        		if( editor_type === 'basic' ){
+        		    new_url = '/basic/' + id;
+        		}else{
+        		    new_url = '/editor/graph/' + id;
+        		}
+        		return new_url;
+        	    }
+
+        	    // Cram all the buttons in.
+        	    var bstrs = [
+        		'<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
+                // '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
+        		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
+        		'<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
+        	    ];
+        	    tr_cache.push(bstrs.join(' '));
+
+        	    // Add to cache.
+        	    var tr_str = '<td>' + tr_cache.join('</td><td>') + '</td>';
+        	    table_cache.push(tr_str);
+        	});
+        	var table_str = '<tr>' + table_cache.join('</tr><tr>') + '</tr>';
+        	jQuery('#model-golr-selection-data').empty();
+        	jQuery('#model-golr-selection-data').append(table_str);
+           	console.log('golr table_str', table_str);
+
+            // Make the tables real nice. Sort by date.
+            jQuery('#model-golr-selection').DataTable(
+                    {autoWidth: false, "order": [[3, "desc"], [0, "asc"]]});
+        }
     });
     var p = manager.search();
-
 };
+
 
 // Start the day the jsPlumb way.
 jQuery(document).ready(function(){
-
     // Try to define token.
     var start_token = null;
     if( global_barista_token ){
@@ -796,9 +867,9 @@ jQuery(document).ready(function(){
 	// Will use the above variables internally (sorry).
 	MinervaBootstrapping(start_token);
 
-	// Things to build from talking to a GOlr.
-	AmiGOBootstrapping(start_token);
-
+	if (global_noctua_context === 'go') {
+	    loadLandingTableFromGOLR(start_token);
+	}
 	// When all is said and done, let's also fillout the user
 	// name just for niceness. This is also a test of CORS in
 	// express.

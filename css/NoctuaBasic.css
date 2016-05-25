@@ -9,3 +9,52 @@
 .myGrid {
     width: 1150px;
 }
+
+div.association-entry {
+  padding: 1px;
+  margin: 0;
+  border:1px solid darkgray;
+  border-radius:5px;
+}
+
+div.association-entry-editing {
+  padding: 1px;
+  margin: 0;
+  border:1px solid darkgray;
+  border-radius:5px;
+}
+
+table.table.association-table {
+  table-layout: fixed;
+  margin:0;
+}
+
+table.table.association-table thead tr,
+table.table.association-table thead tr th,
+table.table.association-table thead tr td,
+table.table.association-table tbody tr,
+table.table.association-table tbody tr th,
+table.table.association-table tbody tr td
+{
+  word-break:break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  padding: 3px;
+  margin: 1px;
+  border:none;
+}
+
+
+
+table.table.association-table .action-row {
+  margin:5px 0 0 0;
+  padding:0;
+}
+
+
+table.table.association-table .evidence-row {
+}
+
+table.table.association-table .evidence-row-editing {
+  background:#EFEFEF;
+}

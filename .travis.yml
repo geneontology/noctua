@@ -1,8 +1,14 @@
 language: node
 node_js:
-  "0.12"
+  "4.3.1"
 before_script:
   - npm install
+  - pushd /tmp
+  - git clone https://github.com/DoctorBud/bbop-client-barista.git
+  - cd bbop-client-barista
+  - git checkout socketio-upgrade
+  - popd
+  - npm install /tmp/bbop-client-barista
 script:
   - cp config/startup.yaml.stack-dev ./startup.yaml
   - ./node_modules/.bin/gulp build

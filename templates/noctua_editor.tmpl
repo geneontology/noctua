@@ -1,5 +1,5 @@
 <!-- Nav. -->
-<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="navbar navbar-inverse navbar-static-top navbar-editor-nomargin">
   <div class="container bbop-bs3-override-nav-scale">
 
     <!-- Button on collapse. -->
@@ -11,12 +11,20 @@
       </button>
       
       <!-- <span class="navbar-brand">MME Editor</span> -->
-      <a href="{{noctua_landing}}" class="navbar-brand">Noctua Preview</a>
+      <a
+        href="{{noctua_landing}}"
+        class="navbar-brand branding-logo-{{noctua_context}}">
+      </a>
     </div>
 
     <div class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-	
+	<li>
+          <a href="{{noctua_landing}}" class="branding-{{noctua_context}}">
+            {{noctua_branding}}
+          </a>
+        </li>
+
 	<!-- Model stuff. -->
 	<li class="dropdown">
           <a href="#" class="dropdown-toggle"
@@ -123,10 +131,10 @@
 	  <a id="action_help"
 	     class="navbar-link"
 	     href="https://github.com/geneontology/noctua"
+	     target="_blank"
 	     title="">Help</a>
 	</li>
 	<!-- </p> -->
-	
       </ul>
 
       <div class="nav navbar-right">

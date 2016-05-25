@@ -2215,7 +2215,9 @@ function user_check(barista_loc, given_token, div_id){
 		var to_remove = 'barista_token=' + given_token;
 		var new_url = window.location.toString().replace(to_remove, '');
 		//var new_url = window.location;
+
 		window.location.replace(new_url);
+	    	console.log('###user_check window.location1', window.location);
 	    }
 	}
     });

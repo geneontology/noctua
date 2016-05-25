@@ -12,7 +12,6 @@ var amigo = require('amigo2');
 ///
 
 var LogoutInit = function(){
-    
     var logger = new bbop.logger('login');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }

@@ -90,6 +90,8 @@ var min_def_name =
 var workbench_maybe_raw =
 	argv['w'] || argv['workbenches'] || './workbenches/';
 // Noctua's real location.
+var noctua_context =
+	argv['t'] || argv['noctua-context'] || 'go';
 var noctua_location =
 	argv['s'] || argv['noctua-self'] || 'http://localhost:8910';
 // Noctua's self/public location (optional).
@@ -216,7 +218,6 @@ var NoctuaLauncher = function(){
     // Set up server IP address and port # using env variables/defaults.
     // WARNING: Port stuff gets weird:
     // https://www.openshift.com/forums/openshift/nodejs-websockets-sockjs-and-other-client-hostings
-//    var noctua_location = config['NOCTUA_LOCATION'].value;
 
     self.IS_ENV_OPENSHIFT = false;
     self.IS_ENV_HEROKU = false;
@@ -316,23 +317,28 @@ var NoctuaLauncher = function(){
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
+	var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
 	if( app_path === '' || app_path === '/' ){ // non-id based pages.
 	    barista_login = barista_loc + '/session' + '?return=' +
 		self.frontend + app_path;
+	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
+	    // determining whether to use ? or &
 	    barista_logout =
-		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.frontend + app_path, barista_token);
+		barista_loc + '/session' + '?return=' +
+		_build_token_link(self.frontend + app_path, barista_token);
 	}else{
 	    barista_login = barista_loc + '/session' + '?return=' +
 		self.frontend + app_path + '/' + model_id;
+	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
+	    // determining whether to use ? or &
 	    barista_logout =
-		_build_token_link(barista_loc + '/session' + '?return=' +
-				  self.frontend + app_path + '/' +
-				  model_id, barista_token);
+		barista_loc + '/session' + '?return=' +
+		_build_token_link(self.frontend + app_path + '/' + model_id, barista_token);
 	}
+
 	var barista_users =
 		_build_token_link(self.barista_location +'/user_info',
 				  barista_token);
@@ -347,6 +353,8 @@ var NoctuaLauncher = function(){
 	    'pup_tent_js_variables': [
 		{name: 'global_id',
 		 value: model_id },
+		{name: 'model_id',
+		 value: model_id },
 		{name: 'global_node_id_list',
 		 value: node_id_list },
 		{name: 'global_model',
@@ -359,6 +367,8 @@ var NoctuaLauncher = function(){
 		 value: self.minerva_definition_name },
 		{name: 'global_barista_location',
 		 value: self.barista_location },
+		{name: 'global_noctua_context',
+		 value: noctua_context },
 		{name: 'global_known_relations',
 		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
@@ -380,7 +390,10 @@ var NoctuaLauncher = function(){
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
+	    'noctua_dev_tabs': noctua_context === 'go',
+	    'noctua_context': noctua_context,
 	    'noctua_landing': noctua_landing,
+	    'noctua_branding': noctua_branding,
 	    'barista_login': barista_login,
 	    'barista_logout': barista_logout,
 	    'noctua_workbenches_universal': workbenches_universal,
@@ -407,6 +420,7 @@ var NoctuaLauncher = function(){
 	    {
 		'pup_tent_css_libraries': [
 		    '/toastr.css',
+		    '/noctua_common.css',
 		    '/NoctuaEditor.css'
 		],
 		'pup_tent_js_libraries': [
@@ -449,7 +463,7 @@ var NoctuaLauncher = function(){
 	'/bbop.css',
 	'/amigo.css']);
     pup_tent.set_common('js_libs', [
-	'/jquery.js',
+	'/jquery.min.js',
 	'/bootstrap.min.js',
 	'/jquery-ui-1.10.3.custom.min.js',
     ]);
@@ -505,10 +519,11 @@ var NoctuaLauncher = function(){
 	///
 
 	self.app.get('/', function(req, res) {
-
 	    // Grab markdown renderable file.
-	    var landing_raw = fs.readFileSync('./LANDING.md').toString();
+	    var landing_raw = fs.readFileSync('./OVERVIEW.' + noctua_context + '.md').toString();
 	    var landing_md = md.markdown.toHTML(landing_raw);
+	    var about_raw = fs.readFileSync('./ABOUT.' + noctua_context + '.md').toString();
+	    var about_md = md.markdown.toHTML(about_raw);
 
 	    var tmpl_args = self.standard_variable_load(
 		'/', 'Landing', req, null, null, null,
@@ -516,13 +531,15 @@ var NoctuaLauncher = function(){
 		    'pup_tent_css_libraries': [
 			'/toastr.css',
 			'jquery.dataTables.min.css',
+		    '/noctua_common.css',
 			'/noctua_landing.css'
 		    ],
 		    'pup_tent_js_libraries': [
 			'jquery.dataTables.min.js',
 			'/NoctuaLanding.js'
 		    ],
-		    'landing_html': landing_md
+		    'landing_html': landing_md,
+		    'about_html': about_md
 		});
 
 	    // Render.
@@ -536,9 +553,10 @@ var NoctuaLauncher = function(){
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
-	    var model_id = req.route.params['query'] || '';
+	    var model_id = req.params['query'] || '';
 
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
+		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
 	    var barista_login = self.barista_location + '/session' + '?return=' +
 		    self.frontend + '/basic/' + model_id;
 	    var barista_logout =
@@ -547,52 +565,76 @@ var NoctuaLauncher = function(){
 				      model_id, barista_token);
 
 	    //
-	    var tmpl_args = {
-		'title': notw + ': Simple',
-		'barista_token': barista_token,
-		'noctua_landing': noctua_landing,
-		'barista_login': barista_login,
-		'barista_logout': barista_logout,
-		'pup_tent_js_variables': [
-		    {name: 'global_minerva_definition_name',
-		     value: self.minerva_definition_name },
-		    {name: 'global_known_relations',
-		     value: self.known_relations},
-		    {name: 'global_barista_token',
-		     value: barista_token},
-		    {name: 'global_barista_location',
-		     value: self.barista_location },
-		    {name: 'global_golr_server',
-		     value: golr_server_location},
-		    {name: 'global_golr_neo_server',
-		     value: golr_neo_server_location},
-		    {name: 'model_id',
-		     value: model_id}
-		],
-		'pup_tent_js_libraries': [
-		    // TODO load via npm
-		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
-    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
-    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
-    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
-    		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
-    		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
-		    //'/selectize.min.js',
-		    //'/xeditable.min.js',
-		    //'/bs-table.min.js',
-		    //'/bbop-widget-solr-autocomplete.js',
-		    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js'
-		],
-		'pup_tent_css_libraries': [
-		    '/css/NoctuaBasic.css',
-		    '/selectize.css',
-		    '/selectize.bootstrap3.css',
-		    '/selectize.custom.css',
-		    '/xeditable.css',
-		    '/angular-material.css'
-		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
-		]
-	    };
+	    var model_obj = null;
+
+		var tmpl_args = self.standard_variable_load(
+		    '/basic', 'FormEditor', req, model_id, model_obj, null,
+		    {
+				'pup_tent_js_libraries': [
+				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
+				    '/deploy/angular-toastr.tpls.min.js'
+				],
+				'pup_tent_css_libraries': [
+				    '/noctua_common.css',
+				    '/NoctuaBasic.css',
+				    '/selectize.css',
+				    '/selectize.bootstrap3.css',
+				    '/selectize.custom.css',
+				    '/xeditable.css',
+				    '/angular-toastr.css',
+				    '/toastr_custom.css'
+				]
+		    });
+	 //    var tmpl_args = {
+		// 'title': notw + ': Simple',
+		// 'barista_token': barista_token,
+	 //    'noctua_context': noctua_context,
+	 //    'noctua_landing': noctua_landing,
+	 //    'noctua_branding': noctua_branding,
+		// 'barista_login': barista_login,
+		// 'barista_logout': barista_logout,
+		// 'pup_tent_js_variables': [
+		//     {name: 'global_minerva_definition_name',
+		//      value: self.minerva_definition_name },
+		//     {name: 'global_known_relations',
+		//      value: self.known_relations},
+		//     {name: 'global_barista_token',
+		//      value: barista_token},
+		//     {name: 'global_barista_location',
+		//      value: self.barista_location },
+		//     {name: 'global_golr_server',
+		//      value: golr_server_location},
+		//     {name: 'global_golr_neo_server',
+		//      value: golr_neo_server_location},
+		//     {name: 'model_id',
+		//      value: model_id}
+		// ],
+		// 'pup_tent_js_libraries': [
+		//     // TODO load via npm
+		//     //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
+  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
+  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
+  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
+  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
+  //   		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
+		//     //'/selectize.min.js',
+		//     //'/xeditable.min.js',
+		//     //'/bs-table.min.js',
+		//     //'/bbop-widget-solr-autocomplete.js',
+		//     '/deploy/js/NoctuaBasic/NoctuaBasicApp.js'
+		// ],
+		// 'pup_tent_css_libraries': [
+		//     '/noctua_common.css',
+		//     '/NoctuaBasic.css',
+		//     '/selectize.css',
+		//     '/selectize.bootstrap3.css',
+		//     '/selectize.custom.css',
+		//     '/xeditable.css'
+		//     // ,'/angular-material.css'
+		//     //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
+		// ]
+	 //    };
+
 	    var ind = pup_tent.render('noctua_basic.tmpl',
 				      tmpl_args,
 				      'noctua_base_landing.tmpl');
@@ -621,6 +663,8 @@ var NoctuaLauncher = function(){
 	// BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.
 	// Probably use _path_cache(key).
 	var static_images = [ // BUG/TODO: Hack.
+	    ['go_logo.png', 'png'],
+	    ['monarch_logo.png', 'png'],
 	    ['waiting_ac.gif', 'gif'],
 	    ['ui-bg_flat_100_ffffff_40x100.png', 'png'],
 	    ['ui-bg_flat_75_d0ffee_40x100.png', 'png'],
@@ -687,8 +731,8 @@ var NoctuaLauncher = function(){
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
 	    //console.log(req.route);
-	    //console.log(req.route.params['query']);
-	    var query = req.route.params['query'] || '';
+	    //console.log(req.params['query']);
+	    var query = req.params['query'] || '';
 	    if( ! query || query === '' ){
 		// Catch error here if no proper ID.
 		res.setHeader('Content-Type', 'text/html');
@@ -721,8 +765,8 @@ var NoctuaLauncher = function(){
 
 		// Pull arguments out of the route and query.
 		//console.log(req.route);
-		//console.log(req.route.params['query']);
-		var model = req.route.params['model'] || null; // model
+		//console.log(req.params['query']);
+		var model = req.params['model'] || null; // model
 		var node_ids = req.query['node_id'] || null; // individual
 		if( node_ids && ! us.isArray(node_ids) ){
 		    node_ids = [node_ids];
@@ -994,7 +1038,7 @@ var NoctuaLauncher = function(){
 
 	    // Deal with incoming parameters.
 	    var mstr = req.query['thing'] ||
-		    req.route.params['thing'] ||
+		    req.params['thing'] ||
 		    req.body['thing'] ||
 		    '???';
 	    //console.log('display thing: ' + mstr);
@@ -1014,9 +1058,9 @@ var NoctuaLauncher = function(){
 	    var known_formats = ['owl', 'gaf', 'gpad'];
 
 	    //console.log(req.route);
-	    //console.log(req.route.params['query']);
-	    var model_id = req.route.params['model'] || '';
-	    var format = req.route.params['format'] || 'owl';
+	    //console.log(req.params['query']);
+	    var model_id = req.params['model'] || '';
+	    var format = req.params['format'] || 'owl';
 	    if( ! model_id || model_id === '' ){
 		// Catch error here if no proper ID.
 		res.status(404);

@@ -59,6 +59,10 @@
     max-width: 100%;
 }
 
+.navbar-editor-nomargin {
+    margin: 0;
+}
+
 .app-graph {
     position: relative;
     /* Playing with draggable "canvas". */
