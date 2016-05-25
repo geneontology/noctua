@@ -9,16 +9,15 @@
         <span class="icon-bar"></span>
       </button>
 
-      <a
-        href="#overview" role="tab" data-toggle="tab"
-        class="overview_trigger navbar-brand branding-logo-{{noctua_context}}">&nbsp;
-      </a>
+      <a href="{{noctua_landing}}"
+         class="navbar-brand branding-logo-{{noctua_context}}">&nbsp;</a>
     </div>
 
     <div class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
         <li class="navbar-tab">
-          <a href="#overview" role="tab" data-toggle="tab" class="overview_trigger branding-{{noctua_context}}">
+          <a href="{{noctua_landing}}"
+	     class="branding-{{noctua_context}}">
             {{noctua_branding}}
           </a>
         </li>
@@ -31,13 +30,10 @@
         </li>
         {{/noctua_dev_tabs}}
 
-
-
         {{#noctua_dev_tabs}}
         <li class="navbar-tab"><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
         <li class="navbar-tab"><a href="#create" role="tab" data-toggle="tab">Create</a></li>
         {{/noctua_dev_tabs}}
-
 
         {{#noctua_dev_tabs}}
         <!-- <li><a href="#export" role="tab" data-toggle="tab">Export</a></li> -->
@@ -60,43 +56,47 @@
           <a href="#about" role="tab" data-toggle="tab">About</a>
         </li>
 
+        <li id="action_help" class="navbar-link">
+          <a href="https://github.com/geneontology/noctua" title="Help!">Help</a>
+        </li>
+
         <li>
-        <span class="navbar-text user_name_info">
-          <span id="user_name_info">
+          <span class="navbar-text user_name_info">
+            <span id="user_name_info">
+            </span>
+            &nbsp;&nbsp;&nbsp;
           </span>
-          &nbsp;&nbsp;&nbsp;
-        </span>
         </li>
 
         {{^barista_token}}
         <li>
-        <button id="action_barista_login"
-          class="btn btn-default navbar-btn"
-          onclick="window.location.href='{{barista_login}}'; return false;"
-          title="Login">
-          Login
-        </button>
+          <button id="action_barista_login"
+		  class="btn btn-default navbar-btn"
+		  onclick="window.location.href='{{barista_login}}'; return false;"
+		  title="Login">
+            Login
+          </button>
         </li>
         {{/barista_token}}
         {{#barista_token}}
         <li>
-        <span class="navbar-text user_name_info">
-          <span id="user_name_info">
+          <span class="navbar-text user_name_info">
+            <span id="user_name_info">
+            </span>
+            &nbsp;&nbsp;&nbsp;
           </span>
-          &nbsp;&nbsp;&nbsp;
-        </span>
         </li>
         <li>
           <button
-            onclick="window.location.href='{{barista_logout}}'; return false;"
-            type="button"
-            class="btn btn-default navbar-btn">
+             onclick="window.location.href='{{barista_logout}}'; return false;"
+             type="button"
+             class="btn btn-default navbar-btn">
             Logout
           </button>
         </li>
         {{/barista_token}}
         <li>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </li>
       </ul>
 
@@ -116,44 +116,42 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Welcome to {{{noctua_branding}}}
-          </h3>
-          <a
-            id="learn_more_trigger"
-            class="btn btn-success btn-sm"
-            type="button"
-            style="float:right;margin-top:-23px;"
-            xdata-toggle="tab"
-            href="#about"
-            xrole="tab">
+          <h3 class="panel-title">Welcome to {{{ noctua_branding }}}</h3>
+          <a id="learn_more_trigger"
+             class="btn btn-success btn-sm"
+             type="button"
+             style="float:right;margin-top:-23px;"
+             xdata-toggle="tab"
+             href="#about"
+             xrole="tab">
             Learn More...
           </a>
         </div>
         <div class="panel-body">
           {{{landing_html}}}
-            {{#barista_token}}
-            {{#noctua_dev_tabs}}
-            <div class="col-xs-3">
+          {{#barista_token}}
+          {{#noctua_dev_tabs}}
+          <div class="col-xs-3">
             &nbsp;
-            </div>
-            <button id="button_nothing_for_create" type="submit"
-                    class="col-xs-6 btn btn-primary">Create Noctua Model</button>
-            {{/noctua_dev_tabs}}
-            {{^noctua_dev_tabs}}
-            <button id="create_button_basic" type="submit"
-                    class="col-xs-5 btn btn-primary">
-              Create Model via Form
-            </button>
-            <button id="button_nothing_for_create" type="submit"
-                    class="col-xs-5 btn btn-primary pull-right">Create Model via Graph</button>
-            {{/noctua_dev_tabs}}
+          </div>
+          <button id="button_nothing_for_create" type="submit"
+                  class="col-xs-6 btn btn-primary">Create Noctua Model</button>
+          {{/noctua_dev_tabs}}
+          {{^noctua_dev_tabs}}
+          <button id="create_button_basic" type="submit"
+                  class="col-xs-5 btn btn-primary">
+            Create Model via Form
+          </button>
+          <button id="button_nothing_for_create" type="submit"
+                  class="col-xs-5 btn btn-primary pull-right">Create Model via Graph</button>
+          {{/noctua_dev_tabs}}
           {{/barista_token}}
           {{^barista_token}}
-            <p>
+          <p>
             You must
             <a id="action_barista_login" href="{{barista_login}}" title="Login">Login</a>
             to create or edit models. Models may be viewed without login.
-            </p>
+          </p>
           {{/barista_token}}
         </div>
       </div>
@@ -284,7 +282,7 @@
           <p>
             You <strong>must</strong> be logged in to create a new
             model. You will jump directly to the <strong>prototype
-            form editor UI</strong> for the new empty model.
+              form editor UI</strong> for the new empty model.
           </p>
           <button id="create_button_basic" type="submit"
                   class="btn btn-primary">Create &raquo;</button>
@@ -387,7 +385,7 @@
           <h3 class="panel-title">About {{noctua_branding}}</h3>
         </div>
         <div class="panel-body">
-        {{{about_html}}}
+          {{{about_html}}}
         </div>
       </div>
 
@@ -396,7 +394,7 @@
           <h3 class="panel-title">Welcome to {{noctua_branding}}</h3>
         </div>
         <div class="panel-body">
-        {{{landing_html}}}
+          {{{landing_html}}}
         </div>
       </div>
 
@@ -407,13 +405,13 @@
         <div class="panel-body">
           <p>
             <a href="https://github.com/geneontology/noctua">Noctua (clients and Barista)</a>
-      at GitHub.
+	    at GitHub.
             <a href="https://github.com/geneontology/minerva">Noctua (Minerva server)</a>
-      at GitHub.
+	    at GitHub.
           </p>
           <p>
             <a href="https://github.com/geneontology/noctua/issues">Issue tracker</a>
-      at GitHub.
+	    at GitHub.
           </p>
         </div>
       </div>
