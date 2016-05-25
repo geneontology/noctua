@@ -37,6 +37,7 @@
     "angular-ui-bootstrap": "^1.3.2",
     "aws-sdk": "2.2.43",
     "bbop": "2.4.3",
+    "bbop-client-barista": "0.0.6",
     "bbop-core": "0.0.5",
     "bbop-graph": "0.0.19",
     "bbop-graph-noctua": "0.0.29",
