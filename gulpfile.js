@@ -334,10 +334,9 @@ var minerva_opts = ['java',
      '--port', minerva_port
     ];
 
-if (noctua_context === 'go') {
+if( noctua_context === 'go' ){
     minerva_opts.push('--golr-labels', golr_neo_lookup_url);
-}
-if (noctua_context === 'monarch') {
+}else if( noctua_context === 'monarch' ){
     // minerva_opts.push('--monarch-labels', golr_neo_lookup_url);
     minerva_opts.push('--skip-class-id-validation');
 }
@@ -359,6 +358,26 @@ gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
      '--slme-elk',
      '-g', ontology_list,
      '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+     '-c', ontology_catalog,
+     '-f', noctua_models,
+     '--port', minerva_port
+    ]
+)));
+
+// Minerva runner without a lookup.
+gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
+    ['java',
+     '-Xmx' + minerva_max_mem + 'G',
+     '-cp', './java/lib/minerva-cli.jar',
+     'org.geneontology.minerva.server.StartUpTool',
+     '--use-golr-url-logging',
+     '--use-request-logging',
+     '--slme-elk',
+     '-g', ontology_list,
+     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+     '--golr-seed', golr_lookup_url,     
+     '--golr-labels', golr_neo_lookup_url,
+     '--skip-class-id-validation',
      '-c', ontology_catalog,
      '-f', noctua_models,
      '--port', minerva_port
