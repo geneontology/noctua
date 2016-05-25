@@ -24,6 +24,16 @@
         </li>
 
         {{#noctua_dev_tabs}}
+        <li class="navbar-tab">
+          <a href="#overview" role="tab" data-toggle="tab" class="overview_trigger branding-{{noctua_context}}">
+            Overview
+          </a>
+        </li>
+        {{/noctua_dev_tabs}}
+
+
+
+        {{#noctua_dev_tabs}}
         <li class="navbar-tab"><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
         <li class="navbar-tab"><a href="#create" role="tab" data-toggle="tab">Create</a></li>
         {{/noctua_dev_tabs}}
@@ -121,13 +131,22 @@
         </div>
         <div class="panel-body">
           {{{landing_html}}}
-          {{#barista_token}}
+            {{#barista_token}}
+            {{#noctua_dev_tabs}}
+            <div class="col-xs-3">
+            &nbsp;
+            </div>
+            <button id="button_nothing_for_create" type="submit"
+                    class="col-xs-6 btn btn-primary">Create Noctua Model</button>
+            {{/noctua_dev_tabs}}
+            {{^noctua_dev_tabs}}
             <button id="create_button_basic" type="submit"
                     class="col-xs-5 btn btn-primary">
               Create Model via Form
             </button>
             <button id="button_nothing_for_create" type="submit"
                     class="col-xs-5 btn btn-primary pull-right">Create Model via Graph</button>
+            {{/noctua_dev_tabs}}
           {{/barista_token}}
           {{^barista_token}}
             <p>
