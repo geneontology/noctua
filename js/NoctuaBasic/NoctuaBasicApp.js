@@ -1,17 +1,26 @@
 var angular = require('angular');
+
 require('bs-table');
-require('angular-xeditable');
 require('angular-ui-bootstrap');
 require('angular-animate'); // https://github.com/Foxandxss/angular-toastr
 require('angular-toastr'); // https://github.com/Foxandxss/angular-toastr
+require('ui-select');
+require('angular-ui-grid');
+require('angular-sanitize');
+require('ngtouch'); // https://github.com/Foxandxss/angular-toastr
+
 
 var app = angular.module('noctuaBasicApp',
-  	[require('angular-route'),
-  	 'ui.bootstrap',
-  	 require('angular-aria'),
-     'ngAnimate', 'toastr',
-  	 "bsTable",
-  	 'xeditable']);
+    [require('angular-route'),
+     'ui.bootstrap',
+     require('angular-aria'),
+     'ngAnimate',
+     'ngTouch',
+     'toastr',
+     'bsTable',
+     'ui.select',
+     'ngSanitize',
+     'ui.grid', 'ui.grid.edit', 'ui.grid.rowEdit', 'ui.grid.cellNav', 'ui.grid.autoResize', 'ui.grid.resizeColumns']);
 
 
 app.config(['toastrConfig', function(toastrConfig) {
@@ -42,7 +51,7 @@ app.config(['toastrConfig', function(toastrConfig) {
   });
 }]);
 
-// app.directive('autofocus', function($timeout) {
+// app.directive('autofocus', ['$timeout', function($timeout) {
 //   return {
 //     restrict: 'AC',
 //     link: function(scope, _element) {
@@ -52,15 +61,8 @@ app.config(['toastrConfig', function(toastrConfig) {
 //       }, 0);
 //     }
 //   };
-// });
+// }]);
 
-// Change AngularJS markup's template to avoid clashes with mustache templates
-// .config(function($interpolateProvider) {
-//   $interpolateProvider.startSymbol('{[{').endSymbol('}]}');
-// })
-app.run(['editableOptions', function(editableOptions) { // specific to xeditable library
-    editableOptions.theme = 'bs3'; // bootstrap3 theme. Can be also 'bs2', 'default'
-  }]);
 
 require('./NoctuaBasicController.js');
 

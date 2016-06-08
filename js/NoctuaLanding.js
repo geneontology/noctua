@@ -15,8 +15,6 @@
 
 var us = require('underscore');
 var bbop = require('bbop-core');
-//var bbop = require('bbop').bbop;
-//var bbopx = require('bbopx');
 var amigo = require('amigo2');
 var bbop_legacy = require('bbop').bbop;
 

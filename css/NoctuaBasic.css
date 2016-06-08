@@ -1,3 +1,108 @@
+#noctua-app div.selectize-control {
+  xfont-size:1em;
+  xline-height:1em;
+  width:100%;
+  padding:0;
+  margin:0;
+}
+
+#noctua-app button.btn-compact {
+  border-color:lightgray;
+  margin:1px;
+  padding:1px 2px;
+}
+
+
+
+#noctua-app div.selectize-control div.selectize-input {
+  padding:5px 3px 0 3px;
+  margin:0;
+}
+
+
+#noctua-app div.selectize-control div.selectize-input:after {
+  top:5px;
+  right:0;
+}
+
+
+#noctua-app div.selectize-control div.selectize-input.input-active {
+  min-width:300px;
+  z-index:100;
+}
+
+
+#noctua-app div.selectize-control div.selectize-input input::-webkit-input-placeholder,
+#noctua-app div.selectize-control div.selectize-input input:-moz-placeholder,
+#noctua-app div.selectize-control div.selectize-input input::-moz-placeholder,
+#noctua-app div.selectize-control div.selectize-input input:-ms-input-placeholder {
+    margin:0;
+    padding:0;
+    width:100%;
+}
+
+#noctua-app div.selectize-control div.selectize-input input:placeholder-shown {
+}
+
+#noctua-app div.selectize-control div.selectize-dropdown {
+  margin:0;
+  padding:0;
+  width:100%;
+}
+
+#noctua-app div.selectize-control div.selectize-dropdown div.selectize-dropdown-content > * {
+  margin:1px;
+  padding:0;
+}
+
+
+#noctua-app div.feedback_label {
+  position:absolute;
+  border:1px solid darkgray;
+  background:lightyellow;
+  display:none;
+  padding:2px;
+  top:-30px;
+  z-index:3333;
+  left:15px;
+  right:15px;
+}
+
+
+
+/* ui-grid/ui-select support
+*/
+
+#noctua-app #grid1.grid {
+  width:100%;
+}
+#noctua-app #grid1 .ui-grid-cell {
+  overflow: visible;
+  z-index: 99999;
+}
+#noctua-app #grid1 .ui-grid-cell, ui-select-wrap {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+#noctua-app .selectize-control > .selectize-dropdown {
+      top: 36px;
+    }
+
+/* Some additional styling to demonstrate that append-to-body helps achieve the proper z-index layering. */
+/*
+#noctua-app .select-box {
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+*/
+
+
+
 .md-toast.error {
     background-color: red;
 }
@@ -27,6 +132,12 @@ div.association-entry-editing {
 table.table.association-table {
   table-layout: fixed;
   margin:0;
+  padding:0;
+  font-size:0.9em;
+}
+
+.glyphicon-duplicate:before {
+  content: "\e224";
 }
 
 table.table.association-table thead tr,
@@ -41,14 +152,14 @@ table.table.association-table tbody tr td
   word-wrap: break-word;
   padding: 3px;
   margin: 1px;
-  border:none;
+  /* border:none; */
 }
 
 
 
 table.table.association-table .action-row {
-  margin:5px 0 0 0;
-  padding:0;
+  margin:0;
+  padding:2px;
 }
 
 
