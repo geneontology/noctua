@@ -1711,7 +1711,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// subgraph elsewhere.
 		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
 		    
-		    // Setup a dummy incase we fail.
+		    // Setup a dummy in case we fail, like if we're
+		    // fully exploded and there is no subgraph.
 		    var ref_val = ann.value();
 		    var ref_sub = entity.get_referenced_subgraph_by_id(ref_val);
 		    kval = '(evidence annotation for: ' + ref_val + ')';
@@ -1731,8 +1732,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    // about the dumb tag on the end).
 			    each(ref_ind.annotations(), function(ref_ann){
 				// Skip unnecessary information.
-				if(ref_ann.key() !== 'hint-layout-x' &&
-				   ref_ann.key() !== 'hint-layout-y' ){
+				if( ref_ann.key() !== 'hint-layout-x' &&
+				    ref_ann.key() !== 'hint-layout-y' ){
 				       var rav = ref_ann.value();
 				       // link pmids silly
 				       if( rav.split('PMID:').length === 2 ){
@@ -1854,6 +1855,46 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	    out_cache.push('</div>');
 	});
+
+	// Optionally, collect any annotations not in one of the given
+	// defined categories.
+	var all_undefined_annotations = entity.get_annotations_by_filter(
+	    function(in_ann){
+		var retval = false;
+		if( in_ann.key() !== 'hint-layout-x' &&
+		    in_ann.key() !== 'hint-layout-y' ){
+		    if( ! ann_classes[in_ann.key()] ){ // ! defined ann class
+			retval = true;
+		    }
+		}
+		return retval;
+	    }
+	);
+	// Add them to the display at the bottom if there is anything
+	// worth acting on.
+	if( ! us.isEmpty(all_undefined_annotations) ){
+		
+	    // As above, but manually add visible annotations.
+	    out_cache.push('<div class="panel panel-default">');
+	    out_cache.push('<div class="panel-heading">Other annotations</div>');
+	    out_cache.push('<div class="panel-body">');
+	    out_cache.push('<ul class="list-group"></ul>');
+	    each(all_undefined_annotations, function(unann){
+
+		out_cache.push('<li class="list-group-item">');
+		out_cache.push(unann.key());
+		out_cache.push(': ');
+		out_cache.push(unann.value());
+		if( unann.value_type() ){
+		    out_cache.push(' [' + unann.value_type() + ']');
+		}
+		out_cache.push('</li>');
+		
+	    });
+	    out_cache.push('</ul>');
+	    out_cache.push('</div>');
+	    out_cache.push('</div>');
+	}
 
 	// Setup base modal.
 	mdl = new contained_modal('dialog', 'Annotations for: ' + entity_title);

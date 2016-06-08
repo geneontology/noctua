@@ -258,7 +258,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'placeholder': 'Add comment...'		
 	}
     ];
-    var instance_annotation_config = [
+    var individual_annotation_config = [
 	// {
 	//     'id': 'title',
 	//     'label': 'Title',
@@ -283,6 +283,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    //'placeholder': 'n/a!',
 	    //'widget_type': 'text'
 	},
+	// {
+	//     'id': 'source',
+	//     'label': 'Source'
+	//     // 'widget_type': 'text',
+	//     // 'policy': 'mutable',
+	//     // 'cardinality': 'many',
+	//     // 'placeholder': 'Enter reference type'
+	// },
 	// {
 	//     'id': 'with',
 	//     'label': 'With',
@@ -338,11 +346,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	},
 	// {
 	//     'id': 'source',
-	//     'label': 'Source',
-	//     'widget_type': 'text',
-	//     'policy': 'mutable',
-	//     'cardinality': 'many',
-	//     'placeholder': 'Enter reference type'
+	//     'label': 'Source'
+	//     // 'widget_type': 'text',
+	//     // 'policy': 'mutable',
+	//     // 'cardinality': 'many',
+	//     // 'placeholder': 'Enter reference type'
 	// },
 	{
 	    'id': 'comment',
@@ -669,7 +677,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		if( ! enode ){
 		    alert('Could not find related test element.');
 		}else{
-		    var eam = edit_ann_modal(instance_annotation_config, ecore,
+		    var eam = edit_ann_modal(individual_annotation_config, ecore,
 					     manager, enode.id(), gserv, gconf);
 		    eam.show();
 		}
