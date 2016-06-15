@@ -103,6 +103,8 @@
      https://github.com/berkeleybop/bbop-manager-minerva/wiki/MinervaRequestAPI
    - Example client project:
      https://github.com/geneontology/noctua-repl
+   - Architecture diagram:
+     https://www.lucidchart.com/documents/edit/2a21c669-f8ff-4f94-b118-cefe7ca370db/0
 
 ** How to use demo
 *** Generating/selecting a model
