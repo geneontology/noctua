@@ -11,14 +11,17 @@ repo.
 ## Ansible
 
 This is aimed at getting AWS instances of a complete Noctua stack up
-and running with as little pain as possible.
+and running with as little pain as possible, all concentrated on a
+single instance.
 
 We are going to assume that you have a fairly standard AWS instance,
 with decent memory, keyed to "noctua-demo-deployment.pem", at
 address 127.0.0.1.
-
+ 
 ```
 ansible-playbook -l 127.0.0.1 --private-key noctua-demo-deployment.pem ./aws-noctua-up.playbook.yaml
 ```
 
 ## Ansible/Docker
+
+See: http://github.com/geneontology/ansible-machine-bootstrap
