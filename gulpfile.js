@@ -109,6 +109,32 @@ var paths = {
     tests: ['tests/*.test.js']
 };
 
+// var paths = {
+//     // WARNING: Cannot use glob for clients--I use the explicit listing
+//     // to generate a dynamic browserify set.
+//     'core_noctua_clients': [
+// 	'js/NoctuaEditor.js',
+// 	//'js/NoctuaLanding.js'
+// 	//'js/NoctuaBasic/NoctuaBasicApp.js'
+//     ],
+//     'core_barista_clients': [
+// 	// 'js/BaristaLogin.js'
+// 	// 'js/BaristaLogout.js'
+// 	// 'js/BaristaSession.js'
+//     ],
+//     'core_workbench_clients': [
+// 	// A temporary place for internal workspaces.
+// 	// //'workbenches/copy_in_model/CopyInModel.js'
+// 	// 'workbenches/mmcc/MMCC.js'
+// 	// 'workbenches/bioentity_companion/BioentityCompanion.js'
+// 	// 'workbenches/companion/Companion.js'
+// 	// 'workbenches/cytoview/CytoView.js'
+//     ],
+//     support: ['js/connectors-sugiyama.js'],
+//     scripts: ['scripts/*'],
+//     tests: ['tests/*.test.js']
+// };
+
 ///
 /// Build tasks.
 ///
