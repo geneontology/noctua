@@ -317,7 +317,10 @@ var NoctuaLauncher = function(){
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
-	var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
+	var noctua_branding = 'Noctua';
+	var noctua_minimal_p = false;
+	if( noctua_context === 'monarch' ){ noctua_branding = 'WebPhenote'; }
+	if( noctua_context === 'open' ){ noctua_minimal_p = true; }
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
@@ -369,6 +372,8 @@ var NoctuaLauncher = function(){
 		 value: self.barista_location },
 		{name: 'global_noctua_context',
 		 value: noctua_context },
+		{name: 'global_noctua_minimal_p',
+		 value: noctua_minimal_p },
 		{name: 'global_known_relations',
 		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
@@ -392,6 +397,7 @@ var NoctuaLauncher = function(){
 	    'barista_users': barista_users,
 	    'noctua_dev_tabs': noctua_context === 'go',
 	    'noctua_context': noctua_context,
+	    'noctua_minimal_p': noctua_minimal_p,
 	    'noctua_landing': noctua_landing,
 	    'noctua_branding': noctua_branding,
 	    'barista_login': barista_login,
@@ -556,7 +562,8 @@ var NoctuaLauncher = function(){
 	    var model_id = req.params['query'] || '';
 
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
-		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
+	    var noctua_branding = 'Noctua';
+	    if( noctua_context === 'monarch'){ noctua_context = 'WebPhenote'; }
 	    var barista_login = self.barista_location + '/session' + '?return=' +
 		    self.frontend + '/basic/' + model_id;
 	    var barista_logout =

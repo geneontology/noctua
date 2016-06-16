@@ -27,6 +27,10 @@ BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
   value: http://toaster.lbl.gov:3400
+NOCTUA_CONTEXT:
+  comment: The context/audience for which Noctua will be run.
+  type: string
+  value: go
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url

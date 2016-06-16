@@ -87,6 +87,7 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'core_noctua_clients': [
+	//'js/NoctuaEditor.js'
 	'js/NoctuaEditor.js',
 	'js/NoctuaLanding.js',
 	'js/NoctuaBasic/NoctuaBasicApp.js'
@@ -336,7 +337,7 @@ var minerva_opts = ['java',
 
 if( noctua_context === 'go' ){
     minerva_opts.push('--golr-labels', golr_neo_lookup_url);
-}else if( noctua_context === 'monarch' ){
+}else if( noctua_context === 'monarch' || noctua_context === 'open' ){
     // minerva_opts.push('--monarch-labels', golr_neo_lookup_url);
     minerva_opts.push('--skip-class-id-validation');
 }
