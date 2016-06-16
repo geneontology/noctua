@@ -1896,9 +1896,43 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	}
 
+	// Cheaply inject a button for experimenting with TextAE.
+	out_cache.push('<div class="panel panel-default">');
+	out_cache.push('<div class="panel-heading">Interact with TextAE</div>');
+	out_cache.push('<div class="panel-body">');
+	out_cache.push('<ul class="list-group"></ul>');
+	// TextAE button.
+	var textae_btn_args = {
+    	    'generate_id': true,
+    	    'type': 'button',
+    	    'class': 'btn btn-success'
+	};
+	var textae_btn =
+	    new bbop.html.tag('button', textae_btn_args, 'TextAE');
+	out_cache.push(textae_btn.to_string());
+	out_cache.push('</ul>');
+	out_cache.push('</div>');
+	out_cache.push('</div>');
+
 	// Setup base modal.
 	mdl = new contained_modal('dialog', 'Annotations for: ' + entity_title);
 	mdl.add_to_body(out_cache.join(''));
+
+	// Okay, still playing from just above, let's arm the TextAE
+	// button and start playing in a different modal.
+	jQuery('#' + textae_btn.get_id()).click( function(evt){
+	    evt.stopPropagation();
+	    
+	    // Close out what we had.
+	    mdl.destroy();
+
+	    var taemdl =
+		new contained_modal('dialog', 'TextAE Interaction');
+	    taemdl.add_to_body('<h4>Hello, TextAE!</h4>');
+	    taemdl.add_to_body('<div><p>Foo!</p></div>');
+	    taemdl.show();
+	});
+	
 	
 	// Now that they're all in the DOM, add any delete annotation
 	// actions. These are completely generic--all annotations can
