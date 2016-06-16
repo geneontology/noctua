@@ -724,6 +724,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    rn = readable_rn; // use context
 	}
 
+	//ll('looking at edge: [' + [sn,tn,rn].join(', ') + ']');
+
 	// Try changing the color with context.
 	var clr = aid.color(rn);
 
@@ -1024,6 +1026,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    });
 
     	    // Now let's try to add all the edges/connections.
+	    //ll('assumed edges: ' + ecore.all_edges().length);
     	    each(ecore.all_edges(), function(eedge, eeid){
     		_connect_with_edge(eedge);
     	    });
