@@ -5,3 +5,6 @@
 ## Your hosts here.
 [remote-deployments]
 54.164.195.125
+
+[biohackathon-instance]
+54.89.124.238
