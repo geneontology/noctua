@@ -83,10 +83,11 @@ var MinervaBootstrapping = function(user_token){
     // Events registry.
     // Add manager and default callbacks to repl.
     var engine = new jquery_engine(barista_response);
+    engine.method('POST'); // The big imports require this.
     var manager = new minerva_manager(global_barista_location,
 				      global_minerva_definition_name,
 				      user_token, engine, 'async');
-
+    
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
@@ -707,7 +708,17 @@ var MinervaBootstrapping = function(user_token){
 	evt.preventDefault();
 	//alert('not yet implemented');
 	var in_str = jQuery(model_data_input_elt).val();
-	manager.import_model(in_str);
+
+	// Currently, import_model busted in manager (didn't track
+	// late changes to rationalize naming), so try temporary
+	// workaround.
+	var reqs = new minerva_requests.request_set(manager.user_token());
+	var req = new minerva_requests.request('model', 'import');
+	req.special('import-model', in_str);
+	reqs.add(req);
+
+	//manager.import_model(in_str);
+	manager.request_with(reqs);
     });
 
     ///
