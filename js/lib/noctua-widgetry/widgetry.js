@@ -1937,6 +1937,17 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    new contained_modal('dialog', 'Textpresso interaction');
 		taemdl.add_to_body('<div><p>Textpresso!</p></div>');
 		taemdl.show();
+
+		// Kick people to new link in new window.
+		var btkn = manager.user_token();
+		if( ! btkn || ! us.isString(btkn) ){
+		    alert('Need to be logged in to kick out to Textpresso.');
+		}else{
+		    var txtpr = 'http://sandbox.textpresso.org';
+		    window.open(txtpr + '/cgi-bin/tc/tpc/search?token=' + btkn,
+				'_blank');
+		}
+		taemdl.destroy();
 	    });	
 	    jQuery('#' + pubann_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
