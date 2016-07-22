@@ -314,13 +314,23 @@ var NoctuaLauncher = function(){
 					   model_id, model_obj, node_id_list,
 					   additional_args){
 
+	// Setup branding.
+	var noctua_branding = 'Noctua (?)'; // self-name
+	var noctua_minimal_p = false; // use of side panel in graph editor
+	if( noctua_context === 'go' ){
+	    noctua_branding = 'Noctua';
+	if( noctua_context === 'monarch' ){
+	    noctua_branding = 'WebPhenote';
+	}else if( noctua_context === 'open' ){
+	    noctua_minimal_p = true;
+	}else{
+	    // Unknown miss.
+	    console.log('WARNING: unknown context "' + noctua_context + '"');
+	}
+
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
-	var noctua_branding = 'Noctua';
-	var noctua_minimal_p = false;
-	if( noctua_context === 'monarch' ){ noctua_branding = 'WebPhenote'; }
-	if( noctua_context === 'open' ){ noctua_minimal_p = true; }
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
@@ -395,7 +405,7 @@ var NoctuaLauncher = function(){
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
-	    'noctua_dev_tabs': noctua_context === 'go',
+	    'noctua_dev_tabs': noctua_context !== 'monarch',
 	    'noctua_context': noctua_context,
 	    'noctua_minimal_p': noctua_minimal_p,
 	    'noctua_landing': noctua_landing,
@@ -671,6 +681,7 @@ var NoctuaLauncher = function(){
 	// Probably use _path_cache(key).
 	var static_images = [ // BUG/TODO: Hack.
 	    ['go_logo.png', 'png'],
+	    ['open_logo.png', 'png'],
 	    ['monarch_logo.png', 'png'],
 	    ['waiting_ac.gif', 'gif'],
 	    ['ui-bg_flat_100_ffffff_40x100.png', 'png'],
