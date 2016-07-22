@@ -23,6 +23,7 @@
 /* global global_known_relations */
 /* global global_workbenches_individual */
 /* global global_noctua_minimal_p */
+/* global global_noctua_context */
 
 // Code here will be ignored by JSHint, as we are technically
 // "redefining" jQuery (although we are not).
@@ -679,7 +680,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    alert('Could not find related test element.');
 		}else{
 		    var eam = edit_ann_modal(individual_annotation_config, ecore,
-					     manager, enode.id(), gserv, gconf);
+					     manager, enode.id(), gserv, gconf,
+					     global_noctua_context);
 		    eam.show();
 		}
     	    });
@@ -806,7 +808,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	new_conn.bind('click', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
 	    var eam = edit_ann_modal(fact_annotation_config, ecore, manager,
-				     eedge.id(), gserv, gconf);
+				     eedge.id(), gserv, gconf,
+				     global_noctua_context);
 	    eam.show();
 	});
 	
@@ -2409,7 +2412,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     //
     jQuery(model_ann_elt).click(function(){
 	var eam = edit_ann_modal(model_annotation_config, ecore, manager,
-				 ecore.get_id(), gserv, gconf);
+				 ecore.get_id(), gserv, gconf,
+				 global_noctua_context);
 	eam.show();
     });
 

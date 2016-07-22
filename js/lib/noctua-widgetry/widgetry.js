@@ -1354,7 +1354,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
  * @constructor
  */
 function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
-				gserv, gconf){
+				gserv, gconf, context){
 
     ///
     /// This first section describes a semi-generic way of generating
@@ -1896,8 +1896,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	}
 
-	// Cheaply inject a button for experimenting with TextAE.
-	if( entity_type === 'fact' ){
+	// Cheaply inject a button for experimenting with TextAE,
+	// GO-only.
+	if( entity_type === 'fact' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
 			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
@@ -1926,7 +1927,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	// Okay, still playing from just above, let's arm the
 	// Textpresso and PubAnn buttons and start playing.
-	if( entity_type === 'fact' ){
+	if( entity_type === 'fact' && context === 'go' ){
 	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
 		
