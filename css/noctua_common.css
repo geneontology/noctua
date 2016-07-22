@@ -1,3 +1,8 @@
+/*
+ * Context-specific structures.
+ */
+
+/* Monarch logo and branding. */
 .branding-logo-monarch {
     background-image: url("images/monarch_logo.png");
     background-size: contain;
@@ -18,11 +23,9 @@
     padding:0;
 }
 
-
-/* Adds GO logo */
-
+/* GO logo and branding. */
 .navbar-brand.branding-logo-go {
-	background-image: url("images/go_logo.png");
+    background-image: url("images/go_logo.png");
     background-size: contain;
     background-repeat: no-repeat;
     height:40px !important;
@@ -41,6 +44,30 @@
     font-weight: 500;
 }
 
+/* "Neutral" logo and branding. */
+.navbar-brand.branding-logo-open {
+    background-image: url("images/open_logo.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height:40px !important;
+    width:40px !important;
+    margin:0 !important;
+    padding:0 !important;
+    margin: 5px 0 0 5px !important;
+    border: 2px solid lightgray;
+    border-radius:40px;
+}
+
+.branding-open {
+    margin: -1px 0 -5px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/*
+ * Generic structures.
+ */
 
 nav#navbar.navbar .navbar-brand {
     height: 36px;
@@ -69,3 +96,7 @@ nav#navbar.navbar .navbar-collapse {
     margin:0;
 }
 
+/* Warnings. */
+.alpha {
+    color: red;
+}

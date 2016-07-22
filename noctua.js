@@ -97,6 +97,10 @@ var noctua_location =
 // Noctua's self/public location (optional).
 var noctua_frontend = argv['p'] || argv['noctua-public'];
 
+// External browser location for models.
+var external_browser_location =
+	argv['e'] || argv['external-browser-location'] || null;
+
 // Process strings to usable lists.
 var collapsible_relations = [];
 if( collapsible_raw ){
@@ -114,7 +118,7 @@ console.log('Using GOlr lookup server at: ', golr_server_location);
 console.log('Using GOlr NEO lookup server at: ', golr_neo_server_location);
 console.log('Barista location: ' + barloc);
 console.log('Minerva definition name: ' + min_def_name);
-
+console.log('External model browser: ' + external_browser_location);
 
 // Figure out our base and URLs we'll need to aim this locally.
 var linker = new amigo.linker();
@@ -314,10 +318,24 @@ var NoctuaLauncher = function(){
 					   model_id, model_obj, node_id_list,
 					   additional_args){
 
+	// Setup branding.
+	var noctua_branding = 'Noctua (?)'; // self-name
+	var noctua_minimal_p = false; // use of side panel in graph editor
+	if( noctua_context === 'go' ){
+	    noctua_branding = 'Noctua';
+	}else if( noctua_context === 'monarch' ){
+	    noctua_branding = 'WebPhenote';
+	}else if( noctua_context === 'open' ){
+	    noctua_branding = 'Noctua';
+	    noctua_minimal_p = true;
+	}else{
+	    // Unknown miss.
+	    console.log('WARNING: unknown context "' + noctua_context + '"');
+	}
+	    
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
-	var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
 	var barista_loc = self.barista_location;
 	var barista_login = null;
 	var barista_logout = null;
@@ -338,7 +356,7 @@ var NoctuaLauncher = function(){
 		barista_loc + '/session' + '?return=' +
 		_build_token_link(self.frontend + app_path + '/' + model_id, barista_token);
 	}
-
+	    
 	var barista_users =
 		_build_token_link(self.barista_location +'/user_info',
 				  barista_token);
@@ -369,6 +387,10 @@ var NoctuaLauncher = function(){
 		 value: self.barista_location },
 		{name: 'global_noctua_context',
 		 value: noctua_context },
+		{name: 'global_noctua_minimal_p',
+		 value: noctua_minimal_p },
+		{name: 'global_external_browser_location',
+		 value: external_browser_location },
 		{name: 'global_known_relations',
 		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
@@ -390,8 +412,10 @@ var NoctuaLauncher = function(){
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
-	    'noctua_dev_tabs': noctua_context === 'go',
+	    'noctua_dev_tabs': noctua_context !== 'monarch',
 	    'noctua_context': noctua_context,
+	    'external_browser_location': external_browser_location,
+	    'noctua_minimal_p': noctua_minimal_p,
 	    'noctua_landing': noctua_landing,
 	    'noctua_branding': noctua_branding,
 	    'barista_login': barista_login,
@@ -405,9 +429,9 @@ var NoctuaLauncher = function(){
 	each(additional_args, function(val, key){
 	    tmpl_args[key] = val;
 	});
-	
+	    
 	return tmpl_args;
-    };
+    }
 
     // Assemble return doc.
     self.bootstrap_editor = function(req, res, model_id, model_obj){
@@ -556,7 +580,8 @@ var NoctuaLauncher = function(){
 	    var model_id = req.params['query'] || '';
 
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
-		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
+	    var noctua_branding = 'Noctua';
+	    if( noctua_context === 'monarch'){ noctua_context = 'WebPhenote'; }
 	    var barista_login = self.barista_location + '/session' + '?return=' +
 		    self.frontend + '/basic/' + model_id;
 	    var barista_logout =
@@ -596,6 +621,8 @@ var NoctuaLauncher = function(){
 		// 'pup_tent_js_variables': [
 		//     {name: 'global_minerva_definition_name',
 		//      value: self.minerva_definition_name },
+	        //     {name: 'global_external_browser_location',
+		//      value: external_browser_location },
 		//     {name: 'global_known_relations',
 		//      value: self.known_relations},
 		//     {name: 'global_barista_token',
@@ -664,6 +691,7 @@ var NoctuaLauncher = function(){
 	// Probably use _path_cache(key).
 	var static_images = [ // BUG/TODO: Hack.
 	    ['go_logo.png', 'png'],
+	    ['open_logo.png', 'png'],
 	    ['monarch_logo.png', 'png'],
 	    ['waiting_ac.gif', 'gif'],
 	    ['ui-bg_flat_100_ffffff_40x100.png', 'png'],
@@ -882,8 +910,10 @@ var NoctuaLauncher = function(){
 		pre_fail(res, "requests empty in POST data", "meh");
 	    }else{
 
-		// We first need to extract this:
+		// We first need to extract these:
 		// https://github.com/geneontology/noctua/issues/147
+		// https://github.com/geneontology/noctua/issues/316
+		// E.g.:
 		// {
 		//     "barista-token": "sdlkjslkjd",
 		//     "model-id": "gomodel:01234567", // optional
@@ -920,81 +950,108 @@ var NoctuaLauncher = function(){
 		    rs.add_model();
 		}
 
-		// This is known to be a populate array.
+		// We assume Textpresso, but others could be using
+		// this too.
+		var client_id = null;
+		if( decoded_body['client-id'] ){
+		    client_id = decoded_body['client-id'];
+		}
+
+		// We can throw this out as it is Barista's problem,
+		// not ours.
+		var user_id = null;
+		if( decoded_body['user-id'] ){
+		    user_id = decoded_body['user-id'];
+		}
+
+		// This is known to be a populated array, but the
+		// contents will depend on who the calling client is.
 		var incoming_requests = decoded_body['requests'];
 
 		// From here, loop through and collect all of the
-		// requests.
+		// requests, depending on who we think the client is.
 		var resulting_requests = [];
-		each(incoming_requests, function(incoming_request){
+		if( client_id === 'pubannotator' ){
 
-		    // GP/entity.
-		    var gpid = null;
-		    if( incoming_request['database-id'] ){
-			gpid = incoming_request['database-id'];
-		    }
-		    
-		    // Evidence.
-		    var evid = null;
-		    if( incoming_request['evidence-id'] ){
-			evid = incoming_request['evidence-id'];
-		    }
-		    
-		    // Class/term.
-		    var clsid = null;
-		    if( incoming_request['class-id'] ){
-			clsid = incoming_request['class-id'];
-		    }
-		    
-		    // Class/term.
-		    var refid = null;
-		    if( incoming_request['reference-id'] ){
-			refid = incoming_request['reference-id'];
-		    }
-		    
-		    // External ID.
-		    var txpid = null;
-		    if( incoming_request['external-id'] ){
-			txpid = incoming_request['external-id'];
-		    }
-		    
-		    // Comments, list of strings.
-		    var comments = [];
-		    if( incoming_request['comments'] ){
-			var cmts = incoming_request['comments'];
+		    each(incoming_requests, function(incoming_request){
+			// TODO.
+		    });
+
+		}else{ // Assume Capella/Textpresso as default.
+
+		    each(incoming_requests, function(incoming_request){
 			
-			if( us.isArray(cmts) ){
-			    comments = cmts;
-			}else if( us.isString(cmts) ){
-			    comments.push(cmts);
+			// GP/entity.
+			var gpid = null;
+			if( incoming_request['database-id'] ){
+			    gpid = incoming_request['database-id'];
 			}
-		    }
-		    
-		    // TODO/BUG: For now, toss the textspresso id into
-		    // comments for experimentation.
-		    if( txpid ){
-			comments.push(txpid);
-		    }
-		    
-		    // Double check we're clear, then go.
-		    if( ! refid || ! clsid || ! evid || ! gpid ){
-			pre_fail(res, 'insufficient arg data to continue','n/a');
-		    }else{
-
-			// Assemble a minerva-request to go along with
-			// rich annoton.
-			var ind1 = rs.add_individual(clsid);
-			var ind2 = rs.add_individual(gpid);
-			var f1 = rs.add_fact([ind1, ind2, 'RO:0002333']);
-			//rs.add_svf_expression(gpid, 'RO:0002333');	
-			var ev1 = rs.add_evidence(evid, [refid], [],
-						  [ind1, ind2, 'RO:0002333']);
-
-			// BUG/TODO: temporarily store comments here.
-			rs.add_annotation_to_fact('comment', comments, null, f1);
-		    }
-		});
-		    
+			
+			// Evidence.
+			var evid = null;
+			if( incoming_request['evidence-id'] ){
+			    evid = incoming_request['evidence-id'];
+			}
+			
+			// Class/term.
+			var clsid = null;
+			if( incoming_request['class-id'] ){
+			    clsid = incoming_request['class-id'];
+			}
+			
+			// Class/term.
+			var refid = null;
+			if( incoming_request['reference-id'] ){
+			    refid = incoming_request['reference-id'];
+			}
+			
+			// External ID.
+			var txpid = null;
+			if( incoming_request['external-id'] ){
+			    txpid = incoming_request['external-id'];
+			}
+			
+			// Comments, list of strings.
+			var comments = [];
+			if( incoming_request['comments'] ){
+			    var cmts = incoming_request['comments'];
+			    
+			    if( us.isArray(cmts) ){
+				comments = cmts;
+			    }else if( us.isString(cmts) ){
+				comments.push(cmts);
+			    }
+			}
+			
+			// TODO/BUG: For now, toss the textspresso id into
+			// comments for experimentation.
+			if( txpid ){
+			    comments.push(txpid);
+			}
+			
+			// Double check we're clear, then go.
+			if( ! refid || ! clsid || ! evid || ! gpid ){
+			    pre_fail(res, 'insufficient arg data to continue',
+				     'n/a');
+			}else{
+			    
+			    // Assemble a minerva-request to go along with
+			    // rich annoton.
+			    var ind1 = rs.add_individual(clsid);
+			    var ind2 = rs.add_individual(gpid);
+			    var f1 = rs.add_fact([ind1, ind2, 'RO:0002333']);
+			    //rs.add_svf_expression(gpid, 'RO:0002333');	
+			    var ev1 =
+				    rs.add_evidence(evid, [refid], [],
+						    [ind1, ind2, 'RO:0002333']);
+			    
+			    // BUG/TODO: temporarily store comments here.
+			    rs.add_annotation_to_fact('comment', comments,
+						      null, f1);
+			}
+		    });
+		}
+		
 		// Okay, we've got probably good input as we haven't
 		// bailed out yet. Grab model for export with fresh
 		// manager.

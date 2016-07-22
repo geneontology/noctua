@@ -1896,9 +1896,71 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	}
 
+	// Cheaply inject a button for experimenting with TextAE.
+	if( entity_type === 'fact' ){
+	    out_cache.push('<div class="panel panel-default">');
+	    out_cache.push('<div class="panel-heading">' +
+			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
+	    out_cache.push('<div class="panel-body">');
+	    // Markup buttons.
+	    var textae_btn_args = {
+    		'generate_id': true,
+    		'type': 'button',
+    		'class': 'btn btn-success btn-xs',
+		'style': 'padding-right: 1em;'
+	    };
+	    var textpr_btn =
+		new bbop.html.tag('button', textae_btn_args, 'Textpresso');
+	    var pubann_btn =
+		new bbop.html.tag('button', textae_btn_args, 'PubAnnotator');
+	    out_cache.push(textpr_btn.to_string());
+	    out_cache.push('&nbsp;');
+	    out_cache.push(pubann_btn.to_string());
+	    out_cache.push('</div>');
+	    out_cache.push('</div>');
+	}
+
 	// Setup base modal.
 	mdl = new contained_modal('dialog', 'Annotations for: ' + entity_title);
 	mdl.add_to_body(out_cache.join(''));
+
+	// Okay, still playing from just above, let's arm the
+	// Textpresso and PubAnn buttons and start playing.
+	if( entity_type === 'fact' ){
+	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
+		evt.stopPropagation();
+		
+		// Close out what we had.
+		mdl.destroy();
+		
+		var taemdl =
+		    new contained_modal('dialog', 'Textpresso interaction');
+		taemdl.add_to_body('<div><p>Textpresso!</p></div>');
+		taemdl.show();
+
+		// Kick people to new link in new window.
+		var btkn = manager.user_token();
+		if( ! btkn || ! us.isString(btkn) ){
+		    alert('Need to be logged in to kick out to Textpresso.');
+		}else{
+		    var txtpr = 'http://sandbox.textpresso.org';
+		    window.open(txtpr + '/cgi-bin/tc/tpc/search?token=' + btkn,
+				'_blank');
+		}
+		taemdl.destroy();
+	    });	
+	    jQuery('#' + pubann_btn.get_id()).click( function(evt){
+		evt.stopPropagation();
+		
+		// Close out what we had.
+		mdl.destroy();
+		
+		var taemdl =
+		    new contained_modal('dialog', 'PubAnnotation interaction');
+		taemdl.add_to_body('<div><p>PubAnnotation!</p></div>');
+		taemdl.show();
+	    });
+	}
 	
 	// Now that they're all in the DOM, add any delete annotation
 	// actions. These are completely generic--all annotations can

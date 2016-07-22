@@ -26,6 +26,10 @@ BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
   value: http://localhost:3400
+NOCTUA_CONTEXT:
+  comment: The context/audience for which Noctua will be run.
+  type: string
+  value: go
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
@@ -38,6 +42,10 @@ MINERVA_LOCATION:
   comment: The location of the minerva to communicate with.
   type: url
   value: http://localhost:6800
+EXTERNAL_BROWSER_LOCATION:
+  comment: The location of a top-level external browser to use to look at the models.
+  type: url
+  value: http://tomodachi.berkeleybop.org/amigo/search/model_annotation
 ## File locations.
 USER_DATA:
   comment: The location of the known users for the system (GO metadata users.yaml style).

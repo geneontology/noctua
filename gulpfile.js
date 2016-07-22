@@ -87,6 +87,7 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'core_noctua_clients': [
+	//'js/NoctuaEditor.js'
 	'js/NoctuaEditor.js',
 	'js/NoctuaLanding.js',
 	'js/NoctuaBasic/NoctuaBasicApp.js'
@@ -314,6 +315,12 @@ var minerva_location = config['MINERVA_LOCATION'].value;
 var minerva_port = url.parse(minerva_location).port || 80;
 var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 
+// External tools.
+if( config['EXTERNAL_BROWSER_LOCATION'] ){
+    var external_browser_location =
+	    config['EXTERNAL_BROWSER_LOCATION'].value || null;
+}
+
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
@@ -362,7 +369,7 @@ var minerva_opts = ['java',
 
 if( noctua_context === 'go' ){
     minerva_opts.push('--golr-labels', golr_neo_lookup_url);
-}else if( noctua_context === 'monarch' ){
+}else if( noctua_context === 'monarch' || noctua_context === 'open' ){
     // minerva_opts.push('--monarch-labels', golr_neo_lookup_url);
     minerva_opts.push('--skip-class-id-validation');
 }
@@ -442,6 +449,11 @@ if( collapsible_relations_str ){
 if( collapsible_reverse_relations_str ){
     noctua_run_list.push('--collapsible-reverse-relations');
     noctua_run_list.push('"' + collapsible_reverse_relations_str + '"');
+}
+// See if we have an external browser.
+if( external_browser_location ){
+    noctua_run_list.push('--external-browser-location');
+    noctua_run_list.push('"' + external_browser_location + '"');
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list

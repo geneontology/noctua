@@ -119,9 +119,9 @@
 	      </label>
 	    </li>
             <li class="divider"></li>
-            <li><a id="action_ping" href="#">Request contact <span style="color:red;">ALPHA</span></a></li>
-            <li><a id="action_test" href="#">Test thing <span style="color:red;">ALPHA</span></a></li>
-            <li><a id="action_shin" href="#">Try new way of doing things <span style="color:red;">ALPHA</span></a></li>
+            <li><a id="action_ping" href="#">Request contact <span class="alpha">ALPHA</span></a></li>
+            <li><a id="action_test" href="#">Test thing <span class="alpha">ALPHA</span></a></li>
+            <li><a id="action_shin" href="#">Try new way of doing things <span class="alpha">ALPHA</span></a></li>
           </ul>
 	</li>
 
@@ -180,7 +180,12 @@
               </a>
 	    </h4>
 	  </div>
+	  {{# noctua_minimal_p }}
+	  <div id="collapse_five" class="panel-collapse collapse in">
+	  {{/ noctua_minimal_p }}
+	  {{^ noctua_minimal_p }}
 	  <div id="collapse_five" class="panel-collapse collapse">
+	  {{/ noctua_minimal_p }}
 	    <div class="panel-body">
 	      
 	      <p>
@@ -200,6 +205,7 @@
 	  </div>
 	</div>
 
+	{{^ noctua_minimal_p }}
 	<!-- Annoton template. -->
 	<div class="panel panel-default">
 	  <div class="panel-heading">
@@ -329,6 +335,7 @@
 	    
 	  </div>
 	</div>
+	{{/ noctua_minimal_p }}
 
       </div>
     </div>
