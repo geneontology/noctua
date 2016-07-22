@@ -96,3 +96,7 @@ nav#navbar.navbar .navbar-collapse {
     margin:0;
 }
 
+/* Warnings. */
+.alpha {
+    color: red;
+}

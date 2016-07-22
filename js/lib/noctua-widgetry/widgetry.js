@@ -1900,13 +1900,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	if( entity_type === 'fact' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
-			   'Paper markup tools</div>');
+			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
 	    var textae_btn_args = {
     		'generate_id': true,
     		'type': 'button',
-    		'class': 'btn btn-success',
+    		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
 	    var textpr_btn =
