@@ -42,6 +42,10 @@ MINERVA_LOCATION:
   comment: The location of the minerva to communicate with.
   type: url
   value: http://localhost:6800
+EXTERNAL_BROWSER_LOCATION:
+  comment: The location of a top-level external browser to use to look at the models.
+  type: url
+  value: http://tomodachi.berkeleybop.org/amigo/search/model_annotation
 ## File locations.
 USER_DATA:
   comment: The location of the known users for the system (GO metadata users.yaml style).
