@@ -390,7 +390,7 @@ var NoctuaLauncher = function(){
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
-	    'noctua_dev_tabs': noctua_context !== 'monarch',
+	    'noctua_dev_tabs': noctua_context === 'go',
 	    'noctua_context': noctua_context,
 	    'noctua_landing': noctua_landing,
 	    'noctua_branding': noctua_branding,
