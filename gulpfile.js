@@ -289,6 +289,12 @@ var minerva_location = config['MINERVA_LOCATION'].value;
 var minerva_port = url.parse(minerva_location).port || 80;
 var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 
+// External tools.
+if( config['EXTERNAL_BROWSER_LOCATION'] ){
+    var external_browser_location =
+	    config['EXTERNAL_BROWSER_LOCATION'].value || null;
+}
+
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
@@ -417,6 +423,11 @@ if( collapsible_relations_str ){
 if( collapsible_reverse_relations_str ){
     noctua_run_list.push('--collapsible-reverse-relations');
     noctua_run_list.push('"' + collapsible_reverse_relations_str + '"');
+}
+// See if we have an external browser.
+if( external_browser_location ){
+    noctua_run_list.push('--external-browser-location');
+    noctua_run_list.push('"' + external_browser_location + '"');
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list

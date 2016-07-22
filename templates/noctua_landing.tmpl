@@ -31,7 +31,9 @@
         {{/noctua_dev_tabs}}
 
         {{#noctua_dev_tabs}}
+	{{#noctua_external_browser}}	
         <li class="navbar-tab"><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
+	{{/noctua_external_browser}}
         <li class="navbar-tab"><a href="#create" role="tab" data-toggle="tab">Create</a></li>
         {{/noctua_dev_tabs}}
 
@@ -200,6 +202,7 @@
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
+      {{#noctua_external_browser}}	
       <!-- Browse. -->
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -216,6 +219,7 @@
           </p>
         </div>
       </div>
+      {{/noctua_external_browser}}	
 
     </div>
     {{/noctua_dev_tabs}}
@@ -276,7 +280,7 @@
       <!-- Form creation panel. -->
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Create new model from the æther (prototype form) <span style="color:red;">ALPHA</span></h3>
+          <h3 class="panel-title">Create new model from the æther (prototype form) <span class="alpha">ALPHA</span></h3>
         </div>
         <div class="panel-body">
           <p>
@@ -328,7 +332,7 @@
     <div class="tab-pane noctua_tab_wrapper" id="import">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Load model using ??? format <span style="color:red;">ALPHA</span></h3>
+          <h3 class="panel-title">Load model using ??? format <span class="alpha">ALPHA</span></h3>
         </div>
         <div class="panel-body">
           <p>

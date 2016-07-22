@@ -97,6 +97,10 @@ var noctua_location =
 // Noctua's self/public location (optional).
 var noctua_frontend = argv['p'] || argv['noctua-public'];
 
+// External browser location for models.
+var external_browser_location =
+	argv['e'] || argv['external-browser-location'] || null;
+
 // Process strings to usable lists.
 var collapsible_relations = [];
 if( collapsible_raw ){
@@ -114,7 +118,7 @@ console.log('Using GOlr lookup server at: ', golr_server_location);
 console.log('Using GOlr NEO lookup server at: ', golr_neo_server_location);
 console.log('Barista location: ' + barloc);
 console.log('Minerva definition name: ' + min_def_name);
-
+console.log('External model browser: ' + external_browser_location);
 
 // Figure out our base and URLs we'll need to aim this locally.
 var linker = new amigo.linker();
@@ -319,15 +323,16 @@ var NoctuaLauncher = function(){
 	var noctua_minimal_p = false; // use of side panel in graph editor
 	if( noctua_context === 'go' ){
 	    noctua_branding = 'Noctua';
-	if( noctua_context === 'monarch' ){
+	}else if( noctua_context === 'monarch' ){
 	    noctua_branding = 'WebPhenote';
 	}else if( noctua_context === 'open' ){
+	    noctua_branding = 'Noctua';
 	    noctua_minimal_p = true;
 	}else{
 	    // Unknown miss.
 	    console.log('WARNING: unknown context "' + noctua_context + '"');
 	}
-
+	    
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
@@ -351,7 +356,7 @@ var NoctuaLauncher = function(){
 		barista_loc + '/session' + '?return=' +
 		_build_token_link(self.frontend + app_path + '/' + model_id, barista_token);
 	}
-
+	    
 	var barista_users =
 		_build_token_link(self.barista_location +'/user_info',
 				  barista_token);
@@ -384,6 +389,8 @@ var NoctuaLauncher = function(){
 		 value: noctua_context },
 		{name: 'global_noctua_minimal_p',
 		 value: noctua_minimal_p },
+		{name: 'global_external_browser_location',
+		 value: external_browser_location },
 		{name: 'global_known_relations',
 		 value: out_known_rels },
 		{name: 'global_collapsible_relations',
@@ -407,6 +414,7 @@ var NoctuaLauncher = function(){
 	    'barista_users': barista_users,
 	    'noctua_dev_tabs': noctua_context !== 'monarch',
 	    'noctua_context': noctua_context,
+	    'external_browser_location': external_browser_location,
 	    'noctua_minimal_p': noctua_minimal_p,
 	    'noctua_landing': noctua_landing,
 	    'noctua_branding': noctua_branding,
@@ -421,9 +429,9 @@ var NoctuaLauncher = function(){
 	each(additional_args, function(val, key){
 	    tmpl_args[key] = val;
 	});
-	
+	    
 	return tmpl_args;
-    };
+    }
 
     // Assemble return doc.
     self.bootstrap_editor = function(req, res, model_id, model_obj){
@@ -613,6 +621,8 @@ var NoctuaLauncher = function(){
 		// 'pup_tent_js_variables': [
 		//     {name: 'global_minerva_definition_name',
 		//      value: self.minerva_definition_name },
+	        //     {name: 'global_external_browser_location',
+		//      value: external_browser_location },
 		//     {name: 'global_known_relations',
 		//      value: self.known_relations},
 		//     {name: 'global_barista_token',
