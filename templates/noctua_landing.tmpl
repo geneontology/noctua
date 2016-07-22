@@ -31,9 +31,9 @@
         {{/noctua_dev_tabs}}
 
         {{#noctua_dev_tabs}}
-	{{#noctua_external_browser}}	
+	{{#external_browser_location}}	
         <li class="navbar-tab"><a href="#select" role="tab" data-toggle="tab">Browse</a></li>
-	{{/noctua_external_browser}}
+	{{/external_browser_location}}
         <li class="navbar-tab"><a href="#create" role="tab" data-toggle="tab">Create</a></li>
         {{/noctua_dev_tabs}}
 
@@ -202,7 +202,7 @@
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
-      {{#noctua_external_browser}}	
+      {{#external_browser_location}}	
       <!-- Browse. -->
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -219,7 +219,7 @@
           </p>
         </div>
       </div>
-      {{/noctua_external_browser}}	
+      {{/external_browser_location}}	
 
     </div>
     {{/noctua_dev_tabs}}
