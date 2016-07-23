@@ -431,7 +431,7 @@ var NoctuaLauncher = function(){
 	});
 	    
 	return tmpl_args;
-    }
+    };
 
     // Assemble return doc.
     self.bootstrap_editor = function(req, res, model_id, model_obj){
