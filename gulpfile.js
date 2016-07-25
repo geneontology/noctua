@@ -329,7 +329,7 @@ var noctua_context = config['NOCTUA_CONTEXT'] ? config['NOCTUA_CONTEXT'].value :
 var noctua_models = config['NOCTUA_MODELS'].value;
 var user_data = config['USER_DATA'].value;
 var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
-var ontology_catalog = config['ONTOLOGY_CATALOG'].value;
+var ontology_catalog = config['ONTOLOGY_CATALOG'] ? config['ONTOLOGY_CATALOG'].value : null;
 var workbench_dirs = config['WORKBENCHES'].value;
 var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
@@ -352,21 +352,64 @@ if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
 // Execute counter.
 _ping_count();
 
-var minerva_opts = ['java',
-     '-Xmx' + minerva_max_mem + 'G',
-     '-cp', './java/lib/minerva-cli.jar',
-     'org.geneontology.minerva.server.StartUpTool',
-     '--use-golr-url-logging',
-     '--use-request-logging',
-     '--slme-elk',
-     '-g', ontology_list,
-     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-     '--golr-seed', golr_lookup_url,
-     '-c', ontology_catalog,
-     '-f', noctua_models,
-     '--port', minerva_port
-    ];
+var minerva_opts = [
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-cp', './java/lib/minerva-cli.jar',
+    'org.geneontology.minerva.server.StartUpTool',
+    '--use-golr-url-logging',
+    '--use-request-logging',
+    '--slme-elk',
+    '-g', ontology_list,
+    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+    '--golr-seed', golr_lookup_url,
+    '-f', noctua_models,
+    '--port', minerva_port
+];
 
+var minerva_opts_no_lookup = [
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-cp', './java/lib/minerva-cli.jar',
+    'org.geneontology.minerva.server.StartUpTool',
+    '--use-golr-url-logging',
+    '--use-request-logging',
+    '--slme-elk',
+    '-g', ontology_list,
+    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+    '-f', noctua_models,
+    '--port', minerva_port
+];
+
+var minerva_opts_no_validation = [
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-cp', './java/lib/minerva-cli.jar',
+    'org.geneontology.minerva.server.StartUpTool',
+    '--use-golr-url-logging',
+    '--use-request-logging',
+    '--slme-elk',
+    '-g', ontology_list,
+    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+    '--golr-seed', golr_lookup_url,
+    '--golr-labels', golr_neo_lookup_url,
+    '--skip-class-id-validation',
+    '-f', noctua_models,
+    '--port', minerva_port
+];
+
+// Optional catalog,
+if( us.isString(ontology_catalog) && ontology_catalog !== '' ){
+    us.each([minerva_opts, minerva_opts_no_lookup, minerva_opts_no_validation],
+	    function(opts){
+		opts.push('-c');
+		opts.push(ontology_catalog);
+	    });
+}
+
+// TODO: Convert these to use one of the templates above, like the
+// ontology_catalog.
+// Context-dependent label resolution.
 if( noctua_context === 'go' ){
     minerva_opts.push('--golr-labels', golr_neo_lookup_url);
 }else if( noctua_context === 'monarch' || noctua_context === 'open' ){
@@ -379,42 +422,14 @@ gulp.task('run-minerva', shell.task(_run_cmd(
     minerva_opts
 )));
 
-
 // Minerva runner without a lookup.
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
-    ['java',
-     '-Xmx' + minerva_max_mem + 'G',
-     '-cp', './java/lib/minerva-cli.jar',
-     'org.geneontology.minerva.server.StartUpTool',
-     '--use-golr-url-logging',
-     '--use-request-logging',
-     '--slme-elk',
-     '-g', ontology_list,
-     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-     '-c', ontology_catalog,
-     '-f', noctua_models,
-     '--port', minerva_port
-    ]
+    minerva_opts_no_lookup
 )));
 
 // Minerva runner without a lookup.
 gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
-    ['java',
-     '-Xmx' + minerva_max_mem + 'G',
-     '-cp', './java/lib/minerva-cli.jar',
-     'org.geneontology.minerva.server.StartUpTool',
-     '--use-golr-url-logging',
-     '--use-request-logging',
-     '--slme-elk',
-     '-g', ontology_list,
-     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-     '--golr-seed', golr_lookup_url,     
-     '--golr-labels', golr_neo_lookup_url,
-     '--skip-class-id-validation',
-     '-c', ontology_catalog,
-     '-f', noctua_models,
-     '--port', minerva_port
-    ]
+    minerva_opts_no_validation
 )));
 
 //node barista.js --self http://localhost:3400
