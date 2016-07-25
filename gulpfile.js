@@ -352,27 +352,18 @@ if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
 // Execute counter.
 _ping_count();
 
-var minerva_opts = [
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-cp', './java/lib/minerva-cli.jar',
-    'org.geneontology.minerva.server.StartUpTool',
-    '--use-golr-url-logging',
-    '--use-request-logging',
-    '--slme-elk',
-    '-g', ontology_list,
-    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-    '--golr-seed', golr_lookup_url,
-    '-f', noctua_models,
-    '--port', minerva_port
-];
+///
+/// Runner assembly.
+///
 
-var minerva_opts_no_lookup = [
+// TODO: All of the listed options should be pushed into the config
+// file like the ontology catalog--no more secrets in the gulpfiles.
+var minerva_opts_base = [
     'java',
     '-Xmx' + minerva_max_mem + 'G',
     '-cp', './java/lib/minerva-cli.jar',
     'org.geneontology.minerva.server.StartUpTool',
-    '--use-golr-url-logging',
+    '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
     '--use-request-logging',
     '--slme-elk',
     '-g', ontology_list,
@@ -381,55 +372,40 @@ var minerva_opts_no_lookup = [
     '--port', minerva_port
 ];
 
-var minerva_opts_no_validation = [
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-cp', './java/lib/minerva-cli.jar',
-    'org.geneontology.minerva.server.StartUpTool',
-    '--use-golr-url-logging',
-    '--use-request-logging',
-    '--slme-elk',
-    '-g', ontology_list,
-    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-    '--golr-seed', golr_lookup_url,
+var minerva_opts_lookup = [
     '--golr-labels', golr_neo_lookup_url,
-    '--skip-class-id-validation',
-    '-f', noctua_models,
-    '--port', minerva_port
+    '--golr-seed', golr_lookup_url,
 ];
 
-// Optional catalog,
+// Using validation is the default setting.
+var minerva_opts_no_validation = [
+    '--skip-class-id-validation'
+];
+
+// Optional catalog, depending on startup config environment.
 if( us.isString(ontology_catalog) && ontology_catalog !== '' ){
-    us.each([minerva_opts, minerva_opts_no_lookup, minerva_opts_no_validation],
-	    function(opts){
-		opts.push('-c');
-		opts.push(ontology_catalog);
-	    });
+    minerva_opts_base.push('-c');
+    minerva_opts_base.push(ontology_catalog);
 }
 
-// TODO: Convert these to use one of the templates above, like the
-// ontology_catalog.
-// Context-dependent label resolution.
-if( noctua_context === 'go' ){
-    minerva_opts.push('--golr-labels', golr_neo_lookup_url);
-}else if( noctua_context === 'monarch' || noctua_context === 'open' ){
-    // minerva_opts.push('--monarch-labels', golr_neo_lookup_url);
-    minerva_opts.push('--skip-class-id-validation');
-}
-
-// Minerva runner.
+// Minerva runner: +lookup +validation
 gulp.task('run-minerva', shell.task(_run_cmd(
-    minerva_opts
+    us.union(minerva_opts_base, minerva_opts_lookup)
 )));
 
-// Minerva runner without a lookup.
+// Minerva runner: -lookup +validation
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
-    minerva_opts_no_lookup
+    us.union(minerva_opts_base)
 )));
 
-// Minerva runner without a lookup.
+// Minerva runner: +lookup -validation
 gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
-    minerva_opts_no_validation
+    us.union(minerva_opts_base, minerva_opts_lookup, minerva_opts_no_validation)
+)));
+
+// Minerva runner: -lookup -validation
+gulp.task('run-minerva-no-lookup-no-validation', shell.task(_run_cmd(
+    us.union(minerva_opts_base, minerva_opts_no_validation)
 )));
 
 //node barista.js --self http://localhost:3400
