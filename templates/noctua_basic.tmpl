@@ -81,6 +81,7 @@
 
   <div id="noctua-app"
     style="margin:0 15px 0 15px;">
+ 
     <div
       class="container-fluid"
       ng-if="!basic.response_model">
@@ -98,12 +99,12 @@
           ng-if="!basic.modelSubject"
           class="panel-heading">
           <h4 class="text-center">
-          Choose a disease to annotate.
+          Select a Disease
           </h4>
         </div>
         <div class="panel-body">
           <div
-            ng-if="!basic.modelSubject"
+            ng-hide="basic.modelSubject"
             class="row">
             <div
               class="col-xs-9 col-sm-10">
@@ -118,7 +119,7 @@
               class="col-xs-3 col-sm-2">
               <button
                 ng-disabled="!(basic.newSubject)"
-                type="button" class="btn btn-primary btn-sm" ng-click="basic.saveEditedSubject()">
+                type="button" class="btn btn-primary xbtn-sm" ng-click="basic.saveEditedSubject()">
                 Set Disease
               </button>
             </div>
@@ -140,7 +141,7 @@
             <div
               ng-if="!basic.editingTitle"
               class="col-xs-7">
-              <i><b>{{basic.modelTitle}}</b></i>
+              <i><b>{{basic.modelTitle}}</b></i>&nbsp;({{basic.modelType}})
             </div>
             <div
               ng-if="!basic.editingTitle && basic.user_token"

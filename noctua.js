@@ -316,8 +316,8 @@ var NoctuaLauncher = function(){
 
     // Standard template arguments payload.
     self.standard_variable_load = function(app_path, app_name, req,
-					   model_id, model_obj, node_id_list,
-					   additional_args){
+					   model_id, model_type, model_obj, node_id_list,
+					   additional_args) {
 
 	// Setup branding.
 	var noctua_branding = 'Noctua (?)'; // self-name
@@ -372,6 +372,8 @@ var NoctuaLauncher = function(){
 	    'pup_tent_js_variables': [
 		{name: 'global_id',
 		 value: model_id },
+		{name: 'global_model_type',
+		 value: model_type },
 		{name: 'model_id',
 		 value: model_id },
 		{name: 'global_node_id_list',
@@ -409,6 +411,7 @@ var NoctuaLauncher = function(){
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
+	    'model_type': model_type,
 	    'node_id_list': node_id_list,
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
@@ -441,7 +444,7 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 
 	var tmpl_args = self.standard_variable_load(
-	    '/editor/graph', 'Editor', req, model_id, model_obj, null,
+	    '/editor/graph', 'Editor', req, model_id, null, model_obj, null,
 	    {
 		'pup_tent_css_libraries': [
 		    '/toastr.css',
@@ -551,7 +554,7 @@ var NoctuaLauncher = function(){
 	    var about_md = md.markdown.toHTML(about_raw);
 
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Landing', req, null, null, null,
+		'/', 'Landing', req, null, null, null, null,
 		{
 		    'pup_tent_css_libraries': [
 			'/toastr.css',
@@ -634,27 +637,26 @@ var NoctuaLauncher = function(){
 	});
 
 	// 
-	self.app.get('/basic/:query', function(req, res) {
+	self.app.get('/basic/:model_type/:query', function(req, res) {
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
+	    var model_type = req.params['model_type'] || '';
 	    var model_id = req.params['query'] || '';
-
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
-	    var noctua_branding = 'Noctua';
-	    if( noctua_context === 'monarch'){ noctua_context = 'WebPhenote'; }
-	    var barista_login = self.barista_location + '/session' + '?return=' +
-		    self.frontend + '/basic/' + model_id;
+		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
+	    var barista_login = self.barista_location + '/session?return=' +
+		    self.frontend + '/basic/' + model_type + '/' + model_id;
 	    var barista_logout =
 		    _build_token_link(self.barista_location + '/session' +
-				      '?return=' + self.frontend + '/basic/' +
+				      '?return=' + self.frontend + '/basic/' + model_type + '/' +
 				      model_id, barista_token);
 
 	    //
 	    var model_obj = null;
 
 		var tmpl_args = self.standard_variable_load(
-		    '/basic', 'FormEditor', req, model_id, model_obj, null,
+		    '/basic/' + model_type, 'FormEditor', req, model_id, model_type, model_obj, null,
 		    {
 				'pup_tent_js_libraries': [
 				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
@@ -832,7 +834,7 @@ var NoctuaLauncher = function(){
 		
 		var tmpl_args = self.standard_variable_load(
 		    '/workbench/' + path_id,
-		    page_name, req, model, null, node_ids,
+		    page_name, req, model, model_type, null, node_ids,
 		    {
 			'pup_tent_css_libraries': final_css,
 			'pup_tent_js_libraries': final_js,

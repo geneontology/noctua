@@ -1,5 +1,3 @@
-# Introduction
-
 Welcome to the general public face of Noctua. _Current development is
 very rapid, so some of these docs may be out of date._
 
@@ -23,7 +21,7 @@ very rapid, so some of these docs may be out of date._
 ## How to use the beta
 
 The current preview instance is available here; for a toy example model, see [one of the](http://noctua.berkeleybop.org/editor/graph/gomodel:55ad81df00000001) scratch models.
-  
+
 This instance is configured for use with the [Gene Ontology](http://geneontology.org) project.
 
 ### Generating/selecting a model
@@ -39,7 +37,7 @@ This instance is configured for use with the [Gene Ontology](http://geneontology
 * Double clicking edges and instances allows the editing of evidence and comments
 * Clicking on the green box upper-left of an instance allows you to view and edit the instance type information
 * By dragging the blue circle in the upper-right of an instance to anywhere on a different instance will allow you to create a relation between the two
-   
+
 ### Models
 
 * Model meta information can be edited by selecting [Model] > [Edit annotations] from the top menu
@@ -78,3 +76,9 @@ not mentioned here or in the tracker, please contact Seth, Heiko, or Chris.
  * Are you logged in? Are you sure? Try logging out and logging back in again--a bad session can cause all sorts of interesting things
  * Try going back to the main landing page, finding your model again, and trying again
  * Try contacting Seth, Chris, or Heiko
+
+### Noctua Resources
+
+- [Noctua GitHub Repository](https://github.com/geneontology/noctua)
+- [Minerva GitHub Repository](https://github.com/geneontology/minerva)
+- [Noctua Issue Tracker](https://github.com/geneontology/noctua/issues)

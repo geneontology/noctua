@@ -330,7 +330,9 @@ try {
 
 // Lookup/public locations.
 var golr_lookup_url = config['GOLR_LOOKUP_URL'].value;
+var golr_lookup_url_slash = golr_lookup_url + '/';
 var golr_neo_lookup_url = config['GOLR_NEO_LOOKUP_URL'].value;
+var golr_neo_lookup_url_slash = golr_neo_lookup_url + '/';
 var noctua_lookup_url = config['NOCTUA_LOOKUP_URL'].value;
 var barista_lookup_url = config['BARISTA_LOOKUP_URL'].value;
 
@@ -452,8 +454,8 @@ gulp.task('run-barista', shell.task(_run_cmd(
 //node noctua.js -c "RO:0002333 BFO:0000066 RO:0002233 RO:0002488" -g http://golr.geneontology.org/solr/ -b http://localhost:3400 -m minerva_local
 var noctua_run_list = [
     'node', 'noctua.js',
-    '--golr', golr_lookup_url,
-    '--golr-neo', golr_neo_lookup_url,
+    '--golr', golr_lookup_url_slash,
+    '--golr-neo', golr_neo_lookup_url_slash,
     '--barista', barista_lookup_url,
     '--noctua-context', noctua_context,
     '--noctua-public', noctua_lookup_url,
