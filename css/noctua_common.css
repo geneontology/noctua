@@ -49,6 +49,7 @@
     background-image: url("images/open_logo.png");
     background-size: contain;
     background-repeat: no-repeat;
+    background-color: silver;
     height:40px !important;
     width:40px !important;
     margin:0 !important;
