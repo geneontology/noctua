@@ -100,7 +100,7 @@ var MinervaBootstrapping = function(user_token){
     // var select_scratch_jump_button_elt = '#' + select_scratch_jump_button_id;
     //
     // Create new model from nothing.
-    var model_create_by_nothing_id = 'button_nothing_for_create';
+    var model_create_by_nothing_id = 'create_button_graph';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
     // Create new model from process and taxon.
     var model_create_by_protax_button_id = 'button_protax_for_create';
