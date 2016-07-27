@@ -316,9 +316,10 @@ var minerva_port = url.parse(minerva_location).port || 80;
 var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
 
 // External tools.
+var external_browser_location = null;
 if( config['EXTERNAL_BROWSER_LOCATION'] ){
-    var external_browser_location =
-	    config['EXTERNAL_BROWSER_LOCATION'].value || null;
+    external_browser_location =
+	config['EXTERNAL_BROWSER_LOCATION'].value || null;
 }
 
 // Optional.
