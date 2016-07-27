@@ -327,7 +327,9 @@ var MinervaBootstrapping = function(user_token){
 			  if( models_meta && models_meta[model_id]){
 			      each(models_meta[model_id], function(row) {
 				  if (row.key === 'contributor') {
-				      var url = '<a href=' + row.value + ' target="blank">' + row.value + '</a>';
+				      var url = '<a href=' + row.value +
+					      ' target="blank">' + row.value +
+					      '</a>';
 				      retlist.push(url);
 				  }
 			      });
@@ -510,16 +512,16 @@ var MinervaBootstrapping = function(user_token){
 			      // State.
 			      tr_cache.push(state);
 
-			      // Check to see if it's a template and highlight that
-			      // fact.
+			      // Check to see if it's a template and
+			      // highlight that fact.
 			      if( _model_template_p(model_id) ){
 				  tr_cache.push('TEMPLATE');
 			      }else{
 				  tr_cache.push('');
 			      }
 
-			      // Check to see if it's deprecated and highlight that
-			      // fact.
+			      // Check to see if it's deprecated and
+			      // highlight that fact.
 			      if( _model_deprecated_p(model_id) ){
 				  tr_cache.push(':(');
 			      }else{
@@ -535,11 +537,11 @@ var MinervaBootstrapping = function(user_token){
 
 	        	      // Cram all the buttons in.
 	        	      var bstrs = [];
-		    	      if (global_noctua_context === 'monarch') {
+		    	      if( global_noctua_context === 'monarch' ){
 	        		  bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button">Form</a>');
 	        	      }
 	    		      bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
-		    	      if (global_noctua_context === 'go') {
+		    	      if( global_noctua_context !== 'monarch' ){
 	        		  bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
 	        	      }
 	        	      bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button" target="_blank">OWL</a>');
@@ -556,7 +558,7 @@ var MinervaBootstrapping = function(user_token){
 			  jQuery('#model-selection-data').append(table_str);
 			  jQuery('#model-selection').DataTable({autoWidth:false});
 
-			  if (global_noctua_context === 'monarch') {
+			  if( global_noctua_context === 'monarch' ){
 			      var landing_table_str = '<tr>' + landing_table_cache.join('</tr><tr>') + '</tr>';
 		              jQuery('#model-golr-selection-data').empty();
 		              jQuery('#model-golr-selection-data').append(landing_table_str);
@@ -858,7 +860,7 @@ jQuery(document).ready(function(){
 	    // Will use the above variables internally (sorry).
 	    MinervaBootstrapping(start_token);
 
-	    if (global_noctua_context === 'go') {
+	    if( global_noctua_context !== 'monarch' ){
 		LoadLandingTableFromGOlr(start_token);
 	    }
 	    // When all is said and done, let's also fillout the user
