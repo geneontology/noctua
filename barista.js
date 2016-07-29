@@ -122,6 +122,8 @@ if (barista_debug > 0) {
 }
 
 // Define bogus users.
+var rand_user_token = bbop.core.randomness(4);
+ll('Anonymous editor token: ' + rand_user_token);
 var bogus_users = [
     {
 	email: 'spam@genkisugi.net',
@@ -134,13 +136,18 @@ var bogus_users = [
 	email: 'spam@genkisugi.net',
 	token: '000',
 	nickname: 'kltm (admin)',
-	uri: 'GOC:kltm', 
+	uri: 'GOC:kltm',
 	'user-type': 'allow-admin'
+    },
+    // Create a random bogus user for this barista run.
+    {
+	email: 'anonymous@localhost',
+	token: rand_user_token,
+	nickname: 'anonymous',
+	uri: 'TEMP:anonymous', 
+	'user-type': 'allow-edit'
     }
 ];
-
-
-
 
 ///
 /// ModelCubby: per-model message caching management.
