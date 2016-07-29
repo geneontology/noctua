@@ -121,6 +121,27 @@ if (barista_debug > 0) {
 	process.env['DEBUG'] = process.env['DEBUG'] + ' xsocket.io:*';
 }
 
+// Define bogus users.
+var bogus_users = [
+    {
+	email: 'spam@genkisugi.net',
+	token: '123',
+	nickname: 'kltm (editor)',
+	uri: 'GOC:kltm',
+	'user-type': 'allow-edit'
+    },
+    {
+	email: 'spam@genkisugi.net',
+	token: '000',
+	nickname: 'kltm (admin)',
+	uri: 'GOC:kltm', 
+	'user-type': 'allow-admin'
+    }
+];
+
+
+
+
 ///
 /// ModelCubby: per-model message caching management.
 ///
@@ -298,11 +319,22 @@ var AppGuard = function(app_list){
 ///
 
 // BUG/TODO: Currently, Barista tokens do not expire. Need to
-// implement either: a new token every response or a a rolling time
-// window which is searched.
+// implement either: a new token every response or rolling time window
+// which is searched.
 // {day1: {SET2}, day2: {SET2}}
 var Sessioner = function(auth_list){
     var self = this;
+
+    // NOTE: Order is important here--the later privs override earlier
+    // ones.
+    var known_user_types = [
+	'allow-edit', // can edit models
+	'allow-admin' // has powers
+    ];
+
+    var ucolor_list = [
+	'red', 'green', 'purple', 'blue', 'brown', 'black'
+    ];
 
     // Generate a new token.
     function get_token(){
@@ -312,7 +344,6 @@ var Sessioner = function(auth_list){
 
     // Colors.
     function get_color(){
-	var ucolor_list = ['red', 'green', 'purple', 'blue', 'brown', 'black'];
 	var rci = Math.floor(Math.random() * ucolor_list.length);
 	var color = ucolor_list[rci];
 	return color;
@@ -347,8 +378,14 @@ var Sessioner = function(auth_list){
     /*
      * Failure is an unknown, unauthorized, or ill-formed user.
      */
-    self.authorize_by_email = function(email){
+    self.authorize_by_email = function(email, user_type){
 	var ret = false;
+
+	// If no user_type is listed, assume the lowest ranked one for
+	// the attempt.
+	if( ! us.isString(user_type) ){
+	    user_type = known_user_types[0];
+	}
 
 	// Our requirements are: email (by md5 proxy), uri, and
 	// "minerva-go" authorization (empty is fine).
@@ -358,17 +395,22 @@ var Sessioner = function(auth_list){
 	    if( uinf['uri'] &&
 		uinf['authorizations'] &&
 		uinf['authorizations']['noctua-go'] &&
-		uinf['authorizations']['noctua-go']['allow-edit'] ){
+		uinf['authorizations']['noctua-go'][user_type] ){
 		ret = true;
 	    }
 	}
 
 	return ret;
-    };
+   };
     
     // Internal function to actually create the used session
     // structure.
-    function _gel_session(email, token, nickname, uri){
+    function _gel_session(email, token, nickname, uri, user_type){
+
+	// Double check user type.
+	if( ! us.contains(known_user_types, user_type) ){
+	    throw new Error('unknown user type: ' + user_type);
+	}
 
 	// Create new session.
 	var emd5 = str2md5(email);
@@ -379,7 +421,8 @@ var Sessioner = function(auth_list){
 	    'email': email,
 	    'email-md5': emd5,
 	    'token': token,
-	    'color': color
+	    'color': color,
+	    'user-type': user_type // this will be the highest rank available
 	};
 	email2token[email] = token;
 	
@@ -396,9 +439,17 @@ var Sessioner = function(auth_list){
     // TODO: Session lifespan: every time a new session is created,
     // clear out old sessions.
     self.create_session_by_email = function(email){
-	var ret = null;
 
-	if( ! self.authorize_by_email(email) ){
+	// Cycle through to see what kind os user we have.
+	var user_type = null;
+	us.each(known_user_types, function(try_user_type){
+	    if( self.authorize_by_email(email, try_user_type) ){
+		user_type = try_user_type;
+	    }
+	});
+
+	var ret = null;
+	if( ! user_type ){
 	    // Cannot--likely bad info or unauthorized.
 	}else{
 
@@ -412,7 +463,7 @@ var Sessioner = function(auth_list){
 	    var new_token = get_token();
 
 	    // Gel and clone for return.
-	    return _gel_session(email, new_token, new_nick, new_uri);
+	    return _gel_session(email, new_token, new_nick, new_uri, user_type);
 	}
 
 	return ret;
@@ -421,8 +472,8 @@ var Sessioner = function(auth_list){
     /*
      * Add a bogus session for testing--dangerous!
      */
-    self.create_bogus_session = function(email, token, nickname, uri){
-	return _gel_session(email, token, nickname, uri);
+    self.create_bogus_session = function(email, token, nickname, uri, user_type){
+	return _gel_session(email, token, nickname, uri, user_type);
     };
 
     /*
@@ -504,21 +555,22 @@ var Sessioner = function(auth_list){
 
 // Bring in metadata that will be used for identifying user. Spin-up
 // session manager. Written as separate function to make the REPL easier
-function setup_session(fname){
+function _setup_sessioner(fname){
 
     var auth_list = yaml.load(fname);
 
-    return new Sessioner(auth_list);
-}
-var sessioner = setup_session(user_fname);
+    var new_sessioner = new Sessioner(auth_list);
 
-// BUG/TODO/DEBUG: create an always user so I don't go crazy when
-// reloading Barista during experiments..
-// Will need to go at some point, or be more subtle.
-function create_bogus_session(email, token, name, uri){
-    sessioner.create_bogus_session(email, token, name, uri);
+    // Bring on the listed bogus user sessions.
+    us.each(bogus_users, function(bu){
+	new_sessioner.create_bogus_session(bu['email'], bu['token'],
+					   bu['nickname'], bu['uri'],
+					   bu['user-type']);
+    });
+
+    return new_sessioner;
 }
-create_bogus_session('spam@genkisugi.net', '123', 'kltm', 'GOC:kltm');
+var sessioner = _setup_sessioner(user_fname);
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
@@ -554,7 +606,7 @@ var BaristaLauncher = function(){
     }
 
     // Optional REPL setup.
-    if( barista_repl_port){
+    if( barista_repl_port ){
 
 	//var pmt = 'barista@'+socket.remoteAddress+':'+socket.remotePort +'> ';
 	vantage.delimiter('barista@' + ':');
@@ -566,15 +618,15 @@ var BaristaLauncher = function(){
 	    vnt_cmd.remove();
 	}
 	
-	// Refresh.
-	var rld_cmd = vantage.command('refresh [filename]');
-	rld_cmd.description("Refresh/reload users.yaml file for the Sessioner.");
+	// Reset.
+	var rld_cmd = vantage.command('reset [filename]');
+	rld_cmd.description("Reset using a specified file for the Sessioner, defaults to initial file.");
 	rld_cmd.action(function(args, cb){
-	    var fname = args.filename;
+	    var fname = args.filename || user_fname;
 	    
 	    var new_sessioner = null;
 	    try {
-		new_sessioner = setup_session(fname);
+		new_sessioner = _setup_sessioner(fname);
 	    }catch(e){
 		rlog(this, 'Failed to load: ' + fname);
 	    }
@@ -586,20 +638,52 @@ var BaristaLauncher = function(){
 	    
 	    cb();
 	});
-	
+
+	// Refresh.
+	var rfr_cmd = vantage.command('refresh [filename]');
+	rfr_cmd.description("Refresh using a specified file for the Sessioner, defaults to initial file.");
+	rfr_cmd.action(function(args, cb){
+	    var fname = args.filename || user_fname;
+	    
+	    var current_sessions = sessioner.get_sessions();
+
+	    var new_sessioner = null;
+	    try {
+		new_sessioner = _setup_sessioner(fname);
+	    }catch(e){
+		rlog(this, 'Failed to load: ' + fname);
+	    }
+	    
+	    if( new_sessioner ){
+
+		us.each(current_sessions, function(cs){
+		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
+						       cs['nickname'], cs['uri'],
+						       cs['user-type']);
+		});
+
+		sessioner = new_sessioner;
+		rlog(this, '(Re)loaded: ' + fname);
+	    }
+	    
+	    cb();
+	});
+
 	// Setup bogus session.
-	var bog_cmd = vantage.command('bogus [email] [token] [name] [uri]');
-	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved.");
+	var bog_cmd = vantage.command('bogus [email] [token] [name] [uri] [user_type]');
+	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved. User types are 'allow-edit' and 'allow-admin'.");
 	bog_cmd.action(function(args, cb){
 	    var email = args.email;
 	    var token = args.token;
 	    var name = args.name || '???';
 	    var uri = args.uri;
+	    var user_type = args.user_type;
 	    
-	    if( ! email || ! token || ! name || ! uri ){
+	    if( ! email || ! token || ! name || ! uri || ! user_type ){
 		rlog(this, 'Cannot create bogus session with given info.' );
 	    }else{
-		sessioner.create_bogus_session(email, token, name, uri);
+		sessioner.create_bogus_session(email, token, name,
+					       uri, user_type);
 		rlog(this, 'Created bogus session with given info.' );
 	    }
 	    
@@ -665,8 +749,33 @@ var BaristaLauncher = function(){
     }
 
     ///
-    /// Response helper.
+    /// Response helpers.
     ///
+
+    function _get_token(req){
+	var ret = null;
+	if( req && req.query && req.query['barista_token'] ){
+	    ret = req.query['barista_token'];
+	}
+	return ret;
+    }
+
+    function _build_token_link(url, token, token_name){
+	var new_url = url;
+
+	// Default to "barista_token".
+	if( ! token_name ){ token_name = 'barista_token'; }
+	
+	if( token ){
+	    if( new_url.indexOf('?') === -1 ){
+		new_url = new_url + '?' + token_name + '=' + token;
+	    }else{
+		new_url = new_url + '&' + token_name + '=' + token;
+	    }
+	}
+
+	return new_url;
+    }
 
     function _standard_response(res, code, type, body){
 	res.setHeader('Content-Type', type);
@@ -904,9 +1013,11 @@ var BaristaLauncher = function(){
 
     var SESS_NO_TOKEN = -1;
     var SESS_BAD_TOKEN = -2;
-    var SESS_GOOD = 1;
+    var SESS_BAD_USER_TYPE = -3;
+    var SESS_GOOD_EDIT = 1;
+    var SESS_GOOD_ADMIN = 2;
 
-    // Check to see if we have access to the good stuff. Tri-state.
+    // Check to see if we have access to the good stuff. Multi-state.
     function _session_status(req){
 
 	var ret = null;
@@ -919,8 +1030,17 @@ var BaristaLauncher = function(){
 	    // Try and retrieve by the barista token.
 	    sess = sessioner.get_session_by_token(barista_token);
 	    if( sess ){
-		ret = SESS_GOOD;
-		ll('barista session token: ' + barista_token);
+		if( sess['user-type'] === 'allow-edit' ){
+		    ret = SESS_GOOD_EDIT;
+		    ll('barista session token (edit): ' + barista_token);
+		}else if( sess['user-type'] === 'allow-admin' ){
+		    ret = SESS_GOOD_ADMIN;
+		    ll('barista session token (admin): ' + barista_token);
+		}else{
+		    // Not a known session.
+		    ret = SESS_BAD_USER_TYPE;
+		    ll('barista session fail on user type: '+ sess['user-type']);
+		}
 	    }else{
 		ret = SESS_BAD_TOKEN;
 		ll('non-session (old/bad?) token, ignore: ' + barista_token);
@@ -934,22 +1054,97 @@ var BaristaLauncher = function(){
     }
 
     // Gross overview of current users.
-    messaging_app.get('/user_info', function(req, res) {
+    messaging_app.get('/user_info/:action?', function(req, res) {
 	
-	// Check to see if we have access to the good stuff.
-	var show_all_p = false;
+	// First, check to see if we have access to the good stuff,
+	// both for later drawing use and for local actions.
 	var sess_stat = _session_status(req);
-	if( sess_stat === SESS_GOOD ){
-	    show_all_p = true;
+	var show_editor_p = false;
+	var show_admin_p = false;
+	if( sess_stat === SESS_GOOD_EDIT ){
+	    show_editor_p = true;
+	}else if( sess_stat === SESS_GOOD_ADMIN ){
+	    show_editor_p = true;
+	    show_admin_p = true;
 	}
 
-	// Gather all session info.
+	// Now that we know what we're allowed to do, see what user
+	// operation we're going to try and perform.
+	var action = req.params['action'] || null;
+	var do_reset_p = null;
+	var do_refresh_p = null;
+	var do_nothing_p = null;
+	if( action === 'reset' ){
+	    do_reset_p = true;
+	    do_refresh_p = false;
+	    do_nothing_p = false;
+	}else if( action === 'refresh' ){
+	    do_reset_p = false;
+	    do_refresh_p = true;
+	    do_nothing_p = false;
+	}else{
+	    do_reset_p = false;
+	    do_refresh_p = false;
+	    do_nothing_p = true;
+	}
+
+	// Perform refresh if we are ordered and we have permission.
+	var barista_user_reset = null;
+	var barista_user_refresh = null;
+	if( do_reset_p && sess_stat !== SESS_GOOD_ADMIN ){
+	    ll('non-admin triggered reset--ignoring');
+	}else if( do_refresh_p && sess_stat !== SESS_GOOD_ADMIN ){
+	    ll('non-admin triggered refresh--ignoring');
+	}else if( (do_reset_p||do_refresh_p) && sess_stat === SESS_GOOD_ADMIN ){
+	    
+	    // TODO: In-place refresh from given file.
+	    ll('admin triggered refresh');
+
+	    // Dump current sessions, or not, depending the type of
+	    // operation that we'll do.
+	    var current_sessions = [];
+	    if( do_refresh_p ){
+		current_sessions = sessioner.get_sessions();
+	    }
+
+	    // Load file.
+	    var new_sessioner = null;
+	    try {
+		new_sessioner = _setup_sessioner(user_fname);
+	    }catch(e){
+		ll('Failed to load: ' + user_fname);
+	    }	    
+
+	    if( new_sessioner ){
+
+		// Load current sessions back into the system.
+		us.each(current_sessions, function(cs){
+		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
+						       cs['nickname'], cs['uri'],
+						       cs['user-type']);
+		});
+	    
+		// Final reload by switching.
+		sessioner = new_sessioner;
+		ll('(Re)loaded: ' + user_fname);
+	    }
+	}
+
+	// We'll need this URL in some cases.
+	var token = _get_token(req);
+	barista_user_reset = _build_token_link('/user_info/reset', token);
+	barista_user_refresh = _build_token_link('/user_info/refresh', token);
+
+	// Dump current sessions.
 	var sessions = sessioner.get_sessions();
-	
+
 	// Variables, render, and output.
 	var tmpl_args = {
-	    'show_all_p': show_all_p,
+	    'show_editor_p': show_editor_p,
+	    'show_admin_p': show_admin_p,
 	    'barista_sessions': sessions,
+	    'barista_user_reset': barista_user_reset,
+	    'barista_user_refresh': barista_user_refresh,
 	    'title': notw + ': Status'
 	};
 	var out = pup_tent.render('barista_status.tmpl',

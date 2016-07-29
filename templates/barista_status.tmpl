@@ -1,8 +1,30 @@
 <div class="container">
   
   <div class="header text-center">
-    <h2>Status</h2>
+    <h2>User Information/Status</h2>
   </div>
+
+  <!-- Barista user operations. -->
+  {{#show_admin_p}}
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Administration controls</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <p>
+	<a href="{{barista_user_reset}}"
+           class="btn btn-warning"
+           type="button">User reset</a>
+	<a href="{{barista_user_refresh}}"
+           class="btn btn-success"
+           type="button">User refresh</a>
+      </p>
+
+    </div>
+  </div>
+  {{/show_admin_p}}
 
   <div class="panel panel-default">
     <div class="panel-heading">
@@ -12,27 +34,31 @@
     <div class="panel-body">
 
       <!-- Status of barista. -->
+      {{#barista_sessions}}
       <p>
 	<dl class="dl-horizontal">
-	  {{#barista_sessions}}
 	  <dt>name</dt>
-	  <dd>{{nickname}}</dd>
+	  <dd><strong>{{nickname}}</strong></dd>
+	  {{#show_editor_p}}
 	  <dt>email</dt>
 	  <dd>{{email-md5}}</dd>
+	  {{/show_editor_p}}
 	  <dt>color</dt>
-	  <dd>{{color}}</dd>
-	  {{#show_all_p}}
+	  <dd>{{color}} <span style="color: {{color}};">&#x2b24;</span></dd>
+	  <dt>type</dt>
+	  <dd>{{user-type}}</dd>
+	  {{#show_admin_p}}
 	  <dt>token</dt>
-	  <dd><strike>{{token}}</strike></dd>
-	  {{/show_all_p}}
+	  <dd>{{token}}</dd>
+	  {{/show_admin_p}}
 	  {{/barista_sessions}}
 	  {{^barista_sessions}}
 	  <dt>Sessions</dt>
 	  <dd>none found</dd>
-	  {{/barista_sessions}}
 	</dl>
       </p>
-
+      {{/barista_sessions}}
+      
     </div>
   </div>
 
