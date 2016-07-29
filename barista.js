@@ -618,11 +618,11 @@ var BaristaLauncher = function(){
 	    vnt_cmd.remove();
 	}
 	
-	// Refresh.
-	var rld_cmd = vantage.command('refresh [filename]');
-	rld_cmd.description("Refresh/reload users.yaml file for the Sessioner.");
+	// Reset.
+	var rld_cmd = vantage.command('reset [filename]');
+	rld_cmd.description("Reset using a specified file for the Sessioner, defaults to initial file.");
 	rld_cmd.action(function(args, cb){
-	    var fname = args.filename;
+	    var fname = args.filename || user_fname;
 	    
 	    var new_sessioner = null;
 	    try {
@@ -638,7 +638,37 @@ var BaristaLauncher = function(){
 	    
 	    cb();
 	});
-	
+
+	// Refresh.
+	var rfr_cmd = vantage.command('refresh [filename]');
+	rfr_cmd.description("Refresh using a specified file for the Sessioner, defaults to initial file.");
+	rfr_cmd.action(function(args, cb){
+	    var fname = args.filename || user_fname;
+	    
+	    var current_sessions = sessioner.get_sessions();
+
+	    var new_sessioner = null;
+	    try {
+		new_sessioner = _setup_sessioner(fname);
+	    }catch(e){
+		rlog(this, 'Failed to load: ' + fname);
+	    }
+	    
+	    if( new_sessioner ){
+
+		us.each(current_sessions, function(cs){
+		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
+						       cs['nickname'], cs['uri'],
+						       cs['user-type']);
+		});
+
+		sessioner = new_sessioner;
+		rlog(this, '(Re)loaded: ' + fname);
+	    }
+	    
+	    cb();
+	});
+
 	// Setup bogus session.
 	var bog_cmd = vantage.command('bogus [email] [token] [name] [uri] [user_type]');
 	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved. User types are 'allow-edit' and 'allow-admin'.");
@@ -1085,16 +1115,19 @@ var BaristaLauncher = function(){
 		ll('Failed to load: ' + user_fname);
 	    }	    
 
-	    // Load current sessions back into the system.
-	    us.each(current_sessions, function(cs){
-		new_sessioner.create_bogus_session(cs['email'], cs['token'],
-						   cs['nickname'], cs['uri'],
-						   cs['user-type']);
-	    });
+	    if( new_sessioner ){
+
+		// Load current sessions back into the system.
+		us.each(current_sessions, function(cs){
+		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
+						       cs['nickname'], cs['uri'],
+						       cs['user-type']);
+		});
 	    
-	    // Final reload by switching.
-	    sessioner = new_sessioner;
-	    ll('(Re)loaded: ' + user_fname);
+		// Final reload by switching.
+		sessioner = new_sessioner;
+		ll('(Re)loaded: ' + user_fname);
+	    }
 	}
 
 	// We'll need this URL in some cases.
