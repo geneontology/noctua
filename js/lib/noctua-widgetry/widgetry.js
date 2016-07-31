@@ -344,9 +344,19 @@ function node_stack_object(enode, aid){
 	    });
 	    each(x_edges, function(x_edge){
 		// Edge info.
-		var rel = x_edge.relation();
+		var rel = x_edge.relation() || 'n/a';
 		var rel_color = aid.color(rel);
 		var rel_readable = aid.readable(rel);
+		// If context aid doesn't work, see if it comes with a label.
+		if( rel_readable === rel && typeof(x_edge.label) === 'function'){
+		    var label_rn = x_edge.label();
+		    if( label_rn !== rel ){
+			rel = label_rn; // use label
+		    }
+		}else{
+		    rel = rel_readable; // use context
+		}
+
 		// Try and extract proof of evidence.
 		var ev_edge_anns = x_edge.get_annotations_by_key('evidence');
 		// Get node.
@@ -372,10 +382,10 @@ function node_stack_object(enode, aid){
 			    // In this case (which should be the only possible
 			    // case), we'll capture the ID and pair it with an
 			    // ID.
-			    _add_table_row(x_type, rel_color, rel_readable + '(',
+			    _add_table_row(x_type, rel_color, rel + '(',
 					   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-with">E</button></sup>');
 			}else{
-			    _add_table_row(x_type, rel_color, rel_readable + '(',
+			    _add_table_row(x_type, rel_color, rel + '(',
 					   ')<sup id="'+elt_id+'"><span class="bbop-noctua-embedded-evidence-symbol-without">&nbsp;</button></sup>');
 			}
 		    });
