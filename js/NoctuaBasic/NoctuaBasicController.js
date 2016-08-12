@@ -394,15 +394,15 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     that.newSubject = that.modelSubject;
     that.editingSubject = true;
 
-    var disease_selectize = jQuery('#select_subject_default')[0].selectize;
-    disease_selectize.clearCache("option");
-    disease_selectize.clearOptions();
-    disease_selectize.addOption([{
+    var subject_selectize = jQuery('#select_subject_default')[0].selectize;
+    subject_selectize.clearCache("option");
+    subject_selectize.clearOptions();
+    subject_selectize.addOption([{
       "id": that.newSubject,
       "annotation_class_label_searchable": that.modelSubjectLabel
     }]);
 
-    disease_selectize.setValue(that.newSubject);
+    subject_selectize.setValue(that.newSubject);
 
     $timeout(function () {
       angular.element('#modelSubject').focus();
@@ -619,15 +619,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     that.initializeRowAutocomplete(rowIndex);
 
-    var disease_selectize = jQuery('#select_disease_' + rowIndex)[0].selectize;
-    disease_selectize.clearCache("option");
-    disease_selectize.clearOptions();
-    disease_selectize.addOption([{
-      "id": row.disease_id,
-      "annotation_class_label_searchable": row.disease_label
-    }]);
-    disease_selectize.setValue(row.disease_id);
-
     var phenotype_selectize = jQuery('#select_phenotype_' + rowIndex)[0].selectize;
     phenotype_selectize.clearCache("option");
     phenotype_selectize.clearOptions();
@@ -677,8 +668,11 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       }, 10);
     });
     $timeout(function() {
-      $location.hash('select_disease_' + rowIndex);
-      $anchorScroll();
+      if (isNew) {
+        $anchorScroll.yOffset = 200;
+        $anchorScroll('scroll_anchor_' + rowIndex);
+      }
+      phenotype_selectize.focus();
     }, 50);
   };
 
@@ -1248,36 +1242,29 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
   this.initializeSubjectAutocomplete = function() {
     var ssd = jQuery('#select_subject_default');
-    var disease_selectize = ssd[0].selectize;
+    var subject_selectize = ssd[0].selectize;
 
-    if (!disease_selectize) {
+    if (!subject_selectize) {
       Solrautocomplete.createSolrAutocompleteForElement(
         '#select_subject_default', that.disease_autocomplete_options(function(value) {
         $timeout(function() {
           that.newSubject = value;
         }, 10);
       }));
-      disease_selectize = ssd[0].selectize;
+      subject_selectize = ssd[0].selectize;
     }
 
     $timeout(function() {
-      disease_selectize.focus();
+      subject_selectize.focus();
     }, 300);
   }
 
   this.initializeRowAutocomplete = function(rowIndex) {
-    var disease_selectize = jQuery('#select_disease_' + rowIndex)[0].selectize;
+    var phenotype_selectize = jQuery('#select_phenotype_' + rowIndex)[0].selectize;
 
-    if (disease_selectize) {
+    if (phenotype_selectize) {
     }
     else {
-      Solrautocomplete.createSolrAutocompleteForElement(
-        '#select_disease_' + rowIndex, that.disease_autocomplete_options(function(value) {
-        $timeout(function() {
-          that.selected_disease = value;
-        }, 10);
-      }));
-
       Solrautocomplete.createSolrAutocompleteForElement('#select_phenotype_' + rowIndex, that.phenotype_autocomplete_options(function(value) {
         $timeout(function() {
           that.selected_phenotype = value;
@@ -1295,23 +1282,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
 
   this.cleanupRowAutocomplete = function(rowIndex) {
-    var disease_selectize = jQuery('#select_disease_' + rowIndex)[0].selectize;
-    var phenotype_selectize = jQuery('#select_phenotype_' + rowIndex)[0].selectize;
-    var ageofonset_selectize = jQuery('#select_ageofonset_' + rowIndex)[0].selectize;
-    if (false && disease_selectize) {
-      disease_selectize.destroy();
-      phenotype_selectize.destroy();
-      ageofonset_selectize.destroy();
-
-      var parentIndex = rowIndex;
-      var evIndex = 0;
-      underscore.each(that.selected_ev_ref_list, function(ev_ref) {
-        var selector = '#' + ev_ref.htmlid + '_' + parentIndex + '_' + evIndex;
-        var selectize = jQuery(selector)[0].selectize;
-        selectize.destroy();
-        ++evIndex;
-      });
-    }
   };
 
   this.init();
@@ -1398,6 +1368,4 @@ if (USE_UI_GRID) {
   app.directive('uiSelectWrap', uiSelectWrap);
   app.directive('uiSelectWrapIcon', uiSelectWrapIcon);
 }
-
-// NoctuaBasicController.$inject = ['$animate', '$timeout', '$location', '$anchorScroll', 'toastr', '$window', '$rootScope'];
 

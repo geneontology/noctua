@@ -90,12 +90,11 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'form_noctua_clients': [
-    'js/NoctuaBasic/NoctuaBasicApp.js'
+      'js/NoctuaBasic/NoctuaBasicApp.js'
     ],
     'core_noctua_clients': [
     	'js/NoctuaEditor.js',
-    	'js/NoctuaLanding.js',
-    	'js/NoctuaBasic/NoctuaBasicApp.js'
+    	'js/NoctuaLanding.js'
     ],
     'core_barista_clients': [
         'js/BaristaLogin.js',
@@ -260,10 +259,10 @@ us.each(paths.core_workbench_clients, function(file, index) {
     });
 });
 
-gulp.task('build', us.union(noctua_build_tasks,
+gulp.task('build', noctua_build_tasks.concat(
                             form_build_tasks,
-                                    barista_build_tasks,
-                                    workbench_build_tasks));
+                            barista_build_tasks,
+                            workbench_build_tasks));
 
 gulp.task('watch', ['watch-noctua', 'watch-form']);
 
@@ -406,7 +405,7 @@ var minerva_opts_base = [
 
 var minerva_opts_lookup = [
     '--golr-labels', golr_neo_lookup_url,
-    '--golr-seed', golr_lookup_url,
+    '--golr-seed', golr_lookup_url
 ];
 
 // Using validation is the default setting.
@@ -422,22 +421,22 @@ if( us.isString(ontology_catalog) && ontology_catalog !== '' ){
 
 // Minerva runner: +lookup +validation
 gulp.task('run-minerva', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_lookup)
+    minerva_opts_base.concat(minerva_opts_lookup)
 )));
 
 // Minerva runner: -lookup +validation
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
-    us.union(minerva_opts_base)
+    minerva_opts_base.concat([])
 )));
 
 // Minerva runner: +lookup -validation
 gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_lookup, minerva_opts_no_validation)
+    minerva_opts_base.concat(minerva_opts_lookup, minerva_opts_no_validation)
 )));
 
 // Minerva runner: -lookup -validation
 gulp.task('run-minerva-no-lookup-no-validation', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_no_validation)
+    minerva_opts_base.concat(minerva_opts_no_validation)
 )));
 
 //node barista.js --self http://localhost:3400

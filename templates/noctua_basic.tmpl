@@ -304,33 +304,13 @@
 
               <tbody>
                 <tr ng-repeat="entry in basic.grid_model | orderBy:'index' track by $index">
-                  <td ng-hide="true" colspan="3"
-                    ng-hide="basic.editing_row !== entry">
-                    <div class="row">
-                      <div class="col-xs-12">
-                        <select
-                          class="form-control"
-                          id="select_disease_{{$index}}"
-                          placeholder="Pick a Disease...">
-                        </select>
-                      </div>
-                    </div>
-                  </td>
-                  <td colspan="3"
-                    ng-hide="true" && basic.editing_row !== entry">
-                    <a
-                      target="_blank"
-                      href="http://monarchinitiative.org/resolve/{{entry.disease_id}}">
-                        {{entry.disease[0]}}<br>&nbsp;
-                        {{entry.disease[1]}}
-                    </a>
-                  </td>
-
                   <td colspan="4"
+                    id="scroll_anchor_{{$index}}"
                     ng-hide="basic.editing_row !== entry">
                     <div class="row">
                       <div class="col-xs-12">
                         <select
+                          autofocus
                           class="form-control"
                           id="select_phenotype_{{$index}}"
                           placeholder="Pick a Phenotype...">
