@@ -784,7 +784,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
     
     // Preamble.
     var mebe = [
-	'<h4>Relation selection</h4>',
+	// '<h4>Relation selection</h4>',
 	'<b>Edge source:</b>',
 	source_id,
 	'<br />',
@@ -794,22 +794,93 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 
     // Randomized radio.
     var radio_name = bbop_core.uuid();
-    var tcache = [mebe.join(' '),
-		  '<div style="height: 25em; overflow-y: scroll;">'];
+
+    // Hard-code tree from
+    // https://github.com/geneontology/noctua/issues/165 as temporary
+    // relief.
+    function _fuse(rel_name, rel_id, radio_name, lvl, first_p){
+
+	// Main.
+	var str = '<label style="margin-bottom: 0px; font-weight: initial; font-size: initial;"><input type="radio" name="' +
+	    radio_name + '" value="' + rel_id +'"';
+	if( first_p ){
+	    str += ' checked="checked" />';
+	}else{
+	    str += ' />';
+	}
+	str += '&nbsp;' + rel_name + ' (' + rel_id + ')</label>';
+
+	var total = 5;
+
+	// Front table buffer.
+	(function(){
+	    var bffr = [];
+	    for( var i = 0; i < lvl; i++ ){
+		bffr.push('&nbsp;&nbsp;&nbsp;');
+	    }
+	    str = bffr.join('') + str;
+	})();
+
+	// // Back table buffer.
+	// (function(){
+	//     var bffr = [];
+	//     for( var i = lvl; i < total; i++ ){
+	// 	bffr.push('<td></td>');
+	//     }
+	//     str = str + bffr.join('');
+	// })();
+
+	return '<div>' + str + '</div>';
+    }
+    
+    // 
+    var str_tree = [
+	'<div style="padding-left: 5px; border-left: 0px solid gray; margin-bottom: 1em;">',
+	'<div><em>Common relations</em></div>',
+	_fuse('enabled by', 'RO:0002333', radio_name, 0, true),
+	_fuse('occurs in', 'BFO:0000066', radio_name, 0),
+	_fuse('part of', 'BFO:0000050', radio_name, 0),
+	_fuse('has part that occurs in', 'RO:0002479', radio_name, 1),
+	_fuse('causal relation between processes', 'RO:0002501', radio_name, 0),
+	_fuse('causally upstream of or within', 'RO:0002418', radio_name, 1),
+	_fuse('causally upstream of', 'RO:0002411', radio_name, 2),
+	_fuse('immediately causally upstream of', 'RO:0002412', radio_name, 3),
+	_fuse('directly provides input for', 'RO:0002413', radio_name, 4),
+	_fuse('regulates', 'RO:0002211', radio_name, 3),
+	_fuse('negatively regulates', 'RO:0002212', radio_name, 4),
+	_fuse('directly inhibits', 'RO:0002408', radio_name, 5),
+	_fuse('positively regulates', 'RO:0002213', radio_name, 4),
+	_fuse('directly activates', 'RO:0002406', radio_name, 5),
+	_fuse('has participant',  'RO:0000057', radio_name, 0),
+	_fuse('has input', 'RO:0002233', radio_name, 1),
+	_fuse('has output', 'RO:0002234', radio_name, 1),
+	_fuse('transports or maintains localization of', 'RO:0002313', radio_name, 1),
+	'</div>'
+    ];
+
+    // List.
+    var tcache = [
+	mebe.join(' '),
+	'<div style="height: 25em; overflow-y: scroll; margin-top: 5px;">',
+	str_tree.join(' '),
+	'<div class="well">',
+	'<div><em>All relations</em></div>'
+    ];
     each(rellist, function(tmp_rel, rel_ind){
 	tcache.push('<div class="radio"><label>');
 	tcache.push('<input type="radio" ');
 	tcache.push('name="' + radio_name + '" ');
 	tcache.push('value="' + tmp_rel[0] +'"');
-	if( rel_ind === 0 ){
-	    tcache.push('checked>');
-	}else{
+	// if( rel_ind === 0 ){
+	//     tcache.push('checked>');
+	// }else{
 	    tcache.push('>');
-	}
+	// }
 	tcache.push(tmp_rel[1] + ' ');
 	tcache.push('(' + tmp_rel[0] + ')');
 	tcache.push('</label></div>');	     
     });
+    tcache.push('</div>');
     tcache.push('</div>');
     
     var save_btn_args = {
