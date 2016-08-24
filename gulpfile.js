@@ -327,11 +327,15 @@ try {
     _die('Could not find "' + conf_file + '", look in ./config for examples.');
 }
 
+function ensure_noslash(s) {
+  return s.replace(/\/$/, '');
+}
+
 // Lookup/public locations.
-var golr_lookup_url = config['GOLR_LOOKUP_URL'].value;
-var golr_lookup_url_slash = golr_lookup_url + '/';
-var golr_neo_lookup_url = config['GOLR_NEO_LOOKUP_URL'].value;
-var golr_neo_lookup_url_slash = golr_neo_lookup_url + '/';
+var golr_lookup_url_noslash = ensure_noslash(config['GOLR_LOOKUP_URL'].value);
+var golr_lookup_url = golr_lookup_url_noslash + '/';
+var golr_neo_lookup_url_noslash = ensure_noslash(config['GOLR_NEO_LOOKUP_URL'].value);
+var golr_neo_lookup_url = golr_neo_lookup_url_noslash + '/';
 var noctua_lookup_url = config['NOCTUA_LOOKUP_URL'].value;
 var barista_lookup_url = config['BARISTA_LOOKUP_URL'].value;
 
@@ -404,8 +408,8 @@ var minerva_opts_base = [
 ];
 
 var minerva_opts_lookup = [
-    '--golr-labels', golr_neo_lookup_url,
-    '--golr-seed', golr_lookup_url
+    '--golr-labels', golr_neo_lookup_url_noslash,
+    '--golr-seed', golr_lookup_url_noslash
 ];
 
 // Using validation is the default setting.
@@ -414,7 +418,7 @@ var minerva_opts_no_validation = [
 ];
 
 // Optional catalog, depending on startup config environment.
-if( us.isString(ontology_catalog) && ontology_catalog !== '' ){
+if (us.isString(ontology_catalog) && ontology_catalog !== '') {
     minerva_opts_base.push('-c');
     minerva_opts_base.push(ontology_catalog);
 }
@@ -453,8 +457,8 @@ gulp.task('run-barista', shell.task(_run_cmd(
 //node noctua.js -c "RO:0002333 BFO:0000066 RO:0002233 RO:0002488" -g http://golr.geneontology.org/solr/ -b http://localhost:3400 -m minerva_local
 var noctua_run_list = [
     'node', 'noctua.js',
-    '--golr', golr_lookup_url_slash,
-    '--golr-neo', golr_neo_lookup_url_slash,
+    '--golr', golr_lookup_url,
+    '--golr-neo', golr_neo_lookup_url,
     '--barista', barista_lookup_url,
     '--noctua-context', noctua_context,
     '--noctua-public', noctua_lookup_url,
