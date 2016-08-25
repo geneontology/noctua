@@ -836,7 +836,7 @@ var NoctuaLauncher = function(){
 		
 		var tmpl_args = self.standard_variable_load(
 		    '/workbench/' + path_id,
-		    page_name, req, model, model_type, null, node_ids,
+		    page_name, req, model, null, null, node_ids,
 		    {
 			'pup_tent_css_libraries': final_css,
 			'pup_tent_js_libraries': final_js,
