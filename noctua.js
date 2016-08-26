@@ -316,7 +316,7 @@ var NoctuaLauncher = function(){
 
     // Standard template arguments payload.
     self.standard_variable_load = function(app_path, app_name, req,
-					   model_id, model_type, model_obj, node_id_list,
+					   model_id, model_obj, node_id_list,
 					   additional_args) {
 
 	// Setup branding.
@@ -372,8 +372,6 @@ var NoctuaLauncher = function(){
 	    'pup_tent_js_variables': [
 		{name: 'global_id',
 		 value: model_id },
-		{name: 'global_model_type',
-		 value: model_type },
 		{name: 'model_id',
 		 value: model_id },
 		{name: 'global_node_id_list',
@@ -411,7 +409,6 @@ var NoctuaLauncher = function(){
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
-	    'model_type': model_type,
 	    'node_id_list': node_id_list,
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
@@ -444,7 +441,7 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 
 	var tmpl_args = self.standard_variable_load(
-	    '/editor/graph', 'Editor', req, model_id, null, model_obj, null,
+	    '/editor/graph', 'Editor', req, model_id, model_obj, null,
 	    {
 		'pup_tent_css_libraries': [
 		    '/toastr.css',
@@ -554,7 +551,7 @@ var NoctuaLauncher = function(){
 	    var about_md = md.markdown.toHTML(about_raw);
 
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Landing', req, null, null, null, null,
+		'/', 'Landing', req, null, null, null,
 		{
 		    'pup_tent_css_libraries': [
 			'/toastr.css',
@@ -656,7 +653,7 @@ var NoctuaLauncher = function(){
 	    var model_obj = null;
 
 		var tmpl_args = self.standard_variable_load(
-		    '/basic/' + model_type, 'FormEditor', req, model_id, model_type, model_obj, null,
+		    '/basic/' + model_type, 'FormEditor', req, model_id, model_obj, null,
 		    {
 				'pup_tent_js_libraries': [
 				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
@@ -673,8 +670,13 @@ var NoctuaLauncher = function(){
 				    // '/ui-grid.css',
 				    '/select.min.css',
 				    '/toastr_custom.css'
-				]
+				],
+				'model_type': model_type
 		    });
+
+		tmpl_args.pup_tent_js_variables.push(
+			{name: 'global_model_type',
+			 value: model_type });
 
 	    var ind = pup_tent.render('noctua_basic.tmpl',
 				      tmpl_args,
@@ -683,12 +685,12 @@ var NoctuaLauncher = function(){
 	});
 
 	// Routes for all static cache items.
-	each(pup_tent.cached_list(), function(thing){
+	each(pup_tent.cached_list(), function(thing) {
 
 	    var ctype = mime.lookup(thing);
 
 	    // This will skip cached templates.
-	    if( ctype !== null ){
+	    if (ctype !== null) {
 		self.app.get('/' + thing, function(req, res) {
 
 		    res.setHeader('Content-Type', ctype);
@@ -836,7 +838,7 @@ var NoctuaLauncher = function(){
 		
 		var tmpl_args = self.standard_variable_load(
 		    '/workbench/' + path_id,
-		    page_name, req, model, null, null, node_ids,
+		    page_name, req, model, null, node_ids,
 		    {
 			'pup_tent_css_libraries': final_css,
 			'pup_tent_js_libraries': final_js,

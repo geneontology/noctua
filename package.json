@@ -24,8 +24,8 @@
     "url": "git+https://github.com/geneontology/noctua.git"
   },
   "engines": {
-    "node": ">= 0.12.2",
-    "npm": ">= 2.7.4"
+    "node": ">= 4.4",
+    "npm": ">= 3.9"
   },
   "dependencies": {
     "amigo2": "2.4.3",
