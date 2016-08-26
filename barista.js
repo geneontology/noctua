@@ -600,6 +600,7 @@ var BaristaLauncher = function(){
     // Monitor some stats.
     var monitor_messages = 0;
     var monitor_calls = 0;
+    var monitor_last_op = {};
 
     ///
     /// Setup a REPL system first--we'll be running the app out of
@@ -1006,6 +1007,10 @@ var BaristaLauncher = function(){
 		{
 		    'name': 'messages',
 		    'messages': monitor_messages
+		},
+		{
+		    'name': 'last',
+		    'messages': monitor_last_op
 		}
 	    ]
 	};
@@ -1145,10 +1150,26 @@ var BaristaLauncher = function(){
 	// Dump current sessions.
 	var sessions = sessioner.get_sessions();
 
+	// Decorate the session hash with last op results.
+	each(sessions, function(s){
+	    if( s['uri'] && monitor_last_op[s['uri']] ){
+		s['_last_op'] = monitor_last_op[s['uri']];
+	    }else{
+		s['_last_op'] = '???';
+	    }
+	});
+
+	// Mustache is dump; do we have any sessions?
+	var barista_sessions_p = false;
+	if( us.isArray(sessions) && sessions.length > 0 ){
+	    barista_sessions_p = true;
+	}
+
 	// Variables, render, and output.
 	var tmpl_args = {
 	    'show_editor_p': show_editor_p,
 	    'show_admin_p': show_admin_p,
+	    'barista_sessions_p': barista_sessions_p,
 	    'barista_sessions': sessions,
 	    'barista_user_reset': barista_user_reset,
 	    'barista_user_refresh': barista_user_refresh,
@@ -1420,6 +1441,12 @@ var BaristaLauncher = function(){
 	    res.send(eresp_str);
 
 	}else{
+
+	    // Good call, so let's make a note of it--we're looking to
+	    // get a little info on currently active users.
+	    if( uuri ){
+		monitor_last_op[uuri] = (new Date()).toJSON();
+	    }
 
 	    // Not public or user is privileged.
 	    // Route the simple call to the right place.

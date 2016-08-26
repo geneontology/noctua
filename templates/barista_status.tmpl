@@ -34,30 +34,49 @@
     <div class="panel-body">
 
       <!-- Status of barista. -->
-      {{#barista_sessions}}
-      <p>
-	<dl class="dl-horizontal">
-	  <dt>name</dt>
-	  <dd><strong>{{nickname}}</strong></dd>
-	  {{#show_editor_p}}
-	  <dt>email</dt>
-	  <dd>{{email-md5}}</dd>
-	  {{/show_editor_p}}
-	  <dt>color</dt>
-	  <dd>{{color}} <span style="color: {{color}};">&#x2b24;</span></dd>
-	  <dt>type</dt>
-	  <dd>{{user-type}}</dd>
-	  {{#show_admin_p}}
-	  <dt>token</dt>
-	  <dd>{{token}}</dd>
-	  {{/show_admin_p}}
+      {{#barista_sessions_p}}
+      <table class="table table-striped table-bordered table-hover">
+	<thead>
+	  <tr>
+	    <td>color</td>
+	    <td>name</td>
+	    <td>uri</td>
+	    {{#show_editor_p}}
+	    <td>last</td>
+	    <td>email</td>
+	    {{#show_admin_p}}
+	    <td>type</td>
+	    <td>token</td>
+	    {{/show_admin_p}}
+	    {{/show_editor_p}}
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#barista_sessions}}
+	  <tr>
+	    
+	    <td><span style="color: {{color}};">&#x2b24;</span> {{color}}</td>
+	    <td><strong>{{nickname}}</strong></td>
+	    <td>{{uri}}</td>
+	    {{#show_editor_p}}
+	    <td>{{_last_op}}</td>
+	    <td>{{email-md5}}</td>
+	    {{#show_admin_p}}
+	    <td>{{user-type}}</td>
+	    <td>{{token}}</td>
+	    {{/show_admin_p}}
+	    {{/show_editor_p}}
+
+	  </tr>
 	  {{/barista_sessions}}
-	  {{^barista_sessions}}
-	  <dt>Sessions</dt>
-	  <dd>none found</dd>
-	</dl>
+	</tbody>
+      </table>
+      {{/barista_sessions_p}}
+      {{^barista_sessions_p}}
+      <p>
+	<strong>No sessions found</strong>
       </p>
-      {{/barista_sessions}}
+      {{/barista_sessions_p}}
       
     </div>
   </div>
