@@ -9,7 +9,8 @@ very rapid, so some of these docs may be out of date._
 
  * *Noctua Users*
     * Start with the [video demos](https://vimeo.com/channels/Noctua), such as the [editing example](https://vimeo.com/channels/noctua/148780879)
-    * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
+    * GO curators should read the [Noctua Quickstart](/doc/quick-start-guide) (draft, in progress)
+    * After that, read the full [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
  * *Bioinformaticians and Systems Biologists* -- See the [Noctua models repository](http://github.com/geneontology/noctua-models) for access to the underlying models and explanation of the OWL representation
