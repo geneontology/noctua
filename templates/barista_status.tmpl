@@ -35,18 +35,24 @@
 
       <!-- Status of barista. -->
       {{#barista_sessions_p}}
-      <table class="table table-striped table-bordered table-hover">
+      <script type="text/javascript">
+	jQuery(document).ready(function(){
+	     jQuery('#user-table').DataTable({autoWidth: true, "order": [[1, "desc"], [2, "asc"]]});
+	});
+      </script>
+      <table id="user-table"
+	     class="table table-striped table-bordered table-hover">
 	<thead>
 	  <tr>
-	    <td>color</td>
-	    <td>name</td>
-	    <td>uri</td>
+	    <th>color</th>
+	    <th>name</th>
+	    <th>uri</th>
 	    {{#show_editor_p}}
-	    <td>last</td>
-	    <td>email</td>
+	    <th>last</th>
+	    <th>email</th>
 	    {{#show_admin_p}}
-	    <td>type</td>
-	    <td>token</td>
+	    <th>type</th>
+	    <th>token</th>
 	    {{/show_admin_p}}
 	    {{/show_editor_p}}
 	  </tr>
@@ -56,7 +62,7 @@
 	  <tr>
 	    
 	    <td><span style="color: {{color}};">&#x2b24;</span> {{color}}</td>
-	    <td><strong>{{nickname}}</strong></td>
+	    <td>{{nickname}}</td>
 	    <td>{{uri}}</td>
 	    {{#show_editor_p}}
 	    <td>{{_last_op}}</td>

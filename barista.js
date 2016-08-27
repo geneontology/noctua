@@ -805,12 +805,14 @@ var BaristaLauncher = function(){
     pup_tent.set_common('css_libs', [
 	'/bootstrap.min.css',
 	'/jquery-ui-1.10.3.custom.min.css',
+	'jquery.dataTables.min.css',
 	'/bbop.css',
 	'/amigo.css']);
     pup_tent.set_common('js_libs', [
 	'/jquery.min.js',
 	'/bootstrap.min.js',
-	'/jquery-ui-1.10.3.custom.min.js']);
+	'/jquery-ui-1.10.3.custom.min.js',
+	'jquery.dataTables.min.js']);
 	// //'/commonjs-runtime.js']);
 	// '/bbop.js',
 	// '/bbopx.js',
@@ -1007,11 +1009,12 @@ var BaristaLauncher = function(){
 		{
 		    'name': 'messages',
 		    'messages': monitor_messages
-		},
-		{
-		    'name': 'last',
-		    'messages': monitor_last_op
 		}
+		// ,
+		// {
+		//     'name': 'last',
+		//     'messages': monitor_last_op
+		// }
 	    ]
 	};
 	var fin = JSON.stringify(ret_obj);

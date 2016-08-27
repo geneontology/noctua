@@ -555,7 +555,7 @@ var NoctuaLauncher = function(){
 		    'pup_tent_css_libraries': [
 			'/toastr.css',
 			'jquery.dataTables.min.css',
-		    '/noctua_common.css',
+			'/noctua_common.css',
 			'/noctua_landing.css'
 		    ],
 		    'pup_tent_js_libraries': [
