@@ -16,6 +16,7 @@
 var md = require('markdown');
 var mustache = require('mustache');
 var fs = require('fs');
+var path = require('path');
 var tilde = require('expand-home-dir');
 var yaml = require('yamljs');
 var mime = require('mime');
@@ -573,6 +574,66 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'text/html', o);
 	});
 
+	// General markdown documentation.
+	self.app.get('/doc/:fname', function(req, res) {
+
+	    var final_content = '???';
+	    var fname = req.params['fname'] || '';
+	    if( ! fname || fname === '' ){
+		// Catch error here if no proper fname.
+		final_content = '<h5>doc/name required</h5>';
+	    }else{
+
+		// Optionally, remove .html (for now).
+		fname = path.basename(fname, '.html');
+		
+		// For now, map this to a markdown doc in the context
+		// directory.
+		var mapped_fname = './context/' + noctua_context +
+			'/markdown-docs/' + fname + '.md';
+
+		// Detect if file exists.
+		try {
+		    var fstats = fs.statSync(mapped_fname);
+		    if( ! fstats.isFile() ){
+			// Catch error here if not found.
+			final_content = '<h5>' + fname + '" not file</h5>';
+		    }else{			
+			// Grab markdown renderable file.
+			var fname_raw = fs.readFileSync(mapped_fname).toString();
+			final_content = md.markdown.toHTML(fname_raw);
+		    }
+		} catch(e) {
+		    // Catch error here if not found.
+		    final_content = '<h5>no "' + fname + '" for "' +
+			noctua_context + '"</h5>: ' + mapped_fname;
+		}
+	    }
+
+	    //
+	    var tmpl_args = self.standard_variable_load(
+		'/doc/' + fname, fname, req, null, null, null,
+		{
+		    'pup_tent_css_libraries': [
+			//'/toastr.css',
+			//'jquery.dataTables.min.css',
+			'/noctua_common.css'//,
+			//'/noctua_landing.css'
+		    ],
+		    'pup_tent_js_libraries': [
+			//'jquery.dataTables.min.js',
+		    ],
+		    'content_insert': final_content
+		});
+	    
+	    // Render.
+	    var o = pup_tent.render('noctua_markdoc.tmpl',
+				    tmpl_args,
+				    'noctua_base_content_frame.tmpl');
+	    self.standard_response(res, 200, 'text/html', o);
+	});
+
+	// 
 	self.app.get('/basic/:query', function(req, res) {
 
 	    // Try and see if we have an API token.
