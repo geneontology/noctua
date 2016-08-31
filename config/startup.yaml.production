@@ -10,7 +10,7 @@
 GOLR_LOOKUP_URL:
   comment: The public location of the GOlr server ask information from about seeding, etc.
   type: url
-  value: http://amigo-dev-golr.berkeleybop.org/
+  value: http://golr.geneontology.org/solr/
 GOLR_NEO_LOOKUP_URL:
   comment: The public location of the NEO GOlr server to ask information from for autocomplete, etc.
   type: url
