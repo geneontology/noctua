@@ -15,8 +15,6 @@
 
 var us = require('underscore');
 var bbop = require('bbop-core');
-//var bbop = require('bbop').bbop;
-//var bbopx = require('bbopx');
 var amigo = require('amigo2');
 var bbop_legacy = require('bbop').bbop;
 
@@ -101,14 +99,8 @@ var MinervaBootstrapping = function(user_token){
     // var select_scratch_jump_button_id = 'select_scratch_jump_button';
     // var select_scratch_jump_button_elt = '#' + select_scratch_jump_button_id;
     //
-    // Form interface jump.
-    var select_stored_jump_basic_id = 'select_stored_jump_basic';
-    var select_stored_jump_basic_elt = '#' + select_stored_jump_basic_id;
-    var select_stored_jump_button_basic_id = 'select_stored_jump_button_basic';
-    var select_stored_jump_button_basic_elt =
-	    '#' + select_stored_jump_button_basic_id;
     // Create new model from nothing.
-    var model_create_by_nothing_id = 'button_nothing_for_create';
+    var model_create_by_nothing_id = 'create_button_graph';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
     // Create new model from process and taxon.
     var model_create_by_protax_button_id = 'button_protax_for_create';
@@ -121,8 +113,10 @@ var MinervaBootstrapping = function(user_token){
     var model_create_by_protax_input_tax_elt =
 	    '#' + model_create_by_protax_input_tax_id;
     // Create new model from nothing for form.
-    var model_create_for_form_button_id = 'create_button_basic';
-    var model_create_for_form_button_elt = '#' + model_create_for_form_button_id;
+    var model_create_monarch_button_id = 'create_button_monarch';
+    var model_create_monarch_button_elt = '#' + model_create_monarch_button_id;
+    var model_create_hpo_button_id = 'create_button_hpo';
+    var model_create_hpo_button_elt = '#' + model_create_hpo_button_id;
     // // Export DOM hooks.
     // var model_export_by_id_def_button_id = 'button_id_for_def_export';
     // var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
@@ -166,18 +160,19 @@ var MinervaBootstrapping = function(user_token){
 	}
     }
 
-    function _jump_to_page(page_url){
+    function _jump_to_page(page_url){ 
 	var newrl = widgetry.build_token_link(page_url, user_token);
 	window.location.replace(newrl);
     }
 
     // Button/link as edit.
-    function _generate_jump_url(id, editor_type){
+    function _generate_jump_url(id, editor_type) {
 	var new_url = "";
-	if( editor_type === 'basic' ){
-            new_url = '/basic/' + id;
-	}else{
-            new_url = '/editor/graph/' + id;
+	if (editor_type === 'monarch' || editor_type === 'hpo') {
+		new_url = '/basic/' + editor_type + '/' + id;
+	}
+	else {
+		new_url = '/editor/graph/' + id;
 	}
 	return new_url;
     }
@@ -336,6 +331,22 @@ var MinervaBootstrapping = function(user_token){
 			  }
 
 			  return retlist;
+		      };
+
+		      //
+		      var _model_type = function(model_id){
+			  var retval = 'hpo';
+
+			  var hlists = model_to_value_hash_list[model_id];
+			  if ( hlists && hlists['dc11:type'] ) {
+			      // Search all annotations for state.
+			      each(hlists['dc11:type'], function(entry){
+				  if (entry ) {
+				      retval = entry;
+				  }
+			      });
+			  }
+			  return retval;
 		      };
 
 		      //
@@ -537,8 +548,10 @@ var MinervaBootstrapping = function(user_token){
 
 	        	      // Cram all the buttons in.
 	        	      var bstrs = [];
-		    	      if( global_noctua_context === 'monarch' ){
-	        		  bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button">Form</a>');
+		    	      if (global_noctua_context === 'monarch') {
+				  var model_type = _model_type(model_id);
+
+	        		  bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, model_type), user_token) +'" role="button">Form</a>');
 	        	      }
 	    		      bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
 		    	      if( global_noctua_context !== 'monarch' ){
@@ -569,20 +582,14 @@ var MinervaBootstrapping = function(user_token){
 
 			  }
 		      }
-		      // Dropdown for the form select interface.
-		      jQuery(select_stored_jump_basic_elt).empty();
-		      jQuery(select_stored_jump_basic_elt).append(rep_str);
-
-		      // Make jump interface for form jump on click.
-		      jQuery(select_stored_jump_button_basic_elt).click(function(evt) {
-			  var id = jQuery(select_stored_jump_basic_elt).val();
-			  _jump_to_page(_generate_jump_url(id, 'basic'));
-		      });
-
 		      // Creation for form. Since default is in the callback is
 		      // "graph", goose it over to kick me to form instead.
-		      jQuery(model_create_for_form_button_elt).click(function(evt) {
-			  to_editor = "basic";
+		      jQuery(model_create_monarch_button_elt).click(function(evt) {
+			  to_editor = "monarch";
+			  manager.add_model();
+		      });
+		      jQuery(model_create_hpo_button_elt).click(function(evt) {
+			  to_editor = "hpo";
 			  manager.add_model();
 		      });
 
@@ -804,17 +811,6 @@ var LoadLandingTableFromGOlr = function(user_token){
 
                 var date = doc['model_date'] || '???';
         	tr_cache.push(date);
-
-        	// Button/link as edit.
-        	function _generate_jump_url(id, editor_type){
-        	    var new_url = "";
-        	    if( editor_type === 'basic' ){
-        		new_url = '/basic/' + id;
-        	    }else{
-        		new_url = '/editor/graph/' + id;
-        	    }
-        	    return new_url;
-        	}
 
         	// Cram all the buttons in.
         	var bstrs = [

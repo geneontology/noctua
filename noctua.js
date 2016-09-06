@@ -317,7 +317,7 @@ var NoctuaLauncher = function(){
     // Standard template arguments payload.
     self.standard_variable_load = function(app_path, app_name, req,
 					   model_id, model_obj, node_id_list,
-					   additional_args){
+					   additional_args) {
 
 	// Setup branding.
 	var noctua_branding = 'Noctua (?)'; // self-name
@@ -634,27 +634,26 @@ var NoctuaLauncher = function(){
 	});
 
 	// 
-	self.app.get('/basic/:query', function(req, res) {
+	self.app.get('/basic/:model_type/:query', function(req, res) {
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
+	    var model_type = req.params['model_type'] || '';
 	    var model_id = req.params['query'] || '';
-
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
-	    var noctua_branding = 'Noctua';
-	    if( noctua_context === 'monarch'){ noctua_context = 'WebPhenote'; }
-	    var barista_login = self.barista_location + '/session' + '?return=' +
-		    self.frontend + '/basic/' + model_id;
+		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
+	    var barista_login = self.barista_location + '/session?return=' +
+		    self.frontend + '/basic/' + model_type + '/' + model_id;
 	    var barista_logout =
 		    _build_token_link(self.barista_location + '/session' +
-				      '?return=' + self.frontend + '/basic/' +
+				      '?return=' + self.frontend + '/basic/' + model_type + '/' +
 				      model_id, barista_token);
 
 	    //
 	    var model_obj = null;
 
 		var tmpl_args = self.standard_variable_load(
-		    '/basic', 'FormEditor', req, model_id, model_obj, null,
+		    '/basic/' + model_type, 'FormEditor', req, model_id, model_obj, null,
 		    {
 				'pup_tent_js_libraries': [
 				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
@@ -666,62 +665,18 @@ var NoctuaLauncher = function(){
 				    '/selectize.css',
 				    '/selectize.bootstrap3.css',
 				    '/selectize.custom.css',
-				    '/xeditable.css',
 				    '/angular-toastr.css',
+					// Disabling ui-grid for now. See USE_UI_GRID in NoctuaBasicController.js
+				    // '/ui-grid.css',
+				    '/select.min.css',
 				    '/toastr_custom.css'
-				]
+				],
+				'model_type': model_type
 		    });
-	 //    var tmpl_args = {
-		// 'title': notw + ': Simple',
-		// 'barista_token': barista_token,
-	 //    'noctua_context': noctua_context,
-	 //    'noctua_landing': noctua_landing,
-	 //    'noctua_branding': noctua_branding,
-		// 'barista_login': barista_login,
-		// 'barista_logout': barista_logout,
-		// 'pup_tent_js_variables': [
-		//     {name: 'global_minerva_definition_name',
-		//      value: self.minerva_definition_name },
-	        //     {name: 'global_external_browser_location',
-		//      value: external_browser_location },
-		//     {name: 'global_known_relations',
-		//      value: self.known_relations},
-		//     {name: 'global_barista_token',
-		//      value: barista_token},
-		//     {name: 'global_barista_location',
-		//      value: self.barista_location },
-		//     {name: 'global_golr_server',
-		//      value: golr_server_location},
-		//     {name: 'global_golr_neo_server',
-		//      value: golr_neo_server_location},
-		//     {name: 'model_id',
-		//      value: model_id}
-		// ],
-		// 'pup_tent_js_libraries': [
-		//     // TODO load via npm
-		//     //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js',
-  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js',
-  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js',
-  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js',
-  //   		    //'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-touch.min.js',
-  //   		    //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js',
-		//     //'/selectize.min.js',
-		//     //'/xeditable.min.js',
-		//     //'/bs-table.min.js',
-		//     //'/bbop-widget-solr-autocomplete.js',
-		//     '/deploy/js/NoctuaBasic/NoctuaBasicApp.js'
-		// ],
-		// 'pup_tent_css_libraries': [
-		//     '/noctua_common.css',
-		//     '/NoctuaBasic.css',
-		//     '/selectize.css',
-		//     '/selectize.bootstrap3.css',
-		//     '/selectize.custom.css',
-		//     '/xeditable.css'
-		//     // ,'/angular-material.css'
-		//     //'https://ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.css'
-		// ]
-	 //    };
+
+		tmpl_args.pup_tent_js_variables.push(
+			{name: 'global_model_type',
+			 value: model_type });
 
 	    var ind = pup_tent.render('noctua_basic.tmpl',
 				      tmpl_args,
@@ -730,12 +685,12 @@ var NoctuaLauncher = function(){
 	});
 
 	// Routes for all static cache items.
-	each(pup_tent.cached_list(), function(thing){
+	each(pup_tent.cached_list(), function(thing) {
 
 	    var ctype = mime.lookup(thing);
 
 	    // This will skip cached templates.
-	    if( ctype !== null ){
+	    if (ctype !== null) {
 		self.app.get('/' + thing, function(req, res) {
 
 		    res.setHeader('Content-Type', ctype);
@@ -746,6 +701,10 @@ var NoctuaLauncher = function(){
 
 	// Fonts are special!
 	self.app.use('/fonts', launcher_app.static('static/fonts'));
+	// Disabling ui-grid for now. See USE_UI_GRID in NoctuaBasicController.js
+	// self.app.use('/ui-grid.svg', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.svg'));
+	// self.app.use('/ui-grid.ttf', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.ttf'));
+	// self.app.use('/ui-grid.woff', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.woff'));
 
 	// Other static routes.
 	// BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.

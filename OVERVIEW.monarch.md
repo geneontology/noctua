@@ -1,6 +1,4 @@
-**WebPhenote** is a software system for collaborative editing of models associating phenotypes with disease.
+**WebPhenote** enables the creation and refinement of *models* that associate facts and their supporting evidence with the model's *subject*. In the current WebPhenote Disease-Phenotype-Onset configuration, each *fact* or *association* consists of a Phenotype and an Age of Onset, and one or more evidence citations.
 
-*Note: This is currently Beta software. There are known bugs being actively fixed and improvements being added.*
-
-
+WebPhenote will eventually support other configurations that can capture other associations, including genetic and biological process details.
 

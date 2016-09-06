@@ -28,6 +28,9 @@ var request = require('request');
 /// Helpers.
 ///
 
+// watch_mode is set by 'gulp watch' tasks to inhibit uglify (which is slow)
+var watch_mode = false;
+
 function _die(str){
     console.error(str);
     process.exit(-1);
@@ -38,17 +41,17 @@ function _ping_count(){
 
     if( count_url && typeof(count_url) === 'string' && count_url !== '' ){
 
-	request({
-	    url: count_url
-	}, function(error, response, body){
-	    if( error || response.statusCode !== 200 ){
-		console.log('Unable to ping: ' + count_url);
-	    }else{
-		console.log('Pinged: ' + count_url);
-	    }
-	});
+        request({
+            url: count_url
+        }, function(error, response, body){
+            if( error || response.statusCode !== 200 ){
+                console.log('Unable to ping: ' + count_url);
+            }else{
+                console.log('Pinged: ' + count_url);
+            }
+        });
     }else{
-	console.log('Will not ping home.');
+        console.log('Will not ping home.');
     }
 }
 
@@ -58,8 +61,8 @@ function _tilde_expand(ufile){
 
 function _tilde_expand_list(list){
     return us.map(list, function(ufile){
-	//console.log('ufile: ' + ufile);
-	return tilde(ufile);
+        //console.log('ufile: ' + ufile);
+        return tilde(ufile);
     });
 }
 
@@ -72,8 +75,8 @@ function _run_cmd_list(commands){
     var final_list = [];
 
     us.each(commands, function(cmd){
-	final_list.push('echo \'' + cmd + '\'');
-	final_list.push(cmd);
+        final_list.push('echo \'' + cmd + '\'');
+        final_list.push(cmd);
     });
 
     return final_list;
@@ -86,24 +89,25 @@ function _run_cmd_list(commands){
 var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
+    'form_noctua_clients': [
+      'js/NoctuaBasic/NoctuaBasicApp.js'
+    ],
     'core_noctua_clients': [
-	//'js/NoctuaEditor.js'
-	'js/NoctuaEditor.js',
-	'js/NoctuaLanding.js',
-	'js/NoctuaBasic/NoctuaBasicApp.js'
+    	'js/NoctuaEditor.js',
+    	'js/NoctuaLanding.js'
     ],
     'core_barista_clients': [
-	'js/BaristaLogin.js',
-	'js/BaristaLogout.js',
-	'js/BaristaSession.js'
+        'js/BaristaLogin.js',
+        'js/BaristaLogout.js',
+        'js/BaristaSession.js'
     ],
     'core_workbench_clients': [
-	// A temporary place for internal workspaces.
-	//'workbenches/copy_in_model/CopyInModel.js',
-	'workbenches/mmcc/MMCC.js',
-	'workbenches/bioentity_companion/BioentityCompanion.js',
-	'workbenches/companion/Companion.js',
-	'workbenches/cytoview/CytoView.js'
+        // A temporary place for internal workspaces.
+        //'workbenches/copy_in_model/CopyInModel.js',
+        'workbenches/mmcc/MMCC.js',
+        'workbenches/bioentity_companion/BioentityCompanion.js',
+        'workbenches/companion/Companion.js',
+        'workbenches/cytoview/CytoView.js'
     ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
@@ -114,22 +118,22 @@ var paths = {
 //     // WARNING: Cannot use glob for clients--I use the explicit listing
 //     // to generate a dynamic browserify set.
 //     'core_noctua_clients': [
-// 	'js/NoctuaEditor.js',
-// 	//'js/NoctuaLanding.js'
-// 	//'js/NoctuaBasic/NoctuaBasicApp.js'
+//      'js/NoctuaEditor.js',
+//      //'js/NoctuaLanding.js'
+//      //'js/NoctuaBasic/NoctuaBasicApp.js'
 //     ],
 //     'core_barista_clients': [
-// 	// 'js/BaristaLogin.js'
-// 	// 'js/BaristaLogout.js'
-// 	// 'js/BaristaSession.js'
+//      // 'js/BaristaLogin.js'
+//      // 'js/BaristaLogout.js'
+//      // 'js/BaristaSession.js'
 //     ],
 //     'core_workbench_clients': [
-// 	// A temporary place for internal workspaces.
-// 	// //'workbenches/copy_in_model/CopyInModel.js'
-// 	// 'workbenches/mmcc/MMCC.js'
-// 	// 'workbenches/bioentity_companion/BioentityCompanion.js'
-// 	// 'workbenches/companion/Companion.js'
-// 	// 'workbenches/cytoview/CytoView.js'
+//      // A temporary place for internal workspaces.
+//      // //'workbenches/copy_in_model/CopyInModel.js'
+//      // 'workbenches/mmcc/MMCC.js'
+//      // 'workbenches/bioentity_companion/BioentityCompanion.js'
+//      // 'workbenches/companion/Companion.js'
+//      // 'workbenches/cytoview/CytoView.js'
 //     ],
 //     support: ['js/connectors-sugiyama.js'],
 //     scripts: ['scripts/*'],
@@ -195,15 +199,19 @@ function _client_compile_task(file) {
     });
   }
 
-//  return browserify(file)
-  return b
-    // not in npm, don't need in browser
-	.exclude('ringo/httpclient')
-	.bundle()
-    // desired output filename to vinyl-source-stream
-	.pipe(source(file))
-    // .pipe(streamify(uglify()))
-	.pipe(gulp.dest('./deploy/'));
+  var result = b
+                // not in npm, don't need in browser
+                .exclude('ringo/httpclient')
+                .bundle()
+                // desired output filename to vinyl-source-stream
+                .pipe(source(file));
+
+  if (!watch_mode) {    // Only uglify when building, not when watching
+    result = result.pipe(streamify(uglify()));
+  }
+
+  result = result.pipe(gulp.dest('./deploy/'));
+  return result;
 }
 
 // Build the clients as best we can.
@@ -213,12 +221,21 @@ var base_build_tasks = [
 ];
 
 // Dynamically define tasks.
+var form_build_tasks = us.clone(base_build_tasks);
+us.each(paths.form_noctua_clients, function(file, index) {
+    var taskname = 'build-client_' + file;
+    form_build_tasks.push(taskname);
+    gulp.task(taskname, function(cb){
+       return _client_compile_task(file);
+    });
+});
+
 var noctua_build_tasks = us.clone(base_build_tasks);
 us.each(paths.core_noctua_clients, function(file, index) {
     var taskname = 'build-client_' + file;
     noctua_build_tasks.push(taskname);
     gulp.task(taskname, function(cb){
-	   return _client_compile_task(file);
+       return _client_compile_task(file);
     });
 });
 
@@ -227,8 +244,8 @@ us.each(paths.core_barista_clients, function(file, index) {
     var taskname = 'build-client_' + file;
     barista_build_tasks.push(taskname);
     gulp.task(taskname, function(cb){
-	_client_compile_task(file);
-	cb(null);
+        _client_compile_task(file);
+        cb(null);
     });
 });
 
@@ -237,22 +254,33 @@ us.each(paths.core_workbench_clients, function(file, index) {
     var taskname = 'build-client_' + file;
     workbench_build_tasks.push(taskname);
     gulp.task(taskname, function(cb){
-	_client_compile_task(file);
-	cb(null);
+        _client_compile_task(file);
+        cb(null);
     });
 });
 
-gulp.task('build', us.union(noctua_build_tasks,
-			    barista_build_tasks,
-			    workbench_build_tasks));
+gulp.task('build', noctua_build_tasks.concat(
+                            form_build_tasks,
+                            barista_build_tasks,
+                            workbench_build_tasks));
+
+gulp.task('watch', ['watch-noctua', 'watch-form']);
 
 // Rerun tasks when a file changes.
-gulp.task('watch', function(cb) {
-    var basic_client_files = paths.core_noctua_clients.concat('js/NoctuaBasic/NoctuaBasicController.js');
+gulp.task('watch-noctua', function(cb) {
+    watch_mode = true;
+    var basic_client_files = paths.core_noctua_clients;
     gulp.watch(basic_client_files, noctua_build_tasks);
     gulp.watch(paths.core_barista_clients, barista_build_tasks);
     gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
-    //gulp.watch(paths.support, ['build']);
+    cb(null);
+});
+
+// Rerun tasks when a file changes.
+gulp.task('watch-form', function(cb) {
+    watch_mode = true;
+    var basic_client_files = paths.form_noctua_clients.concat('js/NoctuaBasic/NoctuaBasicController.js');
+    gulp.watch(basic_client_files, form_build_tasks);
     cb(null);
 });
 
@@ -299,9 +327,15 @@ try {
     _die('Could not find "' + conf_file + '", look in ./config for examples.');
 }
 
+function ensure_noslash(s) {
+  return s.replace(/\/$/, '');
+}
+
 // Lookup/public locations.
-var golr_lookup_url = config['GOLR_LOOKUP_URL'].value;
-var golr_neo_lookup_url = config['GOLR_NEO_LOOKUP_URL'].value;
+var golr_lookup_url_noslash = ensure_noslash(config['GOLR_LOOKUP_URL'].value);
+var golr_lookup_url = golr_lookup_url_noslash + '/';
+var golr_neo_lookup_url_noslash = ensure_noslash(config['GOLR_NEO_LOOKUP_URL'].value);
+var golr_neo_lookup_url = golr_neo_lookup_url_noslash + '/';
 var noctua_lookup_url = config['NOCTUA_LOOKUP_URL'].value;
 var barista_lookup_url = config['BARISTA_LOOKUP_URL'].value;
 
@@ -336,16 +370,16 @@ var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
 var collapsible_relations_str = collapsible_relations.join(' ');
 var collapsible_reverse_relations =
-	config['COLLAPSIBLE_REVERSE_RELATIONS'].value;
+        config['COLLAPSIBLE_REVERSE_RELATIONS'].value;
 var collapsible_reverse_relations_str =
-	collapsible_reverse_relations.join(' ');
+        collapsible_reverse_relations.join(' ');
 var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
 // NOTE: Allowing barista to slurp up startup.yaml itself to get the
 // application definitions.
 
 // Execute by default; variable must be present and empty to stop.
 var count_url =
-	'https://s3-us-west-1.amazonaws.com/go-noctua-usage-master/ping.json';
+        'https://s3-us-west-1.amazonaws.com/go-noctua-usage-master/ping.json';
 if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
     count_url = config['NOCTUA_COUNTER_URL'].value;
 }
@@ -374,8 +408,8 @@ var minerva_opts_base = [
 ];
 
 var minerva_opts_lookup = [
-    '--golr-labels', golr_neo_lookup_url,
-    '--golr-seed', golr_lookup_url,
+    '--golr-labels', golr_neo_lookup_url_noslash,
+    '--golr-seed', golr_lookup_url_noslash
 ];
 
 // Using validation is the default setting.
@@ -384,29 +418,29 @@ var minerva_opts_no_validation = [
 ];
 
 // Optional catalog, depending on startup config environment.
-if( us.isString(ontology_catalog) && ontology_catalog !== '' ){
+if (us.isString(ontology_catalog) && ontology_catalog !== '') {
     minerva_opts_base.push('-c');
     minerva_opts_base.push(ontology_catalog);
 }
 
 // Minerva runner: +lookup +validation
 gulp.task('run-minerva', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_lookup)
+    minerva_opts_base.concat(minerva_opts_lookup)
 )));
 
 // Minerva runner: -lookup +validation
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
-    us.union(minerva_opts_base)
+    minerva_opts_base.concat([])
 )));
 
 // Minerva runner: +lookup -validation
 gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_lookup, minerva_opts_no_validation)
+    minerva_opts_base.concat(minerva_opts_lookup, minerva_opts_no_validation)
 )));
 
 // Minerva runner: -lookup -validation
 gulp.task('run-minerva-no-lookup-no-validation', shell.task(_run_cmd(
-    us.union(minerva_opts_base, minerva_opts_no_validation)
+    minerva_opts_base.concat(minerva_opts_no_validation)
 )));
 
 //node barista.js --self http://localhost:3400
