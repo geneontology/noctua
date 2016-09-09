@@ -72,6 +72,26 @@ var golr_response = require('bbop-response-golr');
 //     ['NCBITaxon:9823', 'Sus scrofa']
 // ];
 
+///
+/// Helpers.
+///
+
+// Button/link as edit.
+function _generate_jump_url(id, editor_type) {
+    var new_url = "";
+    if (editor_type === 'monarch' || editor_type === 'hpo') {
+	new_url = '/basic/' + editor_type + '/' + id;
+    }
+    else {
+	new_url = '/editor/graph/' + id;
+    }
+    return new_url;
+}
+
+///
+/// Main.
+///
+
 var MinervaBootstrapping = function(user_token){
 
     var logger = new bbop.logger('min bstr');
@@ -163,18 +183,6 @@ var MinervaBootstrapping = function(user_token){
     function _jump_to_page(page_url){ 
 	var newrl = widgetry.build_token_link(page_url, user_token);
 	window.location.replace(newrl);
-    }
-
-    // Button/link as edit.
-    function _generate_jump_url(id, editor_type) {
-	var new_url = "";
-	if (editor_type === 'monarch' || editor_type === 'hpo') {
-		new_url = '/basic/' + editor_type + '/' + id;
-	}
-	else {
-		new_url = '/editor/graph/' + id;
-	}
-	return new_url;
     }
 
     // On any model build success, forward to the new page.
