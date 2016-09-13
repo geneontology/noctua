@@ -4,6 +4,7 @@
 
 var gulp = require('gulp');
 //var jsdoc = require("gulp-jsdoc");
+var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
 var shell = require('gulp-shell');
 var browserify = require('browserify');
@@ -111,7 +112,11 @@ var paths = {
     ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
-    tests: ['tests/*.test.js']
+    tests: ['tests/*.test.js'],
+    lint_targets: [
+	'js/NoctuaEditor.js',
+	'js/NoctuaLanding.js'
+    ]
 };
 
 // var paths = {
@@ -152,7 +157,7 @@ var paths = {
 
 // Testing with mocha/chai.
 // NOTE: I'm using chai here.
-gulp.task('test', function() {
+gulp.task('unit-tests', function() {
   return gulp.src(paths.tests, {
     read: false
   }).pipe(mocha({
@@ -163,6 +168,14 @@ gulp.task('test', function() {
     }
   }));
 });
+
+gulp.task('lint-tests', function(){
+    return gulp.src(paths.lint_targets)
+	.pipe(jshint('./config/jshintrc'))
+	.pipe(jshint.reporter('fail'));
+});
+
+gulp.task('test', ['unit-tests', 'lint-tests']);
 
 //
 gulp.task('ready-non-commonjs-libs', function() {
