@@ -463,6 +463,7 @@ gulp.task('run-barista', shell.task(_run_cmd(
      '--users', user_data,
      '--public', barista_lookup_url,
      '--self', barista_location,
+     '--context', noctua_context,
      '--repl', barista_repl_port
     ]
 )));

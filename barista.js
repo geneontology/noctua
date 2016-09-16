@@ -95,6 +95,14 @@ if( ! user_fname ){
     ll('Will pull user info from: ' + user_fname);
 }
 
+// See if we want to use the (for now) optional barista context.
+var barista_context = argv['c'] || argv['context'] || 'go';
+if( barista_context ){
+    ll('Barista operate as in context: "' + barista_context + '"');
+}else{
+    ll('Barista will try to operate without context.');
+}
+
 // Try and see if we run the optional repl port.
 var barista_repl_port = null;
 var barista_repl_port_raw = argv['r'] || argv['repl'] || null;
@@ -395,15 +403,26 @@ var Sessioner = function(auth_list){
 	}
 
 	// Our requirements are: email (by md5 proxy), uri, and
-	// "minerva-go" authorization (empty is fine).
+	// "noctua/go" authorization (empty is fine).
 	var emd5 = str2md5(email);
 	var uinf = uinf_by_md5[emd5];
 	if( uinf ){
+	    // Check the user credentials against what we had in the
+	    // users' file for our specific context.
 	    if( uinf['uri'] &&
 		uinf['authorizations'] &&
-		uinf['authorizations']['noctua-go'] &&
-		uinf['authorizations']['noctua-go'][user_type] ){
+		uinf['authorizations']['noctua'] &&
+		uinf['authorizations']['noctua'][barista_context] &&
+		uinf['authorizations']['noctua'][barista_context][user_type] ){
 		ret = true;
+	    // Legacy checking.
+	    // TODO: Remove this and just leave the templated
+	    // context-sensitive checking above.
+	    }else if( uinf['uri'] &&
+		      uinf['authorizations'] &&
+		      uinf['authorizations']['noctua-go'] &&
+		      uinf['authorizations']['noctua-go'][user_type] ){
+		      ret = true;
 	    }
 	}
 
@@ -447,7 +466,7 @@ var Sessioner = function(auth_list){
     // clear out old sessions.
     self.create_session_by_email = function(email){
 
-	// Cycle through to see what kind os user we have.
+	// Cycle through to see what kind of user we have.
 	var user_type = null;
 	us.each(known_user_types, function(try_user_type){
 	    if( self.authorize_by_email(email, try_user_type) ){
