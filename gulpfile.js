@@ -219,8 +219,8 @@ function _client_compile_task(file) {
                 // desired output filename to vinyl-source-stream
                 .pipe(source(file));
 
-  if (!watch_mode) {    // Only uglify when building, not when watching
-    result = result.pipe(streamify(uglify()));
+  if( ! watch_mode ){    // Only uglify when building, not when watching.
+      result = result.pipe(streamify(uglify()));
   }
 
   result = result.pipe(gulp.dest('./deploy/'));

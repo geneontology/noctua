@@ -1014,15 +1014,29 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 		
     		var eid = bbop_core.uuid();
     		elt2ind[eid] = snid;
-		
+
+		// Get node labeling.
 		var scache = [];
 		each(snode.types(), function(stype){
 		    scache.push(type_to_span(stype));
 		});
 		var slabel = scache.join(' / ') || '<none>'; 
+
+		// See if we can get the edge labeling.
+		var edge_labels = [];
+		var edges = sub.get_edges(tid, snid);
+		if( edges && edges.length > 0 ){
+		    each(edges, function(e){
+			edge_labels.push(e.label() || e.predicate_id());
+		    });
+		}
 		
+		// Build UI.
     		var acache = [];
     		acache.push('<li class="list-group-item">');
+		if( edge_labels.length > 0 ){
+    		    acache.push('[' + edge_labels.join('/') + '] ');
+		}
     		acache.push(slabel);
     		acache.push('<span id="'+ eid +
     			    '" class="badge app-delete-mark">X</span>');
