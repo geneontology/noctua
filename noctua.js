@@ -450,6 +450,9 @@ var NoctuaLauncher = function(){
 		],
 		'pup_tent_js_libraries': [
 		    '/jquery.jsPlumb-1.5.5.js',
+		    //'/jsPlumb-1.5.5.js',
+		    //'/jsPlumb-1.7.10-min.js',
+		    //'/jsPlumb-2.1.7-min.js',
 		    '/jquery.tablesorter.min.js',
 		    self.barista_location + '/socket.io/socket.io.js',
 		    '/connectors-sugiyama.js',

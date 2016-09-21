@@ -66,8 +66,10 @@
 .app-graph {
     position: relative;
     /* Playing with draggable "canvas". */
-    min-height: 600px;
-    min-width: 800px;
+    /* min-height: 3840px; */
+    /* min-width: 2160px; */
+    height: 3840px;
+    width: 2160px;
     /* cursor: all-scroll; */
     /* color: blue; */
 }
