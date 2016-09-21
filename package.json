@@ -120,7 +120,7 @@
     "jquery": "./node_modules/jquery/dist/jquery.min.js",
     "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
     "jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
-    "jsplumb": "./external_js/jquery.jsPlumb-1.5.5.js",
+    "jsplumb": "./external_js/jquery.jsPlumb-1.5.5-min.js",
     "tablesorter": "./external_js/jquery.tablesorter.min.js",
     "datatables": "./external_js/jquery.dataTables.min.js",
     "selectize": "./node_modules/selectize/dist/js/standalone/selectize.min.js",
