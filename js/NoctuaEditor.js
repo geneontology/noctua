@@ -975,8 +975,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	each(ecore.all_nodes(), function(en){
 	    var enid = en.id();
 
-	    // Try and see if we have coords; the precedence is:
-	    // historical (drop), layout, make some up.
+	    // Try and see if we have coords. The precedence is:
+	    // historical (drop), layout (if within reasonable delta
+	    // of currently places node--no rogues rule), try to
+	    // center on current display, make some up.
 	    var fin_left = null;
 	    var fin_top = null;
 	    var local_coords = local_position_store.get(enid);
