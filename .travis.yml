@@ -1,6 +1,6 @@
-language: node
+language: node_js
 node_js:
-  "4.5.0"
+  "4"
 before_script:
   - npm install
   - npm install jshint
