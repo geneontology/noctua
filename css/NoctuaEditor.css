@@ -70,8 +70,11 @@
     /* min-width: 2160px; */
     height: 3840px;
     width: 2160px;
-    /* cursor: all-scroll; */
+    cursor: grab;
     /* color: blue; */
+}
+.app-graph:active {
+    cursor: grabbing;
 }
 
 .app-editor-bounds {
@@ -152,30 +155,37 @@ a:active {
 }
 
 #render a {
-    margin-right:10px;
+    margin-right: 10px;
 }
 
 .selected {
     color:orange !important;
 }
 
-
-.window, .demo-window, .label {
-    
-    text-align:center;
-    z-index:24;
-    cursor:pointer;
+.window, .demo-window, .label {    
+    text-align: center;
+    z-index: 24;
+    cursor: grab;
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
     -webkit-box-shadow: 2px 2px 19px #aaa;
     -moz-box-shadow: 2px 2px 19px #aaa;
 }
+/**
+ * Was unable to make this work, unlike tha app-graph and other
+ * sections, with FF. I believe it's due to something with the :active
+ * pseudo-class not working that "far" away. There seems to be no effect
+ * of the pseudo-class in Chrome, or the "grab/grabbing" for that matter.
+ */
+/* .window:active, .demo-window:active, .label:active { */
+/*     cursor: grabbing; */
+/* } */
 
-path, ._jsPlumb_endpoint { cursor:pointer; }
+path, ._jsPlumb_endpoint { cursor: pointer; }
 
 .cmd {
-    color:white;
-    margin-right:25px;
+    color: white;
+    margin-right: 25px;
 }
 
 .cmd:hover {
@@ -297,7 +307,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     width: 1em;
     height: 1em;
     background-color: #0d78bc;
-    cursor: pointer;
+    cursor: crosshair;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
     -moz-transition:-moz-box-shadow 0.25s ease-in;
@@ -316,7 +326,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     width: 1em;
     height: 1em;
     background-color: #5CB85C;
-    cursor: pointer;
+    cursor: zoom-in;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
     -moz-transition:-moz-box-shadow 0.25s ease-in;
@@ -336,7 +346,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     width: 1em;
     height: 1em;
     background-color: #ccccee;
-    cursor: pointer;
+    cursor: zoom-in;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
     -moz-transition:-moz-box-shadow 0.25s ease-in;
@@ -352,7 +362,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     width: 1em;
     height: 1em;
     background-color: #ccccee;
-    cursor: pointer;
+    cursor: zoom-in;
     box-shadow: 0px 0px 2px black;
     -webkit-transition:-webkit-box-shadow 0.25s ease-in;
     -moz-transition:-moz-box-shadow 0.25s ease-in;
