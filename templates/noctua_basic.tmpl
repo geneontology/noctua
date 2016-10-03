@@ -81,7 +81,7 @@
 
   <div id="noctua-app"
     style="margin:0 15px 0 15px;">
- 
+
     <div
       class="container-fluid"
       ng-if="!basic.response_model">
@@ -132,7 +132,7 @@
               Disease:&nbsp;
               <a
                 target="_blank"
-                href="http://monarchinitiative.org/resolve/{{basic.modelSubject}}">
+                href="http://monarchinitiative.org/resolve/{{basic.modelSubjectMonarchKey}}">
                 {{basic.modelSubjectLabel[0]}}&nbsp;
                 {{basic.modelSubjectLabel[0] === basic.modelSubjectLabel[1] ? '' : basic.modelSubjectLabel[1]}}
               </a>
@@ -182,97 +182,58 @@
             </div>
           </div>
         </div>
-
-        <div ng-if="false" class="panel-footer">
-          <div
-            class="row"
-            ng-if="basic.modelSubject">
-            <div
-              ng-if="basic.user_token"
-              class="text-center col-xs-3">
-              <button
-                type="button"
-                class="btn btn-primary btn-sm" ng-click="basic.addRow()">
-                Add Association
-              </button>
-            </div>
-
-            <div
-              ng-if="basic.user_token"
-              class="text-center col-xs-3">
-              <button
-                ng-disabled="!basic.isValidModel() || basic.editingTitle || basic.editingSubject"
-                id="save_button"
-                type="button"
-                class="btn btn-primary btn-sm"
-                ng-click="basic.store()">
-                Save
-              </button>
-            </div>
-            <div class="text-center col-xs-3">
-              <a
-                ng-disabled="!basic.isValidModel() || basic.editingTitle || basic.editingSubject"
-                type="button" class="btn btn-primary btn-sm"
-                href="{{basic.edit_graph_url}}">
-                Graph
-              </a>
-            </div>
-            <div class="text-center col-xs-3">
-              <a
-                ng-disabled="!basic.isValidModel() || basic.editingTitle || basic.editingSubject"
-                type="button" class="btn btn-primary btn-sm"
-                href="{{basic.export_owl_url}}"
-                target="_blank">
-                Export
-              </a>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div ng-if="basic.modelSubject">
-        <script type="text/ng-template" id="uiSelect">
+
+        <div
+          ng-if="basic.USE_UI_GRID && basic.user_token"
+          class="row">
           <div
-            ng-if="false"
-            style="background:lightyellow;position:fixed !important;z-index:1000;top:0;right:50px;width:300px;height:200px;padding:10px;">
-            <pre>modelcol: MODEL_COL_FIELD</pre>
-            <pre>col: COL_FIELD</pre>
-            <pre>*modelcol: {{MODEL_COL_FIELD}}</pre>
-            <pre>*col: {{COL_FIELD}}</pre>
+            ng-if="basic.user_token"
+            class="col-xs-11">
+            &nbsp;
           </div>
-          <ui-select-wrap>
-            <ui-select
-              search-enabled="true"
-              ng-model="MODEL_COL_FIELD"
-              theme="selectize"
-              ng-disabled="disabled"
-              reset-search-input="true"
-              append-to-body="false">
-              <ui-select-match placeholder="Choose...">
-                {{COL_FIELD.label}}
-              </ui-select-match>
-              <ui-select-choices repeat="item in col.colDef.editDropdownOptionsArray | filter: $select.search">
-                <div ng-bind-html="item.label | highlight: $select.search"></div>
-                <small ng-bind-html="col.colDef.editDropdownOptionsArray.length"></small>
-              </ui-select-choices>
-            </ui-select>
-          </ui-select-wrap>
-        </script>
+          <div
+            class="col-xs-1">
+            <button
+              type="button"
+              name="Add Association"
+              title="Add Association"
+              ng-disabled="basic.editing_row"
+              class="pull-rightx btn btn-secondary xbtn-xs btn-compact" ng-click="basic.addRow()">
+              <i class="glyphicon glyphicon-plus xglyphicon-fw"></i>
+            </button>
+          </div>
+        </div>
 
         <div
           ng-if="basic.USE_UI_GRID"
           class="row">
-          <div
-            id="grid1"
-            ui-grid="basic.gridOptions"
-            ui-grid-edit ui-grid-row-edit ui-grid-cellNav
-            ui-grid-resize-columns ui-grid-auto-resize
-            class="col-xs-12 grid"
-            style="height:200px;">
+
+          <h6>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            {{basic.gridApi.cellNav.getFocusedCell().row.entity.phenotype}}
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            {{basic.gridApi.cellNav.getFocusedCell().col.colDef.name}}
+          </h6>
+          <div class="col-xs-12">
+            <div
+              id="grid1"
+              ui-grid="basic.gridOptions"
+              ui-grid-edit
+              xui-grid-row-edit
+              ui-grid-cellNav
+              ui-grid-resize-columns
+              ui-grid-auto-resize
+              class="grid"
+              style="margin:0;padding:0;border:1px solid purple;">
+            </div>
           </div>
         </div>
 
         <div
+          ng-if="!basic.USE_UI_GRID"
           class="row">
 
           <div
@@ -303,7 +264,7 @@
               </thead>
 
               <tbody>
-                <tr ng-repeat="entry in basic.grid_model | orderBy:'index' track by $index">
+                <tr ng-repeat="(entryIndex, entry) in basic.grid_model | orderBy:'index' track by $index">
                   <td colspan="4"
                     id="scroll_anchor_{{$index}}"
                     ng-hide="basic.editing_row !== entry">
@@ -321,10 +282,11 @@
                   <td colspan="4"
                     ng-if="basic.editing_row !== entry">
                     <a
+                      class="non-editable-cell"
                       target="_blank"
                       href="http://monarchinitiative.org/resolve/{{entry.phenotype_id}}">
-                        {{entry.phenotype[0]}}<br>&nbsp;
-                        {{entry.phenotype[1]}}
+                        {{entry.phenotype[0]}}
+                        <div>{{entry.phenotype[1]}}</div>
                     </a>
                   </td>
 
@@ -343,10 +305,11 @@
                   <td colspan="4"
                     ng-if="basic.editing_row !== entry">
                     <a
+                      class="non-editable-cell"
                       target="_blank"
                       href="http://monarchinitiative.org/resolve/{{entry.ageofonset_id}}">
-                        {{entry.ageofonset[0]}}<br>&nbsp;
-                        {{entry.ageofonset[1]}}
+                        {{entry.ageofonset[0]}}
+                        <div>{{entry.ageofonset[1]}}</div>
                     </a>
                   </td>
 
@@ -370,42 +333,60 @@
                       ng-if="basic.editing_row === entry">
 
                       <div
-                        ng-repeat="ev_ref in entry.evidence_metadata track by $index">
-                        <div class="row">
-                          <div class="col-xs-11">
+                        ng-repeat="ev in basic.selected_evidence_metadata track by $index">
+                        <div
+                          class="row">
+                          <div
+                            ng-if="basic.modelType === 'hpo'"
+                            class="col-xs-11 evidence-selection">
+                            <div class="btn-group" xid="{{ev.htmlid}}_{{entryIndex}}_{{$index}}">
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.IEA.label}}" uib-btn-radio="basic.HPShortCodes.IEA.id">IEA</label>
+
+<!--
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.ITM.label}}" uib-btn-radio="basic.HPShortCodes.ITM.id">ITM</label>
+-->
+
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.TAS.label}}" uib-btn-radio="basic.HPShortCodes.TAS.id">TAS</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.PCS.label}}" uib-btn-radio="basic.HPShortCodes.PCS.id">PCS</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.ICE.label}}" uib-btn-radio="basic.HPShortCodes.ICE.id">ICE</label>
+                            </div>
+                          </div>
+                          <div
+                            ng-if="basic.modelType !== 'hpo'"
+                            class="col-xs-11 evidence-selection">
                             <select
                               class="form-control"
-                              id="{{ev_ref.htmlid}}_{{$parent.$index}}_{{$index}}"
-                              placeholder="Select evidence..." ng-model="ev_ref.ev">
+                              id="{{ev.htmlid}}_{{entryIndex}}_{{$index}}"
+                              placeholder="Select evidence...">
                             </select>
                           </div>
                           <button
                             ng-if="$first"
                             class="xcol-xs-1 btn btn-secondary btn-xs xbtn-compact"
                             style="margin:0;margin-left:-10px;"
-                            ng-click="basic.add_ev(basic.selected_ev_ref_list, $parent.$index)">
+                            ng-click="basic.add_ev(basic.selected_evidence_metadata, entryIndex)">
                             <i class="glyphicon glyphicon-plus"></i>
                           </button>
                         </div>
 
                         <div
-                          ng-repeat="ref in ev_ref.ref_list">
+                          ng-repeat="ref in ev.ref_list">
                           <div
                             class="row"
                             style="padding:0;">
                             <label
                               class="col-xs-2"
                               style="font-size:0.9em;font-weight:400;color:#555;margin:2px -20px 2px 20px;padding:0;"
-                              for="{{ev_ref.htmlid + ref.htmlid}}_{{$parent.$index}}_{{$index}}">
+                              for="{{ev.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}">
                               Ref
                             </label>
                             <div class="col-xs-9">
                               <input
-                                ng-disabled="!ev_ref.ev"
+                                ng-disabled="!ev.id"
                                 class="form-control"
                                 style="font-size:0.9em;font-weight:400;color:#555;"
                                 type="text"
-                                id="{{ev_ref.htmlid + ref.htmlid}}_{{$parent.$index}}_{{$index}}"
+                                id="{{ev.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}"
                                 placeholder="Enter supporting reference (e.g., PMID:1234)"
                                 ng-model="ref.ref">
                               </input>
@@ -415,7 +396,7 @@
                               ng-if="$first"
                               class="xcol-xs-1 btn btn-secondary btn-xs xbtn-compact"
                               style="margin:0;margin-left:-10px;"
-                              ng-click="basic.add_ref(ev_ref)">
+                              ng-click="basic.add_ref(ev)">
                               <i class="glyphicon glyphicon-plus"></i>
                             </button>
                           </div>
@@ -425,17 +406,19 @@
                     <div
                       ng-if="basic.editing_row !== entry">
                       <div
-                        ng-repeat="ev_ref in entry.evidence_metadata track by $index">
+                        ng-repeat="ev in entry.evidence_metadata track by $index">
                         <a
+                          class="non-editable-cell"
                           target="_blank"
-                          href="http://purl.obolibrary.org/obo/{{basic.convertECOId(ev_ref.id)}}">
-                          {{ev_ref.id}}<br>&nbsp;{{ev_ref.label}}
+                          href="{{basic.formatEVURL(ev)}}">
+                          {{basic.formatEVLabel(ev)}}
                         </a>
 
-                        <div
-                          ng-repeat="ref in ev_ref.ref_list">
-                          &nbsp;&nbsp;&nbsp;&nbsp;{{ref.ref}}
-                        </div>
+                        <ul
+                          style="list-style-position: inside;list-style-type:square;margin:0 5px;padding:0;"
+                          ng-repeat="ref in ev.ref_list">
+                          <li>{{ref.ref}}</li>
+                        </ul>
                       </div>
                     </div>
                   </td>
@@ -491,8 +474,89 @@
             </table>
           </div>
         </div>
-      </div>
 
+        <div style="height:200px;">
+        </div>
+      </div>
   </div>
 </div>
+
+
+<script type="text/ng-template" id="uiJQSelect">
+  <div
+    ng-if="false"
+    style="background:lightyellow;position:fixed !important;z-index:1000;top:0;right:50px;width:300px;height:200px;padding:10px;">
+    <pre>modelcol: MODEL_COL_FIELD</pre>
+    <pre>col: COL_FIELD</pre>
+    <pre>*modelcol: {{MODEL_COL_FIELD}}</pre>
+    <pre>*col: {{COL_FIELD}}</pre>
+  </div>
+  <select
+    autofocus
+    class="form-control"
+    id="select_phenotype_{{row.entity.rowIndex}}"
+    placeholder="Pick a Phenotype...">
+  </select>
+</script>
+
+
+<script type="text/ng-template" id="uigridActionCell">
+  <div
+    class="ui-grid-cell-contents"
+    title="TOOLTIP">
+    <div
+      ng-if="grid.appScope.basic.user_token && grid.appScope.basic.editing_row !== row.entity"
+      class="text-center action-row">
+      <button
+        ng-disabled="grid.appScope.basic.editing_row"
+        type="button"
+        title="Edit Association"
+        class="btn btn-default btn-compact"
+        ng-click="grid.appScope.basic.editRow(row.entity, row.entity.rowIndex, false)">
+        <i class="glyphicon glyphicon-pencil glyphicon-fw"></i>
+      </button>
+      <button
+        ng-disabled="grid.appScope.basic.editing_row"
+        type="button"
+        title="Duplicate Association"
+        class="btn btn-default btn-compact"
+        ng-click="grid.appScope.basic.duplicateRow(row.entity, row.entity.rowIndex)">
+        <i class="glyphicon glyphicon-duplicate glyphicon-fw"></i>
+      </button>
+      <button
+        type="button"
+        title="Delete Association"
+        ng-disabled="grid.appScope.basic.editing_row"
+        class="btn btn-warning btn-compact"
+        ng-click="grid.appScope.basic.deleteRow(row.entity.disease_node_id, row.entity.phenotype_node_id, row.entity.ageofonset_node_id)">
+        <i class="glyphicon glyphicon-trash glyphicon-fw"></i>
+      </button>
+    </div>
+
+    <div
+      ng-if="grid.appScope.basic.user_token && grid.appScope.basic.editing_row === row.entity"
+      class="text-center action-row">
+      <button
+        title="Save Association"
+        type="button"
+        class="btn btn-success btn-compact"
+        ng-disabled="!grid.appScope.basic.isValidAssociation()"
+        ng-click="grid.appScope.basic.saveEditedRow()">
+        <i class="glyphicon glyphicon-save glyphicon-fw"></i>
+      </button>
+      <button
+        title="Cancel Editing"
+        type="button"
+        class="btn btn-warning btn-compact"
+        ng-click="grid.appScope.basic.cancelEditRow(row.entity.rowIndex)">
+        <i class="glyphicon glyphicon-ban-circle glyphicon-fw"></i>
+      </button>
+    </div>
+  </div>
+</script>
+
+
+
+
+
 

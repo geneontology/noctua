@@ -669,8 +669,7 @@ var NoctuaLauncher = function(){
 				    '/selectize.bootstrap3.css',
 				    '/selectize.custom.css',
 				    '/angular-toastr.css',
-					// Disabling ui-grid for now. See USE_UI_GRID in NoctuaBasicController.js
-				    // '/ui-grid.css',
+				    '/ui-grid.css',
 				    '/select.min.css',
 				    '/toastr_custom.css'
 				],
@@ -704,10 +703,9 @@ var NoctuaLauncher = function(){
 
 	// Fonts are special!
 	self.app.use('/fonts', launcher_app.static('static/fonts'));
-	// Disabling ui-grid for now. See USE_UI_GRID in NoctuaBasicController.js
-	// self.app.use('/ui-grid.svg', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.svg'));
-	// self.app.use('/ui-grid.ttf', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.ttf'));
-	// self.app.use('/ui-grid.woff', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.woff'));
+	self.app.use('/ui-grid.svg', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.svg'));
+	self.app.use('/ui-grid.ttf', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.ttf'));
+	self.app.use('/ui-grid.woff', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.woff'));
 
 	// Other static routes.
 	// BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.
