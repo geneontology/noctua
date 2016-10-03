@@ -292,7 +292,9 @@ gulp.task('watch-noctua', function(cb) {
 // Rerun tasks when a file changes.
 gulp.task('watch-form', function(cb) {
     watch_mode = true;
-    var basic_client_files = paths.form_noctua_clients.concat('js/NoctuaBasic/NoctuaBasicController.js');
+    var basic_client_files = paths.form_noctua_clients.concat(
+                                'js/NoctuaBasic/NoctuaBasicController.js',
+                                'node_modules/selectize/dist/js/standalone/selectize.js');
     gulp.watch(basic_client_files, form_build_tasks);
     cb(null);
 });
@@ -409,7 +411,8 @@ _ping_count();
 var minerva_opts_base = [
     'java',
     '-Xmx' + minerva_max_mem + 'G',
-    '-cp', './java/lib/minerva-cli.jar',
+    // '-cp', './java/lib/minerva-cli.jar',
+    '-cp', '../minerva/minerva-cli/bin/minerva-cli.jar',
     'org.geneontology.minerva.server.StartUpTool',
     '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
     '--use-request-logging',
