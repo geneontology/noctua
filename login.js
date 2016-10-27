@@ -98,7 +98,8 @@ passport.deserializeUser(function(id, done) {
 var use_provider_local_p = false;
 var use_provider_github_p = false;
 var use_provider_google_plus_p = false;
-us.each(['local', 'google-plus', 'github'], function(provider){
+var use_provider_orcid_p = false;
+us.each(['local', 'google-plus', 'github', 'orcid'], function(provider){
 
     var provider_path = secloc + '/' + provider + '.yaml';
     var prov_stats = null;
@@ -221,9 +222,10 @@ us.each(['local', 'google-plus', 'github'], function(provider){
 
 		console.log("Start auth...");
 		//console.log(provider + ' callback profile: ', profile);
-		console.log(provider + ' callback profile id: ', profile['username']);
+		console.log(provider + ' callback profile id: ',
+			    profile['username']);
 
-		// Try and extract from sessioner using g+ id.
+		// Try and extract from sessioner using github username.
 		if( ! profile || ! us.isString(profile['username']) ){
 		    return done(null, false, { message: 'Bad profile?' });
 		}else{
@@ -241,6 +243,58 @@ us.each(['local', 'google-plus', 'github'], function(provider){
 
 	    // We're go.
 	    use_provider_github_p = true;
+	    
+	}else if( provider === 'orcid' ){
+	    // WARNING: ORCID provides a somewhat standard OAuth2
+	    // interface, but with quirks that need to be detected and
+	    // dealt with.
+	    // https://gist.github.com/JanKoppe/1491e37d1022c77a286087e6c81d6092#file-example-js-L5
+	    
+	    // TODO.
+	    // Pick-up secrets file and check structure.
+	    var orcid_secrets = yaml.load(provider_path);
+	    console.log('secrets for ' + provider, orcid_secrets);
+	    if( orcid_secrets['clientID'] &&
+		orcid_secrets['clientSecret'] &&
+		orcid_secrets['callbackURL'] ){
+		    // Pass.
+		}else{
+		    throw new Error(provider + ' not structured correctly!');
+		}
+	    
+	    var ORCIDStrategy = require('passport-oauth2').Strategy;
+	    passport.use(new ORCIDStrategy({
+		passReqToCallback: true,
+		session: false,
+		authorizationURL: 'https://orcid.org/oauth/authorize',
+		tokenURL: 'https://orcid.org/oauth/token',
+		clientID: orcid_secrets['clientID'],
+		clientSecret: orcid_secrets['clientSecret'],
+		callbackURL: orcid_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, profile, done) {
+
+		console.log("Start auth...");
+		//console.log(provider + ' callback profile: ', profile);
+		console.log(provider + ' callback profile id: ', profile);
+
+		// Try and extract from sessioner using orcid id.
+		if( ! profile || ! us.isString(profile['username']) ){
+		    return done(null, false, { message: 'Bad profile?' });
+		}else{
+
+		    // Looks good.
+		    // TODO: Try and use github username to extract sessioner session to
+		    // ORCID.
+		    // TODO: Through different fail if it cannot.
+		    console.log("Authenticated");
+		    return done(null, {"id": "TEMP:anonymous",
+				       "uri": "TEMP:anonymous:" + profile['username'],
+				       "displayName": "???"});
+		}
+	    }));
+
+	    // We're go.
+	    use_provider_orcid_p = true;
 	    
 	}else{
 	    _die('Impossible to use provider: ' + provider);
@@ -317,6 +371,9 @@ app.get('/login', function(req, res){
     if( use_provider_github_p ){
 	html += '<div><p><a href="/auth/github?return=' + ret + '">Sign In with GitHub</a></p></div>';
     }
+    if( use_provider_orcid_p ){
+	html += '<div><p><a href="/auth/orcid?return=' + ret + '">Sign In with ORCID</a></p></div>';
+    }
     
     return _standard_response(res, 200, 'text/html', html);
 });
@@ -361,9 +418,6 @@ app.get('/auth/local', function(req, res){
 
     return _standard_response(res, 200, 'text/html', '<form action="/auth/local/callback?return=' + ret + '" method="GET"><div><label>Username:</label><input type="text" name="username" /></div><div><label>Password:</label><input type="password" name="password" /></div><div><input type="submit" value="Log In" /></div></form>');
 });
-
-
-
 
 app.get('/auth/local/callback', function(req, res, next) {
 
@@ -440,6 +494,35 @@ app.get('/auth/github/callback', function(req, res, next) {
     passport.authenticate('github', function(err, user, info){
 	if( err ){
 	    console.log('"github" unknown error:', err);
+	    return next(err);
+	}else{
+	    // Return real token get and referer.
+	    console.log('user', user);
+	    return res.redirect('/login/success?return=' + ret +
+				'&barista_token=' +
+				encodeURIComponent(user['uri']));
+	}
+    })(req, res, next);
+});
+
+///
+/// ORCID specific routes.
+///
+
+// Throw.
+app.get('/auth/orcid', passport.authenticate('oauth2'));
+
+// Catch.
+app.get('/auth/orcid/callback', function(req, res, next) {
+
+    // Get return argument (originating URL) if there.
+    var ret = _extract_referer_query_field(req, 'return');
+    console.log('/auth/orcid/callback GET got "return": ' + ret);
+    // TODO: Err if nothing to return to?
+
+    passport.authenticate('orcid', function(err, user, info){
+	if( err ){
+	    console.log('"orcid" unknown error:', err);
 	    return next(err);
 	}else{
 	    // Return real token get and referer.
