@@ -1,0 +1,23 @@
+####
+#### Use kwalify and this schema to validate the local secrets file.
+#### Example (schema check):
+####    kwalify -m ./scripts/local.schema.yaml
+#### Example (YAML check):
+####    kwalify -f ./scripts/local.schema.yaml ./secrets/local.yaml
+####
+type: seq
+sequence:
+  - type: map
+    mapping:
+      "uri":
+        type: str
+        required: true
+        unique: true
+      "username":
+        type: str
+        required: true
+        unique: true
+      "password":
+        type: str
+        required: true
+        unique: true
