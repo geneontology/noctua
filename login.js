@@ -156,7 +156,7 @@ us.each(['local', 'google-plus', 'github'], function(provider){
 
 	    // Pick-up secrets file and check structure.
 	    var google_secrets = yaml.load(provider_path);
-	    console.log('google_secrets', google_secrets);
+	    console.log('secrets for ' + provider, google_secrets);
 	    if( google_secrets['clientID'] &&
 		google_secrets['clientSecret'] &&
 		google_secrets['callbackURL'] ){
@@ -175,9 +175,7 @@ us.each(['local', 'google-plus', 'github'], function(provider){
 	    }, function(req, accessToken, refreshToken, profile, done) {
 
 		console.log("Start auth...");
-		//console.log('google callback accessToken: ', accessToken);
-		//console.log('google callback refreshToken: ', refreshToken);
-		console.log('google callback profile id: ', profile['id']);
+		console.log(provider + ' callback profile id: ', profile['id']);
 
 		// Try and extract from sessioner using g+ id.
 		if( ! profile || ! us.isString(profile['id']) ){
@@ -201,8 +199,46 @@ us.each(['local', 'google-plus', 'github'], function(provider){
 	}else if( provider === 'github' ){
 
 	    // TODO.
-	    _die('Not yet implemented: ' + provider);
+	    // Pick-up secrets file and check structure.
+	    var github_secrets = yaml.load(provider_path);
+	    console.log('secrets for ' + provider, github_secrets);
+	    if( github_secrets['clientID'] &&
+		github_secrets['clientSecret'] &&
+		github_secrets['callbackURL'] ){
+		    // Pass.
+		}else{
+		    throw new Error(provider + ' not structured correctly!');
+		}
 	    
+	    var GitHubStrategy = require('passport-github').Strategy;
+	    passport.use(new GitHubStrategy({
+		passReqToCallback: true,
+		session: false,
+		clientID: github_secrets['clientID'],
+		clientSecret: github_secrets['clientSecret'],
+		callbackURL: github_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, profile, done) {
+
+		console.log("Start auth...");
+		//console.log(provider + ' callback profile: ', profile);
+		console.log(provider + ' callback profile id: ', profile['username']);
+
+		// Try and extract from sessioner using g+ id.
+		if( ! profile || ! us.isString(profile['username']) ){
+		    return done(null, false, { message: 'Bad profile?' });
+		}else{
+
+		    // Looks good.
+		    // TODO: Try and use github username to extract sessioner session to
+		    // ORCID.
+		    // TODO: Through different fail if it cannot.
+		    console.log("Authenticated");
+		    return done(null, {"id": "TEMP:anonymous",
+				       "uri": "TEMP:anonymous:" + profile['username'],
+				       "displayName": "???"});
+		}
+	    }));
+
 	    // We're go.
 	    use_provider_github_p = true;
 	    
@@ -265,14 +301,24 @@ app.get('/login', function(req, res){
     }
 
     // TODO: Complain if nothing to return to.
-    var insert = '';
+    var html = '';
     if( ! ret ){
-	insert = '<div>no place to return to :(</div>';
+	html = '<div>no place to return to :(</div>';
     }else{
-	insert = '<div>will return to "' + ret + '"</div>';
+	html = '<div>will return to "' + ret + '"</div>';
     }
-	
-    return _standard_response(res, 200, 'text/html', insert+ '<div><p><a href="/auth/local?return=' + ret + '">Sign In Locally</a></p></div><div><p><a href="/auth/google?return=' + ret + '">Sign In with Google</a></p></div>');
+
+    if( use_provider_local_p ){
+	html += '<div><p><a href="/auth/local?return=' + ret + '">Sign In Locally</a></p></div>';
+    }
+    if( use_provider_google_plus_p ){
+	html += '<div><p><a href="/auth/google?return=' + ret + '">Sign In with Google</a></p></div>';
+    }
+    if( use_provider_github_p ){
+	html += '<div><p><a href="/auth/github?return=' + ret + '">Sign In with GitHub</a></p></div>';
+    }
+    
+    return _standard_response(res, 200, 'text/html', html);
 });
 
 // Shared success, requiring return and token.
@@ -355,12 +401,6 @@ app.get('/auth/google',
 	));
 
 // Catch.
-// app.get('/auth/google/callback',
-// 	passport.authenticate('google', { failureRedirect: '/login/failure' }),
-// 	function(req, res) {
-// 	    //	    console.log('/auth/google/callback req', );
-// 	    res.redirect('/login/success');
-// 	});
 app.get('/auth/google/callback', function(req, res, next) {
 
     // Get return argument (originating URL) if there.
@@ -371,6 +411,35 @@ app.get('/auth/google/callback', function(req, res, next) {
     passport.authenticate('google', function(err, user, info){
 	if( err ){
 	    console.log('"google" unknown error:', err);
+	    return next(err);
+	}else{
+	    // Return real token get and referer.
+	    console.log('user', user);
+	    return res.redirect('/login/success?return=' + ret +
+				'&barista_token=' +
+				encodeURIComponent(user['uri']));
+	}
+    })(req, res, next);
+});
+
+///
+/// GitHub specific routes.
+///
+
+// Throw.
+app.get('/auth/github',	passport.authenticate('github'));
+
+// Catch.
+app.get('/auth/github/callback', function(req, res, next) {
+
+    // Get return argument (originating URL) if there.
+    var ret = _extract_referer_query_field(req, 'return');
+    console.log('/auth/github/callback GET got "return": ' + ret);
+    // TODO: Err if nothing to return to?
+
+    passport.authenticate('github', function(err, user, info){
+	if( err ){
+	    console.log('"github" unknown error:', err);
 	    return next(err);
 	}else{
 	    // Return real token get and referer.
