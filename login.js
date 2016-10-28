@@ -264,21 +264,22 @@ us.each(['local', 'google-plus', 'github', 'orcid'], function(provider){
 	    
 	    var ORCIDStrategy = require('passport-oauth2').Strategy;
 	    passport.use(new ORCIDStrategy({
-		passReqToCallback: true,
-		session: false,
-		authorizationURL: 'https://orcid.org/oauth/authorize',
-		tokenURL: 'https://orcid.org/oauth/token',
-		clientID: orcid_secrets['clientID'],
-		clientSecret: orcid_secrets['clientSecret'],
-		callbackURL: orcid_secrets['callbackURL']
-	    }, function(req, accessToken, refreshToken, profile, done) {
+	      passReqToCallback: true,
+	      session: false,
+	      authorizationURL: 'https://orcid.org/oauth/authorize',
+	      tokenURL: 'https://pub.orcid.org/oauth/token',
+              scope: '/authenticate',
+	      clientID: orcid_secrets['clientID'],
+	      clientSecret: orcid_secrets['clientSecret'],
+	      callbackURL: orcid_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, params, profile, done){
 
 		console.log("Start auth...");
 		//console.log(provider + ' callback profile: ', profile);
-		console.log(provider + ' callback profile id: ', profile);
+		//console.log(provider + ' callback params: ', params);
 
 		// Try and extract from sessioner using orcid id.
-		if( ! profile || ! us.isString(profile['username']) ){
+		if( ! params || ! us.isString(params['orcid']) ){
 		    return done(null, false, { message: 'Bad profile?' });
 		}else{
 
@@ -288,7 +289,7 @@ us.each(['local', 'google-plus', 'github', 'orcid'], function(provider){
 		    // TODO: Through different fail if it cannot.
 		    console.log("Authenticated");
 		    return done(null, {"id": "TEMP:anonymous",
-				       "uri": "TEMP:anonymous:" + profile['username'],
+				       "uri": "TEMP:anonymous:"+ params['orcid'],
 				       "displayName": "???"});
 		}
 	    }));
@@ -520,7 +521,7 @@ app.get('/auth/orcid/callback', function(req, res, next) {
     console.log('/auth/orcid/callback GET got "return": ' + ret);
     // TODO: Err if nothing to return to?
 
-    passport.authenticate('orcid', function(err, user, info){
+    passport.authenticate('oauth2', function(err, user, info){
 	if( err ){
 	    console.log('"orcid" unknown error:', err);
 	    return next(err);
