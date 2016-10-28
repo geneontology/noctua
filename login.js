@@ -53,6 +53,12 @@ function _extract_referer_query_field(req, field){
     return ret;
 }
 
+function _response_redirect_to_success(res, ret_url, user_uri){
+  return res.redirect('/login/success?return=' + ret_url +
+		      '&barista_token=' +
+		      encodeURIComponent(user_uri));
+}
+
 ///
 /// Credential probing and processing.
 ///
@@ -404,9 +410,10 @@ app.get('/login/failure', function(req, res){
 });
 
 ///
-/// Local specific routes.
+/// Auth specific routes.
 ///
 
+// Create local loop for local.
 app.get('/auth/local', function(req, res){
 
     // Get return argument (originating URL) if there.
@@ -420,117 +427,46 @@ app.get('/auth/local', function(req, res){
     return _standard_response(res, 200, 'text/html', '<form action="/auth/local/callback?return=' + ret + '" method="GET"><div><label>Username:</label><input type="text" name="username" /></div><div><label>Password:</label><input type="password" name="password" /></div><div><input type="submit" value="Log In" /></div></form>');
 });
 
-app.get('/auth/local/callback', function(req, res, next) {
-
-    // Get return argument (originating URL) if there.
-    var ret = _extract_referer_query_field(req, 'return');
-    console.log('/auth/local/callback GET got "return": ' + ret);
-    // TODO: Err if nothing to return to?
-
-    passport.authenticate('local', function(err, user, info){
-	if( err ){
-	    console.log('"local" unknown error:', err);
-	    return next(err);
-	}else if( ! user ){
-	    console.log('"local" error: lack of user?', info);
-	    return res.redirect('/login/failure');
-	}else{
-	    // TODO: Real token get and register new session.
-	    console.log('user', user);
-	    return res.redirect('/login/success?return=' + ret +
-				'&barista_token=' +
-				encodeURIComponent(user['uri']));
-	}
-    })(req, res, next);
-});
-
-///
-/// Google+ specific routes.
-///
-
-// Throw.
+// Throw Google+.
 app.get('/auth/google',
 	passport.authenticate(
 	    'google',
 	    { scope: ['https://www.googleapis.com/auth/plus.login'] }
 	));
 
-// Catch.
-app.get('/auth/google/callback', function(req, res, next) {
-
-    // Get return argument (originating URL) if there.
-    var ret = _extract_referer_query_field(req, 'return');
-    console.log('/auth/google/callback GET got "return": ' + ret);
-    // TODO: Err if nothing to return to?
-
-    passport.authenticate('google', function(err, user, info){
-	if( err ){
-	    console.log('"google" unknown error:', err);
-	    return next(err);
-	}else{
-	    // Return real token get and referer.
-	    console.log('user', user);
-	    return res.redirect('/login/success?return=' + ret +
-				'&barista_token=' +
-				encodeURIComponent(user['uri']));
-	}
-    })(req, res, next);
-});
-
-///
-/// GitHub specific routes.
-///
-
-// Throw.
+// Throw GitHub.
 app.get('/auth/github',	passport.authenticate('github'));
 
-// Catch.
-app.get('/auth/github/callback', function(req, res, next) {
-
-    // Get return argument (originating URL) if there.
-    var ret = _extract_referer_query_field(req, 'return');
-    console.log('/auth/github/callback GET got "return": ' + ret);
-    // TODO: Err if nothing to return to?
-
-    passport.authenticate('github', function(err, user, info){
-	if( err ){
-	    console.log('"github" unknown error:', err);
-	    return next(err);
-	}else{
-	    // Return real token get and referer.
-	    console.log('user', user);
-	    return res.redirect('/login/success?return=' + ret +
-				'&barista_token=' +
-				encodeURIComponent(user['uri']));
-	}
-    })(req, res, next);
-});
-
-///
-/// ORCID specific routes.
-///
-
-// Throw.
+// Throw orcid/oauth2.
 app.get('/auth/orcid', passport.authenticate('oauth2'));
 
-// Catch.
-app.get('/auth/orcid/callback', function(req, res, next) {
+// Generalized final step callback.
+app.get('/auth/:method/callback', function(req, res, next) {
+
+    var method = req.params.method;
+    var method_title = method;
+
+    // The orcid/oauth2 thing is a special case.
+    if( method === 'orcid' ){
+	method = 'oauth2';
+    }
 
     // Get return argument (originating URL) if there.
     var ret = _extract_referer_query_field(req, 'return');
-    console.log('/auth/orcid/callback GET got "return": ' + ret);
+    console.log('/auth/'+method_title+'/callback GET got "return": ' + ret);
     // TODO: Err if nothing to return to?
-
-    passport.authenticate('oauth2', function(err, user, info){
+    
+    passport.authenticate(method, function(err, user, info){
 	if( err ){
-	    console.log('"orcid" unknown error:', err);
+	    console.log('"'+method_title+'" unknown error:', err);
 	    return next(err);
+	}else if( ! user ){
+	    console.log('"'+method_title+'" error: lack of user?', info);
+	    return res.redirect('/login/failure');
 	}else{
-	    // Return real token get and referer.
-	    console.log('user', user);
-	    return res.redirect('/login/success?return=' + ret +
-				'&barista_token=' +
-				encodeURIComponent(user['uri']));
+	  // TODO: Real token get and register new session.
+	  console.log('user', user);
+          return _response_redirect_to_success(res, ret, user['uri']);
 	}
     })(req, res, next);
 });
