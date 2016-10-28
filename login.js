@@ -37,7 +37,7 @@ function _extract_referer_query_field(req, field){
     var ret = null;
 
     if( req && req['headers'] && req['headers']['referer'] ){	
-	console.log('req', req['headers']['referer']);
+	console.log('referer', req['headers']['referer']);
 	var ref_url = req['headers']['referer'];
 	if( us.isString(ref_url) ){
 	    var ref_query = url.parse(ref_url).query;
@@ -359,6 +359,7 @@ app.get('/login', function(req, res){
     var ret = null;
     if( req.query && req.query['return'] ){
 	ret = req.query['return'];
+	req.session.return = ret;
     }
 
     // TODO: Complain if nothing to return to.
@@ -451,11 +452,30 @@ app.get('/auth/:method/callback', function(req, res, next) {
 	method = 'oauth2';
     }
 
-    // Get return argument (originating URL) if there.
-    var ret = _extract_referer_query_field(req, 'return');
+    // Try and extract our return url by a couple of different
+    // methods.
+    // First, see if we stashed it in the session.
+    var ret = null;
+    if( req.session && us.isString(req.session['return']) ){
+	console.log('Recovered return URL from session.');
+	ret = req.session['return'];
+	req.session['return'] = null; // don't confuse ourselves later
+    }
+    // Fall back on trying to get return argument from the header
+    // referer.
+    if( ! ret ){
+	ret = _extract_referer_query_field(req, 'return');
+	if( ret ){
+	    console.log('recovered return from session');
+	}
+    }
     console.log('/auth/'+method_title+'/callback GET got "return": ' + ret);
-    // TODO: Err if nothing to return to?
-    
+
+    // TODO: Err if nothing to return to? Or in the more likely case
+    // of losing my return in the middle, tell people to start again
+    // somewhere?
+
+    // Final redirections.
     passport.authenticate(method, function(err, user, info){
 	if( err ){
 	    console.log('"'+method_title+'" unknown error:', err);
