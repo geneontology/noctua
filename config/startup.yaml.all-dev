@@ -49,8 +49,12 @@ EXTERNAL_BROWSER_LOCATION:
 ## File locations.
 USER_DATA:
   comment: The location of the known users for the system (GO metadata users.yaml style).
-  type: directory
+  type: file
   value: ~/local/src/git/go-site/metadata/users.yaml
+GROUP_DATA:
+  comment: The location of the known groups for the system (GO metadata groups.yaml style).
+  type: file
+  value: ~/local/src/git/go-site/metadata/groups.yaml
 NOCTUA_MODELS:
   comment: The directory of the noctua models to use and monitor.
   type: directory
