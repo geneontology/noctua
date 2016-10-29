@@ -95,6 +95,20 @@ if( ! user_fname ){
     ll('Will pull user info from: ' + user_fname);
 }
 
+// Pull in and keyify the group information.
+var group_fname = argv['g'] || argv['groups'];
+if( ! group_fname ){
+    _die('Option (g|groups) is required.');
+
+    // Make sure extant, etc.
+    var gstats = fs.statSync(group_fname);
+    if( ! gstats.isFile() ){
+	_die('Option (g|groups) is not a file: ' + group_fname);
+    }
+}else{
+    ll('Will pull group info from: ' + group_fname);
+}
+
 // See if we want to use the (for now) optional barista context.
 var barista_context = argv['c'] || argv['context'] || 'go';
 if( barista_context ){
@@ -337,7 +351,7 @@ var AppGuard = function(app_list){
 // implement either: a new token every response or rolling time window
 // which is searched.
 // {day1: {SET2}, day2: {SET2}}
-var Sessioner = function(auth_list){
+var Sessioner = function(auth_list, group_list){
     var self = this;
 
     // NOTE: Order is important here--the later privs override earlier
@@ -346,10 +360,18 @@ var Sessioner = function(auth_list){
 	'allow-edit', // can edit models
 	'allow-admin' // has powers
     ];
-
+    
     var ucolor_list = [
-	'red', 'green', 'purple', 'blue', 'brown', 'black'
+	'red', 'green', 'purple', 'blue', 'brown', 'black', 'orange'
     ];
+
+    // Hashify the contents of the group listing for later lookup.
+    var group_info = {};
+    us.each(group_list, function(group){
+	if( us.isString(group['id']) && us.isString(group['label']) ){
+	    group_info[group['id']] = group;
+	}
+    });
 
     // Generate a new token.
     function get_token(){
@@ -365,6 +387,7 @@ var Sessioner = function(auth_list){
     }
 
     // Strings to md5.
+    // NOTE/TODO: Legacy after Persona switch.
     function str2md5(str){
 	var shasum = crypto.createHash('md5');
 	shasum.update(str);
@@ -374,34 +397,67 @@ var Sessioner = function(auth_list){
 
     // User information is statically stored by various keys. To
     // become a sessions, it is aggregated over in sessions_by_token.
-    var uinf_by_md5 = {};
-    //var uinf_by_email = {};
+    var uinf_by_md5 = {}; // NOTE/TODO: Legacy after Persona switch.
+    var uinf_by_uri = {};
     //var uinf_by_socket = {}; // will have to be built as we go
-    each(auth_list, function(a){
+    each(auth_list, function(auth_line){
+
+	var a = us.clone(auth_line);
+
+	// While we're here, cycle through and toss out any unknown
+	// groups. Let's start with nuking all the groups in the
+	// clone, then working back.
+	a['groups'] = [];
+	if( us.isArray(auth_line['groups']) ){
+	    us.each(auth_line['groups'], function(group_id){
+		if( group_info[group_id] ){
+		    a['groups'].push(group_info[group_id]);
+		}else{
+		    console.log('Skipping unknown group in users: ' + group_id +
+				' for ' + a['uri']);
+		}
+	    });
+	}
+
+	// Also, let's at least ensure that "accounts" is at least
+	// defined as a hash.
+	if( ! us.isObject(a['accounts']) ){
+	    a['accounts'] = {};
+	}
+	
 	// There are a list of valid emails, so hash for them all.
 	var valid_em5_list = a['email-md5'];
 	each(valid_em5_list, function(em5){
 	    uinf_by_md5[em5] = a;
 	});
+	
+	// Just the URI.
+	uinf_by_uri[a['uri']] = a;
+
+	//console.log(a);
     });
 
     // At the end, all sessions are keyed by the referring token.
     var sessions_by_token = {};
-    // This is tied to the session.
-    var email2token = {};
+    // Maps that we need to manage tied to the session.
+    var email2token = {}; // NOTE/TODO: Legacy after Persona switch.
+    var uri2token = {};
 
     /*
-     * Failure is an unknown, unauthorized, or ill-formed user.
+     * Failure is an unknown, unauthorized, or ill-formed user. If no
+     * user_type is listed, assume the lowest ranked one for the
+     * attempt.
+     * NOTE/TODO: Legacy after Persona switch.
      */
     self.authorize_by_email = function(email, user_type){
 	var ret = false;
-
+	
 	// If no user_type is listed, assume the lowest ranked one for
 	// the attempt.
 	if( ! us.isString(user_type) ){
 	    user_type = known_user_types[0];
 	}
-
+	
 	// Our requirements are: email (by md5 proxy), uri, and
 	// "noctua/go" authorization (empty is fine).
 	var emd5 = str2md5(email);
@@ -425,32 +481,111 @@ var Sessioner = function(auth_list){
 		      ret = true;
 	    }
 	}
-
+	
 	return ret;
-   };
+    };
+    
+    /*
+     * Failure is an unknown, unauthorized, or ill-formed user. If no
+     * user_type is listed, assume the lowest ranked one for the
+     * attempt.
+     */
+    self.authorize_by_uri = function(uri, user_type){
+	var ret = false;
+
+	// If no user_type is listed, assume the lowest ranked one for
+	// the attempt.
+	if( ! us.isString(user_type) ){
+	    user_type = known_user_types[0];
+	}
+
+	// Our requirements are: uri and "noctua/go" authorization
+	// (empty is fine).
+	var uinf = uinf_by_uri[uri];
+	if( uinf ){
+	    // Check the user credentials against what we had in the
+	    // users' file for our specific context.
+	    if( uinf['uri'] &&
+		uinf['authorizations'] &&
+		uinf['authorizations']['noctua'] &&
+		uinf['authorizations']['noctua'][barista_context] &&
+		uinf['authorizations']['noctua'][barista_context][user_type] ){
+		ret = true;
+	    // Legacy checking.
+	    // TODO: Remove this and just leave the templated
+	    // context-sensitive checking above.
+	    }else if( uinf['uri'] &&
+		      uinf['authorizations'] &&
+		      uinf['authorizations']['noctua-go'] &&
+		      uinf['authorizations']['noctua-go'][user_type] ){
+		      ret = true;
+	    }
+	}
+	
+	return ret;
+    };
     
     // Internal function to actually create the used session
     // structure.
-    function _gel_session(email, token, nickname, uri, user_type){
+    // NOTE/TODO: Can safely remove email stuff after Persona switch.
+    function _gel_session(token, uri, user_type,
+			  nickname, groups, accounts, email){
+
+	// token and uri are super critical.
+	if( ! us.isString(token) ){
+	    throw new Error('bad user token');
+	}
+	if( ! us.isString(uri) ){
+	    throw new Error('bad user uri');
+	}
 
 	// Double check user type.
 	if( ! us.contains(known_user_types, user_type) ){
 	    throw new Error('unknown user type: ' + user_type);
 	}
 
+	// Well, name is unimportant technically if we have the uri.
+	console.log(nickname);
+	if( ! us.isString(nickname) ){
+	    nickname = '???';
+	}
+	
+	// Groups and accounts, while not required, will be empty.
+	var sess_groups = [];
+	if( us.isArray(groups) ){
+	    sess_groups = groups;
+	}
+	var sess_accounts = {};
+	if( us.isObject(accounts) ){
+	    sess_accounts = accounts;
+	}
+	
+	// Email/md5 is now optional: moving to a post-Persona
+	// universe.
+	var emd5 = null;
+	if( email ){
+	    emd5 = str2md5(email);
+	}else{
+	    email = null;
+	}
+
+	// Color is random.
+	var color = get_color();
+
 	// Create new session.
-	var emd5 = str2md5(email);
-	var color = get_color(); // random color
 	sessions_by_token[token] = {
-	    'nickname': nickname,
-	    'uri': uri,
-	    'email': email,
-	    'email-md5': emd5,
 	    'token': token,
+	    'uri': uri,
+	    'user-type': user_type, // this will be the highest rank available
 	    'color': color,
-	    'user-type': user_type // this will be the highest rank available
+	    'nickname': nickname,
+	    'groups': sess_groups,
+	    'accounts': sess_accounts,
+	    'email': email,
+	    'email-md5': emd5
 	};
 	email2token[email] = token;
+	uri2token[uri] = token;
 	
 	// Clone for return.
 	var ret = clone(sessions_by_token[token]);
@@ -462,6 +597,7 @@ var Sessioner = function(auth_list){
      * Will not clobber if a session exists--just return what's there.
      * Cloned object or null.
      */
+    // NOTE/TODO: Legacy after Persona switch.
     // TODO: Session lifespan: every time a new session is created,
     // clear out old sessions.
     self.create_session_by_email = function(email){
@@ -482,14 +618,57 @@ var Sessioner = function(auth_list){
 	    // Get available user information.
 	    var emd5 = str2md5(email);
 	    var uinf = uinf_by_md5[emd5];
-	    var new_nick = uinf['nickname'] || '???';
 	    var new_uri = uinf['uri'];
-
+	    var new_nick = uinf['nickname'] || '???';
+	    var new_groups = uinf['groups'] || [];
+	    var new_accounts = uinf['accounts'] || {};
+	    
 	    // Generate a new token.
 	    var new_token = get_token();
 
 	    // Gel and clone for return.
-	    return _gel_session(email, new_token, new_nick, new_uri, user_type);
+	    return _gel_session(new_token, new_uri, user_type,
+				new_nick, new_groups, new_accounts, email);
+	}
+
+	return ret;
+    };
+
+    /*
+     * Will not clobber if a session exists--just return what's there.
+     * Cloned object or null.
+     */
+    // TODO: Session lifespan: every time a new session is created,
+    // clear out old sessions.
+    self.create_session_by_uri = function(uri){
+
+	// Cycle through to see what kind of user we have.
+	var user_type = null;
+	us.each(known_user_types, function(try_user_type){
+	    if( self.authorize_by_uri(uri, try_user_type) ){
+		user_type = try_user_type;
+	    }
+	});
+
+	var ret = null;
+	if( ! user_type ){
+	    // Cannot--likely bad info or unauthorized.
+	}else{
+
+	    // Get available user information.
+	    var uinf = uinf_by_uri[uri];
+	    var new_uri = uinf['uri'];
+	    var new_nick = uinf['nickname'] || '???';
+	    var new_email = uinf['email'] || null;
+	    var new_groups = uinf['groups'] || [];
+	    var new_accounts = uinf['accounts'] || {};
+	    
+	    // Generate a new token.
+	    var new_token = get_token();
+
+	    // Gel and clone for return.
+	    return _gel_session(new_token, new_uri, user_type,
+				new_nick, new_groups, new_accounts, new_email);
 	}
 
 	return ret;
@@ -498,17 +677,29 @@ var Sessioner = function(auth_list){
     /*
      * Add a bogus session for testing--dangerous!
      */
-    self.create_bogus_session = function(email, token, nickname, uri, user_type){
-	return _gel_session(email, token, nickname, uri, user_type);
+    self.create_bogus_session = function(token, uri, user_type,
+					 nickname, groups, accounts, email){
+	return _gel_session(token, uri, user_type,
+			    nickname, groups, accounts, email);
+    };
+
+    /*
+     * Cloned object or null.
+     * NOTE/TODO: Legacy after Persona switch.
+     */
+    self.get_session_by_email = function(email){
+    	var token = email2token[email];
+    	var ret = self.get_session_by_token(token);
+    	return ret;
     };
 
     /*
      * Cloned object or null.
      */
-    self.get_session_by_email = function(email){
-	var token = email2token[email];
-	var ret = self.get_session_by_token(token);
-	return ret;
+    self.get_session_by_uri = function(uri){
+    	var token = uri2token[uri];
+    	var ret = self.get_session_by_token(token);
+    	return ret;
     };
 
     /*
@@ -521,6 +712,7 @@ var Sessioner = function(auth_list){
 	each(sessions_by_token,
 	     function(token, session){
 		 ret.push(clone(session));
+		 console.log(session);
 	     });
 
 	return ret;
@@ -545,33 +737,41 @@ var Sessioner = function(auth_list){
     /*
      * True or false.
      */
-    self.delete_session_by_email = function(email){
-	var ret = null;
-	
-	var token = email2token[email];
-	if( token ){
-	    delete sessions_by_token[token];
+    self.delete_session_by_token = function(token){
+	var ret = false;
+
+	if( sessions_by_token[token] ){
+	    // Email deletion.
+	    // NOTE/TODO: Legacy after Persona switch.
+	    var email = sessions_by_token[token]['email'];
 	    delete email2token[email];
+	    // URI deletion.
+	    var uri = sessions_by_token[token]['uri'];
+	    delete uri2token[uri];
+	    // Session deletion.
+	    delete sessions_by_token[token];
+
 	    ret = true;
 	}
-
+	
 	return ret;
     };
 
     /*
      * True or false.
+     * NOTE/TODO: Legacy after Persona switch.
      */
-    self.delete_session_by_token = function(token){
-	var ret = false;
+    self.delete_session_by_email = function(email){
+    	var token = email2token[email];
+	return self.delete_session_by_token(token);
+    };
 
-	if( sessions_by_token[token] ){
-	    var email = sessions_by_token[token]['email'];
-	    delete email2token[email];
-	    delete sessions_by_token[token];
-	    ret = true;
-	}
-	
-	return ret;
+    /*
+     * True or false.
+     */
+    self.delete_session_by_uri = function(uri){
+	var token = uri2token[uri];	
+	return self.delete_session_by_token(token);
     };
 };
 
@@ -581,22 +781,28 @@ var Sessioner = function(auth_list){
 
 // Bring in metadata that will be used for identifying user. Spin-up
 // session manager. Written as separate function to make the REPL easier
-function _setup_sessioner(fname){
+function _setup_sessioner(fname, gname){
 
     var auth_list = yaml.load(fname);
+    var group_list = yaml.load(gname);
 
-    var new_sessioner = new Sessioner(auth_list);
+    var new_sessioner = new Sessioner(auth_list, group_list);
 
     // Bring on the listed bogus user sessions.
     us.each(bogus_users, function(bu){
-	new_sessioner.create_bogus_session(bu['email'], bu['token'],
-					   bu['nickname'], bu['uri'],
-					   bu['user-type']);
+	new_sessioner.create_bogus_session(
+	    bu['token'],
+	    bu['uri'],
+	    bu['user-type'],
+	    bu['nickname'],
+	    [],
+	    {},
+	    bu['email']);
     });
 
     return new_sessioner;
 }
-var sessioner = _setup_sessioner(user_fname);
+var sessioner = _setup_sessioner(user_fname, group_fname);
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
@@ -646,16 +852,17 @@ var BaristaLauncher = function(){
 	}
 	
 	// Reset.
-	var rld_cmd = vantage.command('reset [filename]');
-	rld_cmd.description("Reset using a specified file for the Sessioner, defaults to initial file.");
+	var rld_cmd = vantage.command('reset [user_filename] [group_filename]');
+	rld_cmd.description("Reset using a specified file for the Sessioner, defaults to initial files.");
 	rld_cmd.action(function(args, cb){
-	    var fname = args.filename || user_fname;
+	    var fname = args.user_filename || user_fname;
+	    var gname = args.group_filename || group_fname;
 	    
 	    var new_sessioner = null;
 	    try {
-		new_sessioner = _setup_sessioner(fname);
+		new_sessioner = _setup_sessioner(fname, gname);
 	    }catch(e){
-		rlog(this, 'Failed to load: ' + fname);
+		rlog(this, 'Failed to load: ' + fname + ' or ' + gname);
 	    }
 	    
 	    if( new_sessioner ){
@@ -667,26 +874,33 @@ var BaristaLauncher = function(){
 	});
 
 	// Refresh.
-	var rfr_cmd = vantage.command('refresh [filename]');
-	rfr_cmd.description("Refresh using a specified file for the Sessioner, defaults to initial file.");
+	var rfr_cmd =
+		vantage.command('refresh [user_filename] [group_filename]');
+	rfr_cmd.description("Refresh using a specified file for the Sessioner, defaults to initial files.");
 	rfr_cmd.action(function(args, cb){
-	    var fname = args.filename || user_fname;
+	    var fname = args.user_filename || user_fname;
+	    var gname = args.group_filename || group_fname;
 	    
 	    var current_sessions = sessioner.get_sessions();
 
 	    var new_sessioner = null;
 	    try {
-		new_sessioner = _setup_sessioner(fname);
+		new_sessioner = _setup_sessioner(fname, gname);
 	    }catch(e){
-		rlog(this, 'Failed to load: ' + fname);
+		rlog(this, 'Failed to load: ' + fname + ' or ' + gname);
 	    }
 	    
 	    if( new_sessioner ){
 
 		us.each(current_sessions, function(cs){
-		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
-						       cs['nickname'], cs['uri'],
-						       cs['user-type']);
+		    new_sessioner.create_bogus_session(
+			cs['token'],
+			cs['uri'],
+			cs['user-type'],
+			cs['nickname'],
+			[],
+			{},
+			cs['email']);
 		});
 
 		sessioner = new_sessioner;
@@ -697,20 +911,22 @@ var BaristaLauncher = function(){
 	});
 
 	// Setup bogus session.
-	var bog_cmd = vantage.command('bogus [email] [token] [name] [uri] [user_type]');
-	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved. User types are 'allow-edit' and 'allow-admin'.");
+	var bog_cmd = vantage.command('bogus [token] [uri] [user_type] [name] [email]');
+	bog_cmd.description("Create a temporary bogus session; use with caution as this bad data can be saved. User types are 'allow-edit' and 'allow-admin'. No groups or accounts are current possible.");
 	bog_cmd.action(function(args, cb){
-	    var email = args.email;
+	    // Required.
 	    var token = args.token;
-	    var name = args.name || '???';
 	    var uri = args.uri;
 	    var user_type = args.user_type;
+	    // Optional.
+	    var name = args.name || '???';
+	    var email = args.email;
 	    
-	    if( ! email || ! token || ! name || ! uri || ! user_type ){
+	    if( ! token || ! uri || ! user_type ){
 		rlog(this, 'Cannot create bogus session with given info.' );
 	    }else{
-		sessioner.create_bogus_session(email, token, name,
-					       uri, user_type);
+		sessioner.create_bogus_session(token, uri, user_type,
+					       name, [], {}, email);
 		rlog(this, 'Created bogus session with given info.' );
 	    }
 	    
@@ -1131,36 +1347,40 @@ var BaristaLauncher = function(){
 	    ll('non-admin triggered refresh--ignoring');
 	}else if( (do_reset_p||do_refresh_p) && sess_stat === SESS_GOOD_ADMIN ){
 	    
-	    // TODO: In-place refresh from given file.
+	    // In-place refresh from given files.
 	    ll('admin triggered refresh');
 
 	    // Dump current sessions, or not, depending the type of
-	    // operation that we'll do.
+	    // operation--refresh or reset--that we'll do.
 	    var current_sessions = [];
 	    if( do_refresh_p ){
 		current_sessions = sessioner.get_sessions();
 	    }
 
-	    // Load file.
+	    // Gingerly reload files, wiping out current session set.
 	    var new_sessioner = null;
 	    try {
-		new_sessioner = _setup_sessioner(user_fname);
+		new_sessioner = _setup_sessioner(user_fname, group_fname);
 	    }catch(e){
 		ll('Failed to load: ' + user_fname);
 	    }	    
-
 	    if( new_sessioner ){
 
 		// Load current sessions back into the system.
 		us.each(current_sessions, function(cs){
-		    new_sessioner.create_bogus_session(cs['email'], cs['token'],
-						       cs['nickname'], cs['uri'],
-						       cs['user-type']);
+		    new_sessioner.create_bogus_session(
+			cs['token'],
+			cs['uri'],
+			cs['user-type'],
+			cs['nickname'],
+			[],
+			{},
+			cs['email']);
 		});
 	    
 		// Final reload by switching.
 		sessioner = new_sessioner;
-		ll('(Re)loaded: ' + user_fname);
+		ll('(Re)loaded: ' + user_fname + ' and ' + group_fname);
 	    }
 	}
 
@@ -1181,7 +1401,7 @@ var BaristaLauncher = function(){
 	    }
 	});
 
-	// Mustache is dump; do we have any sessions?
+	// Mustache is dumb; do we have any sessions?
 	var barista_sessions_p = false;
 	if( us.isArray(sessions) && sessions.length > 0 ){
 	    barista_sessions_p = true;

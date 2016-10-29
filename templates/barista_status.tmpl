@@ -50,7 +50,9 @@
 	    {{#show_editor_p}}
 	    <th>last</th>
 	    <th>email</th>
+	    <th>groups</th>
 	    {{#show_admin_p}}
+	    <th>accounts</th>
 	    <th>type</th>
 	    <th>token</th>
 	    {{/show_admin_p}}
@@ -63,11 +65,29 @@
 	    
 	    <td><span style="color: {{color}};">&#x2b24;</span> {{color}}</td>
 	    <td>{{nickname}}</td>
-	    <td>{{uri}}</td>
+	    <td><a href="{{uri}}">{{uri}}</a></td>
 	    {{#show_editor_p}}
 	    <td>{{_last_op}}</td>
 	    <td>{{email-md5}}</td>
+	    <td>
+	    {{#groups}}
+	    <a href="{{id}}">{{label}}</a></br>
+	    {{/groups}}
+	    </td>
 	    {{#show_admin_p}}
+	    <td>
+	    {{#accounts}}
+	    {{#github}}
+	    GitHub:&nbsp;<a href="http://github.com/{{github}}">{{github}}</a><br/>
+	    {{/github}}
+	    {{#google-plus}}
+	    Google+:&nbsp;<a href="http://plus.google.com/{{accounts.google-plus}}">{{accounts.google-plus}}</a><br/>
+	    {{/google-plus}}
+	    {{#orcid}}
+	    ORCID:&nbsp;<a href="http://orcid.org/{{accounts.orcid}}">{{accounts.orcid}}</a><br/>
+	    {{/orcid}}
+	    {{/accounts}}
+	    </td>
 	    <td>{{user-type}}</td>
 	    <td>{{token}}</td>
 	    {{/show_admin_p}}
