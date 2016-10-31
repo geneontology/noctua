@@ -2393,20 +2393,39 @@ function reporter(output_id){
  * Parameters: 
  *  barista_loc - barista location
  *  given_token - token
+ *  elt_id - element to replace
+ *  user_callback - [optional] function to call on successful session get; single argument is the session object
  *  
  * Returns: n/a
  */
-function user_check(barista_loc, given_token, div_id){
+function user_check(barista_loc, given_token, elt_id, user_callback){
 
+    if( ! user_callback ){
+	user_callback = function(){};
+    }
+    
     var user_info_loc = barista_loc + "/user_info_by_token/" + given_token;
     jQuery.ajax({
 	'type': "GET",
 	'url': user_info_loc,
 	'dataType': "json",
-	'error': function(){alert('had an error getting user info--oops!');},
+	'error': function(){
+	    alert('had an error getting user info for: ' + given_token);
+	},
 	'success': function(data){
 	    if( data && data['nickname'] ){
-		jQuery('#' + div_id).replaceWith(data['nickname']);
+
+		// Create widget.
+		var nsel = [
+		    '<span id="' + elt_id + '">',
+		    data['nickname'],
+		    '</span>'
+		];
+		jQuery('#' + elt_id).replaceWith(nsel.join(''));
+
+		// TODO: User callback on change.
+		// Called initially on first/top element.
+		
 	    }else{
 		alert('You seem to have a bad token; will try to clean...');
 		var to_remove = 'barista_token=' + given_token;
