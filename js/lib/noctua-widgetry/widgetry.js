@@ -2400,11 +2400,8 @@ function reporter(output_id){
  * Returns: function that returns current group id/state ???
  */
 function user_check(barista_loc, given_token, elt_id,
-		    init_user_group, change_group_announce_fun){
+		    change_group_announce_fun){
 
-    // if( ! user_group_fun ){
-    // 	user_group_fun = function(){ return null; };
-    // }
     if( ! change_group_announce_fun ){
 	change_group_announce_fun = function(group_id){
 	    alert('Ignoring group change to: ' + group_id);
@@ -2547,7 +2544,23 @@ function user_check(barista_loc, given_token, elt_id,
 	    alert('had an error getting user info for: ' + given_token);
 	},
 	'success': function(data){
+
+	    // Figure out if there is an initial group to handle.
+	    var init_user_group = null;
+	    if( data && us.isArray(data['groups']) ){
+		if( data['groups'].length > 0 ){
+		    var first_group = data['groups'][0];
+		    if( first_group && first_group['id'] ){
+			init_user_group = first_group['id'];
+		    }
+		}
+	    }
+
+	    // Initial draw, hopefully with the right group.
 	    _redraw_widget(init_user_group, data);
+
+	    // Initial use og change group announce fun.
+	    change_group_announce_fun(init_user_group);
 	}
     });
 }
