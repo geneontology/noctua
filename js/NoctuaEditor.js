@@ -2626,6 +2626,20 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
+
+    // When all is said and done, let's get the user and group
+    // information. This is also a test of CORS in express.
+    if( manager.user_token() ){
+	widgetry.user_check(
+	    global_barista_location, manager.user_token(), 'user_name_info',
+	    function(new_group_id){
+		if( ! new_group_id ){
+		    alert('cancelling current gid');
+		}else{
+		    alert('use group: ' + new_group_id);
+		}
+	    });
+    }
 };
 
 ///
@@ -2706,13 +2720,6 @@ jsPlumb.ready(function(){
 		//var rr = manager.get_model(global_id);
 		//ll('rr: ' + rr);
 		
-		// When all is said and done, let's also fillout the user
-		// name just for niceness. This is also a test of CORS in
-		// express.
-		if( start_token ){
-	    	    widgetry.user_check(global_barista_location,
-	    				start_token, 'user_name_info');
-		}
 	    }
 	}
 

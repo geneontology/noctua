@@ -1505,7 +1505,7 @@ var BaristaLauncher = function(){
 	try{
 	    //ll(jsonp);
 	    var resp_json = JSON.parse(json_string);
-		// ll('barista.RESPONSE:\n' + JSON.stringify(resp_json, null, 2));
+	    // ll('barista.RESPONSE:\n' + JSON.stringify(resp_json, null, 2));
 	    resp = new bar_response(resp_json);
 	}catch(e){
 	    response_okay_p = false;
@@ -1524,15 +1524,15 @@ var BaristaLauncher = function(){
 	    }else if( resp.signal() === 'merge' ){
 		ll("Broadcast merge.");
 		sio.emit('relay', {'class': 'merge',
-					   'model_id': resp.model_id(),
-					   'packet_id': resp.packet_id(),
-					   'data': resp.raw()});
+				   'model_id': resp.model_id(),
+				   'packet_id': resp.packet_id(),
+				   'data': resp.raw()});
 	    }else if( resp.signal() === 'rebuild' ){
 		ll("Broadcast rebuild.");
 		sio.emit('relay', {'class': 'rebuild',
-					   'model_id': resp.model_id(),
-					   'packet_id': resp.packet_id(),
-					   'data': resp.raw()});
+				   'model_id': resp.model_id(),
+				   'packet_id': resp.packet_id(),
+				   'data': resp.raw()});
 	    }else{
 		ll("Skip broadcast of message (different signal).");
 	    }
