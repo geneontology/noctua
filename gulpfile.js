@@ -91,30 +91,30 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'form_noctua_clients': [
-      'js/NoctuaBasic/NoctuaBasicApp.js'
+//      'js/NoctuaBasic/NoctuaBasicApp.js'
     ],
     'core_noctua_clients': [
-    	'js/NoctuaEditor.js',
+//    	'js/NoctuaEditor.js',
     	'js/NoctuaLanding.js'
     ],
     'core_barista_clients': [
-        'js/BaristaLogin.js',
-        'js/BaristaLogout.js',
-        'js/BaristaSession.js'
+//        'js/BaristaLogin.js',
+//        'js/BaristaLogout.js',
+//        'js/BaristaSession.js'
     ],
     'core_workbench_clients': [
         // A temporary place for internal workspaces.
         //'workbenches/copy_in_model/CopyInModel.js',
-        'workbenches/mmcc/MMCC.js',
-        'workbenches/bioentity_companion/BioentityCompanion.js',
-        'workbenches/companion/Companion.js',
-        'workbenches/cytoview/CytoView.js'
+//        'workbenches/mmcc/MMCC.js',
+//        'workbenches/bioentity_companion/BioentityCompanion.js',
+//        'workbenches/companion/Companion.js',
+//        'workbenches/cytoview/CytoView.js'
     ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
     tests: ['tests/*.test.js'],
     lint_targets: [
-	'js/NoctuaEditor.js',
+//	'js/NoctuaEditor.js',
 	'js/NoctuaLanding.js'
     ]
 };
@@ -419,7 +419,7 @@ var minerva_opts_base = [
     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
     '--port', minerva_port,
     '-f', noctua_store, // blazegraph journal file
-    '-export-folder', noctua_models
+    '--export-folder', noctua_models
 ];
 
 var minerva_opts_lookup = [
@@ -524,15 +524,6 @@ if( external_browser_location ){
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list
-)));
-
-// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml
-gulp.task('run-epione', shell.task(_run_cmd(
-    ['node', 'epione.js',
-     '--users', user_data,
-     '--monitor', noctua_models,
-     '--golr', golr_location
-    ]
 )));
 
 ///
