@@ -478,6 +478,13 @@ gulp.task('batch-minerva-flush-journal', shell.task(_run_cmd([
     ' -f', noctua_models
 ])));
 
+// Minerva batch: get used minerva version.
+gulp.task('batch-minerva-version', shell.task(_run_cmd([
+    'java',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--version'
+])));
+
 // // Minerva batch: destroy the current journal.
 // gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
 //     'rm', '-f', noctua_store
