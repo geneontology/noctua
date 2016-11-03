@@ -721,6 +721,26 @@ var MinervaBootstrapping = function(user_token){
     ///
 
     manager.get_meta();
+
+    // When all is said and done, let's get the user and group
+    // information. This is also a test of CORS in express.
+    if( manager.user_token() ){
+	widgetry.user_check(
+	    global_barista_location, manager.user_token(), 'user_name_info',
+	    function(new_group_id){
+		if( ! new_group_id ){
+		    manager.use_groups(null);
+		    // console.log('removing groups from user "' +
+		    // 		manager.user_token() + '"');
+		}else{
+		    manager.use_groups([new_group_id]);
+		    // console.log('adding group "'+ new_group_id +'" to user ' +
+		    // 		manager.user_token());
+		}
+		console.log('current groups "' + manager.use_groups() +
+			    '" for user ' + manager.user_token());
+	    });
+    }
 };
 
 // Start the day the jsPlumb way.
@@ -739,13 +759,5 @@ jQuery(document).ready(function(){
 	    // Only roll if the env is correct.
 	    // Will use the above variables internally (sorry).
 	    MinervaBootstrapping(start_token);
-
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
-	    if( start_token ){
-		widgetry.user_check(global_barista_location,
-				    start_token, 'user_name_info');
-	    }
 	}
 });
