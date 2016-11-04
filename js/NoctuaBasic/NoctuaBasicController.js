@@ -1,5 +1,10 @@
-/* xeslint-disable */
+/* eslint-disable */
 /* eslint new-cap: 0 */
+/* global global_barista_token */   // from puptent
+/* global global_barista_location */   // from puptent
+/* global global_minerva_definition_name */   // from puptent
+/* global model_id */   // from puptent
+/* global global_model_type */   // from puptent
 
 var jQuery = require('jquery');
 var bbop = require('bbop').bbop;
@@ -297,7 +302,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     };
   }
 
-  /* global model_id */   // from puptent
   this.model_id = model_id;
   this.export_owl_url = '/download/' + this.model_id + '/owl';
   this.edit_graph_url = '/editor/graph/' + this.model_id;
@@ -330,10 +334,33 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
   this.editingSubject = false;
   this.modelSubject = null;
+  this.modelSubjectMonarchKey = null;
   this.modelSubjectLabel = null;
   this.modelSubjectNodeId = null;
-  /* global global_model_type */   // from puptent
   this.modelType = global_model_type;
+
+
+  //
+  // Mapping between HPO Short Codes and either an ECO code or an HPO synthetic code.
+  // Once the ECO incorporates HPO's codes, this code can be simplified or deleted.
+  //
+  var ecoPrefix = 'http://purl.obolibrary.org/obo/ECO_';
+  var hpPrefix = 'http://human-phenotype-ontology.github.io/documentation.html#annot';
+  this.HPShortCodes = {  /* eslint no-multi-spaces: 0 */
+    IEA: {id: 'ECO:0000501',  label: 'Inferred from Electronic Annotation', url: ecoPrefix + '0000501'},
+    ITM: {id: 'ECO:HPOITM',   label: 'Inferred by Text-mining', url: hpPrefix},
+    TAS: {id: 'ECO:0000304',  label: 'Traceable Author Statement', url: ecoPrefix + '0000304'},
+    PCS: {id: 'ECO:HPOPCS',   label: 'Published Clinical Study', url: hpPrefix},
+    ICE: {id: 'ECO:HPOICE',   label: 'Individual Clinical Experience', url: hpPrefix}
+  };
+  this.HPECOToShortCode = {
+    'ECO:0000501': 'IEA',
+    'ECO:HPOITM': 'ITM',
+    'ECO:0000304': 'TAS',
+    'ECO:HPOPCS': 'PCS',
+    'ECO:HPOICE': 'ICE'
+  };
+
 
   this.newSubject = null;
 
@@ -365,9 +392,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     // Only roll if the env is correct.
 
     // Try to define token.
-    /* global global_barista_token */   // from puptent
-    /* global global_barista_location */   // from puptent
-    /* global global_minerva_definition_name */   // from puptent
     if (global_barista_token) {
       user_token = global_barista_token;
       that.user_token = user_token;
@@ -453,30 +477,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-  this.editSubject = function() {
-    that.newSubject = that.modelSubject;
-    that.editingSubject = true;
-
-    var subject_selectize = jQuery('#select_subject_default')[0].selectize;
-    subject_selectize.clearCache("option");
-    subject_selectize.clearOptions();
-    subject_selectize.addOption([{
-      "id": that.newSubject,
-      "annotation_class_label_searchable": that.modelSubjectLabel
-    }]);
-
-    subject_selectize.setValue(that.newSubject);
-
-    $timeout(function () {
-      angular.element('#modelSubject').focus();
-    }, 10);
-  };
-
-  this.cancelEditSubject = function(newSubject) {
-    that.editingSubject = false;
-  };
-
-
   function isType(type, node) {
     var types = node._types;
     if (types.length == 1) {
@@ -521,6 +521,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       var subject_tmp_id = r.add_individual(that.newSubject);
 
       that.modelSubject = that.newSubject;
+      that.modelSubjectMonarchKey = that.modelSubject.replace(/^MeSH:/, 'MESH:');
       that.modelTitle = that.newTitle;
       that.modelSubjectLabel = [that.newSubject, that.newSubject];
       that.modelSubjectNodeId = subject_tmp_id;
@@ -546,7 +547,17 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     var types = node._types;
 
     if (types.length === 1) {
-      return types[0].class_label();
+      var result = types[0].class_label();
+      if (that.modelType === 'hpo') {
+        if (result.indexOf('ECO:HPO') === 0) {
+          var code = result.slice(7);
+          code = that.HPShortCodes[code];
+          if (code) {
+            result = code.label;
+          }
+        }
+      }
+      return result;
     }
     else {
       return "";
@@ -565,6 +576,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     else {
       var subject = annotations[0].value(); // there should be only one
       that.modelSubject = subject;
+      that.modelSubjectMonarchKey = subject.replace(/^MeSH:/, 'MESH:');
       that.modelSubjectNodeId = subject;
       that.modelSubjectLabel = [subject, subject];
     }
@@ -611,6 +623,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       var nodes = graph.get_nodes();
       // fetching exising disease individual if it exists
       var existing_disease_id = getExistingIndividualId(disease_id, nodes);
+
       requestSetForCreation(r, disease_id, phenotype_id, ageofonset_id, evidence_metadata, description, existing_disease_id);
       var result = manager.request_with(r, "create");
 
@@ -660,7 +673,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
 
   this.editRow = function(row, rowIndex, isNew) {
-    // console.log('editRow', row, rowIndex, isNew);
     that.editing_row = row;
     that.new_row = isNew ? row : null;
     that.selected_disease = row.disease_id;
@@ -713,29 +725,34 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     underscore.each(that.selected_evidence_metadata, function(ev) {
       $timeout(function() {
         var ev_selector = '#' + ev.htmlid + '_' + parentIndex + '_' + evIndex;
-        var ev_selectize = jQuery(ev_selector)[0];
-        if (ev_selectize && ev_selectize.selectize) {
-          ev_selectize = ev_selectize.selectize;
-          // console.log('ev_selectize FOUND', ev_selector, ev_selectize);
+        if (that.modelType !== 'hpo') {
+          var ev_selectize = jQuery(ev_selector)[0];
+          if (ev_selectize && ev_selectize.selectize) {
+            ev_selectize = ev_selectize.selectize;
+            // console.log('ev_selectize FOUND', ev_selector, ev_selectize);
+          }
+          else {
+            Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
+              $timeout(function() {
+                ev.id = value;
+              }, 10);
+            }));
+
+            ev_selectize = jQuery(ev_selector)[0].selectize;
+            // console.log('ev_selectize CREATE', ev_selector, ev_selectize);
+          }
+
+          ev_selectize.clearCache("option");
+          ev_selectize.clearOptions();
+          ev_selectize.addOption([{
+            "id": ev.id,
+            "annotation_class_label_searchable": ev.label
+          }]);
+          ev_selectize.setValue(ev.id);
         }
         else {
-          Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
-            $timeout(function() {
-              ev.ev = value;
-            }, 10);
-          }));
-
-          ev_selectize = jQuery(ev_selector)[0].selectize;
-          // console.log('ev_selectize CREATE', ev_selector, ev_selectize);
+          // xxx
         }
-
-        ev_selectize.clearCache("option");
-        ev_selectize.clearOptions();
-        ev_selectize.addOption([{
-          "id": ev.id,
-          "annotation_class_label_searchable": ev.label
-        }]);
-        ev_selectize.setValue(ev.id);
 
         ++evIndex;
       }, 10);
@@ -789,6 +806,8 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   }
 
   function requestSetForCreation(request_set, disease_id, phenotype_id, ageofonset_id, evidence_metadata, description, existing_disease_id) {
+    disease_id = disease_id.replace(/^MESH:/, 'MeSH:');
+
     var phenotype_tmp_id = request_set.add_individual(phenotype_id);
     if (existing_disease_id === null) {
       request_set.add_fact([request_set.add_individual(disease_id),
@@ -808,7 +827,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         evidence_metadata !== null &&
         evidence_metadata.length !== 0) {
       underscore.map(evidence_metadata, function(ev) {
-        var evidence_tmp_id = request_set.add_individual(ev.ev);
+        var evidence_tmp_id = request_set.add_individual(ev.id);
         request_set.add_annotation_to_individual("evidence", evidence_tmp_id, null, phenotype_tmp_id);
         var ref_list = ev.ref_list;
         if (ref_list !== "" && ref_list !== null && ref_list.length !== 0) {
@@ -848,9 +867,16 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       }
     }
 
-    var ev_ref_list = that.selected_evidence_metadata;
+    var ev_ref_list = that.selected_evidence_metadata.map(function(e) {
+      e = angular.copy(e);
+      if (e.id in that.HPShortCodes) {
+        e.id = 'HP:ECO_' + e.id;
+      }
+      return e;
+    });
+
     if (ev_ref_list.length === 1 &&
-        (!ev_ref_list[0].ev || ev_ref_list[0].ev === '')) {
+        (!ev_ref_list[0].id || ev_ref_list[0].id === '')) {
       ev_ref_list = [];
     }
 
@@ -897,39 +923,58 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }
   };
 
-  this.convertECOId = function(colonId) {
-    if (colonId) {
-      colonId = colonId.replace(':', '_');
+
+  this.formatEVURL = function(ev) {
+    var result = 'http://purl.obolibrary.org/obo/' + ev.id.replace(':', '_');
+
+    if (this.modelType === 'hpo') {
+      result = this.HPECOToShortCode[ev.id];
+      result = this.HPShortCodes[result].url;
     }
-    return colonId;
+
+    return result;
+  };
+
+
+  this.formatEVLabel = function(ev) {
+    var result = ev.id + ' ' + ev.label;
+
+    if (this.modelType === 'hpo') {
+      result = this.HPECOToShortCode[ev.id];
+      result = result + ' ' + this.HPShortCodes[result].label;
+    }
+
+    return result;
   };
 
 
 
-  function activate_evidence_widget(ev_ref, id, rowIndex, refIndex) {
-    var ev_selector = '#' + ev_ref.htmlid + '_' + rowIndex + '_' + refIndex;
-    var ev_selectize = jQuery(ev_selector)[0];
-    if (ev_selectize && ev_selectize.selectize) {
-      ev_selectize = ev_selectize.selectize;
-      // console.log('activate_evidence_widget FOUND', ev_selector, ev_selectize);
-    }
-    else {
-      Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
-        ev_ref.ev = value;
-        if (value && value.length > 0) {
-          var ev = that.lookup_ev_by_id(ev_ref.ev);
-          // console.log('ADD_REF:', ev_ref, ev);
-          // that.add_ref(ev);
-        }
-      }));
-      ev_selectize = jQuery(ev_selector)[0];
-      // console.log('activate_evidence_widget CREATE1', ev_selector, ev_selectize);
-      ev_selectize = ev_selectize.selectize;
-      // console.log('activate_evidence_widget CREATE2', ev_selector, ev_selectize);
-    }
+  function activate_evidence_widget(ev, id, rowIndex, refIndex) {
+    var ev_selector = '#' + ev.htmlid + '_' + rowIndex + '_' + refIndex;
+    if (that.modelType !== 'hpo') {
+      var ev_selectize = jQuery(ev_selector)[0];
+      if (ev_selectize && ev_selectize.selectize) {
+        ev_selectize = ev_selectize.selectize;
+        // console.log('activate_evidence_widget FOUND', ev_selector, ev_selectize);
+      }
+      else {
+        Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
+          if (!ev) {
+            console.log('activate_evidence_widget...undefined ev');
+          }
+          else {
+            ev.id = value;
+          }
+        }));
+        ev_selectize = jQuery(ev_selector)[0];
+        // console.log('activate_evidence_widget CREATE1', ev_selector, ev_selectize);
+        ev_selectize = ev_selectize.selectize;
+        // console.log('activate_evidence_widget CREATE2', ev_selector, ev_selectize);
+      }
 
-    ev_selectize.clearCache("option");
-    ev_selectize.clearOptions();
+      ev_selectize.clearCache("option");
+      ev_selectize.clearOptions();
+    }
   }
 
 
@@ -939,7 +984,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       'htmlid': ev_id
     };
     selected_evidence_metadata.push(ev);
-    // console.log('add_ev', rowIndex, ev);
     that.add_ref(ev);
     $timeout(function() {
       activate_evidence_widget(ev, ev_id, rowIndex, selected_evidence_metadata.length - 1);
@@ -962,7 +1006,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   this.lookup_ev_by_id = function(ev_id) {
     var result = null;
     underscore.each(that.selected_evidence_metadata, function(ev) {
-      if (ev.ev === ev_id) {
+      if (ev.id === ev_id) {
         result = ev;
       }
     });
@@ -1038,9 +1082,9 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       //   return build_joined_label(extract_class_id_from_node(evidence_node), extract_class_label_from_node(evidence_node));
       // });
       var counter = 0;
-      var evidence_metadata = underscore.map(evidence_annotations, function(ev) {
+      var evidence_metadata = underscore.map(evidence_annotations, function(ev_node_id) {
         counter += 1;
-        var evidence_node = graph.get_node(ev);
+        var evidence_node = graph.get_node(ev_node_id);
         var evidence_node_annotations = evidence_node._annotations;
         var current_evidence_refs = [];
 
@@ -1058,14 +1102,18 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
           }
         }
 
-        return {
+        var ev = {
           node_id: evidence_node._id,
           id: extract_class_id_from_node(evidence_node),
+          xid: extract_class_id_from_node(evidence_node),
           label: extract_class_label_from_node(evidence_node),
           ref_list: current_evidence_refs,
           htmlid: "ev" + counter
         };
+
+        return ev;
       });
+
       // if (evidences.length === 0) {
       //   evidences = "";
       // }
@@ -1094,20 +1142,10 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       }
 
       that.grid_model.push(entry);
-
-      if (!firstModelSubject) {
-        that.modelSubject = entry.disease_id;
-        that.modelSubjectLabel = build_joined_label(entry.disease_id, entry.disease_label);
-      }
     }
 
     if (that.USE_UI_GRID) {
       that.gridOptions.data = that.grid_model;
-    }
-
-    if (firstModelSubject) {
-      that.modelSubject = firstModelSubject;
-      that.modelSubjectLabel = firstModelSubjectLabel;
     }
   }
 
@@ -1310,10 +1348,12 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
             '</div>';
         },
         itemDisplay: function(item, escape) {
-          return '<div>' +
-            item.id + ' (' + item.annotation_class_label_searchable + ')' +
-            // item.id + ' (' + item.synonym_searchable + ')' +
-            '</div>';
+          var result =
+              '<div>' +
+                item.id +
+                ' (' + item.annotation_class_label_searchable + ')' +
+              '</div>';
+          return result;
         },
         valueField: 'id',
         // searchField: ['id', 'annotation_class_label_searchable'],
@@ -1345,6 +1385,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         '#select_subject_default', that.disease_autocomplete_options(function(value) {
         var title = subject_selectize.options[value].annotation_class_label;
         $timeout(function() {
+          value = value.replace(/^MESH:/, 'MeSH:');
           that.newSubject = value;
           that.newTitle = title;
         }, 10);
@@ -1410,6 +1451,8 @@ var NoctuaBasicControllerBundle = [
 
 var app = angular.module('noctuaBasicApp');
 app.controller('NoctuaBasicController', NoctuaBasicControllerBundle);
+
+
 
 if (USE_UI_GRID) {
   app.filter('phenotypeLabel', function () {

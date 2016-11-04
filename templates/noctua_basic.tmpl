@@ -132,7 +132,7 @@
               Disease:&nbsp;
               <a
                 target="_blank"
-                href="http://monarchinitiative.org/resolve/{{basic.modelSubject}}">
+                href="http://monarchinitiative.org/resolve/{{basic.modelSubjectMonarchKey}}">
                 {{basic.modelSubjectLabel[0]}}&nbsp;
                 {{basic.modelSubjectLabel[0] === basic.modelSubjectLabel[1] ? '' : basic.modelSubjectLabel[1]}}
               </a>
@@ -333,13 +333,27 @@
                       ng-if="basic.editing_row === entry">
 
                       <div
-                        ng-repeat="ev_ref in entry.evidence_metadata track by $index">
-                        <div class="row">
-                          <div class="col-xs-11 evidence-selection">
+                        ng-repeat="ev in basic.selected_evidence_metadata track by $index">
+                        <div
+                          class="row">
+                          <div
+                            ng-if="basic.modelType === 'hpo'"
+                            class="col-xs-11 evidence-selection">
+                            <div class="btn-group" xid="{{ev.htmlid}}_{{entryIndex}}_{{$index}}">
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.IEA.label}}" uib-btn-radio="basic.HPShortCodes.IEA.id">IEA</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.ITM.label}}" uib-btn-radio="basic.HPShortCodes.ITM.id">ITM</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.TAS.label}}" uib-btn-radio="basic.HPShortCodes.TAS.id">TAS</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.PCS.label}}" uib-btn-radio="basic.HPShortCodes.PCS.id">PCS</label>
+                              <label class="btn btn-xs btn-default" ng-model="ev.id" tooltip-append-to-body="true" uib-tooltip="{{basic.HPShortCodes.ICE.label}}" uib-btn-radio="basic.HPShortCodes.ICE.id">ICE</label>
+                            </div>
+                          </div>
+                          <div
+                            ng-if="basic.modelType !== 'hpo'"
+                            class="col-xs-11 evidence-selection">
                             <select
                               class="form-control"
-                              id="{{ev_ref.htmlid}}_{{entryIndex}}_{{$index}}"
-                              placeholder="Select evidence..." ng-model="ev_ref.ev">
+                              id="{{ev.htmlid}}_{{entryIndex}}_{{$index}}"
+                              placeholder="Select evidence...">
                             </select>
                           </div>
                           <button
@@ -352,23 +366,23 @@
                         </div>
 
                         <div
-                          ng-repeat="ref in ev_ref.ref_list">
+                          ng-repeat="ref in ev.ref_list">
                           <div
                             class="row"
                             style="padding:0;">
                             <label
                               class="col-xs-2"
                               style="font-size:0.9em;font-weight:400;color:#555;margin:2px -20px 2px 20px;padding:0;"
-                              for="{{ev_ref.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}">
+                              for="{{ev.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}">
                               Ref
                             </label>
                             <div class="col-xs-9">
                               <input
-                                ng-disabled="!ev_ref.ev"
+                                ng-disabled="!ev.id"
                                 class="form-control"
                                 style="font-size:0.9em;font-weight:400;color:#555;"
                                 type="text"
-                                id="{{ev_ref.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}"
+                                id="{{ev.htmlid + ref.htmlid}}_{{entryIndex}}_{{$index}}"
                                 placeholder="Enter supporting reference (e.g., PMID:1234)"
                                 ng-model="ref.ref">
                               </input>
@@ -378,7 +392,7 @@
                               ng-if="$first"
                               class="xcol-xs-1 btn btn-secondary btn-xs xbtn-compact"
                               style="margin:0;margin-left:-10px;"
-                              ng-click="basic.add_ref(ev_ref)">
+                              ng-click="basic.add_ref(ev)">
                               <i class="glyphicon glyphicon-plus"></i>
                             </button>
                           </div>
@@ -388,18 +402,17 @@
                     <div
                       ng-if="basic.editing_row !== entry">
                       <div
-                        ng-repeat="ev_ref in entry.evidence_metadata track by $index">
+                        ng-repeat="ev in entry.evidence_metadata track by $index">
                         <a
                           class="non-editable-cell"
                           target="_blank"
-                          href="http://purl.obolibrary.org/obo/{{basic.convertECOId(ev_ref.id)}}">
-                          {{ev_ref.id}}
-                          <div>{{ev_ref.label}}</div>
+                          href="{{basic.formatEVURL(ev)}}">
+                          {{basic.formatEVLabel(ev)}}
                         </a>
 
                         <ul
                           style="list-style-position: inside;list-style-type:square;margin:0 5px;padding:0;"
-                          ng-repeat="ref in ev_ref.ref_list">
+                          ng-repeat="ref in ev.ref_list">
                           <li>{{ref.ref}}</li>
                         </ul>
                       </div>

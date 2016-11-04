@@ -411,8 +411,8 @@ _ping_count();
 var minerva_opts_base = [
     'java',
     '-Xmx' + minerva_max_mem + 'G',
-    // '-cp', './java/lib/minerva-cli.jar',
-    '-cp', '../minerva/minerva-cli/bin/minerva-cli.jar',
+    '-cp', './java/lib/minerva-cli.jar',
+    // '-cp', '../minerva/minerva-cli/bin/minerva-cli.jar',
     'org.geneontology.minerva.server.StartUpTool',
     '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
     '--use-request-logging',
