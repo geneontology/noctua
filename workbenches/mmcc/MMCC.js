@@ -238,7 +238,7 @@ jQuery(document).ready(function(){
     // just for niceness. This is also a test of CORS in express.
     if( global_barista_token ){
 	widgetry.user_check(global_barista_location,
-			    global_barista_token, 'user_name_info');
+			    global_barista_token, 'user_name_info', false);
     }
 });
 

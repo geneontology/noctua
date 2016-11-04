@@ -418,7 +418,7 @@ jQuery(document).ready(function(){
 	    // express.
 	    if( start_token ){
 		widgetry.user_check(global_barista_location,
-				    start_token, 'user_name_info');
+				    start_token, 'user_name_info', false);
 	    }
 	}
 });

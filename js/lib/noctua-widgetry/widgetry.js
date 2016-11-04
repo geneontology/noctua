@@ -2395,19 +2395,26 @@ function reporter(output_id){
  *  given_token - token
  *  elt_id - element to replace
  *  user_group_fun - [optional] function that returns the current user group id
- *  change_group_fun - [optional] function that returns the current user group id
+ *  change_group_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
  *  
  * Returns: function that returns current group id/state ???
  */
 function user_check(barista_loc, given_token, elt_id,
 		    change_group_announce_fun){
 
-    if( ! change_group_announce_fun ){
+    // Decide whether to render the groups, and if there is a default
+    // callback to use.
+    var render_groups_p = true;
+    if( typeof(change_group_announce_fun) === 'undefined' ){
 	change_group_announce_fun = function(group_id){
 	    alert('Ignoring group change to: ' + group_id);
 	};
+    }else if(change_group_announce_fun === false ){
+	render_groups_p = false;
+    }else if(change_group_announce_fun === null ){
+	render_groups_p = false;
     }
-
+    
     // Redraw the widget from scratch with the incoming data.
     var _redraw_widget = function(user_group_id, data){
 
@@ -2470,7 +2477,9 @@ function user_check(barista_loc, given_token, elt_id,
 	    
 	    // If there is group information, create an active widget,
 	    // otherwise create a silent one.
-	    if( ! us.isArray(data['groups']) || data['groups'].length === 0 ){
+	    if( ! us.isArray(data['groups']) ||
+		data['groups'].length === 0 ||
+		render_groups_p === false ){
 		
 		// Inactive replacement.
 		var nsel = '<span id="user_name_info">' + name + '</span>';
