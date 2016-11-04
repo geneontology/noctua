@@ -339,7 +339,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   this.modelSubjectNodeId = null;
   this.modelType = global_model_type;
 
-
   //
   // Mapping between HPO Short Codes and either an ECO code or an HPO synthetic code.
   // Once the ECO incorporates HPO's codes, this code can be simplified or deleted.
@@ -928,8 +927,10 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     var result = 'http://purl.obolibrary.org/obo/' + ev.id.replace(':', '_');
 
     if (this.modelType === 'hpo') {
-      result = this.HPECOToShortCode[ev.id];
-      result = this.HPShortCodes[result].url;
+      var hpoCode = this.HPECOToShortCode[ev.id];
+      if (hpoCode) {
+        result = this.HPShortCodes[hpoCode].url;
+      }
     }
 
     return result;
@@ -940,8 +941,10 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     var result = ev.id + ' ' + ev.label;
 
     if (this.modelType === 'hpo') {
-      result = this.HPECOToShortCode[ev.id];
-      result = result + ' ' + this.HPShortCodes[result].label;
+      var hpoCode = this.HPECOToShortCode[ev.id];
+      if (hpoCode) {
+        result = hpoCode + ' ' + this.HPShortCodes[hpoCode].label;
+      }
     }
 
     return result;
@@ -963,7 +966,9 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
             console.log('activate_evidence_widget...undefined ev');
           }
           else {
-            ev.id = value;
+            that.$timeout(function() {
+              ev.id = value;
+            }, 10);
           }
         }));
         ev_selectize = jQuery(ev_selector)[0];
