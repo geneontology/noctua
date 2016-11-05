@@ -1656,6 +1656,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
 							ecore.get_id());
 	    reqs.add_individual(simple_ubernoodle_auto_val);
+	    //console.log(reqs.structure());
+	    //console.log(manager.use_groups());
 	    manager.request_with(reqs);
 
 	    // Wipe controls' state, internal and external.
@@ -1672,7 +1674,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// The base settings for bioentity autocomplete.
 	var base_enb_auto_args = {
-    	    'label_template': '{{annotation_class_label}} ({{annotation_class}})',
+    	    'label_template':'{{annotation_class_label}} ({{annotation_class}})',
     	    'value_template': '{{annotation_class_label}}',
 	    'additional_results_class': 'bbop-mme-more-results-ul'
 	};
@@ -2626,6 +2628,26 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    barclient.clairvoyance(top + scroll_top, left + scroll_left);
 	}
     });
+
+    // When all is said and done, let's get the user and group
+    // information. This is also a test of CORS in express.
+    if( manager.user_token() ){
+	widgetry.user_check(
+	    global_barista_location, manager.user_token(), 'user_name_info',
+	    function(new_group_id){
+		if( ! new_group_id ){
+		    manager.use_groups(null);
+		    // console.log('removing groups from user "' +
+		    // 		manager.user_token() + '"');
+		}else{
+		    manager.use_groups([new_group_id]);
+		    // console.log('adding group "'+ new_group_id +'" to user ' +
+		    // 		manager.user_token());
+		}
+		console.log('current groups "' + manager.use_groups() +
+			    '" for user ' + manager.user_token());
+	    });
+    }
 };
 
 ///
@@ -2706,13 +2728,6 @@ jsPlumb.ready(function(){
 		//var rr = manager.get_model(global_id);
 		//ll('rr: ' + rr);
 		
-		// When all is said and done, let's also fillout the user
-		// name just for niceness. This is also a test of CORS in
-		// express.
-		if( start_token ){
-	    	    widgetry.user_check(global_barista_location,
-	    				start_token, 'user_name_info');
-		}
 	    }
 	}
 

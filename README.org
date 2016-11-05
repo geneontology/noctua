@@ -16,19 +16,24 @@
 
 ** Installation
   
-   You must start with a modern version of Node.js (say >=0.12.3). All
-   of the tooling is built around that and should install easily with:
+   You must start with a modern version of Node.js (say >=0.12.3). Due
+   to gcc requirements for Node.js modules, you'll need a relatively
+   new system, we'll be using Ubuntu 16.04 LTS.
+
+   All of the tooling is built around that and should install easily
+   with:
 
    : npm install
 
-   Noctua makes use of [[https://jsplumbtoolkit.com/][jsPlumb]] and [[http://github.com/berkeleybop][BBOP]] components
-   developed for [[https://github.com/geneontology/amigo/][AmiGO]].
+   Noctua makes use of [[https://jsplumbtoolkit.com/][jsPlumb]] and [[http://github.com/berkeleybop][BBOP]] components developed for
+   [[https://github.com/geneontology/amigo/][AmiGO]].
    
 ** Running
 
-   Before you do anything, you'll need to create a startup.yaml that will define
-   your environment. There are examples available in config/startup.yaml.*.
-   For example, for local noctua-only development, you could try:
+   Before you do anything, you'll need to create a startup.yaml that
+   will define your environment. There are examples available in
+   config/startup.yaml.*.  For example, for local noctua-only
+   development, you could try:
 
    : cp config/startup.yaml.noctua-dev ./startup.yaml
 
@@ -54,7 +59,6 @@
    - watch - development file monitor
    - clean - clean out /doc and /deploy
 
-
 *** Minerva (optional)
 
     You must have a Minerva backend running somewhere and target it
@@ -62,6 +66,15 @@
     you need that as well. Everybody is different, but I'll give my
     local dev environment as an example. Minerva is packaged with the
     noctua repo.
+    
+    The first step is to create the Blazegraph journal from your OWL
+    models directory. This will require the necessary variables
+    (e.g. NOCTUA_STORE) to be defined in startup.yaml. To make the
+    journal, run:
+
+    : gulp batch-minerva-create-journal
+
+    After the journal has been properly created you can start Minerva:
 
     : gulp run-minerva
 
@@ -79,6 +92,9 @@
 
     This will startup Barista aimed at the local Minerva instance
     running on default ports.
+
+    Barista needs two files to run: users.yaml and
+    groups.yaml. Examples can be found [[https://github.com/geneontology/go-site/metadata][here]].
 
 *** Client/Graph Editor (previously "Noctua")
 

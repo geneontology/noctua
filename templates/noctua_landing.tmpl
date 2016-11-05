@@ -63,7 +63,7 @@
         </li>
 
         <li>
-          <span class="navbar-text user_name_info">
+          <span class="navbar-text user_name_info" style="margin-bottom: 0px;">
             <span id="user_name_info">
             </span>
             &nbsp;&nbsp;&nbsp;
@@ -172,38 +172,44 @@
         </div>
       </div>
 
-      <!-- GOlr selection table test. -->
+      <!-- Minerva selection table. -->
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Find Existing Models</h3>
         </div>
 
-        <div class="panel-body" style="padding:10px 0 10px 0;margin:0;">
-          <table id="model-golr-selection" class="table table-striped"
+        <div class="panel-body" style="padding:10px 0 10px 0; margin: 1em;">
+          <table id="mmm-selection" class="table table-striped"
                  width="100%" cellspacing="0">
             <thead>
               <tr>
                 <th>Title</th>
-                <th>Contributor(s)</th>
+                <th>Contributors</th>
                 <th>State</th>
                 <th>Date</th>
-                <!-- <th>Modified</th> -->
-                <!-- <th>Deprecated</th> -->
+		{{#noctua_dev_tabs}}
+                <th>Mod</th>
+                <th>Tmpl</th>
+                <th>Dep</th>
+		{{/noctua_dev_tabs}}
                 <th>Operations</th>
               </tr>
             </thead>
             <tfoot>
               <tr>
                 <th>Title</th>
-                <th>Contributor(s)</th>
+                <th>Contributors</th>
                 <th>State</th>
                 <th>Date</th>
-                <!-- <th>Modified</th> -->
-                <!-- <th>Deprecated</th> -->
+		{{#noctua_dev_tabs}}
+                <th>Mod</th>
+                <th>Tmpl</th>
+                <th>Dep</th>
+		{{/noctua_dev_tabs}}
                 <th>Operations</th>
               </tr>
             </tfoot>
-            <tbody id="model-golr-selection-data"></tbody>
+            <tbody id="mmm-selection-data"></tbody>
           </table>
 
         </div>
@@ -498,41 +504,6 @@
             <br /> A configuration error is also possible.
           </p>
           {{/barista_token}}
-        </div>
-      </div>
-
-      <!-- Selection table test. -->
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">In-memory model overview</h3>
-        </div>
-        <div class="panel-body">
-
-          <table id="model-selection" class="display"
-                 width="100%" cellspacing="0">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Modified</th>
-                <th>State</th>
-                <th>Template</th>
-                <th>Deprecated</th>
-                <th>Edit</th>
-              </tr>
-            </thead>
-            <tfoot>
-              <tr>
-                <th>Title</th>
-                <th>Modified</th>
-                <th>State</th>
-                <th>Template</th>
-                <th>Deprecated</th>
-                <th>Edit</th>
-              </tr>
-            </tfoot>
-            <tbody id="model-selection-data"></tbody>
-          </table>
-
         </div>
       </div>
 

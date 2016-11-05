@@ -2037,7 +2037,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		if( ! btkn || ! us.isString(btkn) ){
 		    alert('Need to be logged in to kick out to Textpresso.');
 		}else{
-		    var txtpr = 'http://sandbox.textpresso.org';
+		    var txtpr = 'http://tpc.textpresso.org';
 		    window.open(txtpr + '/cgi-bin/tc/tpc/search?token=' + btkn,
 				'_blank');
 		}
@@ -2393,29 +2393,183 @@ function reporter(output_id){
  * Parameters: 
  *  barista_loc - barista location
  *  given_token - token
+ *  elt_id - element to replace
+ *  user_group_fun - [optional] function that returns the current user group id
+ *  change_group_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
  *  
- * Returns: n/a
+ * Returns: function that returns current group id/state ???
  */
-function user_check(barista_loc, given_token, div_id){
+function user_check(barista_loc, given_token, elt_id,
+		    change_group_announce_fun){
 
+    // Decide whether to render the groups, and if there is a default
+    // callback to use.
+    var render_groups_p = true;
+    if( typeof(change_group_announce_fun) === 'undefined' ){
+	change_group_announce_fun = function(group_id){
+	    alert('Ignoring group change to: ' + group_id);
+	};
+    }else if(change_group_announce_fun === false ){
+	render_groups_p = false;
+    }else if(change_group_announce_fun === null ){
+	render_groups_p = false;
+    }
+    
+    // Redraw the widget from scratch with the incoming data.
+    var _redraw_widget = function(user_group_id, data){
+
+	// Do a basic check on the data; if bad,
+	// try and recover by clearing the token.
+	if( ! data || ! data['uri'] ){
+
+	    alert('You seem to have a bad token; will try to clean...');
+	    var to_remove = 'barista_token=' + given_token;
+	    var new_url = window.location.toString().replace(to_remove, '');
+	    //var new_url = window.location;
+	    
+	    window.location.replace(new_url);
+	    console.log('user_check window.location', window.location);
+
+	}else{
+
+	    var eid2gid = {};
+	    
+	    // Render a single entry in the groups dropdown.
+	    var something_checked_p = false;
+	    var _render_entry = function(user_uri, group_id, group_label){	
+
+		var chk = '&#10004&nbsp;';
+		var box = '&square;&nbsp;';
+		var ret = '';
+
+		var fresh_id = '_user_group_' + bbop_core.uuid();
+		
+		if( user_group_id === group_id ){
+		    // Bold if it is our current group.
+		    ret = '<li><a id=' + fresh_id + ' href="#">' +
+			chk + group_label + '</a></li>';
+		    eid2gid[fresh_id] = group_id;
+		    something_checked_p = true;
+		}else if( user_uri === group_id ){
+		    // Bold if our "none" group.
+		    ret = '<li><a id=' + fresh_id + ' href="#">' +
+			chk + '(none)</a></li>';
+		    eid2gid[fresh_id] = null;
+		    something_checked_p = true;
+		// }else if( ! group_id ){
+		//     // Bold if no group at all.
+		//     ret = '<li><a id=' + fresh_id + ' href="#">' +
+		// 	chk + '(none)</a></li>';
+		//     eid2gid[fresh_id] = null;
+		//     something_checked_p = true;
+		}else{
+		    // Regular unchecked selection.
+		    ret = '<li><a id=' + fresh_id + ' href="#">'+
+			box + group_label +'</a></li>';
+		    eid2gid[fresh_id] = group_id;
+		}
+		
+		return ret;
+	    };
+
+	    // Try and get the best user name we can.
+	    var name = data['nickname'] || data['uri'];
+	    
+	    // If there is group information, create an active widget,
+	    // otherwise create a silent one.
+	    if( ! us.isArray(data['groups']) ||
+		data['groups'].length === 0 ||
+		render_groups_p === false ){
+		
+		// Inactive replacement.
+		var nsel = '<span id="user_name_info">' + name + '</span>';
+		jQuery('#' + elt_id).replaceWith(nsel);
+
+	    }else{
+		
+		// Create the groups list, select the first.
+		// If the first is the uri of the user, select none.
+		var group_list = [];
+		var add_none_p = true;
+		us.each(data['groups'], function(grp){
+		    
+		    // If the user's URI is in there, skip adding
+		    // "none" later.
+		    if( grp['id'] === data['uri'] ){
+			add_none_p = false;
+		    }
+		    var ent = _render_entry(data['uri'],
+					    grp['id'], grp['label']);
+		    group_list.push(ent);
+		});
+		
+		// If we did not run into the user's id, add "none" to
+		// the bottom.
+		if( add_none_p ){
+		    var nent = null;
+		    if( something_checked_p ){
+			nent = _render_entry(data['uri'], null, "(none)");
+		    }else{
+			nent = _render_entry(data['uri'], data['uri'], "(none)");
+		    }
+		    group_list.push(nent);
+		}
+		
+		// Create active widget.
+		var gsel = [
+		    '<!-- Zoom/view controls. -->',
+		    '<li class="dropdown" id="' + elt_id + '">',
+		    '<span class="dropdown-toggle" data-toggle="dropdown">'+
+			name + ' <b class="caret"></b></span>',
+		    '<ul class="dropdown-menu">',
+		    group_list.join(' '),
+		    '</ul>',
+		    '</li>'
+		];
+		jQuery('#' + elt_id).replaceWith(gsel.join(''));
+		
+		// User callback on change.
+		us.each(eid2gid, function(gid, eid){
+		    jQuery('#' + eid).click(function(evt){
+		    	evt.stopPropagation();
+
+			// Redraw with new highlight.
+			_redraw_widget(gid, data);
+
+			// Apply user-supplied function.
+			change_group_announce_fun(gid);
+		    });
+		});		
+	    }
+	}	    
+    };
+    
     var user_info_loc = barista_loc + "/user_info_by_token/" + given_token;
     jQuery.ajax({
 	'type': "GET",
 	'url': user_info_loc,
 	'dataType': "json",
-	'error': function(){alert('had an error getting user info--oops!');},
+	'error': function(){
+	    alert('had an error getting user info for: ' + given_token);
+	},
 	'success': function(data){
-	    if( data && data['nickname'] ){
-		jQuery('#' + div_id).replaceWith(data['nickname']);
-	    }else{
-		alert('You seem to have a bad token; will try to clean...');
-		var to_remove = 'barista_token=' + given_token;
-		var new_url = window.location.toString().replace(to_remove, '');
-		//var new_url = window.location;
 
-		window.location.replace(new_url);
-	    	console.log('###user_check window.location1', window.location);
+	    // Figure out if there is an initial group to handle.
+	    var init_user_group = null;
+	    if( data && us.isArray(data['groups']) ){
+		if( data['groups'].length > 0 ){
+		    var first_group = data['groups'][0];
+		    if( first_group && first_group['id'] ){
+			init_user_group = first_group['id'];
+		    }
+		}
 	    }
+
+	    // Initial draw, hopefully with the right group.
+	    _redraw_widget(init_user_group, data);
+
+	    // Initial use og change group announce fun.
+	    change_group_announce_fun(init_user_group);
 	}
     });
 }

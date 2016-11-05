@@ -91,7 +91,7 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'form_noctua_clients': [
-      'js/NoctuaBasic/NoctuaBasicApp.js'
+	'js/NoctuaBasic/NoctuaBasicApp.js'
     ],
     'core_noctua_clients': [
     	'js/NoctuaEditor.js',
@@ -123,8 +123,8 @@ var paths = {
 //     // WARNING: Cannot use glob for clients--I use the explicit listing
 //     // to generate a dynamic browserify set.
 //     'core_noctua_clients': [
-//      'js/NoctuaEditor.js',
-//      //'js/NoctuaLanding.js'
+// 	'js/NoctuaEditor.js',
+// 	'js/NoctuaLanding.js'
 //      //'js/NoctuaBasic/NoctuaBasicApp.js'
 //     ],
 //     'core_barista_clients': [
@@ -375,7 +375,9 @@ var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 //
 var noctua_context = config['NOCTUA_CONTEXT'] ? config['NOCTUA_CONTEXT'].value : 'go';
 var noctua_models = config['NOCTUA_MODELS'].value;
+var noctua_store = config['NOCTUA_STORE'].value;
 var user_data = config['USER_DATA'].value;
+var group_data = config['GROUP_DATA'].value;
 var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
 var ontology_catalog = config['ONTOLOGY_CATALOG'] ? config['ONTOLOGY_CATALOG'].value : null;
 var workbench_dirs = config['WORKBENCHES'].value;
@@ -416,8 +418,9 @@ var minerva_opts_base = [
     '--slme-elk',
     '-g', ontology_list,
     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-    '-f', noctua_models,
-    '--port', minerva_port
+    '--port', minerva_port,
+    '-f', noctua_store, // blazegraph journal file
+    '--export-folder', noctua_models
 ];
 
 var minerva_opts_lookup = [
@@ -456,11 +459,44 @@ gulp.task('run-minerva-no-lookup-no-validation', shell.task(_run_cmd(
     minerva_opts_base.concat(minerva_opts_no_validation)
 )));
 
+// Minerva batch: create a new journal from the files directory.
+gulp.task('batch-minerva-create-journal', shell.task(_run_cmd([
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--import-owl-models',
+    '-j', noctua_store,
+    ' -f', noctua_models
+])));
+
+// Minerva batch: create a new journal from the files directory.
+gulp.task('batch-minerva-flush-journal', shell.task(_run_cmd([
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--dump-owl-models',
+    '-j', noctua_store,
+    ' -f', noctua_models
+])));
+
+// Minerva batch: get used minerva version.
+gulp.task('batch-minerva-version', shell.task(_run_cmd([
+    'java',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--version'
+])));
+
+// // Minerva batch: destroy the current journal.
+// gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
+//     'rm', '-f', noctua_store
+// ])));
+
 //node barista.js --self http://localhost:3400
 gulp.task('run-barista', shell.task(_run_cmd(
     ['node', 'barista.js',
      '--debug', 0,
      '--users', user_data,
+     '--groups', group_data,
      '--public', barista_lookup_url,
      '--self', barista_location,
      '--context', noctua_context,
@@ -497,15 +533,6 @@ if( external_browser_location ){
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list
-)));
-
-// node epione.js --monitor /home/swdev/local/src/git/noctua-models/models --golr http://toaster.lbl.gov:9000/solr --users /home/swdev/local/src/git/go-site/metadata/users.yaml
-gulp.task('run-epione', shell.task(_run_cmd(
-    ['node', 'epione.js',
-     '--users', user_data,
-     '--monitor', noctua_models,
-     '--golr', golr_location
-    ]
 )));
 
 ///

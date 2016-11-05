@@ -54,13 +54,19 @@
     background-color: red;
 }
 
-/* When app is maximized, the navbar should behave as desktop apps. */
-.bbop-bs3-override-nav-scale {
-    max-width: 100%;
-}
+/* /\* When app is maximized, the navbar should behave as desktop apps. *\/ */
+/* .bbop-bs3-override-nav-scale { */
+/*     max-width: 100%; */
+/* } */
+/* .navbar-editor-nomargin { */
+/*     margin-bottom: 0; */
+/* } */
 
-.navbar-editor-nomargin {
-    margin: 0;
+.navbar-editor-override {
+    margin-bottom: 0;
+}
+.navbar-editor-container-override {
+    margin-right: 2em;
 }
 
 .app-graph {
