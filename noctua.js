@@ -1000,7 +1000,7 @@ var NoctuaLauncher = function(){
 			// TODO.
 		    });
 
-		}else{ // Assume Capella/Textpresso as default.
+		}else{ // For now, assume TPC as default.
 
 		    each(incoming_requests, function(incoming_request){
 			
