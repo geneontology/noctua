@@ -2063,16 +2063,14 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    var endpoint_url =
 			    encodeURIComponent('http://'+ window.location.hostname +'/tractorbeam');
 
-		    var reqs = new minerva_requests.request_set();
+		    var reqs = new minerva_requests.request_set(btkn,
+								ecore.get_id());
 		    // Base.
-		    reqs.token(btkn);
-		    reqs.intention('action');
 		    reqs.use_groups(manager.use_groups());
-		    // Optional.
-		    reqs.referring_model_id(ecore.get_id());
 		    // Fake.
-		    //reqs.user_id('http://user1');
-		    reqs.client_id('tpc');
+		    reqs.external_model_id(ecore.get_id());
+		    reqs.external_client_id('tpc');
+		    //reqs.external_user_id('http://user1'); // not needed yet?
 		    var endpoint_arguments =
 			    encodeURIComponent(JSON.stringify(reqs.structure()));
 
