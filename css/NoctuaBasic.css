@@ -13,10 +13,18 @@
 }
 
 
+#noctua-app a.non-editable-cell {
+  color: darkslateblue;
+}
+
+#noctua-app a.non-editable-cell > div {
+  margin-left: 5px;
+}
 
 #noctua-app div.selectize-control div.selectize-input {
   padding:5px 3px 0 3px;
   margin:0;
+  width: 100%;
 }
 
 
@@ -26,11 +34,19 @@
 }
 
 
-#noctua-app div.selectize-control div.selectize-input.input-active {
-  min-width:300px;
+#noctua-app div.selectize-control div.selectize-input.focus {
+  min-width:350px;
   z-index:100;
 }
 
+
+#noctua-app div.evidence-selection div.selectize-control div.selectize-input.focus {
+  margin-left: -70px;
+}
+
+#noctua-app div.evidence-selection div.selectize-control div.selectize-dropdown {
+  margin-left: -70px;
+}
 
 #noctua-app div.selectize-control div.selectize-input input::-webkit-input-placeholder,
 #noctua-app div.selectize-control div.selectize-input input:-moz-placeholder,
@@ -88,6 +104,13 @@
   -ms-user-select: none;
   user-select: none;
 }
+
+#noctua-app .ui-grid-row-dirty .ui-grid-cell {
+    color: #94c11c;
+    background-color: #ccc;
+}
+
+
 #noctua-app .selectize-control > .selectize-dropdown {
       top: 36px;
     }
@@ -134,6 +157,11 @@ table.table.association-table {
   margin:0;
   padding:0;
   font-size:0.9em;
+}
+
+.glyphicon-fw {
+  width: 20px;
+  margin: 3px 0 0 0;
 }
 
 .glyphicon-duplicate:before {
