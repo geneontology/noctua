@@ -138,9 +138,9 @@ var createComplexAC = function(element_id){
     manager.set_personality('ontology');
     manager.add_query_filter('document_category', 'ontology_class', ['*']);
     // macromolecular complex
-    //manager.add_query_filter('regulates_closure', 'GO:0032991', ['*']);
+    manager.add_query_filter('regulates_closure', 'GO:0032991', ['*']);
     // protein complex
-    manager.add_query_filter('regulates_closure', 'GO:0043234', ['*']);
+    //manager.add_query_filter('regulates_closure', 'GO:0043234', ['*']);
 
     var items = {};
 
@@ -202,7 +202,7 @@ jQuery(document).ready(function(){
     jQuery('#submit').click(function(){
 
 	if( compac.values().length !== 1 ){
-	    alert('You must enter and select *one* protein complex.');
+	    alert('You must enter and select *one* macromolecular complex.');
 	}else if( bioac.values().length === 0 ){
 	    alert('You must enter and select one or more bioentities.');
 	}else{
@@ -210,8 +210,9 @@ jQuery(document).ready(function(){
 	    // We know we have just one, convert it if it is the
 	    // default value.
 	    var cp = compac.values()[0];
-	    if( cp === 'protein complex' ){
-		cp = 'GO:0043234';
+	    if( cp === 'macromolecular complex' ){
+		cp = 'GO:0032991';
+		//cp = 'GO:0043234';
 	    }
 
 	    var reqs = new minerva_requests.request_set(global_barista_token,
