@@ -2464,7 +2464,7 @@ function reporter(output_id){
  *  given_token - token
  *  elt_id - element to replace
  *  user_group_fun - [optional] function that returns the current user group id
- *  change_group_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
+ *  change_group_announce_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
  *  
  * Returns: function that returns current group id/state ???
  */
@@ -2606,7 +2606,9 @@ function user_check(barista_loc, given_token, elt_id,
 			_redraw_widget(gid, data);
 
 			// Apply user-supplied function.
-			change_group_announce_fun(gid);
+			if( typeof(change_group_announce_fun) === 'function' ){
+			    change_group_announce_fun(gid);
+			}
 		    });
 		});		
 	    }
@@ -2638,7 +2640,9 @@ function user_check(barista_loc, given_token, elt_id,
 	    _redraw_widget(init_user_group, data);
 
 	    // Initial use og change group announce fun.
-	    change_group_announce_fun(init_user_group);
+	    if( typeof(change_group_announce_fun) === 'function' ){
+		change_group_announce_fun(init_user_group);
+	    }
 	}
     });
 }
