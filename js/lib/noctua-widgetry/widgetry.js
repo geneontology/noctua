@@ -1991,24 +1991,43 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	// Cheaply inject a button for experimenting with TextAE,
 	// GO-only.
-	if( entity_type === 'fact' && context === 'go' ){
+	if( entity_type === 'model' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
 			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
-	    var textae_btn_args = {
+	    var textae_model_btn_args = {
     		'generate_id': true,
     		'type': 'button',
     		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
 	    var textpr_btn =
-		new bbop.html.tag('button', textae_btn_args, 'Textpresso');
-	    var pubann_btn =
-		new bbop.html.tag('button', textae_btn_args, 'PubAnnotator');
+		new bbop.html.tag('button', textae_model_btn_args, 'Textpresso');
+	    var tpc_btn =
+		new bbop.html.tag('button', textae_model_btn_args, 'TPC');
 	    out_cache.push(textpr_btn.to_string());
 	    out_cache.push('&nbsp;');
+	    out_cache.push(tpc_btn.to_string());
+	    out_cache.push('</div>');
+	    out_cache.push('</div>');
+	}
+	// GO facts.
+	if( entity_type === 'fact' && context === 'go' ){
+	    out_cache.push('<div class="panel panel-default">');
+	    out_cache.push('<div class="panel-heading">' +
+			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
+	    out_cache.push('<div class="panel-body">');
+	    // Markup buttons.
+	    var textae_fact_btn_args = {
+    		'generate_id': true,
+    		'type': 'button',
+    		'class': 'btn btn-success btn-xs',
+		'style': 'padding-right: 1em;'
+	    };
+	    var pubann_btn =
+		new bbop.html.tag('button', textae_fact_btn_args,'PubAnnotator');
 	    out_cache.push(pubann_btn.to_string());
 	    out_cache.push('</div>');
 	    out_cache.push('</div>');
@@ -2020,7 +2039,53 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	// Okay, still playing from just above, let's arm the
 	// Textpresso and PubAnn buttons and start playing.
-	if( entity_type === 'fact' && context === 'go' ){
+	if( entity_type === 'model' && context === 'go' ){
+
+	    // Standard TPC--#316 implementation.
+	    jQuery('#' + tpc_btn.get_id()).click( function(evt){
+		evt.stopPropagation();
+		
+		// Close out what we had.
+		mdl.destroy();
+		
+		var taemdl =
+		    new contained_modal('dialog', 'TPC interaction');
+		taemdl.add_to_body('<div><p>TPC!</p></div>');
+		taemdl.show();
+
+		// Kick people to new link in new window.
+		var btkn = manager.user_token();
+		if( ! btkn || ! us.isString(btkn) ){
+		    alert('Need to be logged in to kick out to TPC.');
+		}else{
+
+		    //
+		    var endpoint_url =
+			    encodeURIComponent('http://'+ window.location.hostname +'/tractorbeam');
+
+		    var reqs = new minerva_requests.request_set(btkn,
+								ecore.get_id());
+		    // Base.
+		    reqs.use_groups(manager.use_groups());
+		    // Fake.
+		    reqs.external_model_id(ecore.get_id());
+		    reqs.external_client_id('tpc');
+		    //reqs.external_user_id('http://user1'); // not needed yet?
+		    var endpoint_arguments =
+			    encodeURIComponent(JSON.stringify(reqs.structure()));
+
+		    // TODO: 
+		    var txtpr = 'http://tpc.textpresso.org';
+		    window.open(txtpr + '/cgi-bin/tc/tpc/search?' +
+				'endpoint_url=' + endpoint_url +
+				'&endpoint_arguments=' + endpoint_arguments,
+				'_blank');
+		    
+		}
+		taemdl.destroy();
+	    });	
+
+	    // Standard Textpresso--token only.
 	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
 		
@@ -2043,6 +2108,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		}
 		taemdl.destroy();
 	    });	
+
+	}else if( entity_type === 'fact' && context === 'go' ){
+
+	    // PubAnnotation.
 	    jQuery('#' + pubann_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
 		
@@ -2395,7 +2464,7 @@ function reporter(output_id){
  *  given_token - token
  *  elt_id - element to replace
  *  user_group_fun - [optional] function that returns the current user group id
- *  change_group_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
+ *  change_group_announce_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
  *  
  * Returns: function that returns current group id/state ???
  */
@@ -2537,7 +2606,9 @@ function user_check(barista_loc, given_token, elt_id,
 			_redraw_widget(gid, data);
 
 			// Apply user-supplied function.
-			change_group_announce_fun(gid);
+			if( typeof(change_group_announce_fun) === 'function' ){
+			    change_group_announce_fun(gid);
+			}
 		    });
 		});		
 	    }
@@ -2569,7 +2640,9 @@ function user_check(barista_loc, given_token, elt_id,
 	    _redraw_widget(init_user_group, data);
 
 	    // Initial use og change group announce fun.
-	    change_group_announce_fun(init_user_group);
+	    if( typeof(change_group_announce_fun) === 'function' ){
+		change_group_announce_fun(init_user_group);
+	    }
 	}
     });
 }

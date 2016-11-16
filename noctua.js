@@ -922,10 +922,12 @@ var NoctuaLauncher = function(){
 	    // Assume batched list.
 	    var decoded_body = req.body || {};
 
+            // At least token and requests are required to get through
+            // here.
 	    if( us.isEmpty(decoded_body) ){
 		pre_fail(res, "no POST data", "meh");
-	    }else if( ! decoded_body['barista-token'] ){
-		pre_fail(res, "no barista_token in POST data", "meh");
+	    }else if( ! decoded_body['token'] ){
+		pre_fail(res, "no token in POST data", "meh");
 	    }else if( ! decoded_body['requests'] ||
 		      ! us.isArray(decoded_body['requests']) ){
 		pre_fail(res, "no required requests in POST data", "meh");
@@ -933,75 +935,77 @@ var NoctuaLauncher = function(){
 		pre_fail(res, "requests empty in POST data", "meh");
 	    }else{
 
-		// We first need to extract these:
-		// https://github.com/geneontology/noctua/issues/147
-		// https://github.com/geneontology/noctua/issues/316
-		// E.g.:
-		// {
-		//     "barista-token": "sdlkjslkjd",
-		//     "model-id": "gomodel:01234567", // optional
-		//     "requests": [
-		//      {
-		//       "database-id" : "UniProtKB:A0A005",
-		//       "evidence-id" : "ECO:0000314",
-		//       "class-id" : "GO:0050689",
-		//       "reference-id" : "PMID:666333",
-		//       "textspresso-id" : "XXX:YYYYYYY",
-		//       "comments" : ["foo", "bar"]
-		//      }
-		//     ]
-		// }
-
-	        tll('looks like we can make minerva attempt');
-	        var cap_token = decoded_body['barista-token'];
-		tll('with token: ' + cap_token);
-
-		// Also, if there is a model id number, use that,
-		// otherwise we'll be creating a new model.
-		// Start the request set we'll use as the
-		// collector. We might build our own model from
-		// scratch.
-		var model_id = null;
-		var rs = null;
-		if( decoded_body['model-id'] ){
-		    // Has model.
-		    model_id = decoded_body['model-id'];
-		    rs = new minerva_requests.request_set(cap_token, model_id);
-		}else{
-		    // No model; create new.
-		    rs = new minerva_requests.request_set(cap_token);
-		    rs.add_model();
-		}
-
 		// We assume Textpresso, but others could be using
-		// this too.
-		var client_id = null;
-		if( decoded_body['client-id'] ){
-		    client_id = decoded_body['client-id'];
+		// this too. 
+		var external_client_id = null;
+		if( decoded_body['x-client-id'] ){
+		    external_client_id = decoded_body['x-client-id'];
 		}
+		
+		var rs = null;
+		if( external_client_id === 'pubannotator' ){
 
-		// We can throw this out as it is Barista's problem,
-		// not ours.
-		var user_id = null;
-		if( decoded_body['user-id'] ){
-		    user_id = decoded_body['user-id'];
-		}
+		    // TODO.
+		    // https://github.com/geneontology/noctua/issues/316
+		    pre_fail(res, "does not yet support pubannotator", "almost");
 
-		// This is known to be a populated array, but the
-		// contents will depend on who the calling client is.
-		var incoming_requests = decoded_body['requests'];
+		}else if( external_client_id === 'tpc' ){
+		    
+		    // We first need to extract these:
+		    // https://github.com/geneontology/noctua/issues/147
+		    // https://github.com/geneontology/noctua/issues/283
+		    // E.g.:
+		    // {
+		    //  "token": "sdlkjslkjd",
+		    //  "x-model-id": "gomodel:01234567", // optional when new
+		    //  "x-client-id": "textpresso"
+		    //  "x-user-id": "http://happy.user", // optional, don't need
+		    //  "requests": [
+		    //   {
+		    //    "database-id" : "UniProtKB:A0A005",
+		    //    "evidence-id" : "ECO:0000314",
+		    //    "class-id" : "GO:0050689",
+		    //    "reference-id" : "PMID:666333",
+		    //    "external-id" : "XXX:YYYYYYY",
+		    //    "comments" : ["foo", "bar"]
+		    //   }
+		    //  ]
+		    // }
 
-		// From here, loop through and collect all of the
-		// requests, depending on who we think the client is.
-		var resulting_requests = [];
-		if( client_id === 'pubannotator' ){
+	            tll('looks like we can make minerva attempt');
+	            var cap_token = decoded_body['token'];
+		    tll('with token: ' + cap_token);
 
-		    each(incoming_requests, function(incoming_request){
-			// TODO.
-		    });
+		    // Also, if there is a model id number, use that,
+		    // otherwise we'll be creating a new model. Start
+		    // the request set we'll use as the collector. We
+		    // might build our own model from scratch.
+		    if( decoded_body['x-model-id'] ){
+			// Has model in mind.
+			var external_model_id = decoded_body['x-model-id'];
+			rs = new minerva_requests.request_set(cap_token,
+							      external_model_id);
+			console.log('x-client: use model: ' + external_model_id);
+		    }else{
+			// No model; create new.
+			rs = new minerva_requests.request_set(cap_token);
+			rs.add_model();
+			console.log('x-client: new model');
+		    }
 
-		}else{ // For now, assume TPC as default.
+		    // We can throw this out as it is Barista's problem,
+		    // not ours.
+		    var external_user_id = null;
+		    if( decoded_body['x-user-id'] ){
+			external_user_id = decoded_body['x-user-id'];
+		    }
 
+		    // This is known to be a populated array, but the
+		    // contents will depend on who the calling client is.
+		    var incoming_requests = decoded_body['requests'];
+		    
+		    // From here, loop through and collect all of the
+		    // requests, depending on who we think the client is.
 		    each(incoming_requests, function(incoming_request){
 			
 			// GP/entity.
@@ -1073,6 +1077,14 @@ var NoctuaLauncher = function(){
 						      null, f1);
 			}
 		    });
+
+		}else{
+
+		    // TODO: The general case should be just
+		    // converting the incoming requests directly as
+		    // minerva requests.
+		    pre_fail(res, "does not yet support min-req", "almost");
+
 		}
 		
 		// Okay, we've got probably good input as we haven't
@@ -1105,10 +1117,11 @@ var NoctuaLauncher = function(){
 		    res.setHeader('Content-Type', 'application/json');
 		    res.send(JSON.stringify(resp.raw()));
 		});
-		    
-		// Trigger capella manager.
+		
+		// Trigger tractorbeam manager.
 		tll('request_with: ' + JSON.stringify(rs.structure()));
 		cap_manager.request_with(rs);
+		
 	    }
 	    //});
 	});

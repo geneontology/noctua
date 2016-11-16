@@ -1055,9 +1055,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    
     	});
 
-	// As our final act, we will make some changes to the display
-	// depending on the model annotations. Specifically, whether
-	// or not this looks like a template.
+	// We will make some changes to the display depending on the
+	// model annotations. Specifically, whether or not this looks
+	// like a template.
 	var template_p = false;
 	var tanns = ecore.get_annotations_by_key('template');
 	if( us.isArray(tanns) && tanns.length === 1 ){
@@ -1098,6 +1098,25 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    jQuery('#template_announce_div').addClass('hidden');	    
 	    jQuery('#main_exp_graph_container').addClass('app-graph-container');
 	    jQuery('#main_exp_graph_container').removeClass('app-graph-container-as-template');
+	}
+
+	// Finally, as above, just for deprecation.
+	var deprecated_p = false;
+	var danns = ecore.get_annotations_by_key('deprecated');
+        console.log(danns);
+	if( us.isArray(danns) && danns.length === 1 ){
+	    var dann = danns[0].value();
+	    if( dann && dann === 'true' ){
+		deprecated_p = true;
+	    }
+	}
+	// BUG/TODO: As above, this all needs to be abstracted into
+	// the widgetry.js in a more systematic way so that we can do
+	// group controlling a little better in the UI.
+	if( deprecated_p ){
+	    jQuery('#deprecated_announce_div').removeClass('hidden');
+	}else{
+	    jQuery('#deprecated_announce_div').addClass('hidden');
 	}
 
     }
