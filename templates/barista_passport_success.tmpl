@@ -1,0 +1,86 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Login Success</h2>
+  </div>
+
+  {{^return}}
+  <div class="alert alert-danger" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    <strong>Warning!</strong> You have come here without a calling
+    application as an argument. You are likely to be eaten by a
+    grue. Logging into the system is still possible, but it will
+    serve little purpose, except for debugging.
+  </div>
+  {{/return}}
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Session status</h3>
+    </div>
+
+    <div class="panel-body">
+      
+      {{^session}}
+      <div id="logged-out">
+	<h4>You are not currently logged-in</h4>
+	<p>
+	  You may generate a new working token by clicking the [Login]
+	  button below. As it stands now, the token will be good until
+	  the next Barista restart.
+	</p>
+	<p>
+	  {{#return}}
+	  <a id="return-trip-logout" href="{{return_link}}" class="btn btn-primary">Return</a>
+	  {{/return}}
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	</p>
+      </div>      
+      {{/session}}
+      {{#session}}
+      <div>
+	<h4>Your current session information</h4>
+	<p>
+	  <dl class="dl-horizontal">
+	    <dt>
+	      name
+	    </dt>
+	    <dd id="logged-in-name">
+	      {{user_name}}
+	    </dd>
+	    {{#user_email}}
+	    <dt>
+	      email
+	    </dt>
+	    <dd id="logged-in-email">
+	      {{user_email}}
+	    </dd>
+	    {{/user_email}}
+	    <dt>
+	      color
+	    </dt>
+	    <dd id="logged-in-color">
+	      {{user_color}}
+	    </dd>
+	    <dt>
+	      token
+	    </dt>
+	    <dd id="logged-in-token">
+	      {{token}}
+	    </dd>
+	  </dl>
+	</p>
+	<p>
+	  {{#return}}
+	  <a id="return-trip-login" href="{{return_link}}" class="btn btn-primary">Return</a>
+	  {{/return}}
+	  <a id="persona-logout" href="{{logout_link}}" class="btn btn-warning">Logout</a>
+	</p>
+      </div>
+      {{/session}}
+
+    </div>
+    
+  </div>
+  
+</div>

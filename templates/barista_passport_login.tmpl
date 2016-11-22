@@ -1,0 +1,75 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Session Login</h2>
+  </div>
+
+  {{#return}}
+  <!-- <div class="alert alert-info" role="alert"> -->
+  <!-- <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button> -->
+  <!-- After logging in, you will have the option to return -->
+  <!-- to <a href"{{return}}">{{return}}</a>. -->
+  <!-- </div> -->
+  {{/return}}
+  {{^return}}
+  <div class="alert alert-danger" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    <strong>Warning!</strong> You have come here without a calling
+    application as an argument. You are likely to be eaten by a
+    grue. Logging into the system is still possible, but it will
+    serve little purpose, except for debugging.
+  </div>
+  {{/return}}
+  
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Sign in options</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <div>
+	<p>
+	  If you have trouble logging in to the application you came
+	  from, please check with your calling application's
+	  administrator: there are cases where you may have a login
+	  account with your sign in method (e.g. a Github account),
+	  but not have authorization in the calling application.
+	</p>
+      </div>
+      
+      {{#use_provider_local_p}}
+      <div>
+	<p>
+	  <a href="/auth/local?return={{return}}">Sign in <b>locally</b></a>
+	</p>
+      </div>
+      {{/use_provider_local_p}}
+      
+      {{#use_provider_github_p}}
+      <div>
+	<p>
+	  <a href="/auth/github?return={{return}}">Sign in with <b>GitHub</b></a>
+	</p>
+      </div>
+      {{/use_provider_github_p}}
+      
+      {{#use_provider_google_plus_p}}
+      <div>
+	<p>
+	  <a href="/auth/google?return={{return}}">Sign in with <b>Google</b></a>
+	</p>
+      </div>
+      {{/use_provider_google_plus_p}}
+      
+      {{#use_provider_orcid_p}}
+      <div>
+	<p>
+	  <a href="/auth/orcid?return={{return}}">Sign in with <b>ORCID</b></a>
+	</p>
+      </div>
+      {{/use_provider_orcid_p}}
+      
+    </div>
+  </div>
+</div>

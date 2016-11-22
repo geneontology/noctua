@@ -1,0 +1,57 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Login Failure</h2>
+  </div>
+
+  {{^return}}
+  <div class="alert alert-danger" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    <strong>Warning!</strong> You have come here without a calling
+    application as an argument. You are likely to be eaten by a
+    grue. Logging into the system is still possible, but it will
+    serve little purpose, except for debugging.
+  </div>
+  {{/return}}
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Session status</h3>
+    </div>
+
+    <div class="panel-body">
+      
+      <div id="logged-out">
+	<h4>There was an issue trying to login</h4>
+	<p>
+	  An attempt was made to login with your local
+	  provider. Unfortunately, there was an unrecoverable error in
+	  the process. Possible issues might be:
+	  <ul>
+	    <li>
+	      You used the wrong login credentials with your provider
+	    </li>
+	    <li>
+	      Your provider is currently having an outage or other issues
+	    </li>
+	    <li>
+	      There has been a configuration issue with this application
+	    </li>
+	  </ul>
+	  If you are unaware of the issue or feel that this page was
+	  not reached due to user error, please contact this
+	  application's administrator for more help.
+	</p>
+	<p>
+	  {{#return}}
+	  <a id="return-trip-logout" href="{{return_link}}" class="btn btn-primary">Return</a>
+	  {{/return}}
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	</p>
+      </div>      
+
+    </div>
+    
+  </div>
+  
+</div>

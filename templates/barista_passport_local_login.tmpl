@@ -1,0 +1,75 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Session Login</h2>
+  </div>
+
+  {{#return}}
+  <!-- <div class="alert alert-info" role="alert"> -->
+  <!-- <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button> -->
+  <!-- After logging in, you will have the option to return -->
+  <!-- to <a href"{{return}}">{{return}}</a>. -->
+  <!-- </div> -->
+  {{/return}}
+  {{^return}}
+  <div class="alert alert-danger" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    <strong>Warning!</strong> You have come here without a calling
+    application as an argument. You are likely to be eaten by a
+    grue. Logging into the system is still possible, but it will
+    serve little purpose, except for debugging.
+  </div>
+  {{/return}}
+  
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Local sign in</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <div>
+	<p>
+	  Sign in using the private credentials that you have already
+	  coordinated with you application administrator.
+	</p>
+	<p>
+	  If you do not now what this is, please go back and use a
+	  different login method.
+	</p>
+      </div>
+      
+      <div>
+	<form action="/auth/local/callback?return={{ return }}" method="GET">
+	  <div class="form-group">
+	    <label>Username:</label>
+	    <input class="form-control" type="text" name="username" />
+	  </div>
+	  <div class="form-group">
+	    <label>Password:</label>
+	    <input class="form-control" type="password" name="password" />
+	  </div>
+	  <div>
+	    <!-- <input type="submit" value="Log In" /> -->
+	    <button type="submit" class="btn btn-default" value="Log In">Submit</button>
+	  </div>
+	</form>
+	
+	<!-- <form action="/login" method="POST"> -->
+	<!--   <div> -->
+        <!--     <label>Username:</label> -->
+        <!--     <input type="text" name="username" /> -->
+	<!--   </div> -->
+	<!--   <div> -->
+        <!--     <label>Password:</label> -->
+        <!--     <input type="password" name="password" /> -->
+	<!--   </div> -->
+	<!--   <div> -->
+        <!--     <input type="submit" value="Log In" /> -->
+	<!--   </div> -->
+	<!-- </form> -->
+      </div>
+      
+    </div>
+  </div>
+</div>

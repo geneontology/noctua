@@ -1,0 +1,65 @@
+<div class="container">
+  
+  <div class="header text-center">
+    <h2>Logout </h2>
+  </div>
+
+  {{^return}}
+  <div class="alert alert-danger" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    <strong>Warning!</strong> You have come here without a calling
+    application as an argument. You are likely to be eaten by a
+    grue. Logging into the system is still possible, but it will
+    serve little purpose, except for debugging.
+  </div>
+  {{/return}}
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Session status</h3>
+    </div>
+
+    <div class="panel-body">
+      
+      {{#deleted_session_p}}
+      <div id="logged-out">
+	<h4>You are now logged out</h4>
+	<p>
+	  Your session has been completed. You may return to the
+	  calling application or login again.
+	</p>
+	<p>
+	  {{#return}}
+	  <a id="return-trip-logout" href="{{return_link}}" class="btn btn-primary">Return</a>
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	  {{/return}}
+	  {{^return}}
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	  {{/return}}
+	</p>
+      </div>      
+      {{/deleted_session_p}}
+      {{^deleted_session_p}}
+      <div id="logged-out">
+	<h4>You were not logged in</h4>
+	<p>
+	  You had no current session. Perhaps you were already logged
+	  out or your session timed out.
+	</p>
+	<p>
+	  {{#return}}
+	  <a id="return-trip-logout" href="{{return_link}}" class="btn btn-primary">Return</a>
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	  {{/return}}
+	  {{^return}}
+	  <a id="persona-login" href="{{login_link}}" class="btn btn-success">Login</a>
+	  {{/return}}
+	</p>
+      </div>      
+      {{/deleted_session_p}}
+
+    </div>
+    
+  </div>
+  
+</div>
