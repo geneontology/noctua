@@ -72,10 +72,11 @@
 
         {{^barista_token}}
         <li>
-          <button id="action_barista_login"
-		  class="btn btn-default navbar-btn"
-		  onclick="window.location.href='{{barista_login}}'; return false;"
-		  title="Login">
+          <button
+	     class="btn btn-default navbar-btn"
+	     onclick="window.location.href='{{barista_login}}'; return false;"
+             type="button"
+	     title="Login">
             Login
           </button>
         </li>
@@ -91,8 +92,9 @@
         <li>
           <button
              onclick="window.location.href='{{barista_logout}}'; return false;"
+             class="btn btn-default navbar-btn"
              type="button"
-             class="btn btn-default navbar-btn">
+	     title="Login">
             Logout
           </button>
         </li>
