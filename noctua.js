@@ -276,8 +276,8 @@ var NoctuaLauncher = function(){
     console.log('Detected frontend: ' + self.frontend);
     
     // Attempt to intelligently add a token to an input URL.
-    // BUG: This code is repeated in
-    // bbop_mme_widgets.build_token_link().
+    // BUG: This code is repeated in bbop_mme_widgets.build_token_link()
+    // and barista.js.
     function _build_token_link(url, token, token_name){
 	var new_url = url;
 
@@ -341,21 +341,23 @@ var NoctuaLauncher = function(){
 	var barista_login = null;
 	var barista_logout = null;
 	if( app_path === '' || app_path === '/' ){ // non-id based pages.
-	    barista_login = barista_loc + '/session' + '?return=' +
+	    barista_login = barista_loc + '/login' + '?return=' +
 		self.frontend + app_path;
-	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
-	    // determining whether to use ? or &
-	    barista_logout =
-		barista_loc + '/session' + '?return=' +
-		_build_token_link(self.frontend + app_path, barista_token);
+	    // Make sure that _build_token_link() doesn't get the '?' from
+	    // barista_loc when determining whether to use ? or &
+	    barista_logout = barista_loc + '/logout' +
+		'?barista_token=' + barista_token +
+		'&return=' + _build_token_link(self.frontend + app_path,
+					       barista_token);
 	}else{
-	    barista_login = barista_loc + '/session' + '?return=' +
+	    barista_login = barista_loc + '/login' + '?return=' +
 		self.frontend + app_path + '/' + model_id;
-	    // Make sure that _build_token_link() doesn't get the '?' from barista_loc when
-	    // determining whether to use ? or &
-	    barista_logout =
-		barista_loc + '/session' + '?return=' +
-		_build_token_link(self.frontend + app_path + '/' + model_id, barista_token);
+	    // Make sure that _build_token_link() doesn't get the '?' from
+	    // barista_loc when determining whether to use ? or &
+	    barista_logout = barista_loc + '/logout' +
+		'?barista_token=' + barista_token +
+		'&return=' + _build_token_link(self.frontend + app_path + '/' +
+					       model_id, barista_token);
 	}
 	    
 	var barista_users =
@@ -644,13 +646,15 @@ var NoctuaLauncher = function(){
 	    var model_type = req.params['model_type'] || '';
 	    var model_id = req.params['query'] || '';
 	    var noctua_landing = _build_token_link(self.frontend, barista_token);
-		var noctua_branding = (noctua_context === 'monarch') ? 'WebPhenote' : 'Noctua';
-	    var barista_login = self.barista_location + '/session?return=' +
+	    var noctua_branding = 'Noctua';
+	    if( noctua_context === 'monarch' ){ noctua_branding = 'WebPhenote'; }
+	    var barista_login = self.barista_location + '/login?return=' +
 		    self.frontend + '/basic/' + model_type + '/' + model_id;
 	    var barista_logout =
-		    _build_token_link(self.barista_location + '/session' +
-				      '?return=' + self.frontend + '/basic/' + model_type + '/' +
-				      model_id, barista_token);
+		    _build_token_link(self.barista_location + '/logout' +
+				      '?barista_token=' + barista_token +
+				      '&return=' + self.frontend + '/basic/' +
+				      model_type +'/'+ model_id, barista_token);
 
 	    //
 	    var model_obj = null;

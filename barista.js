@@ -1,4 +1,7 @@
 ////
+//// Communications, translation, and authorization and authentication
+//// server for Minerva and Noctua clients.
+////
 //// If I spin the server out into a different project, what's added
 //// above the MME laucher/base and messenger client code is:
 ////
@@ -6,7 +9,7 @@
 ////  static/messenger.html
 ////  node_modules/socket.io/
 ////
-//// : node barista.js --self http://localhost:3400
+//// : node barista.js --debug 0 --users /tmp/users.yaml --groups /tmp/groups.yaml --public http://localhost:3400 --self http://localhost:3400 --context minerva_local --repl 7887
 ////
 
 // Required shareable Node libs.
@@ -18,7 +21,9 @@ var us = require('underscore');
 var querystring = require('querystring');
 var crypto = require('crypto');
 
+var path = require('path');
 var url = require('url');
+
 var vantage = require('vantage')();
 
 // Required add-on libs.
@@ -71,9 +76,9 @@ var notw = 'Barista';
 // CLI handling.
 var argv = require('minimist')(process.argv.slice(2));
 
-// Where the world thinks Barista is.
-var publoc = argv['p'] || argv['public'] || 'http://localhost:3400';
-ll('Barista location (public/persona): ' + publoc);
+// // Where the world thinks Barista is.
+// var publoc = argv['p'] || argv['public'] || 'http://localhost:3400';
+// ll('Barista location (public/persona): ' + publoc);
 
 // Where Barista thinks it is in the world.
 var runloc = argv['s'] || argv['self'] || 'http://localhost:3400';
@@ -143,7 +148,29 @@ if (barista_debug > 0) {
 	process.env['DEBUG'] = process.env['DEBUG'] + ' xsocket.io:*';
 }
 
+// CLI handling.
+var argv = require('minimist')(process.argv.slice(2));
+var secloc = argv['x'] || argv['secrets'];
+if( ! secloc ){
+    secloc = './secrets';
+    ll('Secrets location defaulting to: ' + secloc);
+}
+
+// Make sure secloc extant, etc.
+var fstats = null;
+try {
+    fstats = fs.statSync(secloc);
+}catch(e){
+    _die('Option secrets location does not exist: ' + secloc);
+}
+if( ! fstats.isDirectory() ){
+    _die('Option (x|secrets) is not a directory: ' + secloc);
+}else{
+    ll('Will use secrets directory at: ' + secloc);
+}
+
 // Define bogus users.
+// TODO: Put out into private file on filesystem; still report on startup.
 var rand_user_token = bbop.core.randomness(4);
 ll('Anonymous editor token: ' + rand_user_token);
 var bogus_users = [
@@ -387,7 +414,7 @@ var Sessioner = function(auth_list, group_list){
     }
 
     // Strings to md5.
-    // NOTE/TODO: Legacy after Persona switch.
+    // NOTE/TODO: Legacy after Persona switch?
     function str2md5(str){
 	var shasum = crypto.createHash('md5');
 	shasum.update(str);
@@ -397,8 +424,11 @@ var Sessioner = function(auth_list, group_list){
 
     // User information is statically stored by various keys. To
     // become a sessions, it is aggregated over in sessions_by_token.
-    var uinf_by_md5 = {}; // NOTE/TODO: Legacy after Persona switch.
+    var uinf_by_md5 = {}; // NOTE/TODO: Legacy after Persona switch?
     var uinf_by_uri = {};
+    var uinf_by_account = {
+	// second-level provider hashes will go here
+    };
     //var uinf_by_socket = {}; // will have to be built as we go
     each(auth_list, function(auth_line){
 
@@ -424,6 +454,20 @@ var Sessioner = function(auth_list, group_list){
 	if( ! us.isObject(a['accounts']) ){
 	    a['accounts'] = {};
 	}
+	// If available, add in the different accounts.
+	us.each(a['accounts'], function(account_id, account_provider){
+	    if( us.isString(account_id) && us.isString(account_provider) ){
+
+		// Ensure second-level place to put accounts.
+		if( ! uinf_by_account[account_provider] ){
+		    uinf_by_account[account_provider] = {};
+		}
+
+		// Add second-level user information to provider/id
+		// combo.
+		uinf_by_account[account_provider][account_id] = a;
+	    }
+	});
 	
 	// There are a list of valid emails, so hash for them all.
 	var valid_em5_list = a['email-md5'];
@@ -440,14 +484,14 @@ var Sessioner = function(auth_list, group_list){
     // At the end, all sessions are keyed by the referring token.
     var sessions_by_token = {};
     // Maps that we need to manage tied to the session.
-    var email2token = {}; // NOTE/TODO: Legacy after Persona switch.
+    var email2token = {}; // NOTE/TODO: Legacy after Persona switch?
     var uri2token = {};
 
     /*
      * Failure is an unknown, unauthorized, or ill-formed user. If no
      * user_type is listed, assume the lowest ranked one for the
      * attempt.
-     * NOTE/TODO: Legacy after Persona switch.
+     * NOTE/TODO: Legacy after Persona switch?
      */
     self.authorize_by_email = function(email, user_type){
 	var ret = false;
@@ -527,7 +571,7 @@ var Sessioner = function(auth_list, group_list){
     
     // Internal function to actually create the used session
     // structure.
-    // NOTE/TODO: Can safely remove email stuff after Persona switch.
+    // NOTE/TODO: Can safely remove email stuff after Persona switch?
     function _gel_session(token, uri, user_type,
 			  nickname, groups, accounts, email){
 
@@ -560,7 +604,7 @@ var Sessioner = function(auth_list, group_list){
 	    sess_accounts = accounts;
 	}
 	
-	// Email/md5 is now optional: moving to a post-Persona
+	// Email/md5 is now optional? Moving to a post-Persona
 	// universe.
 	var emd5 = null;
 	if( email ){
@@ -594,84 +638,130 @@ var Sessioner = function(auth_list, group_list){
     }
 
     /*
-     * Will not clobber if a session exists--just return what's there.
+     * Will not clobber or repeat if a session exists--just return what's there.
      * Cloned object or null.
      */
-    // NOTE/TODO: Legacy after Persona switch.
+    // NOTE/TODO: Legacy after Persona switch?
     // TODO: Session lifespan: every time a new session is created,
     // clear out old sessions.
     self.create_session_by_email = function(email){
 
-	// Cycle through to see what kind of user we have.
-	var user_type = null;
-	us.each(known_user_types, function(try_user_type){
-	    if( self.authorize_by_email(email, try_user_type) ){
-		user_type = try_user_type;
-	    }
-	});
-
 	var ret = null;
-	if( ! user_type ){
-	    // Cannot--likely bad info or unauthorized.
+
+	// First, just return a current session if there is one--don't
+	// create a new one.
+	if( email && email2token[email] &&
+	    sessions_by_token[email2token[email]] ){
+	
+	    ret = clone( sessions_by_token[email2token[email]]);
+	    
 	}else{
 
-	    // Get available user information.
-	    var emd5 = str2md5(email);
-	    var uinf = uinf_by_md5[emd5];
-	    var new_uri = uinf['uri'];
-	    var new_nick = uinf['nickname'] || '???';
-	    var new_groups = uinf['groups'] || [];
-	    var new_accounts = uinf['accounts'] || {};
+	    // Cycle through to see what kind of user we have.
+	    var user_type = null;
+	    us.each(known_user_types, function(try_user_type){
+		if( self.authorize_by_email(email, try_user_type) ){
+		    user_type = try_user_type;
+		}
+	    });
 	    
-	    // Generate a new token.
-	    var new_token = get_token();
-
-	    // Gel and clone for return.
-	    return _gel_session(new_token, new_uri, user_type,
-				new_nick, new_groups, new_accounts, email);
+	    if( ! user_type ){
+		// Cannot--likely bad info or unauthorized.
+	    }else{
+		
+		// Get available user information.
+		var emd5 = str2md5(email);
+		var uinf = uinf_by_md5[emd5];
+		var new_uri = uinf['uri'];
+		var new_nick = uinf['nickname'] || '???';
+		var new_groups = uinf['groups'] || [];
+		var new_accounts = uinf['accounts'] || {};
+		
+		// Generate a new token.
+		var new_token = get_token();
+		
+		// Gel and clone for return.
+		return _gel_session(new_token, new_uri, user_type,
+				    new_nick, new_groups, new_accounts,
+				    email);
+	    }
 	}
-
+	
 	return ret;
     };
 
     /*
-     * Will not clobber if a session exists--just return what's there.
+     * Will not clobber or repeat if a session exists--just return what's there.
      * Cloned object or null.
      */
     // TODO: Session lifespan: every time a new session is created,
     // clear out old sessions.
     self.create_session_by_uri = function(uri){
 
-	// Cycle through to see what kind of user we have.
-	var user_type = null;
-	us.each(known_user_types, function(try_user_type){
-	    if( self.authorize_by_uri(uri, try_user_type) ){
-		user_type = try_user_type;
-	    }
-	});
-
 	var ret = null;
-	if( ! user_type ){
-	    // Cannot--likely bad info or unauthorized.
+
+	// First, just return a current session if there is one--don't
+	// create a new one.
+	if( uri && uri2token[uri] && sessions_by_token[uri2token[uri]] ){
+	
+	    ret = clone( sessions_by_token[uri2token[uri]]);
+	    
 	}else{
 
-	    // Get available user information.
-	    var uinf = uinf_by_uri[uri];
-	    var new_uri = uinf['uri'];
-	    var new_nick = uinf['nickname'] || '???';
-	    var new_email = uinf['email'] || null;
-	    var new_groups = uinf['groups'] || [];
-	    var new_accounts = uinf['accounts'] || {};
+	    // Cycle through to see what kind of user we have.
+	    var user_type = null;
+	    us.each(known_user_types, function(try_user_type){
+		if( self.authorize_by_uri(uri, try_user_type) ){
+		    user_type = try_user_type;
+		}
+	    });
 	    
-	    // Generate a new token.
-	    var new_token = get_token();
-
-	    // Gel and clone for return.
-	    return _gel_session(new_token, new_uri, user_type,
-				new_nick, new_groups, new_accounts, new_email);
+	    if( ! user_type ){
+		// Cannot--likely bad info or unauthorized.
+	    }else{
+		
+		// Get available user information.
+		var uinf = uinf_by_uri[uri];
+		var new_uri = uinf['uri'];
+		var new_nick = uinf['nickname'] || '???';
+		var new_email = uinf['email'] || null;
+		var new_groups = uinf['groups'] || [];
+		var new_accounts = uinf['accounts'] || {};
+	    
+		// Generate a new token.
+		var new_token = get_token();
+		
+		// Gel and clone for return.
+		return _gel_session(new_token, new_uri, user_type,
+				    new_nick, new_groups, new_accounts,
+				    new_email);
+	    }
 	}
-
+	
 	return ret;
+    };
+
+    /*
+     * Will not clobber or repeat if a session exists--just return what's there.
+     * Cloned object or null.
+     */
+    // TODO: Session lifespan: every time a new session is created,
+    // clear out old sessions.
+    self.create_session_by_provider = function(provider_name, user_id){
+
+	// First, try and recover URI, which we will then use to delegate to
+	// a more full function.
+	var try_uri = null;
+	if( uinf_by_account[provider_name] &&
+	    uinf_by_account[provider_name][user_id] ){
+		
+		var sess = uinf_by_account[provider_name][user_id];
+		if( sess && sess['uri'] ){
+		    try_uri = sess['uri'];
+		}
+	    }
+	
+	return self.create_session_by_uri(try_uri);
     };
 
     /*
@@ -685,7 +775,7 @@ var Sessioner = function(auth_list, group_list){
 
     /*
      * Cloned object or null.
-     * NOTE/TODO: Legacy after Persona switch.
+     * NOTE/TODO: Legacy after Persona switch?
      */
     self.get_session_by_email = function(email){
     	var token = email2token[email];
@@ -742,7 +832,7 @@ var Sessioner = function(auth_list, group_list){
 
 	if( sessions_by_token[token] ){
 	    // Email deletion.
-	    // NOTE/TODO: Legacy after Persona switch.
+	    // NOTE/TODO: Legacy after Persona switch?
 	    var email = sessions_by_token[token]['email'];
 	    delete email2token[email];
 	    // URI deletion.
@@ -759,7 +849,7 @@ var Sessioner = function(auth_list, group_list){
 
     /*
      * True or false.
-     * NOTE/TODO: Legacy after Persona switch.
+     * NOTE/TODO: Legacy after Persona switch?
      */
     self.delete_session_by_email = function(email){
     	var token = email2token[email];
@@ -803,6 +893,243 @@ function _setup_sessioner(fname, gname){
     return new_sessioner;
 }
 var sessioner = _setup_sessioner(user_fname, group_fname);
+
+///
+/// Passport and strategy setup.
+///
+
+var passport = require('passport');
+passport.serializeUser(function(user, done){
+    console.log('passport serializeUser: ', user);
+    done(null, user.id);
+});
+passport.deserializeUser(function(id, done) {
+    console.log('passport deserializeUser: ', id);
+    done(null, {'id': id});
+    // else done(err, null)  
+});
+
+// Scan secloc for secrets at "<provider>.yaml". "local" is special,
+// actually defining usernames and passwords keyed to user IDs.
+var use_provider_local_p = false;
+var use_provider_github_p = false;
+var use_provider_google_plus_p = false;
+var use_provider_orcid_p = false;
+us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
+
+    var provider_path = secloc + '/' + provider + '.yaml';
+    var prov_stats = null;
+    try {
+	prov_stats = fs.statSync(provider_path);
+    }catch(e){
+	ll('Will not use provider: ' + provider);
+    }
+    
+    if( prov_stats ){
+	ll('Will search for (' + provider + ') secrets at: ' + secloc);
+
+	if( ! prov_stats.isFile() ){
+	    ll('Unable to read ' + provider +
+	       ' provider file at: ' + provider_path);
+	}else if( provider === 'local' ){
+
+	    // Squeeze whatever we can out of the secrets files.
+	    var local_secrets = {};
+	    var local_secrets_list = yaml.load(provider_path);
+	    us.each( local_secrets_list, function(local_secret){
+		if( us.isString(local_secret['uri']) && 
+		    us.isString(local_secret['username']) &&
+		    us.isString(local_secret['password']) ){
+
+		    local_secrets[local_secret['username']] = local_secret;
+		}
+	    });
+	    
+	    // Local password strategy.
+	    var LocalStrategy = require('passport-local').Strategy;
+	    passport.use(new LocalStrategy({
+		passReqToCallback: true//,
+		//session: false
+	    }, function(req, username, password, done) {
+		console.log("Start local auth...");
+		//console.log("Have req", req);
+		if( ! local_secrets[username] ){
+		    console.log("Incorrect username: " + username);
+		    return done(null, false, { message: 'Incorrect username.' });
+		}else if( password !== local_secrets[username]['password'] ){
+		    console.log("Incorrect password: " + password);
+		    return done(null, false, { message: 'Incorrect password.' });
+		}else{
+		    console.log("Authenticated with URI: " +
+				local_secrets[username]['uri']);
+		    return done(null, {
+			"uri": local_secrets[username]['uri'],
+			"provider_id": 'local',
+			"user_id": local_secrets[username]['uri']
+		    });
+		}
+	    }));
+					   
+	    // We're go.
+	    use_provider_local_p = true;
+	    
+	}else if( provider === 'github' ){
+
+	    // TODO.
+	    // Pick-up secrets file and check structure.
+	    var github_secrets = yaml.load(provider_path);
+	    console.log('secrets for ' + provider, github_secrets);
+	    if( github_secrets['clientID'] &&
+		github_secrets['clientSecret'] &&
+		github_secrets['callbackURL'] ){
+		    // Pass.
+		}else{
+		    throw new Error(provider + ' not structured correctly!');
+		}
+	    
+	    var GitHubStrategy = require('passport-github').Strategy;
+	    passport.use(new GitHubStrategy({
+		passReqToCallback: true,
+		session: false,
+		clientID: github_secrets['clientID'],
+		clientSecret: github_secrets['clientSecret'],
+		callbackURL: github_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, profile, done) {
+
+		console.log("Start GitHub auth...");
+		//console.log(provider + ' callback profile: ', profile);
+		console.log(provider + ' callback profile id: ',
+			    profile['username']);
+
+		// Try and extract from sessioner using github username.
+		if( ! profile || ! us.isString(profile['username']) ){
+		    return done(null, false, { message: 'Bad profile?' });
+		}else{
+
+		    // Looks good. Try and use github username to extract
+		    // sessioner session to ORCID.
+		    // TODO: Through different fail if it cannot.
+		    console.log("Authenticated using GitHub username: " +
+				profile['username']);
+		    return done(null, {
+			"provider_id": 'github',
+			"user_id": profile['username']
+		    });
+		}
+	    }));
+
+	    // We're go.
+	    use_provider_github_p = true;
+	    
+	}else if( provider === 'google-plus' ){
+
+	    // Pick-up secrets file and check structure.
+	    var google_secrets = yaml.load(provider_path);
+	    console.log('secrets for ' + provider, google_secrets);
+	    if( google_secrets['clientID'] &&
+		google_secrets['clientSecret'] &&
+		google_secrets['callbackURL'] ){
+		    // Pass.
+		}else{
+		    throw new Error(provider + ' not structured correctly!');
+		}
+	    
+	    var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+	    passport.use(new GoogleStrategy({
+		passReqToCallback: true,
+		session: false,
+		clientID: google_secrets['clientID'],
+		clientSecret: google_secrets['clientSecret'],
+		callbackURL: google_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, profile, done) {
+
+		console.log("Start G+ auth...");
+		console.log(provider + ' callback profile id: ', profile['id']);
+
+		// Try and extract from sessioner using g+ id.
+		if( ! profile || ! us.isString(profile['id']) ){
+		    return done(null, false, { message: 'Bad profile?' });
+		}else{
+
+		    // Looks good.
+		    // TODO: Try and use g+ id to extract sessioner session to
+		    // ORCID.
+		    // TODO: Through different fail if it cannot.
+		    console.log("Authenticated using profile G+ ID: " +
+				profile['id']);
+		    return done(null, {
+			"provider_id": 'google-plus',
+			"user_id": profile['id']
+		    });
+		}
+	    }));
+
+	    // We're go.
+	    use_provider_google_plus_p = true;
+	    
+	}else if( provider === 'orcid' ){
+	    // WARNING: ORCID provides a somewhat standard OAuth2
+	    // interface, but with quirks that need to be detected and
+	    // dealt with.
+	    // https://gist.github.com/JanKoppe/1491e37d1022c77a286087e6c81d6092#file-example-js-L5
+	    
+	    // TODO.
+	    // Pick-up secrets file and check structure.
+	    var orcid_secrets = yaml.load(provider_path);
+	    console.log('secrets for ' + provider, orcid_secrets);
+	    if( orcid_secrets['clientID'] &&
+		orcid_secrets['clientSecret'] &&
+		orcid_secrets['callbackURL'] ){
+		    // Pass.
+		}else{
+		    throw new Error(provider + ' not structured correctly!');
+		}
+	    
+	    var ORCIDStrategy = require('passport-oauth2').Strategy;
+	    passport.use(new ORCIDStrategy({
+	      passReqToCallback: true,
+	      session: false,
+	      authorizationURL: 'https://orcid.org/oauth/authorize',
+	      tokenURL: 'https://pub.orcid.org/oauth/token',
+              scope: '/authenticate',
+	      clientID: orcid_secrets['clientID'],
+	      clientSecret: orcid_secrets['clientSecret'],
+	      callbackURL: orcid_secrets['callbackURL']
+	    }, function(req, accessToken, refreshToken, params, profile, done){
+
+		console.log("Start ORCID auth...");
+		//console.log(provider + ' callback profile: ', profile);
+		//console.log(provider + ' callback params: ', params);
+
+		// Try and extract from sessioner using orcid id.
+		if( ! params || ! us.isString(params['orcid']) ){
+		    return done(null, false, { message: 'Bad profile?' });
+		}else{
+
+		    // Looks good.
+		    // TODO: Try and use github username to extract sessioner session to
+		    // ORCID.
+		    // TODO: Through different fail if it cannot.
+		    console.log("Authenticated");
+		    return done(null, {
+			"provider_id": 'orcid',
+			"user_id": params['orcid']
+		    });
+		}
+	    }));
+
+	    // We're go.
+	    use_provider_orcid_p = true;
+	    
+	}else{
+	    _die('Impossible to use provider: ' + provider);
+	}
+    }    
+});
+
+///
+///
+///
 
 // Bring in metadata that will be used for identifying
 // application protections. Spin-up app manager.
@@ -1003,12 +1330,71 @@ var BaristaLauncher = function(){
 	return ret;
     }
 
+    function _filter_token_from_url(url_str){
+	var ret = url_str;
+
+	if( ret ){
+	    var url_obj = url.parse(ret);
+	    var q_obj = querystring.parse(url_obj['query']);
+	    delete q_obj['barista_token'];
+	    url_obj['query'] = querystring.encode(q_obj);
+	    var encodable = querystring.encode(q_obj);
+	    if( encodable && encodable !== '' ){
+		url_obj['search'] = '?' + encodable;
+	    }else{
+		url_obj['search'] = null;
+	    }
+	    ret = url.format(url_obj);
+	}
+
+	return ret;
+    }
+
+    function _standard_response(res, code, type, body){
+	res.setHeader('Content-Type', type);
+	res.setHeader('Content-Length', body.length);
+	res.end(body);
+	return res;
+    }
+
+    function _extract_referer_query_field(req, field){
+	var ret = null;
+	
+	if( req && req['headers'] && req['headers']['referer'] ){	
+	    console.log('referer', req['headers']['referer']);
+	    var ref_url = req['headers']['referer'];
+	    if( us.isString(ref_url) ){
+		var ref_query = url.parse(ref_url).query;
+		if( us.isString( ref_query ) ){
+		    var parsed_query = querystring.parse(ref_query);
+		    if( parsed_query && parsed_query[field] ){
+			ret = parsed_query[field];
+		    }
+		}
+	    }
+	}
+	
+	return ret;
+    }
+    
+    function _response_redirect_to_success(res, ret_url, user_token){
+	var base_url = '/login/success?barista_token=' +
+		encodeURIComponent(user_token);
+	if( ret_url ){
+	    base_url += '&return=' + ret_url;
+	}
+	return res.redirect(base_url);
+    }
+
+    // Attempt to intelligently add a token to an input URL.
+    // BUG: This code is repeated in bbop_mme_widgets.build_token_link()
+    // and noctua.js.
     function _build_token_link(url, token, token_name){
 	var new_url = url;
 
 	// Default to "barista_token".
 	if( ! token_name ){ token_name = 'barista_token'; }
-	
+
 	if( token ){
 	    if( new_url.indexOf('?') === -1 ){
 		new_url = new_url + '?' + token_name + '=' + token;
@@ -1018,13 +1404,6 @@ var BaristaLauncher = function(){
 	}
 
 	return new_url;
-    }
-
-    function _standard_response(res, code, type, body){
-	res.setHeader('Content-Type', type);
-	res.setHeader('Content-Length', body.length);
-	res.end(body);
-	return res;
     }
 
     ///
@@ -1068,11 +1447,13 @@ var BaristaLauncher = function(){
     var cookieParser = require('cookie-parser');
     messaging_app.use(cookieParser());  // Must be placed after more specific route defs
 
-	var cors = require('cors');
+    var cors = require('cors');
     messaging_app.use(cors());
 
     messaging_app.set('port', runport);
 
+    // Cookies initially needed for Persona, not used to store the
+    // referring "return" location after oauth2 kickouts.
     // https://github.com/expressjs/session#options
     var session = require('express-session');
     var session_options = {
@@ -1082,97 +1463,9 @@ var BaristaLauncher = function(){
     };
     messaging_app.use(session(session_options));
 
-    // Must match client browser's address bar.
-    var persona_opts = {
-	audience: publoc,
-
-	// Internal function to run if remote login was susseccful or
-	// a session remains open.
-	verifyResponse: function(err, req, res, email){
-
-	    ll('user has authenticated through persona: ' + email);
-
-	    // First, we need to establish a session. Check if this
-	    // email address already has a session associated with
-	    // it. If so, don't bother creating a new one.
-	    var sess = sessioner.get_session_by_email(email);
-	    if( sess ){
-		ll('recovered session:');
-		ll(sess);
-	    }else{
-		// Not already there, so let's see if we can create
-		// one from scratch.
-		sess = sessioner.create_session_by_email(email);
-		if( sess ){
-		    // Create new user session.
-		    ll('created new session:');
-		    ll(sess);
-		}else{
-		    // Cannot create, so some kind of authorization
-		    // issue.
-		    ll('login fail; unknown/unauthorized user: ' + email);
-		    res.json({status: "failure",
-			      email: email,
-			      reason:"unknown/unauthorized (check users.json)"});
-		    return; // WARNING: out-of-flow return
-		}
-	    }
-
-	    ll('session success (' + sess.email + '): ' + sess.token);
-
-	    // Adjust this client/server session.
-	    req.session.authorized = true;
-		
-	    // Pass back the interesting bits to the 
-	    res.json({status: "okay",
-		      email: sess.email,
-		      nickname: sess.nickname,
-		      uri: sess.uri,
-		      token: sess.token,
-		      color: sess.color});
-	    return; // return success
-	},
-
-	// Code to run when the user has or is logged out.
-	logoutResponse: function(err, req, res) {
-	    // Destroy as much of the session information as we can.
-	    var did_something_p = false;
-	    if( req && req.session ){
-
-		// Looks still authorized?
-		if( req.session.authorized ){
-		    // Adjust this client/server session.
-		    req.session.authorized = null;
-		    ll('logout: nulled authorization');
-		    did_something_p = true;
-		}
-
-		// Recoverable email.
-		if( req.session.email ){
-		    var sess = sessioner.get_session_by_email(email);
-		    var email = req.session.email;
-		    var token = sess.token;
-
-		    // Remove from internal session system.
-		    sessioner.delete_session_by_email(email);
-
-		    ll('logout: Barista delete ('+ email +'): '+ token);
-		    did_something_p = true;
-		}
-	    }
-
-	    if( ! did_something_p ){
-		ll('logout: nothing to do');
-	    }
-
-	    // We did what we could, get out of here.
-	    ll('logout: success');
-	    res.json({status: "okay"});
-	}
-    };
-    var express_persona = require('express-persona');
-    express_persona(messaging_app, persona_opts);
-
+    // Passport.
+    messaging_app.use(passport.initialize());
+    messaging_app.use(passport.session());
 
     // Middleware that defines routes should be here, so that more-specific
     // route defs above have priority
@@ -1230,8 +1523,8 @@ var BaristaLauncher = function(){
 	    'okay': true,
 	    'name': 'Barista',
 	    'date': (new Date()).toJSON(),
-	    'location': runloc,
-	    'public': publoc,
+	    // 'location': runloc,
+	    // 'public': publoc,
 	    'offerings': [
 		{
 		    'name': 'sessions',
@@ -1443,28 +1736,315 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'application/json', fin);
     });
     
-    messaging_app.get('/session', function(req, res) {
+    // messaging_app.get('/session', function(req, res) {
+
+    // 	// Get return argument (originating URL) if there.
+    // 	var ret = null;
+    // 	if( req.query && req.query['return'] ){
+    // 	    ret = req.query['return'];
+    // 	}
+    // 	var tmpl_args = {
+    // 	    'pup_tent_js_variables': [
+    // 		{'name': 'global_barista_return', 'value': ret }
+    // 	    ],
+    // 	    'pup_tent_js_libraries': [
+    // 		'https://login.persona.org/include.js',
+    // 		'/BaristaSession.js'
+    // 	    ],
+    // 	    'title': notw + ': Session Manager',
+    // 	    'return': ret
+    // 	};
+    // 	var out = pup_tent.render('barista_session.tmpl',
+    // 				  tmpl_args,
+    // 				  'barista_base.tmpl');
+    // 	_standard_response(res, 200, 'text/html', out);
+    // });
+
+    // Shared login page.
+    messaging_app.get('/login', function(req, res){
+
+	// Get return argument (originating URL) if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	    req.session.return = ret;
+	}
+
+    	var tmpl_args = {
+    	    'pup_tent_js_variables': [],
+    	    'pup_tent_js_libraries': [],
+    	    'title': notw + ': Session Login',
+    	    'return': ret,
+	    'use_provider_local_p': use_provider_local_p,
+	    'use_provider_google_plus_p': use_provider_google_plus_p,
+	    'use_provider_github_p': use_provider_github_p,
+	    'use_provider_orcid_p': use_provider_orcid_p
+    	};
+    	var out = pup_tent.render('barista_passport_login.tmpl',
+    				  tmpl_args,
+    				  'barista_base.tmpl');
+    	return _standard_response(res, 200, 'text/html', out);
+    });
+
+    // Shared success, requiring return and token.
+    messaging_app.get('/login/success', function(req, res){
 
 	// Get return argument (originating URL) if there.
 	var ret = null;
 	if( req.query && req.query['return'] ){
 	    ret = req.query['return'];
 	}
-	var tmpl_args = {
-	    'pup_tent_js_variables': [
-		{'name': 'global_barista_return', 'value': ret }
-	    ],
-	    'pup_tent_js_libraries': [
-		'https://login.persona.org/include.js',
-		'/BaristaSession.js'
-	    ],
-	    'title': notw + ': Session Manager',
-	    'return': ret
-	};
-	var out = pup_tent.render('barista_session.tmpl',
-				  tmpl_args,
-				  'barista_base.tmpl');
-	_standard_response(res, 200, 'text/html', out);
+	// Get the token, which really should be there.
+	var tok = null;
+	if( req.query && req.query['barista_token'] ){
+	    tok = req.query['barista_token'];
+	}
+	//console.log('tok', tok);
+	
+	// We'll need this URL in some cases.
+	var return_link = _build_token_link(ret, tok);
+	var logout_link = _build_token_link('/logout?return='+ ret, tok);
+	var login_link = _build_token_link('/login?return='+ ret, tok);
+	
+	var sess = sessioner.get_session_by_token(tok);
+	var user_name = '???';
+	var user_email = null;
+	var user_color = '???';
+	console.log('sess', sess);
+	if( sess ){
+	    user_name = sess['nickname'];
+	    //user_email = sess['email'];
+	    user_color = sess['color'];
+	}
+
+	// Get return argument (originating URL) if there.
+    	var tmpl_args = {
+    	    'pup_tent_js_variables': [],
+    	    'pup_tent_js_libraries': [],
+    	    'title': notw + ': Login Success',
+    	    'session': sess,
+    	    'token': tok,
+    	    'return': ret,
+    	    'user_name': user_name,
+    	    'user_email': user_email,
+    	    'user_color': user_color,
+	    'return_link': return_link,
+	    'login_link': login_link,
+	    'logout_link': logout_link
+  	};
+    	var out = pup_tent.render('barista_passport_success.tmpl',
+    				  tmpl_args,
+    				  'barista_base.tmpl');
+    	return _standard_response(res, 200, 'text/html', out);
+    });
+
+    // General failure.
+    messaging_app.get('/login/failure', function(req, res){
+
+	console.log('Login FAILURE.');
+
+	// Try and extract our return url by a few different
+	// methods.
+	// First, see if we stashed it in the url.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	    console.log('Recovered return URL from URL.');
+	}
+	// Next, see if we stashed it in the session.
+	if( ! ret ){
+	    if( req.session && us.isString(req.session['return']) ){
+		console.log('Recovered return URL from session.');
+		ret = req.session['return'];
+	    }
+	    // Fall back on trying to get return argument from the header
+	    // referer.
+	    if( ! ret ){
+		ret = _extract_referer_query_field(req, 'return');
+		if( ret ){
+		    console.log('Recovered return URL from field.');
+		}else{
+		    console.log('No recoverable return field.');
+		}
+	    }
+	}
+
+	// We do not want a token floating around in the case of failure.
+	//console.log('ret (pre)', ret);
+	ret = _filter_token_from_url(ret);
+	//console.log('ret (post)', ret);
+
+	// We'll need this URL in some cases.
+	var return_link = ret;
+	var login_link = '/login?return='+ ret;
+	
+	// Get return argument (originating URL) if there.
+    	var tmpl_args = {
+    	    'pup_tent_js_variables': [],
+    	    'pup_tent_js_libraries': [],
+    	    'title': notw + ': Login Failure',
+    	    'return': ret,
+	    'return_link': return_link,
+	    'login_link': login_link
+  	};
+    	var out = pup_tent.render('barista_passport_failure.tmpl',
+    				  tmpl_args,
+    				  'barista_base.tmpl');
+    	return _standard_response(res, 200, 'text/html', out);
+    });
+
+    // Really requires a return and token.
+    messaging_app.get('/logout', function(req, res){
+
+	// Get return argument (originating URL) if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	}
+	// Get the token, which reall should be there.
+	var tok = null;
+	if( req.query && req.query['barista_token'] ){
+	    tok = req.query['barista_token'];
+	}
+	//console.log('tok', tok);
+
+	// Now then, to keep from causing weirdness, we'll need to
+	// remove any incoming barista token in the URL.
+	//console.log('ret (pre)', ret);
+	ret = _filter_token_from_url(ret);
+	//console.log('ret (post)', ret);
+	
+	// We'll need this URL in some cases.
+	var return_link = ret;
+	var login_link = '/login?return='+ ret;
+	
+	//
+	var deleted_session_p = sessioner.delete_session_by_token(tok);
+
+	// Get return argument (originating URL) if there.
+    	var tmpl_args = {
+    	    'pup_tent_js_variables': [],
+    	    'pup_tent_js_libraries': [],
+    	    'title': notw + ': Login Success',
+    	    'token': tok,
+	    'deleted_session_p': deleted_session_p,
+    	    'return': ret,
+	    'return_link': return_link,
+	    'login_link': login_link,
+  	};
+    	var out = pup_tent.render('barista_passport_logout.tmpl',
+    				  tmpl_args,
+    				  'barista_base.tmpl');
+    	return _standard_response(res, 200, 'text/html', out);
+    });
+
+    ///
+    /// Auth specific routes.
+    ///
+
+    // Create local loop for local.
+    messaging_app.get('/auth/local', function(req, res){
+
+	// Get return argument (originating URL) if there.
+	var ret = null;
+	if( req.query && req.query['return'] ){
+	    ret = req.query['return'];
+	}
+	console.log('/auth/local GET got "return": ' + ret);
+	// TODO: Err if nothing to return to?
+
+	// Get return argument (originating URL) if there.
+    	var tmpl_args = {
+    	    'pup_tent_js_variables': [],
+    	    'pup_tent_js_libraries': [],
+    	    'title': notw + ': Local Login',
+    	    'return': ret
+  	};
+    	var out = pup_tent.render('barista_passport_local_login.tmpl',
+    				  tmpl_args,
+    				  'barista_base.tmpl');
+    	return _standard_response(res, 200, 'text/html', out);
+    });
+
+    // Throw Google+.
+    messaging_app.get('/auth/google',
+	    passport.authenticate(
+		'google',
+		{ scope: ['https://www.googleapis.com/auth/plus.login'] }
+	    ));
+
+    // Throw GitHub.
+    messaging_app.get('/auth/github',	passport.authenticate('github'));
+
+    // Throw orcid/oauth2.
+    messaging_app.get('/auth/orcid', passport.authenticate('oauth2'));
+
+    // Generalized final step callback.
+    messaging_app.get('/auth/:method/callback', function(req, res, next) {
+
+	var method = req.params.method;
+	var method_title = method;
+
+	// The orcid/oauth2 thing is a special case.
+	if( method === 'orcid' ){
+	    method = 'oauth2';
+	}
+
+	// Try and extract our return url by a couple of different
+	// methods.
+	// First, see if we stashed it in the session.
+	var ret = null;
+	if( req.session && us.isString(req.session['return']) ){
+	    console.log('Recovered return URL from session.');
+	    ret = req.session['return'];
+	    req.session['return'] = null; // don't confuse ourselves later
+	}
+	// Fall back on trying to get return argument from the header
+	// referer.
+	if( ! ret ){
+	    ret = _extract_referer_query_field(req, 'return');
+	    if( ret ){
+		console.log('Recovered return URL from field.');
+	    }
+	}
+	console.log('/auth/'+method_title+'/callback GET got "return": ' + ret);
+
+	// TODO: Err if nothing to return to? Or in the more likely case
+	// of losing my return in the middle, tell people to start again
+	// somewhere?
+
+	// Final redirections.
+	passport.authenticate(method, function(err, user, info){
+	    if( err ){
+		console.log('"'+method_title+'" unknown error:', err);
+		return next(err);
+	    }else if( ! user ){
+		console.log('"'+method_title+'" error: lack of user?', info);
+		return res.redirect('/login/failure');
+	    }else{
+
+		// Try and put together a session from the fragmentary
+		// information that we captured.
+		console.log('Captured user info', user);
+		var sess = null;
+		if( user['uri'] ){ // get lucky
+		    sess = sessioner.create_session_by_uri(user['uri']);
+		}else{
+		    // Try and create one via provider.
+		    sess = sessioner.create_session_by_provider(
+			user['provider_id'], user['user_id']);
+		}
+
+		var created_token = null;
+		if( sess && sess['token'] ){
+		    created_token = sess['token'];
+		}else{
+		    // TODO: Something if in error?
+		}
+		
+		return _response_redirect_to_success(res, ret, created_token);
+	    }
+	})(req, res, next);
     });
 
     ///
