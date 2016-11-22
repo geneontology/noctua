@@ -378,6 +378,7 @@ var noctua_models = config['NOCTUA_MODELS'].value;
 var noctua_store = config['NOCTUA_STORE'].value;
 var user_data = config['USER_DATA'].value;
 var group_data = config['GROUP_DATA'].value;
+var login_secrets_dir = config['BARISTA_LOGIN_SECRETS'].value;
 var ontology_list = _tilde_expand_list(config['ONTOLOGY_LIST'].value);
 var ontology_catalog = config['ONTOLOGY_CATALOG'] ? config['ONTOLOGY_CATALOG'].value : null;
 var workbench_dirs = config['WORKBENCHES'].value;
@@ -497,8 +498,9 @@ gulp.task('run-barista', shell.task(_run_cmd(
      '--debug', 0,
      '--users', user_data,
      '--groups', group_data,
-     '--public', barista_lookup_url,
+     // '--public', barista_lookup_url,
      '--self', barista_location,
+     '--secrets', login_secrets_dir,
      '--context', noctua_context,
      '--repl', barista_repl_port
     ]
