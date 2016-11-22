@@ -2586,7 +2586,7 @@ function user_check(barista_loc, given_token, elt_id,
 		
 		// Create active widget.
 		var gsel = [
-		    '<!-- Zoom/view controls. -->',
+		    '<!-- Group controls. -->',
 		    '<li class="dropdown" id="' + elt_id + '">',
 		    '<span class="dropdown-toggle" data-toggle="dropdown">'+
 			name + ' <b class="caret"></b></span>',
@@ -2639,7 +2639,7 @@ function user_check(barista_loc, given_token, elt_id,
 	    // Initial draw, hopefully with the right group.
 	    _redraw_widget(init_user_group, data);
 
-	    // Initial use og change group announce fun.
+	    // Initial use of change group announce fun.
 	    if( typeof(change_group_announce_fun) === 'function' ){
 		change_group_announce_fun(init_user_group);
 	    }
