@@ -32,26 +32,24 @@ into LEGO models.
 #### Login
 
 To create or edit a LEGO model using Noctua, you currently need to
-have two things: an email address registered with
-[Persona](http://persona.org) and to be properly registered as a
-Noctua user in the GO users' metadata for that email address. If you
-are already a registered GO curator and have a Persona account, you
-can login to Noctua by following the steps after clicking [Login] on
-any page and be clicking [Return] once a token has been issued.
+have three things: an account on [GitHub](https://github.com/), an
+[ORCID](http://orcid.org/), and to be properly registered as a Noctua
+user in the GO users' metadata. If you are already a registered GO
+curator and have a GitHub account, you can login to Noctua by
+following the steps after clicking [Login] on any page and be clicking
+[Return] once a token has been issued.
 
-If you don't already have a [Persona](http://persona.org) account, as
-long as you have a public email address, you can register the first
-time you try to login. The more important step is to get your
+If you don't already have a [GitHub](https://github.com/) or
+[ORCID](http://orcid.org/) account, please obtain these before
+continuing (note that in exceptional circumstances, it is possible to
+use Noctua without these). The most important step is to get your
 information properly into the users' metadata file. The easiest way to
 do this is to fill out the online
 [new user form](http://bit.ly/new-noctua-user) and contact sjcarbon at
 lbl dot gov once complete. Propagating the metadata information may
 take a little time, so please do this as early as possible. To fill
-out this form, you will need your name, organization, and ORCID (yes,
-you'll need one of those as well if you do not have one).
-
-Please note that in many browsers you must have pop-up blocking disabled
-for the Noctua domains in order to be able to get the login dialog.
+out this form, you will need your name, organization, and GitHub and
+ORCID account information.
 
 #### Accessing the Graph Editor
 
