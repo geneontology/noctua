@@ -170,3 +170,7 @@ are marked production
 OWL models may be retrieved here:
 
 *TBD.*
+
+## Providing Feedback
+
+Curators should send bug reports and requests for new features on the [Noctua issue tracker](https://github.com/geneontology/noctua/issues). Be sure to search the tracker to see if the request has not already been reported!
