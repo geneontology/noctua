@@ -97,11 +97,6 @@ var paths = {
     	'js/NoctuaEditor.js',
     	'js/NoctuaLanding.js'
     ],
-    'core_barista_clients': [
-        'js/BaristaLogin.js',
-        'js/BaristaLogout.js',
-        'js/BaristaSession.js'
-    ],
     'core_workbench_clients': [
         // A temporary place for internal workspaces.
         //'workbenches/copy_in_model/CopyInModel.js',
@@ -126,11 +121,6 @@ var paths = {
 // 	'js/NoctuaEditor.js',
 // 	'js/NoctuaLanding.js'
 //      //'js/NoctuaBasic/NoctuaBasicApp.js'
-//     ],
-//     'core_barista_clients': [
-//      // 'js/BaristaLogin.js'
-//      // 'js/BaristaLogout.js'
-//      // 'js/BaristaSession.js'
 //     ],
 //     'core_workbench_clients': [
 //      // A temporary place for internal workspaces.
@@ -252,16 +242,6 @@ us.each(paths.core_noctua_clients, function(file, index) {
     });
 });
 
-var barista_build_tasks = us.clone(base_build_tasks);
-us.each(paths.core_barista_clients, function(file, index) {
-    var taskname = 'build-client_' + file;
-    barista_build_tasks.push(taskname);
-    gulp.task(taskname, function(cb){
-        _client_compile_task(file);
-        cb(null);
-    });
-});
-
 var workbench_build_tasks = us.clone(base_build_tasks);
 us.each(paths.core_workbench_clients, function(file, index) {
     var taskname = 'build-client_' + file;
@@ -274,7 +254,6 @@ us.each(paths.core_workbench_clients, function(file, index) {
 
 gulp.task('build', noctua_build_tasks.concat(
                             form_build_tasks,
-                            barista_build_tasks,
                             workbench_build_tasks));
 
 gulp.task('watch', ['watch-noctua', 'watch-form']);
@@ -284,7 +263,6 @@ gulp.task('watch-noctua', function(cb) {
     watch_mode = true;
     var basic_client_files = paths.core_noctua_clients;
     gulp.watch(basic_client_files, noctua_build_tasks);
-    gulp.watch(paths.core_barista_clients, barista_build_tasks);
     gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
     cb(null);
 });
