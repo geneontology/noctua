@@ -2074,9 +2074,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    var endpoint_arguments =
 			    encodeURIComponent(JSON.stringify(reqs.structure()));
 
-		    // TODO: 
+		    // TODO: This seems to change a lot--maybe push it into
+		    // a config, or start the plugin thinking?
 		    var txtpr = 'http://tpc.textpresso.org';
-		    window.open(txtpr + '/cgi-bin/tc/tpc/search?' +
+		    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?' +
 				'endpoint_url=' + endpoint_url +
 				'&endpoint_arguments=' + endpoint_arguments,
 				'_blank');
@@ -2103,7 +2104,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    alert('Need to be logged in to kick out to Textpresso.');
 		}else{
 		    var txtpr = 'http://tpc.textpresso.org';
-		    window.open(txtpr + '/cgi-bin/tc/tpc/search?token=' + btkn,
+		    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?token=' + btkn,
 				'_blank');
 		}
 		taemdl.destroy();
