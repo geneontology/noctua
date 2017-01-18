@@ -451,14 +451,9 @@ gulp.task('batch-minerva-create-journal', shell.task(_run_cmd([
     ' -f', noctua_models
 ])));
 
-// Minerva batch: create a new journal from the files directory.
-gulp.task('batch-minerva-flush-journal', shell.task(_run_cmd([
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-jar', './java/lib/minerva-cli.jar',
-    '--dump-owl-models',
-    '-j', noctua_store,
-    ' -f', noctua_models
+// Minerva batch: destroy the current journal.
+gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
+    'rm', '-f', noctua_store
 ])));
 
 // Minerva batch: get used minerva version.
@@ -467,11 +462,6 @@ gulp.task('batch-minerva-version', shell.task(_run_cmd([
     '-jar', './java/lib/minerva-cli.jar',
     '--version'
 ])));
-
-// // Minerva batch: destroy the current journal.
-// gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
-//     'rm', '-f', noctua_store
-// ])));
 
 //node barista.js --self http://localhost:3400
 gulp.task('run-barista', shell.task(_run_cmd(
