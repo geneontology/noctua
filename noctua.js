@@ -307,6 +307,14 @@ var NoctuaLauncher = function(){
 	return ret;
     };
 
+    self.get_qp = function(req, query_parameter){
+	var ret = null;
+	if( req && req.query && req.query[query_parameter] ){
+	   ret = req.query[query_parameter];
+	}
+	return ret;
+    };
+
     self.standard_response = function(res, code, type, body){
 	res.setHeader('Content-Type', type);
 	res.setHeader('Content-Length', body.length);
@@ -747,8 +755,8 @@ var NoctuaLauncher = function(){
 
 	    //console.log(req.route);
 	    //console.log(req.params['query']);
-	    var etype = req.params['type'] || 'unclassified error';
-	    var emessage = req.params['message'] || 'unknown error';
+	    var etype = self.get_qp(req, 'type') || 'unclassified error';
+	    var emessage = self.get_qp(req, 'message') || 'unknown error';
 
 	    var fin = [
 		'<html>',
@@ -1236,13 +1244,17 @@ var NoctuaLauncher = function(){
 			
 			// First, error callbacks.
 			cap_manager.register('error', function(resp, man){
-			    var etype = 'server error; could not resolve model';
-			    var emessage = JSON.stringify(resp.raw());
+			    var etype = encodeURIComponent(
+				'server error; could not resolve model');
+			    var emessage = encodeURIComponent(
+				JSON.stringify(resp.raw()));
 			    res.redirect('/error');
 			});
 			cap_manager.register('manager_error',function(resp, man){
-			    var etype = 'manager error; could not resolve model';
-			    var emessage = JSON.stringify(resp.raw());
+			    var etype = encodeURIComponent(
+				'manager error; could not resolve model');
+			    var emessage = encodeURIComponent(
+				JSON.stringify(resp.raw()));
 			    res.redirect('/error');
 			});
 			
