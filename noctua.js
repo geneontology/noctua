@@ -740,6 +740,32 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'image/x-icon', '');
 	});
 
+	// Error redirect catch.
+	self.app.get('/error', function(req, res) {
+
+	    console.log('caught intentional redirect for error report');
+
+	    //console.log(req.route);
+	    //console.log(req.params['query']);
+	    var etype = req.params['type'] || 'unclassified error';
+	    var emessage = req.params['message'] || 'unknown error';
+
+	    var fin = [
+		'<html>',
+		'<div>',
+		'<h4>',
+		'ERROR: ' + etype,
+		'</h4>',
+		'<p>',
+		emessage,
+		'</p>',
+		'</div>',
+		'</html>',
+	    ];
+	    
+	    self.standard_response(res, 200, 'text/html', fin.join(''));
+	});
+
 	///
 	/// High-level status overview and heartbeat
 	///
@@ -921,7 +947,7 @@ var NoctuaLauncher = function(){
 		// // Chunks to object.
 		// var decoded_body = querystring.parse(full_body) || {};
 		// console.log('decoded body', decoded_body);
-	    
+
 	    // Assume batched list.
 	    var decoded_body = req.body || {};
 
@@ -938,6 +964,16 @@ var NoctuaLauncher = function(){
 		pre_fail(res, "requests empty in POST data", "meh");
 	    }else{
 
+		// Assume that we're going to send a JSON payload back
+		// over the wire. The other alternative is to forward
+		// the user to a new HTML page on our end.
+		var json_response_p = true;
+		// Also want to know how to return.
+		var x_return_url = decoded_body['x-return-url'];
+		if( x_return_url && us.isString(x_return_url) ){
+		    json_response_p = false;
+		}
+	    
 		// We assume Textpresso, but others could be using
 		// this too. 
 		var external_client_id = null;
@@ -978,9 +1014,6 @@ var NoctuaLauncher = function(){
 		    var pa_fact_target_id = decoded_body['x-fact-target-id'];
 		    var pa_fact_relation_id = decoded_body['x-fact-relation-id'];
 		    
-		    // Also want to know how to return.
-		    var pa_return_url = decoded_body['x-return-url'];
-
 		    // We can throw this out as it is Barista's problem,
 		    // not ours.
 		    var pa_user_id = null;
@@ -1148,39 +1181,85 @@ var NoctuaLauncher = function(){
 		
 		// Okay, we've got probably good input as we haven't
 		// bailed out yet. Grab model for export with fresh
-		// manager.
-		var cap_engine = new node_engine(barista_response);
-		var cap_manager =
-			new minerva_manager(self.barista_location,
-					    self.minerva_definition_name,
-					    cap_token, cap_engine, 'async');
-		//null, cap_engine, 'async');
+		// manager. Switch fundamentally on whether this is a
+		// transparent JSON return or a forwarding situation.
+		if( json_response_p ){
+
+		    (function(){
+			var cap_engine = new node_engine(barista_response);
+			var cap_manager =
+				new minerva_manager(self.barista_location,
+						    self.minerva_definition_name,
+						    cap_token, cap_engine,
+						    'async');
+			//null, cap_engine, 'async');
+			
+			// First, error callbacks.
+			cap_manager.register('error', function(resp, man){
+			    pre_fail(res, 'could not resolve model: ' +
+				     JSON.stringify(resp.raw()), 'n/a');
+			});
+			cap_manager.register('manager_error',function(resp, man){
+			    pre_fail(res, 'comms issues for this model: ' +
+				     JSON.stringify(resp.raw()), 'n/a');
+			});
 		    
-		// First, error callbacks.
-		cap_manager.register('error', function(resp, man){
-		    pre_fail(res, 'could not resolve model: ' +
-			     JSON.stringify(resp.raw()), 'n/a');
-		});
-		cap_manager.register('manager_error', function(resp, man){
-		    pre_fail(res, 'comms issues for this model: ' +
-			     JSON.stringify(resp.raw()), 'n/a');
-		});
+			// Possible success callback--return response
+			// straight?
+			cap_manager.register('merge', function(resp, man){
+			    res.setHeader('Content-Type', 'application/json');
+			    res.send(JSON.stringify(resp.raw()));
+			});
+			cap_manager.register('rebuild', function(resp, man){
+			    res.setHeader('Content-Type', 'application/json');
+			    res.send(JSON.stringify(resp.raw()));
+			});
+			
+			// Trigger tractorbeam manager.
+			tll('request_with: ' + JSON.stringify(rs.structure()));
+			cap_manager.request_with(rs);
+		    })();
 		    
-		// Possible success callback--return response
-		// straight?
-		cap_manager.register('merge', function(resp, man){
-		    res.setHeader('Content-Type', 'application/json');
-		    res.send(JSON.stringify(resp.raw()));
-		});
-		cap_manager.register('rebuild', function(resp, man){
-		    res.setHeader('Content-Type', 'application/json');
-		    res.send(JSON.stringify(resp.raw()));
-		});
-		
-		// Trigger tractorbeam manager.
-		tll('request_with: ' + JSON.stringify(rs.structure()));
-		cap_manager.request_with(rs);
-		
+		}else{
+		    
+		    // TODO:
+		    // Forward on success, display error page on
+		    // failure.
+		    (function(){
+			var cap_engine = new node_engine(barista_response);
+			var cap_manager =
+				new minerva_manager(self.barista_location,
+						    self.minerva_definition_name,
+						    cap_token, cap_engine,
+						    'async');
+			//null, cap_engine, 'async');
+			
+			// First, error callbacks.
+			cap_manager.register('error', function(resp, man){
+			    var etype = 'server error; could not resolve model';
+			    var emessage = JSON.stringify(resp.raw());
+			    res.redirect('/error');
+			});
+			cap_manager.register('manager_error',function(resp, man){
+			    var etype = 'manager error; could not resolve model';
+			    var emessage = JSON.stringify(resp.raw());
+			    res.redirect('/error');
+			});
+			
+			// Possible success callback--return response
+			// straight?
+			cap_manager.register('merge', function(resp, man){
+			    res.redirect(x_return_url);
+			});
+			cap_manager.register('rebuild', function(resp, man){
+			    res.redirect(x_return_url);
+			});
+			
+			// Trigger tractorbeam manager.
+			tll('request_with: ' + JSON.stringify(rs.structure()));
+			cap_manager.request_with(rs);
+		    })();
+		}
 	    }
 	    //});
 	});
