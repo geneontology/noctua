@@ -901,7 +901,8 @@ var NoctuaLauncher = function(){
 	// Offer POST, not GET.
 	self.app.get('/tractorbeam', function(req, res){
 	    tll('attempt to GET tractorbeam');
-	    pre_fail(res, "no GET endpoint", "try POST instead of GET");
+	    pre_fail(res, "no GET endpoint",
+		     "try POST instead of GET at this URL");
 	});
 	self.app.post('/tractorbeam', function(req, res){
 
@@ -944,13 +945,73 @@ var NoctuaLauncher = function(){
 		    external_client_id = decoded_body['x-client-id'];
 		}
 		
+	        tll('looks like we can make minerva attempt');
+	        var cap_token = decoded_body['token'];
+		tll('with token: ' + cap_token);
+
 		var rs = null;
-		if( external_client_id === 'pubannotator' ){
+		if( external_client_id === 'pubannotation.org' ){
 
-		    // TODO.
-		    // https://github.com/geneontology/noctua/issues/316
-		    pre_fail(res, "does not yet support pubannotator", "almost");
+		    // // TODO.
+		    // // https://github.com/geneontology/noctua/issues/316
+		    // pre_fail(res, "does not yet support pubannotator", "almost");
 
+		    // Ready to roll. Confirm this type of input:
+		    //{
+		    //  "requests": [],
+		    //  "x-return-url": "http://localhost:8910/editor/graph/gomodel:584b49fa00000194?barista_token=123",
+		    //  "x-fact-relation-id": "RO:0002411",
+		    //  "x-fact-target-id": "gomodel:584b49fa00000194/584b49fa00000205",
+		    //  "x-fact-source-id": "gomodel:584b49fa00000194/586fc17a00000115",
+		    //  "x-client-id": "pubannotation.org",
+		    //  "x-model-id": "gomodel:584b49fa00000194",
+		    //  "token": "1234567890"
+		    //}
+		    
+		    // We require a model.
+		    var pa_model_id = decoded_body['x-model-id'];
+		    rs = new minerva_requests.request_set(cap_token, pa_model_id);
+		    console.log('x-client: use model: ' + pa_model_id);
+
+		    // And the rest for a fact location.
+		    var pa_fact_source_id = decoded_body['x-fact-source-id'];
+		    var pa_fact_target_id = decoded_body['x-fact-target-id'];
+		    var pa_fact_relation_id = decoded_body['x-fact-relation-id'];
+		    
+		    // Also want to know how to return.
+		    var pa_return_url = decoded_body['x-return-url'];
+
+		    // We can throw this out as it is Barista's problem,
+		    // not ours.
+		    var pa_user_id = null;
+		    if( decoded_body['x-user-id'] ){
+			pa_user_id = decoded_body['x-user-id'];
+		    }
+
+		    // This is known/hoped to be a populated array.
+		    var pa_requests = decoded_body['requests'];
+		    
+		    // From here, loop through and collect all of the
+		    // requests, depending on who we think the client is.
+		    var comments = [];
+		    each(pa_requests, function(pa_request){
+			comments.push(pa_request);
+		    });
+
+		    if( ! pa_fact_source_id || ! pa_fact_target_id || ! pa_fact_relation_id || ! pa_model_id || ! us.isArray(comments) || (comments.length === 0) || ! cap_token ){
+			
+			pre_fail(res, 'insufficient arg data to continue',
+				 'one of the necessary fields was not provided');
+		    }else{
+
+			// TODO: Add this to evidence in more sensible way.
+			//var pf = rs.add_fact(
+			rs.add_annotation_to_fact('comment', comments, null,
+						  [pa_fact_source_id,
+						   pa_fact_target_id,
+						   pa_fact_relation_id]);
+		    }
+		
 		}else if( external_client_id === 'tpc' ){
 		    
 		    // We first need to extract these:
@@ -973,10 +1034,6 @@ var NoctuaLauncher = function(){
 		    //   }
 		    //  ]
 		    // }
-
-	            tll('looks like we can make minerva attempt');
-	            var cap_token = decoded_body['token'];
-		    tll('with token: ' + cap_token);
 
 		    // Also, if there is a model id number, use that,
 		    // otherwise we'll be creating a new model. Start
