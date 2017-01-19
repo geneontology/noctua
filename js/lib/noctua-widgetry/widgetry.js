@@ -1989,7 +1989,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	}
 
-	// Cheaply inject a button for experimenting with TextAE,
+	// Cheaply inject a button for experimenting with markup tools,
 	// GO-only.
 	if( entity_type === 'model' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
@@ -1997,16 +1997,16 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
-	    var textae_model_btn_args = {
+	    var pubann_model_btn_args = {
     		'generate_id': true,
     		'type': 'button',
     		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
 	    var textpr_btn =
-		new bbop.html.tag('button', textae_model_btn_args, 'Textpresso');
+		new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso');
 	    var tpc_btn =
-		new bbop.html.tag('button', textae_model_btn_args, 'TPC');
+		new bbop.html.tag('button', pubann_model_btn_args, 'TPC');
 	    out_cache.push(textpr_btn.to_string());
 	    out_cache.push('&nbsp;');
 	    out_cache.push(tpc_btn.to_string());
@@ -2014,20 +2014,23 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    out_cache.push('</div>');
 	}
 	// GO facts.
+	//if( ( entity_type === 'fact' || entity_type === 'individual' ) &&
+	    // context === 'go' ){
 	if( entity_type === 'fact' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
 			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
-	    var textae_fact_btn_args = {
+	    var pubann_fact_btn_args = {
     		'generate_id': true,
     		'type': 'button',
     		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
 	    var pubann_btn =
-		new bbop.html.tag('button', textae_fact_btn_args,'PubAnnotator');
+		    new bbop.html.tag('button', pubann_fact_btn_args,
+				      'PubAnnotation');
 	    out_cache.push(pubann_btn.to_string());
 	    out_cache.push('</div>');
 	    out_cache.push('</div>');
@@ -2110,6 +2113,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		taemdl.destroy();
 	    });	
 
+	// }else if( (entity_type === 'fact' || entity_type === 'individual' ) &&
+	// 	  context === 'go' ){
 	}else if( entity_type === 'fact' && context === 'go' ){
 
 	    // PubAnnotation.
@@ -2121,8 +2126,99 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		
 		var taemdl =
 		    new contained_modal('dialog', 'PubAnnotation interaction');
-		taemdl.add_to_body('<div><p>PubAnnotation!</p></div>');
+		var tofm = [
+		    '<div><p>Markup a PubMed document for the comments in this entity.</p>',
+		    '<form id="pubanninteraction" class="form-inline">',
+		    '<div class="form-group">',
+		    '<label for="pubannpubid">PubMed ID</label>',
+		    '<input type="text" class="form-control" id="pubannpubid" placeholder="PMID:01234567" />',
+		    '</div><br />',
+		    '<button id="pubannpubidsend" type="submit" class="btn btn-default">Go to PubAnnotation</button>',
+		    '</form>',
+		    '</div>'
+		];
+		taemdl.add_to_body(tofm.join(''));
 		taemdl.show();
+
+		// TODO: Action on button click.
+		// If input looks okay, kick people to PubAnnotation.
+		jQuery("#pubanninteraction" ).submit(function(event){
+		    event.preventDefault();
+
+		    var btkn = manager.user_token();
+		    if( ! btkn || ! us.isString(btkn) ){
+			alert('Need to be logged in to transfer ' +
+			      'to PubAnnotation.');
+			taemdl.destroy();
+		    }else{
+
+			// Try to get the PubMed ID.
+			var finputs = jQuery('#pubanninteraction :input');
+			//console.log(finputs);
+			var fvalues = {};
+			each(finputs, function(finput){
+			    fvalues[finput.id] = finput.value;
+			    //console.log(finput);
+			});
+			//console.log(fvalues);
+			var inp = fvalues['pubannpubid'];
+
+			// If the PMID is good, build a link out to
+			// PubAnnotation and kick.
+			if( ! inp ){
+			    alert('Need to input a PubMed ID.');
+			}else{
+
+			    var good_pmid_a = /[0-9]+/;
+			    var good_pmid_b = /PMID\:[0-9]+/;
+			    if( ! good_pmid_a.test(inp) &&
+				! good_pmid_b.test(inp) ){
+				alert('Not a recognized PubMed ID: ' + inp);
+			    }else{
+
+				// Get only the local if full short form.
+				if( good_pmid_b.test(inp) ){
+				    inp = inp.substr(5, inp.length);
+				}
+				    
+				// Finally, kick out to PubAnnotation.
+				var endp_url = 'http://'+ window.location.hostname +'/tractorbeam';
+				var endpoint_url = encodeURIComponent(endp_url);
+				var reqs = new minerva_requests.request_set(
+				    btkn, ecore.get_id());
+				// Base.
+				reqs.use_groups(manager.use_groups());
+				// Fake.
+				reqs.external_model_id(ecore.get_id());
+				reqs.external_client_id('pubannotation.org');
+				if( entity_type === 'fact' ){
+				    var xsource = entity.source();
+				    var xtarget = entity.target();
+				    var xrelation = entity.relation();
+				    reqs.external_fact_source_id(xsource);
+				    reqs.external_fact_target_id(xtarget);
+				    reqs.external_fact_relation_id(xrelation);
+				}else if( entity_type === 'individual' ){
+				    reqs.external_individual_id(entity_id);
+				}
+				var endpoint_arguments =
+					encodeURIComponent(JSON.stringify(reqs.structure()));
+
+				// TODO: This seems to change a lot--maybe
+				// push it into a config, or start the plugin
+				// thinking?
+				var kick_url = 'http://pubannotation.org/docs/sourcedb/PubMed/sourceid/' + inp + '?';
+				window.open(kick_url +
+				'endpoint_url=' + endpoint_url +
+				'&endpoint_arguments=' + endpoint_arguments,
+				'_blank');
+				
+				taemdl.destroy();
+			    }
+			}
+		    }
+		});
+		
 	    });
 	}
 	
