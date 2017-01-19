@@ -2182,7 +2182,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				}
 				    
 				// Finally, kick out to PubAnnotation.
-				var endp_url = 'http://'+ window.location.hostname +'/tractorbeam';
+				var endp_url = 'http://'+ window.location.origin +'/tractorbeam';
 				var endpoint_url = encodeURIComponent(endp_url);
 				var reqs = new minerva_requests.request_set(
 				    btkn, ecore.get_id());
@@ -2191,6 +2191,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				// Fake.
 				reqs.external_model_id(ecore.get_id());
 				reqs.external_client_id('pubannotation.org');
+				reqs.external_return_url(window.location.toString());
 				if( entity_type === 'fact' ){
 				    var xsource = entity.source();
 				    var xtarget = entity.target();
