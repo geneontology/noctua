@@ -2125,15 +2125,15 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		mdl.destroy();
 		
 		var taemdl =
-		    new contained_modal('dialog', 'PubAnnotation interaction');
+		    new contained_modal('dialog', 'PubAnnotation pattern interaction');
 		var tofm = [
 		    '<div><p>Markup a PubMed document for the comments in this entity.</p>',
 		    '<form id="pubanninteraction" class="form-inline">',
 		    '<div class="form-group">',
-		    '<label for="pubannpubid">PubMed ID</label>',
-		    '<input type="text" class="form-control" id="pubannpubid" placeholder="PMID:01234567" />',
+		    '<label for="pubannpubid">PubMed ID <i>or full service URL to PubMed markup page for an ID</i></label>',
+		    '<input type="text" class="form-control" id="pubannpubid" placeholder="PMID:01234567 or 01234567 or full URL to service page" />',
 		    '</div><br />',
-		    '<button id="pubannpubidsend" type="submit" class="btn btn-default">Go to PubAnnotation</button>',
+		    '<button id="pubannpubidsend" type="submit" class="btn btn-default">Go to service</button>',
 		    '</form>',
 		    '</div>'
 		];
@@ -2169,13 +2169,17 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    alert('Need to input a PubMed ID.');
 			}else{
 
-			    var good_pmid_a = /[0-9]+/;
-			    var good_pmid_b = /PMID\:[0-9]+/;
+			    var good_pmid_a = /^[0-9]+$/;
+			    var good_pmid_b = /^PMID\:[0-9]+$/;
+			    var good_pmid_c = /^http:\/\/.*[0-9]+.*/;
 			    if( ! good_pmid_a.test(inp) &&
-				! good_pmid_b.test(inp) ){
+				! good_pmid_b.test(inp) &&
+				! good_pmid_c.test(inp) ){
 				alert('Not a recognized PubMed ID: ' + inp);
 			    }else{
 
+				// Assume PubAnnotation, unless otherwise
+				// specified.
 				// Get only the local if full short form.
 				if( good_pmid_b.test(inp) ){
 				    inp = inp.substr(5, inp.length);
@@ -2209,6 +2213,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				// push it into a config, or start the plugin
 				// thinking?
 				var kick_url = 'http://pubannotation.org/docs/sourcedb/PubMed/sourceid/' + inp + '?';
+				if( good_pmid_c.test(inp) ){
+				    kick_url = inp + '?';
+				}
 				window.open(kick_url +
 				'endpoint_url=' + endpoint_url +
 				'&endpoint_arguments=' + endpoint_arguments,
