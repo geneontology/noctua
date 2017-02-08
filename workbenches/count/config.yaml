@@ -1,0 +1,7 @@
+menu-name: "Model count (template)"
+page-name: "Model Count"
+type: "universal"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - http://vuejs.org/js/vue.min.js
+  - foo.js

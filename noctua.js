@@ -145,67 +145,135 @@ var NoctuaLauncher = function(){
     ///
 
     // Get the location(s) of the workbench plugins.
+    var workbenches_all_ids = {};
     var workbenches_universal = [];
     var workbenches_model = [];
     var workbenches_individual = [];
+    var workbenches_edge = [];
     each(workbench_maybe_dirs, function(dir){
 	//console.log('dir', dir);
 
 	// Look at all of the listed directories.
-	var files = fs.readdirSync(dir);
-	//console.log('files', files);
+	var maybe_dir_files = fs.readdirSync(dir);
 	
-	// Only try to scan the YAML files in those
-	// directories.
-	each(files, function(file){
-	    //console.log('file', file);
-	    
-	    var suf = '.yaml';
-	    if( file.indexOf(suf, file.length - suf.length) !== -1 ){
+	each(maybe_dir_files, function(subdir){
+	    //console.log('subdir', subdir);
+
+	    var dstats = null;
+	    try {
+		//console.log(dir + '/' + subdir);
+		dstats = fs.statSync(dir + '/' + subdir);
+	    } catch(e) {
+		// Pass.
+	    }
+	    if( ! dstats || ! dstats.isDirectory() ){
+		//console.log(subdir + ' not a directory.');
+	    }else{
+
+		var wbpath = dir + '/' + subdir;
+		var wbid = subdir; // also the ID of our workbench
+		//console.log('Checking ' + wbid + ' (' + wbpath + ')');
 		
 		// Check that the file looks right.
-		var wb = yaml.load(dir + '/' + file);
-		if( wb['menu-name'] && wb['page-name'] &&
-		    wb['help-link'] && wb['path-id'] &&
-		    wb['type'] && wb['body-template'] &&
-		    wb['css'] && wb['javascript'] ){
-			
-			// Add the base file location of the wb.
-		        wb['base-location'] = dir;
+		var wb = null;
+		try {
+		    wb = yaml.load(wbpath + '/config.yaml');
+		} catch(e) {
+		    // Pass.
+		}
+		if( ! wb ){
+
+		    console.log('Rejected workbench: ' + wbid + '; ' +
+				'no good config.yaml');
+
+		}else if( ! ( wb['menu-name'] &&
+			      wb['page-name'] &&
+			      wb['help-link'] &&
+			      wb['type'] ) ){
+
+		    console.log('Rejected workbench: ' + wbid + '; ' +
+				'insufficient fields.');
+
+		}else if( ! /^[a-zA-Z0-9-_]+$/.test(wbid) ){
+
+		    console.log('Rejected workbench: ' + wbid + '; ' +
+				'workbench ID not alphanum.');
+		    
+		}else if( workbenches_all_ids[wbid] ){
+
+		    console.log('Rejected workbench: ' + wbid + '; ' +
+				'workbench ID not unique.');
+		    
+		}else{
+
+		    /// Get ready a second battery of more invasive
+		    /// filesystem tests.
+		    wb['workbench-id'] = wbid;
+
+		    // Files and directories to test.
+		    var wbpath_try_public = wbpath + '/public';
+		    var wbpath_try_tmpl = wbpath_try_public + '/inject.tmpl';
+
+		    // Test said entities.
+		    var tmpl_fstats = null;
+		    try {
+			// We know the probably at least one of these
+			// isn't gunna work, so the is the order of
+			// criticality.
+			tmpl_fstats = fs.statSync(wbpath_try_tmpl);
+		    } catch(e) {
+			// Pass.
+		    } finally {
+			// Pass.
+		    }
+
+		    if( ! tmpl_fstats || ! tmpl_fstats.isFile() ){
+
+			console.log('Rejected workbench: ' + wbid + '; ' +
+				    'no public/inject.tmpl');
+		    
+		    }else{
+
+			/// It looks like we are probably going to be
+			/// good to go.
+
+			// Ensure that we don't hit this one again.
+			workbenches_all_ids[wbid] = true;
+
+			// Add things to the permenent record.
+			wb['template-injectable'] = wbpath_try_tmpl;
+			wb['public-directory'] = wbpath_try_public;
 			
 			// Load workbench for later.
 			if( wb['type'] === 'universal' ){
 			    workbenches_universal.push(wb);
-			    console.log(
-				'Added workbench (u: '+wb['path-id']+'): '+file);
+			    console.log('Added workbench (u: '+wbid+')');
 			}else if( wb['type'] === 'model' ){
 			    workbenches_model.push(wb);
-			    console.log(
-				'Added workbench (m: '+wb['path-id']+'): '+file);
+			    console.log('Added workbench (m: '+wbid+')');
 			}else if( wb['type'] === 'individual' ){
 			    workbenches_individual.push(wb);
-			    console.log(
-				'Added workbench (i: '+wb['path-id']+'): '+file);
+			    console.log('Added workbench (i: '+wbid+')');
+			}else if( wb['type'] === 'edge' ){
+			    workbenches_edge.push(wb);
+			    console.log('Added workbench (e: '+wbid+')');
 			}else{
-			    console.log('Rejected workbench (type): ' + file);
+			    console.log('Rejected workbench (type)');
 			}
-		    }else{
-			console.log('Rejected workbench: ' + file);
 		    }
+		}
 	    }
 	});
     });
 
     // Apply external to internal variables.
-    var all_workbenches = workbenches_universal.concat(workbenches_model).concat(workbenches_individual);
+    var all_workbenches = workbenches_universal.concat(workbenches_model).concat(workbenches_individual).concat(workbenches_edge);
     if( us.isEmpty(all_workbenches) ){
 	console.log('No workbenches defined.');
     }else{
-	console.log(all_workbenches.length + ' workbenches defined.');
+	console.log(all_workbenches.length + ' workbench(es) defined.');
     }
-    // self.workbenches_universal = workbenches_universal;
-    // self.workbenches_model = workbenches_model;
-    // self.workbenches_individual = workbenches_individual;
+
     // Barista location setting.
     //var barloc = config['BARISTA_LOOKUP_URL'].value;
     self.barista_location = barloc;
@@ -415,7 +483,9 @@ var NoctuaLauncher = function(){
 		{name: 'global_workbenches_model',
 		 value: workbenches_model },
 		{name: 'global_workbenches_individual',
-		 value: workbenches_individual }
+		 value: workbenches_individual },
+		{name: 'global_workbenches_edge',
+		 value: workbenches_edge }
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
@@ -433,7 +503,8 @@ var NoctuaLauncher = function(){
 	    'barista_logout': barista_logout,
 	    'noctua_workbenches_universal': workbenches_universal,
 	    'noctua_workbenches_model': workbenches_model,
-	    'noctua_workbenches_individual': workbenches_individual
+	    'noctua_workbenches_individual': workbenches_individual,
+	    'noctua_workbenches_edge': workbenches_edge
 	};
 
 	// Load in the additions.
@@ -481,17 +552,15 @@ var NoctuaLauncher = function(){
 
     // Will pick things up recursively.
     var ppaths = ['static', 'deploy', 'css', 'templates'];
-  
-    // Add the paths for the workbench plugins. The workbench JS will
-    // get compiled into the deploy directory, but we still need to
-    // pickup the templates and keep them ready.
+
+    // Add the paths for the workbenches. While we don't need these
+    // for the asset delivery (that is taken care of directly by
+    // express in the dynamic route creation below), we need it to
+    // allow pup-tent to render the templates.
     each(all_workbenches, function(wb){
     	// We know these are good.
-    	var path_id = wb['path-id'];
-    	// var css_list = wb['css'];
-    	// var js_list = wb['javascript'];
-    	var base_location = wb['base-location'];
-    	ppaths.push(base_location +'/'+ path_id);
+    	var path = wb['public-directory'];
+    	ppaths.push(path);
     });
     var pup_tent = require('pup-tent')(ppaths, null, true);
     pup_tent.use_cache_p(false);
@@ -832,63 +901,113 @@ var NoctuaLauncher = function(){
 	    }
 	});
 
-	// Realize all the detected workbenches.
+	// Realize all the detected workbenches into routes in our
+	// system.
+	var express = require('express'); // using this for static middleware below
 	each(all_workbenches, function(wb){
 
-	    // We know these are good.
+	    // We know these are good from the checking above.
 	    var menu_name = wb['menu-name'];
 	    var page_name = wb['page-name'];
 	    var wbtype = wb['type'];
 	    var help_link = wb['help-link'];
-	    var path_id = wb['path-id'];
-	    var body_template = wb['body-template'];
-	    var css_list = wb['css'];
-	    var js_list = wb['javascript'];
-	    var base_location = wb['base-location'];
+	    var wbid = wb['workbench-id'];
+	    var pub_dir = wb['public-directory'];
+	    var tmpl_inj = wb['template-injectable'];
 
-	    self.app.get('/workbench/' + path_id +'/:model?', function(req, res){
+	    // Add the public directory for the workbenches to the
+	    // standard express static delivery.
+	    self.app.use('/workbench/' + wbid, express.static(pub_dir));
 
-		monitor_internal_kicks = monitor_internal_kicks + 1;
+	    // Scrape out the content of the public directory
+	    // for injection into template.
+	    var injectable_js = wb['javascript'] || [];	
+	    var injectable_css = wb['css'] || [];	
 
-		// Pull arguments out of the route and query.
-		//console.log(req.route);
-		//console.log(req.params['query']);
-		var model = req.params['model'] || null; // model
-		var node_ids = req.query['node_id'] || null; // individual
-		if( node_ids && ! us.isArray(node_ids) ){
-		    node_ids = [node_ids];
-		}
-		//console.log('node_ids:', node_ids);
+	    //
+	    // var injectable_js = [];
+	    // var injectable_css = [];
+	    // //console.log('contents', contents);
+	    // each(contents, function(asset){
+	    // 	if( /\.js$/.test(asset) ){
+	    // 	    //console.log('asset', asset);
+	    // 	    injectable_js.push(asset);
+	    // 	}else if( /\.css$/.test(asset) ){
+	    // 	    //console.log('asset', asset);
+	    // 	    injectable_css.push(asset);
+	    // 	}else{
+	    // 	    // Pass--no other assets we're interested in
+	    // 	    // injecting right now.
+	    // 	}
+	    // });
+	    
+	    /// TODO: Build a workbench path depending on the type.
+	    if( wbtype === 'universal' ){
+
+		self.app.get('/workbench/'+wbid+'', function(req, res){
 		    
-		// Make sure to map the plugin assets to the right
-		// location.
-		//var home = path_id + '/';
-		var home = base_location +'/' + path_id + '/';
-		var css_home = '/' + base_location +'/' + path_id + '/';
-		var js_home = '/deploy/'+ base_location +'/'+ path_id +'/';
-		var final_css = [];
-		each(css_list, function(css){
-		    final_css.push(css_home + css);
-		});
-		var final_js = [];
-		each(js_list, function(js){
-		    final_js.push(js_home + js);
-		});
+		    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+		    var tmpl_args = self.standard_variable_load(
+			'/workbench/' + wbid,
+			page_name, req, null, null, [],
+			{
+			    'pup_tent_css_libraries': injectable_css,
+			    'pup_tent_js_libraries': injectable_js,
+			    'workbench_help_link': help_link
+			});
 		
-		var tmpl_args = self.standard_variable_load(
-		    '/workbench/' + path_id,
-		    page_name, req, model, null, node_ids,
-		    {
-			'pup_tent_css_libraries': final_css,
-			'pup_tent_js_libraries': final_js,
-			'workbench_help_link': help_link
-		    });
+		    // Render.
+		    //console.log('tmpl_inj', tmpl_inj);
+		    var ret = pup_tent.render(tmpl_inj, tmpl_args,
+					      'noctua_base_workbench.tmpl');
+		    self.standard_response(res, 200, 'text/html', ret);
+		});
+	    }
+
+	    // self.app.get('/workbench/' + wbid +'/:model?', function(req, res){
+
+	    // 	monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    // 	// Pull arguments out of the route and query.
+	    // 	//console.log(req.route);
+	    // 	//console.log(req.params['query']);
+	    // 	var model = req.params['model'] || null; // model
+	    // 	var node_ids = req.query['node_id'] || null; // individual
+	    // 	if( node_ids && ! us.isArray(node_ids) ){
+	    // 	    node_ids = [node_ids];
+	    // 	}
+	    // 	//console.log('node_ids:', node_ids);
+		    
+	    // 	// Make sure to map the plugin assets to the right
+	    // 	// location.
+	    // 	//var home = path_id + '/';
+	    // 	var home = base_location +'/' + path_id + '/';
+	    // 	var css_home = '/' + base_location +'/' + path_id + '/';
+	    // 	var js_home = '/deploy/'+ base_location +'/'+ path_id +'/';
+	    // 	var final_css = [];
+	    // 	each(css_list, function(css){
+	    // 	    final_css.push(css_home + css);
+	    // 	});
+	    // 	var final_js = [];
+	    // 	each(js_list, function(js){
+	    // 	    final_js.push(js_home + js);
+	    // 	});
 		
-		// Render.
-		var ret = pup_tent.render(home + body_template, tmpl_args,
-					  'noctua_base_workbench.tmpl');
-		self.standard_response(res, 200, 'text/html', ret);
-	    });
+	    // 	var tmpl_args = self.standard_variable_load(
+	    // 	    '/workbench/' + path_id,
+	    // 	    page_name, req, model, null, node_ids,
+	    // 	    {
+	    // 		'pup_tent_css_libraries': final_css,
+	    // 		'pup_tent_js_libraries': final_js,
+	    // 		'workbench_help_link': help_link
+	    // 	    });
+		
+	    // 	// Render.
+	    // 	var ret = pup_tent.render(home + body_template, tmpl_args,
+	    // 				  'noctua_base_workbench.tmpl');
+	    // 	self.standard_response(res, 200, 'text/html', ret);
+	    // });
 	});
 	
 	// DEBUG: A JSON model debugging tool for @hdietze
