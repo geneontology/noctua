@@ -948,6 +948,32 @@ var NoctuaLauncher = function(){
 					      'noctua_base_workbench.tmpl');
 		    self.standard_response(res, 200, 'text/html', ret);
 		});
+	    }else if( wbtype === 'model' ){
+
+		self.app.get('/workbench/'+ wbid +'/:model', function(req, res){
+		    
+		    monitor_internal_kicks = monitor_internal_kicks + 1;
+
+	    	    // Pull arguments out of the route and query.
+	    	    //console.log(req.route);
+	    	    //console.log(req.params['query']);
+	    	    var mid = req.params['model'] || null; // model
+		    
+		    var tmpl_args = self.standard_variable_load(
+			'/workbench/' + wbid + '/' + mid, page_name,
+			req, mid, null, [],
+			{
+			    'pup_tent_css_libraries': injectable_css,
+			    'pup_tent_js_libraries': injectable_js,
+			    'workbench_help_link': help_link
+			});
+		    
+		    // Render.
+		    //console.log('tmpl_inj', tmpl_inj);
+		    var ret = pup_tent.render(tmpl_inj, tmpl_args,
+					      'noctua_base_workbench.tmpl');
+		    self.standard_response(res, 200, 'text/html', ret);
+		});
 	    }
 
 	    // self.app.get('/workbench/' + wbid +'/:model?', function(req, res){
