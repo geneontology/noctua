@@ -19,7 +19,6 @@ var bbop = require('bbop-core');
 //var bbopx = require('bbopx');
 var amigo = require('amigo2');
 var bbop_legacy = require('bbop').bbop;
-var barista_response = require('bbop-response-barista');
 
 // Help with strings and colors--configured separately.
 var aid = new bbop_legacy.context(amigo.data.context);
@@ -36,7 +35,6 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
-var each = us.each;
 var is_defined = bbop.is_defined;
 var what_is = bbop.what_is;
 var uuid = bbop.uuid;
@@ -50,7 +48,6 @@ var jQuery = require('jquery');
 var barista_response = require('bbop-response-barista');
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
-var noctua_model = require('bbop-graph-noctua');
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;

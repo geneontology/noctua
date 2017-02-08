@@ -1,0 +1,7 @@
+menu-name: "Cytoscape view"
+page-name: "Cytoscape View"
+type: "model"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - CytoViewBundle.js
+css: []
