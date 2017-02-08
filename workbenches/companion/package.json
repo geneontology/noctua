@@ -1,0 +1,81 @@
+{
+    "name": "workbench-go-companion",
+    "version": "0.0.1",
+    "license": "BSD-3-Clause",
+    "description": "Experimental function companion Noctua workbench for the Gene Ontology.",
+    "keywords": [
+	"workbench",
+	"gene ontology",
+	"GO",
+	"bbop",
+	"pup-tent",
+	"noctua",
+	"barista"
+    ],
+    "author": "SJC <sjcarbon@lbl.gov> (http://berkeleybop.org/)",
+    "homepage": "http://berkeleybop.org/",
+    "repository": {
+	"type": "git",
+	"url": "git+https://github.com/geneontology/noctua.git"
+    },
+    "engines": {
+	"node": ">= 4.4",
+	"npm": ">= 2.15"
+    },
+    "dependencies": {
+	"amigo2": "2.4.3",
+	"bbop": "2.4.3",
+	"bbop-core": "0.0.5",
+	"bbop-graph-noctua": "0.0.32",
+	"bbop-manager-golr": "0.0.11",
+	"bbop-manager-minerva": "0.0.15",
+	"bbop-response-barista": "0.0.9",
+	"bbop-response-golr": "0.0.6",
+	"bbop-rest-manager": "0.0.11",
+	"class-expression": "0.0.11",
+	"golr-conf": "0.0.3",
+	"jquery": "^2.2.4",
+	"minerva-requests": "0.0.15",
+	"selectize": "^0.12.1",
+	"underscore": "1.8.3"
+    },
+    "devDependencies": {
+	"browserify": "^13.0.1",
+	"browserify-shim": "^3.8.12",
+	"eslint": "^2.13.1",
+	"jshint": "^2.9.3"
+    },
+    "browserify": {
+	"transform": [
+	    "browserify-shim"
+	]
+    },
+    "browser": {
+	"jquery": "./node_modules/jquery/dist/jquery.min.js",
+	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
+	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
+	"noctua-widgetry": "../../js/lib/noctua-widgetry/widgetry.js"
+    },
+    "browserify-shim": {
+	"jquery": {
+	    "exports": "global:jQuery"
+	},
+	"jquery-ui": {
+	    "depends": [
+		"jquery"
+	    ]
+	}
+    },
+    "bundleDependencies": [],
+    "private": false,
+    "main": null,
+    "bugs": {
+	"url": "https://github.com/geneontology/noctua/issues"
+    },
+    "directories": {
+    },
+    "scripts": {
+	"build": "./node_modules/.bin/browserify Companion.js -o public/CompanionBundle.js --exclude ringo/httpclient",
+	"test": "echo \"Error: no test specified\" && exit 1"
+    }
+}

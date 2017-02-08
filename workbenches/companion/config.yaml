@@ -2,7 +2,5 @@ menu-name: "Function companion"
 page-name: "Function Companion"
 type: "model"
 help-link: "http://github.com/geneontology/noctua/issues"
-path-id: "companion"
-body-template: 'body.tmpl'
+javascript: ['CompanionBundle.js']
 css: []
-javascript: ['Companion.js']
