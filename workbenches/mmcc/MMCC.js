@@ -15,15 +15,15 @@
 /* global global_collapsible_relations */
 /* global global_barista_token */
 
+// Code here will be ignored by JSHint, as we are technically
+// "redefining" jQuery (although we are not).
+/* jshint ignore:start */
 var jQuery = require('jquery');
+/* jshint ignore:end */
 var selectize = require('selectize');
 
 var us = require('underscore');
 var bbop = require('bbop-core');
-//var bbop = require('bbop').bbop;
-//var bbopx = require('bbopx');
-//var bbop_legacy = require('bbop').bbop;
-//var barista_response = require('bbop-response-barista');
 
 var amigo = require('amigo2');
 var golr_manager = require('bbop-manager-golr');
@@ -45,15 +45,11 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
-var each = us.each;
 var is_defined = bbop.is_defined;
 var what_is = bbop.what_is;
 var uuid = bbop.uuid;
 
 var barista_response = require('bbop-response-barista');
-var class_expression = require('class-expression');
-var minerva_requests = require('minerva-requests');
-var noctua_model = require('bbop-graph-noctua');
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
