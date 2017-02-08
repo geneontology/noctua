@@ -395,7 +395,7 @@ var NoctuaLauncher = function(){
 					   model_id, model_obj, node_id_list,
 					   additional_args) {
 
-	// Setup branding.
+	// Setup branding, driven by external variable.
 	var noctua_branding = 'Noctua (?)'; // self-name
 	var noctua_minimal_p = false; // use of side panel in graph editor
 	if( noctua_context === 'go' ){
@@ -427,13 +427,13 @@ var NoctuaLauncher = function(){
 					       barista_token);
 	}else{
 	    barista_login = barista_loc + '/login' + '?return=' +
-		self.frontend + app_path + '/' + model_id;
+		self.frontend + app_path;
 	    // Make sure that _build_token_link() doesn't get the '?' from
 	    // barista_loc when determining whether to use ? or &
 	    barista_logout = barista_loc + '/logout' +
 		'?barista_token=' + barista_token +
-		'&return=' + _build_token_link(self.frontend + app_path + '/' +
-					       model_id, barista_token);
+		'&return=' + _build_token_link(self.frontend + app_path,
+					       barista_token);
 	}
 	    
 	var barista_users =
@@ -522,7 +522,7 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 
 	var tmpl_args = self.standard_variable_load(
-	    '/editor/graph', 'Editor', req, model_id, model_obj, null,
+	    '/editor/graph/'+ model_id, 'Editor', req, model_id, model_obj, null,
 	    {
 		'pup_tent_css_libraries': [
 		    '/toastr.css',
@@ -903,7 +903,8 @@ var NoctuaLauncher = function(){
 
 	// Realize all the detected workbenches into routes in our
 	// system.
-	var express = require('express'); // using this for static middleware below
+	var express = require('express'); // using this for convenience in
+					  // defining static middleware below
 	each(all_workbenches, function(wb){
 
 	    // We know these are good from the checking above.
@@ -924,33 +925,16 @@ var NoctuaLauncher = function(){
 	    var injectable_js = wb['javascript'] || [];	
 	    var injectable_css = wb['css'] || [];	
 
-	    //
-	    // var injectable_js = [];
-	    // var injectable_css = [];
-	    // //console.log('contents', contents);
-	    // each(contents, function(asset){
-	    // 	if( /\.js$/.test(asset) ){
-	    // 	    //console.log('asset', asset);
-	    // 	    injectable_js.push(asset);
-	    // 	}else if( /\.css$/.test(asset) ){
-	    // 	    //console.log('asset', asset);
-	    // 	    injectable_css.push(asset);
-	    // 	}else{
-	    // 	    // Pass--no other assets we're interested in
-	    // 	    // injecting right now.
-	    // 	}
-	    // });
-	    
 	    /// TODO: Build a workbench path depending on the type.
 	    if( wbtype === 'universal' ){
 
-		self.app.get('/workbench/'+wbid+'', function(req, res){
+		self.app.get('/workbench/' + wbid, function(req, res){
 		    
 		    monitor_internal_kicks = monitor_internal_kicks + 1;
 
 		    var tmpl_args = self.standard_variable_load(
-			'/workbench/' + wbid,
-			page_name, req, null, null, [],
+			'/workbench/' + wbid, page_name,
+			req, null, null, [],
 			{
 			    'pup_tent_css_libraries': injectable_css,
 			    'pup_tent_js_libraries': injectable_js,
