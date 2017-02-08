@@ -1,8 +1,0 @@
-menu-name: "Model count (template)"
-page-name: "Model Count"
-type: "universal"
-help-link: "http://github.com/geneontology/noctua/issues"
-path-id: "count"
-body-template: 'ucount.tmpl'
-css: []
-javascript: []
