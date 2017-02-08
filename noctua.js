@@ -737,7 +737,8 @@ var NoctuaLauncher = function(){
 	    var model_obj = null;
 
 		var tmpl_args = self.standard_variable_load(
-		    '/basic/' + model_type, 'FormEditor', req, model_id, model_obj, null,
+		    '/basic/' + model_type + '/' + model_id, 'FormEditor',
+		    req, model_id, model_obj, null,
 		    {
 				'pup_tent_js_libraries': [
 				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
