@@ -97,14 +97,14 @@ var paths = {
     	'js/NoctuaEditor.js',
     	'js/NoctuaLanding.js'
     ],
-    'core_workbench_clients': [
-        // A temporary place for internal workspaces.
-        //'workbenches/copy_in_model/CopyInModel.js',
-        'workbenches/mmcc/MMCC.js',
-        'workbenches/bioentity_companion/BioentityCompanion.js',
-        'workbenches/companion/Companion.js',
-        'workbenches/cytoview/CytoView.js'
-    ],
+    // 'core_workbench_clients': [
+    //     // A temporary place for internal workspaces.
+    //     //'workbenches/copy_in_model/CopyInModel.js',
+    //     'workbenches/mmcc/MMCC.js',
+    //     'workbenches/bioentity_companion/BioentityCompanion.js',
+    //     'workbenches/companion/Companion.js',
+    //     'workbenches/cytoview/CytoView.js'
+    // ],
     support: ['js/connectors-sugiyama.js'],
     scripts: ['scripts/*'],
     tests: ['tests/*.test.js'],
@@ -121,14 +121,6 @@ var paths = {
 // 	'js/NoctuaEditor.js',
 // 	'js/NoctuaLanding.js'
 //      //'js/NoctuaBasic/NoctuaBasicApp.js'
-//     ],
-//     'core_workbench_clients': [
-//      // A temporary place for internal workspaces.
-//      // //'workbenches/copy_in_model/CopyInModel.js'
-//      // 'workbenches/mmcc/MMCC.js'
-//      // 'workbenches/bioentity_companion/BioentityCompanion.js'
-//      // 'workbenches/companion/Companion.js'
-//      // 'workbenches/cytoview/CytoView.js'
 //     ],
 //     support: ['js/connectors-sugiyama.js'],
 //     scripts: ['scripts/*'],
@@ -242,19 +234,19 @@ us.each(paths.core_noctua_clients, function(file, index) {
     });
 });
 
-var workbench_build_tasks = us.clone(base_build_tasks);
-us.each(paths.core_workbench_clients, function(file, index) {
-    var taskname = 'build-client_' + file;
-    workbench_build_tasks.push(taskname);
-    gulp.task(taskname, function(cb){
-        _client_compile_task(file);
-        cb(null);
-    });
-});
+// var workbench_build_tasks = us.clone(base_build_tasks);
+// us.each(paths.core_workbench_clients, function(file, index) {
+//     var taskname = 'build-client_' + file;
+//     workbench_build_tasks.push(taskname);
+//     gulp.task(taskname, function(cb){
+//         _client_compile_task(file);
+//         cb(null);
+//     });
+// });
 
 gulp.task('build', noctua_build_tasks.concat(
-                            form_build_tasks,
-                            workbench_build_tasks));
+    form_build_tasks));
+// workbench_build_tasks));
 
 gulp.task('watch', ['watch-noctua', 'watch-form']);
 
@@ -263,7 +255,7 @@ gulp.task('watch-noctua', function(cb) {
     watch_mode = true;
     var basic_client_files = paths.core_noctua_clients;
     gulp.watch(basic_client_files, noctua_build_tasks);
-    gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
+    //gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
     cb(null);
 });
 
