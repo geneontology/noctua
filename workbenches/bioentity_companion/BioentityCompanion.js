@@ -5,8 +5,8 @@
 // Let jshint pass over over our external globals (browserify takes
 // care of it all).
 /* global jQuery */
-/* global global_id */
-/* global global_node_id_list */
+/* global global_model_id */
+/* global global_individual_id */
 /* global global_golr_server */
 /* global global_golr_neo_server */
 /* global global_barista_location */
@@ -117,7 +117,7 @@ var BioCompanionBootstrap = function(user_token){
 				       user_token, engine, 'async');
 
     // Get the model and follow up.
-    mmanager.get_model(global_id).then(function(resp){
+    mmanager.get_model(global_model_id).then(function(resp){
 
 	// On response, load model and fold.
 	var graph = new noctua_graph();
@@ -127,35 +127,32 @@ var BioCompanionBootstrap = function(user_token){
 
 	// Get the individual we're all about.
 	var bioentity_ids = [];
-	var nlist = global_node_id_list;
-	if( us.isArray(nlist) && nlist.length === 1 ){
-	    var nid = nlist[0];
+	var nid = global_individual_id;
 	    
-	    // Get the individual.
-	    var ind = graph.get_node(nid);
-	    if( ind ){
+	// Get the individual.
+	var ind = graph.get_node(nid);
+	if( ind ){
 
-		// Okay, probe self and any first-level subgraphs for
-		// GPs that we can use to narrow our search.
-		var all_types = ind.types() || []; // start with these
-		var sub = ind.subgraph();
-		if( sub ){
-
-		    // Get enabled_by nodes. Scan the types to see if
-		    // there is anything easily available and
-		    // interesting.
- 		    var enb_pnodes = sub.get_parent_nodes(nid, 'RO:0002333');
-		    each(enb_pnodes, function(e){
-
-			var ts = e.types();			
-			each(ts, function(t){
-			    bioentity_ids.push(t.class_id());
-			});
+	    // Okay, probe self and any first-level subgraphs for
+	    // GPs that we can use to narrow our search.
+	    var all_types = ind.types() || []; // start with these
+	    var sub = ind.subgraph();
+	    if( sub ){
+		
+		// Get enabled_by nodes. Scan the types to see if
+		// there is anything easily available and
+		// interesting.
+ 		var enb_pnodes = sub.get_parent_nodes(nid, 'RO:0002333');
+		each(enb_pnodes, function(e){
+		    
+		    var ts = e.types();			
+		    each(ts, function(t){
+			bioentity_ids.push(t.class_id());
 		    });
-		}
+		});
 	    }
 	}
-
+	
 	// We got what we could--start up.
 	BioCompanionInit(user_token, bioentity_ids);
 
@@ -405,7 +402,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 		    // Now let's actually assemble the requests for
 		    // the run.
 		    var reqs = new minerva_requests.request_set(
-			global_barista_token, global_id);
+			global_barista_token, global_model_id);
 
 		    // A slightly harder algorithm here. Everything
 		    // starts from F, no matter what.
