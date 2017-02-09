@@ -392,7 +392,9 @@ var NoctuaLauncher = function(){
 
     // Standard template arguments payload.
     self.standard_variable_load = function(app_path, app_name, req,
-					   model_id, model_obj, node_id_list,
+					   model_id, model_obj,
+					   individual_id, subject_individual_id,
+					   object_individual_id, relation_id,
 					   additional_args) {
 
 	// Setup branding, driven by external variable.
@@ -452,8 +454,16 @@ var NoctuaLauncher = function(){
 		 value: model_id },
 		{name: 'model_id',
 		 value: model_id },
-		{name: 'global_node_id_list',
-		 value: node_id_list },
+		{name: 'global_model_id',
+		 value: model_id },
+		{name: 'global_individual_id',
+		 value: individual_id },
+		{name: 'global_subject_individual_id',
+		 value: subject_individual_id },
+		{name: 'global_object_individual_id',
+		 value: object_individual_id },
+		{name: 'global_relation_id',
+		 value: relation_id },
 		{name: 'global_model',
 		 value: (model_obj || null)},
 		{name: 'global_golr_server',
@@ -489,7 +499,10 @@ var NoctuaLauncher = function(){
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
-	    'node_id_list': node_id_list,
+	    'individual_id': individual_id,
+	    'subject_individual_id': subject_individual_id,
+	    'object_individual_id': object_individual_id,
+	    'relation_id': relation_id,
 	    'barista_token': barista_token,
 	    'barista_location': self.barista_location,
 	    'barista_users': barista_users,
@@ -522,7 +535,10 @@ var NoctuaLauncher = function(){
 	res.setHeader('Content-Type', 'text/html');
 
 	var tmpl_args = self.standard_variable_load(
-	    '/editor/graph/'+ model_id, 'Editor', req, model_id, model_obj, null,
+	    '/editor/graph/'+ model_id, 'Editor', req,
+	    model_id, model_obj,
+	    null, null,
+	    null, null,
 	    {
 		'pup_tent_css_libraries': [
 		    '/toastr.css',
@@ -633,7 +649,10 @@ var NoctuaLauncher = function(){
 	    var about_md = md.markdown.toHTML(about_raw);
 
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Landing', req, null, null, null,
+		'/', 'Landing', req,
+		null, null,
+		null, null,
+		null, null,
 		{
 		    'pup_tent_css_libraries': [
 			'/toastr.css',
@@ -694,7 +713,10 @@ var NoctuaLauncher = function(){
 
 	    //
 	    var tmpl_args = self.standard_variable_load(
-		'/doc/' + fname, fname, req, null, null, null,
+		'/doc/' + fname, fname, req,
+		null, null,
+		null, null,
+		null, null,
 		{
 		    'pup_tent_css_libraries': [
 			//'/toastr.css',
@@ -737,8 +759,10 @@ var NoctuaLauncher = function(){
 	    var model_obj = null;
 
 		var tmpl_args = self.standard_variable_load(
-		    '/basic/' + model_type + '/' + model_id, 'FormEditor',
-		    req, model_id, model_obj, null,
+		    '/basic/' + model_type + '/' + model_id, 'FormEditor', req,
+		    model_id, model_obj,
+		    null, null,
+		    null, null,
 		    {
 				'pup_tent_js_libraries': [
 				    '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
@@ -926,99 +950,67 @@ var NoctuaLauncher = function(){
 	    var injectable_js = wb['javascript'] || [];	
 	    var injectable_css = wb['css'] || [];	
 
-	    /// TODO: Build a workbench path depending on the type.
-	    if( wbtype === 'universal' ){
-
-		self.app.get('/workbench/' + wbid, function(req, res){
+	    self.app.get('/workbench/' + wbid, function(req, res){
 		    
-		    monitor_internal_kicks = monitor_internal_kicks + 1;
-
-		    var tmpl_args = self.standard_variable_load(
-			'/workbench/' + wbid, page_name,
-			req, null, null, [],
-			{
-			    'pup_tent_css_libraries': injectable_css,
-			    'pup_tent_js_libraries': injectable_js,
-			    'workbench_help_link': help_link
-			});
+		monitor_internal_kicks = monitor_internal_kicks + 1;
 		
-		    // Render.
-		    //console.log('tmpl_inj', tmpl_inj);
-		    var ret = pup_tent.render(tmpl_inj, tmpl_args,
-					      'noctua_base_workbench.tmpl');
-		    self.standard_response(res, 200, 'text/html', ret);
-		});
-	    }else if( wbtype === 'model' ){
+		// All possible workbench types. Jimmy out the arguments.
+		var model_id = null;
+		var individual_id = null;
+		var subject_individual_id = null;
+		var object_individual_id = null;
+		var relation_id = null;
+		if( wbtype === 'universal' ){
+		    // Pass.
+		}else if( wbtype === 'model' ){
+	    	    model_id = req.query['model_id'] || null;
+		    if( ! model_id ){
+			self.standard_response(res, 500, 'text/html',
+					       'Need model_id');
+		    }
+		}else if( wbtype === 'individual' ){
+	    	    model_id = req.query['model_id'] || null;
+	    	    individual_id = req.query['individual_id'] || null;
+		    if( ! model_id || ! individual_id ){
+			self.standard_response(res, 500, 'text/html',
+					       'Need model_id or individual_id');
+		    }
+		}else if( wbtype === 'edge' ){
+	    	    model_id = req.query['model_id'] || null;
+	    	    subject_individual_id =
+			req.query['subject_individual_id'] || null;
+	    	    object_individual_id =
+			req.query['object_individual_id'] || null;
+	    	    relation_id = req.query['relation_id'] || null;
+		    if( ! model_id || ! subject_individual_id ||
+			! object_individual_id || ! relation_id ){
+			self.standard_response(res, 500, 'text/html',
+					       'Need model_id or ' +
+					       'subject_individual_id or' +
+					       'object_individual_id or' +
+					       'relation_id');
+			}
+		}else{
+		    // TODO: Error.
+		}
 
-		self.app.get('/workbench/'+ wbid +'/:model', function(req, res){
-		    
-		    monitor_internal_kicks = monitor_internal_kicks + 1;
-
-	    	    // Pull arguments out of the route and query.
-	    	    //console.log(req.route);
-	    	    //console.log(req.params['query']);
-	    	    var mid = req.params['model'] || null; // model
-		    
-		    var tmpl_args = self.standard_variable_load(
-			'/workbench/' + wbid + '/' + mid, page_name,
-			req, mid, null, [],
-			{
-			    'pup_tent_css_libraries': injectable_css,
-			    'pup_tent_js_libraries': injectable_js,
-			    'workbench_help_link': help_link
-			});
-		    
-		    // Render.
-		    //console.log('tmpl_inj', tmpl_inj);
-		    var ret = pup_tent.render(tmpl_inj, tmpl_args,
-					      'noctua_base_workbench.tmpl');
-		    self.standard_response(res, 200, 'text/html', ret);
-		});
-	    }
-
-	    // self.app.get('/workbench/' + wbid +'/:model?', function(req, res){
-
-	    // 	monitor_internal_kicks = monitor_internal_kicks + 1;
-
-	    // 	// Pull arguments out of the route and query.
-	    // 	//console.log(req.route);
-	    // 	//console.log(req.params['query']);
-	    // 	var model = req.params['model'] || null; // model
-	    // 	var node_ids = req.query['node_id'] || null; // individual
-	    // 	if( node_ids && ! us.isArray(node_ids) ){
-	    // 	    node_ids = [node_ids];
-	    // 	}
-	    // 	//console.log('node_ids:', node_ids);
-		    
-	    // 	// Make sure to map the plugin assets to the right
-	    // 	// location.
-	    // 	//var home = path_id + '/';
-	    // 	var home = base_location +'/' + path_id + '/';
-	    // 	var css_home = '/' + base_location +'/' + path_id + '/';
-	    // 	var js_home = '/deploy/'+ base_location +'/'+ path_id +'/';
-	    // 	var final_css = [];
-	    // 	each(css_list, function(css){
-	    // 	    final_css.push(css_home + css);
-	    // 	});
-	    // 	var final_js = [];
-	    // 	each(js_list, function(js){
-	    // 	    final_js.push(js_home + js);
-	    // 	});
+		var tmpl_args = self.standard_variable_load(
+		    '/workbench/' + wbid, page_name, req,
+		    model_id, null,
+		    individual_id, subject_individual_id,
+		    object_individual_id, relation_id,
+		    {
+			'pup_tent_css_libraries': injectable_css,
+			'pup_tent_js_libraries': injectable_js,
+			'workbench_help_link': help_link
+		    });
 		
-	    // 	var tmpl_args = self.standard_variable_load(
-	    // 	    '/workbench/' + path_id,
-	    // 	    page_name, req, model, null, node_ids,
-	    // 	    {
-	    // 		'pup_tent_css_libraries': final_css,
-	    // 		'pup_tent_js_libraries': final_js,
-	    // 		'workbench_help_link': help_link
-	    // 	    });
-		
-	    // 	// Render.
-	    // 	var ret = pup_tent.render(home + body_template, tmpl_args,
-	    // 				  'noctua_base_workbench.tmpl');
-	    // 	self.standard_response(res, 200, 'text/html', ret);
-	    // });
+		// Render.
+		//console.log('tmpl_inj', tmpl_inj);
+		var ret = pup_tent.render(tmpl_inj, tmpl_args,
+					  'noctua_base_workbench.tmpl');
+		self.standard_response(res, 200, 'text/html', ret);
+	    });
 	});
 	
 	// DEBUG: A JSON model debugging tool for @hdietze

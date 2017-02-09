@@ -1104,9 +1104,9 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     	'class': 'btn btn-success'
     };
     each(iworkbenches, function(wb){
-	var path_id = wb['path-id'];
-	var href = '/workbench/'+ path_id +'/'+ ecore.id() +
-	    '?node_id='+ encodeURIComponent(tid);
+	var workbench_id = wb['workbench-id'];
+	var href = '/workbench/'+ workbench_id +'?model_id='+ ecore.id() +
+		'&individual_id='+ encodeURIComponent(tid);
 	if( user_token ){ // if have login, keep in
 	    href = href + '&barista_token=' + user_token;
 	}
