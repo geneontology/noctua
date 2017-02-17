@@ -32830,22 +32830,22 @@ module.exports = {
 /* global global_barista_location */
 /* global global_collapsible_relations */
 /* global global_minerva_definition_name */
-/* global jsPlumb */
 /* global global_barista_token */
+/* global Vue */
+/* global VueSpinner */
 
 var us = require('underscore');
 var bbop = require('bbop-core');
-//var bbop = require('bbop').bbop;
-//var bbopx = require('bbopx');
-var amigo = require('amigo2');
 var bbop_legacy = require('bbop').bbop;
+
+var amigo = require('amigo2');
 var barista_response = require('bbop-response-barista');
-
-// Help with strings and colors--configured separately.
-var aid = new bbop_legacy.context(amigo.data.context);
-
 var model = require('bbop-graph-noctua');
 var widgetry = require('noctua-widgetry');
+var class_expression = require('class-expression');
+var minerva_requests = require('minerva-requests');
+var jquery_engine = require('bbop-rest-manager').jquery;
+var minerva_manager = require('bbop-manager-minerva');
 
 // Code here will be ignored by JSHint, as we are technically
 // "redefining" jQuery (although we are not).
@@ -32853,13 +32853,8 @@ var widgetry = require('noctua-widgetry');
 var jQuery = (typeof window !== "undefined" ? window['jQuery'] : typeof global !== "undefined" ? global['jQuery'] : null);
 /* jshint ignore:end */
 
-// Items 
-var barista_response = require('bbop-response-barista');
-var class_expression = require('class-expression');
-var minerva_requests = require('minerva-requests');
-//var noctua_model = require('bbop-graph-noctua');
-var jquery_engine = require('bbop-rest-manager').jquery;
-var minerva_manager = require('bbop-manager-minerva');
+// Help with strings and colors--configured separately.
+var aid = new bbop_legacy.context(amigo.data.context);
 
 // Items for running the old AmiGO stuff.
 var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
@@ -32873,10 +32868,24 @@ var noctua_graph = model.graph;
 var noctua_node = model.node;
 var noctua_annotation = model.annotation;
 var edge = model.edge;
-var each = us.each;
 var is_defined = bbop.is_defined;
 var what_is = bbop.what_is;
 var uuid = bbop.uuid;
+
+// Noticable logger.
+var logger = new bbop.logger('noctua w/gbbuddy');
+logger.DEBUG = true;
+function ll(str){ logger.kvetch(str); }
+
+// Placeholder for JS spinner once we start.
+var spinner_vapp = null;
+function _spinner_up(){
+    spinner_vapp.loading = true;
+}
+
+function _spinner_down(){
+    spinner_vapp.loading = false;
+}		  
 
 ///
 /// Ugly decode table necessary because of "hack" load we currently do
@@ -32915,16 +32924,12 @@ var eco_lookup = {
 ///
 ///
 
-var logger = new bbop.logger('noctua w/bcomp');
-logger.DEBUG = true;
-function ll(str){ logger.kvetch(str); }
+// StageOne gets the current model and tries to extract any bioentity
+// information from the given node id. After successful completion, it
+// passes control to StageTwo.
+var StageOne = function(user_token, model_id, indiv_id){
 
-// The bootstrap gets the current model and tries to extract any
-// bioentity information from the given node id. After completion, it
-// passes control to BioCompanionInit.
-var BioCompanionBootstrap = function(user_token){
-
-    ll('bootstrap startup');
+    ll('stage one start');
 
     // Get a manager up. We'll use promises here--a little easier when
     // not dealing with a ton of UI overhead and we're sure of the
@@ -32935,7 +32940,8 @@ var BioCompanionBootstrap = function(user_token){
 				       user_token, engine, 'async');
 
     // Get the model and follow up.
-    mmanager.get_model(global_model_id).then(function(resp){
+    _spinner_up();
+    mmanager.get_model(model_id).then(function(resp){
 
 	// On response, load model and fold.
 	var graph = new noctua_graph();
@@ -32945,10 +32951,10 @@ var BioCompanionBootstrap = function(user_token){
 
 	// Get the individual we're all about.
 	var bioentity_ids = [];
-	var nid = global_individual_id;
+	var cc_indiv_ids = [];
 	    
 	// Get the individual.
-	var ind = graph.get_node(nid);
+	var ind = graph.get_node(indiv_id);
 	if( ind ){
 
 	    // Okay, probe self and any first-level subgraphs for
@@ -32960,7 +32966,7 @@ var BioCompanionBootstrap = function(user_token){
 		// Get enabled_by nodes. Scan the types to see if
 		// there is anything easily available and
 		// interesting.
- 		var enb_pnodes = sub.get_parent_nodes(nid, 'RO:0002333');
+ 		var enb_pnodes = sub.get_parent_nodes(indiv_id, 'RO:0002333');
 		each(enb_pnodes, function(e){
 		    
 		    var ts = e.types();			
@@ -32968,21 +32974,41 @@ var BioCompanionBootstrap = function(user_token){
 			bioentity_ids.push(t.class_id());
 		    });
 		});
+
+		// Get occurs_in nodes. We'll be removing these later.
+ 		var occ_pnodes = sub.get_parent_nodes(indiv_id, 'BFO:0000066');
+		each(occ_pnodes, function(e){
+		    cc_indiv_ids.push(e.id());
+		    // var ts = e.types();	
+		    // each(ts, function(t){
+		    // 	cc_indiv_ids.push(t.id());
+		    // });
+		});
 	    }
 	}
 	
 	// We got what we could--start up.
-	BioCompanionInit(user_token, bioentity_ids);
-
+	if( ! bioentity_ids || bioentity_ids.length === 0 ){
+	    alert('No workable bioentities in calling annoton. Closing.');
+	    window.close();
+	}else{
+	    StageTwo(user_token, bioentity_ids, cc_indiv_ids,
+		     model_id, indiv_id);
+	}
+	
+	_spinner_down();
     }).done();
 
 };
 
-// Build the user interface with the information extracted from
+// TODO: Build the user interface with the information extracted from
 // BioCompanionBootstrap.
-var BioCompanionInit = function(user_token, bioentity_ids){
+var StageTwo = function(user_token, bioentity_ids, cc_indiv_ids,
+			model_id, indiv_id){
 
-    ll('init startup');
+    ll('stage two start');
+    ll('bioentities: ' + bioentity_ids.join(', '));
+    ll('extant ccs: ' + cc_indiv_ids.join(', '));
 
     // Events registry.
     // Add manager and default callbacks to repl.
@@ -32995,33 +33021,9 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     /// Minerva/Noctua comms.
     ///
 
-    var compute_shield_modal = null;
-
-    // Block interface from taking user input while
-    // operating.
-    function _shields_up(){
-	if( compute_shield_modal ){
-	    // Already have one.
-	}else{
-	    ll('shield up');
-	    compute_shield_modal = widgetry.compute_shield();
-	    compute_shield_modal.show();
-	}
-    }
-    // Release interface when transaction done.
-    function _shields_down(){
-	if( compute_shield_modal ){
-	    ll('shield down');
-	    compute_shield_modal.destroy();
-	    compute_shield_modal = null;
-	}else{
-	    // None to begin with.
-	}
-    }
-
     // Internal registrations.
-    mmanager.register('prerun', _shields_up);
-    mmanager.register('postrun', _shields_down, 9);
+    mmanager.register('prerun', _spinner_up);
+    mmanager.register('postrun', _spinner_down, 9);
     mmanager.register('manager_error', function(resp, man){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
@@ -33056,7 +33058,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 
     // ???
     mmanager.register('meta', function(resp, man){
-	ll('a meta callback?');
+	ll('huh...a meta callback?');
     });
 
     // Likely results of a new model being built on Minerva.
@@ -33072,12 +33074,14 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 	var wrn = new widgetry.contained_modal(
 	    null, '<strong>Operation a success</strong>', success_txt.join(''));
 	wrn.show();
+	window.close();
     }, 10);
     mmanager.register('rebuild', function(resp, man){
 	ll('rebuild callback');
 	var wrn = new widgetry.contained_modal(
 	    null, '<strong>Operation a success</strong>', success_txt.join(''));
 	wrn.show();
+	window.close();
     }, 10);
 
     //mmanager.get_model(global_id);
@@ -33092,7 +33096,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     widget_manager.set_personality('annotation');
     widget_manager.add_query_filter('document_category',
 				    confc.document_category(), ['*']);    
-    widget_manager.add_query_filter('aspect', 'F'); // removable
+    widget_manager.add_query_filter('aspect', 'C'); // removable
     each(bioentity_ids, function(bid){
 	widget_manager.add_query_filter('bioentity', bid); // removable
     });
@@ -33116,8 +33120,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     
     // Describe the button that will attempt to compact the selected 
     // annotations and send macro commands to noctua/minerva.
-    // The alrorithm is derived from a diagram here:
-    // https://github.com/geneontology/noctua/issues/170#issuecomment-134414048
+    // See: 
     var port_to_noctua_button = {
 	label: 'Import',
 	diabled_p: false,
@@ -33128,11 +33131,14 @@ var BioCompanionInit = function(user_token, bioentity_ids){
    		var selected_ids = results_table.get_selected_items();
    		var resp = results_table.last_response();
 
-		if( ! resp || ! selected_ids || ! resp.success() ||
-		  us.isEmpty(selected_ids) ){
-		    alert('No action can be taken currently.');
+		if( ! selected_ids || us.isEmpty(selected_ids) ){
+		    alert('No action can be taken if nothing is selected.');
+		}else if( ! resp || ! resp.success() ){
+		    alert('No action can--last request to server was empty.');
+		}else if( selected_ids.length !== 1 ){
+		    alert('Please select just one item for now.');
 		}else{
-		    //alert('Actionable input.');
+		    //console.log('Actionable input.');
 		    
 		    // Extract the documents that we'll operate on.
 		    var docs_to_run = [];
@@ -33144,32 +33150,14 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 		    });
 		    
 		    // Assemble a batch to run.
-		    var acls_set_f = {};
-		    var acls_set_p = {};
-		    var acls_set_c = {};
+		    var acls_set = {};
 		    each(docs_to_run, function(doc){
 			
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
-			// Using aspect, place the information under a
-			// paricular aspect grouping.
-			var aspect = doc['aspect'];
-			var acls_set = null;
-			//var rel = null;
-			if( aspect === 'F' ){
-			    acls_set = acls_set_f;
-			    //rel = 'RO:0002333'; // enabled_by
-			}else if( aspect === 'P' ){
-			    acls_set = acls_set_p;
-			    //rel = 'RO:0002233'; // has_input
-			}else{ // C
-			    acls_set = acls_set_c;
-			    //rel = 'BFO:0000066'; // occurs_in
-			}
-			// 'BFO:0000050'; // part_of
 
-			// Attempt at save ECO mapping.
+			// Attempt at safe ECO mapping.
 			var ev = doc['evidence_type'];
 			if( eco_lookup[ev] ){
 			    // Apparently on our lookup.
@@ -33178,7 +33166,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 			    // @cmungall's preferred default
 			    ev = 'ECO:0000305';
 			}
-			// Fix refs if necessary.
+			// Fix refs if necessary (must be list).
 			var refs = doc['reference'];
 			if( ! refs ){ // null to list
 			    refs = [];
@@ -33186,7 +33174,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 			if( ! us.isArray(refs) ){ // string to list
 			    refs = [refs];
 			}
-			// Fix withs if necessary.
+			// Fix withs if necessary (must be list).
 			var withs = doc['evidence_with'];
 			if( ! withs ){ // null to list
 			    withs = [];
@@ -33195,21 +33183,16 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 			    withs = [withs];
 			}
 
-			// Okay, try and compact this down as much as
-			// possible. First, select which aspect
-			// grouping it's in, then ensure structure.
+			// Okay, group by class, entity, ev.
 			if( ! acls_set[acls] ){
 			    acls_set[acls] = {};
 			}
 			if( ! acls_set[acls][bio] ){
-			    //acls_set[acls][bio] = {};
 			    acls_set[acls][bio] = [];
 			}
-			// if( ! acls_set[acls][bio][rel] ){
-			//     acls_set[acls][bio][rel] = [];
-			// }
 			// Add on the evidence.
-			//acls_set[acls][bio][rel].push({
+			//console.log(ev, refs, withs);
+			//alert('breakpoint');
 			acls_set[acls][bio].push({
 			    ev: ev,
 			    refs: refs,
@@ -33222,16 +33205,23 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 		    var reqs = new minerva_requests.request_set(
 			global_barista_token, global_model_id);
 
-		    // A slightly harder algorithm here. Everything
-		    // starts from F, no matter what.
-		    each(acls_set_f, function(bio_set, acls){
+		    // If there is already an "occurs_in" go
+		    // ahead and take it out.
+		    each(cc_indiv_ids, function(cc_indiv_id){
+			var sub = indiv_id;
+			var obj = cc_indiv_id;
+			reqs.remove_fact([sub, obj, 'BFO:0000066']);
+		    });
+		    
+		    // 
+		    each(acls_set, function(bio_set, acls){
 			
-			var sub = reqs.add_individual(acls);
+			var obj = reqs.add_individual(acls);
 
 			each(bio_set, function(ev_list, bio){
 
-			    var obj = reqs.add_individual(bio);
-			    var edge = reqs.add_fact([sub, obj, 'RO:0002333']);
+			    var sub = indiv_id;
+			    var edge = reqs.add_fact([sub, obj, 'BFO:0000066']);
 			    
 			    each(ev_list, function(ev_set){
 				
@@ -33242,7 +33232,7 @@ var BioCompanionInit = function(user_token, bioentity_ids){
 				
 				// Tag on the final evidence.
 				reqs.add_evidence(ev, refs, withs,
-						  [sub, obj, 'RO:0002333']);
+						  [sub, obj, 'BFO:0000066']);
 			    });
 			});
 
@@ -33271,41 +33261,60 @@ var BioCompanionInit = function(user_token, bioentity_ids){
     
     // Add pre and post run spinner (borrow filter's for now).
     widget_manager.register('prerun', 'foo', function(){
-	filters.spin_up();
+	spinner_vapp.loading = true;
+	//filters.spin_up();
     });
     widget_manager.register('postrun', 'foo', function(){
-	filters.spin_down();
+	spinner_vapp.loading = false;
+	//filters.spin_down();
     });
 
     // If we're all done, trigger initial hit.
     widget_manager.search();
 };
 
-// Start the day the jQuery way.
+// Bootstrap: Start the day the jQuery way.
 jQuery(document).ready(function(){
 
-    // Try to define token.
-    var start_token = null;
-    if( global_barista_token ){
-	start_token = global_barista_token;
-    }
-
-    // Next we need a manager to try and pull in the model.
-    if( typeof(global_minerva_definition_name) === 'undefined' ||
-	typeof(global_barista_location) === 'undefined' ){
-	alert('environment not ready');
+    ll('bootstrap start');
+    
+    // Try to define token and basic input IDs.
+    if( ! global_barista_token || ! global_model_id || ! global_individual_id ){
+	alert('basic environment not ready');	
+    }else if( typeof(global_minerva_definition_name) === 'undefined' ||
+	      typeof(global_barista_location) === 'undefined' ){
+	// Next we need a manager to try and pull in the model.
+	alert('remote environment not ready');
     }else{
-	// Only roll if the env is correct.  Will use the above
-	// variables internally (sorry).
-	BioCompanionBootstrap(start_token);
+
+	// Create a global spinner we can use.
+	var PulseLoader = VueSpinner.PulseLoader;
+	spinner_vapp = new Vue({
+	    el: '#spinner-vapp',
+	    components: {
+		'PulseLoader': PulseLoader
+	    },
+	    data: function(){
+		return {
+		    loading: false,
+		    color: '#3AB982',
+		    size: '15px'
+		};
+	    }
+	});
+	
+	// Only roll to if the env is correct: get the GPs from the
+	// annoton.
+	StageOne(global_barista_token, global_model_id, global_individual_id);
 
 	// When all is said and done, let's also fillout the user name
 	// just for niceness. This is also a test of CORS in express.
-	if( start_token ){
+	if( global_barista_token ){
 	    widgetry.user_check(global_barista_location,
-				start_token, 'user_name_info', false);
+				global_barista_token, 'user_name_info', false);
 	}
     }
+    
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})

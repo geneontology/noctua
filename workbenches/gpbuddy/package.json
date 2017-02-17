@@ -1,8 +1,8 @@
 {
-    "name": "workbench-go-bioentity-companion",
+    "name": "workbench-go-gp-buddy",
     "version": "0.0.1",
     "license": "BSD-3-Clause",
-    "description": "Experimental bioentity companion Noctua workbench for the Gene Ontology.",
+    "description": "Experimental workbench for issue #224 for the Gene Ontology.",
     "keywords": [
 	"workbench",
 	"gene ontology",
@@ -37,26 +37,14 @@
 	"jquery": "^2.2.4",
 	"minerva-requests": "0.0.15",
 	"selectize": "^0.12.1",
-	"underscore": "1.8.3"
+	"underscore": "1.8.3",
+	"vue": "2.1.0"
     },
     "devDependencies": {
 	"browserify": "^13.0.1",
 	"browserify-shim": "^3.8.12",
-	"chai": "^3.5.0",
 	"eslint": "^2.13.1",
-	"gulp-bump": "^2.1.0",
-	"gulp-git": "^1.7.2",
-	"gulp-jsdoc": "^0.1.5",
-	"gulp-jshint": "^2.0.1",
-	"gulp-mocha": "^2.2.0",
-	"gulp-streamify": "^1.0.2",
-	"gulp-uglify": "^1.5.3",
-	"jsdoc": "^3.4.0",
-	"jshint": "^2.9.3",
-	"uglifyify": "^3.0.2",
-	"vinyl-source-stream": "1.1.0",
-	"wait-on": "^1.5.2",
-	"watchify": "^3.7.0"
+	"jshint": "^2.9.3"
     },
     "browserify": {
 	"transform": [
@@ -67,8 +55,7 @@
 	"jquery": "./node_modules/jquery/dist/jquery.min.js",
 	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
 	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
-	"noctua-widgetry": "../../js/lib/noctua-widgetry/widgetry.js",
-	"selectize": "./node_modules/selectize/dist/js/standalone/selectize.min.js"
+	"noctua-widgetry": "../../js/lib/noctua-widgetry/widgetry.js"
     },
     "browserify-shim": {
 	"jquery": {
@@ -89,7 +76,7 @@
     "directories": {
     },
     "scripts": {
-	"build": "./node_modules/.bin/browserify BioentityCompanion.js -o public/BioentityCompanionBundle.js --exclude ringo/httpclient",
+	"build": "./node_modules/.bin/browserify GPBuddy.js -o public/GPBuddyBundle.js --exclude ringo/httpclient",
 	"test": "echo \"Error: no test specified\" && exit 1"
     }
 }

@@ -1,7 +1,0 @@
-menu-name: "Bioentity companion"
-page-name: "Bioentity Companion"
-type: "individual"
-help-link: "http://github.com/geneontology/noctua/issues"
-javascript:
-  - BioentityCompanionBundle.js
-css: []

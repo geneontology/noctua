@@ -1,0 +1,9 @@
+menu-name: "GP Buddy"
+page-name: "GP Buddy"
+type: "individual"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - http://cdnjs.cloudflare.com/ajax/libs/vue/2.1.0/vue.js
+  - vue-spinner.min.js
+  - GPBuddyBundle.js
+css: []
