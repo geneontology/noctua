@@ -114,6 +114,18 @@ BARISTA_REPL_PORT:
   comment: The port to start the Barista REPL on. If not defined, will not start listener.
   type: number
   value: 9090
+GITHUB_API:
+  comment: The location of the GitHub API that we want to use.
+  type: string
+  value: api.github.com
+GITHUB_ORG:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: geneontology
+GITHUB_REPO:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: noctua-models
 APP_DEFINITIONS:
   comment: A list of resources that Barista will allow public access to.
   type: list
