@@ -344,6 +344,24 @@ if( config['EXTERNAL_BROWSER_LOCATION'] ){
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
+// Optional external.
+var use_github_p = false;
+var github_api = null;
+var github_org = null;
+var github_repo = null;
+if( config['GITHUB_API'] ){
+    github_api = config['GITHUB_API'].value || null;
+}
+if( config['GITHUB_ORG'] ){
+    github_org = config['GITHUB_ORG'].value || null;
+}
+if( config['GITHUB_REPO'] ){
+    github_repo = config['GITHUB_REPO'].value || null;
+}
+if( github_api && github_org && github_repo ){
+    use_github_p = true;
+}
+
 //
 var noctua_context = config['NOCTUA_CONTEXT'] ? config['NOCTUA_CONTEXT'].value : 'go';
 var noctua_models = config['NOCTUA_MODELS'].value;
@@ -495,6 +513,15 @@ if( collapsible_reverse_relations_str ){
 if( external_browser_location ){
     noctua_run_list.push('--external-browser-location');
     noctua_run_list.push('"' + external_browser_location + '"');
+}
+// See if we will be using github.
+if( use_github_p ){
+    noctua_run_list.push('--github-api');
+    noctua_run_list.push(github_api);
+    noctua_run_list.push('--github-org');
+    noctua_run_list.push(github_org);
+    noctua_run_list.push('--github-repo');
+    noctua_run_list.push(github_repo);
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
     noctua_run_list

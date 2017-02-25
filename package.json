@@ -49,6 +49,7 @@
     "bbop-response-barista": "0.0.9",
     "bbop-response-golr": "0.0.6",
     "bbop-rest-manager": "0.0.11",
+    "bbop-rest-response": "0.0.4",
     "bbopx": "0.9.32",
     "body-parser": "1.15.2",
     "bootstrap": "3.3.6",

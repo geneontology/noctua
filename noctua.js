@@ -102,6 +102,11 @@ var noctua_frontend = argv['p'] || argv['noctua-public'];
 var external_browser_location =
 	argv['e'] || argv['external-browser-location'] || null;
 
+// External browser location for models.
+var github_api = argv['github-api'] || null;
+var github_org = argv['github-org'] || null;
+var github_repo = argv['github-repo'] || null;
+
 // Process strings to usable lists.
 var collapsible_relations = [];
 if( collapsible_raw ){
@@ -120,6 +125,14 @@ console.log('Using GOlr NEO lookup server at: ', golr_neo_server_location);
 console.log('Barista location: ' + barloc);
 console.log('Minerva definition name: ' + min_def_name);
 console.log('External model browser: ' + external_browser_location);
+var use_github_p = false;
+if( github_api && github_org && github_repo ){
+    console.log('Use GitHub API: ' +
+		[github_api, github_org, github_repo].join(', '));
+    use_github_p = true;
+}else{
+    console.log('Will not use GitHub API');
+}
 
 // Figure out our base and URLs we'll need to aim this locally.
 var linker = new amigo.linker();
@@ -495,7 +508,15 @@ var NoctuaLauncher = function(){
 		{name: 'global_workbenches_individual',
 		 value: workbenches_individual },
 		{name: 'global_workbenches_edge',
-		 value: workbenches_edge }
+		 value: workbenches_edge },
+		{name: 'global_github_api',
+		 value: github_api },
+		{name: 'global_github_org',
+		 value: github_org },
+		{name: 'global_github_repo',
+		 value: github_repo },
+		{name: 'global_use_github_p',
+		 value: use_github_p }
 	    ],
 	    'title': notw + ' ' + app_name,
 	    'model_id': model_id,
@@ -509,6 +530,10 @@ var NoctuaLauncher = function(){
 	    'noctua_dev_tabs': noctua_context !== 'monarch',
 	    'noctua_context': noctua_context,
 	    'external_browser_location': external_browser_location,
+	    'github_api': github_api,
+	    'github_org': github_org,
+	    'github_repo': github_repo,
+	    'use_github_p': use_github_p,
 	    'noctua_minimal_p': noctua_minimal_p,
 	    'noctua_landing': noctua_landing,
 	    'noctua_branding': noctua_branding,

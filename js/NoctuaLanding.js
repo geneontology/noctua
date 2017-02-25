@@ -12,6 +12,10 @@
 /* global global_noctua_context */
 /* global jsPlumb */
 /* global global_barista_token */
+/* global global_github_api */
+/* global global_github_org */
+/* global global_github_repo */
+/* global global_use_github_p */
 
 var us = require('underscore');
 var bbop = require('bbop-core');
@@ -34,6 +38,7 @@ var jQuery = require('jquery');
 
 var notify_minerva = require('toastr'); // notifications
 var notify_amigo = require('toastr'); // notifications
+var notify_github = require('toastr'); // notifications
 
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
@@ -48,7 +53,12 @@ var barista_response = require('bbop-response-barista');
 var golr_manager = require('bbop-manager-golr');
 var golr_conf = require('golr-conf');
 var golr_response = require('bbop-response-golr');
+var rest_response = require('bbop-rest-response').json;
 
+
+// "Optional" external resource.
+// BUG/TODO: Cannot use, this lib does not browserify apparently.
+//var ghapi = require("github");
 
 // // Harumph.
 // var global_known_taxons = [
@@ -92,7 +102,7 @@ function _generate_jump_url(id, editor_type) {
 /// Main.
 ///
 
-var MinervaBootstrapping = function(user_token){
+var MinervaBootstrapping = function(user_token, issue_list){
 
     var logger = new bbop.logger('min bstr');
     logger.DEBUG = true;
@@ -352,6 +362,27 @@ var MinervaBootstrapping = function(user_token){
 		return retlist;
 	    };
 	    
+	    // Get the issues associated with a model.
+	    // TODO/BUG: Obviously needs to be optimized.
+	    var _model_issue_list = function(model_id){
+		var retlist = [];
+		
+		us.each(issue_list, function(issue){
+		    var title = issue['title'];
+		    var number = issue['number'];
+		    var url = issue['url'];
+		    if( title && title.indexOf(model_id) !== -1 ){
+			var link = '<a href=' + url +
+				' title="' + title + '"' +
+				' target="blank">#' + number +
+				'</a>';
+			retlist.push(link);
+		    }
+		});
+		
+		return retlist;
+	    };
+	    
 	    //
 	    var _model_type = function(model_id){
 		var retval = 'hpo';
@@ -530,6 +561,17 @@ var MinervaBootstrapping = function(user_token){
 		    }else{
 			geneont_tr_cache.push('');
 		    }
+
+		    if( global_use_github_p ){
+			var issues = _model_issue_list(model_id);
+			if( ! us.isEmpty(issues) ){
+			    geneont_tr_cache.push(issues);
+			    monarch_tr_cache.push(issues);
+			}else{
+			    geneont_tr_cache.push('');
+			    monarch_tr_cache.push('');
+			}
+		    }
 		    
 	            // Cram all the buttons in.
 		    var bstrs = [];
@@ -540,7 +582,7 @@ var MinervaBootstrapping = function(user_token){
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
 			];
-
+			
 			geneont_tr_cache.push(bstrs.join('&nbsp;'));
 
 		    }else{ // monarch
@@ -743,8 +785,97 @@ jQuery(document).ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
+
 	    // Only roll if the env is correct.
 	    // Will use the above variables internally (sorry).
-	    MinervaBootstrapping(start_token);
+	    // If the GitHub hook-up is to be used, get the items
+	    // first, then start the Minerva Bootstrap to get the rest
+	    // of the model content.
+	    if(!global_github_api || !global_github_org || !global_github_repo){
+		// Start without GitHub contact.
+		MinervaBootstrapping(start_token, null);
+	    }else{
+
+		// Well, due to issues like
+		// https://github.com/noflo/noflo-github/pull/57 and
+		// https://github.com/mikedeboer/node-github/issues/328,
+		// we have not been able to use a "proper" API, so
+		// falling back on manual for the demo.
+		var gh_engine = new jquery_engine(rest_response);
+		var target = 'https://' + global_github_api;
+		var path = '/repos/' + global_github_org + '/' +
+			global_github_repo +'/' + 'issues';
+		var pay = {"state": "open"};
+		notify_github.info("Getting issue iformation from GitHub...");
+		gh_engine.start(target + path, pay, 'GET').then(function(resp){
+		    notify_github.clear();
+		    if( ! resp || ! resp.okay() ){
+			// Start without GitHub contact.
+			MinervaBootstrapping(start_token, null);
+		    }else{
+    			//console.log('resp', resp);
+    			var res = resp.raw();
+    			//console.log('res', res);
+			var display_list = [];
+			us.each(res, function(item){
+			    var title = item['title'];
+			    var url = item['html_url'];
+			    var number = item['number'];
+			    display_list.push({
+				"title": title,
+				"number": number, 
+				"url": url
+			    });
+			    //console.log(JSON.stringify(item, null, 4));
+			});
+			MinervaBootstrapping(start_token, display_list);
+		    }
+		}).done();
+	    }		
+	    // // Try and make contact with GitHub.
+	    // var github = new ghapi({
+	    //     debug: true,
+	    //     protocol: "https",
+	    //     host: global_github_api,
+	    //     headers: {
+	    // 	"user-agent": "Noctua"
+	    //     },
+	    //     //		    Promise: require('q'),
+	    //     followRedirects: false,
+	    //     timeout: 5000
+	    // });
+	    // github.issues.getForRepo({
+	    //     "owner": global_github_org,
+	    //     "repo": global_github_repo,
+	    //     "state": "open",
+	    //     "per_page": 100
+	    // }, function(err, res){
+	    //     if( err ){
+	    // 	console.log('ERROR: ', err);
+	    // 	// Start without GitHub contact.
+	    // 	MinervaBootstrapping(start_token, null);
+	    //     }else if( ! res || ! res['data'] ){
+	    // 	console.log('ERROR: ', 'bad structure');
+	    // 	// Start without GitHub contact.
+	    // 	MinervaBootstrapping(start_token, null);
+	    //     }else{
+	    
+	    // 	var display_list = [];
+	    // 	us.each(res['data'], function(item){
+	    // 	    var title = item['title'];
+	    // 	    var url = item['html_url'];
+	    // 	    var number = item['number'];
+	    // 	    display_list.push({
+	    // 		"title": title,
+	    // 		"number": number, 
+	    // 		"url": url
+	    // 	    });
+	    // 	    //console.log(JSON.stringify(item, null, 4));
+	    // 	});
+	    // 	//console.log(JSON.stringify(display_list, null, 4));
+	    //	MinervaBootstrapping(start_token, display_list);
+	    // }
+	    //});
+	    // }
 	}
 });
