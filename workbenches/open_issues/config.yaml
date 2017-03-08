@@ -1,0 +1,7 @@
+menu-name: "Open Issues"
+page-name: "Open Issues"
+type: "universal"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - http://vuejs.org/js/vue.min.js
+  - foo.js
