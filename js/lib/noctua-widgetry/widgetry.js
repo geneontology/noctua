@@ -842,6 +842,8 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	_fuse('part of', 'BFO:0000050', radio_name, 0),
 	_fuse('causally upstream of or within', 'RO:0002418', radio_name, 0),
 	_fuse('causally upstream of', 'RO:0002411', radio_name, 1),
+	_fuse('causally upstream of, positive effect', 'RO:0002304', radio_name, 2),
+	_fuse('causally upstream of, negative effect', 'RO:0002305', radio_name, 2),
 	_fuse('immediately causally upstream of', 'RO:0002412', radio_name, 2),
 	_fuse('directly provides input for', 'RO:0002413', radio_name, 3),
 	_fuse('regulates', 'RO:0002211', radio_name, 2),
