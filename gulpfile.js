@@ -473,6 +473,26 @@ gulp.task('batch-minerva-version', shell.task(_run_cmd([
     '--version'
 ])));
 
+// Minerva batch: dump models in offline journal to directory.
+gulp.task('batch-minerva-dump-from-journal', shell.task(_run_cmd([
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--dump-owl-models',
+    '-j', noctua_store,
+    ' -f', noctua_models
+])));
+
+// Minerva batch: apply 'update.rq' to offline journal.
+gulp.task('batch-minerva-apply-sparql-update', shell.task(_run_cmd([
+    'java',
+    '-Xmx' + minerva_max_mem + 'G',
+    '-jar', './java/lib/minerva-cli.jar',
+    '--sparql-update',
+    '-j', noctua_store,
+    ' -f', 'update.rq'
+])));
+
 //node barista.js --self http://localhost:3400
 gulp.task('run-barista', shell.task(_run_cmd(
     ['node', 'barista.js',
