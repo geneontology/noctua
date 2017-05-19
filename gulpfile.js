@@ -419,7 +419,7 @@ var minerva_opts_base = [
 if( minerva_reasoner === 'none' ){
     // Apparently no reasoner--should only be used for debugging or
     // madness.
-}else if( minerva_reasoner === 'arache' ){
+}else if( minerva_reasoner === 'arachne' ){
     minerva_opts_base.push('--arachne');
 }else if( minerva_reasoner === 'slme-elk' ){
     // Legacy reasoner.
