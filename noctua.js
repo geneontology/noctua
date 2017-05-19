@@ -592,7 +592,7 @@ var NoctuaLauncher = function(){
     ///
 
     // Will pick things up recursively.
-    var ppaths = ['static', 'deploy', 'css', 'templates'];
+    var ppaths = ['static', 'deploy', 'css', 'templates', 'external_js'];
 
     // Add the paths for the workbenches. While we don't need these
     // for the asset delivery (that is taken care of directly by
