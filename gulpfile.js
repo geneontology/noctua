@@ -398,6 +398,25 @@ _ping_count();
 /// Runner assembly.
 ///
 
+// Add reasoner, or not, depending on external cues.
+function _select_reasoner(){
+
+    // Default reasoner is still legacy.
+    var ret = '--slme-elk';
+
+    if( minerva_reasoner === 'none' ){
+	// Apparently no reasoner--should only be used for debugging or
+	// madness.
+    }else if( minerva_reasoner === 'arachne' ){
+	ret = '--arachne';
+    }else if( minerva_reasoner === 'slme-elk' ){
+	// Legacy reasoner.
+	ret = '--slme-elk';
+    }
+
+    return ret;
+}
+
 // TODO: All of the listed options should be pushed into the config
 // file like the ontology catalog--no more secrets in the gulpfiles.
 var minerva_opts_base = [
@@ -408,26 +427,13 @@ var minerva_opts_base = [
     'org.geneontology.minerva.server.StartUpTool',
     '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
     '--use-request-logging',
+    _select_reasoner(),
     '-g', ontology_list,
     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
     '--port', minerva_port,
     '-f', noctua_store, // blazegraph journal file
     '--export-folder', noctua_models
 ];
-
-// Add reasoner, or not, depending on external cues.
-if( minerva_reasoner === 'none' ){
-    // Apparently no reasoner--should only be used for debugging or
-    // madness.
-}else if( minerva_reasoner === 'arachne' ){
-    minerva_opts_base.push('--arachne');
-}else if( minerva_reasoner === 'slme-elk' ){
-    // Legacy reasoner.
-    minerva_opts_base.push('--slme-elk');
-}else{
-    // Default reasoner is still legacy.
-    minerva_opts_base.push('--slme-elk');
-}
 
 var minerva_opts_lookup = [
     '--golr-labels', golr_neo_lookup_url_noslash,
