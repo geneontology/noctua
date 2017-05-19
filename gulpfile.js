@@ -332,7 +332,8 @@ var minerva_location = config['MINERVA_LOCATION'].value;
 
 // Minerva.
 var minerva_port = url.parse(minerva_location).port || 80;
-var minerva_max_mem = parseInt(config['MINERVA MAX_MEMORY'].value);
+var minerva_max_mem = parseInt(config['MINERVA_MAX_MEMORY'].value);
+var minerva_reasoner = config['MINERVA_REASONER'].value;
 
 // External tools.
 var external_browser_location = null;
@@ -407,13 +408,26 @@ var minerva_opts_base = [
     'org.geneontology.minerva.server.StartUpTool',
     '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
     '--use-request-logging',
-    '--slme-elk',
     '-g', ontology_list,
     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
     '--port', minerva_port,
     '-f', noctua_store, // blazegraph journal file
     '--export-folder', noctua_models
 ];
+
+// Add reasoner, or not, depending on external cues.
+if( minerva_reasoner === 'none' ){
+    // Apparently no reasoner--should only be used for debugging or
+    // madness.
+}else if( minerva_reasoner === 'arache' ){
+    minerva_opts_base.push('--arachne');
+}else if( minerva_reasoner === 'slme-elk' ){
+    // Legacy reasoner.
+    minerva_opts_base.push('--slme-elk');
+}else{
+    // Default reasoner is still legacy.
+    minerva_opts_base.push('--slme-elk');
+}
 
 var minerva_opts_lookup = [
     '--golr-labels', golr_neo_lookup_url_noslash,
