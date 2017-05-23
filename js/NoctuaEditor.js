@@ -440,6 +440,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var save_btn_elt = '#' + save_btn_id;
     var ping_btn_id = 'action_ping';
     var ping_btn_elt = '#' + ping_btn_id;
+    var compact_btn_id = 'action_compact';
+    var compact_btn_elt = '#' + compact_btn_id;
     var test_btn_id = 'action_test';
     var test_btn_elt = '#' + test_btn_id;
     var exp_btn_id = 'action_shin';
@@ -868,20 +870,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	}
 
 	document.title = mtitle + ' (Noctua Editor)';
-    }
-
-    // WARNING: response-only as written.
-    function _inconsistency_check(resp, man){
-	ll('doing the inconsistent_p check: ' + ecore.inconsistent_p() );
-	if( ecore.inconsistent_p() === true &&
-	    ! jQuery(graph_container_div).hasClass('model-inconsistent') ){
-	    // Recolor the interface.
-	    jQuery(graph_container_div).addClass('model-inconsistent');
-	}else if( ecore.inconsistent_p() !== true &&
-		  jQuery(graph_container_div).hasClass('model-inconsistent') ){
-	    // Restore the interface coloration.
-	    jQuery(graph_container_div).removeClass('model-inconsistent');
-	}
     }
 
     // See what the undo/redo listing looks like.
@@ -1401,7 +1389,6 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	postruns++;
 	ll('in postrun #' + postruns + '');
     }, 11);
-    manager.register('postrun', _inconsistency_check, 10);
     manager.register('postrun', _refresh_tables, 9);
     manager.register('postrun', function(resp, man){
 
@@ -1410,13 +1397,27 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	if( resp.signal() === 'rebuild' || resp.signal() === 'merge' ){
 
 	    ll('reasoner-p now reads as: ' + resp.reasoner_p());
+	    ll('inconsistent-p now reads as: ' + resp.inconsistent_p());
 	    if( resp.reasoner_p() ){
-		// Set the manager to the correct value.
+
+		// A little decoration depending on inconsistent state
+		// when reasoning.
+		if( resp.inconsistent_p() ){
+		    jQuery('.app-graph-container').css('background-color',
+						       '#FF0000');
+		}else{
+		    jQuery('.app-graph-container').css('background-color',
+						       '#999999');
+		}
+
+		// Set the manager to the correct value given our
+		// response.
 		manager.use_reasoner_p(true);
-		// A little decoration.
-		jQuery('.app-graph-container').css('background-color',
-						   '#999999');
+
+		// If we got a reasoned, response, the reasoner is
+		// marked as on.
 		jQuery(toggle_reasoner_elt).prop('checked', true);
+
 	    }else{
 		// Set the manager to the correct value.
 		manager.use_reasoner_p(false);
@@ -2420,6 +2421,69 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// ll('DESTROYING WORKING BARISTA CLIENT!!!');
 	// barclient = null;
     }
+
+    // Experimental compactifier to get rogue nodes onto our page and
+    // usable.
+    jQuery(compact_btn_elt).click(function(){
+	//alert('compactor');
+
+	// The compactor is currently assuming we're taking an
+	// infinite range and trying to map it into a 700x700 box,
+	// with things farther out getting yanked more than things
+	// closer in.	
+	var _compactor = function(n){
+	    return Math.round(Math.atan(n/500.00) * (1400/Math.PI));
+	};
+	
+	// Ready new request set.
+	var reqs = new minerva_requests.request_set(manager.user_token(),
+						    ecore.get_id());
+	//reqs.store_model();
+
+	// Update coordinates using the compactor.
+	each(ecore.all_nodes(), function(node){
+
+	    // Get real current position, if possible.
+	    var rx = null;
+	    var ry = null;
+	    var iid = node.id();
+	    var enelt = ecore.get_node_elt_id(iid);
+	    if( enelt ){
+
+		var position = jQuery('#' + enelt).position();
+		if( position ){
+		    rx = position['left'];
+		    ry = position['top'];
+		    console.log('real position recovered');
+		}
+	    }
+	    // Assign a random position if we could not recover.
+	    if( rx === null || ry === null ){
+		rx = _extract_node_position(node, 'x') || _vari();
+		ry = _extract_node_position(node, 'y') || _vari();
+		console.log('otherwise extracted a position');
+	    }
+
+	    var cx = _compactor(rx);
+	    var cy = _compactor(ry);
+	    console.log(node.id()+' - x: '+ rx +'=>'+ cx +', y: '+ ry +'=>'+ cy);
+
+	    reqs.update_annotations(node, 'hint-layout-x', _compactor(cx));
+	    reqs.update_annotations(node, 'hint-layout-y', _compactor(cy));
+
+	    // Update coordinates and report them to others.
+	    local_position_store.add(iid, cx, cy);
+	    if( barclient ){
+		// Remember: telekinesis does t/l, not l/t (= x/y).
+		barclient.telekinesis(iid, cy, cx);
+	    }
+	});
+ 
+	// And add the actual storage.
+	//reqs.store_model();
+	manager.request_with(reqs);
+
+    });
 
     //
     jQuery(ping_btn_elt).click(function(){

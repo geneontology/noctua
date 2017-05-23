@@ -44,10 +44,6 @@
     height: 100%;
 }
 
-.model-inconsistent {
-    background-color: #FF0000;
-}
-
 .app-delete-mark {
     cursor: pointer;
     color: white;
