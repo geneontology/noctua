@@ -122,16 +122,16 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // Create new model from nothing.
     var model_create_by_nothing_id = 'create_button_graph';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
-    // Create new model from process and taxon.
-    var model_create_by_protax_button_id = 'button_protax_for_create';
-    var model_create_by_protax_button_elt =
-	    '#' + model_create_by_protax_button_id;
-    var model_create_by_protax_input_proc_id = 'select_protax_proc_for_create';
-    var model_create_by_protax_input_proc_elt =
-	    '#' + model_create_by_protax_input_proc_id;
-    var model_create_by_protax_input_tax_id = 'select_protax_tax_for_create';
-    var model_create_by_protax_input_tax_elt =
-	    '#' + model_create_by_protax_input_tax_id;
+    // // Create new model from process and taxon.
+    // var model_create_by_protax_button_id = 'button_protax_for_create';
+    // var model_create_by_protax_button_elt =
+    // 	    '#' + model_create_by_protax_button_id;
+    // var model_create_by_protax_input_proc_id = 'select_protax_proc_for_create';
+    // var model_create_by_protax_input_proc_elt =
+    // 	    '#' + model_create_by_protax_input_proc_id;
+    // var model_create_by_protax_input_tax_id = 'select_protax_tax_for_create';
+    // var model_create_by_protax_input_tax_elt =
+    // 	    '#' + model_create_by_protax_input_tax_id;
     // Create new model from nothing for form.
     var model_create_monarch_button_id = 'create_button_monarch';
     var model_create_monarch_button_elt = '#' + model_create_monarch_button_id;
@@ -633,72 +633,72 @@ var MinervaBootstrapping = function(user_token, issue_list){
 	    manager.add_model();
 	});
 	
-	///
-	/// Make the process/taxon seeding interactive.
-	///
+    // 	///
+    // 	/// Make the process/taxon seeding interactive.
+    // 	///
 	
-	var protax_proc_auto_val = null;
-	var protax_tax_auto_val = null;
+    // 	var protax_proc_auto_val = null;
+    // 	var protax_tax_auto_val = null;
 	
-	// go process
-	var protax_proc_auto_args = {
-    	    'label_template':
-	    '{{annotation_class_label}} ({{annotation_class}})',
-    	    'value_template': '{{annotation_class_label}}',
-	    'additional_results_class': 'bbop-mme-more-results-ul',
-    	    'list_select_callback':
-    	    function(doc){
-    		//alert('adding: ' + doc['annotation_class_label']);
-		protax_proc_auto_val = doc['annotation_class'] || null;
-    	    }
-	};
-	var protax_proc_auto =
-	    	new bbop_legacy.widget.search_box(
-		    gserv, gconf, model_create_by_protax_input_proc_id,
-		    protax_proc_auto_args);
-	protax_proc_auto.lite(true);
-	protax_proc_auto.add_query_filter('document_category',
-					  'ontology_class');
-	protax_proc_auto.add_query_filter('regulates_closure_label',
-    					  'biological_process');
-	protax_proc_auto.set_personality('ontology');
+    // 	// go process
+    // 	var protax_proc_auto_args = {
+    // 	    'label_template':
+    // 	    '{{annotation_class_label}} ({{annotation_class}})',
+    // 	    'value_template': '{{annotation_class_label}}',
+    // 	    'additional_results_class': 'bbop-mme-more-results-ul',
+    // 	    'list_select_callback':
+    // 	    function(doc){
+    // 		//alert('adding: ' + doc['annotation_class_label']);
+    // 		protax_proc_auto_val = doc['annotation_class'] || null;
+    // 	    }
+    // 	};
+    // 	var protax_proc_auto =
+    // 	    	new bbop_legacy.widget.search_box(
+    // 		    gserv, gconf, model_create_by_protax_input_proc_id,
+    // 		    protax_proc_auto_args);
+    // 	protax_proc_auto.lite(true);
+    // 	protax_proc_auto.add_query_filter('document_category',
+    // 					  'ontology_class');
+    // 	protax_proc_auto.add_query_filter('regulates_closure_label',
+    // 					  'biological_process');
+    // 	protax_proc_auto.set_personality('ontology');
 	
-	// taxon
-	var protax_tax_auto_args = {
-    	    'label_template':
-	    '{{annotation_class_label}} ({{annotation_class}})',
-    	    'value_template': '{{annotation_class_label}}',
-	    'additional_results_class': 'bbop-mme-more-results-ul',
-    	    'list_select_callback':
-    	    function(doc){
-    		//alert('adding: ' + doc['annotation_class_label']);
-		protax_tax_auto_val = doc['annotation_class'] || null;
-    	    }
-	};
-	var protax_tax_auto =
-	    	new bbop_legacy.widget.search_box(
-		    gserv, gconf, model_create_by_protax_input_tax_id,
-		    protax_tax_auto_args);
-	protax_tax_auto.lite(true);
-	protax_tax_auto.add_query_filter('document_category',
-					 'ontology_class');
-	protax_tax_auto.add_query_filter('source',
-    					 'ncbi_taxonomy');
-	protax_tax_auto.set_personality('ontology');
+    // 	// taxon
+    // 	var protax_tax_auto_args = {
+    // 	    'label_template':
+    // 	    '{{annotation_class_label}} ({{annotation_class}})',
+    // 	    'value_template': '{{annotation_class_label}}',
+    // 	    'additional_results_class': 'bbop-mme-more-results-ul',
+    // 	    'list_select_callback':
+    // 	    function(doc){
+    // 		//alert('adding: ' + doc['annotation_class_label']);
+    // 		protax_tax_auto_val = doc['annotation_class'] || null;
+    // 	    }
+    // 	};
+    // 	var protax_tax_auto =
+    // 	    	new bbop_legacy.widget.search_box(
+    // 		    gserv, gconf, model_create_by_protax_input_tax_id,
+    // 		    protax_tax_auto_args);
+    // 	protax_tax_auto.lite(true);
+    // 	protax_tax_auto.add_query_filter('document_category',
+    // 					 'ontology_class');
+    // 	protax_tax_auto.add_query_filter('source',
+    // 					 'ncbi_taxonomy');
+    // 	protax_tax_auto.set_personality('ontology');
 	
-	// Get create-by-process/taxon ready to go.
-	jQuery(model_create_by_protax_button_elt).click(function(evt){
+    // 	// Get create-by-process/taxon ready to go.
+    // 	jQuery(model_create_by_protax_button_elt).click(function(evt){
 	    
-	    if( protax_proc_auto_val && protax_tax_auto_val ){
-		// alert('You have: ' + protax_proc_auto_val +
-		// 	  ' and ' + protax_tax_auto_val);
-		manager.seed_from_process(protax_proc_auto_val,
-		    			  protax_tax_auto_val);
-	    }else{
-		alert('ERROR: Need both process ID (GO:XXXXXXX) and ' +
-		      'taxon ID (NCBITaxon:XXXXXXX) to proceed.');
-	    }
-	});	
+    // 	    if( protax_proc_auto_val && protax_tax_auto_val ){
+    // 		// alert('You have: ' + protax_proc_auto_val +
+    // 		// 	  ' and ' + protax_tax_auto_val);
+    // 		manager.seed_from_process(protax_proc_auto_val,
+    // 		    			  protax_tax_auto_val);
+    // 	    }else{
+    // 		alert('ERROR: Need both process ID (GO:XXXXXXX) and ' +
+    // 		      'taxon ID (NCBITaxon:XXXXXXX) to proceed.');
+    // 	    }
+    // 	});	
     });
 
     // Likely result of a new model being built on Minerva.
