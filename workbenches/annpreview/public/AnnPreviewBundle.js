@@ -33016,6 +33016,18 @@ var AnnPreviewInit = function(user_token){
 	
 	// Secondarily, go and get the GPAD.
 	gpad_manager.export_model(global_id, 'gpad');
+
+	// Tertiarily, try to find and update the title.
+	var title = null;
+	var title_anns = graph.get_annotations_by_key('title');
+	if( title_anns && title_anns.length === 1 ){
+	    title = title_anns[0].value();
+	    //alert(mtitle);
+	}
+	if( title ){
+	    jQuery('#page-title').empty();
+	    jQuery('#page-title').append('<b>' + title + '</b> (' + graph.get_id() + ')');
+	}
 	
     }, 10);
 			   

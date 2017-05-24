@@ -5,4 +5,5 @@ help-link: "http://github.com/geneontology/noctua/issues"
 javascript:
   - AnnPreviewBundle.js
   - jquery.dataTables.min.js
-css: []
+css:
+  - https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css
