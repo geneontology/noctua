@@ -579,7 +579,8 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			bstrs = [
 			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
 			    // '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
-			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
+			    // '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
+			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button">GPAD</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
 			];
 			
@@ -591,7 +592,8 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			
 	        	bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, model_type), user_token) +'" role="button">Form</a>');
 	    		bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
-	        	bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
+	        	// bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
+	        	bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button" target="_blank">GPAD</a>');
 			bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button" target="_blank">OWL</a>');
 
 			monarch_tr_cache.push(bstrs.join(' '));
