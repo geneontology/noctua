@@ -51,6 +51,38 @@ var minerva_requests = require('minerva-requests');
 var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
 
+// Barista (telekinesis, etc.) communication.
+var barista_client = require('bbop-client-barista');
+var barclient = null;
+
+///
+/// Helpers.
+///
+
+var compute_shield_modal = null;
+
+// Block interface from taking user input while
+// operating.
+function _shields_up(){
+    if( compute_shield_modal ){
+	// Already have one.
+    }else{
+	console.log('shield up');
+	compute_shield_modal = widgetry.compute_shield();
+	compute_shield_modal.show();
+    }
+}
+// Release interface when transaction done.
+function _shields_down(){
+    if( compute_shield_modal ){
+	console.log('shield down');
+	compute_shield_modal.destroy();
+	compute_shield_modal = null;
+    }else{
+	// None to begin with.
+    }
+}
+
 ///
 /// ...
 ///
@@ -58,9 +90,22 @@ var minerva_manager = require('bbop-manager-minerva');
 ///
 var AnnPreviewInit = function(user_token){
 
-    var logger = new bbop.logger('noctua cvi');
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
+    // var logger = new bbop.logger('noctua cvi');
+    // logger.DEBUG = true;
+    // function ll(str){ logger.kvetch(str); }
+
+    // First, try and setup the barista listener.
+    console.log('try setup for messaging at: ' + global_barista_location);
+    barclient = new barista_client(global_barista_location, user_token);
+    barclient.register('merge', function(a,b){
+	console.log('barista/merge response');
+	AnnPreviewInit(user_token);
+    });
+    barclient.register('rebuild', function(a,b){
+	console.log('barista/rebuild response');
+	AnnPreviewInit(user_token);	
+    });
+    barclient.connect(global_id);
 
     // Events registry.
     // Add manager and default callbacks to repl.
@@ -75,34 +120,6 @@ var AnnPreviewInit = function(user_token){
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
-
-    ///
-    /// Helpers.
-    ///
-
-    var compute_shield_modal = null;
-
-    // Block interface from taking user input while
-    // operating.
-    function _shields_up(){
-	if( compute_shield_modal ){
-	    // Already have one.
-	}else{
-	    ll('shield up');
-	    compute_shield_modal = widgetry.compute_shield();
-	    compute_shield_modal.show();
-	}
-    }
-    // Release interface when transaction done.
-    function _shields_down(){
-	if( compute_shield_modal ){
-	    ll('shield down');
-	    compute_shield_modal.destroy();
-	    compute_shield_modal = null;
-	}else{
-	    // None to begin with.
-	}
-    }
 
     ///
     /// Data.
@@ -154,21 +171,21 @@ var AnnPreviewInit = function(user_token){
 
 	// ???
 	manager.register('meta', function(resp, man){
-	    ll('a meta callback?');
+	    console.log('a meta callback?');
 	});
     });
 	
     // Likely result of a new model being built on Minerva.
     model_manager.register('rebuild', function(resp, man){
-	ll('rebuild callback for model');
+	console.log('rebuild callback for model');
 
 	// Noctua graph.
 	graph = new noctua_graph();
 	graph.load_data_basic(resp.data());
-
+	
 	// Max node exposure.
 	graph.unfold();
-
+	
 	// Populate the cache with the opened contents of the graph.
 	cache = {};
 	us.each(graph.all_nodes(), function(n){
@@ -176,15 +193,15 @@ var AnnPreviewInit = function(user_token){
 		cache[t.class_id()] = t.class_label();
 	    });
 	});
-
+	
 	// Secondarily, go and get the GPAD.
 	gpad_manager.export_model(global_id, 'gpad');
-
+	
     }, 10);
-
+			   
     // Likely result of a new model being built on Minerva.
     gpad_manager.register('meta', function(resp, man){
-	ll('rebuild callback for gpad');
+	console.log('rebuild callback for gpad');
 
 	//var exmodel = resp.raw().data['export-model'];
 	//var pstr = resp.raw().data['export-model'];
