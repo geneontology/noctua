@@ -267,7 +267,14 @@ var AnnPreviewInit = function(user_token){
         jQuery('#tbl').append(tbl_str);
 	if( jQuery('#ann-tbl').DataTable ){
             jQuery('#ann-tbl').DataTable(
-		//{autoWidth: true, "order": [[3, "desc"], [0, "asc"]]}
+		{
+		    "autoWidth": true,
+		    // "order": [[3, "desc"], [0, "asc"]],
+		    "lengthMenu": [10, 50, 100, 500],
+		    "pageLength": 100,
+		    "iDisplayLength": 100
+		}
+		
             );
 	}
 
