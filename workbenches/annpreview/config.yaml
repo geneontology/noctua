@@ -1,0 +1,8 @@
+menu-name: "Annotation preview"
+page-name: "Annotation Preview"
+type: "model"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - AnnPreviewBundle.js
+  - jquery.dataTables.min.js
+css: []
