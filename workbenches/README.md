@@ -19,7 +19,7 @@ specific contexts (see next section).
 There are currently four different workbench types.
 
 - `universal`: This workbench appears as a menu item on the Noctua landing page; the client has no additional information, besides the user token, if available.
-- `model`: This workbench appears as a menu item on model pages; the client has access, besides the user token, if available.
+- `model`: This workbench appears as a menu item on model pages; the client has access to, besides the user token, model-specific information.
 - `individual`: TODO
 - `edge`: TODO
 
