@@ -1,8 +1,8 @@
-## Getting Started With Noctua and LEGO Curation
+## Getting Started With Noctua and GO-CAM Curation
 
-* What is LEGO?
+* What is GO-CAM?
 * What is Noctua?
-* Creating a LEGO Model
+* Creating a GO-CAM Model
  * Login
  * Accessing the Graph Editor
  * Creating an Individual
@@ -10,11 +10,11 @@
  * Adding Evidence
  * Linking Individuals
  * Naming your Model and Saving your Work
-* Incorporating LEGO Annotations into your Workflow
+* Incorporating GO-CAM Annotations into your Workflow
 
-### What is LEGO?
+### What is GO-CAM?
 
-LEGO (Linked Expressions using the Gene Ontology) is a formalism for
+GO-CAM (Linked Expressions using the Gene Ontology) is a formalism for
 constructing models of biological pathways or processes using Gene
 Ontology (GO) annotations, contextual information (e.g., cell and
 tissue types) and defined semantic relations from the Relations
@@ -23,15 +23,15 @@ Ontology (RO).
 ### What is Noctua?
 
 Noctua (http://noctua.berkeleybop.org) is the web-based collaborative
-editing system used to create LEGO models. Noctua can also be used to
+editing system used to create GO-CAM models. Noctua can also be used to
 create simpler, conventional GO annotations that may be incorporated
-into LEGO models.
+into GO-CAM models.
 
-### Creating a LEGO Model
+### Creating a GO-CAM Model
 
 #### Login
 
-To create or edit a LEGO model using Noctua, you currently need to
+To create or edit a GO-CAM model using Noctua, you currently need to
 have three things: an account on [GitHub](https://github.com/), an
 [ORCID](http://orcid.org/), and to be properly registered as a Noctua
 user in the GO users' metadata. If you are already a registered GO
@@ -61,12 +61,12 @@ bottom of the page.
 
 #### Creating an Individual
 
-The core graphical view of a statement in LEGO is called an
+The core graphical view of a statement in GO-CAM is called an
 "individual". To create a new individual, you can click on either of
 the four options on the left side of the editor: [Add individual],
 [Add annoton], [Add function], [Add process]. Simply fill in the the
 autocomplete fields in one of the options and hit the appropriate
-"add" button. The core unit of annotation for a LEGO model is the
+"add" button. The core unit of annotation for a GO-CAM model is the
 annoton. Annotons represent linked statements about the function of a
 gene product, where the function occurs at a cellular level and the
 process in which the function is executed.
@@ -86,7 +86,7 @@ respective fields.
 
 #### Adding Evidence
 
-Every assertion in a LEGO model should be supported by evidence. To
+Every assertion in a GO-CAM model should be supported by evidence. To
 add evidence to an individual, click on the empty box in the upper
 right corner of each colored box that illustrates a relation and an
 entity. In the resulting pop-up window, go to the "Evidence" section
@@ -96,7 +96,7 @@ appropriate an entry in the With/From field.
 
 #### Linking Individuals with Relations
 
-Individuals in LEGO models are linked with semantically
+Individuals in GO-CAM models are linked with semantically
 appropriate relations from the RO. To link two individuals, click on
 the blue circle in the box of the individual that is the "subject" of
 the relation and drag the cursor from that individual to the individual
@@ -130,7 +130,7 @@ will disappear. Save your work often while editing!
 
 #### How to Make a Model Public
 
-LEGO models can exist in different curation states, depending
+GO-CAM models can exist in different curation states, depending
 upon whether the curator(s) wish to make the model public. This allows
 curators to work on a model over a period of time, perhaps review them
 with colleagues or experts in the field, and then publish them to the GO
@@ -148,13 +148,13 @@ down menu and select "Edit Annotations" from the list. Under the
 * Closed
 * Delete
 
-### Incorporating LEGO Annotations into your Workflow
+### Incorporating GO-CAM Annotations into your Workflow
 
 GO annotations created in Noctua can be downloaded in three
 different annotation file formats: GAF, GPAD, and OWL.  Note that the
-OWL representation of LEGO models is the semantically correct
+OWL representation of GO-CAM models is the semantically correct
 representation, and that GAF and GPAD file formats are the closest
-representation of the OWL-based LEGO model that can be made using these
+representation of the OWL-based GO-CAM model that can be made using these
 legacy annotations file formats.
 
 From Noctua, annotation files for a specific model can be viewed
@@ -162,7 +162,7 @@ and downloaded by clicking on the Model drop down and then selecting the
 appropriate Export option from the list. Resulting annotation files
 will appear in the browser and can be downloaded from there.
 
-Alternatively, LEGO annotations files can be retrieved from
+Alternatively, GO-CAM annotations files can be retrieved from
 Jenkins. Currently there is a repository for legacy file formats that
 are marked production
 [here](http://build.berkeleybop.org/view/GO/job/export-lego-to-legacy/).
