@@ -57,8 +57,20 @@ function repaint_info(ecore, aid, info_div){
     // Any annotation information that came in.
     var anns = '';
     each(ecore.annotations(), function(ann){
-	if( ann.key() === 'comment' && ann.value() ){
-	    anns += '<dd>' + '<small><strong>comment</strong></small> ' +
+	// if( ann.key() === 'comment' && ann.value() ){
+	//     anns += '<dd>' + '<small><strong>comment</strong></small> ' +
+	// 	ann.value() + '</dd>';
+	// }
+	var okay_annotations = {
+	    'state' : true,
+	    'date' : true,
+	    'title' : true,
+	    'contributor' : true,
+	    'comment' : true
+	};
+	if( okay_annotations[ann.key()] && ann.value() ){
+	    anns += '<dd>' + '<small><strong>' +
+		ann.key() + '</strong></small> ' +
 		ann.value() + '</dd>';
 	}
     });
