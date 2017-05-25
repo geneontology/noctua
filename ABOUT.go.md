@@ -3,79 +3,82 @@ very rapid, so some of these docs may be out of date._
 
 ![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
 
-## Quickstart
+## Quickstart for...
 
  * *Noctua Users*
     * Start with the [video demos](https://vimeo.com/channels/Noctua), such as the [editing example](https://vimeo.com/channels/noctua/148780879)
     * GO curators should read the [Noctua Quickstart](/doc/quick-start-guide) (draft, in progress)
-    * After that, read the full [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
+    * After that, read the full [GO-CAM modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
  * *Bioinformaticians and Systems Biologists* -- See the [Noctua models repository](http://github.com/geneontology/noctua-models) for access to the underlying models and explanation of the OWL representation
  * *Biologists and end-users* -- We are working on a number of ways to make the models easier to search and to use in data interpretation
-    * [Embeddable widgets for adding to existing database websites](https://github.com/geneontology/noctua/issues/221)
-    * Browsing of models and annotons in AmiGO. Currently only available in labs. Choose "Select/Browse" on the landing page
+    * [Embeddable widgets](https://github.com/geneontology/noctua/issues/221) for adding to existing database websites
+    * Browsing of models and annotons in AmiGO. Currently only available as an experiment; choose [Browse] in the menu bar then [Search]
     * Network-based enrichment analysis
-    * Check back on this site throughout 2016 to see progress!
+    * Check back on this site throughout 2017 to see progress!
 
 ## How to use the beta
 
-The current preview instance is available here; for a toy example model, see [one of the](http://noctua.berkeleybop.org/editor/graph/gomodel:55ad81df00000001) scratch models.
-
 This instance is configured for use with the [Gene Ontology](http://geneontology.org) project.
 
-### Generating/selecting a model
+The current preview instance is available here; for a toy example model, see [one of the](http://noctua.berkeleybop.org/editor/graph/gomodel:55ad81df00000001) scratch models.
 
-* Models that are currently known (either in memory or file) are found under [Current State] > select "Usable" > [Jump]
-* To create a new model from a class and a DB, use [Wizard] > (fill out first sections) > [Generate]; this operation could take tens of minutes depending on the complexity
-* To create a new model from just a DB, use [Wizard] > (fill out second section) > [Generate]; this operation may take minutes depending on the size of the GAF to be loaded
-* Directly loading by copy-and-paste is not currently tested
+### Selecting/creatong a model
 
-### Instances and edges
+* Current models on the landing page, which can also be accessed later by clicking the [Overview] menu item
+* To create a new model, click [Create Noctua Model] while logged in on the landing page
 
-* A new instance can be created by filling in the form on the left side of the display
-* Double clicking edges and instances allows the editing of evidence and comments
-* Clicking on the green box upper-left of an instance allows you to view and edit the instance type information
+### Instances and edges in the graph editor
+
+* A new single instance can be created by filling opening the [Add individual] shade on the left side of the display and selecting from the autocomplete
+* A new single "annoton" (the four core individuals of GO-CAM modeling) can be created by filling opening the [Add annoton] shade on the left side of the display and selecting from the autocompletes
+* Clicking on the green and gray squares in the left and upper-left of entities in the graph will open popups for editing things like evidence and comments
 * By dragging the blue circle in the upper-right of an instance to anywhere on a different instance will allow you to create a relation between the two
+* Individuals can be moved by clicking and dragging
 
-### Models
+### Models in the graph editor
 
 * Model meta information can be edited by selecting [Model] > [Edit annotations] from the top menu
-* [Model] > [Soft refresh] gets a fully updated model from the server; this is what you'll use for the time being when another user makes a change to the model
-* [Model] > [Reset] complete reloads everything from the server from scratch
-* To export to a text file (Manchester syntax), use [Export]
-* To save your current model, select [Model] > [Save]; your model should now be available from the landing page
+* [Model] > [Reset], from the top menu, completely reloads everything from the server from scratch
+* To export to a text file (TTL or GPAD), look at the export options under [Model]
+* To save your current model, select [Model] > [Save]
 
-### General navigation
+### General navigation in the graph editor
 
-* Dragging on the background of the model allows you to pan around without using the scrollbars
-* Under [Views], there are various zooming options
+* Clicking and dragging on the background of a model allows you to pan around without using the scrollbars
+* Under [View] there are various zooming options
+* Under [Workbenches] there are various sub-components that will open up in a new window or tab
+* [Plugins] is indeed empty right now
+* [Skunkworks] includes embedded utilities that you should have separate training on before using
 * To reduce clutter, the "part of" relation can be hidden by selecting [View] > [Show/hide "part of"]
-* The minimum space you start with is 800x600px. If you need more, try reseting your model--the space you can use will grow with it.
+* The minimum space you start with is 800x600px. If you need more, try reseting your model--the space you can use will grow with it
 
 ## Known Issues
 
 The bulk of major issues and feature requests are handled by the
 tracker (https://github.com/geneontology/noctua/issues). If something is
-not mentioned here or in the tracker, please contact Seth, Heiko, or Chris.
+not mentioned here or in the tracker, please contact Seth or Chris.
 
-* When editing large models, you may reach a point where almost anything you do will cause an error and hang (refresh to get back to where you were); if you want to make sure your model is saved, contact Seth [#151](https://github.com/geneontology/noctua/issues/151)
+Some irritants that you may run into sooner rather than later:
+
 * Sometimes, when moving instance or relations near a boundary, the relations will fall out of sync; either move nearby instances or refresh the model
 * Sometimes, when editing an instance, the relations (edges) will fall out of sync; either move nearby instances or refresh the model
+* The layout system can (will) get confused by larger models and models when "exploded" out; there is a tool in [Skunkworks] that can help with this in the meantime
 
 ## Troubleshooting
 
-* Newer versions of Chrome and Firefox are supported, __Safari is not supported__
-* You need to have cookies allowed in your browser (for Persona)
+* Newer versions of Chrome and Firefox are tested and supported, __Safari is not tested or supported, but may work__
+* You need to have cookies allowed in your browser (for initial login)
 * Ad-blockers have been known to cause problems, please use a clean browser profile
-* You cannot save unless you have a title.
-* You cannot delete.
+* You cannot save unless you have a title
+* You cannot delete a model, only mark it for deletion during periodic cleanups
 * When weird things happen, this is pretty much what you should try:
- * Refresh your page
- * "Hard" refresh your page (probably by pressing "shift" or something when you refresh; the idea is to try and flush your cache, getting things freshly from the server)
- * Are you logged in? Are you sure? Try logging out and logging back in again--a bad session can cause all sorts of interesting things
+ * Refresh the page in your browser
+ * "Hard" refresh the page in your browser(probably by pressing "shift" or something when you refresh; the idea is to try and flush your cache, getting things freshly from the server)
+ * Are you logged in? Are you sure? Try logging out and logging back in again--a bad session can cause all sorts of interesting issues
  * Try going back to the main landing page, finding your model again, and trying again
- * Try contacting Seth, Chris, or Heiko
+ * Try contacting Seth or Chris
 
 ### Noctua Resources
 

@@ -39,7 +39,7 @@
 
         {{#noctua_dev_tabs}}
         <!-- <li><a href="#export" role="tab" data-toggle="tab">Export</a></li> -->
-        <li class="navbar-tab"><a href="#import" role="tab" data-toggle="tab">Import</a></li>
+        <!-- <li class="navbar-tab"><a href="#import" role="tab" data-toggle="tab">Import</a></li> -->
         <li class="navbar-tab"><a href="#workbenches" role="tab" data-toggle="tab">Workbenches</a></li>
         {{/noctua_dev_tabs}}
 
@@ -356,37 +356,37 @@
     <!-- </div> -->
 
     {{#noctua_dev_tabs}}
-    <!-- Import tab. -->
-    <div class="tab-pane noctua_tab_wrapper" id="import">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">Load model using ??? format <span class="alpha">ALPHA</span></h3>
-        </div>
-        <div class="panel-body">
-          <p>
-            You do <strong>not</strong> want to be using this right
-            now.
-          </p>
-          <p>
-            <textarea class="form-control" id="model_data_input"
-                      placeholder="???" rows="3"></textarea>
-          </p>
-          <p>
-            <button id="model_data_button" type="submit"
-                    class="btn btn-primary">Load</button>
-          </p>
-          <!-- </form> -->
-        </div>
-      </div>
+    <!-- <\!-- Import tab. -\-> -->
+    <!-- <div class="tab-pane noctua_tab_wrapper" id="import"> -->
+    <!--   <div class="panel panel-default"> -->
+    <!--     <div class="panel-heading"> -->
+    <!--       <h3 class="panel-title">Load model using ??? format <span class="alpha">ALPHA</span></h3> -->
+    <!--     </div> -->
+    <!--     <div class="panel-body"> -->
+    <!--       <p> -->
+    <!--         You do <strong>not</strong> want to be using this right -->
+    <!--         now. -->
+    <!--       </p> -->
+    <!--       <p> -->
+    <!--         <textarea class="form-control" id="model_data_input" -->
+    <!--                   placeholder="???" rows="3"></textarea> -->
+    <!--       </p> -->
+    <!--       <p> -->
+    <!--         <button id="model_data_button" type="submit" -->
+    <!--                 class="btn btn-primary">Load</button> -->
+    <!--       </p> -->
+    <!--       <\!-- </form> -\-> -->
+    <!--     </div> -->
+    <!--   </div> -->
 
-    </div>
+    <!-- </div> -->
     {{/noctua_dev_tabs}}
 
     {{#noctua_dev_tabs}}
-
+    
     <!-- Universal workbenches tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="workbenches">
-
+      
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Workbenches</h3>
@@ -455,6 +455,28 @@
         </div>
       </div>
 
+      <!-- When Import works again... -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Load model using ??? format <span class="alpha">ALPHA</span></h3>
+        </div>
+        <div class="panel-body">
+          <p>
+            You do <strong>not</strong> want to be using this right
+            now.
+          </p>
+          <p>
+            <textarea class="form-control" id="model_data_input"
+                      placeholder="???" rows="3"></textarea>
+          </p>
+          <p>
+            <button id="model_data_button" type="submit"
+                    class="btn btn-primary">Load</button>
+          </p>
+          <!-- </form> -->
+        </div>
+      </div>
+	
       <!-- Cheap-and-dirty debugging wire JSON. -->
       <div class="panel panel-default">
         <div class="panel-heading">
