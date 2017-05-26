@@ -31,7 +31,7 @@
 	"bbop-response-barista": "0.0.9",
 	"bbop-rest-manager": "0.0.11",
 	"class-expression": "0.0.11",
-	"cytoscape": "2.7.3",
+	"cytoscape": "3.1.1",
 	"gulp": "^3.9.1",
 	"jquery": "^2.2.4",
 	"minerva-requests": "0.0.15",

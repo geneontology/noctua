@@ -10,15 +10,17 @@
     <div class="form-group">
       <label for="layout_selection">Layout</label>
       <select id="layout_selection" class="form-control col-sm-6">
-	<option value="breadthfirst" selected="selected">
-	  breadthfirst
+	<option value="noctuadef" selected="selected">
+	  noctua default
+	<option value="breadthfirst">
+	  naive breadthfirst
 	</option>
 	<option value="cose">
-	  cose
+	  force 
 	</option>
-	<option value="circle">
-	  circle
-	</option>
+	<!-- <option value="circle"> -->
+	<!--   circle -->
+	<!-- </option> -->
 	<option value="random">
 	  random
 	</option>
@@ -41,8 +43,8 @@
   </div>
 
   <div id="cytoview"
-       width="100%" height="750px"
-       style="border: 1px black solid; width:100%; height:750px; margin-top:5px;">
+       width="100%" height="700px"
+       style="border: 1px black solid; width:100%; height:700px; background-color: #ffebcd; margin-top:5px;">
     Loading...
   </div>
 
