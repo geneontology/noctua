@@ -50,7 +50,7 @@ The current preview instance is available here; for a toy example model, see [on
 * Under [View] there are various zooming options
 * [Tools] includes embedded utilities that you should have separate training on before using
 * Under [Workbenches] there are various sub-components that will open up in a new window or tab
-* [GitHub] allows interactions with the integrated model issue system
+* [Issues] allows interactions with the integrated model issue system
 * To reduce clutter, the "part of" relation can be hidden by selecting [View] > [Show/hide "part of"]
 * The minimum space you start with is 800x600px. If you need more, try reseting your model--the space you can use will grow with it
 
