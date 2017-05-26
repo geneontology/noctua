@@ -24,6 +24,10 @@
 /* global global_workbenches_individual */
 /* global global_noctua_minimal_p */
 /* global global_noctua_context */
+/* global global_github_api */
+/* global global_github_org */
+/* global global_github_repo */
+/* global global_use_github_p */
 
 // Code here will be ignored by JSHint, as we are technically
 // "redefining" jQuery (although we are not).
@@ -46,6 +50,7 @@ var bbop = require('bbop-core');
 var model = require('bbop-graph-noctua');
 var barista_response = require('bbop-response-barista');
 var minerva_requests = require('minerva-requests');
+var rest_response = require('bbop-rest-response').json;
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
@@ -60,6 +65,7 @@ var barista_client = require('bbop-client-barista');
 var widgetry = require('noctua-widgetry');
 var notify_barista = require('toastr'); // regular notifications
 var broadcast_barista = require('toastr'); // broadcast notifications
+var notify_github = require('toastr'); // notifications
 
 // And the layouts!
 var layout_engine = require('bbop-layout');
@@ -2812,6 +2818,65 @@ jsPlumb.ready(function(){
 		//ll('rr: ' + rr);
 		
 	    }
+
+	    ///
+	    /// Grab GitHub information from the tracker for this
+	    /// model.
+	    ///
+	    /// This part is lifted pretty much verbatim from a
+	    /// similar section in NoctuaLanding.js that deals with
+	    /// the general case. As with there, library bugs mean
+	    /// we'll hack this for the time being and revisit when we
+	    /// switch to a new framework.
+	    ///
+	    if( global_github_api && global_github_org && global_github_repo){
+
+		var gh_engine = new jquery_engine(rest_response);
+		// E.g. https://api.github.com/search/issues?q="gomodel:55ad81df00000001"+in:title+state:open+repo:geneontology%2Fnoctua-models
+		var target = 'https://' + global_github_api;
+		// WARNING: For some reason these arguments did not work
+		// correctly as "payload", so falling back to loading
+		// everything directly into the path.
+		// var pay = {"q": '"' +
+		// 	   global_id + '"+in:title+state:open+repo:' +
+		// 	   global_github_org + '/' + global_github_repo};
+		var pay = {};
+		var path = '/search/issues?' +
+			'q="' + global_id + '"+in:title+state:open+repo:' +
+			global_github_org + '%2F' + global_github_repo;
+		notify_github.info("Getting issue information from GitHub...");
+		gh_engine.start(target + path, pay, 'GET').then(function(resp){
+		    notify_github.clear();
+		    if( ! resp || ! resp.okay() ){
+			console.log('error on github issue search');
+		    }else{
+    			//console.log('resp', resp);
+    			var res = resp.raw();
+    			//console.log('res', res);
+			var display_list = [];
+			if( res && res.items ){
+			    var open_count = 0;
+			    var to_append = '';
+			    us.each(res.items, function(item){
+				open_count++;
+				var title = item['title'];
+				var url = item['html_url'];
+				var number = item['number'];
+				if( title && title.indexOf(global_id) !== -1 ){
+			    	    var menu_link = '<li><a href="'+url+'" title="' + title + '" target="_blank"><strong style="color:green;">Open</strong> '+title+' (#' + number + ')</a></li>';
+				    to_append += menu_link;
+				}
+			    });
+			    if( open_count > 0 ){
+				jQuery('#github-list').append(
+				    '<li class="divider"></li>' + to_append);
+				jQuery('#github-badge').append(open_count);
+			    }
+			}
+		    }
+		}).done();
+	    }
+	    
 	}
 
 });

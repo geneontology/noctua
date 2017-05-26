@@ -79,7 +79,28 @@
           </ul>
 	</li>
 
-	<!-- Workbenches/plugins? -->
+	<!-- Experimental stuff ?! -->
+	<li class="dropdown">
+          <a href="#" class="dropdown-toggle"
+	     data-toggle="dropdown">Tools <b class="caret"></b></a>
+          <ul id="skunkworks" class="dropdown-menu">
+            <!-- <li><a id="action_add_seed_from_process" href="#">Seed from process</a></li> -->
+            <li><a id="action_save_wo_layout" href="#">Save (without layout)</a></li>
+            <li><a id="action_compact" href="#">Compact layout (into 700)</a></li>
+            <li class="divider"></li>
+	    <li class="checkbox bbop-noctua-menu-checkbox">
+	      <label>
+		<input id="action_use_reasoner" type="checkbox"> Use reasoner
+	      </label>
+	    </li>
+            <!-- <li class="divider"></li> -->
+            <!-- <li><a id="action_ping" href="#">Request contact <span class="alpha">ALPHA</span></a></li> -->
+            <!-- <li><a id="action_test" href="#">Timer test <span class="alpha">ALPHA</span></a></li> -->
+            <!-- <li><a id="action_shin" href="#">Try new way of doing things <span class="alpha">ALPHA</span></a></li> -->
+          </ul>
+	</li>
+
+	<!-- Workbenches. -->
 	<li class="dropdown">
           <a href="#" class="dropdown-toggle"
 	     data-toggle="dropdown">Workbenches<b class="caret"></b></a>
@@ -94,35 +115,29 @@
           </ul>
 	</li>
 
-	<!-- Should I work on plugins? -->
-	<li class="dropdown">
-          <a href="#" class="dropdown-toggle"
-	     data-toggle="dropdown">Plugins <b class="caret"></b></a>
-          <ul class="dropdown-menu">
-            <!-- <li><a href="#">Does nothing</a></li> -->
-          </ul>
-	</li>
+	<!-- <\!-- Should I work on plugins? -\-> -->
+	<!-- <li class="dropdown"> -->
+        <!--   <a href="#" class="dropdown-toggle" -->
+	<!--      data-toggle="dropdown">Plugins <b class="caret"></b></a> -->
+        <!--   <ul class="dropdown-menu"> -->
+        <!--     <\!-- <li><a href="#">Does nothing</a></li> -\-> -->
+        <!--   </ul> -->
+	<!-- </li> -->
 
-	<!-- Experimental stuff ?! -->
+	{{#use_github_p}}
+	<!-- GitHub. -->
 	<li class="dropdown">
           <a href="#" class="dropdown-toggle"
-	     data-toggle="dropdown">Skunkworks <b class="caret"></b></a>
-          <ul class="dropdown-menu">
-            <!-- <li><a id="action_add_seed_from_process" href="#">Seed from process</a></li> -->
-            <li><a id="action_save_wo_layout" href="#">Save (without layout)</a></li>
-            <li><a id="action_compact" href="#">Compact layout (into 700)</a></li>
-            <li class="divider"></li>
-	    <li class="checkbox bbop-noctua-menu-checkbox">
-	      <label>
-		<input id="action_use_reasoner" type="checkbox"> Use reasoner
-	      </label>
-	    </li>
-            <li class="divider"></li>
-            <!-- <li><a id="action_ping" href="#">Request contact <span class="alpha">ALPHA</span></a></li> -->
-            <!-- <li><a id="action_test" href="#">Timer test <span class="alpha">ALPHA</span></a></li> -->
-            <!-- <li><a id="action_shin" href="#">Try new way of doing things <span class="alpha">ALPHA</span></a></li> -->
+	     data-toggle="dropdown">GitHub <span id="github-badge" class="badge"></span> <b class="caret"></b></a>
+          <ul id="github-list" class="dropdown-menu">
+	    <!-- TODO/BUG: Temporary hard-code here--need to add external referencing URL option, but not sure what that would look like as there many options, such as the model URI, etc. -->
+            <li><a target="_blank" href="http://github.com/{{ github_org }}/{{ github_repo }}/issues/new?title=EDIT+ALL+BUT+REF+THERE->+(ref:+{{ model_id }})&body=FREELY+EDIT+EVERYTHING+IN+BODY++(optional back ref:+http:%2F%2Fnoctua.berkeleybop.org%2Feditor%2Fgraph%2F{{ model_id }})">Create new issue for this model</a></li>
+	    <li><a target="_blank" href="https://github.com/{{ github_org }}/{{ github_repo }}/issues?utf8=%E2%9C%93&q=is%3Aissue%20in%3Atitle%20{{ model_id }}">See all issues for this model</a></li>
+	    <!-- Add nothing after this within this <UL> as I will -->
+	    <!-- be trying to inject GitHub issues here. -->
           </ul>
 	</li>
+	{{/use_github_p}}
 
 	<!-- Help. -->
 	<li>
