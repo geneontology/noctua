@@ -1,4 +1,4 @@
-* What is a "workbench"?
+### What is a "workbench"?
 
 The intention of workbenches is that group can develop functionality
 for Noctua without having to integrate with the main stack using
@@ -14,16 +14,16 @@ variables for them to inspect and operate on. Users interact with them
 by the menu items or buttons added by Noctua for them in their
 specific contexts (see next section).
 
-* Workbench types
+### Workbench types
 
 There are currently four different workbench types.
 
 - `universal`: This workbench appears as a menu item on the Noctua landing page; the client has no additional information, besides the user token, if available.
-- `model`: This workbench appears as a menu item on model pages; the client has access, besides the user token, if available.
+- `model`: This workbench appears as a menu item on model pages; the client has access to, besides the user token, model-specific information.
 - `individual`: TODO
 - `edge`: TODO
 
-* Workbench variables
+### Workbench variables
 
 These are the environmental variables made available to workbenches
 (as above):
@@ -36,12 +36,12 @@ These are the environmental variables made available to workbenches
 - `global_relation_id`: TODO
 - TODO
 
-* Workbench file scan
+### Workbench file scan
 
 On startup, Noctua will scan the listed directories for workbench
 definition files.
 
-* Workbench definition file
+### Workbench definition file
 
 The definition YAML file for a workbench contains the following
 fields. These fields will be scanned for issues at runtime, with
@@ -66,7 +66,7 @@ javascript:
   - foo.js
 ```
 
-* Workbench directory layout
+### Workbench directory layout
 
 The unique identifier for the workbench is the directory that it
 exists in; it may only contain alphanums, it is used for asset
@@ -87,10 +87,10 @@ used can be found below.
 All other files and directories are available to the developers for
 deployment, management, and compilation.
 
-* Workbench template file variables
+### Workbench template file variables
 
 TODO: pup-tent injection pattern.
 
-* Workbench development
+### Workbench development
 
 TODO

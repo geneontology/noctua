@@ -372,9 +372,9 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    var number = issue['number'];
 		    var url = issue['url'];
 		    if( title && title.indexOf(model_id) !== -1 ){
-			var link = '<a href=' + url +
-				' title="' + title + '"' +
-				' target="blank">#' + number +
+			var link = '<a href="' + url +
+				'" title="' + title + '"' +
+				' target="_blank">#' + number +
 				'</a>';
 			retlist.push(link);
 		    }
@@ -798,17 +798,21 @@ jQuery(document).ready(function(){
 		MinervaBootstrapping(start_token, null);
 	    }else{
 
-		// Well, due to issues like
-		// https://github.com/noflo/noflo-github/pull/57 and
-		// https://github.com/mikedeboer/node-github/issues/328,
-		// we have not been able to use a "proper" API, so
-		// falling back on manual for the demo.
+		///
+		/// Well, due to issues like
+		/// https://github.com/noflo/noflo-github/pull/57 and
+		/// https://github.com/mikedeboer/node-github/issues/328,
+		/// we have not been able to use a "proper" API, so
+		/// falling back on manual for the demo.
+		///
+		/// Also see similar section in NoctuaEditor.js.
+		///
 		var gh_engine = new jquery_engine(rest_response);
 		var target = 'https://' + global_github_api;
 		var path = '/repos/' + global_github_org + '/' +
 			global_github_repo +'/' + 'issues';
 		var pay = {"state": "open"};
-		notify_github.info("Getting issue iformation from GitHub...");
+		notify_github.info("Getting issue information from GitHub...");
 		gh_engine.start(target + path, pay, 'GET').then(function(resp){
 		    notify_github.clear();
 		    if( ! resp || ! resp.okay() ){
