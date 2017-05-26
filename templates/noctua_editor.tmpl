@@ -84,15 +84,16 @@
           <a href="#" class="dropdown-toggle"
 	     data-toggle="dropdown">Tools <b class="caret"></b></a>
           <ul id="skunkworks" class="dropdown-menu">
-            <!-- <li><a id="action_add_seed_from_process" href="#">Seed from process</a></li> -->
-            <li><a id="action_save_wo_layout" href="#">Save (without layout)</a></li>
-            <li><a id="action_compact" href="#">Compact layout (into 700)</a></li>
-            <li class="divider"></li>
 	    <li class="checkbox bbop-noctua-menu-checkbox">
 	      <label>
 		<input id="action_use_reasoner" type="checkbox"> Use reasoner
 	      </label>
 	    </li>
+            <li class="divider"></li>
+	    <!-- WARNING: force simulation of BS3 dropdown-menu > li > a class. -->
+	    <li><span style="display: block; padding: 3px 20px;" class="disabled"><strong>Advanced options...</strong></span></li>
+            <li><a id="action_save_wo_layout" href="#">Save (without layout)</a></li>
+            <li><a id="action_compact" href="#">Compact layout (into 700)</a></li>
             <!-- <li class="divider"></li> -->
             <!-- <li><a id="action_ping" href="#">Request contact <span class="alpha">ALPHA</span></a></li> -->
             <!-- <li><a id="action_test" href="#">Timer test <span class="alpha">ALPHA</span></a></li> -->
