@@ -438,14 +438,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // var export_btn_elt = '#' + export_btn_id;
     var save_btn_id = 'action_save';
     var save_btn_elt = '#' + save_btn_id;
-    var ping_btn_id = 'action_ping';
-    var ping_btn_elt = '#' + ping_btn_id;
+    // var ping_btn_id = 'action_ping';
+    // var ping_btn_elt = '#' + ping_btn_id;
     var compact_btn_id = 'action_compact';
     var compact_btn_elt = '#' + compact_btn_id;
-    var test_btn_id = 'action_test';
-    var test_btn_elt = '#' + test_btn_id;
-    var exp_btn_id = 'action_shin';
-    var exp_btn_elt = '#' + exp_btn_id;
+    // var test_btn_id = 'action_test';
+    // var test_btn_elt = '#' + test_btn_id;
+    // var exp_btn_id = 'action_shin';
+    // var exp_btn_elt = '#' + exp_btn_id;
     var help_btn_id = 'action_help';
     var help_btn_elt = '#' + help_btn_id;
     // A hidden for to communicate with the outside world.
@@ -2485,16 +2485,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     });
 
-    //
-    jQuery(ping_btn_elt).click(function(){
-	if( barclient ){
-	    barclient.message(
-		{'message':
-		 '<strong>please contact me for discussion</strong>',
-		 'message_type': 'success'}
-	    );
-	}
-    });
+    // //
+    // jQuery(ping_btn_elt).click(function(){
+    // 	if( barclient ){
+    // 	    barclient.message(
+    // 		{'message':
+    // 		 '<strong>please contact me for discussion</strong>',
+    // 		 'message_type': 'success'}
+    // 	    );
+    // 	}
+    // });
 
     //
     jQuery(model_ann_elt).click(function(){
@@ -2504,31 +2504,31 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	eam.show();
     });
 
-    // 
-    jQuery(test_btn_elt).click(function(){
-	//alert('in progress');
+    // // 
+    // jQuery(test_btn_elt).click(function(){
+    // 	//alert('in progress');
 	
-	// Grab node.
-	var nset = ecore.get_nodes();
-	var nkeys = us.keys(nset);
-	var node = nset[nkeys[0]];
-	if( node ){
-	    // 
-	    //alert('in progress: + ' + node.id());
-	    //bbop_mme_widgetry.contained_modal('shield');
-	    //var mdl = new bbop_mme_widgetry.contained_modal('dialog', 'hi');
-	    var mdl = widgetry.compute_shield();
-	    mdl.show();
+    // 	// Grab node.
+    // 	var nset = ecore.get_nodes();
+    // 	var nkeys = us.keys(nset);
+    // 	var node = nset[nkeys[0]];
+    // 	if( node ){
+    // 	    // 
+    // 	    //alert('in progress: + ' + node.id());
+    // 	    //bbop_mme_widgetry.contained_modal('shield');
+    // 	    //var mdl = new bbop_mme_widgetry.contained_modal('dialog', 'hi');
+    // 	    var mdl = widgetry.compute_shield();
+    // 	    mdl.show();
 	    
-	    // Works.
- 	    // Test that destroy works.
-	    window.setTimeout(
-		function(){
-		    mdl.destroy();
-		    alert('I did nothing. You wasted two seconds. Ha!');
-		}, 2000);
-	}
-    });
+    // 	    // Works.
+    // 	    // Test that destroy works.
+    // 	    window.setTimeout(
+    // 		function(){
+    // 		    mdl.destroy();
+    // 		    alert('I did nothing. You wasted two seconds. Ha!');
+    // 		}, 2000);
+    // 	}
+    // });
 
 
     ///
@@ -2550,45 +2550,45 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	manager.request_with(reqs);
     });
 
-    // Start with an empty model as we run through this.
-    // TODO/BUG: DO_NOT_USE_THIS.
-    jQuery(exp_btn_elt).click(function(){
+    // // Start with an empty model as we run through this.
+    // // TODO/BUG: DO_NOT_USE_THIS.
+    // jQuery(exp_btn_elt).click(function(){
 
-	// Get the modal up.
-	var mdl = new widgetry.contained_modal(
-	    'dialog',
-	    'Please be patient...',
-	    'Hey!');
-	mdl.show();
+    // 	// Get the modal up.
+    // 	var mdl = new widgetry.contained_modal(
+    // 	    'dialog',
+    // 	    'Please be patient...',
+    // 	    'Hey!');
+    // 	mdl.show();
 
-	// // Just a hook to an experimental method for easy access to
-	// // the manager.
-	// var reqs = new minerva_requests.request_set(manager.user_token(),
-	// 					    'action', ecore.get_id());
+    // 	// // Just a hook to an experimental method for easy access to
+    // 	// // the manager.
+    // 	// var reqs = new minerva_requests.request_set(manager.user_token(),
+    // 	// 					    'action', ecore.get_id());
 
-	// /// Individuals.
-	// // axon guidance receptor activity
-	// reqs.add_simple_individual('GO:0008046');
-	// var mf = reqs.last_individual_id();    
-	// // neurogenesis
-	// reqs.add_simple_individual('GO:0022008');
-	// var bp = reqs.last_individual_id();
-	// // cell part
-	// reqs.add_simple_individual('GO:0004464');
-	// var loc = reqs.last_individual_id();
-	// // Drd3
-	// reqs.add_simple_individual('MGI:MGI:94925');
-	// var gp = reqs.last_individual_id();
+    // 	// /// Individuals.
+    // 	// // axon guidance receptor activity
+    // 	// reqs.add_simple_individual('GO:0008046');
+    // 	// var mf = reqs.last_individual_id();    
+    // 	// // neurogenesis
+    // 	// reqs.add_simple_individual('GO:0022008');
+    // 	// var bp = reqs.last_individual_id();
+    // 	// // cell part
+    // 	// reqs.add_simple_individual('GO:0004464');
+    // 	// var loc = reqs.last_individual_id();
+    // 	// // Drd3
+    // 	// reqs.add_simple_individual('MGI:MGI:94925');
+    // 	// var gp = reqs.last_individual_id();
 	
-	// // Edges and evidence.    
-	// reqs.add_fact(mf, bp, 'part_of');
-	// reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
-	// 			  mf, bp, 'part_of');
-	// reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
-	// reqs.add_fact(mf, gp, 'occurs_in');
+    // 	// // Edges and evidence.    
+    // 	// reqs.add_fact(mf, bp, 'part_of');
+    // 	// reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
+    // 	// 			  mf, bp, 'part_of');
+    // 	// reqs.add_fact(mf, loc, 'RO:0002333'); // enabled_by
+    // 	// reqs.add_fact(mf, gp, 'occurs_in');
 
-	// manager.request_with(reqs, ecore.get_id());
-    });
+    // 	// manager.request_with(reqs, ecore.get_id());
+    // });
 
     // Toggle the visibility of the part_of connectors. 
     var viz_p = true; // obviously, start visible
