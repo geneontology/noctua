@@ -48,9 +48,9 @@ The current preview instance is available here; for a toy example model, see [on
 
 * Clicking and dragging on the background of a model allows you to pan around without using the scrollbars
 * Under [View] there are various zooming options
+* [Tools] includes embedded utilities that you should have separate training on before using
 * Under [Workbenches] there are various sub-components that will open up in a new window or tab
-* [Plugins] is indeed empty right now
-* [Skunkworks] includes embedded utilities that you should have separate training on before using
+* [GitHub] allows interactions with the integrated model issue system
 * To reduce clutter, the "part of" relation can be hidden by selecting [View] > [Show/hide "part of"]
 * The minimum space you start with is 800x600px. If you need more, try reseting your model--the space you can use will grow with it
 
@@ -64,7 +64,7 @@ Some irritants that you may run into sooner rather than later:
 
 * Sometimes, when moving instance or relations near a boundary, the relations will fall out of sync; either move nearby instances or refresh the model
 * Sometimes, when editing an instance, the relations (edges) will fall out of sync; either move nearby instances or refresh the model
-* The layout system can (will) get confused by larger models and models when "exploded" out; there is a tool in [Skunkworks] that can help with this in the meantime
+* The layout system can (will) get confused by larger models and models when "exploded" out; there is a tool in [Tools] that can help with this in the meantime
 
 ## Troubleshooting
 
