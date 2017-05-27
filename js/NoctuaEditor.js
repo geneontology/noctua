@@ -510,7 +510,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	var hint_anns = node.get_annotations_by_key(hint_str);
 	if( hint_anns.length === 1 ){
-	    ret = hint_anns[0].value();
+	    ret = parseInt(hint_anns[0].value());
 	    //ll('extracted coord ' + x_or_y + ': ' + ret);
 	}else if( hint_anns.length === 0 ){
 	    //ll('no coord');	    

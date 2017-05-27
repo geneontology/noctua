@@ -58,7 +58,7 @@ var minerva_manager = require('bbop-manager-minerva');
 ///
 
 var graph_id = 'cytoview';
-var graph_layout = 'breadthfirst'; // default
+var graph_layout = 'noctuadef'; // default
 var graph_fold = 'editor'; // default
 var graph = null; // the graph itself
 var cy = null;
@@ -213,6 +213,51 @@ var CytoViewInit = function(user_token){
 		// 'circle': false,
 		// 'roots': cyroots
 	    },
+	    'noctuadef': {
+	        'name': 'preset',
+	        'padding': 30,
+		'fit': true,
+	        'positions': function(a){
+
+		    var nid = a.data('id');
+		    var node = ngraph.get_node(nid);
+		    
+		    // Somewhat vary the intitial placement.
+		    function _vari(){
+			var min = -25;
+			var max = 25;
+			var rand = Math.random();
+			var seed = Math.floor(rand * (max-min+1) +min);
+			return seed + 100;
+		    }
+		    function _extract_node_position(node, x_or_y){
+			var ret = null;
+			
+			var hint_str = null;
+			if( x_or_y === 'x' || x_or_y === 'y' ){
+			    hint_str = 'hint-layout-' + x_or_y;
+			}
+			
+			var hint_anns = node.get_annotations_by_key(hint_str);
+			if( hint_anns.length === 1 ){
+			    ret = parseInt(hint_anns[0].value());
+			    //ll('extracted coord ' + x_or_y + ': ' + ret);
+			}else if( hint_anns.length === 0 ){
+			    //ll('no coord');	    
+			}else{
+			    //ll('too many coord');
+			}
+	
+			return ret;
+		    }
+		    
+		    var old_x = _extract_node_position(node, 'x') || _vari();
+		    var old_y = _extract_node_position(node, 'y') || _vari();
+		    console.log('nid', nid, 'old_x', old_x, 'old_y', old_y);
+		    
+		    return {'x': old_x, 'y': old_y };
+		}
+	    },
 	    // 'sugiyama': {
 	    //     'name': 'grid',
 	    //     'padding': 30,
@@ -240,6 +285,9 @@ var CytoViewInit = function(user_token){
 		name: 'breadthfirst',
 		directed: true,
 		fit: true,
+		//nodeDimensionsIncludeLabels: true,
+		spacingFactor: 1.0,// 1.75,
+		padding: 30,// 30,
 		//maximalAdjustments: 0,
 		circle: false//,
 		//roots: root_ids
@@ -263,13 +311,18 @@ var CytoViewInit = function(user_token){
 		    selector: 'node',
 		    style: {
 			'content': 'data(label)',
-			'font-size': 8,
+			'width': 150,
+			'height': 100,
+			'background-color': 'white',
+			'border-width': 2,
+			'border-color': 'black',
+			'font-size': 14,
 			'min-zoomed-font-size': 6, //10,
                         'text-valign': 'center',
-                        'color': 'white',
+                        'color': 'black',
 			'shape': 'roundrectangle',
-                        'text-outline-width': 2,
-                        'text-outline-color': '#222222',
+                        //'text-outline-width': 2,
+                        //'text-outline-color': '#222222',
 			'text-wrap': 'wrap',
 			'text-max-width': '100px'
 		    }
@@ -282,7 +335,7 @@ var CytoViewInit = function(user_token){
 			'target-arrow-fill': 'filled',
 			'line-color': 'data(color)',
 			'content': 'data(label)',
-			'font-size': 8,
+			'font-size': 14,
 			'min-zoomed-font-size': 6, //10,
                         'text-valign': 'center',
                         'color': 'white',
@@ -293,11 +346,11 @@ var CytoViewInit = function(user_token){
 		}
 	    ],
 	    // initial viewport state:
-	    zoom: 1,
-	    pan: { x: 0, y: 0 },
+	    //zoom: 1,
+	    //pan: { x: 0, y: 0 },
 	    // interaction options:
-	    minZoom: 1e-50,
-	    maxZoom: 1e50,
+	    minZoom: 1e-5,
+	    maxZoom: 1e5,
 	    zoomingEnabled: true,
 	    userZoomingEnabled: true,
 	    panningEnabled: true,
@@ -316,8 +369,8 @@ var CytoViewInit = function(user_token){
 
 	//
 	cy.viewport({
-	    zoom: 2,
-	    pan: { x: 100, y: 100 }
+	    //zoom: 2//,
+	    //pan: { x: 100, y: 100 }
 	});
     }
 
@@ -380,7 +433,9 @@ var CytoViewInit = function(user_token){
 	jQuery("#" + "layout_selection").change(function(event){
 	    graph_layout = jQuery(this).val();
 	    //_render_graph(graph, graph_layout, graph_fold);
-	    cy.layout(layout_opts[graph_layout]);
+	    console.log('layout_opts', layout_opts[graph_layout]);
+	    var layout = cy.layout(layout_opts[graph_layout]);
+	    layout.run();
 	});
 	jQuery("#" + "fold_selection").change(function(event){
 	    graph_fold = jQuery(this).val();
