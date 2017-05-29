@@ -1,5 +1,5 @@
-menu-name: "Cytoscape view"
-page-name: "Cytoscape View"
+menu-name: "Cytoscape layout tool"
+page-name: "Cytoscape Layout Tool"
 type: "model"
 help-link: "http://github.com/geneontology/noctua/issues"
 javascript:

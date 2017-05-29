@@ -49,6 +49,9 @@ var barista_response = require('bbop-response-barista');
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
 
+// Barista (telekinesis, etc.) communication.
+var barista_client = require('bbop-client-barista');
+
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
 var minerva_manager = require('bbop-manager-minerva');
@@ -317,7 +320,7 @@ var CytoViewInit = function(user_token){
 			'border-width': 2,
 			'border-color': 'black',
 			'font-size': 14,
-			'min-zoomed-font-size': 6, //10,
+			'min-zoomed-font-size': 3, //10,
                         'text-valign': 'center',
                         'color': 'black',
 			'shape': 'roundrectangle',
@@ -336,7 +339,7 @@ var CytoViewInit = function(user_token){
 			'line-color': 'data(color)',
 			'content': 'data(label)',
 			'font-size': 14,
-			'min-zoomed-font-size': 6, //10,
+			'min-zoomed-font-size': 3, //10,
                         'text-valign': 'center',
                         'color': 'white',
 			'width': 6,
@@ -349,8 +352,8 @@ var CytoViewInit = function(user_token){
 	    //zoom: 1,
 	    //pan: { x: 0, y: 0 },
 	    // interaction options:
-	    minZoom: 1e-5,
-	    maxZoom: 1e5,
+	    minZoom: 0.1,
+	    maxZoom: 3.0,
 	    zoomingEnabled: true,
 	    userZoomingEnabled: true,
 	    panningEnabled: true,
@@ -371,6 +374,91 @@ var CytoViewInit = function(user_token){
 	cy.viewport({
 	    //zoom: 2//,
 	    //pan: { x: 100, y: 100 }
+	});
+	cy.boxSelectionEnabled( true );
+	
+	///
+	/// We have environment and token, get ready to allow live
+	/// layout work.
+	///
+		
+	// Zoom has no affect on the "position" of the nodes, so we can
+	// just find a box and translate it into noctua.
+	jQuery('#button').click(function(){
+
+	    // Manager to push saved locations back to the server.
+	    var laymanager = new minerva_manager(global_barista_location,
+						 global_minerva_definition_name,
+						 user_token, engine, 'async');
+	    laymanager.register('prerun', _shields_up);
+	    laymanager.register('postrun', _shields_down, 9);
+	    // Likely save success.
+	    laymanager.register('rebuild', function(resp, man){
+		ll('rebuild callback--save success, so close');
+		window.close();
+	    });
+
+	    // Barista client for pushing changes to barista, and
+	    // update listing clients.
+	    var barclient = new barista_client(global_barista_location,
+					       user_token);
+	    barclient.connect(global_id);
+
+	    var cnodes = cy.nodes();
+	    if( cnodes && cnodes.length !== 0 ){
+		// Default to something real before loop.
+		var least_x = cnodes[0].position('x');
+		var least_y = cnodes[0].position('y');
+		us.each(cnodes, function(cnode){
+		    var x = cnode.position('x');
+		    if( x < least_x ){ least_x = x; }
+		    var y = cnode.position('y');
+		    if( y < least_y ){ least_y = y; }
+		    
+		    console.log('position', cnode.position());
+		});
+		//alert(cy.zoom());
+		
+		console.log('zoom', cy.zoom());
+		console.log('least_x', least_x);
+		console.log('least_y', least_y);
+		
+		//
+		var base_shift = 50;
+		var x_shift = (-1.0 * least_x) + base_shift;
+		var y_shift = (-1.0 * least_y) + base_shift;
+		
+		// Start a new request and cycle through all the nodes
+		// to force updates.
+		var reqs = new minerva_requests.request_set(
+		    laymanager.user_token(), global_id);
+		us.each(cnodes, function(cnode){
+
+		    var nid = cnode.data('id');
+		    var node = ngraph.get_node(nid);
+		    
+		    var new_x =  cnode.position('x') + x_shift;
+		    var new_y =  cnode.position('y') + y_shift;
+
+		    console.log('nx', new_x, 'ny', new_y);
+
+		    reqs.update_annotations(
+		    	node, 'hint-layout-x', new_x);
+		    reqs.update_annotations(
+		    	node, 'hint-layout-y', new_y);
+
+		    // There is no "local store" to speak of here, so
+		    // just push out to other clients.
+		    if( barclient ){
+			// Remember: telekinesis does t/l, not l/t (= x/y).
+			barclient.telekinesis(nid, new_y, new_x);
+		    }
+		});
+
+		// And add the actual storage.
+		reqs.store_model();
+		laymanager.request_with(reqs);
+	    }
 	});
     }
 
