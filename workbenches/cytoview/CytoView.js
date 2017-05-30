@@ -77,6 +77,7 @@ var CytoViewInit = function(user_token){
     // Events registry.
     // Add manager and default callbacks to repl.
     var engine = new jquery_engine(barista_response);
+    engine.method('POST');
     var manager = new minerva_manager(global_barista_location,
 				      global_minerva_definition_name,
 				      user_token, engine, 'async');
