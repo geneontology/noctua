@@ -33191,7 +33191,7 @@ var CytoViewInit = function(user_token){
 	    userZoomingEnabled: true,
 	    panningEnabled: true,
 	    userPanningEnabled: true,
-	    boxSelectionEnabled: false,
+	    boxSelectionEnabled: true,
 	    selectionType: 'single',
 	    touchTapThreshold: 8,
 	    desktopTapThreshold: 4,
@@ -33208,7 +33208,20 @@ var CytoViewInit = function(user_token){
 	    //zoom: 2//,
 	    //pan: { x: 100, y: 100 }
 	});
-	cy.boxSelectionEnabled( true );
+
+	cy.on('select', function(evt){
+	    console.log( 'selected: ' + evt.target.id() );
+	    evt.target.style('background-color', 'gray');
+	    //var shared_style =
+	    //shared_style['background-color'] = 'gray';
+	    //evt.target.style();
+	    //console.log( shared_style );
+	});
+	cy.on('unselect', function(evt){
+	    console.log( 'unselected: ' + evt.target.id() );
+	    evt.target.style('background-color', 'white');
+	    //evt.target.style(shared_style);
+	});
 	
 	///
 	/// We have environment and token, get ready to allow live
