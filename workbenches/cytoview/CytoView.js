@@ -359,7 +359,7 @@ var CytoViewInit = function(user_token){
 	    userZoomingEnabled: true,
 	    panningEnabled: true,
 	    userPanningEnabled: true,
-	    boxSelectionEnabled: false,
+	    boxSelectionEnabled: true,
 	    selectionType: 'single',
 	    touchTapThreshold: 8,
 	    desktopTapThreshold: 4,
@@ -376,7 +376,17 @@ var CytoViewInit = function(user_token){
 	    //zoom: 2//,
 	    //pan: { x: 100, y: 100 }
 	});
-	cy.boxSelectionEnabled( true );
+
+	// Make sure that there is a notice of highlight when we are
+	// working.
+	cy.on('select', function(evt){
+	    console.log( 'selected: ' + evt.target.id() );
+	    evt.target.style('background-color', 'gray');
+	});
+	cy.on('unselect', function(evt){
+	    console.log( 'unselected: ' + evt.target.id() );
+	    evt.target.style('background-color', 'white');
+	});
 	
 	///
 	/// We have environment and token, get ready to allow live
