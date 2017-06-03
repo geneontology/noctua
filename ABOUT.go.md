@@ -54,6 +54,26 @@ The current preview instance is available here; for a toy example model, see [on
 * To reduce clutter, the "part of" relation can be hidden by selecting [View] > [Show/hide "part of"]
 * The minimum space you start with is 800x600px. If you need more, try reseting your model--the space you can use will grow with it
 
+## Understanding "saving"
+
+Given the distributed nature of Noctua and how it works, some aspects
+of saving may be unintuitive.
+
+The first thing to understand is that Noctua regards "saving" as a
+working model being flushed to disk (and saved to GitHub). When you
+are logged in to Noctua and editing, all of your changes are
+*persistent*, as in they will continue to exist between login
+sessions, but they are not "saved". If Noctua is restarted for some
+reason, any changes that were made after the last save will be lost.
+
+Next, Noctua *does not autosave*--you must click the "Save" under the
+[Model] menu in order to save your edits.
+
+Finally, when working on something that you would like to preserve
+into the future, just like when editing in a word processor, please
+get into the habit of periodically saving your models.
+
+
 ## Known Issues
 
 The bulk of major issues and feature requests are handled by the
