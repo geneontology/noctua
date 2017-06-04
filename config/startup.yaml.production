@@ -86,7 +86,7 @@ WORKBENCHES:
 MINERVA_REASONER:
   comment: The reasoner to use in Minerva.
   type: string
-  value: slme-elk
+  value: arachne
 ## JVM preferences.
 MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
