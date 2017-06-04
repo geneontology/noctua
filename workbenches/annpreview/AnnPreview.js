@@ -104,7 +104,7 @@ var AnnPreviewInit = function(user_token){
     });
     barclient.register('rebuild', function(a,b){
 	console.log('barista/rebuild response');
-	AnnPreviewInit(user_token);	
+	AnnPreviewInit(user_token);
     });
     barclient.connect(global_id);
 
@@ -114,6 +114,7 @@ var AnnPreviewInit = function(user_token){
     var model_manager = new minerva_manager(global_barista_location,
 					    global_minerva_definition_name,
 					    user_token, engine, 'async');
+    model_manager.use_reasoner_p(true);
     var gpad_manager = new minerva_manager(global_barista_location,
 					   global_minerva_definition_name,
 					   user_token, engine, 'async');
@@ -190,7 +191,15 @@ var AnnPreviewInit = function(user_token){
 	// Populate the cache with the opened contents of the graph.
 	cache = {};
 	us.each(graph.all_nodes(), function(n){
+
+	    // Get the primary class labels, etc.
 	    us.each(n.types(), function(t){
+		cache[t.class_id()] = t.class_label();
+	    });
+
+	    //Dig in and try and get out any inferred labels.
+	    var inf_types = n.get_unique_inferred_types();
+	    each(inf_types, function(t){
 		cache[t.class_id()] = t.class_label();
 	    });
 	});
