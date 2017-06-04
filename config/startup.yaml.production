@@ -91,7 +91,7 @@ MINERVA_REASONER:
 MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
   type: number
-  value: 32
+  value: 128
 ## Graph preferences.
 COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.
