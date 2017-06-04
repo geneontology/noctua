@@ -1852,7 +1852,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 					       'PMID:'+ pmid +'</a>';
 				       }else if( rav.split('http://').length === 2 ){
 					   kval +='; <a href="' +
-					       rav + ' target="_blank"">'+
+					       rav + '" target="_blank">'+
 					       rav + '</a>';
 				       }else{
 					   kval +='; '+ ref_ann.key() +': '+
