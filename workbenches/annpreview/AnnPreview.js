@@ -88,6 +88,7 @@ function _shields_down(){
 ///
 
 ///
+var initial_p = true;
 var AnnPreviewInit = function(user_token){
 
     // var logger = new bbop.logger('noctua cvi');
@@ -103,7 +104,7 @@ var AnnPreviewInit = function(user_token){
     });
     barclient.register('rebuild', function(a,b){
 	console.log('barista/rebuild response');
-	AnnPreviewInit(user_token);	
+	AnnPreviewInit(user_token);
     });
     barclient.connect(global_id);
 
@@ -113,6 +114,7 @@ var AnnPreviewInit = function(user_token){
     var model_manager = new minerva_manager(global_barista_location,
 					    global_minerva_definition_name,
 					    user_token, engine, 'async');
+    model_manager.use_reasoner_p(true);
     var gpad_manager = new minerva_manager(global_barista_location,
 					   global_minerva_definition_name,
 					   user_token, engine, 'async');
@@ -189,7 +191,15 @@ var AnnPreviewInit = function(user_token){
 	// Populate the cache with the opened contents of the graph.
 	cache = {};
 	us.each(graph.all_nodes(), function(n){
+
+	    // Get the primary class labels, etc.
 	    us.each(n.types(), function(t){
+		cache[t.class_id()] = t.class_label();
+	    });
+
+	    //Dig in and try and get out any inferred labels.
+	    var inf_types = n.get_unique_inferred_types();
+	    each(inf_types, function(t){
 		cache[t.class_id()] = t.class_label();
 	    });
 	});
@@ -265,17 +275,22 @@ var AnnPreviewInit = function(user_token){
 	// Add to DOM.
 	jQuery('#tbl').empty();
         jQuery('#tbl').append(tbl_str);
-	if( jQuery('#ann-tbl').DataTable ){
-            jQuery('#ann-tbl').DataTable(
-		{
-		    "autoWidth": true,
-		    // "order": [[3, "desc"], [0, "asc"]],
-		    "lengthMenu": [10, 50, 100, 500],
-		    "pageLength": 100,
-		    "iDisplayLength": 100
-		}
-		
-            );
+
+	// Initialize table if first time through...
+	if( initial_p ){
+	    initial_p = false;
+
+	    if( jQuery('#ann-tbl').DataTable ){
+		jQuery('#ann-tbl').DataTable(
+		    {
+			"autoWidth": true,
+			// "order": [[3, "desc"], [0, "asc"]],
+			"lengthMenu": [10, 50, 100, 500],
+			"pageLength": 100,
+			"iDisplayLength": 100
+		    }
+		);
+	    }
 	}
 
     }, 10);

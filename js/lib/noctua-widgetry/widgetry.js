@@ -1811,7 +1811,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// string while storing the ids for later use.
 		var kval = ann.value();
 		if( kval.split('http://').length === 2 ){ // cheap link
-		    kval = '<a href="' + kval + '">' + kval + '</a>';
+		    kval = '<a href="' +
+			kval + '" target="_blank">' +
+			kval + '</a>';
 		}
 		// However, evidence annotations are very different
 		// for us now, and we need to dig out the guts from a
@@ -1846,10 +1848,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				       if( rav.split('PMID:').length === 2 ){
 					   var pmid = rav.split('PMID:')[1];
 					   kval += '; <a href="http://pmid.us/'+
-					       pmid +'">'+ 'PMID:'+ pmid +'</a>';
+					       pmid +'" target="_blank">'+
+					       'PMID:'+ pmid +'</a>';
 				       }else if( rav.split('http://').length === 2 ){
-					   kval +='; <a href="'+ rav +'">'+
-					       rav +'</a>';
+					   kval +='; <a href="' +
+					       rav + '" target="_blank">'+
+					       rav + '</a>';
 				       }else{
 					   kval +='; '+ ref_ann.key() +': '+
 					       rav;
@@ -1968,7 +1972,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	var all_undefined_annotations = entity.get_annotations_by_filter(
 	    function(in_ann){
 		var retval = false;
-		if( in_ann.key() !== 'hint-layout-x' &&
+		if( in_ann.key() !== 'http://geneontology.org/lego/json-model' &&
+		    in_ann.key() !== 'hint-layout-x' &&
 		    in_ann.key() !== 'hint-layout-y' ){
 		    if( ! ann_classes[in_ann.key()] ){ // ! defined ann class
 			retval = true;
@@ -1996,7 +2001,6 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    out_cache.push(' [' + unann.value_type() + ']');
 		}
 		out_cache.push('</li>');
-		
 	    });
 	    out_cache.push('</ul>');
 	    out_cache.push('</div>');

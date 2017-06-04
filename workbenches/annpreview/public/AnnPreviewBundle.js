@@ -59,8 +59,20 @@ function repaint_info(ecore, aid, info_div){
     // Any annotation information that came in.
     var anns = '';
     each(ecore.annotations(), function(ann){
-	if( ann.key() === 'comment' && ann.value() ){
-	    anns += '<dd>' + '<small><strong>comment</strong></small> ' +
+	// if( ann.key() === 'comment' && ann.value() ){
+	//     anns += '<dd>' + '<small><strong>comment</strong></small> ' +
+	// 	ann.value() + '</dd>';
+	// }
+	var okay_annotations = {
+	    'state' : true,
+	    'date' : true,
+	    'title' : true,
+	    'contributor' : true,
+	    'comment' : true
+	};
+	if( okay_annotations[ann.key()] && ann.value() ){
+	    anns += '<dd>' + '<small><strong>' +
+		ann.key() + '</strong></small> ' +
 		ann.value() + '</dd>';
 	}
     });
@@ -1801,7 +1813,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// string while storing the ids for later use.
 		var kval = ann.value();
 		if( kval.split('http://').length === 2 ){ // cheap link
-		    kval = '<a href="' + kval + '">' + kval + '</a>';
+		    kval = '<a href="' +
+			kval + '" target="_blank">' +
+			kval + '</a>';
 		}
 		// However, evidence annotations are very different
 		// for us now, and we need to dig out the guts from a
@@ -1836,10 +1850,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				       if( rav.split('PMID:').length === 2 ){
 					   var pmid = rav.split('PMID:')[1];
 					   kval += '; <a href="http://pmid.us/'+
-					       pmid +'">'+ 'PMID:'+ pmid +'</a>';
+					       pmid +'" target="_blank">'+
+					       'PMID:'+ pmid +'</a>';
 				       }else if( rav.split('http://').length === 2 ){
-					   kval +='; <a href="'+ rav +'">'+
-					       rav +'</a>';
+					   kval +='; <a href="' +
+					       rav + '" target="_blank">'+
+					       rav + '</a>';
 				       }else{
 					   kval +='; '+ ref_ann.key() +': '+
 					       rav;
@@ -1958,7 +1974,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	var all_undefined_annotations = entity.get_annotations_by_filter(
 	    function(in_ann){
 		var retval = false;
-		if( in_ann.key() !== 'hint-layout-x' &&
+		if( in_ann.key() !== 'http://geneontology.org/lego/json-model' &&
+		    in_ann.key() !== 'hint-layout-x' &&
 		    in_ann.key() !== 'hint-layout-y' ){
 		    if( ! ann_classes[in_ann.key()] ){ // ! defined ann class
 			retval = true;
@@ -1986,7 +2003,6 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    out_cache.push(' [' + unann.value_type() + ']');
 		}
 		out_cache.push('</li>');
-		
 	    });
 	    out_cache.push('</ul>');
 	    out_cache.push('</div>');
@@ -32908,6 +32924,7 @@ function _shields_down(){
 ///
 
 ///
+var initial_p = true;
 var AnnPreviewInit = function(user_token){
 
     // var logger = new bbop.logger('noctua cvi');
@@ -32923,7 +32940,7 @@ var AnnPreviewInit = function(user_token){
     });
     barclient.register('rebuild', function(a,b){
 	console.log('barista/rebuild response');
-	AnnPreviewInit(user_token);	
+	AnnPreviewInit(user_token);
     });
     barclient.connect(global_id);
 
@@ -32933,6 +32950,7 @@ var AnnPreviewInit = function(user_token){
     var model_manager = new minerva_manager(global_barista_location,
 					    global_minerva_definition_name,
 					    user_token, engine, 'async');
+    model_manager.use_reasoner_p(true);
     var gpad_manager = new minerva_manager(global_barista_location,
 					   global_minerva_definition_name,
 					   user_token, engine, 'async');
@@ -33009,7 +33027,15 @@ var AnnPreviewInit = function(user_token){
 	// Populate the cache with the opened contents of the graph.
 	cache = {};
 	us.each(graph.all_nodes(), function(n){
+
+	    // Get the primary class labels, etc.
 	    us.each(n.types(), function(t){
+		cache[t.class_id()] = t.class_label();
+	    });
+
+	    //Dig in and try and get out any inferred labels.
+	    var inf_types = n.get_unique_inferred_types();
+	    each(inf_types, function(t){
 		cache[t.class_id()] = t.class_label();
 	    });
 	});
@@ -33085,17 +33111,22 @@ var AnnPreviewInit = function(user_token){
 	// Add to DOM.
 	jQuery('#tbl').empty();
         jQuery('#tbl').append(tbl_str);
-	if( jQuery('#ann-tbl').DataTable ){
-            jQuery('#ann-tbl').DataTable(
-		{
-		    "autoWidth": true,
-		    // "order": [[3, "desc"], [0, "asc"]],
-		    "lengthMenu": [10, 50, 100, 500],
-		    "pageLength": 100,
-		    "iDisplayLength": 100
-		}
-		
-            );
+
+	// Initialize table if first time through...
+	if( initial_p ){
+	    initial_p = false;
+
+	    if( jQuery('#ann-tbl').DataTable ){
+		jQuery('#ann-tbl').DataTable(
+		    {
+			"autoWidth": true,
+			// "order": [[3, "desc"], [0, "asc"]],
+			"lengthMenu": [10, 50, 100, 500],
+			"pageLength": 100,
+			"iDisplayLength": 100
+		    }
+		);
+	    }
 	}
 
     }, 10);
