@@ -1972,7 +1972,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	var all_undefined_annotations = entity.get_annotations_by_filter(
 	    function(in_ann){
 		var retval = false;
-		if( in_ann.key() !== 'hint-layout-x' &&
+		if( in_ann.key() !== 'http://geneontology.org/lego/json-model' &&
+		    in_ann.key() !== 'hint-layout-x' &&
 		    in_ann.key() !== 'hint-layout-y' ){
 		    if( ! ann_classes[in_ann.key()] ){ // ! defined ann class
 			retval = true;
@@ -2000,7 +2001,6 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    out_cache.push(' [' + unann.value_type() + ']');
 		}
 		out_cache.push('</li>');
-		
 	    });
 	    out_cache.push('</ul>');
 	    out_cache.push('</div>');
