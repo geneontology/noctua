@@ -88,6 +88,7 @@ function _shields_down(){
 ///
 
 ///
+var initial_p = true;
 var AnnPreviewInit = function(user_token){
 
     // var logger = new bbop.logger('noctua cvi');
@@ -265,17 +266,22 @@ var AnnPreviewInit = function(user_token){
 	// Add to DOM.
 	jQuery('#tbl').empty();
         jQuery('#tbl').append(tbl_str);
-	if( jQuery('#ann-tbl').DataTable ){
-            jQuery('#ann-tbl').DataTable(
-		{
-		    "autoWidth": true,
-		    // "order": [[3, "desc"], [0, "asc"]],
-		    "lengthMenu": [10, 50, 100, 500],
-		    "pageLength": 100,
-		    "iDisplayLength": 100
-		}
-		
-            );
+
+	// Initialize table if first time through...
+	if( initial_p ){
+	    initial_p = false;
+
+	    if( jQuery('#ann-tbl').DataTable ){
+		jQuery('#ann-tbl').DataTable(
+		    {
+			"autoWidth": true,
+			// "order": [[3, "desc"], [0, "asc"]],
+			"lengthMenu": [10, 50, 100, 500],
+			"pageLength": 100,
+			"iDisplayLength": 100
+		    }
+		);
+	    }
 	}
 
     }, 10);
