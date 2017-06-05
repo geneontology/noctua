@@ -1413,7 +1413,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 						       '#FF0000');
 		}else{
 		    jQuery('.app-graph-container').css('background-color',
-						       '#999999');
+						       '#ddffdd');
 		}
 
 		// Set the manager to the correct value given our
