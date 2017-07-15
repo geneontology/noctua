@@ -33103,7 +33103,7 @@ module.exports = {
         }
         
         function formatExplanation(explanation) {
-            return '<p>Triples</p>' + 
+            return '<p>Asserted Triples</p>' + 
             '<ul>' + 
             us.map(explanation.triples, function (tripleID) {
                 var triple = tripleMap[tripleID];
