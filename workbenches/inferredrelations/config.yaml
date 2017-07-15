@@ -1,0 +1,9 @@
+menu-name: "Inference Explanations"
+page-name: "Inference Explanations"
+type: "model"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - InferredRelationsBundle.js
+  - jquery.dataTables.min.js
+css:
+  - https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css
