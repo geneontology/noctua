@@ -33087,19 +33087,27 @@ module.exports = {
         }
         var tblAssertions = us.map(json.assertions, function (triple) {
             return '<tr>' + 
-            '<td><a href="' + triple.subject + '">' + getLabel(triple.subject) + '</a></td>' +
-            '<td><a href="' + triple.predicate + '">' + getLabel(triple.predicate) + '</a></td>' +
-            '<td><a href="' + triple.object + '">' + getLabel(triple.object) + '</a></td>' +
+            '<td><a title="' + triple.subject + '"href="' + triple.subject + '">' + getLabel(triple.subject) + '</a></td>' +
+            '<td><a title="' + triple.predicate + '"href="' + triple.predicate + '">' + getLabel(triple.predicate) + '</a></td>' +
+            '<td><a title="' + triple.object + '"href="' + triple.object + '">' + getLabel(triple.object) + '</a></td>' +
             '<td>asserted</td>' +
             '</tr>';
         });
+        
+        function formatNode(node) {
+            if (node.startsWith('http')) {
+                return '<a title="' + node + '"href="' + node + '">' + getLabel(node) + '</a>'
+            } else {
+                return getLabel(node);
+            }
+        }
         
         function formatExplanation(explanation) {
             return '<p>Triples</p>' + 
             '<ul>' + 
             us.map(explanation.triples, function (tripleID) {
                 var triple = tripleMap[tripleID];
-                return '<li>' + getLabel(triple.subject) + ' ' + getLabel(triple.predicate) + ' ' + getLabel(triple.object) + '</li>';
+                return '<li>' + formatNode(triple.subject) + ' ' + formatNode(triple.predicate) + ' ' + formatNode(triple.object) + '</li>';
             }) + 
             '</ul>' +
             '<p>Rules</p>' + 
@@ -33107,10 +33115,10 @@ module.exports = {
             us.map(explanation.rules, function (ruleID) {
                 var rule = ruleMap[ruleID];
                 var body = us.map(rule.body, function (triple) {
-                    return '( ' + getLabel(triple.subject) + ' ' + getLabel(triple.predicate) + ' ' + getLabel(triple.object) + ' )';
+                    return '( ' + formatNode(triple.subject) + ' ' + formatNode(triple.predicate) + ' ' + formatNode(triple.object) + ' )';
                 }).join(' ∧ ');
                 var head = us.map(rule.head, function (triple) {
-                    return '( ' + getLabel(triple.subject) + ' ' + getLabel(triple.predicate) + ' ' + getLabel(triple.object) + ' )';
+                    return '( ' + formatNode(triple.subject) + ' ' + formatNode(triple.predicate) + ' ' + formatNode(triple.object) + ' )';
                 }).join(' ∧ ');
                 return '<li>' + body + ' → ' + head + '</li>';
             }) +
