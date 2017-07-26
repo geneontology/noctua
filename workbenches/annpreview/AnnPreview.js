@@ -273,23 +273,23 @@ var AnnPreviewInit = function(user_token){
 	});
 	
 	// Add to DOM.
-	jQuery('#tbl').empty();
-        jQuery('#tbl').append(tbl_str);
+	jQuery('#tbl-bdy').empty();
+        jQuery('#tbl-bdy').append(tbl_str);
 
-	// Initialize table if first time through...
-	if( initial_p ){
+	// Initialize table if first time through and there is
+	// something available in the table (as detected by a value in
+	// tbl_str).
+	if( initial_p && tbl_str !== '' ){
 	    initial_p = false;
 
-	    if( jQuery('#ann-tbl').DataTable ){
-		jQuery('#ann-tbl').DataTable(
-		    {
-			"autoWidth": true,
-			// "order": [[3, "desc"], [0, "asc"]],
-			"lengthMenu": [10, 50, 100, 500],
-			"pageLength": 100,
-			"iDisplayLength": 100
-		    }
-		);
+	    if( typeofjQuery('#ann-tbl').DataTable ){
+		jQuery('#ann-tbl').DataTable({
+		    "autoWidth": true,
+		    // "order": [[3, "desc"], [0, "asc"]],
+		    "lengthMenu": [10, 50, 100, 500],
+		    "pageLength": 100,
+		    "iDisplayLength": 100
+		});
 	    }
 	}
 

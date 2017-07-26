@@ -1841,24 +1841,32 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    // Collect annotations (almost certainly
 			    // had some class first, so no worries
 			    // about the dumb tag on the end).
-			    each(ref_ind.annotations(), function(ref_ann){
+			    var ref_anns = ref_ind.annotations();
+			    var sorted_ref_anns = ref_anns.sort(function(a, b){
+				var va = a.key();
+				var vb = b.key();
+				var retval = 0;
+				if( va < vb ){
+				    retval = -1;
+				}else if( va > vb ){
+				    retval = 1;
+				}
+				return retval;
+			    });
+			    each(sorted_ref_anns, function(ref_ann){
 				// Skip unnecessary information.
+				//console.log('ref_ann.key():' + ref_ann.key() );
 				if( ref_ann.key() !== 'hint-layout-x' &&
 				    ref_ann.key() !== 'hint-layout-y' ){
 				       var rav = ref_ann.value();
 				       // link pmids silly
 				       if( rav.split('PMID:').length === 2 ){
 					   var pmid = rav.split('PMID:')[1];
-					   kval += '; <a href="http://pmid.us/'+
-					       pmid +'" target="_blank">'+
-					       'PMID:'+ pmid +'</a>';
+					   kval += '<br />' + ref_ann.key() +': <a href="http://pmid.us/'+ pmid +'" target="_blank">'+ 'PMID:'+ pmid +' &#128279;</a>';
 				       }else if( rav.split('http://').length === 2 ){
-					   kval +='; <a href="' +
-					       rav + '" target="_blank">'+
-					       rav + '</a>';
+					   kval +='<br />' + ref_ann.key() +': <a href="' + rav + '" target="_blank">'+ rav + ' &#128279;</a>';
 				       }else{
-					   kval +='; '+ ref_ann.key() +': '+
-					       rav;
+					   kval +='<br /> '+ ref_ann.key() +': '+ rav;
 				       }
 				   }
 			    });
@@ -33109,23 +33117,23 @@ var AnnPreviewInit = function(user_token){
 	});
 	
 	// Add to DOM.
-	jQuery('#tbl').empty();
-        jQuery('#tbl').append(tbl_str);
+	jQuery('#tbl-bdy').empty();
+        jQuery('#tbl-bdy').append(tbl_str);
 
-	// Initialize table if first time through...
-	if( initial_p ){
+	// Initialize table if first time through and there is
+	// something available in the table (as detected by a value in
+	// tbl_str).
+	if( initial_p && tbl_str !== '' ){
 	    initial_p = false;
 
-	    if( jQuery('#ann-tbl').DataTable ){
-		jQuery('#ann-tbl').DataTable(
-		    {
-			"autoWidth": true,
-			// "order": [[3, "desc"], [0, "asc"]],
-			"lengthMenu": [10, 50, 100, 500],
-			"pageLength": 100,
-			"iDisplayLength": 100
-		    }
-		);
+	    if( typeofjQuery('#ann-tbl').DataTable ){
+		jQuery('#ann-tbl').DataTable({
+		    "autoWidth": true,
+		    // "order": [[3, "desc"], [0, "asc"]],
+		    "lengthMenu": [10, 50, 100, 500],
+		    "pageLength": 100,
+		    "iDisplayLength": 100
+		});
 	    }
 	}
 
