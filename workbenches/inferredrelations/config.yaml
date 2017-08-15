@@ -1,5 +1,5 @@
-menu-name: "Inference Explanations"
-page-name: "Inference Explanations"
+menu-name: "Inference explanations"
+page-name: "Inference explanations"
 type: "model"
 help-link: "http://github.com/geneontology/noctua/issues"
 javascript:
