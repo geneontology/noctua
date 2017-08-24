@@ -1727,24 +1727,24 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// biological process
 	var annoton_bp_auto_args = us.clone(base_annoton_auto_args);
-	// annoton_bp_auto_args['list_select_callback'] =
-	// 	function(doc){
-	// 	    annoton_bp_auto_val = doc['annotation_class'] || null;
-	// 	};
+	annoton_bp_auto_args['list_select_callback'] =
+	    function(doc){
+		annoton_bp_auto_val = doc['annotation_class'] || null;
+	    };
 	
 	// molecular function
 	var annoton_mf_auto_args = us.clone(base_annoton_auto_args);
-	// annoton_mf_auto_args['list_select_callback'] =
-	// 	function(doc){
-	// 	    annoton_mf_auto_val = doc['annotation_class'] || null;
-	// 	};
+	annoton_mf_auto_args['list_select_callback'] =
+	    function(doc){
+		annoton_mf_auto_val = doc['annotation_class'] || null;
+	    };
 	
 	// cellular component
 	var annoton_cc_auto_args = us.clone(base_annoton_auto_args);
-	// annoton_bp_auto_args['list_select_callback'] =
-	// 	function(doc){
-	// 	    annoton_bp_auto_val = doc['annotation_class'] || null;
-	// 	};
+	annoton_bp_auto_args['list_select_callback'] =
+	    function(doc){
+		annoton_bp_auto_val = doc['annotation_class'] || null;
+	    };
 	
 	// Remember that we're using NEO for this now.
 	var annoton_eb_auto =
@@ -1792,24 +1792,32 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    function(){
     		var eb = jQuery('#' + 'annoton_eb_auto').val() || '';
     		var mf = jQuery('#' + 'annoton_mf_auto').val() || 'GO:0003674';
-    		var bp = jQuery('#' + 'annoton_bp_auto').val() || 'GO:0008150';
-    		var cc = jQuery('#' + 'annoton_cc_auto').val() || 'GO:0005575';
+    		var bp = jQuery('#' + 'annoton_bp_auto').val() || '';
+    		var cc = jQuery('#' + 'annoton_cc_auto').val() || '';
 
     		if( eb === '' ){
     		    alert('You must at least select a bioentity.');
     		}else{
 		    
 		    // Ready new super request.
-		    var reqs = new minerva_requests.request_set(manager.user_token(),
-								ecore.get_id());
+		    var reqs = new minerva_requests.request_set(
+			manager.user_token(),
+			ecore.get_id());
 
+		    // There must be a GP.
 		    var ind_eb = reqs.add_individual(eb);
+		    // There will at least be a top-level MF.
 		    var ind_mf = reqs.add_individual(mf);
-		    var ind_bp = reqs.add_individual(bp);
-		    var ind_cc = reqs.add_individual(cc);
 		    reqs.add_fact([ind_mf, ind_eb, 'RO:0002333']);
-		    reqs.add_fact([ind_mf, ind_bp, 'BFO:0000050']);
-		    reqs.add_fact([ind_mf, ind_cc, 'BFO:0000066']);
+		    // These are now optional.
+		    if( bp && bp !== '' ){
+			var ind_bp = reqs.add_individual(bp);
+			reqs.add_fact([ind_mf, ind_bp, 'BFO:0000050']);
+		    }
+		    if( cc && cc !== '' ){
+			var ind_cc = reqs.add_individual(cc);
+			reqs.add_fact([ind_mf, ind_cc, 'BFO:0000066']);
+		    }
 		    manager.request_with(reqs);
 
 		    // Finally, wipe controls' state, internal and external.
