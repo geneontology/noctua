@@ -1673,7 +1673,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     // Add new remote node button.
     jQuery(simple_ubernoodle_add_btn_elt).click(function(){
-	
+
     	if( ! simple_ubernoodle_auto_val || simple_ubernoodle_auto_val === '' ){
     	    alert('Must select something from autocomplete list.');
     	}else{
@@ -1797,6 +1797,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     		if( eb === '' ){
     		    alert('You must at least select a bioentity.');
+    		}else if( mf !== 'GO:0003674' && ( ! annoton_mf_auto_val || annoton_mf_auto_val === '') ){
+    		    alert('Must leave blank or select something from autocomplete list for molecular function.');
+    		}else if( bp && bp !== '' && ( ! annoton_bp_auto_val || annoton_bp_auto_val === '') ){
+    		    alert('Must select something from autocomplete list for biological_process.');
+    		}else if( cc && cc !== '' && ( ! annoton_cc_auto_val || annoton_cc_auto_val === '') ){
+    		    alert('Must select something from autocomplete list for cellular_component.');
     		}else{
 		    
 		    // Ready new super request.
@@ -2618,7 +2624,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	});
 
 	// Switch viz.
-	if( viz_p ){ viz_p = false; }else{ viz_p = true;  }
+	if( viz_p ){ viz_p = false; }else{ viz_p = true; }
 	
 	// Toggle viz on and off.
 	each(instance.getConnections(), function(conn){
