@@ -73,10 +73,6 @@ ONTOLOGY_LIST:
   type: list
   value:
     - http://purl.obolibrary.org/obo/go/extensions/go-lego.owl
-ONTOLOGY_CATALOG:
-  comment: The catalog to use for Minerva.
-  type: file
-  value: ~/local/src/svn/geneontology.org/trunk/ontology/extensions/catalog-v001.xml
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
