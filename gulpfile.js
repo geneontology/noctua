@@ -458,11 +458,11 @@ var minerva_opts_no_validation = [
     '--skip-class-id-validation'
 ];
 
-// Optional catalog, depending on startup config environment.
-if (us.isString(ontology_catalog) && ontology_catalog !== '') {
-    minerva_opts_base.push('-c');
-    minerva_opts_base.push(ontology_catalog);
-}
+// // Optional catalog, depending on startup config environment.
+// if (us.isString(ontology_catalog) && ontology_catalog !== '') {
+//     minerva_opts_base.push('-c');
+//     minerva_opts_base.push(ontology_catalog);
+// }
 
 // Minerva runner: +lookup +validation
 gulp.task('run-minerva', shell.task(_run_cmd(
