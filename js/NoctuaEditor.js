@@ -42,7 +42,8 @@ var jsPlumb = require('jsplumb');
 //require('./js/connectors-sugiyama.js');
 var bbop_legacy = require('bbop').bbop;
 var bbopx = require('bbopx');
-var amigo = require('amigo2');
+var amigo_inst_gen = require('amigo2-instance-data');
+var amigo_inst = new amigo_inst_gen();
 
 // The new backbone libs.
 var us = require('underscore');
@@ -107,7 +108,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // amigo.data.context['RO:0002413']['priority'] = 1;
     // console.log(amigo.data.context);
     // // Instantiate.
-    var aid = new bbop_legacy.context(amigo.data.context);
+    var aid = new bbop_legacy.context(amigo_inst.data.context);
 
     // Create the core model.
     var ecore = new noctua_graph();
@@ -135,7 +136,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gserv_neo = global_golr_neo_server;
-    var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
+    var gconf = new bbop_legacy.golr.conf(amigo_inst.data.golr);
 
     // Define what annotations are allowed to be edited where.
     // Looking eerily like GOlr config now.
@@ -724,15 +725,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var rn = eedge.relation() || 'n/a';
 
 	// Readable label, try context aid first.
-	var readable_rn = aid.readable(rn);
+	var readable_rn = aid.readable(rn) || rn;
 	// If context aid doesn't work, see if it comes with a label.
 	if( readable_rn === rn && typeof(eedge.label) === 'function' ){
 	    var label_rn = eedge.label();
 	    if( label_rn !== rn ){
-		rn = label_rn; // use label
+		readable_rn = label_rn; // use label
 	    }
-	}else{
-	    rn = readable_rn; // use context
 	}
 
 	//ll('looking at edge: [' + [sn,tn,rn].join(', ') + ']');
@@ -753,7 +752,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    n_other++;
 		}
 	    });
-	    rn +=
+	    readable_rn +=
 		'&nbsp;<small style="color: grey;">'+n_ev+'/'+n_other+'</small>';
 	}
 
@@ -761,23 +760,31 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var rglyph = aid.glyph(rn);
 	var glyph = null;
 	var glyph_args = {};
-	if( rglyph === 'arrow' ){
+	if( rglyph === 'arrow' ){ // Arrow is explicit filled "PlainArrow".
 	    glyph = 'Arrow';
+	    glyph_args['length'] = 20;
+	    glyph_args['width'] = 20;
 	    glyph_args['location'] = -4;
-	}else if( rglyph === 'diamond' ){
-	    glyph = 'Diamond';
-	    glyph_args['location'] = -5;
-	}else if( rglyph === 'bar' ){
+	    glyph_args['foldback'] = 1.0;
+	// }else if( rglyph === 'diamond' ){
+	//     glyph = 'Diamond';
+	//     glyph_args['location'] = -5;
+	}else if( rglyph === 'bar' ){ // Bar simulated by flattened arrow.
 	    glyph = 'Arrow';
 	    glyph_args['length'] = 2;
 	    glyph_args['width'] = 25;
 	    glyph_args['foldback'] = 2.0;
 	    glyph_args['location'] = -5;
-	}else if( rglyph === 'wedge' ){
-	    glyph = 'PlainArrow';
-	    glyph_args['location'] = -4;
-	}else if( ! rglyph || rglyph === 'none' ){
+	// }else if( rglyph === 'wedge' ){
+	//     glyph = 'PlainArrow';
+	//     glyph_args['location'] = -4;
+	}else if( ! rglyph || rglyph === 'none' ){ // Default is small "V".
 	    // Let it go as nothing.
+	    glyph = 'Arrow';
+	    glyph_args['length'] = 12.5;
+	    glyph_args['width'] = 15;
+	    glyph_args['location'] = -4;
+	    glyph_args['foldback'] = 0.25;
 	}else{
 	    // Unpossible.
 	    throw new Error('unpossible glyph...is apparently possible');
@@ -797,7 +804,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		lineWidth: 5
 	    },
 	    'overlays': [ // does not!?
-		["Label", {'label': openann_edge_str + '&nbsp;' + rn,
+		["Label", {'label': openann_edge_str + '&nbsp;' + readable_rn,
 			   'location': 0.5,
 			   'cssClass': "aLabel",
 			   'id': 'label' } ]
