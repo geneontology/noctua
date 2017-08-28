@@ -23,6 +23,7 @@
 	"npm": ">= 2.15"
     },
     "dependencies": {
+	"amigo2-instance-data": "2.5.7",
 	"amigo2": "2.4.3",
 	"bbop": "2.4.3",
 	"bbop-client-barista": "0.0.7",

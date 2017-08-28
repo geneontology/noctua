@@ -17,7 +17,8 @@ var us = require('underscore');
 var bbop = require('bbop-core');
 //var bbop = require('bbop').bbop;
 //var bbopx = require('bbopx');
-var amigo = require('amigo2');
+var amigo_inst = require('amigo2-instance-data');
+var amigo = new amigo_inst();
 var bbop_legacy = require('bbop').bbop;
 
 // Help with strings and colors--configured separately.
@@ -184,6 +185,26 @@ var CytoViewInit = function(user_token){
 	    });
 	});
 	each(ngraph.all_edges(), function(e){
+
+	    // Detect endpoint type as best as possible.
+	    var rglyph = aid.glyph(e.predicate_id());
+	    var glyph = null;
+	    if( rglyph === 'arrow' ){ // Arrow is explicit filled "PlainArrow".
+		glyph = 'triangle';
+	    }else if( rglyph === 'bar' ){ // Bar simulated by flattened arrow.
+		glyph = 'tee';
+	    }else if( ! rglyph || rglyph === 'none' ){ // Default is small "V".
+		// Choosing circle over backcurve as the latter looks
+		// essentially just like the triangle, and the circle
+		// is the target endpoint in the GE anyways.
+		glyph = 'circle';
+		//glyph = 'triangle-backcurve';
+	    }else{
+		// Unpossible.
+		throw new Error('unpossible glyph...is apparently possible');
+	    }
+
+	    // Push final edge data.
 	    elements.push({
 		group: 'edges',
 		data: {
@@ -192,7 +213,8 @@ var CytoViewInit = function(user_token){
 		    target: e.object_id(),
 		    predicate: e.predicate_id(),
 		    label: aid.readable(e.predicate_id()),
-		    color: aid.color(e.predicate_id())
+		    color: aid.color(e.predicate_id()),
+		    glyph: glyph
 		}
 	    });
 	});
@@ -334,8 +356,16 @@ var CytoViewInit = function(user_token){
 		{
 		    selector: 'edge',
 		    style: {
+			// NOTE/WARNING: From
+			// http://js.cytoscape.org/#style/edge-line
+			// and other places, we need to use 'bezier'
+			// here, rather than the defaulr 'haystack'
+			// because the latter does not support glyphs
+			// on the endpoints. However, this apparently
+			// incurs a non-trivial performance hit.
+			'curve-style': 'bezier',
 			'target-arrow-color': 'data(color)',
-			'target-arrow-shape': 'triangle',
+			'target-arrow-shape': 'data(glyph)',
 			'target-arrow-fill': 'filled',
 			'line-color': 'data(color)',
 			'content': 'data(label)',
