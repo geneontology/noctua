@@ -32962,6 +32962,32 @@ var CytoViewInit = function(user_token){
 	}
     }
 
+    // Stolen from the internal workings of widgetry.
+    // Part 1.
+    function _node_labels(n, cat_list){
+
+	var retlist = [];
+	
+	var bin = {};
+	each(n.types(), function(in_type){
+	    var cat = in_type.category();
+	    if( ! bin[cat] ){ bin[cat] = []; }
+	    bin[cat].push(in_type);
+	});
+	each(cat_list, function(cat_id){
+	    var accumulated_types = bin[cat_id];
+	    var cell_cache = [];
+	    each(accumulated_types, function(atype){
+		//var tt = widgetry.type_to_span(atype, aid);
+		var tt = atype.to_string();
+		cell_cache.push(tt);
+	    });
+	    retlist.push(cell_cache.join("\n"));
+	});
+
+	return retlist;
+    }
+    
     function _render_graph(ngraph, layout, fold){
 
 	// Wipe it and start again.
@@ -32994,26 +33020,47 @@ var CytoViewInit = function(user_token){
 	var elements = [];
 	each(ngraph.all_nodes(), function(n){
 
-	    // Stolen from the internal workings of widgetry.
-	    // Part 1.
-	    var bin = {};
-	    each(n.types(), function(in_type){
-		var cat = in_type.category();
-		if( ! bin[cat] ){ bin[cat] = []; }
-		bin[cat].push(in_type);
-	    });
+	    var nid = n.id();
+	    
+	    // Where we'll assemble the label.
 	    var table_row = [];
-	    each(cat_list, function(cat_id){
-		var accumulated_types = bin[cat_id];
-		var cell_cache = [];
-		each(accumulated_types, function(atype){
-		    //var tt = widgetry.type_to_span(atype, aid);
-		    var tt = atype.to_string();
-		    cell_cache.push(tt);
-		});
-		table_row.push(cell_cache.join("\n"));
-	    });
 
+	    // First, extract any GP info, if it's there.
+	    var sub = n.subgraph();
+	    if( sub ){
+		each(sub.all_nodes(), function(snode){
+  
+    		    var snid = snode.id();
+	    
+		    if( nid !== snid ){
+
+			var edges = sub.get_edges(nid, snid);
+			if( edges && edges.length > 0 ){
+			    each(edges, function(e){
+				if( e.predicate_id() === 'http://purl.obolibrary.org/obo/RO_0002333' ||
+				    e.predicate_id() === 'RO_0002333' ||
+				    e.predicate_id() === 'RO:0002333' ){
+					var gpn = sub.get_node(snid);
+					var gplbl = gpn;
+					// Extract gp type labels and add them.
+					var gp_labels =
+						_node_labels(gpn, cat_list);
+					each(gp_labels, function(gpl){
+					    table_row.push('[' + gpl + ']');
+					});
+				}
+			    });
+			}
+		    }
+		});
+	    }
+
+	    // Extract node type labels and add them.
+	    var node_labels = _node_labels(n, cat_list);
+	    each(node_labels, function(nl){
+		table_row.push(nl);
+	    });
+	    
 	    // Make a label from it.
 	    var nlbl = table_row.join("\n");
 
@@ -33023,7 +33070,7 @@ var CytoViewInit = function(user_token){
 		data: {
 		    id: n.id(),
 		    label: nlbl,
-		    degree: (ngraph.get_child_nodes(n.id()).length * 10)+
+		    degree: (ngraph.get_child_nodes(n.id()).length * 10) +
 			ngraph.get_parent_nodes(n.id()).length
 		}
 	    });
@@ -33038,6 +33085,9 @@ var CytoViewInit = function(user_token){
 	    }else if( rglyph === 'bar' ){ // Bar simulated by flattened arrow.
 		glyph = 'tee';
 	    }else if( ! rglyph || rglyph === 'none' ){ // Default is small "V".
+		// Choosing circle over backcurve as the latter looks
+		// essentially just like the triangle, and the circle
+		// is the target endpoint in the GE anyways.
 		glyph = 'circle';
 		//glyph = 'triangle-backcurve';
 	    }else{
