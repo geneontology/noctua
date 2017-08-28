@@ -1813,7 +1813,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// string while storing the ids for later use.
 		var kval = ann.value();
 		if( kval.split('http://').length === 2 ){ // cheap link
-		    kval = '<a href="' + kval + '">' + kval + '</a>';
+		    kval = '<a href="' +
+			kval + '" target="_blank">' +
+			kval + '</a>';
 		}
 		// However, evidence annotations are very different
 		// for us now, and we need to dig out the guts from a
@@ -1839,22 +1841,32 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    // Collect annotations (almost certainly
 			    // had some class first, so no worries
 			    // about the dumb tag on the end).
-			    each(ref_ind.annotations(), function(ref_ann){
+			    var ref_anns = ref_ind.annotations();
+			    var sorted_ref_anns = ref_anns.sort(function(a, b){
+				var va = a.key();
+				var vb = b.key();
+				var retval = 0;
+				if( va < vb ){
+				    retval = -1;
+				}else if( va > vb ){
+				    retval = 1;
+				}
+				return retval;
+			    });
+			    each(sorted_ref_anns, function(ref_ann){
 				// Skip unnecessary information.
+				//console.log('ref_ann.key():' + ref_ann.key() );
 				if( ref_ann.key() !== 'hint-layout-x' &&
 				    ref_ann.key() !== 'hint-layout-y' ){
 				       var rav = ref_ann.value();
 				       // link pmids silly
 				       if( rav.split('PMID:').length === 2 ){
 					   var pmid = rav.split('PMID:')[1];
-					   kval += '; <a href="http://pmid.us/'+
-					       pmid +'">'+ 'PMID:'+ pmid +'</a>';
+					   kval += '<br />' + ref_ann.key() +': <a href="http://pmid.us/'+ pmid +'" target="_blank">'+ 'PMID:'+ pmid +' &#128279;</a>';
 				       }else if( rav.split('http://').length === 2 ){
-					   kval +='; <a href="'+ rav +'">'+
-					       rav +'</a>';
+					   kval +='<br />' + ref_ann.key() +': <a href="' + rav + '" target="_blank">'+ rav + ' &#128279;</a>';
 				       }else{
-					   kval +='; '+ ref_ann.key() +': '+
-					       rav;
+					   kval +='<br /> '+ ref_ann.key() +': '+ rav;
 				       }
 				   }
 			    });
@@ -1970,7 +1982,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	var all_undefined_annotations = entity.get_annotations_by_filter(
 	    function(in_ann){
 		var retval = false;
-		if( in_ann.key() !== 'hint-layout-x' &&
+		if( in_ann.key() !== 'http://geneontology.org/lego/json-model' &&
+		    in_ann.key() !== 'hint-layout-x' &&
 		    in_ann.key() !== 'hint-layout-y' ){
 		    if( ! ann_classes[in_ann.key()] ){ // ! defined ann class
 			retval = true;
@@ -1998,7 +2011,6 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    out_cache.push(' [' + unann.value_type() + ']');
 		}
 		out_cache.push('</li>');
-		
 	    });
 	    out_cache.push('</ul>');
 	    out_cache.push('</div>');
@@ -28777,7 +28789,7 @@ if( typeof(exports) != 'undefined' ){
 }
 
 
-},{"http":107,"ringo/httpclient":undefined,"url":113}],4:[function(require,module,exports){
+},{"http":115,"ringo/httpclient":undefined,"url":121}],4:[function(require,module,exports){
 /** 
  * Class expressions.
  * 
@@ -32849,7 +32861,8 @@ var us = require('underscore');
 var bbop = require('bbop-core');
 //var bbop = require('bbop').bbop;
 //var bbopx = require('bbopx');
-var amigo = require('amigo2');
+var amigo_inst = require('amigo2-instance-data');
+var amigo = new amigo_inst();
 var bbop_legacy = require('bbop').bbop;
 
 // Help with strings and colors--configured separately.
@@ -33016,6 +33029,23 @@ var CytoViewInit = function(user_token){
 	    });
 	});
 	each(ngraph.all_edges(), function(e){
+
+	    // Detect endpoint type as best as possible.
+	    var rglyph = aid.glyph(e.predicate_id());
+	    var glyph = null;
+	    if( rglyph === 'arrow' ){ // Arrow is explicit filled "PlainArrow".
+		glyph = 'triangle';
+	    }else if( rglyph === 'bar' ){ // Bar simulated by flattened arrow.
+		glyph = 'tee';
+	    }else if( ! rglyph || rglyph === 'none' ){ // Default is small "V".
+		glyph = 'circle';
+		//glyph = 'triangle-backcurve';
+	    }else{
+		// Unpossible.
+		throw new Error('unpossible glyph...is apparently possible');
+	    }
+
+	    // Push final edge data.
 	    elements.push({
 		group: 'edges',
 		data: {
@@ -33024,7 +33054,8 @@ var CytoViewInit = function(user_token){
 		    target: e.object_id(),
 		    predicate: e.predicate_id(),
 		    label: aid.readable(e.predicate_id()),
-		    color: aid.color(e.predicate_id())
+		    color: aid.color(e.predicate_id()),
+		    glyph: glyph
 		}
 	    });
 	});
@@ -33166,8 +33197,16 @@ var CytoViewInit = function(user_token){
 		{
 		    selector: 'edge',
 		    style: {
+			// NOTE/WARNING: From
+			// http://js.cytoscape.org/#style/edge-line
+			// and other places, we need to use 'bezier'
+			// here, rather than the defaulr 'haystack'
+			// because the latter does not support glyphs
+			// on the endpoints. However, this apparently
+			// incurs a non-trivial performance hit.
+			'curve-style': 'bezier',
 			'target-arrow-color': 'data(color)',
-			'target-arrow-shape': 'triangle',
+			'target-arrow-shape': 'data(glyph)',
 			'target-arrow-fill': 'filled',
 			'line-color': 'data(color)',
 			'content': 'data(label)',
@@ -33209,18 +33248,15 @@ var CytoViewInit = function(user_token){
 	    //pan: { x: 100, y: 100 }
 	});
 
+	// Make sure that there is a notice of highlight when we are
+	// working.
 	cy.on('select', function(evt){
 	    console.log( 'selected: ' + evt.target.id() );
 	    evt.target.style('background-color', 'gray');
-	    //var shared_style =
-	    //shared_style['background-color'] = 'gray';
-	    //evt.target.style();
-	    //console.log( shared_style );
 	});
 	cy.on('unselect', function(evt){
 	    console.log( 'unselected: ' + evt.target.id() );
 	    evt.target.style('background-color', 'white');
-	    //evt.target.style(shared_style);
 	});
 	
 	///
@@ -33410,704 +33446,11558 @@ jQuery(document).ready(function(){
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"amigo2":8,"bbop":78,"bbop-client-barista":9,"bbop-core":58,"bbop-graph-noctua":59,"bbop-manager-minerva":61,"bbop-response-barista":64,"bbop-rest-manager":66,"class-expression":116,"cytoscape":206,"minerva-requests":233,"noctua-widgetry":1,"underscore":234}],8:[function(require,module,exports){
-// If it looks like we're in an environment that supports CommonJS
-// Modules 1.0, bbop-js might not be extant in this namespace. Try and
-// get at it. Otherwise, if we're in browser-land, it should be
-// included in the global and we can proceed.
-if( typeof(exports) != 'undefined' ){
-    var bbop = require('bbop').bbop;
-}
+},{"amigo2-instance-data":8,"bbop":86,"bbop-client-barista":17,"bbop-core":66,"bbop-graph-noctua":67,"bbop-manager-minerva":69,"bbop-response-barista":72,"bbop-rest-manager":74,"class-expression":124,"cytoscape":214,"minerva-requests":241,"noctua-widgetry":1,"underscore":242}],8:[function(require,module,exports){
 /* 
- * Package: version.js
- * 
- * Namespace: amigo.version
- * 
- * This package was automatically generated during the build process
- * and contains its version information--this is the release of the
- * API that you have.
- */
-
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.version == "undefined" ){ amigo.version = {}; }
-
-/*
- * Variable: revision
+ * The framework to hang the rest of the amigo2 package internals on.
  *
- * Partial version for this library; revision (major/minor version numbers)
- * information.
+ * @module: amigo2
  */
-amigo.version.revision = "2.4.0";
 
-/*
- * Variable: release
+var us = require('underscore');
+var bbop = require('bbop-core');
+
+/**
+ * "Constructor" for amigo2.
+ * 
+ * Parameters:
+ *  more_dispatch - addition to or override of default dispatch table
  *
- * Partial version for this library: release (date-like) information.
+ * @constructor 
+ * @returns {Object} amigo2 object
  */
-amigo.version.release = "20151113";
+var amigo = function(more_dispatch){
+    this._is_a = 'amigo2-instance-data';
+
+    var anchor = this;
+
+    // // The (TODO: now unused?) API lib.
+    // this.api = require('./api');
+
+    // // TODO: No longer necessary w/NPM switch.
+    // this.version = require('./version');
+
+    // // TODO: Not entirely sure what this was doing anyways.
+    //this.data.statistics = require('./data/statistics');
+
+    ///
+    /// Dealing with access to the "statically" created instance data.
+    ///
+
+    // .data subsection.
+    this.data = {};
+    // Objects.
+    this.data.context = require('./data/context');
+    this.data.definitions = require('./data/definitions');
+    this.data.golr = require('./data/golr');
+    this.data.xrefs = require('./data/xrefs');
+    this.data.server = require('./data/server');
+
+    ///
+    /// Externalized functions built on our data base.
+    ///
+
+    // Does it look like a term?
+    var meta_data = this.data.server.meta_data;
+    var tre_str = meta_data.term_regexp;
+    var tre = new RegExp(tre_str); // compile upfront
+
+    // Construct a one-time map of aliases to canonical IDs.
+    var alias_map = {};
+    if( anchor.data && anchor.data.context ){
+	us.each(anchor.data.context, function(context_data, context_id){
+	    
+	    if( context_data.aliases ){
+		us.each(context_data.aliases, function(alias){
+		    alias_map[alias] = context_id;
+		});
+	    }
+	});
+    }
+    
+    /*
+     * Function: term_id_p
+     * 
+     * True or false on whether or not a string looks like a GO term id.
+     * 
+     * Parameters:
+     *  term_id - the string to test
+     * 
+     * Returns:
+     *  boolean
+     */
+    this.term_id_p =function(term_id){
+	var retval = false;
+	if( tre.test(term_id) ){
+            retval = true;
+	}
+	return retval;
+    };
+
+    /*
+     * Function: get_image_resource
+     * 
+     * Get a named resource from the meta_data hash if possible.
+     * 
+     * Parameters:
+     *  resource - the string id of the resource
+     * 
+     * Returns:
+     * string (url) of resource
+     */
+    this.get_image_resource = function(resource){
+	
+	var retval = null;
+	var mangled_res = 'bbop_img_' + resource;
+	
+	if( meta_data[mangled_res] ){
+            retval = meta_data[mangled_res];
+	}
+	return retval;
+    };
+
+    ///
+    /// Function/object generators.
+    ///
+
+    // Generate the linker from the internal xrefs and server refs.
+    var linker_gen = require('./linker');
+    this.linker = new linker_gen(this.data.xrefs, this.data.server);
+    
+    // Need the to feed the linker into the dispatch table generator.
+    var dispatch_gen = require('./data/dispatch');
+    anchor.data.dispatch = dispatch_gen(anchor.linker);
+    // Allow override of dispatch table with arguments into AmiGO at
+    // instantiation time.
+    if( us.isObject(more_dispatch) ){
+	us.each(more_dispatch, function(contexts, field_name){
+
+	    // Make sure we start with a nice something here.
+	    if( ! us.isObject(anchor.data.dispatch[field_name]) ){
+		anchor.data.dispatch[field_name] = {};
+	    }
+
+	    // Add any default functions (if no context is provided).
+	    if( us.isFunction(contexts.default) ){
+		anchor.data.dispatch[field_name]['default'] = contexts.default;
+	    }
+
+	    // Add additional context information.
+	    if( contexts.context ){ // double check the jump
+		us.each(contexts.context, function(run_fun, context){
+
+		    // Now merge the structure in if it fits.
+		    if( us.isFunction(run_fun) &&
+			us.isString(context) &&
+			us.isString(field_name) ){
+
+			if( ! us.isObject(anchor.data.dispatch[field_name]) ||
+			    ! us.isObject(anchor.data.dispatch[field_name]['context']) ){
+			    anchor.data.dispatch[field_name]['context'] = {};
+			}
+			// Write into the final form.
+			anchor.data.dispatch[field_name]['context'][context] = run_fun;
+		    }
+		});
+	    }
+	});
+    }
+
+    // Use this nice dispatch table as the argument to the handler.
+    var handler_gen = require('./handler');
+    this.handler = new handler_gen(this.data.dispatch);
+    
+    // .ui subsection.
+    //    this.ui = {};
+
+    /*
+     * Function: dealias
+     * 
+     * Attempt to convert an incoming ID into the canonical ID used
+     * for the context.
+     * 
+     * Parameters:
+     *  map_id - the string id of the entity
+     * 
+     * Returns:
+     *  string (true id) or null
+     */
+    this.dealias = function(map_id){
+	
+	var retval = null;
+
+	if( alias_map[map_id] ){
+	    retval = alias_map[map_id];
+	}
+
+	return retval;
+    };
+
+    /*
+     * Function: readable
+     * 
+     * Get readable label for the entity, if it can be found in the
+     * context.
+     * 
+     * Parameters:
+     *  id - the string id of the entity
+     * 
+     * Returns:
+     *  string label, or incoming id if not found
+     */
+    this.readable = function(id){
+	
+	if( this.dealias(id) ){
+	    id = this.dealias(id);
+	}
+	var retval = id;
+
+	if( anchor.data && anchor.data.context && anchor.data.context[id] ){
+	    var entry =  anchor.data.context[id];
+	    if( entry['readable'] ){
+		retval = entry['readable'];
+	    }
+	}
+	return retval;
+    };
+
+    /*
+     * Function: color
+     * 
+     * Get color string for the entity, if it can be found in the
+     * context.
+     * 
+     * Parameters:
+     *  id - the string id of the entity
+     * 
+     * Returns:
+     *  string label, or "#888888" if not found
+     */
+    this.color = function(id){
+	
+	if( this.dealias(id) ){
+	    id = this.dealias(id);
+	}
+	var retval = '#888888';
+
+	if( anchor.data && anchor.data.context && anchor.data.context[id] ){
+	    var entry =  anchor.data.context[id];
+	    if( entry['color'] ){
+		retval = entry['color'];
+	    }
+	}
+	return retval;
+    };
+
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = amigo;
+
+},{"./data/context":9,"./data/definitions":10,"./data/dispatch":11,"./data/golr":12,"./data/server":13,"./data/xrefs":14,"./handler":15,"./linker":16,"bbop-core":66,"underscore":242}],9:[function(require,module,exports){
 /*
- * Package: api.js
+ * Package: context.js
  * 
- * Namespace: amigo.api
+ * Namespace: amigo.data.context
  * 
- * Core for AmiGO 2 remote functionality.
- * 
- * Provide methods for accessing AmiGO/GO-related web resources from
- * the host server. A loose analog to the perl AmiGO.pm top-level.
- * 
- * This module should contain nothing to do with the DOM, but rather
- * methods to access and make sense of resources provided by AmiGO and
- * its related services on the host.
- * 
- * WARNING: This changes very quickly as parts get spun-out into more
- * stable packages.
+ * Another context.
  */
 
-// Module and namespace checking.
-if( typeof amigo == "undefined" ){ var amigo = {}; }
 
 /*
- * Constructor: api
+ * Variable: context
  * 
- * Contructor for the AmiGO API object.
- * Hooks to useful things back on AmiGO.
+ * Manually added in from conf/context.yaml.
+ */
+var data_context = {
+  "instance_of": {
+    "readable": "instance of",
+    "priority": 8,
+    "aliases": [
+      "instance of"
+    ],
+    "color": "#FFFAFA"
+  },
+  "is_a": {
+    "readable": "is a",
+    "aliases": [
+      "is a"
+    ],
+    "color": "#000000"
+  },
+  "BFO:0000050": {
+    "readable": "part of",
+    "priority": 15,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/BFO_0000050",
+      "http://purl.obolibrary.org/obo/part_of",
+      "BFO_0000050",
+      "part:of",
+      "part of",
+      "part_of"
+    ],
+    "color": "#add8e6"
+  },
+  "BFO:0000051": {
+    "readable": "has part",
+    "priority": 4,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/BFO_0000051",
+      "has:part",
+      "has part",
+      "has_part"
+    ],
+    "color": "#6495ED"
+  },
+  "BFO:0000066": {
+    "readable": "occurs in",
+    "priority": 12,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/BFO_0000066",
+      "BFO_0000066",
+      "occurs:in",
+      "occurs in",
+      "occurs_in"
+    ],
+    "color": "#66CDAA"
+  },
+  "RO:0002202": {
+    "readable": "develops from",
+    "priority": 0,
+    "aliases": [
+      "develops:from",
+      "develops from",
+      "develops_from"
+    ],
+    "color": "#A52A2A"
+  },
+  "RO:0002211": {
+    "readable": "regulates",
+    "priority": 16,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/RO_0002211",
+      "regulates"
+    ],
+    "color": "#2F4F4F"
+  },
+  "RO:0002212": {
+    "readable": "negatively regulates",
+    "priority": 16,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/RO_0002212",
+      "negatively:regulates",
+      "negatively regulates",
+      "negatively_regulates"
+    ],
+    "glyph": "bar",
+    "color": "#FF0000"
+  },
+  "RO:0002630": {
+    "readable": "directly negatively regulates",
+    "priority": 15,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/RO_0002630",
+      "directly:negatively:regulates",
+      "directly negatively regulates",
+      "directly_negatively_regulates"
+    ],
+    "glyph": "bar",
+    "color": "#FF0000"
+  },
+  "RO:0002213": {
+    "readable": "positively regulates",
+    "priority": 18,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/RO_0002213",
+      "positively:regulates",
+      "positively regulates",
+      "positively_regulates"
+    ],
+    "glyph": "arrow",
+    "color": "#008000"
+  },
+  "RO:0002629": {
+    "readable": "directly positively regulates",
+    "priority": 17,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/RO_0002629",
+      "directly:positively:regulates",
+      "directly positively regulates",
+      "directly_positively_regulates"
+    ],
+    "glyph": "arrow",
+    "color": "#008000"
+  },
+  "RO:0002233": {
+    "readable": "has input",
+    "priority": 14,
+    "aliases": [
+      "has:input",
+      "has input",
+      "has_input"
+    ],
+    "color": "#6495ED"
+  },
+  "RO:0002234": {
+    "readable": "has output",
+    "priority": 0,
+    "aliases": [
+      "has:output",
+      "has output",
+      "has_output"
+    ],
+    "color": "#ED6495"
+  },
+  "RO:0002330": {
+    "readable": "genomically related to",
+    "priority": 0,
+    "aliases": [
+      "genomically related to",
+      "genomically_related_to"
+    ],
+    "color": "#9932CC"
+  },
+  "RO:0002331": {
+    "readable": "involved in",
+    "priority": 3,
+    "aliases": [
+      "involved:in",
+      "involved in",
+      "involved_in"
+    ],
+    "color": "#E9967A"
+  },
+  "RO:0002332": {
+    "readable": "regulates level of",
+    "priority": 0,
+    "aliases": [
+      "regulates level of",
+      "regulates_level_of"
+    ],
+    "color": "#556B2F"
+  },
+  "RO:0002333": {
+    "readable": "enabled by",
+    "priority": 13,
+    "aliases": [
+      "RO_0002333",
+      "enabled:by",
+      "enabled by",
+      "enabled_by"
+    ],
+    "color": "#B8860B"
+  },
+  "RO:0002334": {
+    "readable": "regulated by",
+    "priority": 0,
+    "aliases": [
+      "RO_0002334",
+      "regulated by",
+      "regulated_by"
+    ],
+    "color": "#86B80B"
+  },
+  "RO:0002335": {
+    "readable": "negatively regulated by",
+    "priority": 0,
+    "aliases": [
+      "RO_0002335",
+      "negatively regulated by",
+      "negatively_regulated_by"
+    ],
+    "color": "#0B86BB"
+  },
+  "RO:0002336": {
+    "readable": "positively regulated by",
+    "priority": 0,
+    "aliases": [
+      "RO_0002336",
+      "positively regulated by",
+      "positively_regulated_by"
+    ],
+    "color": "#BB0B86"
+  },
+  "activates": {
+    "readable": "activates",
+    "priority": 0,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/activates"
+    ],
+    "color": "#8FBC8F"
+  },
+  "RO:0002404": {
+    "readable": "causally downstream of",
+    "priority": 2,
+    "aliases": [
+      "causally_downstream_of"
+    ],
+    "color": "#FF1493"
+  },
+  "RO:0002406": {
+    "readable": "directly activates",
+    "priority": 2,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/directly_activates",
+      "directly:activates",
+      "directly activates",
+      "directly_activates"
+    ],
+    "glyph": "arrow",
+    "color": "#008000"
+  },
+  "RO:0002407": {
+    "readable": "indirectly activates",
+    "priority": 1,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/indirectly_activates",
+      "indirectly:activates",
+      "indirectly activates",
+      "indirectly_activates"
+    ],
+    "glyph": "arrow",
+    "color": "#008000"
+  },
+  "upstream_of": {
+    "readable": "upstream of",
+    "priority": 2,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/upstream_of",
+      "upstream:of",
+      "upstream of",
+      "upstream_of"
+    ],
+    "color": "#FF1493"
+  },
+  "RO:0002408": {
+    "readable": "directly inhibits",
+    "priority": 2,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/directly_inhibits",
+      "directly:inhibits",
+      "directly inhibits",
+      "directly_inhibits"
+    ],
+    "glyph": "bar",
+    "color": "#FF0000"
+  },
+  "RO:0002409": {
+    "readable": "indirectly inhibits",
+    "priority": 1,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/indirectly_inhibits",
+      "indirectly:inhibits",
+      "indirectly inhibits",
+      "indirectly_inhibits"
+    ],
+    "glyph": "bar",
+    "color": "#FF0000"
+  },
+  "RO:0002411": {
+    "readable": "causally upstream of",
+    "priority": 2,
+    "aliases": [
+      "causally_upstream_of"
+    ],
+    "color": "#483D8B"
+  },
+  "indirectly_disables_action_of": {
+    "readable": "indirectly disables action of",
+    "priority": 0,
+    "aliases": [
+      "http://purl.obolibrary.org/obo/indirectly_disables_action_of",
+      "indirectly disables action of",
+      "indirectly_disables_action_of"
+    ],
+    "color": "#483D8B"
+  },
+  "provides_input_for": {
+    "readable": "provides input for",
+    "priority": 0,
+    "aliases": [
+      "GOREL_provides_input_for",
+      "http://purl.obolibrary.org/obo/GOREL_provides_input_for"
+    ],
+    "color": "#483D8B"
+  },
+  "RO:0002413": {
+    "readable": "directly provides input for",
+    "priority": 1,
+    "aliases": [
+      "directly_provides_input_for",
+      "GOREL_directly_provides_input_for",
+      "http://purl.obolibrary.org/obo/GOREL_directly_provides_input_for"
+    ],
+    "glyph": "diamond",
+    "color": "#483D8B"
+  },
+  "subclass_of": {
+    "readable": "subclass of",
+    "priority": 100,
+    "aliases": [
+      "SUBCLASS_OF"
+    ],
+    "glyph": "diamond",
+    "color": "#E9967A"
+  },
+  "superclass_of": {
+    "readable": "superclass of",
+    "priority": 100,
+    "aliases": [
+      "SUPERCLASS_OF"
+    ],
+    "glyph": "diamond",
+    "color": "#556B2F"
+  },
+  "annotation": {
+    "readable": "annotation",
+    "priority": 100,
+    "aliases": [
+      "ANNOTATION"
+    ],
+    "glyph": "diamond",
+    "color": "#483D8B"
+  },
+  "RO:0002215": {
+    "readable": "capable of",
+    "priority": 9,
+    "aliases": [
+      "capable_of",
+      "capable of"
+    ],
+    "glyph": "diamond",
+    "color": "#483D8B"
+  },
+  "RO:0002216": {
+    "readable": "capable of part of",
+    "priority": 8,
+    "aliases": [
+      "capable_of_part_of",
+      "capable_of part_of",
+      "capable of part of"
+    ],
+    "glyph": "diamond",
+    "color": "#483D8B"
+  },
+  "GO:0008150": {
+    "readable": "biological process",
+    "aliases": [
+      "GO_0008150",
+      "P",
+      "biological_process"
+    ],
+    "color": "#00ee76"
+  },
+  "GO:0005575": {
+    "readable": "cellular component",
+    "aliases": [
+      "GO_0005575",
+      "C",
+      "cellular_component"
+    ],
+    "color": "#a020f0"
+  },
+  "GO:0003674": {
+    "readable": "molecular function",
+    "aliases": [
+      "GO_0003674",
+      "F",
+      "molecular_function"
+    ],
+    "color": "#ffd700"
+  }
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = data_context;
+
+},{}],10:[function(require,module,exports){
+/*
+ * Package: definitions.js
+ * 
+ * Namespace: amigo.data.definitions
+ * 
+ * Purpose: Useful information about common GO datatypes and
+ * structures, as well as some constants.
+ */
+
+/*
+ * Constructor: definitions
+ * 
+ * Encapsulate common structures and constants.
+ * 
+ * Arguments:
+ *  n/a
+ */
+var definitions = {
+
+    /*
+     * Function: gaf_from_golr_fields
+     * 
+     * A list of fields to generate a GAF from using golr fields.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  list of strings
+     */
+    gaf_from_golr_fields: [
+	    'source', // c1
+	    'bioentity_internal_id', // c2; not bioentity
+	    'bioentity_label', // c3
+	    'qualifier', // c4
+	    'annotation_class', // c5
+	    'reference', // c6
+	    'evidence_type', // c7
+	    'evidence_with', // c8
+	    'aspect', // c9
+	    'bioentity_name', // c10
+	    'synonym', // c11
+	    'type', // c12
+	    'taxon', // c13
+	    'date', // c14
+	    'assigned_by', // c15
+	    'annotation_extension_class', // c16
+	    'bioentity_isoform' // c17
+	],
+
+    /*
+     * Function: download_limit
+     * 
+     * The maximum allowed number of items to download for out server.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  integer
+     */
+    download_limit: 100000,
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = definitions;
+
+},{}],11:[function(require,module,exports){
+/* 
+ * Package: dispatch.js
+ * 
+ * Namespace: amigo.data.dispatch
+ * 
+ * This package was automatically created during an AmiGO 2 installation
+ * from the YAML configuration files that AmiGO pulls in.
+ *
+ * The mapping file for data fields and contexts to functions, often
+ * used for displays. See the package <handler.js> for the API to interact
+ * with this data file.
+ *
+ * NOTE: This file is generated dynamically at installation time.
+ * Hard to work with unit tests--hope it's not too bad. You have to
+ * occasionally copy back to keep the unit tests sane.
+ *
+ * NOTE: This file has a slightly different latout from the YAML
+ * configuration file.
+ */
+
+var us = require('underscore');
+var bbop = require('bbop-core');
+
+var linker = null;
+
+/*
+ * Function: echo
+ * 
+ * Applies bbop.dump to whatever comes in.
+ * Static function handler for echoing inputs--really used for
+ * teaching and testing.
+ *
+ * Parameters:
+ *  thing
+ * 
+ * Returns:
+ *  a string; it /will/ be a string
+ * 
+ * Also See: <bbop.handler>
+ */
+var echo = function(thing, name, context){
+
+    // Force a return string into existence.
+    var retstr = null;
+    try {
+	retstr = bbop.dump(thing);
+    } catch (x) {
+	retstr = '';
+    }
+
+    // // Append any optional stuff.
+    // if( is_def(name) && what_is(name) === 'string' ){
+    // 	retstr += ' (' + name + ')';
+    // }
+    // if( is_def(context) && what_is(context) === 'string' ){
+    // 	retstr += ' (' + context + ')';
+    // }
+
+    return retstr;
+};
+
+/*
+ * Function: owl_class_expression
+ *
+ * Static function handler for displaying OWL class expression
+ * results. To be used for GAF column 16 stuff.
+ *
+ * Example incoming data (as a string or object):
+ * 
+ * : { relationship: {
+ * :     relation: [{id: "RO:001234", label: "regulates"},
+ * :                {id:"BFO:0003456", label: "hp"}], 
+ * :     id: "MGI:MGI:185963",
+ * :     label: "kidney"
+ * :   }
+ * : }
+ * 
+ * Parameters:
+ *  JSON object as *[string or object]*; see above
+ * 
+ * Returns:
+ *  HTML string
+ * 
+ * Also See: <bbop.handler>
+ */
+var owl_class_expression = function(in_owlo){
+
+    var retstr = "";
+
+    // // Add logging.
+    // var logger = new bbop.logger();
+    // logger.DEBUG = true;
+    // //logger.DEBUG = false;
+    // function ll(str){ logger.kvetch(str); }
+
+    var owlo = in_owlo;
+    if( bbop.what_is(owlo) === 'string' ){
+	// This should be an unnecessary robustness check as
+	// everything /should/ be a legit JSON string...but things
+	// happen in testing. We'll check to make sure that it looks
+	// like what it should be as well.
+	if( in_owlo.charAt(0) === '{' &&
+	    in_owlo.charAt(in_owlo.length-1) === '}' ){
+	    owlo = JSON.parse(in_owlo) || {};
+	}else{
+	    // Looks like a normal string string.
+	    // Do nothing for now, but catch in the next section.
+	}
+    }
+
+    // Check to make sure that it looks right.
+    if( bbop.what_is(owlo) === 'string' ){
+	// Still a string means bad happened--we want to see that.
+	retstr = owlo + '?';
+    }else if( typeof(owlo) === 'undefined' ||
+	      typeof(owlo['relationship']) === 'undefined' ||
+	      bbop.what_is(owlo['relationship']) !== 'object' ||
+	      bbop.what_is(owlo['relationship']['relation']) !== 'array' ||
+	      typeof(owlo['relationship']['id']) === 'undefined' ||
+	      typeof(owlo['relationship']['label']) === 'undefined' ){
+	// 'Twas an error--ignore.
+	//throw new Error('sproing!');
+    }else{
+	
+	// Okay, right structure--first assemble the relationships,
+	// then tag onto end.
+	var rel_buff = [];
+	us.each(owlo['relationship']['relation'], function(rel){
+	    // Check to make sure that these are
+	    // structured correctly as well.
+	    var rel_id = rel['id'];
+	    var rel_lbl = rel['label'];
+	    if( typeof(rel_id) !== 'undefined' && typeof(rel_lbl) !== 'undefined' ){
+		var an = linker.anchor({id: rel_id, label: rel_lbl});
+		// Final check: if we didn't get
+		// anything reasonable, just a label.
+		if( ! an ){ an = rel_lbl; }
+		rel_buff.push(an);
+		// ll('in ' + rel_id + ' + ' + rel_lbl + ': ' + an);
+	    }
+	});
+	var ranc = linker.anchor({id: owlo['relationship']['id'],
+				  label: owlo['relationship']['label']});
+	// Again, a final check
+	if( ! ranc ){ ranc = owlo['relationship']['label']; }
+	retstr = rel_buff.join(' &rarr; ') + ' ' + ranc;
+    }
+    
+    return retstr;
+};
+
+/*
+ * Function: qualifiers
+ * 
+ * Essentially catch certain strings and hightlight them.
+ * 
+ * Example incoming data as string:
+ * 
+ * : "not"
+ * 
+ * Parameters:
+ *  string or null
+ * 
+ * Returns:
+ *  HTML string
+ * 
+ * Also See: <bbop.handler>
+ */
+var qualifiers = function(in_qual){
+
+    var retstr = in_qual;
+
+    if( typeof(in_qual) !== 'undefined' ){
+	if( bbop.what_is(in_qual) === 'string' ){
+	    if( in_qual === 'not' || in_qual === 'NOT' ){
+		retstr = '<span class="qualifier-not">NOT</span>';
+	    }
+	}
+    }
+
+    return retstr;
+};
+
+/*
+ * Function: alternate_id
+ * 
+ * Essentially do /nothing/ to alternate ids--ignore them.
+ * 
+ * Parameters:
+ *  string or null
+ * 
+ * Returns:
+ *  same
+ * 
+ * Also See: <bbop.handler>
+ */
+var alternate_id = function(id){
+
+    var retstr = id;
+    return retstr;
+};
+
+/*
+ * Variable: dispatch
+ * 
+ * The configuration for the data.
+ * Essentially a JSONification of the YAML file.
+ * This should be consumed directly by <amigo.handler>.
+ */
+var dispatch_table = {
+    "example_field" : {
+	"context" : {
+            "example_context": echo
+	}
+    },
+    "annotation_extension_json" : {
+	"context" : {
+            "bbop-widget-set.live_results": owl_class_expression
+	}
+    },
+    "qualifier" : {
+	"context" : {
+            "bbop-widget-set.live_results": qualifiers
+	}
+    },
+    "alternate_id" : {
+	"context" : {
+            "bbop-widget-set.live_results": alternate_id
+	}
+    }
+};
+
+var dispatch_table_generator = function(required_linker){
+    linker = required_linker;
+    return dispatch_table;
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = dispatch_table_generator;
+
+},{"bbop-core":66,"underscore":242}],12:[function(require,module,exports){
+/* 
+ * Package: golr.js
+ * 
+ * Namespace: amigo.data.golr
+ * 
+ * This package was automatically created during an AmiGO 2 installation
+ * from the YAML configuration files that AmiGO pulls in.
+ *
+ * Useful information about GOlr. See the package <golr_conf.js>
+ * for the API to interact with this data file.
+ *
+ * NOTE: This file is generated dynamically at installation time.
+ * Hard to work with unit tests--hope it's not too bad. You have to
+ * occasionally copy back to keep the unit tests sane.
+ *
+ * NOTE: This file has a slightly different latout from the YAML
+ * configurations files--in addition instead of the fields
+ * being in lists (fields), they are in hashes keyed by the
+ * field id (fields_hash).
+ */
+
+/*
+ * Variable: golr
+ * 
+ * The configuration for the data.
+ * Essentially a JSONification of the OWLTools YAML files.
+ * This should be consumed directly by <bbop.golr.conf>.
+ */
+var golr = {
+   "model_annotation" : {
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/model-ann-config.yaml",
+      "result_weights" : "function_class^9.0 enabled_by^8.0 location_list^7.0 process_class^6.0 model^5.0 taxon^4.5 contributor^4.0 model_date^3.0 reference^2.0",
+      "filter_weights" : "model_label^5.0 enabled_by_label^4.5 reference^4.3 location_list_closure_label^4.0 process_class_closure_label^3.0 function_class_closure_label^2.0 contributor^1.0 evidence_type^0.5",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/model-ann-config.yaml",
+      "fields" : [
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "id",
+            "description" : "A unique (and internal) thing.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "ID"
+         },
+         {
+            "id" : "annotation_unit",
+            "property" : [],
+            "description" : "???.",
+            "cardinality" : "single",
+            "display_name" : "Annotation unit",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_unit_label",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Annotation unit"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Model title",
+            "id" : "model",
+            "description" : "???.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "id" : "model_label",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model title",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "id" : "model_url",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model URL",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "???.",
+            "id" : "model_state",
+            "display_name" : "State",
+            "cardinality" : "single"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Text",
+            "id" : "annotation_value",
+            "description" : "set of all literal values of all annotation assertions in model",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "display_name" : "Contributor",
+            "cardinality" : "multi",
+            "description" : "???.",
+            "property" : [],
+            "id" : "contributor",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "description" : "Last modified",
+            "property" : [],
+            "id" : "model_date",
+            "display_name" : "Modified",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Comments",
+            "id" : "comment",
+            "property" : [],
+            "description" : "Comments"
+         },
+         {
+            "display_name" : "Enabled by",
+            "cardinality" : "single",
+            "description" : "???",
+            "property" : [],
+            "id" : "enabled_by",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "display_name" : "Enabled by",
+            "cardinality" : "single",
+            "description" : "???",
+            "property" : [],
+            "id" : "enabled_by_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         {
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "GAF column 13 (taxon).",
+            "property" : [],
+            "id" : "taxon",
+            "display_name" : "Taxon",
+            "cardinality" : "single"
+         },
+         {
+            "display_name" : "Taxon",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "id" : "taxon_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "display_name" : "Taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "property" : [],
+            "id" : "taxon_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "id" : "taxon_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "property" : [],
+            "description" : "Function acc/ID.",
+            "id" : "function_class",
+            "display_name" : "Function",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Function",
+            "id" : "function_class_label",
+            "description" : "Common function name.",
+            "property" : []
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "function_class_closure",
+            "description" : "???",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Function"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "???",
+            "property" : [],
+            "id" : "function_class_closure_label",
+            "display_name" : "Function",
+            "cardinality" : "multi"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Process acc/ID.",
+            "id" : "process_class",
+            "display_name" : "Process",
+            "cardinality" : "single"
+         },
+         {
+            "display_name" : "Process",
+            "cardinality" : "single",
+            "description" : "Common process name.",
+            "property" : [],
+            "id" : "process_class_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "property" : [],
+            "description" : "???",
+            "id" : "process_class_closure",
+            "display_name" : "Process",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Process",
+            "id" : "process_class_closure_label",
+            "description" : "???",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Location",
+            "id" : "location_list",
+            "description" : "",
+            "property" : []
+         },
+         {
+            "property" : [],
+            "description" : "",
+            "id" : "location_list_label",
+            "display_name" : "Location",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "",
+            "property" : [],
+            "id" : "location_list_closure",
+            "display_name" : "Location",
+            "cardinality" : "multi"
+         },
+         {
+            "id" : "location_list_closure_label",
+            "description" : "",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Location",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "false",
+            "type" : "string",
+            "id" : "owl_blob_json",
+            "property" : [],
+            "description" : "???",
+            "cardinality" : "single",
+            "display_name" : "???"
+         },
+         {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Topology graph (JSON)",
+            "id" : "topology_graph_json",
+            "property" : [],
+            "description" : "JSON blob form of the local stepwise topology graph."
+         },
+         {
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "description" : "All evidence (evidence closure) for this annotation",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type_label",
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Evidence type",
+            "cardinality" : "multi",
+            "description" : "All evidence (evidence closure) for this annotation",
+            "property" : [],
+            "id" : "evidence_type_closure_label"
+         },
+         {
+            "description" : "Evidence with/from.",
+            "property" : [],
+            "id" : "evidence_with",
+            "display_name" : "Evidence with",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "property" : [],
+            "description" : "Database reference.",
+            "id" : "reference",
+            "display_name" : "Reference",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         }
+      ],
+      "weight" : "40",
+      "searchable_extension" : "_searchable",
+      "display_name" : "GO models (ALPHA)",
+      "boost_weights" : "model_label^1.0 annotation_unit_label^1.0 enabled_by^1.0 enabled_by_label^1.0 location_list_closure^1.0 location_list_closure_label^1.0 process_class_closure_label^1.0 function_class_closure_label^1.0 comment^0.5",
+      "id" : "model_annotation",
+      "fields_hash" : {
+         "evidence_type_closure" : {
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "description" : "All evidence (evidence closure) for this annotation",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "model_url" : {
+            "id" : "model_url",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model URL",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "process_class_label" : {
+            "display_name" : "Process",
+            "cardinality" : "single",
+            "description" : "Common process name.",
+            "property" : [],
+            "id" : "process_class_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         "evidence_type" : {
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "function_class_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Function",
+            "id" : "function_class_label",
+            "description" : "Common function name.",
+            "property" : []
+         },
+         "process_class" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Process acc/ID.",
+            "id" : "process_class",
+            "display_name" : "Process",
+            "cardinality" : "single"
+         },
+         "comment" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Comments",
+            "id" : "comment",
+            "property" : [],
+            "description" : "Comments"
+         },
+         "taxon_label" : {
+            "display_name" : "Taxon",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "id" : "taxon_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         "process_class_closure" : {
+            "property" : [],
+            "description" : "???",
+            "id" : "process_class_closure",
+            "display_name" : "Process",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "function_class_closure" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "function_class_closure",
+            "description" : "???",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Function"
+         },
+         "contributor" : {
+            "display_name" : "Contributor",
+            "cardinality" : "multi",
+            "description" : "???.",
+            "property" : [],
+            "id" : "contributor",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "taxon_closure_label" : {
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "id" : "taxon_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "annotation_unit" : {
+            "id" : "annotation_unit",
+            "property" : [],
+            "description" : "???.",
+            "cardinality" : "single",
+            "display_name" : "Annotation unit",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "enabled_by_label" : {
+            "display_name" : "Enabled by",
+            "cardinality" : "single",
+            "description" : "???",
+            "property" : [],
+            "id" : "enabled_by_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "panther_family_label" : {
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "owl_blob_json" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "false",
+            "type" : "string",
+            "id" : "owl_blob_json",
+            "property" : [],
+            "description" : "???",
+            "cardinality" : "single",
+            "display_name" : "???"
+         },
+         "enabled_by" : {
+            "display_name" : "Enabled by",
+            "cardinality" : "single",
+            "description" : "???",
+            "property" : [],
+            "id" : "enabled_by",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "topology_graph_json" : {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Topology graph (JSON)",
+            "id" : "topology_graph_json",
+            "property" : [],
+            "description" : "JSON blob form of the local stepwise topology graph."
+         },
+         "function_class_closure_label" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "???",
+            "property" : [],
+            "id" : "function_class_closure_label",
+            "display_name" : "Function",
+            "cardinality" : "multi"
+         },
+         "model_date" : {
+            "description" : "Last modified",
+            "property" : [],
+            "id" : "model_date",
+            "display_name" : "Modified",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "location_list" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Location",
+            "id" : "location_list",
+            "description" : "",
+            "property" : []
+         },
+         "taxon" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "GAF column 13 (taxon).",
+            "property" : [],
+            "id" : "taxon",
+            "display_name" : "Taxon",
+            "cardinality" : "single"
+         },
+         "id" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "id",
+            "description" : "A unique (and internal) thing.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "ID"
+         },
+         "model_label" : {
+            "id" : "model_label",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model title",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "evidence_with" : {
+            "description" : "Evidence with/from.",
+            "property" : [],
+            "id" : "evidence_with",
+            "display_name" : "Evidence with",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "panther_family" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         "function_class" : {
+            "property" : [],
+            "description" : "Function acc/ID.",
+            "id" : "function_class",
+            "display_name" : "Function",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "process_class_closure_label" : {
+            "cardinality" : "multi",
+            "display_name" : "Process",
+            "id" : "process_class_closure_label",
+            "description" : "???",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         "model_state" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "???.",
+            "id" : "model_state",
+            "display_name" : "State",
+            "cardinality" : "single"
+         },
+         "location_list_label" : {
+            "property" : [],
+            "description" : "",
+            "id" : "location_list_label",
+            "display_name" : "Location",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "location_list_closure_label" : {
+            "id" : "location_list_closure_label",
+            "description" : "",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Location",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "location_list_closure" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "",
+            "property" : [],
+            "id" : "location_list_closure",
+            "display_name" : "Location",
+            "cardinality" : "multi"
+         },
+         "annotation_unit_label" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_unit_label",
+            "description" : "???.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Annotation unit"
+         },
+         "taxon_closure" : {
+            "display_name" : "Taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo.",
+            "property" : [],
+            "id" : "taxon_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "model" : {
+            "cardinality" : "single",
+            "display_name" : "Model title",
+            "id" : "model",
+            "description" : "???.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "reference" : {
+            "property" : [],
+            "description" : "Database reference.",
+            "id" : "reference",
+            "display_name" : "Reference",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "evidence_type_label" : {
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type_label",
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "evidence_type_closure_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Evidence type",
+            "cardinality" : "multi",
+            "description" : "All evidence (evidence closure) for this annotation",
+            "property" : [],
+            "id" : "evidence_type_closure_label"
+         },
+         "annotation_value" : {
+            "cardinality" : "multi",
+            "display_name" : "Text",
+            "id" : "annotation_value",
+            "description" : "set of all literal values of all annotation assertions in model",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         }
+      },
+      "description" : "An individual unit within LEGO. This is <strong>ALPHA</strong> software.",
+      "_strict" : 0,
+      "schema_generating" : "true",
+      "document_category" : "model_annotation"
+   },
+   "family" : {
+      "document_category" : "family",
+      "_strict" : 0,
+      "schema_generating" : "true",
+      "id" : "family",
+      "boost_weights" : "panther_family^2.0 panther_family_label^2.0 bioentity_list^1.0 bioentity_list_label^1.0",
+      "fields_hash" : {
+         "panther_family" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "description" : "PANTHER family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family"
+         },
+         "id" : {
+            "description" : "Family ID.",
+            "property" : [],
+            "id" : "id",
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "bioentity_list_label" : {
+            "display_name" : "Gene/products",
+            "cardinality" : "multi",
+            "description" : "Gene/products annotated with this protein family.",
+            "property" : [],
+            "id" : "bioentity_list_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "panther_family_label" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         "phylo_graph_json" : {
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "JSON blob form of the phylogenic tree.",
+            "id" : "phylo_graph_json",
+            "type" : "string",
+            "indexed" : "false",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "bioentity_list" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "bioentity_list",
+            "property" : [],
+            "description" : "Gene/products annotated with this protein family.",
+            "cardinality" : "multi",
+            "display_name" : "Gene/products"
+         }
+      },
+      "description" : "Information about protein (PANTHER) families.",
+      "filter_weights" : "bioentity_list_label^1.0",
+      "result_weights" : "panther_family^5.0 bioentity_list^4.0",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/protein-family-config.yaml",
+      "display_name" : "Protein families",
+      "searchable_extension" : "_searchable",
+      "fields" : [
+         {
+            "description" : "Family ID.",
+            "property" : [],
+            "id" : "id",
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "description" : "PANTHER family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         {
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "JSON blob form of the phylogenic tree.",
+            "id" : "phylo_graph_json",
+            "type" : "string",
+            "indexed" : "false",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "bioentity_list",
+            "property" : [],
+            "description" : "Gene/products annotated with this protein family.",
+            "cardinality" : "multi",
+            "display_name" : "Gene/products"
+         },
+         {
+            "display_name" : "Gene/products",
+            "cardinality" : "multi",
+            "description" : "Gene/products annotated with this protein family.",
+            "property" : [],
+            "id" : "bioentity_list_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         }
+      ],
+      "weight" : "5",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/protein-family-config.yaml"
+   },
+   "bioentity_for_browser" : {
+      "document_category" : "bioentity",
+      "schema_generating" : "false",
+      "_strict" : 0,
+      "fields_hash" : {
+         "taxon_closure_label" : {
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         "type" : {
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "id" : "type",
+            "property" : [],
+            "description" : "Type class.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "taxon_closure" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure"
+         },
+         "source" : {
+            "description" : "Database source.",
+            "property" : [],
+            "id" : "source",
+            "display_name" : "Source",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "taxon_subset_closure_label" : {
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "taxon_subset_closure" : {
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "id" : "taxon_subset_closure",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "taxon_label" : {
+            "description" : "Taxonomic group",
+            "property" : [],
+            "id" : "taxon_label",
+            "display_name" : "Taxon",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "taxon" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon",
+            "property" : [],
+            "description" : "Taxonomic group",
+            "cardinality" : "single",
+            "display_name" : "Taxon"
+         }
+      },
+      "description" : "Special schema for certain ontology browser widget\\'s filters.",
+      "id" : "bioentity_for_browser",
+      "boost_weights" : "taxon_subset_closure_label^1.0 type^1.0",
+      "searchable_extension" : "_searchable",
+      "display_name" : "Genes and gene products (BROWSER)",
+      "weight" : "-130",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.browse.yaml",
+      "fields" : [
+         {
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "id" : "type",
+            "property" : [],
+            "description" : "Type class.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon",
+            "property" : [],
+            "description" : "Taxonomic group",
+            "cardinality" : "single",
+            "display_name" : "Taxon"
+         },
+         {
+            "description" : "Taxonomic group",
+            "property" : [],
+            "id" : "taxon_label",
+            "display_name" : "Taxon",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure"
+         },
+         {
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "id" : "taxon_subset_closure",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "description" : "Database source.",
+            "property" : [],
+            "id" : "source",
+            "display_name" : "Source",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         }
+      ],
+      "result_weights" : "taxon_subset_closure_label^8.0 type^6.0",
+      "filter_weights" : "taxon_subset_closure_label^8.0 type^6.0",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.browse.yaml"
+   },
+   "annotation" : {
+      "searchable_extension" : "_searchable",
+      "display_name" : "Annotations",
+      "fields" : [
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "A unique (and internal) combination of bioentity and ontology class.",
+            "id" : "id"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Database source.",
+            "property" : [],
+            "id" : "source",
+            "display_name" : "Source",
+            "cardinality" : "single"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "id" : "type",
+            "property" : [],
+            "description" : "Type class.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "id" : "date",
+            "description" : "Date of assignment.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Date",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Contributor",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Annotations assigned by group.",
+            "id" : "assigned_by"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Redundant for",
+            "id" : "is_redundant_for",
+            "description" : "Rational for redundancy of annotation.",
+            "property" : []
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon",
+            "description" : "Taxonomic group.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon_label",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure",
+            "display_name" : "Organism",
+            "cardinality" : "multi"
+         },
+         {
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "property" : []
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota)."
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "single",
+            "description" : "Secondary taxon.",
+            "property" : [],
+            "id" : "secondary_taxon"
+         },
+         {
+            "property" : [],
+            "description" : "Secondary taxon.",
+            "id" : "secondary_taxon_label",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Secondary taxon",
+            "id" : "secondary_taxon_closure",
+            "description" : "Secondary taxon closure.",
+            "property" : []
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Secondary taxon closure.",
+            "id" : "secondary_taxon_closure_label"
+         },
+         {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "id" : "isa_partof_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "property" : [],
+            "id" : "isa_partof_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "display_name" : "GO class",
+            "cardinality" : "multi",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "property" : [],
+            "id" : "regulates_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "property" : [],
+            "id" : "regulates_closure_label",
+            "display_name" : "GO class",
+            "cardinality" : "multi"
+         },
+         {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "has_participant_closure",
+            "description" : "Closure of ids/accs over has_participant.",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Has participant (IDs)"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "has_participant_closure_label",
+            "property" : [],
+            "description" : "Closure of labels over has_participant.",
+            "cardinality" : "multi",
+            "display_name" : "Has participant"
+         },
+         {
+            "property" : [],
+            "description" : "Gene or gene product synonyms.",
+            "id" : "synonym",
+            "display_name" : "Synonym",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "description" : "Gene or gene product identifiers.",
+            "property" : [],
+            "id" : "bioentity",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Gene or gene product identifiers.",
+            "id" : "bioentity_label"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "bioentity_name",
+            "property" : [],
+            "description" : "The full name of the gene or gene product.",
+            "cardinality" : "single",
+            "display_name" : "Gene/product name"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "false",
+            "property" : [],
+            "description" : "The bioentity ID used at the database of origin.",
+            "id" : "bioentity_internal_id",
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single"
+         },
+         {
+            "display_name" : "Annotation qualifier",
+            "cardinality" : "multi",
+            "description" : "Annotation qualifier.",
+            "property" : [],
+            "id" : "qualifier",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "display_name" : "GO class (direct)",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_label",
+            "display_name" : "GO class (direct)",
+            "cardinality" : "single"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Ontology (aspect)",
+            "cardinality" : "single",
+            "description" : "Ontology aspect.",
+            "property" : [],
+            "id" : "aspect"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Isoform",
+            "id" : "bioentity_isoform",
+            "description" : "Biological isoform.",
+            "property" : []
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Evidence",
+            "id" : "evidence_type",
+            "property" : [],
+            "description" : "Evidence type. (legacy)",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence (evidence closure) for this annotation. (legacy)",
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "evidence_with",
+            "property" : [],
+            "description" : "Evidence with/from.",
+            "cardinality" : "multi",
+            "display_name" : "Evidence with"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Evidence.",
+            "id" : "evidence",
+            "display_name" : "Evidence",
+            "cardinality" : "single"
+         },
+         {
+            "property" : [],
+            "description" : "Evidence.",
+            "id" : "evidence_label",
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_closure",
+            "property" : [],
+            "description" : "All evidence for this annotation."
+         },
+         {
+            "display_name" : "Evidence",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "All evidence for this annotation.",
+            "id" : "evidence_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_subset_closure",
+            "description" : "All evidence for this annotation reduced to a usable subset.",
+            "property" : []
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_subset_closure_label",
+            "description" : "All evidence for this annotation reduced to a usable subset.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Database reference.",
+            "property" : [],
+            "id" : "reference",
+            "display_name" : "Reference",
+            "cardinality" : "multi"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_class",
+            "property" : [],
+            "description" : "Extension class for the annotation.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_class_label",
+            "property" : [],
+            "description" : "Extension class for the annotation."
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_extension_class_closure",
+            "description" : "Extension class for the annotation.",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension"
+         },
+         {
+            "display_name" : "Annotation extension",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Extension class for the annotation.",
+            "id" : "annotation_extension_class_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Annotation extension",
+            "cardinality" : "multi",
+            "description" : "Extension class for the annotation (JSON).",
+            "property" : [],
+            "id" : "annotation_extension_json"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "PANTHER family",
+            "id" : "panther_family",
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity."
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "PANTHER family",
+            "id" : "panther_family_label",
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity."
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "integer",
+            "indexed" : "true",
+            "description" : "Experimental numeric type (X).",
+            "property" : [],
+            "id" : "geospatial_x",
+            "display_name" : "X",
+            "cardinality" : "multi"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Y",
+            "id" : "geospatial_y",
+            "property" : [],
+            "description" : "Experimental numeric type (Y).",
+            "indexed" : "true",
+            "type" : "integer",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "indexed" : "true",
+            "type" : "integer",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Z",
+            "id" : "geospatial_z",
+            "description" : "Experimental numeric type (Z).",
+            "property" : []
+         }
+      ],
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.yaml",
+      "weight" : "20",
+      "filter_weights" : "aspect^10.0 taxon_subset_closure_label^9.0 type^8.5 evidence_subset_closure_label^8.0 regulates_closure_label^7.0 annotation_class_label^6.0 qualifier^5.0 annotation_extension_class_closure_label^4.0 assigned_by^3.0 panther_family_label^2.0",
+      "result_weights" : "bioentity^7.0 bioentity_name^6.0 qualifier^5.0 annotation_class^4.7 annotation_extension_json^4.5 assigned_by^4.0 taxon^3.0 evidence_type^2.5 evidence_with^2.0 panther_family^1.5 type^1.0 bioentity_isoform^0.5 reference^0.25 date^0.10",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.yaml",
+      "description" : "Associations between GO terms and genes or gene products.",
+      "fields_hash" : {
+         "source" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Database source.",
+            "property" : [],
+            "id" : "source",
+            "display_name" : "Source",
+            "cardinality" : "single"
+         },
+         "annotation_extension_class_closure_label" : {
+            "display_name" : "Annotation extension",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Extension class for the annotation.",
+            "id" : "annotation_extension_class_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "reference" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Database reference.",
+            "property" : [],
+            "id" : "reference",
+            "display_name" : "Reference",
+            "cardinality" : "multi"
+         },
+         "taxon_closure" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure",
+            "display_name" : "Organism",
+            "cardinality" : "multi"
+         },
+         "geospatial_x" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "integer",
+            "indexed" : "true",
+            "description" : "Experimental numeric type (X).",
+            "property" : [],
+            "id" : "geospatial_x",
+            "display_name" : "X",
+            "cardinality" : "multi"
+         },
+         "date" : {
+            "id" : "date",
+            "description" : "Date of assignment.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Date",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "annotation_extension_class_closure" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_extension_class_closure",
+            "description" : "Extension class for the annotation.",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension"
+         },
+         "taxon_subset_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "property" : []
+         },
+         "secondary_taxon_closure_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Secondary taxon closure.",
+            "id" : "secondary_taxon_closure_label"
+         },
+         "bioentity_internal_id" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "false",
+            "property" : [],
+            "description" : "The bioentity ID used at the database of origin.",
+            "id" : "bioentity_internal_id",
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single"
+         },
+         "synonym" : {
+            "property" : [],
+            "description" : "Gene or gene product synonyms.",
+            "id" : "synonym",
+            "display_name" : "Synonym",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "aspect" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Ontology (aspect)",
+            "cardinality" : "single",
+            "description" : "Ontology aspect.",
+            "property" : [],
+            "id" : "aspect"
+         },
+         "annotation_class_label" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_label",
+            "display_name" : "GO class (direct)",
+            "cardinality" : "single"
+         },
+         "bioentity_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Gene or gene product identifiers.",
+            "id" : "bioentity_label"
+         },
+         "panther_family" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "PANTHER family",
+            "id" : "panther_family",
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity."
+         },
+         "annotation_extension_class_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_class_label",
+            "property" : [],
+            "description" : "Extension class for the annotation."
+         },
+         "evidence_with" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "evidence_with",
+            "property" : [],
+            "description" : "Evidence with/from.",
+            "cardinality" : "multi",
+            "display_name" : "Evidence with"
+         },
+         "isa_partof_closure_label" : {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "property" : [],
+            "id" : "isa_partof_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         "evidence_closure_label" : {
+            "display_name" : "Evidence",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "All evidence for this annotation.",
+            "id" : "evidence_closure_label",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "regulates_closure_label" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "property" : [],
+            "id" : "regulates_closure_label",
+            "display_name" : "GO class",
+            "cardinality" : "multi"
+         },
+         "isa_partof_closure" : {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Annotations for this term or its children (over is_a/part_of).",
+            "id" : "isa_partof_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "evidence_subset_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_subset_closure",
+            "description" : "All evidence for this annotation reduced to a usable subset.",
+            "property" : []
+         },
+         "type" : {
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "id" : "type",
+            "property" : [],
+            "description" : "Type class.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "bioentity_name" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "bioentity_name",
+            "property" : [],
+            "description" : "The full name of the gene or gene product.",
+            "cardinality" : "single",
+            "display_name" : "Gene/product name"
+         },
+         "qualifier" : {
+            "display_name" : "Annotation qualifier",
+            "cardinality" : "multi",
+            "description" : "Annotation qualifier.",
+            "property" : [],
+            "id" : "qualifier",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "regulates_closure" : {
+            "display_name" : "GO class",
+            "cardinality" : "multi",
+            "description" : "Annotations for this term or its children (over regulates).",
+            "property" : [],
+            "id" : "regulates_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "is_redundant_for" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Redundant for",
+            "id" : "is_redundant_for",
+            "description" : "Rational for redundancy of annotation.",
+            "property" : []
+         },
+         "annotation_class" : {
+            "display_name" : "GO class (direct)",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "geospatial_y" : {
+            "cardinality" : "multi",
+            "display_name" : "Y",
+            "id" : "geospatial_y",
+            "property" : [],
+            "description" : "Experimental numeric type (Y).",
+            "indexed" : "true",
+            "type" : "integer",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "evidence_label" : {
+            "property" : [],
+            "description" : "Evidence.",
+            "id" : "evidence_label",
+            "display_name" : "Evidence",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "geospatial_z" : {
+            "indexed" : "true",
+            "type" : "integer",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Z",
+            "id" : "geospatial_z",
+            "description" : "Experimental numeric type (Z).",
+            "property" : []
+         },
+         "secondary_taxon_label" : {
+            "property" : [],
+            "description" : "Secondary taxon.",
+            "id" : "secondary_taxon_label",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "annotation_extension_json" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Annotation extension",
+            "cardinality" : "multi",
+            "description" : "Extension class for the annotation (JSON).",
+            "property" : [],
+            "id" : "annotation_extension_json"
+         },
+         "panther_family_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "PANTHER family",
+            "id" : "panther_family_label",
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity."
+         },
+         "taxon_closure_label" : {
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "bioentity" : {
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "description" : "Gene or gene product identifiers.",
+            "property" : [],
+            "id" : "bioentity",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "evidence" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Evidence.",
+            "id" : "evidence",
+            "display_name" : "Evidence",
+            "cardinality" : "single"
+         },
+         "taxon" : {
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon",
+            "description" : "Taxonomic group.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "id" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "A unique (and internal) combination of bioentity and ontology class.",
+            "id" : "id"
+         },
+         "taxon_subset_closure_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota)."
+         },
+         "assigned_by" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Contributor",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "Annotations assigned by group.",
+            "id" : "assigned_by"
+         },
+         "evidence_type" : {
+            "cardinality" : "single",
+            "display_name" : "Evidence",
+            "id" : "evidence_type",
+            "property" : [],
+            "description" : "Evidence type. (legacy)",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "bioentity_isoform" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Isoform",
+            "id" : "bioentity_isoform",
+            "description" : "Biological isoform.",
+            "property" : []
+         },
+         "evidence_type_closure" : {
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence (evidence closure) for this annotation. (legacy)",
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "secondary_taxon_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Secondary taxon",
+            "id" : "secondary_taxon_closure",
+            "description" : "Secondary taxon closure.",
+            "property" : []
+         },
+         "has_participant_closure" : {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "has_participant_closure",
+            "description" : "Closure of ids/accs over has_participant.",
+            "property" : [],
+            "cardinality" : "multi",
+            "display_name" : "Has participant (IDs)"
+         },
+         "taxon_label" : {
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon_label",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         "has_participant_closure_label" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "has_participant_closure_label",
+            "property" : [],
+            "description" : "Closure of labels over has_participant.",
+            "cardinality" : "multi",
+            "display_name" : "Has participant"
+         },
+         "annotation_extension_class" : {
+            "cardinality" : "multi",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_class",
+            "property" : [],
+            "description" : "Extension class for the annotation.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "evidence_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_closure",
+            "property" : [],
+            "description" : "All evidence for this annotation."
+         },
+         "secondary_taxon" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Secondary taxon",
+            "cardinality" : "single",
+            "description" : "Secondary taxon.",
+            "property" : [],
+            "id" : "secondary_taxon"
+         },
+         "evidence_subset_closure_label" : {
+            "cardinality" : "multi",
+            "display_name" : "Evidence",
+            "id" : "evidence_subset_closure_label",
+            "description" : "All evidence for this annotation reduced to a usable subset.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         }
+      },
+      "id" : "annotation",
+      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 bioentity_name^1.0 annotation_extension_class^2.0 annotation_extension_class_label^1.0 reference^1.0 panther_family^1.0 panther_family_label^1.0 bioentity_isoform^1.0 regulates_closure^1.0 regulates_closure_label^1.0",
+      "schema_generating" : "true",
+      "_strict" : 0,
+      "document_category" : "annotation"
+   },
+   "bioentity" : {
+      "filter_weights" : "source^7.0 taxon_subset_closure_label^6.0 type^5.0 panther_family_label^4.0 annotation_class_list_label^3.0 regulates_closure_label^2.0",
+      "result_weights" : "bioentity^8.0 bioentity_name^7.0 taxon^6.0 panther_family^5.0 type^4.0 source^3.0 synonym^1.0",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.yaml",
+      "display_name" : "Genes and gene products",
+      "searchable_extension" : "_searchable",
+      "weight" : "30",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.yaml",
+      "fields" : [
+         {
+            "cardinality" : "single",
+            "display_name" : "Acc",
+            "id" : "id",
+            "property" : [],
+            "description" : "Gene of gene product ID.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Gene/product",
+            "id" : "bioentity",
+            "property" : [],
+            "description" : "Gene or gene product identifiers.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "description" : "Gene or gene product identifiers.",
+            "property" : [],
+            "id" : "bioentity_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "property" : [],
+            "description" : "The full name of the gene or gene product.",
+            "id" : "bioentity_name",
+            "display_name" : "Gene/product name",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "false",
+            "property" : [],
+            "description" : "The bioentity ID used at the database of origin.",
+            "id" : "bioentity_internal_id",
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single"
+         },
+         {
+            "id" : "type",
+            "description" : "Type class.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon",
+            "description" : "Taxonomic group",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Organism"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon_label",
+            "property" : [],
+            "description" : "Taxonomic group"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_closure",
+            "description" : "Taxonomic group and ancestral groups.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_closure_label",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups."
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota)."
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "cardinality" : "multi",
+            "display_name" : "Organism"
+         },
+         {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "description" : "Closure of ids/accs over isa and partof.",
+            "property" : [],
+            "id" : "isa_partof_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Involved in",
+            "id" : "isa_partof_closure_label",
+            "property" : [],
+            "description" : "Closure of labels over isa and partof.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "regulates_closure",
+            "property" : [],
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "cardinality" : "multi",
+            "display_name" : "Inferred annotation"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Inferred annotation",
+            "id" : "regulates_closure_label",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "property" : []
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Source",
+            "id" : "source",
+            "description" : "Database source.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "display_name" : "Direct annotation",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_list",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Direct annotation",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_list_label"
+         },
+         {
+            "display_name" : "Synonyms",
+            "cardinality" : "multi",
+            "description" : "Gene product synonyms.",
+            "property" : [],
+            "id" : "synonym",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity.",
+            "id" : "panther_family",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "This should not be displayed",
+            "id" : "phylo_graph_json",
+            "property" : [],
+            "description" : "JSON blob form of the phylogenic tree."
+         },
+         {
+            "id" : "database_xref",
+            "property" : [],
+            "description" : "Database cross-reference.",
+            "cardinality" : "multi",
+            "display_name" : "DB xref",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         }
+      ],
+      "id" : "bioentity",
+      "boost_weights" : "bioentity^2.0 bioentity_label^2.0 bioentity_name^1.0 bioentity_internal_id^1.0 synonym^1.0 isa_partof_closure_label^1.0 regulates_closure^1.0 regulates_closure_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_label^1.0",
+      "description" : "Genes and gene products associated with GO terms.",
+      "fields_hash" : {
+         "isa_partof_closure_label" : {
+            "cardinality" : "multi",
+            "display_name" : "Involved in",
+            "id" : "isa_partof_closure_label",
+            "property" : [],
+            "description" : "Closure of labels over isa and partof.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         "panther_family" : {
+            "property" : [],
+            "description" : "PANTHER families that are associated with this entity.",
+            "id" : "panther_family",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "type" : {
+            "id" : "type",
+            "description" : "Type class.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Type",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "isa_partof_closure" : {
+            "display_name" : "Involved in",
+            "cardinality" : "multi",
+            "description" : "Closure of ids/accs over isa and partof.",
+            "property" : [],
+            "id" : "isa_partof_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "regulates_closure_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Inferred annotation",
+            "id" : "regulates_closure_label",
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "property" : []
+         },
+         "regulates_closure" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "regulates_closure",
+            "property" : [],
+            "description" : "Bioentities associated with this term or its children (over regulates).",
+            "cardinality" : "multi",
+            "display_name" : "Inferred annotation"
+         },
+         "bioentity_name" : {
+            "property" : [],
+            "description" : "The full name of the gene or gene product.",
+            "id" : "bioentity_name",
+            "display_name" : "Gene/product name",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "taxon_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Organism",
+            "id" : "taxon_label",
+            "property" : [],
+            "description" : "Taxonomic group"
+         },
+         "annotation_class_list" : {
+            "display_name" : "Direct annotation",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_list",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "source" : {
+            "cardinality" : "single",
+            "display_name" : "Source",
+            "id" : "source",
+            "description" : "Database source.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "bioentity" : {
+            "cardinality" : "single",
+            "display_name" : "Gene/product",
+            "id" : "bioentity",
+            "property" : [],
+            "description" : "Gene or gene product identifiers.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "annotation_class_list_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Direct annotation",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Direct annotations.",
+            "id" : "annotation_class_list_label"
+         },
+         "taxon_closure_label" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_closure_label",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups."
+         },
+         "taxon_closure" : {
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_closure",
+            "description" : "Taxonomic group and ancestral groups.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "panther_family_label" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "PANTHER families that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family_label",
+            "display_name" : "PANTHER family",
+            "cardinality" : "single"
+         },
+         "database_xref" : {
+            "id" : "database_xref",
+            "property" : [],
+            "description" : "Database cross-reference.",
+            "cardinality" : "multi",
+            "display_name" : "DB xref",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "taxon_subset_closure_label" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon_subset_closure_label",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "cardinality" : "multi",
+            "display_name" : "Organism"
+         },
+         "synonym" : {
+            "display_name" : "Synonyms",
+            "cardinality" : "multi",
+            "description" : "Gene product synonyms.",
+            "property" : [],
+            "id" : "synonym",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "bioentity_internal_id" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "false",
+            "property" : [],
+            "description" : "The bioentity ID used at the database of origin.",
+            "id" : "bioentity_internal_id",
+            "display_name" : "This should not be displayed",
+            "cardinality" : "single"
+         },
+         "taxon_subset_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "property" : [],
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota)."
+         },
+         "taxon" : {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "taxon",
+            "description" : "Taxonomic group",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Organism"
+         },
+         "id" : {
+            "cardinality" : "single",
+            "display_name" : "Acc",
+            "id" : "id",
+            "property" : [],
+            "description" : "Gene of gene product ID.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "phylo_graph_json" : {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "This should not be displayed",
+            "id" : "phylo_graph_json",
+            "property" : [],
+            "description" : "JSON blob form of the phylogenic tree."
+         },
+         "bioentity_label" : {
+            "display_name" : "Gene/product",
+            "cardinality" : "single",
+            "description" : "Gene or gene product identifiers.",
+            "property" : [],
+            "id" : "bioentity_label",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         }
+      },
+      "_strict" : 0,
+      "schema_generating" : "true",
+      "document_category" : "bioentity"
+   },
+   "bbop_ann_ev_agg" : {
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann_ev_agg-config.yaml",
+      "filter_weights" : "evidence_type_closure^4.0 evidence_with^3.0 taxon_closure_label^2.0",
+      "result_weights" : "bioentity^4.0 annotation_class^3.0 taxon^2.0",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann_ev_agg-config.yaml",
+      "fields" : [
+         {
+            "cardinality" : "single",
+            "display_name" : "Acc",
+            "id" : "id",
+            "property" : [],
+            "description" : "Gene/product ID.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "display_name" : "Gene/product ID",
+            "cardinality" : "single",
+            "description" : "Column 1 + columns 2.",
+            "property" : [],
+            "id" : "bioentity",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Column 3.",
+            "property" : [],
+            "id" : "bioentity_label",
+            "display_name" : "Gene/product label",
+            "cardinality" : "single"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Annotation class",
+            "cardinality" : "single",
+            "description" : "Column 5.",
+            "property" : [],
+            "id" : "annotation_class"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Column 5 + ontology.",
+            "id" : "annotation_class_label",
+            "display_name" : "Annotation class label",
+            "cardinality" : "single"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence for this term/gene product pair"
+         },
+         {
+            "display_name" : "Evidence with",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "All column 8s for this term/gene product pair",
+            "id" : "evidence_with",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Taxon",
+            "id" : "taxon",
+            "description" : "Column 13: taxon.",
+            "property" : []
+         },
+         {
+            "id" : "taxon_label",
+            "description" : "Derived from C13 + ncbi_taxonomy.obo.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Taxon",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "IDs derived from C13 + ncbi_taxonomy.obo.",
+            "property" : [],
+            "id" : "taxon_closure"
+         },
+         {
+            "property" : [],
+            "description" : "Labels derived from C13 + ncbi_taxonomy.obo.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "display_name" : "Protein family",
+            "cardinality" : "single",
+            "description" : "Family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Family",
+            "id" : "panther_family_label",
+            "description" : "Families that are associated with this entity.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         }
+      ],
+      "weight" : "-10",
+      "display_name" : "Advanced",
+      "searchable_extension" : "_searchable",
+      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_closure_label^1.0",
+      "id" : "bbop_ann_ev_agg",
+      "fields_hash" : {
+         "taxon_closure" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "IDs derived from C13 + ncbi_taxonomy.obo.",
+            "property" : [],
+            "id" : "taxon_closure"
+         },
+         "panther_family_label" : {
+            "cardinality" : "single",
+            "display_name" : "Family",
+            "id" : "panther_family_label",
+            "description" : "Families that are associated with this entity.",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         "evidence_type_closure" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence for this term/gene product pair"
+         },
+         "bioentity" : {
+            "display_name" : "Gene/product ID",
+            "cardinality" : "single",
+            "description" : "Column 1 + columns 2.",
+            "property" : [],
+            "id" : "bioentity",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "taxon_closure_label" : {
+            "property" : [],
+            "description" : "Labels derived from C13 + ncbi_taxonomy.obo.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Taxon",
+            "cardinality" : "multi",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "panther_family" : {
+            "display_name" : "Protein family",
+            "cardinality" : "single",
+            "description" : "Family IDs that are associated with this entity.",
+            "property" : [],
+            "id" : "panther_family",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true"
+         },
+         "evidence_with" : {
+            "display_name" : "Evidence with",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "All column 8s for this term/gene product pair",
+            "id" : "evidence_with",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "annotation_class_label" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Column 5 + ontology.",
+            "id" : "annotation_class_label",
+            "display_name" : "Annotation class label",
+            "cardinality" : "single"
+         },
+         "bioentity_label" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Column 3.",
+            "property" : [],
+            "id" : "bioentity_label",
+            "display_name" : "Gene/product label",
+            "cardinality" : "single"
+         },
+         "annotation_class" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "display_name" : "Annotation class",
+            "cardinality" : "single",
+            "description" : "Column 5.",
+            "property" : [],
+            "id" : "annotation_class"
+         },
+         "taxon_label" : {
+            "id" : "taxon_label",
+            "description" : "Derived from C13 + ncbi_taxonomy.obo.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Taxon",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "id" : {
+            "cardinality" : "single",
+            "display_name" : "Acc",
+            "id" : "id",
+            "property" : [],
+            "description" : "Gene/product ID.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "taxon" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Taxon",
+            "id" : "taxon",
+            "description" : "Column 13: taxon.",
+            "property" : []
+         }
+      },
+      "description" : "A description of annotation evidence aggregate for GOlr and AmiGO.",
+      "_strict" : 0,
+      "schema_generating" : "true",
+      "document_category" : "annotation_evidence_aggregate"
+   },
+   "annotation_for_browser" : {
+      "_strict" : 0,
+      "schema_generating" : "false",
+      "document_category" : "annotation",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.browse.yaml",
+      "filter_weights" : "taxon_subset_closure_label^9.0 evidence_type_closure^8.0",
+      "result_weights" : "taxon_subset_closure_label^9.0 evidence_type_closure^8.0",
+      "fields" : [
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group.",
+            "id" : "taxon",
+            "display_name" : "Organism",
+            "cardinality" : "single"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Organism",
+            "cardinality" : "single",
+            "description" : "Taxonomic group and ancestral groups.",
+            "property" : [],
+            "id" : "taxon_label"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Organism",
+            "cardinality" : "multi"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "id" : "taxon_subset_closure_label"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type",
+            "display_name" : "Evidence",
+            "cardinality" : "single"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence (evidence closure) for this annotation",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         }
+      ],
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.browse.yaml",
+      "weight" : "-120",
+      "display_name" : "Annotations (BROWSER)",
+      "searchable_extension" : "_searchable",
+      "boost_weights" : "taxon_subset_closure_label^1.0 evidence_type_closure^1.0",
+      "id" : "annotation_for_browser",
+      "description" : "Special schema for certain ontology browser widget\\'s filters.",
+      "fields_hash" : {
+         "taxon" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group.",
+            "id" : "taxon",
+            "display_name" : "Organism",
+            "cardinality" : "single"
+         },
+         "taxon_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Organism",
+            "cardinality" : "single",
+            "description" : "Taxonomic group and ancestral groups.",
+            "property" : [],
+            "id" : "taxon_label"
+         },
+         "taxon_subset_closure" : {
+            "cardinality" : "multi",
+            "display_name" : "Organism",
+            "id" : "taxon_subset_closure",
+            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
+            "property" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "taxon_subset_closure_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
+            "id" : "taxon_subset_closure_label"
+         },
+         "taxon_closure" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Organism",
+            "cardinality" : "multi",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure"
+         },
+         "taxon_closure_label" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "Taxonomic group and ancestral groups.",
+            "id" : "taxon_closure_label",
+            "display_name" : "Organism",
+            "cardinality" : "multi"
+         },
+         "evidence_type_closure" : {
+            "cardinality" : "multi",
+            "display_name" : "Evidence type",
+            "id" : "evidence_type_closure",
+            "property" : [],
+            "description" : "All evidence (evidence closure) for this annotation",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "evidence_type" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Evidence type.",
+            "property" : [],
+            "id" : "evidence_type",
+            "display_name" : "Evidence",
+            "cardinality" : "single"
+         }
+      }
+   },
+   "general" : {
+      "boost_weights" : "entity^3.0 entity_label^3.0 general_blob^3.0",
+      "id" : "general",
+      "fields_hash" : {
+         "general_blob" : {
+            "description" : "A hidden searchable blob document to access this item. It should contain all the goodies that we want to search for, like species(?), synonyms, etc.",
+            "property" : [],
+            "id" : "general_blob",
+            "display_name" : "Generic blob",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "entity_label" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Enity label",
+            "cardinality" : "single",
+            "description" : "The label for this entity.",
+            "property" : [],
+            "id" : "entity_label"
+         },
+         "id" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "The mangled internal ID for this entity.",
+            "id" : "id",
+            "display_name" : "Internal ID",
+            "cardinality" : "single"
+         },
+         "entity" : {
+            "description" : "The ID/label for this entity.",
+            "property" : [],
+            "id" : "entity",
+            "display_name" : "Entity",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "category" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Document category",
+            "id" : "category",
+            "description" : "The document category that this enitity belongs to.",
+            "property" : []
+         }
+      },
+      "description" : "A generic search document to get a general overview of everything.",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/general-config.yaml",
+      "filter_weights" : "category^4.0",
+      "result_weights" : "entity^3.0 category^1.0",
+      "weight" : "0",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/general-config.yaml",
+      "fields" : [
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [],
+            "description" : "The mangled internal ID for this entity.",
+            "id" : "id",
+            "display_name" : "Internal ID",
+            "cardinality" : "single"
+         },
+         {
+            "description" : "The ID/label for this entity.",
+            "property" : [],
+            "id" : "entity",
+            "display_name" : "Entity",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Enity label",
+            "cardinality" : "single",
+            "description" : "The label for this entity.",
+            "property" : [],
+            "id" : "entity_label"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "cardinality" : "single",
+            "display_name" : "Document category",
+            "id" : "category",
+            "description" : "The document category that this enitity belongs to.",
+            "property" : []
+         },
+         {
+            "description" : "A hidden searchable blob document to access this item. It should contain all the goodies that we want to search for, like species(?), synonyms, etc.",
+            "property" : [],
+            "id" : "general_blob",
+            "display_name" : "Generic blob",
+            "cardinality" : "single",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         }
+      ],
+      "searchable_extension" : "_searchable",
+      "display_name" : "General",
+      "document_category" : "general",
+      "_strict" : 0,
+      "schema_generating" : "true"
+   },
+   "noctua_model_meta" : {
+      "document_category" : "noctua_model_meta",
+      "_strict" : 0,
+      "schema_generating" : "true",
+      "id" : "noctua_model_meta",
+      "boost_weights" : "annotation_unit_label^3.0 contributor^2.0 model_date^1.0 comment^1.0",
+      "fields_hash" : {
+         "annotation_unit" : {
+            "id" : "annotation_unit",
+            "description" : "The title(s) associated with the model.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model identifier",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "contributor" : {
+            "display_name" : "Contributor",
+            "cardinality" : "multi",
+            "description" : "Contributor identity.",
+            "property" : [],
+            "id" : "contributor",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         "annotation_unit_label" : {
+            "id" : "annotation_unit_label",
+            "property" : [],
+            "description" : "The title(s) associated with the model.",
+            "cardinality" : "single",
+            "display_name" : "Model identifier",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "owl_blob_json" : {
+            "cardinality" : "single",
+            "display_name" : "???",
+            "id" : "owl_blob_json",
+            "description" : "???",
+            "property" : [],
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         },
+         "comment" : {
+            "id" : "comment",
+            "description" : "The comments associated with a model.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Comment",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "id" : {
+            "display_name" : "Internal ID",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "The mangled internal ID for this entity.",
+            "id" : "id",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "model_state" : {
+            "display_name" : "State",
+            "cardinality" : "single",
+            "description" : "The editorial state of the model.",
+            "property" : [],
+            "id" : "model_state",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "model_date" : {
+            "display_name" : "Last modified",
+            "cardinality" : "single",
+            "description" : "Model last modification dates.",
+            "property" : [],
+            "id" : "model_date",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         }
+      },
+      "description" : "A generic capture of light Noctua metadata in realtime.",
+      "filter_weights" : "contributor^3.0 model_state^2.0 model_date^1.0",
+      "result_weights" : "annotation_unit^3.0 contributor^2.0 model_state^1.0 model_date^1.0 comment^1.0",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/noctua-model-meta-config.yaml",
+      "display_name" : "Noctua meta",
+      "searchable_extension" : "_searchable",
+      "weight" : "0",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/noctua-model-meta-config.yaml",
+      "fields" : [
+         {
+            "display_name" : "Internal ID",
+            "cardinality" : "single",
+            "property" : [],
+            "description" : "The mangled internal ID for this entity.",
+            "id" : "id",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "id" : "annotation_unit",
+            "description" : "The title(s) associated with the model.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Model identifier",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "id" : "annotation_unit_label",
+            "property" : [],
+            "description" : "The title(s) associated with the model.",
+            "cardinality" : "single",
+            "display_name" : "Model identifier",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "display_name" : "Contributor",
+            "cardinality" : "multi",
+            "description" : "Contributor identity.",
+            "property" : [],
+            "id" : "contributor",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "display_name" : "Last modified",
+            "cardinality" : "single",
+            "description" : "Model last modification dates.",
+            "property" : [],
+            "id" : "model_date",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true"
+         },
+         {
+            "display_name" : "State",
+            "cardinality" : "single",
+            "description" : "The editorial state of the model.",
+            "property" : [],
+            "id" : "model_state",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "id" : "comment",
+            "description" : "The comments associated with a model.",
+            "property" : [],
+            "cardinality" : "single",
+            "display_name" : "Comment",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "???",
+            "id" : "owl_blob_json",
+            "description" : "???",
+            "property" : [],
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : []
+         }
+      ]
+   },
+   "ontology" : {
+      "id" : "ontology",
+      "boost_weights" : "annotation_class^3.0 annotation_class_label^5.5 description^1.0 synonym^1.0 alternate_id^1.0",
+      "description" : "Gene Ontology Term, Synonym, or Definition.",
+      "fields_hash" : {
+         "regulates_closure" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [
+               "getRelationIDClosure",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
+            "id" : "regulates_closure",
+            "display_name" : "Ancestor",
+            "cardinality" : "multi"
+         },
+         "subset" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "subset",
+            "property" : [
+               "getSubsets"
+            ],
+            "description" : "Special use collections of terms.",
+            "cardinality" : "multi",
+            "display_name" : "Subset"
+         },
+         "alternate_id" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Alt ID",
+            "cardinality" : "multi",
+            "description" : "Alternate term identifier.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "alt_id"
+            ],
+            "id" : "alternate_id"
+         },
+         "neighborhood_limited_graph_json" : {
+            "type" : "string",
+            "indexed" : "false",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Term neighborhood limited graph (JSON)",
+            "cardinality" : "single",
+            "property" : [
+               "getNeighborsLimitedJSON"
+            ],
+            "description" : "JSON blob form of all immediate neighbors of the term; in the case that there are too many neighbors to transport, the number will be artificially reduced.",
+            "id" : "neighborhood_limited_graph_json"
+         },
+         "annotation_class" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [
+               "getIdentifier"
+            ],
+            "description" : "Term identifier.",
+            "id" : "annotation_class",
+            "display_name" : "Term",
+            "cardinality" : "single"
+         },
+         "only_in_taxon_label" : {
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "only_in_taxon_label",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "Only in taxon label.",
+            "cardinality" : "single",
+            "display_name" : "Only in taxon"
+         },
+         "regulates_transitivity_graph_json" : {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Regulates transitivity graph (JSON)",
+            "id" : "regulates_transitivity_graph_json",
+            "property" : [
+               "getLineageShuntGraphJSON",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of)."
+         },
+         "isa_partof_closure_label" : {
+            "cardinality" : "multi",
+            "display_name" : "Is-a/part-of",
+            "id" : "isa_partof_closure_label",
+            "property" : [
+               "getRelationLabelClosure",
+               "BFO:0000050"
+            ],
+            "description" : "Ancestral terms (is_a/part_of).",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         "regulates_closure_label" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "regulates_closure_label",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
+            "property" : [
+               "getRelationLabelClosure",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Ancestor"
+         },
+         "isa_partof_closure" : {
+            "description" : "Ancestral terms (is_a/part_of).",
+            "property" : [
+               "getRelationIDClosure",
+               "BFO:0000050"
+            ],
+            "id" : "isa_partof_closure",
+            "display_name" : "Is-a/part-of",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "synonym" : {
+            "description" : "Term synonyms.",
+            "property" : [
+               "getOBOSynonymStrings"
+            ],
+            "id" : "synonym",
+            "display_name" : "Synonyms",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "idspace" : {
+            "property" : [
+               "getIdSpace"
+            ],
+            "description" : "Term ID space.",
+            "id" : "idspace",
+            "display_name" : "Ontology ID space",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         "annotation_relation" : {
+            "display_name" : "Annotation relation",
+            "cardinality" : "single",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "This is equivalent to the relation field in GPAD.",
+            "id" : "annotation_relation",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "annotation_class_label" : {
+            "cardinality" : "single",
+            "display_name" : "Term",
+            "id" : "annotation_class_label",
+            "property" : [
+               "getLabel"
+            ],
+            "description" : "Identifier.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : []
+         },
+         "annotation_extension_owl_json" : {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_owl_json",
+            "description" : "A non-lossy representation of conjunctions and disjunctions in c16 (JSON).",
+            "property" : [
+               "getDummyString"
+            ]
+         },
+         "annotation_relation_label" : {
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_relation_label",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "This is equivalent to the relation field in GPAD.",
+            "cardinality" : "single",
+            "display_name" : "Annotation relation"
+         },
+         "definition_xref" : {
+            "id" : "definition_xref",
+            "description" : "Definition cross-reference.",
+            "property" : [
+               "getDefXref"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Def xref",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "source" : {
+            "display_name" : "Ontology source",
+            "cardinality" : "single",
+            "description" : "Term namespace.",
+            "property" : [
+               "getNamespace"
+            ],
+            "id" : "source",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         "neighborhood_graph_json" : {
+            "display_name" : "Term neighborhood graph (JSON)",
+            "cardinality" : "single",
+            "property" : [
+               "getNeighborsJSON"
+            ],
+            "description" : "JSON blob form of all immediate neighbors of the term.",
+            "id" : "neighborhood_graph_json",
+            "type" : "string",
+            "indexed" : "false",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "only_in_taxon_closure_label" : {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Only in taxon label closure.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "id" : "only_in_taxon_closure_label",
+            "display_name" : "Only in taxon",
+            "cardinality" : "multi"
+         },
+         "description" : {
+            "id" : "description",
+            "description" : "Term definition.",
+            "property" : [
+               "getDef"
+            ],
+            "cardinality" : "single",
+            "display_name" : "Definition",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "consider" : {
+            "cardinality" : "multi",
+            "display_name" : "Consider",
+            "id" : "consider",
+            "description" : "Others terms you might want to look at.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "consider"
+            ],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         "comment" : {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Comments",
+            "cardinality" : "multi",
+            "description" : "Term comments.",
+            "property" : [
+               "getComments"
+            ],
+            "id" : "comment"
+         },
+         "only_in_taxon_closure" : {
+            "display_name" : "Only in taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "Only in taxon closure.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "id" : "only_in_taxon_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "equivalent_class_expressions_json" : {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "equivalent_class_expressions_json",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "For any class document C, this will contain json(CE) for all axioms of form EquivalentClasses(C ... CE ....).",
+            "cardinality" : "single",
+            "display_name" : "Eq class expressions"
+         },
+         "disjoint_class_list" : {
+            "id" : "disjoint_class_list",
+            "description" : "Disjoint classes.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Disjoint classes",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "is_obsolete" : {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "boolean",
+            "indexed" : "true",
+            "property" : [
+               "getIsObsoleteBinaryString"
+            ],
+            "description" : "Is the term obsolete?",
+            "id" : "is_obsolete",
+            "display_name" : "Obsoletion",
+            "cardinality" : "single"
+         },
+         "id" : {
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "description" : "Term identifier.",
+            "property" : [
+               "getIdentifier"
+            ],
+            "id" : "id",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "disjoint_class_list_label" : {
+            "id" : "disjoint_class_list_label",
+            "description" : "Disjoint classes.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Disjoint classes",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         "topology_graph_json" : {
+            "id" : "topology_graph_json",
+            "property" : [
+               "getSegmentShuntGraphJSON",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "JSON blob form of the local stepwise topology graph. Uses various relations (including regulates, occurs in, capable_of).",
+            "cardinality" : "single",
+            "display_name" : "Topology graph (JSON)",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "false",
+            "type" : "string"
+         },
+         "database_xref" : {
+            "display_name" : "DB xref",
+            "cardinality" : "multi",
+            "description" : "Database cross-reference.",
+            "property" : [
+               "getXref"
+            ],
+            "id" : "database_xref",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         "only_in_taxon" : {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "only_in_taxon",
+            "description" : "Only in taxon.",
+            "property" : [
+               "getDummyString"
+            ],
+            "cardinality" : "single",
+            "display_name" : "Only in taxon"
+         },
+         "replaced_by" : {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "replaced_by",
+            "description" : "Term that replaces this term.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "replaced_by"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Replaced By"
+         }
+      },
+      "result_weights" : "annotation_class^8.0 description^6.0 source^4.0 idspace^3.5 synonym^3.0 alternate_id^2.0",
+      "filter_weights" : "source^4.0 idspace^3.5 subset^3.0 is_obsolete^0.0",
+      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ont-config.yaml",
+      "searchable_extension" : "_searchable",
+      "display_name" : "Ontology",
+      "weight" : "40",
+      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ont-config.yaml",
+      "fields" : [
+         {
+            "display_name" : "Acc",
+            "cardinality" : "single",
+            "description" : "Term identifier.",
+            "property" : [
+               "getIdentifier"
+            ],
+            "id" : "id",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [
+               "getIdentifier"
+            ],
+            "description" : "Term identifier.",
+            "id" : "annotation_class",
+            "display_name" : "Term",
+            "cardinality" : "single"
+         },
+         {
+            "cardinality" : "single",
+            "display_name" : "Term",
+            "id" : "annotation_class_label",
+            "property" : [
+               "getLabel"
+            ],
+            "description" : "Identifier.",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : []
+         },
+         {
+            "id" : "description",
+            "description" : "Term definition.",
+            "property" : [
+               "getDef"
+            ],
+            "cardinality" : "single",
+            "display_name" : "Definition",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "display_name" : "Ontology source",
+            "cardinality" : "single",
+            "description" : "Term namespace.",
+            "property" : [
+               "getNamespace"
+            ],
+            "id" : "source",
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false"
+         },
+         {
+            "property" : [
+               "getIdSpace"
+            ],
+            "description" : "Term ID space.",
+            "id" : "idspace",
+            "display_name" : "Ontology ID space",
+            "cardinality" : "single",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "boolean",
+            "indexed" : "true",
+            "property" : [
+               "getIsObsoleteBinaryString"
+            ],
+            "description" : "Is the term obsolete?",
+            "id" : "is_obsolete",
+            "display_name" : "Obsoletion",
+            "cardinality" : "single"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "display_name" : "Comments",
+            "cardinality" : "multi",
+            "description" : "Term comments.",
+            "property" : [
+               "getComments"
+            ],
+            "id" : "comment"
+         },
+         {
+            "description" : "Term synonyms.",
+            "property" : [
+               "getOBOSynonymStrings"
+            ],
+            "id" : "synonym",
+            "display_name" : "Synonyms",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "type" : "string",
+            "indexed" : "true",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Alt ID",
+            "cardinality" : "multi",
+            "description" : "Alternate term identifier.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "alt_id"
+            ],
+            "id" : "alternate_id"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "replaced_by",
+            "description" : "Term that replaces this term.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "replaced_by"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Replaced By"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Consider",
+            "id" : "consider",
+            "description" : "Others terms you might want to look at.",
+            "property" : [
+               "getAnnotationPropertyValues",
+               "consider"
+            ],
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "subset",
+            "property" : [
+               "getSubsets"
+            ],
+            "description" : "Special use collections of terms.",
+            "cardinality" : "multi",
+            "display_name" : "Subset"
+         },
+         {
+            "id" : "definition_xref",
+            "description" : "Definition cross-reference.",
+            "property" : [
+               "getDefXref"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Def xref",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "display_name" : "DB xref",
+            "cardinality" : "multi",
+            "description" : "Database cross-reference.",
+            "property" : [
+               "getXref"
+            ],
+            "id" : "database_xref",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "description" : "Ancestral terms (is_a/part_of).",
+            "property" : [
+               "getRelationIDClosure",
+               "BFO:0000050"
+            ],
+            "id" : "isa_partof_closure",
+            "display_name" : "Is-a/part-of",
+            "cardinality" : "multi",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true"
+         },
+         {
+            "cardinality" : "multi",
+            "display_name" : "Is-a/part-of",
+            "id" : "isa_partof_closure_label",
+            "property" : [
+               "getRelationLabelClosure",
+               "BFO:0000050"
+            ],
+            "description" : "Ancestral terms (is_a/part_of).",
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false",
+            "type" : "string",
+            "indexed" : "true",
+            "property" : [
+               "getRelationIDClosure",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
+            "id" : "regulates_closure",
+            "display_name" : "Ancestor",
+            "cardinality" : "multi"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "regulates_closure_label",
+            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
+            "property" : [
+               "getRelationLabelClosure",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Ancestor"
+         },
+         {
+            "id" : "topology_graph_json",
+            "property" : [
+               "getSegmentShuntGraphJSON",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "JSON blob form of the local stepwise topology graph. Uses various relations (including regulates, occurs in, capable_of).",
+            "cardinality" : "single",
+            "display_name" : "Topology graph (JSON)",
+            "searchable" : "false",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "false",
+            "type" : "string"
+         },
+         {
+            "indexed" : "false",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Regulates transitivity graph (JSON)",
+            "id" : "regulates_transitivity_graph_json",
+            "property" : [
+               "getLineageShuntGraphJSON",
+               "BFO:0000050",
+               "BFO:0000066",
+               "RO:0002211",
+               "RO:0002212",
+               "RO:0002213",
+               "RO:0002215",
+               "RO:0002216"
+            ],
+            "description" : "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of)."
+         },
+         {
+            "display_name" : "Term neighborhood graph (JSON)",
+            "cardinality" : "single",
+            "property" : [
+               "getNeighborsJSON"
+            ],
+            "description" : "JSON blob form of all immediate neighbors of the term.",
+            "id" : "neighborhood_graph_json",
+            "type" : "string",
+            "indexed" : "false",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "type" : "string",
+            "indexed" : "false",
+            "required" : "false",
+            "transform" : [],
+            "searchable" : "false",
+            "display_name" : "Term neighborhood limited graph (JSON)",
+            "cardinality" : "single",
+            "property" : [
+               "getNeighborsLimitedJSON"
+            ],
+            "description" : "JSON blob form of all immediate neighbors of the term; in the case that there are too many neighbors to transport, the number will be artificially reduced.",
+            "id" : "neighborhood_limited_graph_json"
+         },
+         {
+            "searchable" : "true",
+            "transform" : [],
+            "required" : "false",
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "only_in_taxon",
+            "description" : "Only in taxon.",
+            "property" : [
+               "getDummyString"
+            ],
+            "cardinality" : "single",
+            "display_name" : "Only in taxon"
+         },
+         {
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "only_in_taxon_label",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "Only in taxon label.",
+            "cardinality" : "single",
+            "display_name" : "Only in taxon"
+         },
+         {
+            "display_name" : "Only in taxon (IDs)",
+            "cardinality" : "multi",
+            "description" : "Only in taxon closure.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "id" : "only_in_taxon_closure",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "true",
+            "type" : "string",
+            "indexed" : "true",
+            "description" : "Only in taxon label closure.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "id" : "only_in_taxon_closure_label",
+            "display_name" : "Only in taxon",
+            "cardinality" : "multi"
+         },
+         {
+            "indexed" : "true",
+            "type" : "string",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "cardinality" : "single",
+            "display_name" : "Annotation extension",
+            "id" : "annotation_extension_owl_json",
+            "description" : "A non-lossy representation of conjunctions and disjunctions in c16 (JSON).",
+            "property" : [
+               "getDummyString"
+            ]
+         },
+         {
+            "display_name" : "Annotation relation",
+            "cardinality" : "single",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "This is equivalent to the relation field in GPAD.",
+            "id" : "annotation_relation",
+            "type" : "string",
+            "indexed" : "true",
+            "transform" : [],
+            "required" : "false",
+            "searchable" : "false"
+         },
+         {
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "annotation_relation_label",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "This is equivalent to the relation field in GPAD.",
+            "cardinality" : "single",
+            "display_name" : "Annotation relation"
+         },
+         {
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string",
+            "id" : "equivalent_class_expressions_json",
+            "property" : [
+               "getDummyString"
+            ],
+            "description" : "For any class document C, this will contain json(CE) for all axioms of form EquivalentClasses(C ... CE ....).",
+            "cardinality" : "single",
+            "display_name" : "Eq class expressions"
+         },
+         {
+            "id" : "disjoint_class_list",
+            "description" : "Disjoint classes.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Disjoint classes",
+            "searchable" : "false",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         },
+         {
+            "id" : "disjoint_class_list_label",
+            "description" : "Disjoint classes.",
+            "property" : [
+               "getDummyStrings"
+            ],
+            "cardinality" : "multi",
+            "display_name" : "Disjoint classes",
+            "searchable" : "true",
+            "required" : "false",
+            "transform" : [],
+            "indexed" : "true",
+            "type" : "string"
+         }
+      ],
+      "document_category" : "ontology_class",
+      "_strict" : 0,
+      "schema_generating" : "true"
+   }
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = golr;
+
+},{}],13:[function(require,module,exports){
+/*
+ * Package: amigo2-instance-server
+ * 
+ * This package was automatically created during AmiGO 2 installation.
+ * 
+ * Purpose: Useful information about GO and the AmiGO installation.
+ *          Also serves as a repository and getter for web
+ *          resources such as images.
+ * 
+ * NOTE: This file is generated dynamically at installation time.
+ *       Hard to work with unit tests--hope it's not too bad.
+ *       Want to keep this real simple.
+ */
+
+// All of the server/instance-specific meta-data.
+var meta_data = {"evidence_codes":{},"browse_filter_idspace":"GO","term_regexp":"all|GO:[0-9]{7}","ontologies":[],"noctua_base":"http://noctua.berkeleybop.org/","golr_bulk_base":"http://localhost:8080/solr/","html_base":"http://localhost:9999/static","galaxy_base":"http://galaxy.berkeleybop.org/","species_map":{},"golr_base":"http://localhost:8080/solr/","sources":[],"image_base":"http://localhost:9999/static/images","app_base":"http://localhost:9999","gp_types":[],"species":[],"beta":"1","js_dev_base":"http://localhost:9999/static/staging","root_terms":[{"id":"GO:0008150","label":"biological process"},{"label":"cellular component","id":"GO:0005575"},{"id":"GO:0003674","label":"molecular function"}],"css_base":"http://localhost:9999/static/css","bbop_img_star":"http://localhost:9999/static/images/star.png","js_base":"http://localhost:9999/static/js"};
+
+/*
+ * Constructor: server
+ * 
+ * The configuration for the server settings.
+ * Essentially a JSONification of the config.pl AmiGO 2 file.
+ * 
+ * Arguments:
+ *  n/a
+ */
+var server = {
+
+    ///
+    /// Da chunk...
+    ///
+
+    meta_data: meta_data,
+
+    ///
+    /// Break out the data and various functions to access them...
+    ///
+
+    /*
+     * Function: sources
+     * 
+     * Access to AmiGO variable sources.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    sources: meta_data.sources,
+
+    /*
+     * Function: app_base
+     * 
+     * Access to AmiGO variable app_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    app_base: meta_data.app_base,
+
+    /*
+     * Function: term_regexp
+     * 
+     * Access to AmiGO variable term_regexp.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    term_regexp: meta_data.term_regexp,
+
+    /*
+     * Function: noctua_base
+     * 
+     * Access to AmiGO variable noctua_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    noctua_base: meta_data.noctua_base,
+
+    /*
+     * Function: golr_base
+     * 
+     * Access to AmiGO variable golr_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    golr_base: meta_data.golr_base,
+
+    /*
+     * Function: golr_bulk_base
+     * 
+     * Access to AmiGO variable golr_bulk_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    golr_bulk_base: meta_data.golr_bulk_base,
+
+    /*
+     * Function: evidence_codes
+     * 
+     * Access to AmiGO variable evidence_codes.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    evidence_codes: meta_data.evidence_codes,
+
+    /*
+     * Function: root_terms
+     * 
+     * Access to AmiGO variable root_terms.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  object
+     */
+    root_terms: meta_data.root_terms,
+
+    /*
+     * Function: beta
+     * 
+     * Access to AmiGO variable beta.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    beta: meta_data.beta,
+
+    /*
+     * Function: html_base
+     * 
+     * Access to AmiGO variable html_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    html_base: meta_data.html_base,
+
+    /*
+     * Function: gp_types
+     * 
+     * Access to AmiGO variable gp_types.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    gp_types: meta_data.gp_types,
+
+    /*
+     * Function: browse_filter_idspace
+     * 
+     * Access to AmiGO variable browse_filter_idspace.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    browse_filter_idspace: meta_data.browse_filter_idspace,
+
+    /*
+     * Function: species_map
+     * 
+     * Access to AmiGO variable species_map.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    species_map: meta_data.species_map,
+
+    /*
+     * Function: js_base
+     * 
+     * Access to AmiGO variable js_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    js_base: meta_data.js_base,
+
+    /*
+     * Function: species
+     * 
+     * Access to AmiGO variable species.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    species: meta_data.species,
+
+    /*
+     * Function: js_dev_base
+     * 
+     * Access to AmiGO variable js_dev_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    js_dev_base: meta_data.js_dev_base,
+
+    /*
+     * Function: galaxy_base
+     * 
+     * Access to AmiGO variable galaxy_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    galaxy_base: meta_data.galaxy_base,
+
+    /*
+     * Function: css_base
+     * 
+     * Access to AmiGO variable css_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    css_base: meta_data.css_base,
+
+    /*
+     * Function: bbop_img_star
+     * 
+     * Access to AmiGO variable bbop_img_star.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    bbop_img_star: meta_data.bbop_img_star,
+
+    /*
+     * Function: ontologies
+     * 
+     * Access to AmiGO variable ontologies.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    ontologies: meta_data.ontologies,
+
+    /*
+     * Function: image_base
+     * 
+     * Access to AmiGO variable image_base.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  string
+     */
+    image_base: meta_data.image_base,
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = server;
+
+},{}],14:[function(require,module,exports){
+/* 
+ * Package: xrefs.js
+ * 
+ * Namespace: amigo.data.xrefs
+ * 
+ * This package was automatically created during an AmiGO 2 installation
+ * from the GO.xrf_abbs file at: "https://raw.githubusercontent.com/geneontology/go-site/master/metadata/db-xrefs.yaml".
+ *
+ * NOTE: This file is generated dynamically at installation time.
+ * Hard to work with unit tests--hope it's not too bad. You have to
+ * occasionally copy back to keep the unit tests sane.
+ */
+
+/*
+ * Variable: xrefs
+ * 
+ * All the external references that we know about.
+ */
+var xrefs = {
+   "dictybase_gene_name" : {
+      "url_example" : "http://dictybase.org/gene/mlcE",
+      "abbreviation" : "dictyBase_gene_name",
+      "example_id" : "dictyBase_gene_name:mlcE",
+      "object" : "entity",
+      "id" : "dictyBase_gene_name",
+      "url_syntax" : "http://dictybase.org/gene/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://dictybase.org",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "dictyBase",
+      "name" : "dictyBase"
+   },
+   "jcvi_genprop" : {
+      "database" : "Genome Properties database at the J. Craig Venter Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Genome Properties database at the J. Craig Venter Institute",
+      "datatype" : "biological_process",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=[example_id]",
+      "id" : "JCVI_GenProp",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "example_id" : "JCVI_GenProp:GenProp0120",
+      "object" : "biological_process",
+      "abbreviation" : "JCVI_GenProp",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=GenProp0120"
+   },
+   "syscilia_ccnet" : {
+      "id" : "SYSCILIA_CCNET",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://syscilia.org/",
+      "fullname" : "A systems biology approach to dissect cilia function and its disruption in human genetic disease",
+      "uri_prefix" : null,
+      "database" : "Syscilia",
+      "name" : "Syscilia",
+      "url_example" : null,
+      "abbreviation" : "SYSCILIA_CCNET",
+      "object" : "entity",
+      "example_id" : null
+   },
+   "cog_function" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=[example_id]",
+      "datatype" : "entity",
+      "id" : "COG_Function",
+      "name" : "NCBI COG function",
+      "database" : "NCBI COG function",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "COG_Function:H",
+      "object" : "entity",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=H",
+      "abbreviation" : "COG_Function"
+   },
+   "jcvi_medtr" : {
+      "abbreviation" : "JCVI_Medtr",
+      "url_example" : "http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=Medtr5g024510",
+      "object" : "entity",
+      "example_id" : "JCVI_Medtr:Medtr5g024510",
+      "id" : "JCVI_Medtr",
+      "url_syntax" : "http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://medicago.jcvi.org/cgi-bin/medicago/overview.cgi",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Medicago truncatula genome database at the J. Craig Venter Institute",
+      "name" : "Medicago truncatula genome database at the J. Craig Venter Institute"
+   },
+   "ensemblmetazoa" : {
+      "object" : "gene",
+      "example_id" : "EnsemblMetazoa:FBgn0052693",
+      "abbreviation" : "EnsemblMetazoa",
+      "url_example" : "http://www.ensemblgenomes.org/id/FBgn0052693",
+      "generic_url" : "http://metazoa.ensembl.org/",
+      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_id]",
+      "datatype" : "gene",
+      "id" : "EnsemblMetazoa",
+      "name" : "Ensembl Metazoa, the Ensembl database for accessing genome-scale data from non-vertebrate metazoa.",
+      "database" : "Ensembl Metazoa, the Ensembl database for accessing genome-scale data from non-vertebrate metazoa.",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "broad" : {
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "Broad",
+      "url_example" : null,
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "Broad",
+      "generic_url" : "http://www.broad.mit.edu/",
+      "database" : "Broad Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Broad Institute"
+   },
+   "rad" : {
+      "object" : "gene",
+      "example_id" : "RGD:2004",
+      "abbreviation" : "RAD",
+      "url_example" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004",
+      "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
+      "datatype" : "gene",
+      "id" : "RGD",
+      "generic_url" : "http://rgd.mcw.edu/",
+      "database" : "Rat Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Rat Genome Database"
+   },
+   "genbank" : {
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=AA816246",
+      "abbreviation" : "GenBank",
+      "object" : "protein",
+      "example_id" : "GB:AA816246",
+      "name" : "GenBank",
+      "fullname" : "The NIH genetic sequence database, an annotated collection of all publicly available DNA sequences.",
+      "uri_prefix" : null,
+      "database" : "GenBank",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
+      "id" : "GenBank",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]",
+      "datatype" : "protein"
+   },
+   "genesys-pgr" : {
+      "name" : "Gene DB, Genesys",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Gene DB, Genesys",
+      "generic_url" : "https://www.genesys-pgr.org/",
+      "id" : "Genesys-pgr",
+      "datatype" : "entity",
+      "url_syntax" : "https://www.genesys-pgr.org/acn/search?q=[example_id]",
+      "url_example" : "https://www.genesys-pgr.org/acn/search?q=CM1015-16",
+      "abbreviation" : "Genesys-pgr",
+      "example_id" : "Genesys-pgr:CM1015-16",
+      "object" : "entity"
+   },
+   "pubchem_substance" : {
+      "id" : "PubChem_Substance",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=[example_id]",
+      "datatype" : "chemical entity",
+      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "NCBI PubChem database of chemical substances",
+      "name" : "NCBI PubChem database of chemical substances",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=4594",
+      "abbreviation" : "PubChem_Substance",
+      "object" : "chemical entity",
+      "example_id" : "PubChem_Substance:4594"
+   },
+   "go_noctua" : {
+      "url_example" : null,
+      "abbreviation" : "GO_Noctua",
+      "example_id" : null,
+      "object" : "entity",
+      "id" : "GO_Noctua",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "https://github.com/geneontology/noctua-models",
+      "uri_prefix" : null,
+      "fullname" : "Manual annotation derived from LEGO annotations",
+      "database" : "GO Noctua",
+      "name" : "GO Noctua"
+   },
+   "sptrembl" : {
+      "url_example" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:Q00177]",
+      "abbreviation" : "SPTREMBL",
+      "object" : "entity",
+      "example_id" : "TrEMBL:Q00177",
+      "id" : "TR",
+      "url_syntax" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:[example_id]]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.ebi.ac.uk/swissprot/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "TREMBL",
+      "name" : "TREMBL"
+   },
+   "syngo" : {
+      "abbreviation" : "SynGO",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "The Synapse Gene Ontology and Annotation Initiative",
+      "name" : "The Synapse Gene Ontology and Annotation Initiative",
+      "id" : "SynGO",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://geneontology.org/page/syngo-synapse-biology"
+   },
+   "panther" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
+      "name" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
+      "id" : "PANTHER",
+      "datatype" : "protein family",
+      "url_syntax" : "http://www.pantherdb.org/panther/lookupId.jsp?id=[example_id]",
+      "generic_url" : "http://www.pantherdb.org/",
+      "abbreviation" : "PANTHER",
+      "url_example" : "http://www.pantherdb.org/panther/lookupId.jsp?id=PTHR10000",
+      "object" : "protein family",
+      "example_id" : "PANTHER:PTHR11455"
+   },
+   "lifedb" : {
+      "example_id" : "LIFEdb:DKFZp564O1716",
+      "object" : "entity",
+      "url_example" : "http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=DKFZp564O1716",
+      "abbreviation" : "LIFEdb",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=[example_id]",
+      "id" : "LIFEdb",
+      "generic_url" : "http://www.lifedb.de/",
+      "database" : "LifeDB",
+      "uri_prefix" : null,
+      "fullname" : "LifeDB is a database for information on protein localization, interaction, functional assays and expression.",
+      "name" : "LifeDB"
+   },
+   "unipathway" : {
+      "url_example" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=UPA00155",
+      "abbreviation" : "UniPathway",
+      "example_id" : "UniPathway:UPA00155",
+      "object" : "biological_process",
+      "generic_url" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway",
+      "id" : "UniPathway",
+      "url_syntax" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=[example_id]",
+      "datatype" : "biological_process",
+      "name" : "UniPathway",
+      "fullname" : "UniPathway is a a metabolic door to UniProtKB/Swiss-Prot, a curated resource of metabolic pathways for the UniProtKB/Swiss-Prot knowledgebase.",
+      "uri_prefix" : null,
+      "database" : "UniPathway"
+   },
+   "trembl" : {
+      "id" : "TR",
+      "datatype" : "entity",
+      "url_syntax" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:[example_id]]",
+      "generic_url" : "http://www.ebi.ac.uk/swissprot/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "TREMBL",
+      "name" : "TREMBL",
+      "url_example" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:Q00177]",
+      "abbreviation" : "TrEMBL",
+      "object" : "entity",
+      "example_id" : "TrEMBL:Q00177"
+   },
+   "trait" : {
+      "example_id" : null,
+      "object" : "entity",
+      "abbreviation" : "TRAIT",
+      "url_example" : null,
+      "generic_url" : "http://muscle.cribi.unipd.it/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "TRAIT",
+      "name" : "TRAnscript Integrated Table",
+      "database" : "TRAnscript Integrated Table",
+      "uri_prefix" : null,
+      "fullname" : "an integrated database of transcripts expressed in human skeletal muscle"
+   },
+   "germonline" : {
+      "id" : "GermOnline",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://www.germonline.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "GermOnline",
+      "name" : "GermOnline",
+      "url_example" : null,
+      "abbreviation" : "GermOnline",
+      "object" : "entity",
+      "example_id" : null
+   },
+   "irri" : {
+      "url_example" : "https://www.genesys-pgr.org/acn/search2?q=IRGC+90637",
+      "abbreviation" : "irri",
+      "object" : "germplasm",
+      "example_id" : "GRIMS:90637",
+      "generic_url" : "https://www.genesys-pgr.org",
+      "id" : "GRIMS",
+      "datatype" : "germplasm",
+      "url_syntax" : "https://www.genesys-pgr.org/acn/search2?q=IRGC+[example_id]",
+      "name" : "IRRI Genetic Resources Information Management System",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "IRRI Genetic Resources Information Management System"
+   },
+   "pinc" : {
+      "abbreviation" : "PINC",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "fullname" : "represents GO annotations created in 2001 for NCBI and extracted into UniProtKB-GOA from EntrezGene",
+      "uri_prefix" : null,
+      "database" : "Proteome Inc.",
+      "name" : "Proteome Inc.",
+      "id" : "PINC",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.proteome.com/"
+   },
+   "iuphar_receptor" : {
+      "example_id" : "IUPHAR_RECEPTOR:2205",
+      "object" : "entity",
+      "abbreviation" : "IUPHAR_RECEPTOR",
+      "url_example" : "http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=56",
+      "database" : "International Union of Pharmacology",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "International Union of Pharmacology",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=[example_id]",
+      "id" : "IUPHAR_RECEPTOR",
+      "generic_url" : "http://www.iuphar.org/"
+   },
+   "lis" : {
+      "example_id" : "LIS:Medtr5g030920",
+      "object" : "entity",
+      "abbreviation" : "LIS",
+      "url_example" : "http://legumeinfo.org/feature/Medicago/truncatula/gene/Medtr5g030920.JCVIMt4.0v1",
+      "datatype" : "entity",
+      "url_syntax" : "http://legumeinfo.org/feature/Medicago/truncatula/gene/[example_id].JCVIMt4.0v1",
+      "id" : "LIS",
+      "generic_url" : "http://legumeinfo.org/",
+      "database" : "Legume Information System",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Legume Information System"
+   },
+   "spd" : {
+      "url_example" : "http://www.riken.jp/SPD/05/05F01.html",
+      "abbreviation" : "SPD",
+      "example_id" : "SPD:05/05F01",
+      "object" : "entity",
+      "generic_url" : "http://www.riken.jp/SPD/",
+      "id" : "SPD",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.riken.jp/SPD/[example_id].html",
+      "name" : "Schizosaccharomyces pombe Postgenome Database at RIKEN; includes Orfeome Localisation data",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Schizosaccharomyces pombe Postgenome Database at RIKEN; includes Orfeome Localisation data"
+   },
+   "mtbbase" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "MTBBASE",
+      "database" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "MTBBASE",
+      "generic_url" : "http://www.ark.in-berlin.de/Site/MTBbase.html"
+   },
+   "um-bbd" : {
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "UM-BBD",
+      "generic_url" : "http://eawag-bbd.ethz.ch/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "UM-BBD",
+      "name" : "EAWAG Biocatalysis/Biodegradation Database",
+      "database" : "EAWAG Biocatalysis/Biodegradation Database",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "muscletrait" : {
+      "url_example" : null,
+      "abbreviation" : "MuscleTRAIT",
+      "object" : "entity",
+      "example_id" : null,
+      "id" : "TRAIT",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://muscle.cribi.unipd.it/",
+      "fullname" : "an integrated database of transcripts expressed in human skeletal muscle",
+      "uri_prefix" : null,
+      "database" : "TRAnscript Integrated Table",
+      "name" : "TRAnscript Integrated Table"
+   },
+   "tigr_ref" : {
+      "database" : "J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "J. Craig Venter Institute",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "JCVI_REF",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "example_id" : "JCVI_REF:GO_ref",
+      "object" : "entity",
+      "abbreviation" : "TIGR_REF",
+      "url_example" : "http://cmr.jcvi.org/CMR/AnnotationSops.shtml"
+   },
+   "gr_qtl" : {
+      "object" : "entity",
+      "example_id" : "GR_QTL:CQU7",
+      "abbreviation" : "GR_QTL",
+      "url_example" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=CQU7",
+      "database" : "Gramene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Gramene",
+      "url_syntax" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=[example_id]",
+      "datatype" : "entity",
+      "id" : "GR_QTL",
+      "generic_url" : "http://www.gramene.org/"
+   },
+   "tgd_locus" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Tetrahymena Genome Database",
+      "name" : "Tetrahymena Genome Database",
+      "id" : "TGD_LOCUS",
+      "datatype" : "entity",
+      "url_syntax" : "http://db.ciliate.org/cgi-bin/locus.pl?locus=[example_id]",
+      "generic_url" : "http://www.ciliate.org/",
+      "abbreviation" : "TGD_LOCUS",
+      "url_example" : "http://db.ciliate.org/cgi-bin/locus.pl?locus=PDD1",
+      "example_id" : "TGD_LOCUS:PDD1",
+      "object" : "entity"
+   },
+   "locusid" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/gene/[example_id]",
+      "datatype" : "gene",
+      "id" : "NCBI_Gene",
+      "name" : "NCBI Gene",
+      "database" : "NCBI Gene",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "NCBI_Gene:4771",
+      "object" : "gene",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/gene/4771",
+      "abbreviation" : "LocusID"
+   },
+   "pharmgkb" : {
+      "name" : "Pharmacogenetics and Pharmacogenomics Knowledge Base",
+      "database" : "Pharmacogenetics and Pharmacogenomics Knowledge Base",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.pharmgkb.org",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.pharmgkb.org/do/serve?objId=[example_id]",
+      "id" : "PharmGKB",
+      "object" : "entity",
+      "example_id" : "PharmGKB:PA267",
+      "url_example" : "http://www.pharmgkb.org/do/serve?objId=PA267",
+      "abbreviation" : "PharmGKB"
+   },
+   "rebase" : {
+      "abbreviation" : "REBASE",
+      "url_example" : "http://rebase.neb.com/rebase/enz/EcoRI.html",
+      "example_id" : "REBASE:EcoRI",
+      "object" : "entity",
+      "generic_url" : "http://rebase.neb.com/rebase/rebase.html",
+      "id" : "REBASE",
+      "url_syntax" : "http://rebase.neb.com/rebase/enz/[example_id].html",
+      "datatype" : "entity",
+      "name" : "REBASE restriction enzyme database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "REBASE restriction enzyme database"
+   },
+   "uniparc" : {
+      "generic_url" : "http://www.uniprot.org/uniparc/",
+      "id" : "UniParc",
+      "url_syntax" : "http://www.uniprot.org/uniparc/[example_id]",
+      "datatype" : "entity",
+      "name" : "UniProt Archive",
+      "uri_prefix" : null,
+      "fullname" : "A non-redundant archive of protein sequences extracted from Swiss-Prot, TrEMBL, PIR-PSD, EMBL, Ensembl, IPI, PDB, RefSeq, FlyBase, WormBase, European Patent Office, United States Patent and Trademark Office, and Japanese Patent Office",
+      "database" : "UniProt Archive",
+      "abbreviation" : "UniParc",
+      "url_example" : "http://www.uniprot.org/uniparc/UPI000000000A",
+      "object" : "entity",
+      "example_id" : "UniParc:UPI000000000A"
+   },
+   "cog_pathway" : {
+      "abbreviation" : "COG_Pathway",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=14",
+      "object" : "entity",
+      "example_id" : "COG_Pathway:14",
+      "id" : "COG_Pathway",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "NCBI COG pathway",
+      "name" : "NCBI COG pathway"
+   },
+   "cacao" : {
+      "example_id" : "MYCS2:A0QNF5",
+      "object" : "entity",
+      "abbreviation" : "CACAO",
+      "url_example" : "http://gowiki.tamu.edu/wiki/index.php/MYCS2:A0QNF5",
+      "url_syntax" : "http://gowiki.tamu.edu/wiki/index.php/[example_id]",
+      "datatype" : "entity",
+      "id" : "CACAO",
+      "generic_url" : "http://gowiki.tamu.edu/wiki/index.php/Category:CACAO",
+      "database" : "Community Assessment of Community Annotation with Ontologies",
+      "fullname" : "The Community Assessment of Community Annotation with Ontologies (CACAO) is a project to do large-scale manual community annotation of gene function using the Gene Ontology as a multi-institution student competition.",
+      "uri_prefix" : null,
+      "name" : "Community Assessment of Community Annotation with Ontologies"
+   },
+   "cosmoss_ppv1.2" : {
+      "abbreviation" : "cosmoss_PpV1.2",
+      "url_example" : "https://www.cosmoss.org/annotation/genonaut?accession=Pp1s53_22V2.1&version=V1.2",
+      "object" : "entity",
+      "example_id" : "cosmoss_PpV1.2:Pp1s47_77V2.1",
+      "generic_url" : "https://www.cosmoss.org/annotation/genonaut",
+      "id" : "cosmoss_PpV1.2",
+      "datatype" : "entity",
+      "url_syntax" : "https://www.cosmoss.org/annotation/genonaut?accession=[example_id]&version=V1.2",
+      "name" : "plantco.de|cosmoss.org",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "plantco.de|cosmoss.org"
+   },
+   "uniprotkb" : {
+      "datatype" : "protein",
+      "url_syntax" : "http://www.uniprot.org/uniprot/[example_id]",
+      "id" : "UniProtKB",
+      "generic_url" : "http://www.uniprot.org",
+      "database" : "Universal Protein Knowledgebase",
+      "uri_prefix" : null,
+      "fullname" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
+      "name" : "Universal Protein Knowledgebase",
+      "object" : "protein",
+      "example_id" : "UniProtKB:P51587",
+      "url_example" : "http://www.uniprot.org/uniprot/P51587",
+      "abbreviation" : "UniProtKB"
+   },
+   "unigene" : {
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=[organism_abbreviation]&CID=[cluster_id]",
+      "datatype" : "entity",
+      "id" : "UniGene",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/UniGene",
+      "database" : "UniGene",
+      "fullname" : "NCBI transcript cluster database, organized by transcriptome. Each UniGene entry is a set of transcript sequences that appear to come from the same transcription locus (gene or expressed pseudogene).",
+      "uri_prefix" : null,
+      "name" : "UniGene",
+      "example_id" : "UniGene:Hs.212293",
+      "object" : "entity",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=Hs&CID=212293",
+      "abbreviation" : "UniGene"
+   },
+   "omim" : {
+      "name" : "Mendelian Inheritance in Man",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Mendelian Inheritance in Man",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM",
+      "id" : "OMIM",
+      "url_syntax" : "http://omim.org/entry/[example_id]",
+      "datatype" : "entity",
+      "url_example" : "http://omim.org/entry/190198",
+      "abbreviation" : "OMIM",
+      "object" : "entity",
+      "example_id" : "OMIM:190198"
+   },
+   "biosis" : {
+      "url_example" : null,
+      "abbreviation" : "BIOSIS",
+      "example_id" : "BIOSIS:200200247281",
+      "object" : "entity",
+      "id" : "BIOSIS",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.biosis.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "BIOSIS previews",
+      "name" : "BIOSIS previews"
+   },
+   "protein_id" : {
+      "abbreviation" : "protein_id",
+      "url_example" : null,
+      "example_id" : "protein_id:CAA71991",
+      "object" : "protein",
+      "name" : "DDBJ / ENA / GenBank",
+      "fullname" : "protein identifier shared by DDBJ/EMBL-bank/GenBank nucleotide sequence databases",
+      "uri_prefix" : null,
+      "database" : "DDBJ / ENA / GenBank",
+      "generic_url" : "http://www.ddbj.nig.ac.jp/",
+      "id" : "protein_id",
+      "url_syntax" : null,
+      "datatype" : "protein"
+   },
+   "pamgo_gat" : {
+      "datatype" : "entity",
+      "url_syntax" : "http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=[example_id]",
+      "id" : "PAMGO_GAT",
+      "generic_url" : "http://agro.vbi.vt.edu/public/",
+      "database" : "Genome Annotation Tool (Agrobacterium tumefaciens C58); PAMGO Interest Group",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Genome Annotation Tool (Agrobacterium tumefaciens C58); PAMGO Interest Group",
+      "example_id" : "PAMGO_GAT:Atu0001",
+      "object" : "entity",
+      "url_example" : "http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=atu0001",
+      "abbreviation" : "PAMGO_GAT"
+   },
+   "embl" : {
+      "abbreviation" : "EMBL",
+      "url_example" : "http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=AA816246",
+      "example_id" : "EMBL:AA816246",
+      "object" : "gene",
+      "uri_prefix" : null,
+      "fullname" : "International nucleotide sequence database collaboration, comprising EMBL-EBI nucleotide sequence data library (EMBL-Bank), DNA DataBank of Japan (DDBJ), and NCBI GenBank",
+      "database" : "EMBL Nucleotide Sequence Database",
+      "name" : "EMBL Nucleotide Sequence Database",
+      "id" : "EMBL",
+      "url_syntax" : "http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=[example_id]",
+      "datatype" : "gene",
+      "generic_url" : "http://www.ebi.ac.uk/embl/"
+   },
+   "ncbi_gi" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "id" : "NCBI_gi",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]",
+      "datatype" : "gene",
+      "name" : "NCBI databases",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "NCBI databases",
+      "abbreviation" : "NCBI_gi",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=113194944",
+      "example_id" : "NCBI_gi:113194944",
+      "object" : "gene"
+   },
+   "eco" : {
+      "abbreviation" : "ECO",
+      "url_example" : null,
+      "example_id" : "ECO:0000002",
+      "object" : "entity",
+      "name" : "Evidence Code ontology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Evidence Code ontology",
+      "generic_url" : "http://www.geneontology.org/",
+      "id" : "ECO",
+      "url_syntax" : null,
+      "datatype" : "entity"
+   },
+   "mitre" : {
+      "generic_url" : "http://www.mitre.org/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "MITRE",
+      "name" : "The MITRE Corporation",
+      "database" : "The MITRE Corporation",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "MITRE"
+   },
+   "emapa" : {
+      "generic_url" : "http://emouseatlas.org/",
+      "datatype" : "anatomical entity",
+      "url_syntax" : "http://www.informatics.jax.org/vocab/gxd/anatomy/EMAPA:[example_id]",
+      "id" : "EMAPA",
+      "name" : "Mouse gross anatomy and development, abstract",
+      "database" : "Mouse gross anatomy and development, abstract",
+      "uri_prefix" : null,
+      "fullname" : "A time-independent Mouse Anatomical Dictionary; part of Gene Expression Database",
+      "object" : "anatomical entity",
+      "example_id" : "EMAPA:16032",
+      "url_example" : "http://www.informatics.jax.org/vocab/gxd/anatomy/EMAPA:16894",
+      "abbreviation" : "EMAPA"
+   },
+   "pompep" : {
+      "name" : "Schizosaccharomyces pombe protein data",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Schizosaccharomyces pombe protein data",
+      "generic_url" : "ftp://ftp.sanger.ac.uk/pub/yeast/pombe/Protein_data/",
+      "id" : "Pompep",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "url_example" : null,
+      "abbreviation" : "Pompep",
+      "object" : "entity",
+      "example_id" : "Pompep:SPAC890.04C"
+   },
+   "tigr_cmr" : {
+      "datatype" : "protein",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
+      "id" : "JCVI_CMR",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "database" : "EGAD database at the J. Craig Venter Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "EGAD database at the J. Craig Venter Institute",
+      "example_id" : "JCVI_CMR:VCA0557",
+      "object" : "protein",
+      "abbreviation" : "TIGR_CMR",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557"
+   },
+   "pirsf" : {
+      "id" : "PIRSF",
+      "datatype" : "entity",
+      "url_syntax" : "http://pir.georgetown.edu/cgi-bin/ipcSF?id=[example_id]",
+      "generic_url" : "http://pir.georgetown.edu/pirsf/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "PIR Superfamily Classification System",
+      "name" : "PIR Superfamily Classification System",
+      "url_example" : "http://pir.georgetown.edu/cgi-bin/ipcSF?id=SF002327",
+      "abbreviation" : "PIRSF",
+      "example_id" : "PIRSF:SF002327",
+      "object" : "entity"
+   },
+   "ptarget" : {
+      "url_example" : null,
+      "abbreviation" : "pTARGET",
+      "example_id" : null,
+      "object" : "entity",
+      "id" : "pTARGET",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://bioinformatics.albany.edu/~ptarget/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "pTARGET Prediction server for protein subcellular localization",
+      "name" : "pTARGET Prediction server for protein subcellular localization"
+   },
+   "pubchem_compound" : {
+      "name" : "NCBI PubChem database of chemical structures",
+      "database" : "NCBI PubChem database of chemical structures",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
+      "datatype" : "chemical entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=[example_id]",
+      "id" : "PubChem_Compound",
+      "example_id" : "PubChem_Compound:2244",
+      "object" : "chemical entity",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=2244",
+      "abbreviation" : "PubChem_Compound"
+   },
+   "apidb_plasmodb" : {
+      "abbreviation" : "ApiDB_PlasmoDB",
+      "url_example" : "http://www.plasmodb.org/gene/PF11_0344",
+      "object" : "entity",
+      "example_id" : "ApiDB_PlasmoDB:PF11_0344",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "PlasmoDB Plasmodium Genome Resource",
+      "name" : "PlasmoDB Plasmodium Genome Resource",
+      "id" : "ApiDB_PlasmoDB",
+      "url_syntax" : "http://www.plasmodb.org/gene/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://plasmodb.org/"
+   },
+   "po" : {
+      "abbreviation" : "PO",
+      "url_example" : "http://browser.planteome.org/amigo/term/PO:0025131",
+      "object" : "plant structure development stage",
+      "example_id" : "PO:0025131",
+      "id" : "PO",
+      "url_syntax" : "http://browser.planteome.org/amigo/term/PO:[example_id]",
+      "datatype" : "plant structure development stage",
+      "generic_url" : "http://www.planteome.org/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Plant Ontology",
+      "name" : "Plant Ontology"
+   },
+   "iptmnet" : {
+      "abbreviation" : "iPTMnet",
+      "url_example" : "http://annotation.dbi.udel.edu/iptmnet/entry/P06493/",
+      "example_id" : "iPTM:P06493",
+      "object" : "entity",
+      "id" : "iPTMnet",
+      "url_syntax" : "http://annotation.dbi.udel.edu/iptmnet/entry/[example_id]/",
+      "datatype" : "entity",
+      "generic_url" : "http://annotation.dbi.udel.edu/iptmnet/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "iPTMnet protein post-translational modification database",
+      "name" : "iPTMnet protein post-translational modification database"
+   },
+   "sabio-rk" : {
+      "example_id" : "SABIO-RK:1858",
+      "object" : "entity",
+      "abbreviation" : "SABIO-RK",
+      "url_example" : "http://sabio.villa-bosch.de/reacdetails.jsp?reactid=1858",
+      "database" : "SABIO Reaction Kinetics",
+      "uri_prefix" : null,
+      "fullname" : "The SABIO-RK (System for the Analysis of Biochemical Pathways - Reaction Kinetics) is a web-based application based on the SABIO relational database that contains information about biochemical reactions, their kinetic equations with their parameters, and the experimental conditions under which these parameters were measured.",
+      "name" : "SABIO Reaction Kinetics",
+      "datatype" : "entity",
+      "url_syntax" : "http://sabio.villa-bosch.de/reacdetails.jsp?reactid=[example_id]",
+      "id" : "SABIO-RK",
+      "generic_url" : "http://sabio.villa-bosch.de/"
+   },
+   "ensemblplants/gramene" : {
+      "example_id" : "EnsemblPlants:LOC_Os01g22954",
+      "object" : "gene",
+      "url_example" : "http://www.ensemblgenomes.org/id/LOC_Os01g22954",
+      "abbreviation" : "EnsemblPlants/Gramene",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_id]",
+      "id" : "EnsemblPlants",
+      "generic_url" : "http://plants.ensembl.org/",
+      "database" : "Ensembl Plants, the Ensembl database for accessing genome-scale data from plants.",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Ensembl Plants, the Ensembl database for accessing genome-scale data from plants."
+   },
+   "ec" : {
+      "name" : "Enzyme Commission",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Enzyme Commission",
+      "generic_url" : "http://enzyme.expasy.org/",
+      "id" : "EC",
+      "datatype" : "catalytic activity",
+      "url_syntax" : "http://www.expasy.org/enzyme/[example_id]",
+      "abbreviation" : "EC",
+      "url_example" : "http://www.expasy.org/enzyme/1.4.3.6",
+      "example_id" : "EC:1.4.3.6",
+      "object" : "catalytic activity"
+   },
+   "sptr" : {
+      "abbreviation" : "SPTR",
+      "url_example" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:12345]",
+      "example_id" : "SPTR:12345",
+      "object" : "entity",
+      "id" : "SPTR",
+      "datatype" : "entity",
+      "url_syntax" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:[example_id]]",
+      "generic_url" : "http://srs.ebi.ac.uk",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "SRS database at EBI",
+      "name" : "SRS database at EBI"
+   },
+   "soy_qtl" : {
+      "database" : "SoyBase",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "SoyBase",
+      "url_syntax" : "http://soybase.org/sbt/search/search_results.php?category=QTLName&search_term=[example_id]",
+      "datatype" : "entity",
+      "id" : "SOY_QTL",
+      "generic_url" : "http://soybase.org/",
+      "object" : "entity",
+      "example_id" : "Seedling, abnormal+1-1",
+      "abbreviation" : "SOY_QTL",
+      "url_example" : "http://www.soybase.org/sbt/search/search_results.php?category=QTLName&search_term=Seedling,+abnormal+1-1"
+   },
+   "gr_protein" : {
+      "id" : "GR_PROTEIN",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.gramene.org/db/protein/protein_search?acc=[example_id]",
+      "generic_url" : "http://www.gramene.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Gramene",
+      "name" : "Gramene",
+      "url_example" : "http://www.gramene.org/db/protein/protein_search?acc=Q6VSV0",
+      "abbreviation" : "GR_protein",
+      "object" : "protein",
+      "example_id" : "GR_PROTEIN:Q6VSV0"
+   },
+   "jcvi_tigrfams" : {
+      "abbreviation" : "JCVI_TIGRFAMS",
+      "url_example" : "http://search.jcvi.org/search?p&q=TIGR00254",
+      "example_id" : "JCVI_TIGRFAMS:TIGR00254",
+      "object" : "polypeptide region",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
+      "name" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
+      "id" : "JCVI_TIGRFAMS",
+      "datatype" : "polypeptide region",
+      "url_syntax" : "http://search.jcvi.org/search?p&q=[example_id]",
+      "generic_url" : "http://search.jcvi.org/"
+   },
+   "aspgdid" : {
+      "id" : "AspGD",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
+      "generic_url" : "http://www.aspergillusgenome.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Aspergillus Genome Database",
+      "name" : "Aspergillus Genome Database",
+      "abbreviation" : "AspGDID",
+      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
+      "example_id" : "AspGD:ASPL0000067538",
+      "object" : "gene"
+   },
+   "ri" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Roslin Institute",
+      "name" : "Roslin Institute",
+      "id" : "Roslin_Institute",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.roslin.ac.uk/",
+      "abbreviation" : "RI",
+      "url_example" : null,
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "hgnc" : {
+      "example_id" : "HGNC:29",
+      "object" : "gene",
+      "url_example" : "http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:29",
+      "abbreviation" : "HGNC",
+      "url_syntax" : "http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:[example_id]",
+      "datatype" : "gene",
+      "id" : "HGNC",
+      "generic_url" : "http://www.genenames.org/",
+      "database" : "HUGO Gene Nomenclature Committee",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "HUGO Gene Nomenclature Committee"
+   },
+   "casref" : {
+      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=[example_id]",
+      "datatype" : "entity",
+      "id" : "CASREF",
+      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
+      "database" : "Catalog of Fishes publications database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Catalog of Fishes publications database",
+      "object" : "entity",
+      "example_id" : "CASREF:2031",
+      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=2031",
+      "abbreviation" : "CASREF"
+   },
+   "bfo" : {
+      "abbreviation" : "BFO",
+      "url_example" : "http://purl.obolibrary.org/obo/BFO_0000066",
+      "object" : "entity",
+      "example_id" : "BFO:0000066",
+      "fullname" : "An upper ontology used by Open Bio Ontologies (OBO) Foundry. BFO contains upper-level classes as well as core relations such as part_of (BFO_0000050)",
+      "uri_prefix" : null,
+      "database" : "Basic Formal Ontology",
+      "name" : "Basic Formal Ontology",
+      "id" : "BFO",
+      "datatype" : "entity",
+      "url_syntax" : "http://purl.obolibrary.org/obo/BFO_[example_id]",
+      "generic_url" : "http://purl.obolibrary.org/obo/bfo"
+   },
+   "kegg_ligand" : {
+      "generic_url" : "http://www.genome.ad.jp/kegg/docs/upd_ligand.html",
+      "id" : "KEGG_LIGAND",
+      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?cpd:[example_id]",
+      "datatype" : "chemical entity",
+      "name" : "KEGG LIGAND Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "KEGG LIGAND Database",
+      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?cpd:C00577",
+      "abbreviation" : "KEGG_LIGAND",
+      "example_id" : "KEGG_LIGAND:C00577",
+      "object" : "chemical entity"
+   },
+   "reactome" : {
+      "id" : "Reactome",
+      "datatype" : "entity",
+      "url_syntax" : "www.reactome.org/content/detail/[example_id]",
+      "generic_url" : "http://www.reactome.org/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Reactome - a curated knowledgebase of biological pathways",
+      "name" : "Reactome - a curated knowledgebase of biological pathways",
+      "abbreviation" : "REACTOME",
+      "url_example" : "www.reactome.org/content/detail/R-HSA-109582",
+      "object" : "entity",
+      "example_id" : "Reactome:R-HSA-109582"
+   },
+   "psort" : {
+      "url_example" : null,
+      "abbreviation" : "PSORT",
+      "example_id" : null,
+      "object" : "entity",
+      "generic_url" : "http://www.psort.org/",
+      "id" : "PSORT",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "name" : "PSORT protein subcellular localization databases and prediction tools for bacteria",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "PSORT protein subcellular localization databases and prediction tools for bacteria"
+   },
+   "taxon" : {
+      "object" : "entity",
+      "example_id" : "taxon:7227",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702",
+      "abbreviation" : "taxon",
+      "database" : "NCBI Taxonomy",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "NCBI Taxonomy",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
+      "id" : "taxon",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/"
+   },
+   "hpa_antibody" : {
+      "generic_url" : "http://www.proteinatlas.org/",
+      "url_syntax" : "http://www.proteinatlas.org/antibody_info.php?antibody_id=[example_id]",
+      "datatype" : "entity",
+      "id" : "HPA_antibody",
+      "name" : "Human Protein Atlas antibody information",
+      "database" : "Human Protein Atlas antibody information",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "HPA_antibody:HPA000237",
+      "object" : "entity",
+      "url_example" : "http://www.proteinatlas.org/antibody_info.php?antibody_id=HPA000237",
+      "abbreviation" : "HPA_antibody"
+   },
+   "ecogene" : {
+      "url_example" : "http://www.ecogene.org/geneInfo.php?eg_id=EG10818",
+      "abbreviation" : "ECOGENE",
+      "example_id" : "ECOGENE:EG10818",
+      "object" : "gene",
+      "generic_url" : "http://www.ecogene.org/",
+      "id" : "ECOGENE",
+      "url_syntax" : "http://www.ecogene.org/geneInfo.php?eg_id=[example_id]",
+      "datatype" : "gene",
+      "name" : "EcoGene Database of Escherichia coli Sequence and Function",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "EcoGene Database of Escherichia coli Sequence and Function"
+   },
+   "to_git" : {
+      "object" : "entity",
+      "example_id" : "TO_GIT:381",
+      "abbreviation" : "TO_GIT",
+      "url_example" : "https://github.com/Planteome/plant-trait-ontology/issues/381",
+      "generic_url" : "https://github.com/Planteome/plant-trait-ontology",
+      "datatype" : "entity",
+      "url_syntax" : "https://github.com/Planteome/plant-trait-ontology/issues/[example_id]",
+      "id" : "TO_GIT",
+      "name" : "GitHub",
+      "database" : "GitHub",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "sgn" : {
+      "url_example" : "http://solgenomics.net/phenome/locus_display.pl?locus_id=7740",
+      "abbreviation" : "SGN",
+      "example_id" : "SGN_gene:7740",
+      "object" : "gene",
+      "generic_url" : "http://www.sgn.cornell.edu/",
+      "id" : "SGN",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]",
+      "name" : "Sol Genomics Network",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Sol Genomics Network"
+   },
+   "mgcsc_genetic_stocks" : {
+      "abbreviation" : "MGCSC_GENETIC_STOCKS",
+      "url_example" : "http://www.maizegdb.org/cgi-bin/displaytraitrecord.cgi?id=78112",
+      "example_id" : "MGCSC_GENETIC_STOCKS:78112",
+      "object" : "entity",
+      "name" : "Maize Genetics and Genomics Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Maize Genetics and Genomics Database",
+      "generic_url" : "http://www.maizegdb.org",
+      "id" : "MGCSC_GENETIC_STOCKS",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.maizegdb.org/cgi-bin/displaystockrecord.cgi?id=[example_id]"
+   },
+   "ensembl_transcriptid" : {
+      "example_id" : "ENSEMBL_TranscriptID:ENST00000371959",
+      "object" : "transcript",
+      "url_example" : "http://www.ensembl.org/id/ENST00000371959",
+      "abbreviation" : "ENSEMBL_TranscriptID",
+      "datatype" : "transcript",
+      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
+      "id" : "ENSEMBL_TranscriptID",
+      "generic_url" : "http://www.ensembl.org/",
+      "database" : "Ensembl database of automatically annotated genomic data",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Ensembl database of automatically annotated genomic data"
+   },
+   "pombase" : {
+      "generic_url" : "http://www.pombase.org/",
+      "url_syntax" : "http://www.pombase.org/spombe/result/[example_id]",
+      "datatype" : "gene",
+      "id" : "PomBase",
+      "name" : "PomBase",
+      "database" : "PomBase",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "gene",
+      "example_id" : "PomBase:SPBC11B10.09",
+      "url_example" : "http://www.pombase.org/spombe/result/SPBC11B10.09",
+      "abbreviation" : "PomBase"
+   },
+   "ncbigene" : {
+      "abbreviation" : "NCBIGene",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/gene/4771",
+      "object" : "gene",
+      "example_id" : "NCBI_Gene:4771",
+      "id" : "NCBI_Gene",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/gene/[example_id]",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "NCBI Gene",
+      "name" : "NCBI Gene"
+   },
+   "grims" : {
+      "url_example" : "https://www.genesys-pgr.org/acn/search2?q=IRGC+90637",
+      "abbreviation" : "GRIMS",
+      "object" : "germplasm",
+      "example_id" : "GRIMS:90637",
+      "generic_url" : "https://www.genesys-pgr.org",
+      "id" : "GRIMS",
+      "datatype" : "germplasm",
+      "url_syntax" : "https://www.genesys-pgr.org/acn/search2?q=IRGC+[example_id]",
+      "name" : "IRRI Genetic Resources Information Management System",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "IRRI Genetic Resources Information Management System"
+   },
+   "fypo" : {
+      "generic_url" : "http://www.pombase.org/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "FYPO",
+      "name" : "Fission Yeast Phenotype Ontology",
+      "database" : "Fission Yeast Phenotype Ontology",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "FYPO:0000001",
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "FYPO"
+   },
+   "fb" : {
+      "object" : "gene",
+      "example_id" : "FB:FBgn0000024",
+      "url_example" : "http://flybase.org/reports/FBgn0000024.html",
+      "abbreviation" : "FB",
+      "database" : "FlyBase",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "FlyBase",
+      "url_syntax" : "http://flybase.org/reports/[example_id].html",
+      "datatype" : "gene",
+      "id" : "FB",
+      "generic_url" : "http://flybase.org/"
+   },
+   "tigr_genprop" : {
+      "object" : "biological_process",
+      "example_id" : "JCVI_GenProp:GenProp0120",
+      "abbreviation" : "TIGR_GenProp",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=GenProp0120",
+      "database" : "Genome Properties database at the J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Genome Properties database at the J. Craig Venter Institute",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=[example_id]",
+      "datatype" : "biological_process",
+      "id" : "JCVI_GenProp",
+      "generic_url" : "http://cmr.jcvi.org/"
+   },
+   "h-invdb" : {
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "H-invDB",
+      "generic_url" : "http://www.h-invitational.jp/",
+      "database" : "H-invitational Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "H-invitational Database",
+      "example_id" : null,
+      "object" : "entity",
+      "abbreviation" : "H-invDB",
+      "url_example" : null
+   },
+   "plantsystematics_image_archive" : {
+      "abbreviation" : "PlantSystematics_image_archive",
+      "url_example" : "http://www.plantsystematics.org/imagebyid_37658.html",
+      "example_id" : "PlantSystematics_image_archivee:37658",
+      "object" : "entity",
+      "generic_url" : "http://plantsystematics.org",
+      "id" : "PlantSystematics_image_archive",
+      "url_syntax" : "http://www.plantsystematics.org/imagebyid_[example_id].html",
+      "datatype" : "entity",
+      "name" : "PlantSystematics.org",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "PlantSystematics.org"
+   },
+   "aruk-ucl" : {
+      "example_id" : null,
+      "object" : "entity",
+      "abbreviation" : "ARUK-UCL",
+      "url_example" : null,
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "ARUK-UCL",
+      "generic_url" : "http://www.ucl.ac.uk/functional-gene-annotation/neurological",
+      "database" : "Alzheimers Research Gene Ontology Initiative",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Alzheimers Research Gene Ontology Initiative"
+   },
+   "uniprotkb-subcell" : {
+      "generic_url" : "http://www.uniprot.org/locations/",
+      "id" : "UniProtKB-SubCell",
+      "url_syntax" : "http://www.uniprot.org/locations/[example_id]",
+      "datatype" : "entity",
+      "name" : "UniProt Knowledgebase Subcellular Location vocabulary",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "UniProt Knowledgebase Subcellular Location vocabulary",
+      "abbreviation" : "UniProtKB-SubCell",
+      "url_example" : "http://www.uniprot.org/locations/SL-0012",
+      "object" : "entity",
+      "example_id" : "UniProtKB-SubCell:SL-0012"
+   },
+   "tgd_ref" : {
+      "database" : "Tetrahymena Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Tetrahymena Genome Database",
+      "datatype" : "entity",
+      "url_syntax" : "http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
+      "id" : "TGD_REF",
+      "generic_url" : "http://www.ciliate.org/",
+      "example_id" : "TGD_REF:T000005818",
+      "object" : "entity",
+      "abbreviation" : "TGD_REF",
+      "url_example" : "http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=T000005818"
+   },
+   "ecoliwiki" : {
+      "object" : "gene",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "EcoliWiki",
+      "database" : "EcoliWiki from EcoliHub",
+      "uri_prefix" : null,
+      "fullname" : "EcoliHub\\'s subsystem for community annotation of E. coli K-12",
+      "name" : "EcoliWiki from EcoliHub",
+      "datatype" : "gene",
+      "url_syntax" : null,
+      "id" : "EcoliWiki",
+      "generic_url" : "http://ecoliwiki.net/"
+   },
+   "eck" : {
+      "url_example" : "http://www.ecogene.org/geneInfo.php?eck_id=ECK3746",
+      "abbreviation" : "ECK",
+      "example_id" : "ECK:ECK3746",
+      "object" : "gene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "EcoGene Database of Escherichia coli Sequence and Function",
+      "name" : "EcoGene Database of Escherichia coli Sequence and Function",
+      "id" : "ECK",
+      "url_syntax" : "http://www.ecogene.org/geneInfo.php?eck_id=[example_id]",
+      "datatype" : "gene",
+      "generic_url" : "http://www.ecogene.org/"
+   },
+   "pato" : {
+      "database" : "Phenotypic quality ontology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Phenotypic quality ontology",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "PATO",
+      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
+      "object" : "entity",
+      "example_id" : "PATO:0001420",
+      "abbreviation" : "PATO",
+      "url_example" : null
+   },
+   "smart" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Simple Modular Architecture Research Tool",
+      "name" : "Simple Modular Architecture Research Tool",
+      "id" : "SMART",
+      "url_syntax" : "http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=[example_id]",
+      "datatype" : "polypeptide region",
+      "generic_url" : "http://smart.embl-heidelberg.de/",
+      "abbreviation" : "SMART",
+      "url_example" : "http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=SM00005",
+      "example_id" : "SMART:SM00005",
+      "object" : "polypeptide region"
+   },
+   "gr_mut" : {
+      "object" : "entity",
+      "example_id" : "GR_MUT:GR:0060198",
+      "abbreviation" : "GR_MUT",
+      "url_example" : "http://www.gramene.org/db/genes/search_gene?acc=GR:0060198",
+      "url_syntax" : "http://www.gramene.org/db/genes/search_gene?acc=[example_id]",
+      "datatype" : "entity",
+      "id" : "GR_MUT",
+      "generic_url" : "http://www.gramene.org/",
+      "database" : "A Comparative Mapping Resource for Grains",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "A Comparative Mapping Resource for Grains"
+   },
+   "vida" : {
+      "url_example" : null,
+      "abbreviation" : "VIDA",
+      "example_id" : null,
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Virus Database at University College London",
+      "name" : "Virus Database at University College London",
+      "id" : "VIDA",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.biochem.ucl.ac.uk/bsm/virus_database/VIDA.html"
+   },
+   "pfam" : {
+      "example_id" : "Pfam:PF00046",
+      "object" : "polypeptide region",
+      "url_example" : "http://pfam.xfam.org/family/PF00069",
+      "abbreviation" : "Pfam",
+      "database" : "Pfam database of protein families",
+      "uri_prefix" : null,
+      "fullname" : "Pfam is a collection of protein families represented by sequence alignments and hidden Markov models (HMMs)",
+      "name" : "Pfam database of protein families",
+      "url_syntax" : "http://pfam.xfam.org/family/[example_id]",
+      "datatype" : "polypeptide region",
+      "id" : "Pfam",
+      "generic_url" : "http://pfam.xfam.org"
+   },
+   "uberon" : {
+      "example_id" : "UBERON:0000069",
+      "object" : "life cycle stage",
+      "abbreviation" : "UBERON",
+      "url_example" : null,
+      "generic_url" : "http://uberon.org",
+      "url_syntax" : "http://purl.obolibrary.org/obo/UBERON_[example_id]",
+      "datatype" : "life cycle stage",
+      "id" : "UBERON",
+      "name" : "Uber-anatomy ontology",
+      "database" : "Uber-anatomy ontology",
+      "fullname" : "A multi-species anatomy ontology",
+      "uri_prefix" : null
+   },
+   "sgd_ref" : {
+      "example_id" : "SGD_REF:S000049602",
+      "object" : "entity",
+      "abbreviation" : "SGD_REF",
+      "url_example" : "http://www.yeastgenome.org/reference/S000049602/overview",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.yeastgenome.org/reference/[example_id]/overview",
+      "id" : "SGD_REF",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "database" : "Saccharomyces Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Saccharomyces Genome Database"
+   },
+   "um-bbd_pathwayid" : {
+      "abbreviation" : "UM-BBD_pathwayID",
+      "url_example" : "http://eawag-bbd.ethz.ch/acr/acr_map.html",
+      "object" : "entity",
+      "example_id" : "UM-BBD_pathwayID:acr",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "EAWAG Biocatalysis/Biodegradation Database",
+      "name" : "EAWAG Biocatalysis/Biodegradation Database",
+      "id" : "UM-BBD_pathwayID",
+      "datatype" : "entity",
+      "url_syntax" : "http://eawag-bbd.ethz.ch/[example_id]/[example_id]_map.html",
+      "generic_url" : "http://eawag-bbd.ethz.ch/"
+   },
+   "rnacentral" : {
+      "generic_url" : "http://rnacentral.org",
+      "id" : "RNAcentral",
+      "url_syntax" : "http://rnacentral.org/rna/[example_id]",
+      "datatype" : "ribonucleic acid",
+      "name" : "RNAcentral",
+      "fullname" : "An international database of ncRNA sequences",
+      "uri_prefix" : null,
+      "database" : "RNAcentral",
+      "abbreviation" : "RNAcentral",
+      "url_example" : "http://rnacentral.org/rna/URS000047C79B_9606",
+      "object" : "ribonucleic acid",
+      "example_id" : "RNAcentral:URS000047C79B_9606"
+   },
+   "maizegdb_qtl" : {
+      "generic_url" : "http://www.maizegdb.org/",
+      "url_syntax" : "http://www.maizegdb.org/data_center/trait?id=[example_id]",
+      "datatype" : "entity",
+      "id" : "MaizeGDB_QTL",
+      "name" : "Maize Genetics and Genomics Database",
+      "database" : "Maize Genetics and Genomics Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "MaizeGDB_QTL:78112",
+      "object" : "entity",
+      "abbreviation" : "MaizeGDB_QTL",
+      "url_example" : "http://www.maizegdb.org/data_center/trait?id=78112"
+   },
+   "iuphar" : {
+      "id" : "IUPHAR",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.iuphar.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "International Union of Pharmacology",
+      "name" : "International Union of Pharmacology",
+      "url_example" : null,
+      "abbreviation" : "IUPHAR",
+      "object" : "entity",
+      "example_id" : null
+   },
+   "isbn" : {
+      "datatype" : "entity",
+      "url_syntax" : "http://openisbn.com/search.php?q=[example_id]&isbn=1/",
+      "id" : "ISBN",
+      "generic_url" : "http://isbntools.com/",
+      "database" : "International Standard Book Number",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "International Standard Book Number",
+      "object" : "entity",
+      "example_id" : "ISBN:0781702534",
+      "url_example" : "http://openisbn.com/search.php?q=0781702534&isbn=1/",
+      "abbreviation" : "ISBN"
+   },
+   "prints" : {
+      "abbreviation" : "PRINTS",
+      "url_example" : "http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=PR00025",
+      "object" : "polypeptide region",
+      "example_id" : "PRINTS:PR00025",
+      "name" : "PRINTS compendium of protein fingerprints",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "PRINTS compendium of protein fingerprints",
+      "generic_url" : "http://www.bioinf.manchester.ac.uk/dbbrowser/PRINTS/",
+      "id" : "PRINTS",
+      "url_syntax" : "http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=[example_id]",
+      "datatype" : "polypeptide region"
+   },
+   "apweb" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Angiosperm Phylogeny Website",
+      "name" : "Angiosperm Phylogeny Website",
+      "id" : "APweb",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.mobot.org/mobot/research/apweb/top/glossarya_h.html",
+      "generic_url" : "http://www.mobot.org/mobot/research/apweb/",
+      "abbreviation" : "APweb",
+      "url_example" : "http://www.mobot.org/mobot/research/apweb/top/glossarya_h.html",
+      "object" : "entity",
+      "example_id" : "APweb:Glossary"
+   },
+   "biomd" : {
+      "object" : "entity",
+      "example_id" : "BIOMD:BIOMD0000000045",
+      "url_example" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=BIOMD0000000045",
+      "abbreviation" : "BIOMD",
+      "name" : "BioModels Database",
+      "database" : "BioModels Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.ebi.ac.uk/biomodels/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
+      "id" : "BIOMD"
+   },
+   "ddbj" : {
+      "generic_url" : "http://www.ddbj.nig.ac.jp/",
+      "id" : "DDBJ",
+      "url_syntax" : "http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=[example_id]",
+      "datatype" : "entity",
+      "name" : "DNA Databank of Japan",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "DNA Databank of Japan",
+      "url_example" : "http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=AA816246",
+      "abbreviation" : "DDBJ",
+      "object" : "entity",
+      "example_id" : "DDBJ:AA816246"
+   },
+   "gb" : {
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]",
+      "datatype" : "protein",
+      "id" : "GenBank",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
+      "database" : "GenBank",
+      "fullname" : "The NIH genetic sequence database, an annotated collection of all publicly available DNA sequences.",
+      "uri_prefix" : null,
+      "name" : "GenBank",
+      "object" : "protein",
+      "example_id" : "GB:AA816246",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=AA816246",
+      "abbreviation" : "GB"
+   },
+   "rfam" : {
+      "example_id" : "Rfam:RF00012",
+      "object" : "entity",
+      "url_example" : "http://rfam.sanger.ac.uk/family/RF00012",
+      "abbreviation" : "Rfam",
+      "database" : "Rfam database of RNA families",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Rfam database of RNA families",
+      "datatype" : "entity",
+      "url_syntax" : "http://rfam.sanger.ac.uk/family/[example_id]",
+      "id" : "Rfam",
+      "generic_url" : "http://rfam.sanger.ac.uk/"
+   },
+   "reac" : {
+      "url_example" : "www.reactome.org/content/detail/R-HSA-109582",
+      "abbreviation" : "REAC",
+      "object" : "entity",
+      "example_id" : "Reactome:R-HSA-109582",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Reactome - a curated knowledgebase of biological pathways",
+      "name" : "Reactome - a curated knowledgebase of biological pathways",
+      "id" : "Reactome",
+      "url_syntax" : "www.reactome.org/content/detail/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.reactome.org/"
+   },
+   "cgd_locus" : {
+      "object" : "entity",
+      "example_id" : "CGD_LOCUS:HWP1",
+      "abbreviation" : "CGD_LOCUS",
+      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?locus=HWP1",
+      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?locus=[example_id]",
+      "datatype" : "entity",
+      "id" : "CGD_LOCUS",
+      "generic_url" : "http://www.candidagenome.org/",
+      "database" : "Candida Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Candida Genome Database"
+   },
+   "rgd" : {
+      "abbreviation" : "RGD",
+      "url_example" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004",
+      "object" : "gene",
+      "example_id" : "RGD:2004",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Rat Genome Database",
+      "name" : "Rat Genome Database",
+      "id" : "RGD",
+      "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
+      "datatype" : "gene",
+      "generic_url" : "http://rgd.mcw.edu/"
+   },
+   "cas" : {
+      "example_id" : "CAS:58-08-2",
+      "object" : "entity",
+      "abbreviation" : "CAS",
+      "url_example" : null,
+      "name" : "CAS Chemical Registry",
+      "database" : "CAS Chemical Registry",
+      "fullname" : "CAS REGISTRY is the most authoritative collection of disclosed chemical substance information, containing more than 54 million organic and inorganic substances and 62 million sequences. CAS REGISTRY covers substances identified from the scientific literature from 1957 to the present, with additional substances going back to the early 1900s.",
+      "uri_prefix" : null,
+      "generic_url" : "http://www.cas.org/expertise/cascontent/registry/index.html",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "CAS"
+   },
+   "agi_locuscode" : {
+      "generic_url" : "http://www.arabidopsis.org",
+      "id" : "AGI_LocusCode",
+      "url_syntax" : "http://arabidopsis.org/servlets/TairObject?type=locus&name=[example_id]",
+      "datatype" : "gene",
+      "name" : "Arabidopsis Genome Initiative",
+      "fullname" : "Comprises TAIR, TIGR and MIPS",
+      "uri_prefix" : null,
+      "database" : "Arabidopsis Genome Initiative",
+      "url_example" : "http://arabidopsis.org/servlets/TairObject?type=locus&name=At2g17950",
+      "abbreviation" : "AGI_LocusCode",
+      "example_id" : "AGI_LocusCode:At2g17950",
+      "object" : "gene"
+   },
+   "refgenome" : {
+      "name" : "GO Reference Genomes",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "GO Reference Genomes",
+      "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
+      "id" : "RefGenome",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "url_example" : null,
+      "abbreviation" : "REFGENOME",
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "mim" : {
+      "url_example" : "http://omim.org/entry/190198",
+      "abbreviation" : "MIM",
+      "object" : "entity",
+      "example_id" : "OMIM:190198",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Mendelian Inheritance in Man",
+      "name" : "Mendelian Inheritance in Man",
+      "id" : "OMIM",
+      "datatype" : "entity",
+      "url_syntax" : "http://omim.org/entry/[example_id]",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM"
+   },
+   "soy_ref" : {
+      "database" : "SoyBase",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "SoyBase",
+      "url_syntax" : "http://www.soybase.org/sbt/search/search_results.php?category=Soybase_ID&search_term=[example_id]",
+      "datatype" : "entity",
+      "id" : "SOY_ref",
+      "generic_url" : "http://soybase.org/",
+      "object" : "entity",
+      "example_id" : "SOY ref:SoyBase6597900",
+      "url_example" : "http://www.soybase.org/sbt/search/search_results.php?category=Soybase_ID&search_term=SoyBase3142000126",
+      "abbreviation" : "SOY_ref"
+   },
+   "imgt_ligm" : {
+      "name" : "ImMunoGeneTics database covering immunoglobulins and T-cell receptors",
+      "database" : "ImMunoGeneTics database covering immunoglobulins and T-cell receptors",
+      "fullname" : "Database of immunoglobulins and T cell receptors from human and other vertebrates, with translation for fully annotated sequences.",
+      "uri_prefix" : null,
+      "generic_url" : "http://imgt.cines.fr",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "IMGT_LIGM",
+      "example_id" : "IMGT_LIGM:U03895",
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "IMGT_LIGM"
+   },
+   "aspgd_ref" : {
+      "abbreviation" : "AspGD_REF",
+      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=90",
+      "example_id" : "AspGD_REF:90",
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Aspergillus Genome Database",
+      "name" : "Aspergillus Genome Database",
+      "id" : "AspGD_REF",
+      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.aspergillusgenome.org/"
+   },
+   "phi" : {
+      "id" : "PHI",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://aclame.ulb.ac.be/Classification/mego.html",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "MeGO (Phage and Mobile Element Ontology)",
+      "name" : "MeGO (Phage and Mobile Element Ontology)",
+      "url_example" : null,
+      "abbreviation" : "PHI",
+      "example_id" : "PHI:0000055",
+      "object" : "entity"
+   },
+   "uniprotkb-kw" : {
+      "generic_url" : "http://www.uniprot.org/keywords/",
+      "url_syntax" : "http://www.uniprot.org/keywords/[example_id]",
+      "datatype" : "entity",
+      "id" : "UniProtKB-KW",
+      "name" : "UniProt Knowledgebase keywords",
+      "database" : "UniProt Knowledgebase keywords",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "object" : "entity",
+      "example_id" : "UniProtKB-KW:KW-0812",
+      "url_example" : "http://www.uniprot.org/keywords/KW-0812",
+      "abbreviation" : "UniProtKB-KW"
+   },
+   "patric" : {
+      "url_syntax" : "http://patric.vbi.vt.edu/gene/overview.php?fid=[example_id]",
+      "datatype" : "entity",
+      "id" : "PATRIC",
+      "generic_url" : "http://patric.vbi.vt.edu",
+      "database" : "PathoSystems Resource Integration Center",
+      "uri_prefix" : null,
+      "fullname" : "PathoSystems Resource Integration Center at the Virginia Bioinformatics Institute",
+      "name" : "PathoSystems Resource Integration Center",
+      "example_id" : "PATRIC:cds.000002.436951",
+      "object" : "entity",
+      "url_example" : "http://patric.vbi.vt.edu/gene/overview.php?fid=cds.000002.436951",
+      "abbreviation" : "PATRIC"
+   },
+   "broad_mgg" : {
+      "generic_url" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/Home.html",
+      "id" : "Broad_MGG",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=S[example_id]",
+      "name" : "Magnaporthe grisea Database",
+      "uri_prefix" : null,
+      "fullname" : "Magnaporthe grisea Database at the Broad Institute",
+      "database" : "Magnaporthe grisea Database",
+      "abbreviation" : "Broad_MGG",
+      "url_example" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=SMGG_05132",
+      "example_id" : "Broad_MGG:MGG_05132.5",
+      "object" : "entity"
+   },
+   "ddb" : {
+      "name" : "dictyBase",
+      "database" : "dictyBase",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://dictybase.org",
+      "url_syntax" : "http://dictybase.org/gene/[example_id]",
+      "datatype" : "gene",
+      "id" : "dictyBase",
+      "example_id" : "dictyBase:DDB_G0277859",
+      "object" : "gene",
+      "url_example" : "http://dictybase.org/gene/DDB_G0277859",
+      "abbreviation" : "DDB"
+   },
+   "um-bbd_ruleid" : {
+      "url_example" : "http://eawag-bbd.ethz.ch/servlets/rule.jsp?rule=bt0330",
+      "abbreviation" : "UM-BBD_ruleID",
+      "example_id" : "UM-BBD_ruleID:bt0330",
+      "object" : "entity",
+      "id" : "UM-BBD_ruleID",
+      "url_syntax" : "http://eawag-bbd.ethz.ch/servlets/rule.jsp?rule=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://eawag-bbd.ethz.ch/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "EAWAG Biocatalysis/Biodegradation Database",
+      "name" : "EAWAG Biocatalysis/Biodegradation Database"
+   },
+   "sp_sl" : {
+      "object" : "entity",
+      "example_id" : "UniProtKB-SubCell:SL-0012",
+      "abbreviation" : "SP_SL",
+      "url_example" : "http://www.uniprot.org/locations/SL-0012",
+      "database" : "UniProt Knowledgebase Subcellular Location vocabulary",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "UniProt Knowledgebase Subcellular Location vocabulary",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.uniprot.org/locations/[example_id]",
+      "id" : "UniProtKB-SubCell",
+      "generic_url" : "http://www.uniprot.org/locations/"
+   },
+   "merops" : {
+      "name" : "MEROPS peptidase database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "MEROPS peptidase database",
+      "generic_url" : "http://merops.sanger.ac.uk/",
+      "id" : "MEROPS",
+      "datatype" : "protein",
+      "url_syntax" : "http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=[example_id]",
+      "abbreviation" : "MEROPS",
+      "url_example" : "http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=A08.001",
+      "object" : "protein",
+      "example_id" : "MEROPS:A08.001"
+   },
+   "grindesc" : {
+      "url_example" : "https://npgsweb.ars-grin.gov/gringlobal/descriptordetail.aspx?id=89033",
+      "abbreviation" : "GRINDesc",
+      "example_id" : "GRINdesc:89033",
+      "object" : "germplasm descriptors",
+      "id" : "GRINDesc",
+      "datatype" : "germplasm descriptors",
+      "url_syntax" : "https://npgsweb.ars-grin.gov/gringlobal/descriptordetail.aspx?id=[example_id]",
+      "generic_url" : "http://www.ars-grin.gov/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Germplasm Resources Information Network",
+      "name" : "Germplasm Resources Information Network"
+   },
+   "mengo" : {
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "MENGO",
+      "name" : "Microbial ENergy processes Gene Ontology Project",
+      "database" : "Microbial ENergy processes Gene Ontology Project",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://mengo.vbi.vt.edu/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "MENGO"
+   },
+   "gr_ref" : {
+      "url_example" : "http://www.gramene.org/db/literature/pub_search?ref_id=659",
+      "abbreviation" : "GR_REF",
+      "object" : "entity",
+      "example_id" : "GR_REF:659",
+      "name" : "Gramene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Gramene",
+      "generic_url" : "http://www.gramene.org/",
+      "id" : "GR_REF",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.gramene.org/db/literature/pub_search?ref_id=[example_id]"
+   },
+   "medline" : {
+      "url_example" : null,
+      "abbreviation" : "MEDLINE",
+      "example_id" : "MEDLINE:20572430",
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Medline literature database",
+      "name" : "Medline literature database",
+      "id" : "MEDLINE",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://www.nlm.nih.gov/databases/databases_medline.html"
+   },
+   "rgdid" : {
+      "abbreviation" : "RGDID",
+      "url_example" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004",
+      "example_id" : "RGD:2004",
+      "object" : "gene",
+      "generic_url" : "http://rgd.mcw.edu/",
+      "id" : "RGD",
+      "datatype" : "gene",
+      "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
+      "name" : "Rat Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Rat Genome Database"
+   },
+   "wikipedia" : {
+      "example_id" : "Wikipedia:Endoplasmic_reticulum",
+      "object" : "entity",
+      "abbreviation" : "Wikipedia",
+      "url_example" : "http://en.wikipedia.org/wiki/Endoplasmic_reticulum",
+      "url_syntax" : "http://en.wikipedia.org/wiki/[example_id]",
+      "datatype" : "entity",
+      "id" : "Wikipedia",
+      "generic_url" : "http://en.wikipedia.org/",
+      "database" : "Wikipedia",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Wikipedia"
+   },
+   "isrr" : {
+      "name" : "International Society for Root Research",
+      "database" : "International Society for Root Research",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.rootresearch.org/",
+      "datatype" : "entity",
+      "url_syntax" : "http://wiki.plantontology.org/index.php/ISRR_references",
+      "id" : "ISRR",
+      "example_id" : "ISRR:Richard Zobel",
+      "object" : "entity",
+      "abbreviation" : "ISRR",
+      "url_example" : "http://wiki.plantontology.org/index.php/ISRR_references"
+   },
+   "cribi_vitis" : {
+      "generic_url" : "http://genomes.cribi.unipd.it",
+      "id" : "cribi_vitis",
+      "url_syntax" : "http://genomes.cribi.unipd.it/cgi-bin/pqs2/report.pl?gene_name=[example_id]&release=v1",
+      "datatype" : "entity",
+      "name" : "database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "database",
+      "abbreviation" : "cribi_vitis",
+      "url_example" : "url_example",
+      "object" : "entity",
+      "example_id" : "example_id"
+   },
+   "h-invdb_cdna" : {
+      "id" : "H-invDB_cDNA",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=[example_id]",
+      "generic_url" : "http://www.h-invitational.jp/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "H-invitational Database",
+      "name" : "H-invitational Database",
+      "url_example" : "http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=AK093149",
+      "abbreviation" : "H-invDB_cDNA",
+      "example_id" : "H-invDB_cDNA:AK093148",
+      "object" : "entity"
+   },
+   "nasc" : {
+      "object" : "entity",
+      "example_id" : "NASC_code:N3371",
+      "abbreviation" : "NASC",
+      "url_example" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=N3371",
+      "name" : "Nottingham Arabidopsis Stock Centre Seeds Database",
+      "database" : "Nottingham Arabidopsis Stock Centre Seeds Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://arabidopsis.info",
+      "datatype" : "entity",
+      "url_syntax" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=[example_id]",
+      "id" : "NASC_code"
+   },
+   "prosite" : {
+      "name" : "Prosite database of protein families and domains",
+      "database" : "Prosite database of protein families and domains",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.expasy.ch/prosite/",
+      "url_syntax" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?[example_id]",
+      "datatype" : "polypeptide region",
+      "id" : "Prosite",
+      "example_id" : "Prosite:PS00365",
+      "object" : "polypeptide region",
+      "url_example" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?PS00365",
+      "abbreviation" : "Prosite"
+   },
+   "goc-owl" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "GOC-OWL",
+      "generic_url" : "http://www.geneontology.org/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "GOC-OWL",
+      "name" : "Gene Ontology Consortium - Logical inferences",
+      "database" : "Gene Ontology Consortium - Logical inferences",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "sp" : {
+      "object" : "entity",
+      "example_id" : "SPTR:12345",
+      "url_example" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:12345]",
+      "abbreviation" : "SP",
+      "generic_url" : "http://srs.ebi.ac.uk",
+      "url_syntax" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:[example_id]]",
+      "datatype" : "entity",
+      "id" : "SPTR",
+      "name" : "SRS database at EBI",
+      "database" : "SRS database at EBI",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "poc" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "POC",
+      "database" : "Plant Ontology Consortium",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Plant Ontology Consortium",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "POC",
+      "generic_url" : "http://www.plantontology.org/"
+   },
+   "pamgo_mgg" : {
+      "generic_url" : "http://scotland.fgl.ncsu.edu/smeng/GoAnnotationMagnaporthegrisea.html",
+      "datatype" : "entity",
+      "url_syntax" : "http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=[example_id]",
+      "id" : "PAMGO_MGG",
+      "name" : "Magnaporthe grisea database",
+      "database" : "Magnaporthe grisea database",
+      "fullname" : "Magnaporthe grisea database at North Carolina State University; member of PAMGO Interest Group",
+      "uri_prefix" : null,
+      "example_id" : "PAMGO_MGG:MGG_05132",
+      "object" : "entity",
+      "abbreviation" : "PAMGO_MGG",
+      "url_example" : "http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=MGG_05132"
+   },
+   "rnamdb" : {
+      "object" : "entity",
+      "example_id" : "RNAmods:037",
+      "abbreviation" : "RNAMDB",
+      "url_example" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?091",
+      "name" : "RNA Modification Database",
+      "database" : "RNA Modification Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://s59.cas.albany.edu/RNAmods/",
+      "datatype" : "entity",
+      "url_syntax" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?[example_id]",
+      "id" : "RNAmods"
+   },
+   "sgn_germplasm" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
+      "id" : "SGN_germplasm",
+      "url_syntax" : "http://solgenomics.net/stock/[example_id]/view/",
+      "datatype" : "entity",
+      "name" : "Sol Genomics Network",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Sol Genomics Network",
+      "abbreviation" : "SGN_germplasm",
+      "url_example" : "http://solgenomics.net/stock/6583/view/",
+      "example_id" : "SGN_germplasm:6583",
+      "object" : "entity"
+   },
+   "fbbt" : {
+      "example_id" : "FBbt:00005177",
+      "object" : "entity",
+      "abbreviation" : "FBbt",
+      "url_example" : "http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:00005177",
+      "name" : "Drosophila gross anatomy",
+      "database" : "Drosophila gross anatomy",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://flybase.org/",
+      "url_syntax" : "http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:[example_id]",
+      "datatype" : "entity",
+      "id" : "FBbt"
+   },
+   "cgd" : {
+      "example_id" : "CGD:CAL0005516",
+      "object" : "gene",
+      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=CAL0005516",
+      "abbreviation" : "CGD",
+      "database" : "Candida Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Candida Genome Database",
+      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]",
+      "datatype" : "gene",
+      "id" : "CGD",
+      "generic_url" : "http://www.candidagenome.org/"
+   },
+   "kegg_enzyme" : {
+      "abbreviation" : "KEGG_ENZYME",
+      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?ec:2.1.1.4",
+      "object" : "entity",
+      "example_id" : "KEGG_ENZYME:2.1.1.4",
+      "id" : "KEGG_ENZYME",
+      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?ec:[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.genome.jp/dbget-bin/www_bfind?enzyme",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "KEGG Enzyme Database",
+      "name" : "KEGG Enzyme Database"
+   },
+   "pr" : {
+      "url_example" : "http://purl.obolibrary.org/obo/PR_000025380",
+      "abbreviation" : "PR",
+      "example_id" : "PR:000025380",
+      "object" : "protein",
+      "name" : "Protein Ontology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Protein Ontology",
+      "generic_url" : "http://www.proconsortium.org/pro/pro.shtml",
+      "id" : "PR",
+      "url_syntax" : "http://purl.obolibrary.org/obo/PR_[example_id]",
+      "datatype" : "protein"
+   },
+   "ncbi_gene" : {
+      "database" : "NCBI Gene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "NCBI Gene",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/gene/[example_id]",
+      "id" : "NCBI_Gene",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "example_id" : "NCBI_Gene:4771",
+      "object" : "gene",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/gene/4771",
+      "abbreviation" : "NCBI_Gene"
+   },
+   "kegg_pathway" : {
+      "object" : "entity",
+      "example_id" : "KEGG_PATHWAY:ot00020",
+      "abbreviation" : "KEGG_PATHWAY",
+      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?path:ot00020",
+      "database" : "KEGG Pathways Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "KEGG Pathways Database",
+      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?path:[example_id]",
+      "datatype" : "entity",
+      "id" : "KEGG_PATHWAY",
+      "generic_url" : "http://www.genome.jp/kegg/pathway.html"
+   },
+   "agricola_id" : {
+      "abbreviation" : "AGRICOLA_ID",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : "AGRICOLA_NAL:TP248.2 P76 v.14",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "AGRICultural OnLine Access",
+      "name" : "AGRICultural OnLine Access",
+      "id" : "AGRICOLA_ID",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://agricola.nal.usda.gov/"
+   },
+   "ecocyc_ref" : {
+      "database" : "Encyclopedia of E. coli metabolism",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Encyclopedia of E. coli metabolism",
+      "url_syntax" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=[example_id]",
+      "datatype" : "entity",
+      "id" : "EcoCyc_REF",
+      "generic_url" : "http://ecocyc.org/",
+      "object" : "entity",
+      "example_id" : "EcoCyc_REF:COLISALII",
+      "abbreviation" : "ECOCYC_REF",
+      "url_example" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=COLISALII"
+   },
+   "hgnc_gene" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "HUGO Gene Nomenclature Committee",
+      "name" : "HUGO Gene Nomenclature Committee",
+      "id" : "HGNC_gene",
+      "url_syntax" : "http://www.genenames.org/data/hgnc_data.php?app_sym=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.genenames.org/",
+      "abbreviation" : "HGNC_gene",
+      "url_example" : "http://www.genenames.org/data/hgnc_data.php?app_sym=ABCA1",
+      "object" : "entity",
+      "example_id" : "HGNC_gene:ABCA1"
+   },
+   "cbs" : {
+      "id" : "CBS",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.cbs.dtu.dk/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Center for Biological Sequence Analysis",
+      "name" : "Center for Biological Sequence Analysis",
+      "url_example" : "http://www.cbs.dtu.dk/services/[example_id]/",
+      "abbreviation" : "CBS",
+      "object" : "entity",
+      "example_id" : "CBS:TMHMM"
+   },
+   "transfac" : {
+      "generic_url" : "http://www.gene-regulation.com/pub/databases.html#transfac",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "TRANSFAC",
+      "name" : "TRANSFAC database of eukaryotic transcription factors",
+      "database" : "TRANSFAC database of eukaryotic transcription factors",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "TRANSFAC"
+   },
+   "geo" : {
+      "example_id" : "GEO:GDS2223",
+      "object" : "entity",
+      "abbreviation" : "GEO",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS2223",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/geo/",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=[example_id]",
+      "datatype" : "entity",
+      "id" : "GEO",
+      "name" : "NCBI Gene Expression Omnibus",
+      "database" : "NCBI Gene Expression Omnibus",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "parkinsonsuk-ucl" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "ParkinsonsUK-UCL",
+      "name" : "Parkinsons Disease Gene Ontology Initiative",
+      "database" : "Parkinsons Disease Gene Ontology Initiative",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.ucl.ac.uk/functional-gene-annotation/neurological",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "ParkinsonsUK-UCL"
+   },
+   "agbase" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "AgBase",
+      "name" : "AgBase resource for functional analysis of agricultural plant and animal gene products",
+      "database" : "AgBase resource for functional analysis of agricultural plant and animal gene products",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.agbase.msstate.edu/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.agbase.msstate.edu/cgi-bin/getEntry.pl?db_pick=[ChickGO/MaizeGO]&uid=[example_id]",
+      "id" : "AgBase"
+   },
+   "rhea" : {
+      "database" : "Rhea, the Annotated Reactions Database",
+      "uri_prefix" : null,
+      "fullname" : "Rhea is a manually annotated database of chemical reactions. All data in Rhea is freely accessible and available for anyone to use.",
+      "name" : "Rhea, the Annotated Reactions Database",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.rhea-db.org/reaction.xhtml?id=[example_id]",
+      "id" : "RHEA",
+      "generic_url" : "http://www.rhea-db.org",
+      "object" : "entity",
+      "example_id" : "RHEA:25811",
+      "url_example" : "http://www.rhea-db.org/reaction.xhtml?id=25811",
+      "abbreviation" : "RHEA"
+   },
+   "vega" : {
+      "object" : "entity",
+      "example_id" : "VEGA:OTTHUMP00000000661",
+      "abbreviation" : "VEGA",
+      "url_example" : "http://vega.sanger.ac.uk/id/OTTHUMP00000000661",
+      "generic_url" : "http://vega.sanger.ac.uk/index.html",
+      "datatype" : "entity",
+      "url_syntax" : "http://vega.sanger.ac.uk/id/[example_id]",
+      "id" : "VEGA",
+      "name" : "Vertebrate Genome Annotation database",
+      "database" : "Vertebrate Genome Annotation database",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "collectf" : {
+      "database" : "Database of transcription factor binding sites (TFBS) in the Bacteria domain",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Database of transcription factor binding sites (TFBS) in the Bacteria domain",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "CollecTF",
+      "generic_url" : "http://www.collectf.org/",
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "CollecTF"
+   },
+   "corum" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "CORUM - the Comprehensive Resource of Mammalian protein complexes",
+      "name" : "CORUM - the Comprehensive Resource of Mammalian protein complexes",
+      "id" : "CORUM",
+      "url_syntax" : "http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://mips.gsf.de/genre/proj/corum/",
+      "abbreviation" : "CORUM",
+      "url_example" : "http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=837",
+      "example_id" : "CORUM:837",
+      "object" : "entity"
+   },
+   "zfin" : {
+      "database" : "Zebrafish Information Network",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Zebrafish Information Network",
+      "url_syntax" : "http://zfin.org/cgi-bin/ZFIN_jump?record=[example_id]",
+      "datatype" : "variation",
+      "id" : "ZFIN",
+      "generic_url" : "http://zfin.org/",
+      "example_id" : "ZFIN:ZDB-GENE-990415-103",
+      "object" : "variation",
+      "url_example" : "http://zfin.org/cgi-bin/ZFIN_jump?record=ZDB-GENE-990415-103",
+      "abbreviation" : "ZFIN"
+   },
+   "aspgd" : {
+      "id" : "AspGD",
+      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
+      "datatype" : "gene",
+      "generic_url" : "http://www.aspergillusgenome.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Aspergillus Genome Database",
+      "name" : "Aspergillus Genome Database",
+      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
+      "abbreviation" : "ASPGD",
+      "object" : "gene",
+      "example_id" : "AspGD:ASPL0000067538"
+   },
+   "wormbase" : {
+      "example_id" : "WB:WBGene00003001",
+      "object" : "protein",
+      "url_example" : "http://www.wormbase.org/db/get?class=Gene;name=WBGene00003001",
+      "abbreviation" : "WormBase",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.wormbase.org/db/gene/gene?name=[example_id]",
+      "id" : "WB",
+      "generic_url" : "http://www.wormbase.org/",
+      "database" : "WormBase database of nematode biology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "WormBase database of nematode biology"
+   },
+   "tr" : {
+      "url_example" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:Q00177]",
+      "abbreviation" : "TR",
+      "object" : "entity",
+      "example_id" : "TrEMBL:Q00177",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "TREMBL",
+      "name" : "TREMBL",
+      "id" : "TR",
+      "datatype" : "entity",
+      "url_syntax" : "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-e+[SWALL-acc:[example_id]]",
+      "generic_url" : "http://www.ebi.ac.uk/swissprot/"
+   },
+   "ro" : {
+      "example_id" : "RO:0002211",
+      "object" : "entity",
+      "url_example" : "http://purl.obolibrary.org/obo/RO_0002211",
+      "abbreviation" : "RO",
+      "generic_url" : "http://purl.obolibrary.org/obo/ro",
+      "url_syntax" : "http://purl.obolibrary.org/obo/RO_[example_id]",
+      "datatype" : "entity",
+      "id" : "RO",
+      "name" : "OBO Relation Ontology Ontology",
+      "database" : "OBO Relation Ontology Ontology",
+      "uri_prefix" : null,
+      "fullname" : "A collection of relations used across OBO ontologies"
+   },
+   "jcvi" : {
+      "generic_url" : "http://www.jcvi.org/",
+      "id" : "JCVI",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "name" : "J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "J. Craig Venter Institute",
+      "abbreviation" : "JCVI",
+      "url_example" : null,
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "ensembl" : {
+      "object" : "transcript",
+      "example_id" : "ENSEMBL:ENSP00000265949",
+      "abbreviation" : "ensembl",
+      "url_example" : "http://www.ensembl.org/id/ENSP00000265949",
+      "generic_url" : "http://www.ensembl.org/",
+      "datatype" : "transcript",
+      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
+      "id" : "ENSEMBL",
+      "name" : "Ensembl database of automatically annotated genomic data",
+      "database" : "Ensembl database of automatically annotated genomic data",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "ensembl_geneid" : {
+      "object" : "gene",
+      "example_id" : "ENSEMBL_GeneID:ENSG00000126016",
+      "url_example" : "http://www.ensembl.org/id/ENSG00000126016",
+      "abbreviation" : "ENSEMBL_GeneID",
+      "generic_url" : "http://www.ensembl.org/",
+      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
+      "datatype" : "gene",
+      "id" : "ENSEMBL_GeneID",
+      "name" : "Ensembl database of automatically annotated genomic data",
+      "database" : "Ensembl database of automatically annotated genomic data",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "superfamily" : {
+      "url_example" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF51905",
+      "abbreviation" : "SUPERFAMILY",
+      "example_id" : "SUPERFAMILY:51905",
+      "object" : "entity",
+      "generic_url" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/index.html",
+      "id" : "SUPERFAMILY",
+      "url_syntax" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF[example_id]",
+      "datatype" : "entity",
+      "name" : "SUPERFAMILY protein annotation database",
+      "uri_prefix" : null,
+      "fullname" : "A database of structural and functional protein annotations for completely sequenced genomes",
+      "database" : "SUPERFAMILY protein annotation database"
+   },
+   "subtilist" : {
+      "generic_url" : "http://genolist.pasteur.fr/SubtiList/",
+      "id" : "SUBTILIST",
+      "url_syntax" : null,
+      "datatype" : "protein",
+      "name" : "Bacillus subtilis Genome Sequence Project",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Bacillus subtilis Genome Sequence Project",
+      "abbreviation" : "SUBTILIST",
+      "url_example" : null,
+      "object" : "protein",
+      "example_id" : "SUBTILISTG:BG11384"
+   },
+   "smd" : {
+      "generic_url" : "http://genome-www.stanford.edu/microarray",
+      "id" : "SMD",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "name" : "Stanford Microarray Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Stanford Microarray Database",
+      "abbreviation" : "SMD",
+      "url_example" : null,
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "h-invdb_locus" : {
+      "name" : "H-invitational Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "H-invitational Database",
+      "generic_url" : "http://www.h-invitational.jp/",
+      "id" : "H-invDB_locus",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=[example_id]",
+      "url_example" : "http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=HIX0014446",
+      "abbreviation" : "H-invDB_locus",
+      "object" : "entity",
+      "example_id" : "H-invDB_locus:HIX0014446"
+   },
+   "ncbi_locus_tag" : {
+      "abbreviation" : "NCBI_locus_tag",
+      "url_example" : null,
+      "example_id" : "NCBI_locus_tag:CTN_0547",
+      "object" : "entity",
+      "id" : "NCBI_locus_tag",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "NCBI locus tag",
+      "name" : "NCBI locus tag"
+   },
+   "cas_gen" : {
+      "object" : "entity",
+      "example_id" : "CASGEN:1040",
+      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=1040",
+      "abbreviation" : "CAS_GEN",
+      "name" : "Catalog of Fishes genus database",
+      "database" : "Catalog of Fishes genus database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
+      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=[example_id]",
+      "datatype" : "entity",
+      "id" : "CASGEN"
+   },
+   "pfamb" : {
+      "abbreviation" : "PfamB",
+      "url_example" : null,
+      "example_id" : "PfamB:PB014624",
+      "object" : "entity",
+      "id" : "PfamB",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://www.sanger.ac.uk/Software/Pfam/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Pfam-B supplement to Pfam",
+      "name" : "Pfam-B supplement to Pfam"
+   },
+   "geneid" : {
+      "url_example" : "http://www.ncbi.nlm.nih.gov/gene/4771",
+      "abbreviation" : "GeneID",
+      "example_id" : "NCBI_Gene:4771",
+      "object" : "gene",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "id" : "NCBI_Gene",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/gene/[example_id]",
+      "datatype" : "gene",
+      "name" : "NCBI Gene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "NCBI Gene"
+   },
+   "tair" : {
+      "database" : "The Arabidopsis Information Resource",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "The Arabidopsis Information Resource",
+      "datatype" : "primary transcript",
+      "url_syntax" : "http://arabidopsis.org/servlets/TairObject?accession=[example_id]",
+      "id" : "TAIR",
+      "generic_url" : "http://www.arabidopsis.org/",
+      "object" : "primary transcript",
+      "example_id" : "TAIR:locus:2146653",
+      "abbreviation" : "TAIR",
+      "url_example" : "http://arabidopsis.org/servlets/TairObject?accession=locus:2146653"
+   },
+   "ena" : {
+      "abbreviation" : "ENA",
+      "url_example" : "http://www.ebi.ac.uk/ena/data/view/AA816246",
+      "example_id" : "ENA:AA816246",
+      "object" : "entity",
+      "name" : "European Nucleotide Archive",
+      "uri_prefix" : null,
+      "fullname" : "ENA is made up of a number of distinct databases that includes EMBL-Bank, the newly established Sequence Read Archive (SRA) and the Trace Archive. International nucleotide sequence database collaboration, comprising ENA-EBI nucleotide sequence data library (EMBL-Bank), DNA DataBank of Japan (DDBJ), and NCBI GenBank",
+      "database" : "European Nucleotide Archive",
+      "generic_url" : "http://www.ebi.ac.uk/ena/",
+      "id" : "ENA",
+      "url_syntax" : "http://www.ebi.ac.uk/ena/data/view/[example_id]",
+      "datatype" : "entity"
+   },
+   "obo_rel" : {
+      "object" : "entity",
+      "example_id" : "OBO_REL:part_of",
+      "url_example" : null,
+      "abbreviation" : "OBO_REL",
+      "name" : "OBO relation ontology",
+      "database" : "OBO relation ontology",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.obofoundry.org/ro/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "OBO_REL"
+   },
+   "mips_funcat" : {
+      "name" : "MIPS Functional Catalogue",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "MIPS Functional Catalogue",
+      "generic_url" : "http://mips.gsf.de/proj/funcatDB/",
+      "id" : "MIPS_funcat",
+      "datatype" : "entity",
+      "url_syntax" : "http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=[example_id]",
+      "url_example" : "http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=11.02",
+      "abbreviation" : "MIPS_funcat",
+      "object" : "entity",
+      "example_id" : "MIPS_funcat:11.02"
+   },
+   "pamgo_vmd" : {
+      "abbreviation" : "PAMGO_VMD",
+      "url_example" : "http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=109198",
+      "example_id" : "PAMGO_VMD:109198",
+      "object" : "entity",
+      "name" : "Virginia Bioinformatics Institute Microbial Database",
+      "fullname" : "Virginia Bioinformatics Institute Microbial Database; member of PAMGO Interest Group",
+      "uri_prefix" : null,
+      "database" : "Virginia Bioinformatics Institute Microbial Database",
+      "generic_url" : "http://phytophthora.vbi.vt.edu",
+      "id" : "PAMGO_VMD",
+      "datatype" : "entity",
+      "url_syntax" : "http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=[example_id]"
+   },
+   "paint_ref" : {
+      "url_example" : "http://www.geneontology.org/gene-associations/submission/paint/PTHR10046/PTHR10046.txt",
+      "abbreviation" : "PAINT_REF",
+      "object" : "entity",
+      "example_id" : "PAINT_REF:PTHR10046",
+      "id" : "PAINT_REF",
+      "url_syntax" : "http://www.geneontology.org/gene-associations/submission/paint/[example_id]/[example_id].txt",
+      "datatype" : "entity",
+      "generic_url" : "http://www.pantherdb.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Phylogenetic Annotation INference Tool References",
+      "name" : "Phylogenetic Annotation INference Tool References"
+   },
+   "go_central" : {
+      "id" : "GO_Central",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
+      "fullname" : "Manual annotation from PAINT curators into the UniProt Protein2GO curation tool.",
+      "uri_prefix" : null,
+      "database" : "GO Central",
+      "name" : "GO Central",
+      "abbreviation" : "GO_CENTRAL",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null
+   },
+   "gr" : {
+      "name" : "Gramene",
+      "database" : "Gramene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.gramene.org/",
+      "url_syntax" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=[example_id]",
+      "datatype" : "protein",
+      "id" : "GR",
+      "example_id" : "GR:sd1",
+      "object" : "protein",
+      "abbreviation" : "GR",
+      "url_example" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=sd1"
+   },
+   "obo_sf2_po" : {
+      "abbreviation" : "OBO_SF2_PO",
+      "url_example" : "http://sourceforge.net/p/obo/plant-ontology-po-term-requests/500",
+      "object" : "entity",
+      "example_id" : "OBO_SF2_PO:500",
+      "id" : "OBO_SF2_PO",
+      "url_syntax" : "http://sourceforge.net/p/obo/plant-ontology-po-term-requests/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "generic_url",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Source Forge OBO Plant Ontology (PO) term request tracker",
+      "name" : "Source Forge OBO Plant Ontology (PO) term request tracker"
+   },
+   "planteome_gene" : {
+      "url_example" : "https://www.google.com/search?q=AC148152.3_FGT008",
+      "abbreviation" : "Planteome_gene",
+      "example_id" : "Planteome_gene:AC148152.3_FGT008",
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Generic planteome genes without homes",
+      "name" : "Generic planteome genes without homes",
+      "id" : "Planteome_gene",
+      "url_syntax" : "https://www.google.com/search?q=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.google.com"
+   },
+   "interpro" : {
+      "example_id" : "InterPro:IPR000001",
+      "object" : "polypeptide region",
+      "url_example" : "http://www.ebi.ac.uk/interpro/entry/IPR015421",
+      "abbreviation" : "INTERPRO",
+      "generic_url" : "http://www.ebi.ac.uk/interpro/",
+      "url_syntax" : "http://www.ebi.ac.uk/interpro/entry/[example_id]",
+      "datatype" : "polypeptide region",
+      "id" : "InterPro",
+      "name" : "InterPro database of protein domains and motifs",
+      "database" : "InterPro database of protein domains and motifs",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "iuphar_gpcr" : {
+      "abbreviation" : "IUPHAR_GPCR",
+      "url_example" : "http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=13",
+      "example_id" : "IUPHAR_GPCR:1279",
+      "object" : "entity",
+      "id" : "IUPHAR_GPCR",
+      "url_syntax" : "http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.iuphar.org/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "International Union of Pharmacology",
+      "name" : "International Union of Pharmacology"
+   },
+   "modbase" : {
+      "generic_url" : "http://modbase.compbio.ucsf.edu/",
+      "id" : "ModBase",
+      "datatype" : "entity",
+      "url_syntax" : "http://salilab.org/modbase/searchbyid?databaseID=[example_id]",
+      "name" : "ModBase comprehensive Database of Comparative Protein Structure Models",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "ModBase comprehensive Database of Comparative Protein Structure Models",
+      "abbreviation" : "ModBase",
+      "url_example" : "http://salilab.org/modbase/searchbyid?databaseID=P04848",
+      "object" : "entity",
+      "example_id" : "ModBase:P10815"
+   },
+   "po_git" : {
+      "name" : "GitHub",
+      "database" : "GitHub",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "https://github.com/Planteome/plant-ontology",
+      "url_syntax" : "https://github.com/Planteome/plant-ontology/issues/[example_id]",
+      "datatype" : "entity",
+      "id" : "PO_GIT",
+      "object" : "entity",
+      "example_id" : "PO_GIT:626",
+      "abbreviation" : "PO_GIT",
+      "url_example" : "https://github.com/Planteome/plant-ontology/issues/626"
+   },
+   "apsnet" : {
+      "abbreviation" : "APSNET",
+      "url_example" : "http://www.apsnet.org/publications/commonnames/Pages/AfricanDaisy.aspx",
+      "example_id" : "APSNET:AfricanDaisy",
+      "object" : "entity",
+      "generic_url" : "http://www.mobot.org/mobot/research/apweb/",
+      "id" : "APSNET",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.apsnet.org/publications/commonnames/Pages/[example_id].aspx",
+      "name" : "APSNET Common Names of Plant Diseases",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "APSNET Common Names of Plant Diseases"
+   },
+   "subtilistg" : {
+      "abbreviation" : "SUBTILISTG",
+      "url_example" : null,
+      "example_id" : "SUBTILISTG:accC",
+      "object" : "entity",
+      "generic_url" : "http://genolist.pasteur.fr/SubtiList/",
+      "id" : "SUBTILISTG",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "name" : "Bacillus subtilis Genome Sequence Project",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Bacillus subtilis Genome Sequence Project"
+   },
+   "dbsnp" : {
+      "object" : "entity",
+      "example_id" : "dbSNP:rs3131969",
+      "abbreviation" : "dbSNP",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=rs3131969",
+      "name" : "NCBI dbSNP",
+      "database" : "NCBI dbSNP",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/projects/SNP",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=[example_id]",
+      "id" : "dbSNP"
+   },
+   "gonuts" : {
+      "fullname" : "Third party documentation for GO and community annotation system.",
+      "uri_prefix" : null,
+      "database" : "Gene Ontology Normal Usage Tracking System (GONUTS)",
+      "name" : "Gene Ontology Normal Usage Tracking System (GONUTS)",
+      "id" : "GONUTS",
+      "url_syntax" : "http://gowiki.tamu.edu/wiki/index.php/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://gowiki.tamu.edu",
+      "abbreviation" : "GONUTS",
+      "url_example" : "http://gowiki.tamu.edu/wiki/index.php/MOUSE:CD28",
+      "object" : "entity",
+      "example_id" : "GONUTS:MOUSE:CD28"
+   },
+   "um-bbd_reactionid" : {
+      "example_id" : "UM-BBD_reactionID:r0129",
+      "object" : "entity",
+      "url_example" : "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=r&reacID=r0129",
+      "abbreviation" : "UM-BBD_reactionID",
+      "database" : "EAWAG Biocatalysis/Biodegradation Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "EAWAG Biocatalysis/Biodegradation Database",
+      "datatype" : "entity",
+      "url_syntax" : "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=r&reacID=[example_id]",
+      "id" : "UM-BBD_reactionID",
+      "generic_url" : "http://eawag-bbd.ethz.ch/"
+   },
+   "wbphenotype" : {
+      "url_example" : "http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:0000154",
+      "abbreviation" : "WBPhenotype",
+      "example_id" : "WBPhenotype:0002117",
+      "object" : "quality",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "WormBase phenotype ontology",
+      "name" : "WormBase phenotype ontology",
+      "id" : "WBPhenotype",
+      "datatype" : "quality",
+      "url_syntax" : "http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:[example_id]",
+      "generic_url" : "http://www.wormbase.org/"
+   },
+   "jcvi_ref" : {
+      "database" : "J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "J. Craig Venter Institute",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "JCVI_REF",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "object" : "entity",
+      "example_id" : "JCVI_REF:GO_ref",
+      "abbreviation" : "JCVI_REF",
+      "url_example" : "http://cmr.jcvi.org/CMR/AnnotationSops.shtml"
+   },
+   "aracyc" : {
+      "url_example" : "http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=PWYQT-62",
+      "abbreviation" : "AraCyc",
+      "example_id" : "AraCyc:PWYQT-62",
+      "object" : "entity",
+      "generic_url" : "http://www.arabidopsis.org/biocyc/index.jsp",
+      "id" : "AraCyc",
+      "url_syntax" : "http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=[example_id]",
+      "datatype" : "entity",
+      "name" : "AraCyc metabolic pathway database for Arabidopsis thaliana",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "AraCyc metabolic pathway database for Arabidopsis thaliana"
+   },
+   "aspgd_locus" : {
+      "abbreviation" : "AspGD_LOCUS",
+      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=AN10942",
+      "object" : "entity",
+      "example_id" : "AspGD_LOCUS:AN10942",
+      "generic_url" : "http://www.aspergillusgenome.org/",
+      "id" : "AspGD_LOCUS",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=[example_id]",
+      "name" : "Aspergillus Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Aspergillus Genome Database"
+   },
+   "img" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Integrated Microbial Genomes; JGI web site for genome annotation",
+      "name" : "Integrated Microbial Genomes; JGI web site for genome annotation",
+      "id" : "IMG",
+      "datatype" : "entity",
+      "url_syntax" : "http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=[example_id]",
+      "generic_url" : "http://img.jgi.doe.gov",
+      "url_example" : "http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=640008772",
+      "abbreviation" : "IMG",
+      "object" : "entity",
+      "example_id" : "IMG:640008772"
+   },
+   "tc" : {
+      "id" : "TC",
+      "url_syntax" : "http://www.tcdb.org/tcdb/index.php?tc=[example_id]",
+      "datatype" : "protein",
+      "generic_url" : "http://www.tcdb.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Transport Protein Database",
+      "name" : "Transport Protein Database",
+      "abbreviation" : "TC",
+      "url_example" : "http://www.tcdb.org/tcdb/index.php?tc=9.A.4.1.1",
+      "object" : "protein",
+      "example_id" : "TC:9.A.4.1.1"
+   },
+   "pubmed" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/pubmed/[example_id]",
+      "id" : "PMID",
+      "name" : "PubMed",
+      "database" : "PubMed",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "entity",
+      "example_id" : "PMID:4208797",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797",
+      "abbreviation" : "PubMed"
+   },
+   "pro" : {
+      "name" : "Protein Ontology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Protein Ontology",
+      "generic_url" : "http://www.proconsortium.org/pro/pro.shtml",
+      "id" : "PR",
+      "url_syntax" : "http://purl.obolibrary.org/obo/PR_[example_id]",
+      "datatype" : "protein",
+      "url_example" : "http://purl.obolibrary.org/obo/PR_000025380",
+      "abbreviation" : "PRO",
+      "object" : "protein",
+      "example_id" : "PR:000025380"
+   },
+   "unimod" : {
+      "fullname" : "protein modifications for mass spectrometry",
+      "uri_prefix" : null,
+      "database" : "UniMod",
+      "name" : "UniMod",
+      "id" : "UniMod",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.unimod.org/modifications_view.php?editid1=[example_id]",
+      "generic_url" : "http://www.unimod.org/",
+      "url_example" : "http://www.unimod.org/modifications_view.php?editid1=1287",
+      "abbreviation" : "UniMod",
+      "object" : "entity",
+      "example_id" : "UniMod:1287"
+   },
+   "sgn_gene" : {
+      "id" : "SGN",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]",
+      "generic_url" : "http://www.sgn.cornell.edu/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Sol Genomics Network",
+      "name" : "Sol Genomics Network",
+      "url_example" : "http://solgenomics.net/phenome/locus_display.pl?locus_id=7740",
+      "abbreviation" : "SGN_gene",
+      "object" : "gene",
+      "example_id" : "SGN_gene:7740"
+   },
+   "psi-mod" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Proteomics Standards Initiative protein modification ontology",
+      "name" : "Proteomics Standards Initiative protein modification ontology",
+      "id" : "PSI-MOD",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:[example_id]",
+      "generic_url" : "http://psidev.sourceforge.net/mod/",
+      "abbreviation" : "PSI-MOD",
+      "url_example" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:00219",
+      "example_id" : "MOD:00219",
+      "object" : "entity"
+   },
+   "biopixie_mefit" : {
+      "name" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
+      "database" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://avis.princeton.edu/mefit/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "bioPIXIE_MEFIT",
+      "example_id" : null,
+      "object" : "entity",
+      "abbreviation" : "bioPIXIE_MEFIT",
+      "url_example" : null
+   },
+   "gr_gene" : {
+      "url_example" : "http://www.gramene.org/db/genes/search_gene?acc=GR:0060198",
+      "abbreviation" : "GR_gene",
+      "example_id" : "GR_GENE:GR:0060198",
+      "object" : "entity",
+      "name" : "Gramene",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Gramene",
+      "generic_url" : "http://www.gramene.org/",
+      "id" : "GR_GENE",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.gramene.org/db/genes/search_gene?acc=[example_id]"
+   },
+   "flybase" : {
+      "database" : "FlyBase",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "FlyBase",
+      "datatype" : "gene",
+      "url_syntax" : "http://flybase.org/reports/[example_id].html",
+      "id" : "FB",
+      "generic_url" : "http://flybase.org/",
+      "example_id" : "FB:FBgn0000024",
+      "object" : "gene",
+      "url_example" : "http://flybase.org/reports/FBgn0000024.html",
+      "abbreviation" : "FLYBASE"
+   },
+   "uniprot" : {
+      "name" : "Universal Protein Knowledgebase",
+      "fullname" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
+      "uri_prefix" : null,
+      "database" : "Universal Protein Knowledgebase",
+      "generic_url" : "http://www.uniprot.org",
+      "id" : "UniProtKB",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.uniprot.org/uniprot/[example_id]",
+      "abbreviation" : "UniProt",
+      "url_example" : "http://www.uniprot.org/uniprot/P51587",
+      "object" : "protein",
+      "example_id" : "UniProtKB:P51587"
+   },
+   "broad_neurospora" : {
+      "abbreviation" : "Broad_NEUROSPORA",
+      "url_example" : "http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S7000007580576824",
+      "example_id" : "BROAD_NEUROSPORA:7000007580576824",
+      "object" : "entity",
+      "generic_url" : "http://www.broadinstitute.org/annotation/genome/neurospora/MultiHome.html",
+      "id" : "Broad_NEUROSPORA",
+      "url_syntax" : "http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S[example_id]",
+      "datatype" : "entity",
+      "name" : "Neurospora crassa Database",
+      "uri_prefix" : null,
+      "fullname" : "Neurospora crassa database at the Broad Institute",
+      "database" : "Neurospora crassa Database"
+   },
+   "vz" : {
+      "object" : "entity",
+      "example_id" : "VZ:957",
+      "abbreviation" : "VZ",
+      "url_example" : "http://viralzone.expasy.org/all_by_protein/957.html",
+      "database" : "ViralZone",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "ViralZone",
+      "url_syntax" : "http://viralzone.expasy.org/all_by_protein/[example_id].html",
+      "datatype" : "entity",
+      "id" : "VZ",
+      "generic_url" : "http://viralzone.expasy.org/"
+   },
+   "casspc" : {
+      "example_id" : null,
+      "object" : "entity",
+      "abbreviation" : "CASSPC",
+      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=1979",
+      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
+      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=[example_id]",
+      "datatype" : "entity",
+      "id" : "CASSPC",
+      "name" : "Catalog of Fishes species database",
+      "database" : "Catalog of Fishes species database",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "hugo" : {
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "HUGO",
+      "generic_url" : "http://www.hugo-international.org/",
+      "database" : "Human Genome Organisation",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Human Genome Organisation",
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "HUGO",
+      "url_example" : null
+   },
+   "bhf-ucl" : {
+      "name" : "Cardiovascular Gene Ontology Annotation Initiative",
+      "database" : "Cardiovascular Gene Ontology Annotation Initiative",
+      "uri_prefix" : null,
+      "fullname" : "The Cardiovascular Gene Ontology Annotation Initiative is supported by the British Heart Foundation (BHF) and located at University College London (UCL).",
+      "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "BHF-UCL",
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "BHF-UCL"
+   },
+   "gdb" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Human Genome Database",
+      "name" : "Human Genome Database",
+      "id" : "GDB",
+      "url_syntax" : "http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.gdb.org/",
+      "url_example" : "http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:306600",
+      "abbreviation" : "GDB",
+      "example_id" : "GDB:306600",
+      "object" : "entity"
+   },
+   "sgd" : {
+      "abbreviation" : "SGD",
+      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview",
+      "example_id" : "SGD:S000006169",
+      "object" : "gene",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "id" : "SGD",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
+      "name" : "Saccharomyces Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Saccharomyces Genome Database"
+   },
+   "maizegdb_ref" : {
+      "url_example" : "http://maizegdb.org/data_center/reference?id=9021423",
+      "abbreviation" : "MaizeGDB_REF",
+      "object" : "entity",
+      "example_id" : "MaizeGDB_REF:9021423",
+      "generic_url" : "http://www.maizegdb.org/",
+      "id" : "MaizeGDB_REF",
+      "url_syntax" : "http://maizegdb.org/data_center/reference?id=[example_id]",
+      "datatype" : "entity",
+      "name" : "Maize Genetics and Genomics Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Maize Genetics and Genomics Database"
+   },
+   "pmcid" : {
+      "database" : "Pubmed Central",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Pubmed Central",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=[example_id]",
+      "datatype" : "entity",
+      "id" : "PMCID",
+      "generic_url" : "http://www.pubmedcentral.nih.gov/",
+      "example_id" : "PMCID:PMC201377",
+      "object" : "entity",
+      "abbreviation" : "PMCID",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=PMC201377"
+   },
+   "jcvi_egad" : {
+      "generic_url" : "http://cmr.jcvi.org/",
+      "id" : "JCVI_EGAD",
+      "datatype" : "entity",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=[example_id]",
+      "name" : "JCVI CMR Egad",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "JCVI CMR Egad",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=74462",
+      "abbreviation" : "JCVI_EGAD",
+      "example_id" : "JCVI_EGAD:74462",
+      "object" : "entity"
+   },
+   "agricola_ind" : {
+      "generic_url" : "http://agricola.nal.usda.gov/",
+      "id" : "AGRICOLA_IND",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "name" : "AGRICultural OnLine Access",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "AGRICultural OnLine Access",
+      "url_example" : null,
+      "abbreviation" : "AGRICOLA_IND",
+      "example_id" : "AGRICOLA_IND:IND23252955",
+      "object" : "entity"
+   },
+   "rap-db" : {
+      "generic_url" : "http://rapdb.dna.affrc.go.jp",
+      "datatype" : "entity",
+      "url_syntax" : "http://rapdb.dna.affrc.go.jp/tools/search/run?id=on&attr=desc&attr=cgs&attr=cgn&attr=cgss&attr=cgns&attr=rgss&attr=rgns&keyword=[example_id]",
+      "id" : "RAP-DB",
+      "name" : "Rice annotation Project database",
+      "database" : "Rice annotation Project database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "RAP-DB:OS01T0100600-01",
+      "object" : "entity",
+      "abbreviation" : "RAP-DB",
+      "url_example" : "http://rapdb.dna.affrc.go.jp/tools/search/run?id=on&attr=desc&attr=cgs&attr=cgn&attr=cgss&attr=cgns&attr=rgss&attr=rgns&keyword=Os01g0100200"
+   },
+   "cafa" : {
+      "database" : "Critical Assessment of Protein Function Annotation",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Critical Assessment of Protein Function Annotation",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "CAFA",
+      "generic_url" : "http://biofunctionprediction.org/cafa/",
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "CAFA",
+      "url_example" : null
+   },
+   "cazy" : {
+      "generic_url" : "http://www.cazy.org/",
+      "id" : "CAZY",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.cazy.org/[example_id].html",
+      "name" : "Carbohydrate Active EnZYmes",
+      "fullname" : "The CAZy database describes the families of structurally-related catalytic and carbohydrate-binding modules (or functional domains) of enzymes that degrade, modify, or create glycosidic bonds.",
+      "uri_prefix" : null,
+      "database" : "Carbohydrate Active EnZYmes",
+      "url_example" : "http://www.cazy.org/PL11.html",
+      "abbreviation" : "CAZY",
+      "example_id" : "CAZY:PL11",
+      "object" : "entity"
+   },
+   "wb_ref" : {
+      "database" : "WormBase database of nematode biology",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "WormBase database of nematode biology",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.wormbase.org/db/misc/paper?name=[example_id]",
+      "id" : "WB_REF",
+      "generic_url" : "http://www.wormbase.org/",
+      "object" : "entity",
+      "example_id" : "WB_REF:WBPaper00004823",
+      "url_example" : "http://www.wormbase.org/db/misc/paper?name=WBPaper00004823",
+      "abbreviation" : "WB_REF"
+   },
+   "soy_gene" : {
+      "generic_url" : "http://soybase.org/",
+      "url_syntax" : "http://www.soybase.org/sbt/search/search_results.php?category=FeatureName&search_term=[example_id]",
+      "datatype" : "gene",
+      "id" : "Soy_gene",
+      "name" : "SoyBase",
+      "database" : "SoyBase",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "Glyma18g02210",
+      "object" : "gene",
+      "abbreviation" : "Soy_gene",
+      "url_example" : "http://www.soybase.org/sbt/search/search_results.php?category=FeatureName&search_term=Glyma18g02210"
+   },
+   "echobase" : {
+      "object" : "gene",
+      "example_id" : "EchoBASE:EB0231",
+      "abbreviation" : "EchoBASE",
+      "url_example" : "http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=EB0231",
+      "generic_url" : "http://www.ecoli-york.org/",
+      "url_syntax" : "http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=[example_id]",
+      "datatype" : "gene",
+      "id" : "EchoBASE",
+      "name" : "EchoBASE post-genomic database for Escherichia coli",
+      "database" : "EchoBASE post-genomic database for Escherichia coli",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "plana_ref" : {
+      "database" : "Planaria Ontology Database References",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Planaria Ontology Database References",
+      "url_syntax" : "http://purl.obolibrary.org/obo/plana/references/[example_id]",
+      "datatype" : "entity",
+      "id" : "PLANA_REF",
+      "generic_url" : "http://purl.obolibrary.org/obo/plana/references/",
+      "object" : "entity",
+      "example_id" : "0000001",
+      "abbreviation" : "PLANA_REF",
+      "url_example" : "http://purl.obolibrary.org/obo/plana/references/0000001"
+   },
+   "vmd" : {
+      "abbreviation" : "VMD",
+      "url_example" : "http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=109198",
+      "example_id" : "VMD:109198",
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Virginia Bioinformatics Institute Microbial Database",
+      "name" : "Virginia Bioinformatics Institute Microbial Database",
+      "id" : "VMD",
+      "url_syntax" : "http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://phytophthora.vbi.vt.edu"
+   },
+   "resid" : {
+      "example_id" : "RESID:AA0062",
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "RESID",
+      "name" : "RESID Database of Protein Modifications",
+      "database" : "RESID Database of Protein Modifications",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "ftp://ftp.ncifcrf.gov/pub/users/residues/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "RESID"
+   },
+   "ncbitaxon" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "NCBI Taxonomy",
+      "name" : "NCBI Taxonomy",
+      "id" : "taxon",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702",
+      "abbreviation" : "NCBITaxon",
+      "example_id" : "taxon:7227",
+      "object" : "entity"
+   },
+   "tigr" : {
+      "name" : "J. Craig Venter Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "J. Craig Venter Institute",
+      "generic_url" : "http://www.jcvi.org/",
+      "id" : "JCVI",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "abbreviation" : "TIGR",
+      "url_example" : null,
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "mi" : {
+      "example_id" : "MI:0018",
+      "object" : "entity",
+      "abbreviation" : "MI",
+      "url_example" : null,
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "PSI-MI",
+      "generic_url" : "http://psidev.sourceforge.net/mi/xml/doc/user/index.html",
+      "database" : "Proteomic Standard Initiative for Molecular Interaction",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Proteomic Standard Initiative for Molecular Interaction"
+   },
+   "ncbi_taxid" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
+      "datatype" : "entity",
+      "id" : "taxon",
+      "name" : "NCBI Taxonomy",
+      "database" : "NCBI Taxonomy",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "entity",
+      "example_id" : "taxon:7227",
+      "abbreviation" : "ncbi_taxid",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702"
+   },
+   "ntnu_sb" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Norwegian University of Science and Technology, Systems Biology team",
+      "name" : "Norwegian University of Science and Technology, Systems Biology team",
+      "id" : "NTNU_SB",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://www.ntnu.edu/nt/systemsbiology",
+      "abbreviation" : "NTNU_SB",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null
+   },
+   "dflat" : {
+      "id" : "DFLAT",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://bcb.cs.tufts.edu/dflat/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Developmental FunctionaL Annotation at Tufts",
+      "name" : "Developmental FunctionaL Annotation at Tufts",
+      "url_example" : null,
+      "abbreviation" : "DFLAT",
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "pseudocap" : {
+      "abbreviation" : "PseudoCAP",
+      "url_example" : "http://v2.pseudomonas.com/getAnnotation.do?locusID=PA4756",
+      "example_id" : "PseudoCAP:PA4756",
+      "object" : "entity",
+      "name" : "Pseudomonas Genome Project",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Pseudomonas Genome Project",
+      "generic_url" : "http://v2.pseudomonas.com/",
+      "id" : "PseudoCAP",
+      "datatype" : "entity",
+      "url_syntax" : "http://v2.pseudomonas.com/getAnnotation.do?locusID=[example_id]"
+   },
+   "sp_kw" : {
+      "name" : "UniProt Knowledgebase keywords",
+      "database" : "UniProt Knowledgebase keywords",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.uniprot.org/keywords/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.uniprot.org/keywords/[example_id]",
+      "id" : "UniProtKB-KW",
+      "example_id" : "UniProtKB-KW:KW-0812",
+      "object" : "entity",
+      "abbreviation" : "SP_KW",
+      "url_example" : "http://www.uniprot.org/keywords/KW-0812"
+   },
+   "hamap" : {
+      "example_id" : "HAMAP:MF_00031",
+      "object" : "entity",
+      "abbreviation" : "HAMAP",
+      "url_example" : "http://hamap.expasy.org/unirule/MF_00131",
+      "database" : "High-quality Automated and Manual Annotation of microbial Proteomes",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "High-quality Automated and Manual Annotation of microbial Proteomes",
+      "datatype" : "entity",
+      "url_syntax" : "http://hamap.expasy.org/unirule/[example_id]",
+      "id" : "HAMAP",
+      "generic_url" : "http://hamap.expasy.org/"
+   },
+   "ncbi" : {
+      "database" : "National Center for Biotechnology Information",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "National Center for Biotechnology Information",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "NCBI",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "NCBI"
+   },
+   "ipi" : {
+      "name" : "International Protein Index",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "International Protein Index",
+      "generic_url" : "http://www.ebi.ac.uk/IPI/IPIhelp.html",
+      "id" : "IPI",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "url_example" : null,
+      "abbreviation" : "IPI",
+      "object" : "entity",
+      "example_id" : "IPI:IPI00000005.1"
+   },
+   "ecogene_g" : {
+      "object" : "entity",
+      "example_id" : "ECOGENE_G:deoC",
+      "url_example" : null,
+      "abbreviation" : "ECOGENE_G",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "ECOGENE_G",
+      "generic_url" : "http://www.ecogene.org/",
+      "database" : "EcoGene Database of Escherichia coli Sequence and Function",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "EcoGene Database of Escherichia coli Sequence and Function"
+   },
+   "cgd_ref" : {
+      "abbreviation" : "CGD_REF",
+      "url_example" : "http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=1490",
+      "example_id" : "CGD_REF:1490",
+      "object" : "entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Candida Genome Database",
+      "name" : "Candida Genome Database",
+      "id" : "CGD_REF",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
+      "generic_url" : "http://www.candidagenome.org/"
+   },
+   "biomdid" : {
+      "url_example" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=BIOMD0000000045",
+      "abbreviation" : "BIOMDID",
+      "example_id" : "BIOMD:BIOMD0000000045",
+      "object" : "entity",
+      "generic_url" : "http://www.ebi.ac.uk/biomodels/",
+      "id" : "BIOMD",
+      "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
+      "datatype" : "entity",
+      "name" : "BioModels Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "BioModels Database"
+   },
+   "merops_fam" : {
+      "generic_url" : "http://merops.sanger.ac.uk/",
+      "id" : "MEROPS_fam",
+      "datatype" : "entity",
+      "url_syntax" : "http://merops.sanger.ac.uk/cgi-bin/famsum?family=[example_id]",
+      "name" : "MEROPS peptidase database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "MEROPS peptidase database",
+      "url_example" : "http://merops.sanger.ac.uk/cgi-bin/famsum?family=m18",
+      "abbreviation" : "MEROPS_fam",
+      "example_id" : "MEROPS_fam:M18",
+      "object" : "entity"
+   },
+   "iric" : {
+      "name" : "International Rice Research Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "International Rice Research Institute",
+      "generic_url" : "http://oryzasnp.org",
+      "id" : "IRIC",
+      "url_syntax" : "http://oryzasnp.org/iric-portal/_variety.zul?irisid=[example_id]",
+      "datatype" : "entity",
+      "url_example" : "http://oryzasnp.org/iric-portal/_variety.zul?irisid=IRIS%20313-11252",
+      "abbreviation" : "IRIC",
+      "example_id" : "IRIS%20313-11252",
+      "object" : "entity"
+   },
+   "omssa" : {
+      "name" : "Open Mass Spectrometry Search Algorithm",
+      "database" : "Open Mass Spectrometry Search Algorithm",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/omssa/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "OMSSA",
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "OMSSA"
+   },
+   "chebi" : {
+      "id" : "CHEBI",
+      "datatype" : "chemical entity",
+      "url_syntax" : "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:[example_id]",
+      "generic_url" : "http://www.ebi.ac.uk/chebi/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Chemical Entities of Biological Interest",
+      "name" : "Chemical Entities of Biological Interest",
+      "abbreviation" : "ChEBI",
+      "url_example" : "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17234",
+      "example_id" : "CHEBI:17234",
+      "object" : "chemical entity"
+   },
+   "unirule" : {
+      "name" : "Manually curated rules for automatic annotation of UniProtKB unreviewed entries",
+      "database" : "Manually curated rules for automatic annotation of UniProtKB unreviewed entries",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.uniprot.org/unirule",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.uniprot.org/unirule/[example_id]",
+      "id" : "UniRule",
+      "object" : "entity",
+      "example_id" : "UniRule:UR000107224",
+      "url_example" : "http://www.uniprot.org/unirule/UR000107224",
+      "abbreviation" : "UniRule"
+   },
+   "mod" : {
+      "example_id" : "MOD:00219",
+      "object" : "entity",
+      "url_example" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:00219",
+      "abbreviation" : "MOD",
+      "generic_url" : "http://psidev.sourceforge.net/mod/",
+      "url_syntax" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:[example_id]",
+      "datatype" : "entity",
+      "id" : "PSI-MOD",
+      "name" : "Proteomics Standards Initiative protein modification ontology",
+      "database" : "Proteomics Standards Initiative protein modification ontology",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "wbbt" : {
+      "abbreviation" : "WBbt",
+      "url_example" : null,
+      "example_id" : "WBbt:0005733",
+      "object" : "metazoan anatomical entity",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "C. elegans gross anatomy",
+      "name" : "C. elegans gross anatomy",
+      "id" : "WBbt",
+      "datatype" : "metazoan anatomical entity",
+      "url_syntax" : null,
+      "generic_url" : "http://www.wormbase.org/"
+   },
+   "asap" : {
+      "id" : "ASAP",
+      "datatype" : "gene",
+      "url_syntax" : "https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=[example_id]",
+      "generic_url" : "https://asap.ahabs.wisc.edu/annotation/php/ASAP1.htm",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "A Systematic Annotation Package for Community Analysis of Genomes",
+      "name" : "A Systematic Annotation Package for Community Analysis of Genomes",
+      "url_example" : "https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=ABE-0000008",
+      "abbreviation" : "ASAP",
+      "example_id" : "ASAP:ABE-0000008",
+      "object" : "gene"
+   },
+   "alzheimers_university_of_toronto" : {
+      "url_example" : null,
+      "abbreviation" : "Alzheimers_University_of_Toronto",
+      "object" : "entity",
+      "example_id" : null,
+      "generic_url" : "http://www.ims.utoronto.ca/",
+      "id" : "Alzheimers_University_of_Toronto",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "name" : "Alzheimers Project at University of Toronto",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Alzheimers Project at University of Toronto"
+   },
+   "co_125" : {
+      "generic_url" : "http://www.cropontology.org/ontology/CO_125/Musa Anatomy",
+      "id" : "CO_125",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "name" : "Crop Ontology CGIAR Musa Anatomy",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Crop Ontology CGIAR Musa Anatomy",
+      "url_example" : "url_example",
+      "abbreviation" : "CO_125",
+      "example_id" : "CO_125:0000002",
+      "object" : "entity"
+   },
+   "wb" : {
+      "abbreviation" : "WB",
+      "url_example" : "http://www.wormbase.org/db/get?class=Gene;name=WBGene00003001",
+      "object" : "protein",
+      "example_id" : "WB:WBGene00003001",
+      "id" : "WB",
+      "url_syntax" : "http://www.wormbase.org/db/gene/gene?name=[example_id]",
+      "datatype" : "protein",
+      "generic_url" : "http://www.wormbase.org/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "WormBase database of nematode biology",
+      "name" : "WormBase database of nematode biology"
+   },
+   "dictybase_ref" : {
+      "abbreviation" : "dictyBase_REF",
+      "url_example" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=10157",
+      "object" : "entity",
+      "example_id" : "dictyBase_REF:10157",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "dictyBase literature references",
+      "name" : "dictyBase literature references",
+      "id" : "dictyBase_REF",
+      "url_syntax" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://dictybase.org"
+   },
+   "swiss-prot" : {
+      "url_example" : "http://www.ebi.uniprot.org/uniprot-srv/uniProtView.do?proteinac=P45867",
+      "abbreviation" : "Swiss-Prot",
+      "object" : "entity",
+      "example_id" : "Swiss-Prot:P45867",
+      "generic_url" : "http://ca.expasy.org/sprot/",
+      "id" : "Swiss-Prot",
+      "url_syntax" : "http://www.ebi.uniprot.org/uniprot-srv/uniProtView.do?proteinac=[example_id]",
+      "datatype" : "entity",
+      "name" : "Swiss-Prot protein database.",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Swiss-Prot protein database."
+   },
+   "tgd" : {
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "TGD",
+      "url_example" : null,
+      "generic_url" : "http://www.ciliate.org/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "TGD",
+      "name" : "Tetrahymena Genome Database",
+      "database" : "Tetrahymena Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "mgi" : {
+      "generic_url" : "http://www.informatics.jax.org/",
+      "id" : "MGI",
+      "url_syntax" : "http://www.informatics.jax.org/accession/[example_id]",
+      "datatype" : "variation",
+      "name" : "Mouse Genome Informatics",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Mouse Genome Informatics",
+      "url_example" : "http://www.informatics.jax.org/accession/MGI:80863",
+      "abbreviation" : "MGI",
+      "object" : "variation",
+      "example_id" : "MGI:MGI:80863"
+   },
+   "maizegdb_stock" : {
+      "generic_url" : "http://www.maizegdb.org/",
+      "id" : "MaizeGDB_stock",
+      "datatype" : "entity",
+      "url_syntax" : "http://maizegdb.org/data_center/stock?id=[example_id]",
+      "name" : "Maize Genetics and Genomics Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Maize Genetics and Genomics Database",
+      "url_example" : "http://maizegdb.org/data_center/stock?id=12098",
+      "abbreviation" : "MaizeGDB_stock",
+      "object" : "entity",
+      "example_id" : "MaizeGDB_stock:12098"
+   },
+   "maizegdb" : {
+      "url_example" : "http://maizegdb.org/gene_center/gene/12098",
+      "abbreviation" : "MaizeGDB",
+      "example_id" : "MaizeGDB:12098",
+      "object" : "entity",
+      "id" : "MaizeGDB",
+      "datatype" : "entity",
+      "url_syntax" : "http://maizegdb.org/gene_center/gene/[example_id]",
+      "generic_url" : "http://www.maizegdb.org",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "MaizeGDB",
+      "name" : "MaizeGDB"
+   },
+   "wbls" : {
+      "generic_url" : "http://www.wormbase.org/",
+      "id" : "WBls",
+      "datatype" : "nematoda life stage",
+      "url_syntax" : null,
+      "name" : "C. elegans development",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "C. elegans development",
+      "abbreviation" : "WBls",
+      "url_example" : null,
+      "example_id" : "WBls:0000010",
+      "object" : "nematoda life stage"
+   },
+   "gene3d" : {
+      "generic_url" : "http://gene3d.biochem.ucl.ac.uk/Gene3D/",
+      "id" : "Gene3D",
+      "datatype" : "entity",
+      "url_syntax" : "http://gene3d.biochem.ucl.ac.uk/search?mode=family&sterm=[example_id]",
+      "name" : "Domain Architecture Classification",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Domain Architecture Classification",
+      "url_example" : "http://gene3d.biochem.ucl.ac.uk/search?mode=family&sterm=3.30.390.30",
+      "abbreviation" : "Gene3D",
+      "example_id" : "Gene3D:3.30.390.30",
+      "object" : "entity"
+   },
+   "so" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Sequence Ontology",
+      "name" : "Sequence Ontology",
+      "id" : "SO",
+      "url_syntax" : "http://www.sequenceontology.org/browser/current_svn/term/SO:[example_id]",
+      "datatype" : "sequence feature",
+      "generic_url" : "http://sequenceontology.org/",
+      "url_example" : "http://www.sequenceontology.org/browser/current_svn/term/SO:0001850",
+      "abbreviation" : "SO",
+      "object" : "sequence feature",
+      "example_id" : "SO:0000195"
+   },
+   "roslin_institute" : {
+      "name" : "Roslin Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Roslin Institute",
+      "generic_url" : "http://www.roslin.ac.uk/",
+      "id" : "Roslin_Institute",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "url_example" : null,
+      "abbreviation" : "Roslin_Institute",
+      "example_id" : null,
+      "object" : "entity"
+   },
+   "eupathdb" : {
+      "abbreviation" : "EuPathDB",
+      "url_example" : "http://eupathdb.org/gene/LtaP17.1490",
+      "example_id" : "EuPathDB:LtaP17.1490",
+      "object" : "gene",
+      "name" : "The Eukaryotic Pathogen Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "The Eukaryotic Pathogen Database",
+      "generic_url" : "http://eupathdb.org",
+      "id" : "EuPathDB",
+      "url_syntax" : "http://eupathdb.org/gene/[example_id]",
+      "datatype" : "gene"
+   },
+   "brenda" : {
+      "abbreviation" : "BRENDA",
+      "url_example" : "http://www.brenda-enzymes.info/php/result_flat.php4?ecno=4.2.1.3",
+      "example_id" : "BRENDA:4.2.1.3",
+      "object" : "catalytic activity",
+      "id" : "BRENDA",
+      "url_syntax" : "http://www.brenda-enzymes.info/php/result_flat.php4?ecno=[example_id]",
+      "datatype" : "catalytic activity",
+      "generic_url" : "http://www.brenda-enzymes.info",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "BRENDA, The Comprehensive Enzyme Information System",
+      "name" : "BRENDA, The Comprehensive Enzyme Information System"
+   },
+   "cas_spc" : {
+      "abbreviation" : "CAS_SPC",
+      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=1979",
+      "example_id" : null,
+      "object" : "entity",
+      "id" : "CASSPC",
+      "datatype" : "entity",
+      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=[example_id]",
+      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Catalog of Fishes species database",
+      "name" : "Catalog of Fishes species database"
+   },
+   "pamgo" : {
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "PAMGO",
+      "url_example" : null,
+      "generic_url" : "http://pamgo.vbi.vt.edu/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "PAMGO",
+      "name" : "Plant-Associated Microbe Gene Ontology Interest Group",
+      "database" : "Plant-Associated Microbe Gene Ontology Interest Group",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "ma" : {
+      "abbreviation" : "MA",
+      "url_example" : "http://www.informatics.jax.org/searches/AMA.cgi?id=MA:0000003",
+      "object" : "entity",
+      "example_id" : "MA:0000003",
+      "fullname" : "Adult Mouse Anatomical Dictionary; part of Gene Expression Database",
+      "uri_prefix" : null,
+      "database" : "Adult Mouse Anatomical Dictionary",
+      "name" : "Adult Mouse Anatomical Dictionary",
+      "id" : "MA",
+      "url_syntax" : "http://www.informatics.jax.org/searches/AMA.cgi?id=MA:[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.informatics.jax.org/"
+   },
+   "goc" : {
+      "abbreviation" : "GOC",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "name" : "Gene Ontology Consortium",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Gene Ontology Consortium",
+      "generic_url" : "http://www.geneontology.org/",
+      "id" : "GOC",
+      "url_syntax" : null,
+      "datatype" : "entity"
+   },
+   "go" : {
+      "datatype" : "macromolecular complex",
+      "url_syntax" : "http://amigo.geneontology.org/amigo/term/GO:[example_id]",
+      "id" : "GO",
+      "generic_url" : "http://amigo.geneontology.org/",
+      "database" : "Gene Ontology Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Gene Ontology Database",
+      "example_id" : "GO:0004352",
+      "object" : "macromolecular complex",
+      "url_example" : "http://amigo.geneontology.org/amigo/term/GO:0004352",
+      "abbreviation" : "GO"
+   },
+   "mesh" : {
+      "example_id" : "MeSH:D017209",
+      "object" : "entity",
+      "abbreviation" : "MeSH",
+      "url_example" : "http://www.nlm.nih.gov/cgi/mesh/2015/MB_cgi?view=expanded&field=uid&term=D017209",
+      "name" : "Medical Subject Headings",
+      "database" : "Medical Subject Headings",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "https://www.nlm.nih.gov/mesh/MBrowser.html",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.nlm.nih.gov/cgi/mesh/2015/MB_cgi?view=expanded&field=uid&term=[example_id]",
+      "id" : "MeSH"
+   },
+   "cgdid" : {
+      "object" : "gene",
+      "example_id" : "CGD:CAL0005516",
+      "abbreviation" : "CGDID",
+      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=CAL0005516",
+      "name" : "Candida Genome Database",
+      "database" : "Candida Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.candidagenome.org/",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]",
+      "id" : "CGD"
+   },
+   "ppi" : {
+      "url_example" : null,
+      "abbreviation" : "PPI",
+      "object" : "entity",
+      "example_id" : null,
+      "generic_url" : "http://genome.pseudomonas-syringae.org/",
+      "id" : "PPI",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "name" : "Pseudomonas syringae community annotation project",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Pseudomonas syringae community annotation project"
+   },
+   "sanger" : {
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "Sanger",
+      "generic_url" : "http://www.sanger.ac.uk/",
+      "database" : "Wellcome Trust Sanger Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Wellcome Trust Sanger Institute",
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "Sanger"
+   },
+   "biocyc" : {
+      "abbreviation" : "BioCyc",
+      "url_example" : "http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=PWY-5271",
+      "object" : "entity",
+      "example_id" : "BioCyc:PWY-5271",
+      "name" : "BioCyc collection of metabolic pathway databases",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "BioCyc collection of metabolic pathway databases",
+      "generic_url" : "http://biocyc.org/",
+      "id" : "BioCyc",
+      "url_syntax" : "http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=[example_id]",
+      "datatype" : "entity"
+   },
+   "cdd" : {
+      "object" : "entity",
+      "example_id" : "CDD:34222",
+      "abbreviation" : "CDD",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=34222",
+      "name" : "Conserved Domain Database at NCBI",
+      "database" : "Conserved Domain Database at NCBI",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=cdd",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=[example_id]",
+      "datatype" : "entity",
+      "id" : "CDD"
+   },
+   "sgd_locus" : {
+      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
+      "datatype" : "entity",
+      "id" : "SGD_LOCUS",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "database" : "Saccharomyces Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Saccharomyces Genome Database",
+      "example_id" : "SGD_LOCUS:GAL4",
+      "object" : "entity",
+      "abbreviation" : "SGD_LOCUS",
+      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview"
+   },
+   "prodom" : {
+      "object" : "entity",
+      "example_id" : "ProDom:PD000001",
+      "url_example" : "http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=PD000001",
+      "abbreviation" : "ProDom",
+      "generic_url" : "http://prodom.prabi.fr/prodom/current/html/home.php",
+      "url_syntax" : "http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=[example_id]",
+      "datatype" : "entity",
+      "id" : "ProDom",
+      "name" : "ProDom protein domain families",
+      "database" : "ProDom protein domain families",
+      "fullname" : "ProDom protein domain families automatically generated from UniProtKB",
+      "uri_prefix" : null
+   },
+   "cgsc" : {
+      "generic_url" : "http://cgsc.biology.yale.edu/",
+      "id" : "CGSC",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "name" : "CGSC",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "CGSC",
+      "url_example" : "http://cgsc.biology.yale.edu/Site.php?ID=315",
+      "abbreviation" : "CGSC",
+      "object" : "entity",
+      "example_id" : "CGSC:rbsK"
+   },
+   "intact" : {
+      "database" : "IntAct protein interaction database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "IntAct protein interaction database",
+      "datatype" : "protein complex",
+      "url_syntax" : "http://www.ebi.ac.uk/complexportal/complex/[example_id]",
+      "id" : "IntAct",
+      "generic_url" : "http://www.ebi.ac.uk/intact/",
+      "example_id" : "IntAct:EBI-10205244",
+      "object" : "protein complex",
+      "url_example" : "http://www.ebi.ac.uk/complexportal/complex/EBI-10205244",
+      "abbreviation" : "IntAct"
+   },
+   "cog_cluster" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=[example_id]",
+      "id" : "COG_Cluster",
+      "name" : "NCBI COG cluster",
+      "database" : "NCBI COG cluster",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "COG_Cluster:COG0001",
+      "object" : "entity",
+      "abbreviation" : "COG_Cluster",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=COG0001"
+   },
+   "cl" : {
+      "abbreviation" : "CL",
+      "url_example" : "http://purl.obolibrary.org/obo/CL_0000041",
+      "object" : "cell",
+      "example_id" : "CL:0000041",
+      "id" : "CL",
+      "datatype" : "cell",
+      "url_syntax" : "http://purl.obolibrary.org/obo/CL_[example_id]",
+      "generic_url" : "http://cellontology.org",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Cell Type Ontology",
+      "name" : "Cell Type Ontology"
+   },
+   "ecocyc" : {
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Encyclopedia of E. coli metabolism",
+      "name" : "Encyclopedia of E. coli metabolism",
+      "id" : "EcoCyc",
+      "url_syntax" : "http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=[example_id]",
+      "datatype" : "biological_process",
+      "generic_url" : "http://ecocyc.org/",
+      "abbreviation" : "EcoCyc",
+      "url_example" : "http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=P2-PWY",
+      "example_id" : "EcoCyc:P2-PWY",
+      "object" : "biological_process"
+   },
+   "prow" : {
+      "database" : "Protein Reviews on the Web",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Protein Reviews on the Web",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "PROW",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/prow/",
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "PROW"
+   },
+   "cog" : {
+      "database" : "NCBI Clusters of Orthologous Groups",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "NCBI Clusters of Orthologous Groups",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "COG",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "COG",
+      "url_example" : null
+   },
+   "ensembl_proteinid" : {
+      "generic_url" : "http://www.ensembl.org/",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
+      "id" : "ENSEMBL_ProteinID",
+      "name" : "Ensembl database of automatically annotated genomic data",
+      "database" : "Ensembl database of automatically annotated genomic data",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "ENSEMBL_ProteinID:ENSP00000361027",
+      "object" : "protein",
+      "abbreviation" : "ENSEMBL_ProteinID",
+      "url_example" : "http://www.ensembl.org/id/ENSP00000361027"
+   },
+   "doi" : {
+      "object" : "entity",
+      "example_id" : "DOI:10.1016/S0963-9969(99)00021-6",
+      "url_example" : "http://dx.doi.org/10.1016/S0963-9969(99)00021-6",
+      "abbreviation" : "DOI",
+      "datatype" : "entity",
+      "url_syntax" : "http://dx.doi.org/[example_id]",
+      "id" : "DOI",
+      "generic_url" : "http://dx.doi.org/",
+      "database" : "Digital Object Identifier",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Digital Object Identifier"
+   },
+   "grin" : {
+      "generic_url" : "http://www.ars-grin.gov/",
+      "datatype" : "germplasm",
+      "url_syntax" : "https://npgsweb.ars-grin.gov/gringlobal/accessiondetail.aspx?id=[example_id]",
+      "id" : "GRIN",
+      "name" : "Germplasm Resources Information Network",
+      "database" : "Germplasm Resources Information Network",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "GRIN:1882640",
+      "object" : "germplasm",
+      "url_example" : "https://npgsweb.ars-grin.gov/gringlobal/accessiondetail.aspx?id=1882640",
+      "abbreviation" : "grin"
+   },
+   "treegenes" : {
+      "object" : "entity",
+      "example_id" : "TreeGenes:254",
+      "url_example" : "http://dendrome.ucdavis.edu/treegenes/protein/view_protein.php?id=254",
+      "abbreviation" : "TreeGenes",
+      "url_syntax" : "http://dendrome.ucdavis.edu/treegenes/protein/view_protein.php?id=[example_id]",
+      "datatype" : "entity",
+      "id" : "TreeGenes",
+      "generic_url" : "http://dendrome.ucdavis.edu/treegenes/",
+      "database" : "Forest Tree Genome Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Forest Tree Genome Database"
+   },
+   "coriell" : {
+      "name" : "Coriell Institute for Medical Research",
+      "uri_prefix" : null,
+      "fullname" : "The Coriell Cell Repositories provide essential research reagents to the scientific community by establishing, verifying, maintaining, and distributing cell cultures and DNA derived from cell cultures. These collections, supported by funds from the National Institutes of Health (NIH) and several foundations, are extensively utilized by research scientists around the world.",
+      "database" : "Coriell Institute for Medical Research",
+      "generic_url" : "http://ccr.coriell.org/",
+      "id" : "CORIELL",
+      "url_syntax" : "http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=[example_id]",
+      "datatype" : "entity",
+      "url_example" : "http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=GM07892",
+      "abbreviation" : "CORIELL",
+      "object" : "entity",
+      "example_id" : "GM07892"
+   },
+   "enzyme" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Swiss Institute of Bioinformatics enzyme database",
+      "name" : "Swiss Institute of Bioinformatics enzyme database",
+      "id" : "ENZYME",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.expasy.ch/cgi-bin/nicezyme.pl?[example_id]",
+      "generic_url" : "http://www.expasy.ch/",
+      "abbreviation" : "ENZYME",
+      "url_example" : "http://www.expasy.ch/cgi-bin/nicezyme.pl?1.1.1.1",
+      "object" : "entity",
+      "example_id" : "ENZYME:EC 1.1.1.1"
+   },
+   "yeastfunc" : {
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "YeastFunc",
+      "name" : "Yeast Function",
+      "database" : "Yeast Function",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://func.med.harvard.edu/yeast/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "YeastFunc"
+   },
+   "imgt_hla" : {
+      "name" : "IMGT/HLA human major histocompatibility complex sequence database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "IMGT/HLA human major histocompatibility complex sequence database",
+      "generic_url" : "http://www.ebi.ac.uk/imgt/hla",
+      "id" : "IMGT_HLA",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "url_example" : null,
+      "abbreviation" : "IMGT_HLA",
+      "object" : "entity",
+      "example_id" : "IMGT_HLA:HLA00031"
+   },
+   "pir" : {
+      "abbreviation" : "PIR",
+      "url_example" : "http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=I49499",
+      "object" : "protein",
+      "example_id" : "PIR:I49499",
+      "name" : "Protein Information Resource",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Protein Information Resource",
+      "generic_url" : "http://pir.georgetown.edu/",
+      "id" : "PIR",
+      "url_syntax" : "http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=[example_id]",
+      "datatype" : "protein"
+   },
+   "mgd" : {
+      "abbreviation" : "MGD",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : "MGD:Adcy9",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Mouse Genome Database",
+      "name" : "Mouse Genome Database",
+      "id" : "MGD",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://www.informatics.jax.org/"
+   },
+   "kegg_reaction" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "KEGG Reaction Database",
+      "name" : "KEGG Reaction Database",
+      "id" : "KEGG_REACTION",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?rn:[example_id]",
+      "generic_url" : "http://www.genome.jp/kegg/reaction/",
+      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?rn:R02328",
+      "abbreviation" : "KEGG_REACTION",
+      "object" : "entity",
+      "example_id" : "KEGG:R02328"
+   },
+   "nif_subcellular" : {
+      "id" : "NIF_Subcellular",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.neurolex.org/wiki/[example_id]",
+      "generic_url" : "http://www.neurolex.org/wiki",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Neuroscience Information Framework standard ontology, subcellular hierarchy",
+      "name" : "Neuroscience Information Framework standard ontology, subcellular hierarchy",
+      "url_example" : "http://www.neurolex.org/wiki/sao1770195789",
+      "abbreviation" : "NIF_Subcellular",
+      "object" : "entity",
+      "example_id" : "NIF_Subcellular:sao1186862860"
+   },
+   "sgn_ref" : {
+      "generic_url" : "http://www.sgn.cornell.edu/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.sgn.cornell.edu/chado/publication.pl?pub_id=[example_id]",
+      "id" : "SGN_ref",
+      "name" : "Sol Genomics Network",
+      "database" : "Sol Genomics Network",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "example_id" : "SGN_ref:861",
+      "object" : "entity",
+      "url_example" : "http://www.sgn.cornell.edu/chado/publication.pl?pub_id=861",
+      "abbreviation" : "SGN_ref"
+   },
+   "multifun" : {
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "MultiFun",
+      "generic_url" : "http://genprotec.mbl.edu/files/MultiFun.html",
+      "database" : "MultiFun cell function assignment schema",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "MultiFun cell function assignment schema",
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "MultiFun",
+      "url_example" : null
+   },
+   "eo_git" : {
+      "example_id" : "EO_GIT:76",
+      "object" : "entity",
+      "url_example" : "https://github.com/Planteome/plant-environment-ontology/issues/76",
+      "abbreviation" : "EO_GIT",
+      "database" : "GitHub",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "GitHub",
+      "url_syntax" : "https://github.com/Planteome/plant-environment-ontology/issues/[example_id]",
+      "datatype" : "entity",
+      "id" : "EO_GIT",
+      "generic_url" : "https://github.com/Planteome/plant-environment-ontology"
+   },
+   "genedb" : {
+      "id" : "GeneDB",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.genedb.org/gene/[example_id]",
+      "generic_url" : "http://www.genedb.org/gene/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "GeneDB",
+      "name" : "GeneDB",
+      "url_example" : "http://www.genedb.org/gene/PF3D7_1467300",
+      "abbreviation" : "GeneDB",
+      "example_id" : "PF3D7_1467300",
+      "object" : "gene"
+   },
+   "dictybase" : {
+      "datatype" : "gene",
+      "url_syntax" : "http://dictybase.org/gene/[example_id]",
+      "id" : "dictyBase",
+      "generic_url" : "http://dictybase.org",
+      "database" : "dictyBase",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "dictyBase",
+      "example_id" : "dictyBase:DDB_G0277859",
+      "object" : "gene",
+      "url_example" : "http://dictybase.org/gene/DDB_G0277859",
+      "abbreviation" : "DictyBase"
+   },
+   "po_ref" : {
+      "abbreviation" : "PO_REF",
+      "url_example" : "http://planteome.org/po_ref/00001",
+      "object" : "entity",
+      "example_id" : "PO_REF:00001",
+      "name" : "Plant Ontology custom references",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Plant Ontology custom references",
+      "generic_url" : "http://planteome.org/po_ref",
+      "id" : "PO_REF",
+      "url_syntax" : "http://planteome.org/po_ref/[example_id]",
+      "datatype" : "entity"
+   },
+   "locsvmpsi" : {
+      "url_example" : null,
+      "abbreviation" : "LOCSVMpsi",
+      "object" : "entity",
+      "example_id" : null,
+      "id" : "LOCSVMpsi",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://bioinformatics.ustc.edu.cn/locsvmpsi/locsvmpsi.php",
+      "uri_prefix" : null,
+      "fullname" : "Subcellular localization for eukayotic proteins based on SVM and PSI-BLAST",
+      "database" : "LOCSVMPSI",
+      "name" : "LOCSVMPSI"
+   },
+   "nc-iubmb" : {
+      "example_id" : null,
+      "object" : "entity",
+      "url_example" : null,
+      "abbreviation" : "NC-IUBMB",
+      "generic_url" : "http://www.chem.qmw.ac.uk/iubmb/",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "NC-IUBMB",
+      "name" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
+      "database" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "issn" : {
+      "generic_url" : "http://www.issn.org/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "ISSN",
+      "name" : "International Standard Serial Number",
+      "database" : "International Standard Serial Number",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "example_id" : "ISSN:1234-1231",
+      "object" : "entity",
+      "abbreviation" : "ISSN",
+      "url_example" : null
+   },
+   "kegg" : {
+      "abbreviation" : "KEGG",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "name" : "Kyoto Encyclopedia of Genes and Genomes",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Kyoto Encyclopedia of Genes and Genomes",
+      "generic_url" : "http://www.genome.ad.jp/kegg/",
+      "id" : "KEGG",
+      "datatype" : "entity",
+      "url_syntax" : null
+   },
+   "hpa" : {
+      "example_id" : "HPA:HPA000237",
+      "object" : "entity",
+      "abbreviation" : "HPA",
+      "url_example" : "http://www.proteinatlas.org/tissue_profile.php?antibody_id=HPA000237",
+      "name" : "Human Protein Atlas tissue profile information",
+      "database" : "Human Protein Atlas tissue profile information",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.proteinatlas.org/",
+      "url_syntax" : "http://www.proteinatlas.org/tissue_profile.php?antibody_id=[example_id]",
+      "datatype" : "entity",
+      "id" : "HPA"
+   },
+   "seed" : {
+      "abbreviation" : "SEED",
+      "url_example" : "http://www.theseed.org/linkin.cgi?id=fig|83331.1.peg.1",
+      "example_id" : "SEED:fig|83331.1.peg.1",
+      "object" : "entity",
+      "id" : "SEED",
+      "url_syntax" : "http://www.theseed.org/linkin.cgi?id=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.theseed.org",
+      "fullname" : "Project to annotate the first 1000 sequenced genomes, develop detailed metabolic reconstructions, and construct the corresponding stoichiometric matrices",
+      "uri_prefix" : null,
+      "database" : "The SEED;",
+      "name" : "The SEED;"
+   },
+   "syngo-ucl" : {
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "SynGO-UCL",
+      "database" : "The Synapse Gene Ontology and Annotation Initiative at UCL",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "The Synapse Gene Ontology and Annotation Initiative at UCL",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "SynGO-UCL",
+      "generic_url" : "http://geneontology.org/page/syngo-synapse-biology"
+   },
+   "ensemblplants" : {
+      "object" : "gene",
+      "example_id" : "EnsemblPlants:LOC_Os01g22954",
+      "abbreviation" : "EnsemblPlants",
+      "url_example" : "http://www.ensemblgenomes.org/id/LOC_Os01g22954",
+      "database" : "Ensembl Plants, the Ensembl database for accessing genome-scale data from plants.",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Ensembl Plants, the Ensembl database for accessing genome-scale data from plants.",
+      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_id]",
+      "datatype" : "gene",
+      "id" : "EnsemblPlants",
+      "generic_url" : "http://plants.ensembl.org/"
+   },
+   "go_ref" : {
+      "abbreviation" : "GO_REF",
+      "url_example" : "http://purl.obolibrary.org/obo/go/references/0000001",
+      "object" : "entity",
+      "example_id" : "0000001",
+      "id" : "GO_REF",
+      "url_syntax" : "http://purl.obolibrary.org/obo/go/references/[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://purl.obolibrary.org/obo/go/references/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Gene Ontology Database references",
+      "name" : "Gene Ontology Database references"
+   },
+   "sgdid" : {
+      "object" : "gene",
+      "example_id" : "SGD:S000006169",
+      "abbreviation" : "SGDID",
+      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
+      "id" : "SGD",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "database" : "Saccharomyces Genome Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Saccharomyces Genome Database"
+   },
+   "macsc_ref" : {
+      "name" : "Maize Genetics and Genomics Database",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Maize Genetics and Genomics Database",
+      "generic_url" : "http://www.maizegdb.org/cgi-bin/id_search.cgi?id=$acc_no",
+      "id" : "MACSC_REF",
+      "url_syntax" : "http://www.maizegdb.org/cgi-bin/displaytraitrecord.cgi?id=[example_id]",
+      "datatype" : "entity",
+      "abbreviation" : "MACSC_REF",
+      "url_example" : "http://www.maizegdb.org/cgi-bin/displaytraitrecord.cgi?id=78112",
+      "example_id" : "MACSC_REF:78112",
+      "object" : "entity"
+   },
+   "genprotec" : {
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "GenProtEC",
+      "url_example" : null,
+      "generic_url" : "http://genprotec.mbl.edu/",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "GenProtEC",
+      "name" : "GenProtEC E. coli genome and proteome database",
+      "database" : "GenProtEC E. coli genome and proteome database",
+      "fullname" : null,
+      "uri_prefix" : null
+   },
+   "casgen" : {
+      "example_id" : "CASGEN:1040",
+      "object" : "entity",
+      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=1040",
+      "abbreviation" : "CASGEN",
+      "database" : "Catalog of Fishes genus database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Catalog of Fishes genus database",
+      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=[example_id]",
+      "datatype" : "entity",
+      "id" : "CASGEN",
+      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html"
+   },
+   "jcvi_cmr" : {
+      "name" : "EGAD database at the J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "EGAD database at the J. Craig Venter Institute",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "id" : "JCVI_CMR",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
+      "datatype" : "protein",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557",
+      "abbreviation" : "JCVI_CMR",
+      "object" : "protein",
+      "example_id" : "JCVI_CMR:VCA0557"
+   },
+   "um-bbd_enzymeid" : {
+      "name" : "EAWAG Biocatalysis/Biodegradation Database",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "EAWAG Biocatalysis/Biodegradation Database",
+      "generic_url" : "http://eawag-bbd.ethz.ch/",
+      "id" : "UM-BBD_enzymeID",
+      "datatype" : "entity",
+      "url_syntax" : "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=ep&enzymeID=[example_id]",
+      "url_example" : "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=ep&enzymeID=e0230",
+      "abbreviation" : "UM-BBD_enzymeID",
+      "object" : "entity",
+      "example_id" : "UM-BBD_enzymeID:e0413"
+   },
+   "refseq" : {
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/RefSeq/",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]",
+      "id" : "RefSeq",
+      "name" : "RefSeq",
+      "database" : "RefSeq",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "object" : "protein",
+      "example_id" : "RefSeq:XP_001068954",
+      "abbreviation" : "RefSeq",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=XP_001068954"
+   },
+   "psi-mi" : {
+      "name" : "Proteomic Standard Initiative for Molecular Interaction",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Proteomic Standard Initiative for Molecular Interaction",
+      "generic_url" : "http://psidev.sourceforge.net/mi/xml/doc/user/index.html",
+      "id" : "PSI-MI",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "abbreviation" : "PSI-MI",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : "MI:0018"
+   },
+   "pmid" : {
+      "name" : "PubMed",
+      "database" : "PubMed",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/pubmed/[example_id]",
+      "id" : "PMID",
+      "object" : "entity",
+      "example_id" : "PMID:4208797",
+      "abbreviation" : "PMID",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797"
+   },
+   "ipr" : {
+      "url_syntax" : "http://www.ebi.ac.uk/interpro/entry/[example_id]",
+      "datatype" : "polypeptide region",
+      "id" : "InterPro",
+      "generic_url" : "http://www.ebi.ac.uk/interpro/",
+      "database" : "InterPro database of protein domains and motifs",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "InterPro database of protein domains and motifs",
+      "object" : "polypeptide region",
+      "example_id" : "InterPro:IPR000001",
+      "url_example" : "http://www.ebi.ac.uk/interpro/entry/IPR015421",
+      "abbreviation" : "IPR"
+   },
+   "obo_sf_po" : {
+      "database" : "Source Forge OBO Plant Ontology (PO) term request tracker",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Source Forge OBO Plant Ontology (PO) term request tracker",
+      "datatype" : "entity",
+      "url_syntax" : "https://sourceforge.net/tracker/index.php?func=detail&aid=[example_id]&group_id=76834&atid=835555",
+      "id" : "OBO_SF_PO",
+      "generic_url" : "http://sourceforge.net/tracker/?func=browse&group_id=76834&atid=835555",
+      "example_id" : "OBO_SF_PO:3184921",
+      "object" : "entity",
+      "abbreviation" : "OBO_SF_PO",
+      "url_example" : "https://sourceforge.net/tracker/index.php?func=detail&aid=3184921&group_id=76834&atid=835555"
+   },
+   "ddb_ref" : {
+      "example_id" : "dictyBase_REF:10157",
+      "object" : "entity",
+      "url_example" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=10157",
+      "abbreviation" : "DDB_REF",
+      "name" : "dictyBase literature references",
+      "database" : "dictyBase literature references",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://dictybase.org",
+      "datatype" : "entity",
+      "url_syntax" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=[example_id]",
+      "id" : "dictyBase_REF"
+   },
+   "mo" : {
+      "name" : "MGED Ontology",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "MGED Ontology",
+      "generic_url" : "http://mged.sourceforge.net/ontologies/MGEDontology.php",
+      "id" : "MO",
+      "datatype" : "entity",
+      "url_syntax" : "http://mged.sourceforge.net/ontologies/MGEDontology.php#[example_id]",
+      "abbreviation" : "MO",
+      "url_example" : "http://mged.sourceforge.net/ontologies/MGEDontology.php#Action",
+      "object" : "entity",
+      "example_id" : "MO:Action"
+   },
+   "tigr_tigrfams" : {
+      "abbreviation" : "TIGR_TIGRFAMS",
+      "url_example" : "http://search.jcvi.org/search?p&q=TIGR00254",
+      "object" : "polypeptide region",
+      "example_id" : "JCVI_TIGRFAMS:TIGR00254",
+      "name" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
+      "generic_url" : "http://search.jcvi.org/",
+      "id" : "JCVI_TIGRFAMS",
+      "datatype" : "polypeptide region",
+      "url_syntax" : "http://search.jcvi.org/search?p&q=[example_id]"
+   },
+   "tigr_egad" : {
+      "object" : "protein",
+      "example_id" : "JCVI_CMR:VCA0557",
+      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557",
+      "abbreviation" : "TIGR_EGAD",
+      "generic_url" : "http://cmr.jcvi.org/",
+      "datatype" : "protein",
+      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
+      "id" : "JCVI_CMR",
+      "name" : "EGAD database at the J. Craig Venter Institute",
+      "database" : "EGAD database at the J. Craig Venter Institute",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "pso_git" : {
+      "example_id" : "PSO_GIT:169",
+      "object" : "entity",
+      "url_example" : "https://github.com/Planteome/plant-stress-ontology/issues/169",
+      "abbreviation" : "PSO_GIT",
+      "name" : "GitHub",
+      "database" : "GitHub",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "generic_url" : "https://github.com/Planteome/plant-stress-ontology",
+      "datatype" : "entity",
+      "url_syntax" : "https://github.com/Planteome/plant-stress-ontology/issues/[example_id]",
+      "id" : "PSO_GIT"
+   },
+   "pdb" : {
+      "example_id" : "PDB:1A4U",
+      "object" : "protein",
+      "url_example" : "http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=1A4U",
+      "abbreviation" : "PDB",
+      "database" : "Protein Data Bank",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "name" : "Protein Data Bank",
+      "url_syntax" : "http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=[example_id]",
+      "datatype" : "protein",
+      "id" : "PDB",
+      "generic_url" : "http://www.rcsb.org/pdb/"
+   },
+   "maizegdb_locus" : {
+      "url_example" : "http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=ZmPK1",
+      "abbreviation" : "MaizeGDB_Locus",
+      "object" : "gene",
+      "example_id" : "MaizeGDB_Locus:ZmPK1",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "MaizeGDB",
+      "name" : "MaizeGDB",
+      "id" : "MaizeGDB_Locus",
+      "datatype" : "gene",
+      "url_syntax" : "http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=[example_id]",
+      "generic_url" : "http://www.maizegdb.org"
+   },
+   "obi" : {
+      "id" : "OBI",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://obi-ontology.org/page/Main_Page",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Ontology for Biomedical Investigations",
+      "name" : "Ontology for Biomedical Investigations",
+      "url_example" : null,
+      "abbreviation" : "OBI",
+      "object" : "entity",
+      "example_id" : "OBI:0000038"
+   },
+   "vbrc" : {
+      "url_example" : "http://vbrc.org/query.asp?web_id=VBRC:F35742",
+      "abbreviation" : "VBRC",
+      "object" : "entity",
+      "example_id" : "VBRC:F35742",
+      "name" : "Viral Bioinformatics Resource Center",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Viral Bioinformatics Resource Center",
+      "generic_url" : "http://vbrc.org",
+      "id" : "VBRC",
+      "datatype" : "entity",
+      "url_syntax" : "http://vbrc.org/query.asp?web_id=VBRC:[example_id]"
+   },
+   "gorel" : {
+      "name" : "GO Extensions to OBO Relation Ontology Ontology",
+      "database" : "GO Extensions to OBO Relation Ontology Ontology",
+      "uri_prefix" : null,
+      "fullname" : "Additional relations pending addition into RO",
+      "generic_url" : "http://purl.obolibrary.org/obo/ro",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "id" : "GOREL",
+      "object" : "entity",
+      "example_id" : null,
+      "abbreviation" : "GOREL",
+      "url_example" : null
+   },
+   "ensemblprotists" : {
+      "database" : "Ensembl Protists, the Ensembl database for accessing genome-scale data from protists.",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Ensembl Protists, the Ensembl database for accessing genome-scale data from protists.",
+      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_id]",
+      "datatype" : "gene",
+      "id" : "EnsemblProtists",
+      "generic_url" : "http://protists.ensembl.org/",
+      "example_id" : "EnsemblProtists:PFL2550w",
+      "object" : "gene",
+      "url_example" : "http://www.ensemblgenomes.org/id/PFL2550w",
+      "abbreviation" : "EnsemblProtists"
+   },
+   "ddanat" : {
+      "abbreviation" : "DDANAT",
+      "url_example" : null,
+      "example_id" : "DDANAT:0000068",
+      "object" : "anatomical entity",
+      "name" : "Dictyostelium discoideum anatomy",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Dictyostelium discoideum anatomy",
+      "generic_url" : "http://dictybase.org/Dicty_Info/dicty_anatomy_ontology.html",
+      "id" : "DDANAT",
+      "url_syntax" : null,
+      "datatype" : "anatomical entity"
+   },
+   "irgc" : {
+      "abbreviation" : "IRGC",
+      "url_example" : "https://www.genesys-pgr.org/acn/search?q=IRGC+10013",
+      "object" : "entity",
+      "example_id" : "IRGC:10012",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "International Rice Genebank Collection",
+      "name" : "International Rice Genebank Collection",
+      "id" : "IRGC",
+      "datatype" : "entity",
+      "url_syntax" : "https://www.genesys-pgr.org/acn/search?q=IRGC+[example_id]",
+      "generic_url" : "https://www.genesys-pgr.org"
+   },
+   "jstor" : {
+      "url_example" : "http://www.jstor.org/stable/3093870",
+      "abbreviation" : "JSTOR",
+      "object" : "entity",
+      "example_id" : "JSTOR:3093870",
+      "generic_url" : "http://www.jstor.org/",
+      "id" : "JSTOR",
+      "datatype" : "entity",
+      "url_syntax" : "http://www.jstor.org/stable/[example_id]",
+      "name" : "Digital archive of scholarly articles",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Digital archive of scholarly articles"
+   },
+   "ncbi_gp" : {
+      "object" : "protein",
+      "example_id" : "NCBI_GP:EAL72968",
+      "abbreviation" : "NCBI_GP",
+      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=EAL72968",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
+      "datatype" : "protein",
+      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=[example_id]",
+      "id" : "NCBI_GP",
+      "name" : "NCBI GenPept",
+      "database" : "NCBI GenPept",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "eurofung" : {
+      "name" : "Eurofungbase community annotation",
+      "database" : "Eurofungbase community annotation",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "generic_url" : "http://www.eurofung.net/option=com_content&task=section&id=3&Itemid=4",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "id" : "Eurofung",
+      "object" : "entity",
+      "example_id" : null,
+      "url_example" : null,
+      "abbreviation" : "Eurofung"
+   },
+   "swall" : {
+      "abbreviation" : "SWALL",
+      "url_example" : "http://ca.expasy.org/cgi-bin/sprot-search-de?S=1&amp;T=1&amp;SEARCH=12345",
+      "object" : "entity",
+      "example_id" : "SWALL:12345",
+      "generic_url" : "http://ca.expasy.org",
+      "id" : "SWALL",
+      "datatype" : "entity",
+      "url_syntax" : "http://ca.expasy.org/cgi-bin/sprot-search-de?S=1&amp;T=1&amp;SEARCH=[example_id]",
+      "name" : "ExPASY Bioinformatics Resource Portal",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "ExPASY Bioinformatics Resource Portal"
+   },
+   "nasc_code" : {
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Nottingham Arabidopsis Stock Centre Seeds Database",
+      "name" : "Nottingham Arabidopsis Stock Centre Seeds Database",
+      "id" : "NASC_code",
+      "url_syntax" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://arabidopsis.info",
+      "url_example" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=N3371",
+      "abbreviation" : "NASC_code",
+      "object" : "entity",
+      "example_id" : "NASC_code:N3371"
+   },
+   "jaiswal_lab" : {
+      "database" : "Jaiswal_Lab",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "name" : "Jaiswal_Lab",
+      "datatype" : "entity",
+      "url_syntax" : "http://wiki.plantontology.org/index.php/PO_REF:00008",
+      "id" : "Jaiswal_Lab",
+      "generic_url" : "http://wiki.plantontology.org/index.php/PO_REF:00008",
+      "example_id" : "Jaiswal_Lab:gene00002",
+      "object" : "entity",
+      "abbreviation" : "Jaiswal_Lab",
+      "url_example" : "http://wiki.plantontology.org/index.php/PO_REF:00008"
+   },
+   "metacyc" : {
+      "name" : "Metabolic Encyclopedia of metabolic and other pathways",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "Metabolic Encyclopedia of metabolic and other pathways",
+      "generic_url" : "http://metacyc.org/",
+      "id" : "MetaCyc",
+      "url_syntax" : "http://biocyc.org/META/NEW-IMAGE?type=NIL&object=[example_id]",
+      "datatype" : "entity",
+      "abbreviation" : "METACYC",
+      "url_example" : "http://biocyc.org/META/NEW-IMAGE?type=NIL&object=GLUTDEG-PWY",
+      "object" : "entity",
+      "example_id" : "MetaCyc:GLUTDEG-PWY"
+   },
+   "nmpdr" : {
+      "abbreviation" : "NMPDR",
+      "url_example" : "http://www.nmpdr.org/linkin.cgi?id=fig|306254.1.peg.183",
+      "object" : "entity",
+      "example_id" : "NMPDR:fig|306254.1.peg.183",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "National Microbial Pathogen Data Resource",
+      "name" : "National Microbial Pathogen Data Resource",
+      "id" : "NMPDR",
+      "url_syntax" : "http://www.nmpdr.org/linkin.cgi?id=[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://www.nmpdr.org"
+   },
+   "phenoscape" : {
+      "abbreviation" : "PhenoScape",
+      "url_example" : null,
+      "object" : "entity",
+      "example_id" : null,
+      "id" : "PhenoScape",
+      "url_syntax" : null,
+      "datatype" : "entity",
+      "generic_url" : "http://phenoscape.org/",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "PhenoScape Knowledgebase",
+      "name" : "PhenoScape Knowledgebase"
+   },
+   "ensemblfungi" : {
+      "generic_url" : "http://fungi.ensembl.org/",
+      "id" : "EnsemblFungi",
+      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_id]",
+      "datatype" : "gene",
+      "name" : "Ensembl Fungi, the Ensembl database for accessing genome-scale data from fungi.",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Ensembl Fungi, the Ensembl database for accessing genome-scale data from fungi.",
+      "abbreviation" : "EnsemblFungi",
+      "url_example" : "http://www.ensemblgenomes.org/id/YOR197W",
+      "object" : "gene",
+      "example_id" : "EnsemblFungi:YOR197W"
+   },
+   "pubchem_bioassay" : {
+      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
+      "id" : "PubChem_BioAssay",
+      "url_syntax" : "http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=[example_id]",
+      "datatype" : "entity",
+      "name" : "NCBI PubChem database of bioassay records",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "NCBI PubChem database of bioassay records",
+      "url_example" : "http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=177",
+      "abbreviation" : "PubChem_BioAssay",
+      "object" : "entity",
+      "example_id" : "PubChem_BioAssay:177"
+   },
+   "rnamods" : {
+      "url_example" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?091",
+      "abbreviation" : "RNAmods",
+      "object" : "entity",
+      "example_id" : "RNAmods:037",
+      "id" : "RNAmods",
+      "url_syntax" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?[example_id]",
+      "datatype" : "entity",
+      "generic_url" : "http://s59.cas.albany.edu/RNAmods/",
+      "fullname" : null,
+      "uri_prefix" : null,
+      "database" : "RNA Modification Database",
+      "name" : "RNA Modification Database"
+   },
+   "riceses" : {
+      "example_id" : "RiceSES:bakanae-diseases-bak",
+      "object" : "entity",
+      "abbreviation" : "RiceSES",
+      "url_example" : "http://www.knowledgebank.irri.org/extension/crop-damage-diseases/bakanae-diseases-bak.html",
+      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
+      "url_syntax" : "http://www.knowledgebank.irri.org/extension/crop-damage-diseases/[example_id].html",
+      "datatype" : "entity",
+      "id" : "RiceSES",
+      "name" : "Rice Knowledge Bank",
+      "database" : "Rice Knowledge Bank",
+      "uri_prefix" : null,
+      "fullname" : null
+   },
+   "cgen" : {
+      "abbreviation" : "CGEN",
+      "url_example" : null,
+      "example_id" : "CGEN:PrID131022",
+      "object" : "entity",
+      "name" : "Compugen Gene Ontology Gene Association Data",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Compugen Gene Ontology Gene Association Data",
+      "generic_url" : "http://www.cgen.com/",
+      "id" : "CGEN",
+      "datatype" : "entity",
+      "url_syntax" : null
+   },
+   "fma" : {
+      "abbreviation" : "FMA",
+      "url_example" : null,
+      "example_id" : "FMA:61905",
+      "object" : "entity",
+      "generic_url" : "http://sig.biostr.washington.edu/projects/fm/index.html",
+      "id" : "FMA",
+      "datatype" : "entity",
+      "url_syntax" : null,
+      "name" : "Foundational Model of Anatomy",
+      "uri_prefix" : null,
+      "fullname" : null,
+      "database" : "Foundational Model of Anatomy"
+   }
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = xrefs;
+
+},{}],15:[function(require,module,exports){
+/* 
+ * Package: handler.js
+ * 
+ * Namespace: amigo.handler
+ * 
+ * Generic AmiGO handler (conforming to what /should/ be described in
+ * the BBOP JS documentation), fed by <amigo.data.dispatch>.
+ */
+
+var bbop = require('bbop-core');
+var us = require('underscore');
+var each = us.each;
+
+/*
+ * Constructor: handler
+ * 
+ * Create an object that will run functions in the namespace with a
+ * specific profile.
+ * 
+ * These functions have a well defined interface so that other
+ * packages can use them (for example, the results display in
+ * LiveSearch.js).
  * 
  * Arguments:
  *  n/a
  * 
  * Returns:
- *  AmiGO object
+ *  self
  */
-amigo.api = function(){
-
-    ///
-    /// General AmiGO (perl server) AJAX response checking (after
-    /// parsing).
-    ///
-
-    this.response = {};
-
-    // Check to see if the server thinks we were successful.
-    this.response.success = function(robj){
-	var retval = false;
-	if( robj && robj.success && robj.success == 1 ){
-	    retval = true;
-	}
-	return retval;
-    };
-
-    // Check to see what the server thinks about its own condition.
-    this.response.type = function(robj){
-	var retval = 'unknown';
-	if( robj && robj.type ){
-	    retval = robj.type;
-	}
-	return retval;
-    };
-
-    // Check to see if the server thinks the data was successful.
-    this.response.errors = function(robj){
-	var retval = new Array();
-	if( robj && robj.errors ){
-	    retval = robj.errors;
-	}
-	return retval;
-    };
-
-    // Check to see if the server thinks the data was correct.
-    this.response.warnings = function(robj){
-	var retval = new Array();
-	if( robj && robj.warnings ){
-	    retval = robj.warnings;
-	}
-	return retval;
-    };
-
-    // Get the results chunk.
-    this.response.results = function(robj){
-	var retval = {};
-	if( robj && robj.results ){
-	    retval = robj.results;
-	}
-	return retval;
-    };
-
-    // Get the arguments chunk.
-    this.response.arguments = function(robj){
-	var retval = {};
-	if( robj && robj.arguments ){
-	    retval = robj.arguments;
-	}
-	return retval;
-    };
-
-    ///
-    /// Workspaces' linking.
-    ///
-
-    function _abstract_head_template(head){
-	return head + '?';
-    }
-
-    // Convert a hash (with possible arrays as arguments) into a link
-    // string.
-    // NOTE: Non-recursive--there are some interesting ways to create
-    // cyclic graph hashes in SpiderMonkey, and I'd rather not think
-    // about it right now.
-    function _abstract_segment_template(segments){
-	
-	var maxibuf = new Array();
-	for( var segkey in segments ){
-
-	    var segval = segments[segkey];
-
-	    // If the value looks like an array, iterate over it and
-	    // collect.
-	    if( segval &&
-		segval != null &&
-		typeof segval == 'object' &&
-		segval.length ){
-
-		for( var i = 0; i < segval.length; i++ ){
-		    var minibuffer = new Array();
-		    minibuffer.push(segkey);
-		    minibuffer.push('=');
-		    minibuffer.push(segval[i]);
-		    maxibuf.push(minibuffer.join(''));
-		}
-
-	    }else{
-		var minibuf = new Array();
-		minibuf.push(segkey);
-		minibuf.push('=');
-		minibuf.push(segval);
-		maxibuf.push(minibuf.join(''));
-	    }
-	}
-	return maxibuf.join('&');
-    }
-
-    // Similar to the above, but creating a solr filter set.
-    function _abstract_solr_filter_template(filters){
-	
-	var allbuf = new Array();
-	for( var filter_key in filters ){
-
-	    var filter_val = filters[filter_key];
-
-	    // If the value looks like an array, iterate over it and
-	    // collect.
-	    if( filter_val &&
-		filter_val != null &&
-		typeof filter_val == 'object' &&
-		filter_val.length ){
-
-		    for( var i = 0; i < filter_val.length; i++ ){
-			var minibuffer = new Array();
-			var try_val = filter_val[i];
-			if( typeof(try_val) != 'undefined' &&
-			try_val != '' ){
-			    minibuffer.push('fq=');
-			    minibuffer.push(filter_key);
-			    minibuffer.push(':');
-			    minibuffer.push('"');
-			    minibuffer.push(filter_val[i]);
-			    minibuffer.push('"');
-			    allbuf.push(minibuffer.join(''));
-			}
-		    }		    
-		}else{
-		    var minibuf = new Array();
-		    if( typeof(filter_val) != 'undefined' &&
-			filter_val != '' ){
-			    minibuf.push('fq=');
-			    minibuf.push(filter_key);
-			    minibuf.push(':');
-			    minibuf.push('"');
-			    minibuf.push(filter_val);
-			    minibuf.push('"');
-			    allbuf.push(minibuf.join(''));
-			}
-		}
-	}
-	return allbuf.join('&');
-    }
-
-    // Construct the templates using head and segments.
-    function _abstract_link_template(head, segments){	
-	return _abstract_head_template(head) +
-	    _abstract_segment_template(segments);
-    }
-
-    // // Construct the templates using the segments.
-    // function _navi_client_template(segments){
-    // 	segments['mode'] = 'layers_graph';
-    // 	return _abstract_link_template('amigo_exp', segments);
-    // }
-
-    // // Construct the templates using the segments.
-    // function _navi_data_template(segments){
-    // 	segments['mode'] = 'navi_js_data';
-    // 	return _abstract_link_template('aserve_exp', segments);
-    // }
-
-    // Construct the templates using the segments.
-    function _ws_template(segments){
-	segments['mode'] = 'workspace';
-	return _abstract_link_template('amigo_exp', segments);
-    }
-
-    // // Construct the templates using the segments.
-    // function _ls_assoc_template(segments){
-    // 	segments['mode'] = 'live_search_association';
-    // 	return _abstract_link_template('aserve', segments);
-    // }
-    // function _ls_gp_template(segments){
-    // 	segments['mode'] = 'live_search_gene_product';
-    // 	return _abstract_link_template('aserve', segments);
-    // }
-    // function _ls_term_template(segments){
-    // 	segments['mode'] = 'live_search_term';
-    // 	return _abstract_link_template('aserve', segments);
-    // }
-
-    // Construct the templates using the segments.
-    function _completion_template(segments){
-    	return _abstract_link_template('completion', segments);
-    }
-
-    // // Construct the templates using the segments.
-    // function _nmatrix_template(segments){
-    // 	segments['mode'] = 'nmatrix';
-    // 	return _abstract_link_template('amigo_exp', segments);
-    // }
-
-    this.api = {};
-    this.link = {};
-    this.html = {};
-
-    //     // Some handling for a workspace object once we get one.
-    //     this.util.workspace = {};
-    //     this.util.workspace.get_terms = function(ws){
-    // 	var all_terms = new Array();
-    // 	for( var t = 0; t < ws.length; t++ ){
-    // 	    var item = ws[t];
-    // 	    if( item.type == 'term' ){
-    // 		all_terms.push(item.key);
-    // 	    }
-    // 	}
-    // 	return all_terms;
-    //     };
-
-    ///
-    /// JSON? JS? API functions for workspaces.
-    ///
-
-    this.workspace = {};
-
-    this.workspace.remove = function(ws_name){
-	return _ws_template({
-	    action: 'remove_workspace',
-	    workspace: ws_name
-	});
-    };
-    this.workspace.add = function(ws_name){
-	return _ws_template({
-	    action: 'add_workspace',
-	    workspace: ws_name
-	});
-    };
-    this.workspace.copy = function(ws_from_name, ws_to_name){
-	return _ws_template({
-	    action: 'copy_workspace',
-	    workspace: ws_from_name,
-	    copy_to_workspace: ws_to_name
-	});
-    };
-    this.workspace.clear = function(ws_name){
-	return _ws_template({
-	    action: 'clear_workspace',
-	    workspace: ws_name
-	});
-    };
-    this.workspace.list = function(ws_name){
-	return _ws_template({
-	    action: 'list_workspaces',
-	    workspace: ws_name
-	});
-    };
-
-    // API functions for workspace items.
-    //     this.workspace.add_item = function(ws_name, key, type, name){
-    this.workspace.add_item = function(ws_name, key, name){
-	return _ws_template({
-	    action: 'add_item',
-	    workspace: ws_name,
-	    key: key,
-            // _t_y_p_e_: _t_y_p_e_, // prevent naturaldocs from finding this
-	    name: name
-	});
-    };
-    this.workspace.remove_item = function(ws_name, key){
-	return _ws_template({
-	    action: 'remove_item',
-	    workspace: ws_name,
-	    key: key
-	});
-    };
-    this.workspace.list_items = function(ws_name){
-	return _ws_template({
-	    action: 'list_items',
-	    workspace: ws_name
-	});
-    };
-
-    // Just the workspace and item status. Essentially do nothing and
-    // link to the current session status.
-    this.workspace.status = function(){
-	return _ws_template({ action: '' });
-    };
-
-    ///
-    /// API function for completion/search information.
-    ///
-
-    this.completion = function(args){
-
-	var format = 'amigo';
-	var type = 'general';
-	var ontology = null;
-	var narrow = 'false';
-	var query = '';
-	if( args ){
-	    if( args['format'] ){ format = args['format']; }
-	    if( args['type'] ){ type = args['type']; }
-	    if( args['ontology'] ){ontology = args['ontology']; }
-	    if( args['narrow'] ){narrow = args['narrow']; }
-	    if( args['query'] ){query = args['query']; }
-	}
-
-	return _completion_template({format: format,
-				     type: type,
-				     ontology: ontology,
-				     narrow: narrow,
-				     query: encodeURIComponent(query)});
-    };
-
-    ///
-    /// API functions for live search.
-    ///
-    this.live_search = {};
-
-    // General search:
-    // http://accordion.lbl.gov:8080/solr/select?indent=on&version=2.2&q=annotation_class_label%3Abinding&fq=&start=0&rows=10&fl=*%2Cscore&qt=standard&wt=json&explainOther=&hl.fl=
-    // Facet on date:
-    // http://accordion.lbl.gov:8080/solr/select?indent=on&version=2.2&q=annotation_class_label%3Abinding&fq=&start=0&rows=10&fl=*%2Cscore&qt=standard&wt=json&explainOther=&hl.fl=&facet=true&facet.field=date    
-    this.live_search.golr = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_query_args =
-	    {
-		// TODO/BUG? need jsonp things here?
-		qt: 'standard',
-		indent: 'on',
-		wt: 'json',
-		version: '2.2',
-		rows: 10,
-		//start: 1,
-		start: 0, // Solr is offset indexing
-		fl: '*%2Cscore',
-
-		// Control of facets.
-		facet: '',
-		'facet.field': [],
-
-		// Facet filtering.
-		fq: [],
-
-		// Query-type stuff.
-		q: '',
-
-		// Our bookkeeping.
-		packet: 0
-	    };
-	var final_query_args = bbop.core.fold(default_query_args, in_args);
-		
-	var default_filter_args =
-	    {
-		// Filter stuff.
-		document_category: [],
-		type: [],
-		source: [],
-		taxon: [],
-		evidence_type: [],
-		evidence_closure: [],
-		isa_partof_label_closure: [],
-		annotation_extension_class_label: [],
-		annotation_extension_class_label_closure: []
-	    };
-	var final_filter_args = bbop.core.fold(default_filter_args, in_args);
-
-	// ...
-	//return _abstract_link_template('select', segments);	
-	var complete_query = _abstract_head_template('select') +
-	    _abstract_segment_template(final_query_args);
-	var addable_filters = _abstract_solr_filter_template(final_filter_args);
-	if( addable_filters.length > 0 ){
-	    complete_query = complete_query + '&' + addable_filters;
-	}
-	return complete_query;
-    };
-
-    ///
-    /// API functions for the ontology.
-    ///
-    this.ontology = {};
-    this.ontology.roots = function(){
-	return _abstract_link_template('aserve_exp', {'mode': 'ontology'});
-    };
-
-    ///
-    /// API functions for navi js data.
-    ///
-
-    this.navi_js_data = function(args){
-
-	if( ! args ){ args = {}; }
-
-	var final_args = {};
-
-	// Transfer the name/value pairs in opt_args into final args
-	// if extant.
-	var opt_args = ['focus', 'zoom', 'lon', 'lat'];
-	//var opt_args_str = '';
-	for( var oa = 0; oa < opt_args.length; oa++ ){
-	    var arg_name = opt_args[oa];
-	    if( args[arg_name] ){
-		// opt_args_str =
-		// opt_args_str + '&' + arg_name + '=' + args[arg_name];
-		final_args[arg_name] = args[arg_name];
-	    }
-	}
-
-	//
-	var terms_buf = new Array();
-	if( args.terms &&
-	    args.terms.length &&
-	    args.terms.length > 0 ){
-
-	    //
-	    for( var at = 0; at < args.terms.length; at++ ){
-		terms_buf.push(args.terms[at]);
-	    } 
-	}
-	final_args['terms'] = terms_buf.join(' '); 
-
-	return _navi_data_template(final_args);
-    };
-
-    ///
-    /// Links for terms and gene products.
-    ///
-
-    function _term_link(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		acc: ''
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	
-	var acc = final_args['acc'];
-	//return 'term_details?term=' + acc;
-	return 'amigo?mode=golr_term_details&term=' + acc;
-    }
-    this.link.term = _term_link;
-
-    // BUG/TODO: should this actually be in widgets? How core is this
-    // convenience?
-    this.html.term_link = function(acc, label){
-	if( ! label ){ label = acc; }
-	return '<a title="Go to term details page for ' + label +
-	    '." href="' + _term_link({acc: acc}) + '">' + label +'</a>';
-    };
-
-    function _gene_product_link(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		acc: ''
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	
-	var acc = final_args['acc'];
-	//return 'gp-details.cgi?gp=' + acc;
-	return 'amigo?mode=golr_gene_product_details&gp=' + acc;
-    }
-    this.link.gene_product = _gene_product_link;
-
-    // BUG/TODO: should this actually be in widgets? How core is this
-    // convenience?
-    this.html.gene_product_link = function(acc, label){
-	if( ! label ){ label = acc; }
-	return '<a title="Go to gene product details page for ' + label +
-	    '." href="' + _gene_product_link({acc: acc}) + '">' + label +'</a>';
-    };
-
-    ///
-    /// Links for term product associations.
-    ///
-
-    this.link.term_assoc = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		acc: '',
-		speciesdb: [],
-		taxid: []
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	var acc = final_args['acc'];
-	var speciesdbs = final_args['speciesdb'];
-	var taxids = final_args['taxid'];
-
-	//
-	var spc_fstr = speciesdbs.join('&speciesdb');
-	var tax_fstr = taxids.join('&taxid=');
-	//core.kvetch('LINK SRCS: ' + spc_fstr);
-	//core.kvetch('LINK TIDS: ' + tax_fstr);
-
-	return 'term-assoc.cgi?term=' + acc +
-	    '&speciesdb=' + spc_fstr +
-	    '&taxid=' + tax_fstr;
-    };
-
-    ///
-    /// Link function for blast.
-    ///
-
-    this.link.single_blast = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		acc: ''
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	
-	var acc = final_args['acc'];
-	return 'blast.cgi?action=blast&seq_id=' + acc;
-    };
-
-    ///
-    /// Link function for term enrichment.
-    ///
-
-    this.link.term_enrichment = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		gp_list: [] 
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	
-	var acc = final_args['acc'];
-	return 'term_enrichment?' +
-	    'gp_list=' + final_args['gp_list'].join(' ');
-    };
-
-    ///
-    /// Link function for slimmer.
-    ///
-
-    this.link.slimmer = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		gp_list: [], 
-		slim_list: []
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-	
-	return 'slimmer?' +
-	    'gp_list=' + final_args['gp_list'].join(' ') +
-	    '&slim_list=' + final_args['slim_list'].join(' ');
-    };
-
-    ///
-    /// Link function for N-Matrix.
-    ///
-
-    this.link.nmatrix = function(in_args){
-
-	if( ! in_args ){ in_args = {}; }
-	var default_args =
-	    {
-		term_set_1: '',
-		term_set_2: ''
-	    };
-	var final_args = bbop.core.fold(default_args, in_args);
-
-	//
-	var terms_buf = new Array();
-	if( in_args.terms &&
-	    in_args.terms.length &&
-	    in_args.terms.length > 0 ){
-
-		//
-	    for( var at = 0; at < in_args.terms.length; at++ ){
-		terms_buf.push(in_args.terms[at]);
-	    } 
-	}
-	final_args['term_set_1'] = terms_buf.join(' '); 
-	final_args['term_set_2'] = terms_buf.join(' '); 
-
-	return _nmatrix_template(final_args);
-    };
-
-    ///
-    /// Link functions for navi client (bookmark).
-    ///
-
-    this.link.layers_graph = function(args){
-
-	//
-	var final_args = {};
-	if( args['lon'] &&
-	    args['lat'] &&
-	    args['zoom'] &&
-	    args['focus'] ){
-
-	    //
-	    final_args['lon'] = args['lon'];
-	    final_args['lat'] = args['lat'];
-	    final_args['zoom'] = args['zoom'];
-	    final_args['focus'] = args['focus'];
-	}
-
-	if( args['terms'] &&
-	    args['terms'].length &&
-	    args['terms'].length > 0 ){
-
-	    //
-	    var aterms = args['terms'];
-	    var terms_buf = new Array();
-	    for( var at = 0; at < aterms.length; at++ ){
-		terms_buf.push(aterms[at]);
-	    }
-	    final_args['terms'] = terms_buf.join(' '); 
-	}
-	
-	return _navi_client_template(final_args);
-    };
-
-    // TODO:
+var handler = function (dispatch_table){
+    this._is_a = 'amigo2.handler';
+
+    // Okay, since trying functions into existance is slow, we'll
+    // create a cache of strings to functions.
+    //this.mangle = bbop.uuid();
+    //    this.string_to_function_map = {};
+    //this.entries = 0; // a little extra for debugging and testing
+    this.dispatch_table = dispatch_table;
 };
+
+/*
+ * Function: dispatch
+ * 
+ * Return a string.
+ * 
+ * The fallback function is called if no match could be found in the
+ * amigo.data.dispatch. It is called with the name and context
+ * arguments in the same order.
+ * 
+ * Arguments:
+ *  data - the incoming string thing to be handled
+ *  field_name - the field name to be processed
+ *  context - *[optional]* a string to add extra context to the call
+ *  fallback - *[optional]* a fallback function to call in case nothing is found
+ * 
+ * Returns:
+ *  string; null if it couldn't create anything
+ */
+handler.prototype.dispatch = function(data, field_name, context, fallback){
+    
+    var run_fun = null;
+    var retval = null;
+
+    // First, try and get the most specific.
+    if( us.isObject(this.dispatch_table[field_name]) ){
+
+	var field_hash = this.dispatch_table[field_name];
+	
+	// console.log('data', data);
+	// console.log('field_name', field_name);
+	// console.log('context', context);
+	// console.log('fallback', fallback);
+	// console.log('field_hash', field_hash);
+
+	// Get the most specific function to run.
+	if( us.isObject(field_hash['context']) &&
+	    us.isString(context) &&
+	    us.isFunction(field_hash['context'][context]) ){
+	    //console.log('context function');
+	    run_fun = field_hash['context'][context];
+	}else if( us.isFunction(field_hash['default']) ){
+	    // Generic default as second place.
+	    //console.log('default function');
+	    run_fun = field_hash['default'];
+	}else if( us.isFunction(fallback) ){
+	    //console.log('fallback function');
+	    run_fun = fallback;	    
+	}
+    }
+
+    // We are now ensured that either we have a callable function or
+    // null, so let's finish it--either the return value of the called
+    // function or null.
+    if( us.isFunction(run_fun) ){
+	retval = run_fun(data, field_name, context);
+    }
+    return retval;
+};
+
+///
+/// Exportable body.
+///
+
+module.exports = handler;
+
+},{"bbop-core":66,"underscore":242}],16:[function(require,module,exports){
 /* 
  * Package: linker.js
  * 
@@ -34120,8 +45010,9 @@ amigo.api = function(){
  * package. However, the future should be here.
  */
 
-// Module and namespace checking.
-if( typeof amigo === "undefined" ){ var amigo = {}; }
+var bbop = require('bbop-core');
+var us = require('underscore');
+var each = us.each;
 
 /*
  * Constructor: linker
@@ -34137,20 +45028,18 @@ if( typeof amigo === "undefined" ){ var amigo = {}; }
  * Returns:
  *  self
  */
-amigo.linker = function (){
-    this._is_a = 'amigo.linker';
+var linker = function (xrefs, server){
+    this._is_a = 'amigo2.linker';
 
-    // With the new dispatcher, relative URLs no longer work, so we
-    // have to bring in server data--first let's ensure it.
-    if( ! amigo.data.server ){
-	throw new Error('we are missing access to amigo.data.server!');
-    }
+    // TODO:BUG: With the new dispatcher, relative URLs no longer work.
+
+    this._xrefs = xrefs;
+
     // Easy app base.
-    var sd = new amigo.data.server();
-    this.app_base = sd.app_base();
+    this.app_base = server.app_base;
     // Internal term matcher.
     this.term_regexp = null;
-    var internal_regexp_str = sd.term_regexp();    
+    var internal_regexp_str = server.term_regexp;
     if( internal_regexp_str ){
 	this.term_regexp = new RegExp(internal_regexp_str);
     }
@@ -34175,6 +45064,9 @@ amigo.linker = function (){
 	'gene_product': true,
 	'bioentity': true
     };
+    this.ref_category = {
+	'reference': true
+    };
     this.model_category = {
         'model': true
     };
@@ -34187,6 +45079,7 @@ amigo.linker = function (){
 	'gene_product': '/bioentity',
 	'bioentity': '/bioentity',
 	'ontology': '/ontology',
+	'reference': '/reference',
 	'annotation': '/annotation',
 	'model': '/model',
 	'family': '/family',
@@ -34220,7 +45113,7 @@ amigo.linker = function (){
  * Returns:
  *  string (url); null if it couldn't create anything
  */
-amigo.linker.prototype.url = function (id, xid, modifier){
+linker.prototype.url = function (id, xid, modifier){
     
     var retval = null;
 
@@ -34241,6 +45134,13 @@ amigo.linker.prototype.url = function (id, xid, modifier){
             }else if( this.bio_category[xid] ){
 		retval = this.app_base + '/amigo/gene_product/' + id;
 		//retval = _add_restmark_modifier(retval, modifier);
+            }else if( this.ref_category[xid] ){
+		// Only operate if it's a PubMed ID.
+		var db = bbop.first_split(':', id)[0];
+		if( db && db === 'PMID' ){
+		    retval = this.app_base + '/amigo/reference/' + id;
+		    //retval = _add_restmark_modifier(retval, modifier);
+		}
             }else if( this.model_category[xid] ){
 		retval = this.app_base + '/amigo/model/'+ id;
             }else if( this.search_category[xid] ){
@@ -34281,7 +45181,7 @@ amigo.linker.prototype.url = function (id, xid, modifier){
 		if( xid === 'medial_search' ){
 		    // The possibility of just tossing back an empty
 		    // search for somebody downstream to fill in.
-		    if( bbop.core.is_defined(id) && id != null ){
+		    if( typeof(id) !== 'undefined' && id !== null ){
 			retval = retval + '?q=' + id;
 		    }
 		}
@@ -34297,22 +45197,23 @@ amigo.linker.prototype.url = function (id, xid, modifier){
     // Since we couldn't find anything with our explicit local
     // transformation set, drop into the great abyss of the xref data.
     if( ! retval && id && id !== '' ){ // not internal, but still has an id
-	if( ! amigo.data.xrefs ){
-	    throw new Error('amigo.data.xrefs is missing!');
-	}
 	
 	// First, extract the probable source and break it into parts.
-	var full_id_parts = bbop.core.first_split(':', id);
+	var full_id_parts = bbop.first_split(':', id);
 	if( full_id_parts && full_id_parts[0] && full_id_parts[1] ){
 	    var src = full_id_parts[0];
 	    var sid = full_id_parts[1];
 	    
 	    // Now, check to see if it is indeed in our store.
 	    var lc_src = src.toLowerCase();
-	    var xref = amigo.data.xrefs[lc_src];
+	    var xref = this._xrefs[lc_src];
 	    if( xref && xref['url_syntax'] ){
-		retval =
-		    xref['url_syntax'].replace('[example_id]', sid, 'g');
+		// Careful, as the global flag has been deprecated;
+		// now need to compile at runtime:
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
+		//retval = xref['url_syntax'].replace('[example_id]', sid, 'g');
+		var scn = new RegExp('\\[example_id\\]', 'g');
+		retval = xref['url_syntax'].replace(scn, sid);
 	    }
 	}
     }
@@ -34334,7 +45235,7 @@ amigo.linker.prototype.url = function (id, xid, modifier){
  * Returns:
  *  string (link); null if it couldn't create anything
  */
-amigo.linker.prototype.anchor = function(args, xid, modifier){
+linker.prototype.anchor = function(args, xid, modifier){
     
     var anchor = this;
     var retval = null;
@@ -34406,9841 +45307,14 @@ amigo.linker.prototype.anchor = function(args, xid, modifier){
 
     return retval;
 };
-/* 
- * Package: handler.js
- * 
- * Namespace: amigo.handler
- * 
- * Generic AmiGO handler (conforming to what /should/ be described in
- * the BBOP JS documentation), fed by <amigo.data.dispatch>.
- */
 
-// Module and namespace checking.
-if( typeof amigo == "undefined" ){ var amigo = {}; }
+///
+/// Exportable body.
+///
 
-/*
- * Constructor: handler
- * 
- * Create an object that will run functions in the namespace with a
- * specific profile.
- * 
- * These functions have a well defined interface so that other
- * packages can use them (for example, the results display in
- * LiveSearch.js).
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  self
- */
-amigo.handler = function (){
-    this._is_a = 'amigo.handler';
+module.exports = linker;
 
-    var is_def = bbop.core.is_defined;
-
-    // Let's ensure we're sane.
-    if( ! is_def(amigo) ||
-	! is_def(amigo.data) ||
-	! is_def(amigo.data.dispatch) ){
-	throw new Error('we are missing access to amigo.data.dispatch!');
-    }
-
-    // Okay, since trying functions into existance is slow, we'll
-    // create a cache of strings to functions.
-    this.mangle = bbop.core.uuid();
-    this.string_to_function_map = {};
-    this.entries = 0; // a little extra for debugging and testing
-};
-
-/*
- * Function: dispatch
- * 
- * Return a string.
- * 
- * The fallback function is called if no match could be found in the
- * amigo.data.dispatch. It is called with the name and context
- * arguments in the same order.
- * 
- * Arguments:
- *  data - the incoming thing to be handled
- *  name - the field name to be processed
- *  context - *[optional]* a string to add extra context to the call
- *  fallback - *[optional]* a fallback function to call in case nothing is found
- * 
- * Returns:
- *  string; null if it couldn't create anything
- */
-amigo.handler.prototype.dispatch = function(data, name, context, fallback){
-    
-    // Aliases.
-    var is_def = bbop.core.is_defined;
-
-    // First, get the specific id for this combination.
-    var did = name || '';
-    did += '_' + this.mangle;
-    if( context ){
-	did += '_' + context;
-    }
-
-    // If the combination is not already in the map, fill it in as
-    // best we can.
-    if( ! is_def(this.string_to_function_map[did]) ){
-	
-	this.entries += 1;
-
-	// First, try and get the most specific.
-	if( is_def(amigo.data.dispatch[name]) ){
-
-	    var field_hash = amigo.data.dispatch[name];
-	    var function_string = null;
-
-	    if( is_def(field_hash['context']) &&
-		is_def(field_hash['context'][context]) ){
-		// The most specific.
-		function_string = field_hash['context'][context];
-	    }else{
-		// If the most specific cannot be found, try and get
-		// the more general one.
-		if( is_def(field_hash['default']) ){
-		    function_string = field_hash['default'];
-		}
-	    }
-
-	    // At the end of this section, if we don't have a string
-	    // to resolve into a function, the data format we're
-	    // working from is damaged.
-	    if( function_string == null ){
-		throw new Error('amigo.data.dispatch appears to be damaged!');
-	    }
-	    
-	    // We have a string. Pop it into existance with eval.
-	    var evalled_thing = eval(function_string);
-
-	    // Final test, make sure it is a function.
-	    if( ! is_def(evalled_thing) ||
-		evalled_thing == null ||
-		bbop.core.what_is(evalled_thing) != 'function' ){
-		throw new Error('"' + function_string + '" did not resolve!');
-	    }else{
-		this.string_to_function_map[did] = evalled_thing;		
-	    }
-
-	}else if( is_def(fallback) ){
-	    // Nothing could be found, so add the fallback if it is
-	    // there.
-	    this.string_to_function_map[did] = fallback;
-	}else{
-	    // Whelp, nothing there, so stick an indicator in.
-	    this.string_to_function_map[did] = null;
-	}
-    }
-
-    // We are now ensured that either we have a callable function or
-    // null, so let's finish it--either the return value of the called
-    // function or null.
-    var retval = null;
-    if( this.string_to_function_map[did] != null ){
-	var cfunc = this.string_to_function_map[did];
-	retval = cfunc(data, name, context);
-    }
-    return retval;
-};
-/* 
- * Package: echo.js
- * 
- * Namespace: amigo.handlers.echo
- * 
- * Static function handler for echoing inputs--really used for
- * teaching and testing.
- */
-
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.handlers == "undefined" ){ amigo.handlers = {}; }
-
-/*
- * Function: echo
- * 
- * Applies bbop.core.dump to whatever comes in.
- * 
- * Parameters:
- *  thing
- * 
- * Returns:
- *  a string; it /will/ be a string
- * 
- * Also See: <bbop.handler>
- */
-amigo.handlers.echo = function(thing, name, context){
-
-    // Force a return string into existence.
-    var retstr = null;
-    try {
-	retstr = bbop.core.dump(thing);
-    } catch (x) {
-	retstr = '';
-    }
-
-    // // Appaend any optional stuff.
-    // var is_def = bbop.core.is_defined;
-    // var what = bbop.core.what_is;
-    // if( is_def(name) && what(name) == 'string' ){
-    // 	retstr += ' (' + name + ')';
-    // }
-    // if( is_def(context) && what(context) == 'string' ){
-    // 	retstr += ' (' + context + ')';
-    // }
-
-    return retstr;
-};
-/* 
- * Package: owl_class_expression.js
- * 
- * Namespace: amigo.handlers.owl_class_expression
- * 
- * Static function handler for displaying OWL class expression
- * results. To be used for GAF column 16 stuff.
- */
-
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.handlers == "undefined" ){ amigo.handlers = {}; }
-
-/*
- * Function: owl_class_expression
- * 
- * Example incoming data (as a string or object):
- * 
- * : { relationship: {
- * :     relation: [{id: "RO:001234", label: "regulates"},
- * :                {id:"BFO:0003456", label: "hp"}], 
- * :     id: "MGI:MGI:185963",
- * :     label: "kidney"
- * :   }
- * : }
- * 
- * Parameters:
- *  JSON object as *[string or object]*; see above
- * 
- * Returns:
- *  HTML string
- * 
- * Also See: <bbop.handler>
- */
-amigo.handlers.owl_class_expression = function(in_owlo){
-
-    var retstr = "";
-
-    // // Add logging.
-    // var logger = new bbop.logger();
-    // logger.DEBUG = true;
-    // //logger.DEBUG = false;
-    // function ll(str){ logger.kvetch(str); }
-
-    // Aliases.
-    var is_def = bbop.core.is_defined;
-    var what_is = bbop.core.what_is;
-    var loop = bbop.core.each;
-
-    var owlo = in_owlo;
-    if( what_is(owlo) == 'string' ){
-	// This should be an unnecessary robustness check as
-	// everything /should/ be a legit JSON string...but things
-	// happen in testing. We'll check to make sure that it looks
-	// like what it should be as well.
-	if( in_owlo.charAt(0) == '{' &&
-	    in_owlo.charAt(in_owlo.length-1) == '}' ){
-	    owlo = bbop.json.parse(in_owlo) || {};
-	}else{
-	    // Looks like a normal string string.
-	    // Do nothing for now, but catch in the next section.
-	}
-    }
-
-    // Check to make sure that it looks right.
-    if( what_is(owlo) == 'string' ){
-	// Still a string means bad happened--we want to see that.
-	retstr = owlo + '?';
-    }else if( ! is_def(owlo) ||
-	      ! is_def(owlo['relationship']) ||
-	      ! what_is(owlo['relationship']) == 'object' ||
-	      ! what_is(owlo['relationship']['relation']) == 'array' ||
-	      ! is_def(owlo['relationship']['id']) ||
-	      ! is_def(owlo['relationship']['label']) ){
-	// 'Twas an error--ignore.
-	//throw new Error('sproing!');
-    }else{
-	
-	//throw new Error('sproing!');
-	var link = new amigo.linker();
-
-	// Okay, right structure--first assemble the relationships,
-	// then tag onto end.
-	var rel_buff = [];
-	bbop.core.each(owlo['relationship']['relation'],
-		       function(rel){
-			   // Check to make sure that these are
-			   // structured correctly as well.
-			   var rel_id = rel['id'];
-			   var rel_lbl = rel['label'];
-			   if( is_def(rel_id) && is_def(rel_lbl) ){
-			       var an =
-				   link.anchor({id: rel_id, label: rel_lbl});
-			       // Final check: if we didn't get
-			       // anything reasonable, just a label.
-			       if( ! an ){ an = rel_lbl; }
-			       rel_buff.push(an);
-			       // ll('in ' + rel_id + ' + ' + rel_lbl + ': ' + an);
-			   }
-		       });
-	var ranc = link.anchor({id: owlo['relationship']['id'],
-				label: owlo['relationship']['label']});
-	// Again, a final check
-	if( ! ranc ){ ranc = owlo['relationship']['label']; }
-	retstr = rel_buff.join(' &rarr; ') + ' ' + ranc;
-    }
-    
-    return retstr;
-};
-/* 
- * Package: qualifiers.js
- * 
- * Namespace: amigo.handlers.qualifiers
- * 
- * 
- */
-
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.handlers == "undefined" ){ amigo.handlers = {}; }
-
-/*
- * Function: qualifiers
- * 
- * Essentially catch certain strings and hightlight them.
- * 
- * Example incoming data as string:
- * 
- * : "not"
- * 
- * Parameters:
- *  string or null
- * 
- * Returns:
- *  HTML string
- * 
- * Also See: <bbop.handler>
- */
-amigo.handlers.qualifiers = function(in_qual){
-
-    var retstr = in_qual;
-
-    // Aliases.
-    var is_def = bbop.core.is_defined;
-    var what_is = bbop.core.what_is;
-
-    if( is_def(in_qual) ){
-	if( what_is(in_qual) == 'string' ){
-	    if( in_qual == 'not' || in_qual == 'NOT' ){
-		retstr = '<span class="qualifier-not">NOT</span>';
-	    }
-	}
-    }
-
-    return retstr;
-};
-/* 
- * Package: golr.js
- * 
- * Namespace: amigo.data.golr
- * 
- * This package was automatically created during an AmiGO 2 installation
- * from the YAML configuration files that AmiGO pulls in.
- *
- * Useful information about GOlr. See the package <golr_conf.js>
- * for the API to interact with this data file.
- *
- * NOTE: This file is generated dynamically at installation time.
- * Hard to work with unit tests--hope it's not too bad. You have to
- * occasionally copy back to keep the unit tests sane.
- *
- * NOTE: This file has a slightly different latout from the YAML
- * configurations files--in addition instead of the fields
- * being in lists (fields), they are in hashes keyed by the
- * field id (fields_hash).
- */
-
-// All of the server/instance-specific meta-data.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Variable: golr
- * 
- * The configuration for the data.
- * Essentially a JSONification of the OWLTools YAML files.
- * This should be consumed directly by <bbop.golr.conf>.
- */
-amigo.data.golr = {
-   "bioentity" : {
-      "document_category" : "bioentity",
-      "display_name" : "Genes and gene products",
-      "schema_generating" : "true",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.yaml",
-      "weight" : "30",
-      "_strict" : 0,
-      "id" : "bioentity",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/bio-config.yaml",
-      "result_weights" : "bioentity^8.0 bioentity_name^7.0 taxon^6.0 panther_family^5.0 type^4.0 source^3.0 synonym^1.0",
-      "searchable_extension" : "_searchable",
-      "description" : "Genes and gene products associated with GO terms.",
-      "fields_hash" : {
-         "panther_family" : {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family"
-         },
-         "bioentity_label" : {
-            "cardinality" : "single",
-            "id" : "bioentity_label",
-            "description" : "Symbol or name.",
-            "display_name" : "Label",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "taxon_label" : {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxonomic group",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "database_xref" : {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "DB xref",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Database cross-reference.",
-            "id" : "database_xref",
-            "cardinality" : "multi"
-         },
-         "id" : {
-            "cardinality" : "single",
-            "description" : "Gene of gene product ID.",
-            "id" : "id",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Acc",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "phylo_graph_json" : {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "This should not be displayed",
-            "indexed" : "false",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "JSON blob form of the phylogenic tree.",
-            "id" : "phylo_graph_json"
-         },
-         "taxon_subset_closure" : {
-            "id" : "taxon_subset_closure",
-            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon subset",
-            "type" : "string"
-         },
-         "taxon_subset_closure_label" : {
-            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
-            "id" : "taxon_subset_closure_label",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Taxon subset",
-            "indexed" : "true"
-         },
-         "isa_partof_closure_label" : {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Closure of labels over isa and partof.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Involved in",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "taxon_closure" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "taxon_closure",
-            "description" : "Taxonomic group and ancestral groups.",
-            "cardinality" : "multi"
-         },
-         "bioentity_name" : {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Name",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "bioentity_name",
-            "description" : "The full name of the gene product."
-         },
-         "source" : {
-            "description" : "Database source.",
-            "id" : "source",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Source",
-            "indexed" : "true"
-         },
-         "taxon" : {
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "taxon",
-            "description" : "Taxonomic group"
-         },
-         "annotation_class_list" : {
-            "id" : "annotation_class_list",
-            "description" : "Direct annotations.",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "type" : "string"
-         },
-         "panther_family_label" : {
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         "regulates_closure_label" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Inferred annotation",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "regulates_closure_label",
-            "description" : "Bioentities associated with this term or its children (over regulates).",
-            "cardinality" : "multi"
-         },
-         "bioentity_internal_id" : {
-            "display_name" : "This should not be displayed",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "bioentity_internal_id",
-            "description" : "The bioentity ID used at the database of origin."
-         },
-         "regulates_closure" : {
-            "required" : "false",
-            "display_name" : "Inferred annotation",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "regulates_closure",
-            "description" : "Bioentities associated with this term or its children (over regulates)."
-         },
-         "annotation_class_list_label" : {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Direct annotation",
-            "indexed" : "true",
-            "description" : "Direct annotations.",
-            "id" : "annotation_class_list_label",
-            "cardinality" : "multi"
-         },
-         "isa_partof_closure" : {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure",
-            "description" : "Closure of ids/accs over isa and partof.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Involved in",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         "taxon_closure_label" : {
-            "id" : "taxon_closure_label",
-            "description" : "Taxonomic group and ancestral groups.",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "bioentity" : {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Acc",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Gene or gene product ID.",
-            "id" : "bioentity",
-            "cardinality" : "single"
-         },
-         "synonym" : {
-            "description" : "Gene product synonyms.",
-            "id" : "synonym",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Synonyms",
-            "required" : "false"
-         },
-         "type" : {
-            "indexed" : "true",
-            "display_name" : "Type",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "type",
-            "description" : "Type class."
-         }
-      },
-      "filter_weights" : "source^7.0 type^6.0 panther_family_label^5.0 annotation_class_list_label^3.5 taxon_label^4.0 regulates_closure_label^2.0",
-      "fields" : [
-         {
-            "cardinality" : "single",
-            "description" : "Gene of gene product ID.",
-            "id" : "id",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Acc",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Acc",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Gene or gene product ID.",
-            "id" : "bioentity",
-            "cardinality" : "single"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "bioentity_label",
-            "description" : "Symbol or name.",
-            "display_name" : "Label",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Name",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "bioentity_name",
-            "description" : "The full name of the gene product."
-         },
-         {
-            "display_name" : "This should not be displayed",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "bioentity_internal_id",
-            "description" : "The bioentity ID used at the database of origin."
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Type",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "type",
-            "description" : "Type class."
-         },
-         {
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "taxon",
-            "description" : "Taxonomic group"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxonomic group",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "taxon_closure",
-            "description" : "Taxonomic group and ancestral groups.",
-            "cardinality" : "multi"
-         },
-         {
-            "id" : "taxon_closure_label",
-            "description" : "Taxonomic group and ancestral groups.",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "id" : "taxon_subset_closure",
-            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon subset",
-            "type" : "string"
-         },
-         {
-            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
-            "id" : "taxon_subset_closure_label",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Taxon subset",
-            "indexed" : "true"
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure",
-            "description" : "Closure of ids/accs over isa and partof.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Involved in",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Closure of labels over isa and partof.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Involved in",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "required" : "false",
-            "display_name" : "Inferred annotation",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "regulates_closure",
-            "description" : "Bioentities associated with this term or its children (over regulates)."
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Inferred annotation",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "regulates_closure_label",
-            "description" : "Bioentities associated with this term or its children (over regulates).",
-            "cardinality" : "multi"
-         },
-         {
-            "description" : "Database source.",
-            "id" : "source",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Source",
-            "indexed" : "true"
-         },
-         {
-            "id" : "annotation_class_list",
-            "description" : "Direct annotations.",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "type" : "string"
-         },
-         {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Direct annotation",
-            "indexed" : "true",
-            "description" : "Direct annotations.",
-            "id" : "annotation_class_list_label",
-            "cardinality" : "multi"
-         },
-         {
-            "description" : "Gene product synonyms.",
-            "id" : "synonym",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Synonyms",
-            "required" : "false"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "This should not be displayed",
-            "indexed" : "false",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "JSON blob form of the phylogenic tree.",
-            "id" : "phylo_graph_json"
-         },
-         {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "DB xref",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Database cross-reference.",
-            "id" : "database_xref",
-            "cardinality" : "multi"
-         }
-      ],
-      "boost_weights" : "bioentity^2.0 bioentity_label^2.0 bioentity_name^1.0 bioentity_internal_id^1.0 synonym^1.0 isa_partof_closure_label^1.0 regulates_closure^1.0 regulates_closure_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_label^1.0"
-   },
-   "ontology" : {
-      "document_category" : "ontology_class",
-      "schema_generating" : "true",
-      "display_name" : "Ontology",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ont-config.yaml",
-      "weight" : "40",
-      "_strict" : 0,
-      "id" : "ontology",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ont-config.yaml",
-      "result_weights" : "annotation_class^8.0 description^6.0 source^4.0 synonym^3.0 alternate_id^2.0",
-      "searchable_extension" : "_searchable",
-      "description" : "Gene Ontology Term, Synonym, or Definition.",
-      "fields_hash" : {
-         "only_in_taxon" : {
-            "id" : "only_in_taxon",
-            "description" : "Only in taxon.",
-            "cardinality" : "single",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Only in taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "comment" : {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getComments"
-            ],
-            "type" : "string",
-            "display_name" : "Comments",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Term comments.",
-            "id" : "comment",
-            "cardinality" : "multi"
-         },
-         "annotation_relation_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation relation",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [
-               "getDummyString"
-            ],
-            "cardinality" : "single",
-            "description" : "This is equivalent to the relation field in GPAD.",
-            "id" : "annotation_relation_label"
-         },
-         "regulates_closure" : {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Ancestor",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getRelationIDClosure",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "cardinality" : "multi",
-            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
-            "id" : "regulates_closure"
-         },
-         "regulates_closure_label" : {
-            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
-            "id" : "regulates_closure_label",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getRelationLabelClosure",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "type" : "string",
-            "display_name" : "Ancestor",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         "disjoint_class_list" : {
-            "description" : "Disjoint classes.",
-            "id" : "disjoint_class_list",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Disjoint classes",
-            "indexed" : "true"
-         },
-         "regulates_transitivity_graph_json" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getLineageShuntGraphJSON",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "type" : "string",
-            "indexed" : "false",
-            "display_name" : "Regulates transitivity graph (JSON)",
-            "required" : "false",
-            "description" : "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of).",
-            "id" : "regulates_transitivity_graph_json",
-            "cardinality" : "single"
-         },
-         "description" : {
-            "description" : "Term definition.",
-            "id" : "description",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getDef"
-            ],
-            "type" : "string",
-            "display_name" : "Definition",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         "annotation_class_label" : {
-            "property" : [
-               "getLabel"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Term",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_class_label",
-            "description" : "Identifier.",
-            "cardinality" : "single"
-         },
-         "replaced_by" : {
-            "type" : "string",
-            "display_name" : "Replaced By",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "replaced_by"
-            ],
-            "cardinality" : "multi",
-            "description" : "Term that replaces this term.",
-            "id" : "replaced_by"
-         },
-         "only_in_taxon_label" : {
-            "cardinality" : "single",
-            "id" : "only_in_taxon_label",
-            "description" : "Only in taxon label.",
-            "display_name" : "Only in taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "isa_partof_closure" : {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getRelationIDClosure",
-               "BFO:0000050"
-            ],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Is-a/part-of",
-            "indexed" : "true",
-            "description" : "Ancestral terms (is_a/part_of).",
-            "id" : "isa_partof_closure",
-            "cardinality" : "multi"
-         },
-         "consider" : {
-            "indexed" : "true",
-            "display_name" : "Consider",
-            "required" : "false",
-            "type" : "string",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "consider"
-            ],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "consider",
-            "description" : "Others terms you might want to look at."
-         },
-         "subset" : {
-            "id" : "subset",
-            "description" : "Special use collections of terms.",
-            "cardinality" : "multi",
-            "property" : [
-               "getSubsets"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Subset",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "only_in_taxon_closure_label" : {
-            "required" : "false",
-            "display_name" : "Only in taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "multi",
-            "id" : "only_in_taxon_closure_label",
-            "description" : "Only in taxon label closure."
-         },
-         "annotation_extension_owl_json" : {
-            "id" : "annotation_extension_owl_json",
-            "description" : "A non-lossy representation of conjunctions and disjunctions in c16 (JSON).",
-            "cardinality" : "single",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "topology_graph_json" : {
-            "cardinality" : "single",
-            "id" : "topology_graph_json",
-            "description" : "JSON blob form of the local stepwise topology graph. Uses various relations (including regulates, occurs in, capable_of).",
-            "indexed" : "false",
-            "required" : "false",
-            "display_name" : "Topology graph (JSON)",
-            "type" : "string",
-            "property" : [
-               "getSegmentShuntGraphJSON",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "searchable" : "false",
-            "transform" : []
-         },
-         "synonym" : {
-            "type" : "string",
-            "display_name" : "Synonyms",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getOBOSynonymStrings"
-            ],
-            "cardinality" : "multi",
-            "description" : "Term synonyms.",
-            "id" : "synonym"
-         },
-         "equivalent_class_expressions_json" : {
-            "cardinality" : "single",
-            "description" : "For any class document C, this will contain json(CE) for all axioms of form EquivalentClasses(C ... CE ....).",
-            "id" : "equivalent_class_expressions_json",
-            "type" : "string",
-            "display_name" : "Eq class expressions",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getDummyString"
-            ]
-         },
-         "database_xref" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getXref"
-            ],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "DB xref",
-            "required" : "false",
-            "description" : "Database cross-reference.",
-            "id" : "database_xref",
-            "cardinality" : "multi"
-         },
-         "id" : {
-            "description" : "Term identifier.",
-            "id" : "id",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getIdentifier"
-            ],
-            "type" : "string",
-            "display_name" : "Acc",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         "annotation_relation" : {
-            "cardinality" : "single",
-            "id" : "annotation_relation",
-            "description" : "This is equivalent to the relation field in GPAD.",
-            "display_name" : "Annotation relation",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "only_in_taxon_closure" : {
-            "cardinality" : "multi",
-            "id" : "only_in_taxon_closure",
-            "description" : "Only in taxon closure.",
-            "display_name" : "Only in taxon (IDs)",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "disjoint_class_list_label" : {
-            "id" : "disjoint_class_list_label",
-            "description" : "Disjoint classes.",
-            "cardinality" : "multi",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Disjoint classes",
-            "required" : "false",
-            "type" : "string"
-         },
-         "annotation_class" : {
-            "property" : [
-               "getIdentifier"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Term",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_class",
-            "description" : "Term identifier.",
-            "cardinality" : "single"
-         },
-         "definition_xref" : {
-            "cardinality" : "multi",
-            "description" : "Definition cross-reference.",
-            "id" : "definition_xref",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Def xref",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getDefXref"
-            ]
-         },
-         "is_obsolete" : {
-            "cardinality" : "single",
-            "id" : "is_obsolete",
-            "description" : "Is the term obsolete?",
-            "required" : "false",
-            "display_name" : "Obsoletion",
-            "indexed" : "true",
-            "type" : "boolean",
-            "property" : [
-               "getIsObsoleteBinaryString"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "alternate_id" : {
-            "cardinality" : "multi",
-            "description" : "Alternate term identifier.",
-            "id" : "alternate_id",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Alt ID",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "alt_id"
-            ]
-         },
-         "isa_partof_closure_label" : {
-            "indexed" : "true",
-            "display_name" : "Is-a/part-of",
-            "required" : "false",
-            "type" : "string",
-            "property" : [
-               "getRelationLabelClosure",
-               "BFO:0000050"
-            ],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Ancestral terms (is_a/part_of)."
-         },
-         "source" : {
-            "display_name" : "Ontology source",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getNamespace"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "source",
-            "description" : "Term namespace."
-         }
-      },
-      "filter_weights" : "source^4.0 subset^3.0 regulates_closure_label^1.0 is_obsolete^0.0",
-      "fields" : [
-         {
-            "description" : "Term identifier.",
-            "id" : "id",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getIdentifier"
-            ],
-            "type" : "string",
-            "display_name" : "Acc",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         {
-            "property" : [
-               "getIdentifier"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Term",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_class",
-            "description" : "Term identifier.",
-            "cardinality" : "single"
-         },
-         {
-            "property" : [
-               "getLabel"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Term",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_class_label",
-            "description" : "Identifier.",
-            "cardinality" : "single"
-         },
-         {
-            "description" : "Term definition.",
-            "id" : "description",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getDef"
-            ],
-            "type" : "string",
-            "display_name" : "Definition",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         {
-            "display_name" : "Ontology source",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getNamespace"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "source",
-            "description" : "Term namespace."
-         },
-         {
-            "cardinality" : "single",
-            "id" : "is_obsolete",
-            "description" : "Is the term obsolete?",
-            "required" : "false",
-            "display_name" : "Obsoletion",
-            "indexed" : "true",
-            "type" : "boolean",
-            "property" : [
-               "getIsObsoleteBinaryString"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getComments"
-            ],
-            "type" : "string",
-            "display_name" : "Comments",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Term comments.",
-            "id" : "comment",
-            "cardinality" : "multi"
-         },
-         {
-            "type" : "string",
-            "display_name" : "Synonyms",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getOBOSynonymStrings"
-            ],
-            "cardinality" : "multi",
-            "description" : "Term synonyms.",
-            "id" : "synonym"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "Alternate term identifier.",
-            "id" : "alternate_id",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Alt ID",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "alt_id"
-            ]
-         },
-         {
-            "type" : "string",
-            "display_name" : "Replaced By",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "replaced_by"
-            ],
-            "cardinality" : "multi",
-            "description" : "Term that replaces this term.",
-            "id" : "replaced_by"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Consider",
-            "required" : "false",
-            "type" : "string",
-            "property" : [
-               "getAnnotationPropertyValues",
-               "consider"
-            ],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "consider",
-            "description" : "Others terms you might want to look at."
-         },
-         {
-            "id" : "subset",
-            "description" : "Special use collections of terms.",
-            "cardinality" : "multi",
-            "property" : [
-               "getSubsets"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Subset",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "Definition cross-reference.",
-            "id" : "definition_xref",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Def xref",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getDefXref"
-            ]
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getXref"
-            ],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "DB xref",
-            "required" : "false",
-            "description" : "Database cross-reference.",
-            "id" : "database_xref",
-            "cardinality" : "multi"
-         },
-         {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getRelationIDClosure",
-               "BFO:0000050"
-            ],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Is-a/part-of",
-            "indexed" : "true",
-            "description" : "Ancestral terms (is_a/part_of).",
-            "id" : "isa_partof_closure",
-            "cardinality" : "multi"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Is-a/part-of",
-            "required" : "false",
-            "type" : "string",
-            "property" : [
-               "getRelationLabelClosure",
-               "BFO:0000050"
-            ],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Ancestral terms (is_a/part_of)."
-         },
-         {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Ancestor",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getRelationIDClosure",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "cardinality" : "multi",
-            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
-            "id" : "regulates_closure"
-         },
-         {
-            "description" : "Ancestral terms (regulates, occurs in, capable_of).",
-            "id" : "regulates_closure_label",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [
-               "getRelationLabelClosure",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "type" : "string",
-            "display_name" : "Ancestor",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "topology_graph_json",
-            "description" : "JSON blob form of the local stepwise topology graph. Uses various relations (including regulates, occurs in, capable_of).",
-            "indexed" : "false",
-            "required" : "false",
-            "display_name" : "Topology graph (JSON)",
-            "type" : "string",
-            "property" : [
-               "getSegmentShuntGraphJSON",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "searchable" : "false",
-            "transform" : []
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [
-               "getLineageShuntGraphJSON",
-               "BFO:0000050",
-               "BFO:0000066",
-               "RO:0002211",
-               "RO:0002212",
-               "RO:0002213",
-               "RO:0002215",
-               "RO:0002216"
-            ],
-            "type" : "string",
-            "indexed" : "false",
-            "display_name" : "Regulates transitivity graph (JSON)",
-            "required" : "false",
-            "description" : "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of).",
-            "id" : "regulates_transitivity_graph_json",
-            "cardinality" : "single"
-         },
-         {
-            "id" : "only_in_taxon",
-            "description" : "Only in taxon.",
-            "cardinality" : "single",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Only in taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "only_in_taxon_label",
-            "description" : "Only in taxon label.",
-            "display_name" : "Only in taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "only_in_taxon_closure",
-            "description" : "Only in taxon closure.",
-            "display_name" : "Only in taxon (IDs)",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "required" : "false",
-            "display_name" : "Only in taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "multi",
-            "id" : "only_in_taxon_closure_label",
-            "description" : "Only in taxon label closure."
-         },
-         {
-            "id" : "annotation_extension_owl_json",
-            "description" : "A non-lossy representation of conjunctions and disjunctions in c16 (JSON).",
-            "cardinality" : "single",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "annotation_relation",
-            "description" : "This is equivalent to the relation field in GPAD.",
-            "display_name" : "Annotation relation",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [
-               "getDummyString"
-            ],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation relation",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [
-               "getDummyString"
-            ],
-            "cardinality" : "single",
-            "description" : "This is equivalent to the relation field in GPAD.",
-            "id" : "annotation_relation_label"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "For any class document C, this will contain json(CE) for all axioms of form EquivalentClasses(C ... CE ....).",
-            "id" : "equivalent_class_expressions_json",
-            "type" : "string",
-            "display_name" : "Eq class expressions",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getDummyString"
-            ]
-         },
-         {
-            "description" : "Disjoint classes.",
-            "id" : "disjoint_class_list",
-            "cardinality" : "multi",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Disjoint classes",
-            "indexed" : "true"
-         },
-         {
-            "id" : "disjoint_class_list_label",
-            "description" : "Disjoint classes.",
-            "cardinality" : "multi",
-            "property" : [
-               "getDummyStrings"
-            ],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Disjoint classes",
-            "required" : "false",
-            "type" : "string"
-         }
-      ],
-      "boost_weights" : "annotation_class^3.0 annotation_class_label^5.5 description^1.0 comment^0.5 synonym^1.0 alternate_id^1.0 regulates_closure^1.0 regulates_closure_label^1.0"
-   },
-   "noctua_model_meta" : {
-      "document_category" : "noctua_model_meta",
-      "display_name" : "Noctua meta",
-      "schema_generating" : "true",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/noctua-model-meta-config.yaml",
-      "fields_hash" : {
-         "contributor" : {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Contributor",
-            "description" : "Contributor identity.",
-            "id" : "contributor",
-            "cardinality" : "multi"
-         },
-         "model_state" : {
-            "id" : "model_state",
-            "description" : "The editorial state of the model.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "State",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "model_date" : {
-            "id" : "model_date",
-            "description" : "Model last modification dates.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Last modified",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "comment" : {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Comment",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "The comments associated with a model.",
-            "id" : "comment",
-            "cardinality" : "single"
-         },
-         "id" : {
-            "description" : "The mangled internal ID for this entity.",
-            "id" : "id",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Internal ID",
-            "required" : "false"
-         },
-         "annotation_unit" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Model identifier",
-            "description" : "The title(s) associated with the model.",
-            "id" : "annotation_unit",
-            "cardinality" : "single"
-         },
-         "annotation_unit_label" : {
-            "indexed" : "true",
-            "display_name" : "Model identifier",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "annotation_unit_label",
-            "description" : "The title(s) associated with the model."
-         }
-      },
-      "filter_weights" : "contributor^3.0 model_state^2.0 model_date^1.0",
-      "fields" : [
-         {
-            "description" : "The mangled internal ID for this entity.",
-            "id" : "id",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Internal ID",
-            "required" : "false"
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Model identifier",
-            "description" : "The title(s) associated with the model.",
-            "id" : "annotation_unit",
-            "cardinality" : "single"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Model identifier",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "annotation_unit_label",
-            "description" : "The title(s) associated with the model."
-         },
-         {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Contributor",
-            "description" : "Contributor identity.",
-            "id" : "contributor",
-            "cardinality" : "multi"
-         },
-         {
-            "id" : "model_date",
-            "description" : "Model last modification dates.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Last modified",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "id" : "model_state",
-            "description" : "The editorial state of the model.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "State",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Comment",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "The comments associated with a model.",
-            "id" : "comment",
-            "cardinality" : "single"
-         }
-      ],
-      "boost_weights" : "annotation_unit_label^3.0 contributor^2.0 model_date^1.0 comment^1.0",
-      "id" : "noctua_model_meta",
-      "_strict" : 0,
-      "weight" : "0",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/noctua-model-meta-config.yaml",
-      "searchable_extension" : "_searchable",
-      "result_weights" : "annotation_unit^3.0 contributor^2.0 model_state^1.0 model_date^1.0 comment^1.0",
-      "description" : "A generic capture of light Noctua metadata in realtime."
-   },
-   "bbop_ann_ev_agg" : {
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann_ev_agg-config.yaml",
-      "document_category" : "annotation_evidence_aggregate",
-      "schema_generating" : "true",
-      "display_name" : "Advanced",
-      "result_weights" : "bioentity^4.0 annotation_class^3.0 taxon^2.0",
-      "searchable_extension" : "_searchable",
-      "description" : "A description of annotation evidence aggregate for GOlr and AmiGO.",
-      "_strict" : 0,
-      "weight" : "-10",
-      "id" : "bbop_ann_ev_agg",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann_ev_agg-config.yaml",
-      "fields" : [
-         {
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "Gene/product ID.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Acc",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         {
-            "cardinality" : "single",
-            "description" : "Column 1 + columns 2.",
-            "id" : "bioentity",
-            "type" : "string",
-            "display_name" : "Gene/product ID",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Gene/product label",
-            "required" : "false",
-            "type" : "string",
-            "id" : "bioentity_label",
-            "description" : "Column 3.",
-            "cardinality" : "single"
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation class",
-            "description" : "Column 5.",
-            "id" : "annotation_class",
-            "cardinality" : "single"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "annotation_class_label",
-            "description" : "Column 5 + ontology.",
-            "required" : "false",
-            "display_name" : "Annotation class label",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "All evidence for this term/gene product pair",
-            "id" : "evidence_type_closure",
-            "type" : "string",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "All column 8s for this term/gene product pair",
-            "id" : "evidence_with",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence with",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "taxon",
-            "description" : "Column 13: taxon."
-         },
-         {
-            "cardinality" : "single",
-            "description" : "Derived from C13 + ncbi_taxonomy.obo.",
-            "id" : "taxon_label",
-            "type" : "string",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : []
-         },
-         {
-            "description" : "IDs derived from C13 + ncbi_taxonomy.obo.",
-            "id" : "taxon_closure",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon (IDs)"
-         },
-         {
-            "id" : "taxon_closure_label",
-            "description" : "Labels derived from C13 + ncbi_taxonomy.obo.",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Protein family",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Family IDs that are associated with this entity.",
-            "id" : "panther_family"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "panther_family_label",
-            "description" : "Families that are associated with this entity.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Family",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         }
-      ],
-      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 panther_family^1.0 panther_family_label^1.0 taxon_closure_label^1.0",
-      "fields_hash" : {
-         "evidence_type_closure" : {
-            "cardinality" : "multi",
-            "description" : "All evidence for this term/gene product pair",
-            "id" : "evidence_type_closure",
-            "type" : "string",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "bioentity" : {
-            "cardinality" : "single",
-            "description" : "Column 1 + columns 2.",
-            "id" : "bioentity",
-            "type" : "string",
-            "display_name" : "Gene/product ID",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "taxon_closure" : {
-            "description" : "IDs derived from C13 + ncbi_taxonomy.obo.",
-            "id" : "taxon_closure",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon (IDs)"
-         },
-         "taxon" : {
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "single",
-            "id" : "taxon",
-            "description" : "Column 13: taxon."
-         },
-         "panther_family_label" : {
-            "cardinality" : "single",
-            "id" : "panther_family_label",
-            "description" : "Families that are associated with this entity.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Family",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "bioentity_label" : {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Gene/product label",
-            "required" : "false",
-            "type" : "string",
-            "id" : "bioentity_label",
-            "description" : "Column 3.",
-            "cardinality" : "single"
-         },
-         "panther_family" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Protein family",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Family IDs that are associated with this entity.",
-            "id" : "panther_family"
-         },
-         "annotation_class_label" : {
-            "cardinality" : "single",
-            "id" : "annotation_class_label",
-            "description" : "Column 5 + ontology.",
-            "required" : "false",
-            "display_name" : "Annotation class label",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "id" : {
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "Gene/product ID.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Acc",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         "evidence_with" : {
-            "cardinality" : "multi",
-            "description" : "All column 8s for this term/gene product pair",
-            "id" : "evidence_with",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence with",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         },
-         "taxon_label" : {
-            "cardinality" : "single",
-            "description" : "Derived from C13 + ncbi_taxonomy.obo.",
-            "id" : "taxon_label",
-            "type" : "string",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : []
-         },
-         "annotation_class" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation class",
-            "description" : "Column 5.",
-            "id" : "annotation_class",
-            "cardinality" : "single"
-         },
-         "taxon_closure_label" : {
-            "id" : "taxon_closure_label",
-            "description" : "Labels derived from C13 + ncbi_taxonomy.obo.",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string"
-         }
-      },
-      "filter_weights" : "evidence_type_closure^4.0 evidence_with^3.0 taxon_closure_label^2.0"
-   },
-   "annotation" : {
-      "searchable_extension" : "_searchable",
-      "result_weights" : "bioentity^7.0 bioentity_name^6.0 qualifier^5.0 annotation_class^4.7 annotation_extension_json^4.5 assigned_by^4.0 taxon^3.0 evidence_type^2.5 evidence_with^2.0 panther_family^1.5 bioentity_isoform^0.5 reference^0.25 date^0.10",
-      "description" : "Associations between GO terms and genes or gene products.",
-      "id" : "annotation",
-      "_strict" : 0,
-      "weight" : "20",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.yaml",
-      "fields" : [
-         {
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "A unique (and internal) combination of bioentity and ontology class.",
-            "required" : "false",
-            "display_name" : "Acc",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "source",
-            "description" : "Database source.",
-            "required" : "false",
-            "display_name" : "Source",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "Type class.",
-            "id" : "type",
-            "type" : "string",
-            "display_name" : "Type class id",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "description" : "Date of assignment.",
-            "id" : "date",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Date",
-            "required" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "assigned_by",
-            "description" : "Annotations assigned by group.",
-            "indexed" : "true",
-            "display_name" : "Assigned by",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         {
-            "id" : "is_redundant_for",
-            "description" : "Rational for redundancy of annotation.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Redundant for",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "type" : "string",
-            "id" : "taxon",
-            "description" : "Taxonomic group.",
-            "cardinality" : "single"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxonomic group and ancestral groups.",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "description" : "Taxonomic group and ancestral groups.",
-            "id" : "taxon_closure",
-            "cardinality" : "multi"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "taxon_closure_label",
-            "description" : "Taxonomic group and ancestral groups."
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
-            "id" : "taxon_subset_closure",
-            "type" : "string",
-            "display_name" : "Taxon subset",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "taxon_subset_closure_label",
-            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
-            "indexed" : "true",
-            "display_name" : "Taxon subset",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "cardinality" : "single",
-            "id" : "secondary_taxon",
-            "description" : "Secondary taxon.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Secondary taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         {
-            "cardinality" : "single",
-            "id" : "secondary_taxon_label",
-            "description" : "Secondary taxon.",
-            "indexed" : "true",
-            "display_name" : "Secondary taxon",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Secondary taxon",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Secondary taxon closure.",
-            "id" : "secondary_taxon_closure"
-         },
-         {
-            "description" : "Secondary taxon closure.",
-            "id" : "secondary_taxon_closure_label",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Secondary taxon",
-            "required" : "false"
-         },
-         {
-            "id" : "isa_partof_closure",
-            "description" : "Annotations for this term or its children (over is_a/part_of).",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Involved in",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Annotations for this term or its children (over is_a/part_of).",
-            "indexed" : "true",
-            "display_name" : "Involved in",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Inferred annotation",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "regulates_closure",
-            "description" : "Annotations for this term or its children (over regulates).",
-            "cardinality" : "multi"
-         },
-         {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Inferred annotation",
-            "required" : "false",
-            "description" : "Annotations for this term or its children (over regulates).",
-            "id" : "regulates_closure_label",
-            "cardinality" : "multi"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "Closure of ids/accs over has_participant.",
-            "id" : "has_participant_closure",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Has participant (IDs)",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Has participant",
-            "required" : "false",
-            "description" : "Closure of labels over has_participant.",
-            "id" : "has_participant_closure_label",
-            "cardinality" : "multi"
-         },
-         {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Synonym",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Gene or gene product synonyms.",
-            "id" : "synonym"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Gene/product",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Gene or gene product identifiers.",
-            "id" : "bioentity"
-         },
-         {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Gene/product",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Gene or gene product identifiers.",
-            "id" : "bioentity_label",
-            "cardinality" : "single"
-         },
-         {
-            "display_name" : "Gene/product name",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "single",
-            "id" : "bioentity_name",
-            "description" : "The full name of the gene or gene product."
-         },
-         {
-            "indexed" : "false",
-            "required" : "false",
-            "display_name" : "This should not be displayed",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "bioentity_internal_id",
-            "description" : "The bioentity ID used at the database of origin."
-         },
-         {
-            "description" : "Annotation qualifier.",
-            "id" : "qualifier",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Qualifier"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "annotation_class",
-            "description" : "Direct annotations."
-         },
-         {
-            "cardinality" : "single",
-            "description" : "Direct annotations.",
-            "id" : "annotation_class_label",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Ontology (aspect)",
-            "description" : "Ontology aspect.",
-            "id" : "aspect",
-            "cardinality" : "single"
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Isoform",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "bioentity_isoform",
-            "description" : "Biological isoform.",
-            "cardinality" : "single"
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence",
-            "required" : "false",
-            "description" : "Evidence type.",
-            "id" : "evidence_type",
-            "cardinality" : "single"
-         },
-         {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "type" : "string",
-            "id" : "evidence_type_closure",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "cardinality" : "multi"
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "evidence_with",
-            "description" : "Evidence with/from.",
-            "display_name" : "Evidence with",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         {
-            "id" : "reference",
-            "description" : "Database reference.",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Reference",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Annotation extension",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_extension_class",
-            "description" : "Extension class for the annotation.",
-            "cardinality" : "multi"
-         },
-         {
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_label",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation extension",
-            "required" : "false"
-         },
-         {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_closure",
-            "cardinality" : "multi"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_closure_label"
-         },
-         {
-            "id" : "annotation_extension_json",
-            "description" : "Extension class for the annotation (JSON).",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Annotation extension",
-            "required" : "false",
-            "type" : "string"
-         },
-         {
-            "id" : "panther_family",
-            "description" : "PANTHER families that are associated with this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "type" : "string"
-         },
-         {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "type" : "string",
-            "id" : "panther_family_label",
-            "description" : "PANTHER families that are associated with this entity.",
-            "cardinality" : "single"
-         }
-      ],
-      "boost_weights" : "annotation_class^2.0 annotation_class_label^1.0 bioentity^2.0 bioentity_label^1.0 bioentity_name^1.0 annotation_extension_class^2.0 annotation_extension_class_label^1.0 reference^1.0 panther_family^1.0 panther_family_label^1.0 bioentity_isoform^1.0 regulates_closure^1.0 regulates_closure_label^1.0",
-      "fields_hash" : {
-         "annotation_extension_json" : {
-            "id" : "annotation_extension_json",
-            "description" : "Extension class for the annotation (JSON).",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Annotation extension",
-            "required" : "false",
-            "type" : "string"
-         },
-         "taxon" : {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "type" : "string",
-            "id" : "taxon",
-            "description" : "Taxonomic group.",
-            "cardinality" : "single"
-         },
-         "isa_partof_closure_label" : {
-            "cardinality" : "multi",
-            "id" : "isa_partof_closure_label",
-            "description" : "Annotations for this term or its children (over is_a/part_of).",
-            "indexed" : "true",
-            "display_name" : "Involved in",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "evidence_type_closure" : {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "type" : "string",
-            "id" : "evidence_type_closure",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "cardinality" : "multi"
-         },
-         "assigned_by" : {
-            "cardinality" : "single",
-            "id" : "assigned_by",
-            "description" : "Annotations assigned by group.",
-            "indexed" : "true",
-            "display_name" : "Assigned by",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         "taxon_subset_closure" : {
-            "cardinality" : "multi",
-            "description" : "Taxonomic group (direct) and ancestral groups that are within the specified subset (e.g mammalia, eukaryota).",
-            "id" : "taxon_subset_closure",
-            "type" : "string",
-            "display_name" : "Taxon subset",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "secondary_taxon" : {
-            "cardinality" : "single",
-            "id" : "secondary_taxon",
-            "description" : "Secondary taxon.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Secondary taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : []
-         },
-         "annotation_class" : {
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "annotation_class",
-            "description" : "Direct annotations."
-         },
-         "aspect" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Ontology (aspect)",
-            "description" : "Ontology aspect.",
-            "id" : "aspect",
-            "cardinality" : "single"
-         },
-         "panther_family" : {
-            "id" : "panther_family",
-            "description" : "PANTHER families that are associated with this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "type" : "string"
-         },
-         "bioentity_label" : {
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Gene/product",
-            "required" : "false",
-            "indexed" : "true",
-            "description" : "Gene or gene product identifiers.",
-            "id" : "bioentity_label",
-            "cardinality" : "single"
-         },
-         "synonym" : {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Synonym",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Gene or gene product synonyms.",
-            "id" : "synonym"
-         },
-         "has_participant_closure_label" : {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Has participant",
-            "required" : "false",
-            "description" : "Closure of labels over has_participant.",
-            "id" : "has_participant_closure_label",
-            "cardinality" : "multi"
-         },
-         "type" : {
-            "cardinality" : "single",
-            "description" : "Type class.",
-            "id" : "type",
-            "type" : "string",
-            "display_name" : "Type class id",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "qualifier" : {
-            "description" : "Annotation qualifier.",
-            "id" : "qualifier",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Qualifier"
-         },
-         "secondary_taxon_closure_label" : {
-            "description" : "Secondary taxon closure.",
-            "id" : "secondary_taxon_closure_label",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Secondary taxon",
-            "required" : "false"
-         },
-         "regulates_closure" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Inferred annotation",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "regulates_closure",
-            "description" : "Annotations for this term or its children (over regulates).",
-            "cardinality" : "multi"
-         },
-         "bioentity_isoform" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Isoform",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "bioentity_isoform",
-            "description" : "Biological isoform.",
-            "cardinality" : "single"
-         },
-         "evidence_type" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence",
-            "required" : "false",
-            "description" : "Evidence type.",
-            "id" : "evidence_type",
-            "cardinality" : "single"
-         },
-         "panther_family_label" : {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "type" : "string",
-            "id" : "panther_family_label",
-            "description" : "PANTHER families that are associated with this entity.",
-            "cardinality" : "single"
-         },
-         "source" : {
-            "cardinality" : "single",
-            "id" : "source",
-            "description" : "Database source.",
-            "required" : "false",
-            "display_name" : "Source",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "bioentity_name" : {
-            "display_name" : "Gene/product name",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "single",
-            "id" : "bioentity_name",
-            "description" : "The full name of the gene or gene product."
-         },
-         "taxon_closure" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "description" : "Taxonomic group and ancestral groups.",
-            "id" : "taxon_closure",
-            "cardinality" : "multi"
-         },
-         "taxon_subset_closure_label" : {
-            "cardinality" : "multi",
-            "id" : "taxon_subset_closure_label",
-            "description" : "Labels for taxonomic group (direct) and ancestral groups that are within the specified subset.",
-            "indexed" : "true",
-            "display_name" : "Taxon subset",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "secondary_taxon_label" : {
-            "cardinality" : "single",
-            "id" : "secondary_taxon_label",
-            "description" : "Secondary taxon.",
-            "indexed" : "true",
-            "display_name" : "Secondary taxon",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "reference" : {
-            "id" : "reference",
-            "description" : "Database reference.",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "display_name" : "Reference",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "annotation_extension_class_closure_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_closure_label"
-         },
-         "taxon_label" : {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxonomic group and ancestral groups.",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "annotation_extension_class" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Annotation extension",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "annotation_extension_class",
-            "description" : "Extension class for the annotation.",
-            "cardinality" : "multi"
-         },
-         "evidence_with" : {
-            "cardinality" : "multi",
-            "id" : "evidence_with",
-            "description" : "Evidence with/from.",
-            "display_name" : "Evidence with",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "id" : {
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "A unique (and internal) combination of bioentity and ontology class.",
-            "required" : "false",
-            "display_name" : "Acc",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "secondary_taxon_closure" : {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Secondary taxon",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "Secondary taxon closure.",
-            "id" : "secondary_taxon_closure"
-         },
-         "annotation_extension_class_closure" : {
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Annotation extension",
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_closure",
-            "cardinality" : "multi"
-         },
-         "bioentity" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Gene/product",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Gene or gene product identifiers.",
-            "id" : "bioentity"
-         },
-         "annotation_extension_class_label" : {
-            "description" : "Extension class for the annotation.",
-            "id" : "annotation_extension_class_label",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation extension",
-            "required" : "false"
-         },
-         "taxon_closure_label" : {
-            "indexed" : "true",
-            "display_name" : "Taxon",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "taxon_closure_label",
-            "description" : "Taxonomic group and ancestral groups."
-         },
-         "isa_partof_closure" : {
-            "id" : "isa_partof_closure",
-            "description" : "Annotations for this term or its children (over is_a/part_of).",
-            "cardinality" : "multi",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Involved in",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "date" : {
-            "description" : "Date of assignment.",
-            "id" : "date",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Date",
-            "required" : "false"
-         },
-         "bioentity_internal_id" : {
-            "indexed" : "false",
-            "required" : "false",
-            "display_name" : "This should not be displayed",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "bioentity_internal_id",
-            "description" : "The bioentity ID used at the database of origin."
-         },
-         "is_redundant_for" : {
-            "id" : "is_redundant_for",
-            "description" : "Rational for redundancy of annotation.",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Redundant for",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "annotation_class_label" : {
-            "cardinality" : "single",
-            "description" : "Direct annotations.",
-            "id" : "annotation_class_label",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Direct annotation",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         "regulates_closure_label" : {
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Inferred annotation",
-            "required" : "false",
-            "description" : "Annotations for this term or its children (over regulates).",
-            "id" : "regulates_closure_label",
-            "cardinality" : "multi"
-         },
-         "has_participant_closure" : {
-            "cardinality" : "multi",
-            "description" : "Closure of ids/accs over has_participant.",
-            "id" : "has_participant_closure",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Has participant (IDs)",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         }
-      },
-      "filter_weights" : "source^7.0 assigned_by^6.5 aspect^6.25 evidence_type_closure^6.0 panther_family_label^5.5 qualifier^5.25 taxon_label^5.0 annotation_class_label^4.5 regulates_closure_label^3.0 annotation_extension_class_closure_label^2.0",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/ann-config.yaml",
-      "document_category" : "annotation",
-      "display_name" : "Annotations",
-      "schema_generating" : "true"
-   },
-   "model_annotation" : {
-      "display_name" : "GO Models (ALPHA)",
-      "schema_generating" : "true",
-      "document_category" : "model_annotation",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/model-ann-config.yaml",
-      "filter_weights" : "model_label^5.0 enabled_by_label^4.5 reference^4.3 location_list_closure_label^4.0 process_class_closure_label^3.0 function_class_closure_label^2.0 contributor^1.0 evidence_type^0.5",
-      "fields_hash" : {
-         "location_list" : {
-            "cardinality" : "multi",
-            "description" : "",
-            "id" : "location_list",
-            "type" : "string",
-            "display_name" : "Location",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "panther_family" : {
-            "id" : "panther_family",
-            "description" : "PANTHER family IDs that are associated with this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "type" : "string"
-         },
-         "process_class_closure" : {
-            "display_name" : "Process",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "process_class_closure",
-            "description" : "???"
-         },
-         "process_class_closure_label" : {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Process",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "???",
-            "id" : "process_class_closure_label"
-         },
-         "location_list_closure" : {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Location",
-            "indexed" : "true",
-            "description" : "",
-            "id" : "location_list_closure",
-            "cardinality" : "multi"
-         },
-         "taxon" : {
-            "description" : "GAF column 13 (taxon).",
-            "id" : "taxon",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon"
-         },
-         "annotation_value" : {
-            "type" : "string",
-            "display_name" : "Text",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "set of all literal values of all annotation assertions in model",
-            "id" : "annotation_value"
-         },
-         "evidence_type_closure" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "id" : "evidence_type_closure"
-         },
-         "function_class_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Function",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Common function name.",
-            "id" : "function_class_label"
-         },
-         "evidence_type" : {
-            "cardinality" : "single",
-            "description" : "Evidence type.",
-            "id" : "evidence_type",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Evidence",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         "annotation_unit" : {
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "annotation_unit",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation unit",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         },
-         "evidence_type_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Evidence",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Evidence type.",
-            "id" : "evidence_type_label"
-         },
-         "model_url" : {
-            "description" : "???.",
-            "id" : "model_url",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Model URL",
-            "required" : "false"
-         },
-         "topology_graph_json" : {
-            "cardinality" : "single",
-            "id" : "topology_graph_json",
-            "description" : "JSON blob form of the local stepwise topology graph.",
-            "display_name" : "Topology graph (JSON)",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "contributor" : {
-            "cardinality" : "multi",
-            "description" : "???.",
-            "id" : "contributor",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Contributor",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         "enabled_by" : {
-            "type" : "string",
-            "display_name" : "Enabled by",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???",
-            "id" : "enabled_by"
-         },
-         "location_list_label" : {
-            "type" : "string",
-            "display_name" : "Location",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "",
-            "id" : "location_list_label"
-         },
-         "model_state" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "State",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "model_state"
-         },
-         "reference" : {
-            "cardinality" : "multi",
-            "id" : "reference",
-            "description" : "Database reference.",
-            "display_name" : "Reference",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "annotation_unit_label" : {
-            "display_name" : "Annotation unit",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "single",
-            "id" : "annotation_unit_label",
-            "description" : "???."
-         },
-         "enabled_by_label" : {
-            "id" : "enabled_by_label",
-            "description" : "???",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Enabled by",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "evidence_with" : {
-            "description" : "Evidence with/from.",
-            "id" : "evidence_with",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence with",
-            "required" : "false"
-         },
-         "id" : {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "ID",
-            "required" : "false",
-            "type" : "string",
-            "id" : "id",
-            "description" : "A unique (and internal) thing.",
-            "cardinality" : "single"
-         },
-         "taxon_label" : {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         "model_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Model title",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "model_label"
-         },
-         "panther_family_label" : {
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label",
-            "type" : "string",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : []
-         },
-         "process_class_label" : {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Process",
-            "required" : "false",
-            "type" : "string",
-            "id" : "process_class_label",
-            "description" : "Common process name.",
-            "cardinality" : "single"
-         },
-         "taxon_closure" : {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon (IDs)",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "taxon_closure",
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo."
-         },
-         "process_class" : {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Process",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "process_class",
-            "description" : "Process acc/ID."
-         },
-         "model_date" : {
-            "id" : "model_date",
-            "description" : "Last modified",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Modified",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         "function_class_closure_label" : {
-            "type" : "string",
-            "display_name" : "Function",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "???",
-            "id" : "function_class_closure_label"
-         },
-         "taxon_closure_label" : {
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "multi",
-            "id" : "taxon_closure_label",
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo."
-         },
-         "model" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Model title",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "model",
-            "description" : "???.",
-            "cardinality" : "single"
-         },
-         "comment" : {
-            "description" : "Comments",
-            "id" : "comment",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Comments",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         "location_list_closure_label" : {
-            "description" : "",
-            "id" : "location_list_closure_label",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Location",
-            "required" : "false"
-         },
-         "function_class" : {
-            "cardinality" : "single",
-            "id" : "function_class",
-            "description" : "Function acc/ID.",
-            "display_name" : "Function",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         "function_class_closure" : {
-            "id" : "function_class_closure",
-            "description" : "???",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Function",
-            "type" : "string"
-         },
-         "evidence_type_closure_label" : {
-            "cardinality" : "multi",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "id" : "evidence_type_closure_label",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         "owl_blob_json" : {
-            "cardinality" : "single",
-            "id" : "owl_blob_json",
-            "description" : "???",
-            "display_name" : "???",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         }
-      },
-      "boost_weights" : "model_label^1.0 annotation_unit_label^1.0 enabled_by^1.0 enabled_by_label^1.0 location_list_closure^1.0 location_list_closure_label^1.0 process_class_closure_label^1.0 function_class_closure_label^1.0 comment^0.5",
-      "fields" : [
-         {
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "ID",
-            "required" : "false",
-            "type" : "string",
-            "id" : "id",
-            "description" : "A unique (and internal) thing.",
-            "cardinality" : "single"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "annotation_unit",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Annotation unit",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "display_name" : "Annotation unit",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "single",
-            "id" : "annotation_unit_label",
-            "description" : "???."
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "required" : "false",
-            "display_name" : "Model title",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "model",
-            "description" : "???.",
-            "cardinality" : "single"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Model title",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "model_label"
-         },
-         {
-            "description" : "???.",
-            "id" : "model_url",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Model URL",
-            "required" : "false"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "State",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???.",
-            "id" : "model_state"
-         },
-         {
-            "type" : "string",
-            "display_name" : "Text",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "set of all literal values of all annotation assertions in model",
-            "id" : "annotation_value"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "???.",
-            "id" : "contributor",
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Contributor",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "id" : "model_date",
-            "description" : "Last modified",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Modified",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "description" : "Comments",
-            "id" : "comment",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "Comments",
-            "required" : "false",
-            "indexed" : "true"
-         },
-         {
-            "type" : "string",
-            "display_name" : "Enabled by",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "???",
-            "id" : "enabled_by"
-         },
-         {
-            "id" : "enabled_by_label",
-            "description" : "???",
-            "cardinality" : "single",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "required" : "false",
-            "display_name" : "Enabled by",
-            "indexed" : "true",
-            "type" : "string"
-         },
-         {
-            "id" : "panther_family",
-            "description" : "PANTHER family IDs that are associated with this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family",
-            "type" : "string"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label",
-            "type" : "string",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : []
-         },
-         {
-            "description" : "GAF column 13 (taxon).",
-            "id" : "taxon",
-            "cardinality" : "single",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "taxon_label",
-            "description" : "Taxon derived from GAF column 13 and ncbi_taxonomy.obo.",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "true",
-            "transform" : []
-         },
-         {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Taxon (IDs)",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "multi",
-            "id" : "taxon_closure",
-            "description" : "Taxon IDs derived from GAF column 13 and ncbi_taxonomy.obo."
-         },
-         {
-            "required" : "false",
-            "display_name" : "Taxon",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true",
-            "cardinality" : "multi",
-            "id" : "taxon_closure_label",
-            "description" : "Taxon label closure derived from GAF column 13 and ncbi_taxonomy.obo."
-         },
-         {
-            "cardinality" : "single",
-            "id" : "function_class",
-            "description" : "Function acc/ID.",
-            "display_name" : "Function",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Function",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Common function name.",
-            "id" : "function_class_label"
-         },
-         {
-            "id" : "function_class_closure",
-            "description" : "???",
-            "cardinality" : "multi",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Function",
-            "type" : "string"
-         },
-         {
-            "type" : "string",
-            "display_name" : "Function",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "???",
-            "id" : "function_class_closure_label"
-         },
-         {
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Process",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "process_class",
-            "description" : "Process acc/ID."
-         },
-         {
-            "property" : [],
-            "searchable" : "true",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Process",
-            "required" : "false",
-            "type" : "string",
-            "id" : "process_class_label",
-            "description" : "Common process name.",
-            "cardinality" : "single"
-         },
-         {
-            "display_name" : "Process",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "process_class_closure",
-            "description" : "???"
-         },
-         {
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Process",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "true",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "???",
-            "id" : "process_class_closure_label"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "",
-            "id" : "location_list",
-            "type" : "string",
-            "display_name" : "Location",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "type" : "string",
-            "display_name" : "Location",
-            "required" : "false",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "",
-            "id" : "location_list_label"
-         },
-         {
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Location",
-            "indexed" : "true",
-            "description" : "",
-            "id" : "location_list_closure",
-            "cardinality" : "multi"
-         },
-         {
-            "description" : "",
-            "id" : "location_list_closure_label",
-            "cardinality" : "multi",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Location",
-            "required" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "owl_blob_json",
-            "description" : "???",
-            "display_name" : "???",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "id" : "topology_graph_json",
-            "description" : "JSON blob form of the local stepwise topology graph.",
-            "display_name" : "Topology graph (JSON)",
-            "required" : "false",
-            "indexed" : "false",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false"
-         },
-         {
-            "cardinality" : "single",
-            "description" : "Evidence type.",
-            "id" : "evidence_type",
-            "type" : "string",
-            "required" : "false",
-            "display_name" : "Evidence",
-            "indexed" : "true",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : []
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "searchable" : "false",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "multi",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "id" : "evidence_type_closure"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Evidence",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "Evidence type.",
-            "id" : "evidence_type_label"
-         },
-         {
-            "cardinality" : "multi",
-            "description" : "All evidence (evidence closure) for this annotation",
-            "id" : "evidence_type_closure_label",
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence type",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : []
-         },
-         {
-            "description" : "Evidence with/from.",
-            "id" : "evidence_with",
-            "cardinality" : "multi",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "Evidence with",
-            "required" : "false"
-         },
-         {
-            "cardinality" : "multi",
-            "id" : "reference",
-            "description" : "Database reference.",
-            "display_name" : "Reference",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         }
-      ],
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/model-ann-config.yaml",
-      "weight" : "40",
-      "_strict" : 0,
-      "id" : "model_annotation",
-      "description" : "An individual unit within LEGO. This is <strong>ALPHA</strong> software.",
-      "result_weights" : "function_class^9.0 enabled_by^8.0 location_list^7.0 process_class^6.0 model^5.0 taxon^4.5 contributor^4.0 model_date^3.0 reference^2.0",
-      "searchable_extension" : "_searchable"
-   },
-   "family" : {
-      "display_name" : "Protein families",
-      "schema_generating" : "true",
-      "document_category" : "family",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/protein-family-config.yaml",
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/protein-family-config.yaml",
-      "id" : "family",
-      "_strict" : 0,
-      "weight" : "5",
-      "description" : "Information about protein (PANTHER) families.",
-      "result_weights" : "panther_family^5.0 bioentity_list^4.0",
-      "searchable_extension" : "_searchable",
-      "filter_weights" : "bioentity_list_label^1.0",
-      "fields_hash" : {
-         "panther_family" : {
-            "description" : "PANTHER family IDs that are associated with this entity.",
-            "id" : "panther_family",
-            "cardinality" : "single",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family"
-         },
-         "bioentity_list" : {
-            "display_name" : "Gene/products",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "bioentity_list",
-            "description" : "Gene/products annotated with this protein family."
-         },
-         "id" : {
-            "indexed" : "true",
-            "display_name" : "Acc",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "Family ID."
-         },
-         "phylo_graph_json" : {
-            "description" : "JSON blob form of the phylogenic tree.",
-            "id" : "phylo_graph_json",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "This should not be displayed",
-            "required" : "false",
-            "indexed" : "false"
-         },
-         "bioentity_list_label" : {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Gene/products",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "bioentity_list_label",
-            "description" : "Gene/products annotated with this protein family.",
-            "cardinality" : "multi"
-         },
-         "panther_family_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label"
-         }
-      },
-      "boost_weights" : "panther_family^2.0 panther_family_label^2.0 bioentity_list^1.0 bioentity_list_label^1.0",
-      "fields" : [
-         {
-            "indexed" : "true",
-            "display_name" : "Acc",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "id",
-            "description" : "Family ID."
-         },
-         {
-            "description" : "PANTHER family IDs that are associated with this entity.",
-            "id" : "panther_family",
-            "cardinality" : "single",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "PANTHER family"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "display_name" : "PANTHER family",
-            "required" : "false",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "PANTHER families that are associated with this entity.",
-            "id" : "panther_family_label"
-         },
-         {
-            "description" : "JSON blob form of the phylogenic tree.",
-            "id" : "phylo_graph_json",
-            "cardinality" : "single",
-            "transform" : [],
-            "searchable" : "false",
-            "property" : [],
-            "type" : "string",
-            "display_name" : "This should not be displayed",
-            "required" : "false",
-            "indexed" : "false"
-         },
-         {
-            "display_name" : "Gene/products",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "cardinality" : "multi",
-            "id" : "bioentity_list",
-            "description" : "Gene/products annotated with this protein family."
-         },
-         {
-            "property" : [],
-            "transform" : [],
-            "searchable" : "false",
-            "display_name" : "Gene/products",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "id" : "bioentity_list_label",
-            "description" : "Gene/products annotated with this protein family.",
-            "cardinality" : "multi"
-         }
-      ]
-   },
-   "general" : {
-      "_outfile" : "/home/sjcarbon//local/src/git/amigo/metadata/general-config.yaml",
-      "id" : "general",
-      "_strict" : 0,
-      "weight" : "0",
-      "description" : "A generic search document to get a general overview of everything.",
-      "result_weights" : "entity^3.0 category^1.0",
-      "searchable_extension" : "_searchable",
-      "filter_weights" : "category^4.0",
-      "fields_hash" : {
-         "category" : {
-            "indexed" : "true",
-            "display_name" : "Document category",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "category",
-            "description" : "The document category that this enitity belongs to."
-         },
-         "entity_label" : {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Enity label",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "The label for this entity.",
-            "id" : "entity_label"
-         },
-         "id" : {
-            "id" : "id",
-            "description" : "The mangled internal ID for this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Internal ID",
-            "required" : "false",
-            "type" : "string"
-         },
-         "general_blob" : {
-            "cardinality" : "single",
-            "id" : "general_blob",
-            "description" : "A hidden searchable blob document to access this item. It should contain all the goodies that we want to search for, like species(?), synonyms, etc.",
-            "display_name" : "Generic blob",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         },
-         "entity" : {
-            "id" : "entity",
-            "description" : "The ID/label for this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Entity",
-            "type" : "string"
-         }
-      },
-      "boost_weights" : "entity^3.0 entity_label^3.0 general_blob^3.0",
-      "fields" : [
-         {
-            "id" : "id",
-            "description" : "The mangled internal ID for this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "display_name" : "Internal ID",
-            "required" : "false",
-            "type" : "string"
-         },
-         {
-            "id" : "entity",
-            "description" : "The ID/label for this entity.",
-            "cardinality" : "single",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Entity",
-            "type" : "string"
-         },
-         {
-            "type" : "string",
-            "indexed" : "true",
-            "required" : "false",
-            "display_name" : "Enity label",
-            "searchable" : "true",
-            "transform" : [],
-            "property" : [],
-            "cardinality" : "single",
-            "description" : "The label for this entity.",
-            "id" : "entity_label"
-         },
-         {
-            "indexed" : "true",
-            "display_name" : "Document category",
-            "required" : "false",
-            "type" : "string",
-            "property" : [],
-            "searchable" : "false",
-            "transform" : [],
-            "cardinality" : "single",
-            "id" : "category",
-            "description" : "The document category that this enitity belongs to."
-         },
-         {
-            "cardinality" : "single",
-            "id" : "general_blob",
-            "description" : "A hidden searchable blob document to access this item. It should contain all the goodies that we want to search for, like species(?), synonyms, etc.",
-            "display_name" : "Generic blob",
-            "required" : "false",
-            "indexed" : "true",
-            "type" : "string",
-            "property" : [],
-            "transform" : [],
-            "searchable" : "true"
-         }
-      ],
-      "display_name" : "General",
-      "schema_generating" : "true",
-      "document_category" : "general",
-      "_infile" : "/home/sjcarbon//local/src/git/amigo/metadata/general-config.yaml"
-   }
-};
-/*
- * Package: server.js
- * 
- * Namespace: amigo.data.server
- * 
- * This package was automatically created during AmiGO 2 installation.
- * 
- * Purpose: Useful information about GO and the AmiGO installation.
- *          Also serves as a repository and getter for web
- *          resources such as images.
- * 
- * NOTE: This file is generated dynamically at installation time.
- *       Hard to work with unit tests--hope it's not too bad.
- *       Want to keep this real simple.
- */
-
-// Module and namespace checking.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Constructor: server
- * 
- * The configuration for the server settings.
- * Essentially a JSONification of the config.pl AmiGO 2 file.
- * 
- * Arguments:
- *  n/a
- */
-amigo.data.server = function(){
-
-    // All of the server/instance-specific meta-data.
-    var meta_data = {"noctua_base":"http://noctua.berkeleybop.org/","js_dev_base":"http://localhost:9999/static/staging","evidence_codes":{},"css_base":"http://localhost:9999/static/css","galaxy_base":"http://galaxy.berkeleybop.org/","html_base":"http://localhost:9999/static","term_regexp":"all|GO:[0-9]{7}","species_map":{},"species":[],"ontologies":[],"beta":"1","gp_types":[],"sources":[],"image_base":"http://localhost:9999/static/images","bbop_img_star":"http://localhost:9999/static/images/star.png","app_base":"http://localhost:9999","golr_base":"http://localhost:8080/solr/","js_base":"http://localhost:9999/static/js"};
-
-    ///
-    /// Break out the data and various functions to access them...
-    ///
-
-    /*
-     * Function: noctua_base
-     * 
-     * Access to AmiGO variable noctua_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var noctua_base = meta_data.noctua_base;
-    this.noctua_base = function(){ return noctua_base; };
-
-    /*
-     * Function: js_dev_base
-     * 
-     * Access to AmiGO variable js_dev_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var js_dev_base = meta_data.js_dev_base;
-    this.js_dev_base = function(){ return js_dev_base; };
-
-    /*
-     * Function: evidence_codes
-     * 
-     * Access to AmiGO variable evidence_codes.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var evidence_codes = meta_data.evidence_codes;
-    this.evidence_codes = function(){ return evidence_codes; };
-
-    /*
-     * Function: css_base
-     * 
-     * Access to AmiGO variable css_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var css_base = meta_data.css_base;
-    this.css_base = function(){ return css_base; };
-
-    /*
-     * Function: galaxy_base
-     * 
-     * Access to AmiGO variable galaxy_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var galaxy_base = meta_data.galaxy_base;
-    this.galaxy_base = function(){ return galaxy_base; };
-
-    /*
-     * Function: html_base
-     * 
-     * Access to AmiGO variable html_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var html_base = meta_data.html_base;
-    this.html_base = function(){ return html_base; };
-
-    /*
-     * Function: term_regexp
-     * 
-     * Access to AmiGO variable term_regexp.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var term_regexp = meta_data.term_regexp;
-    this.term_regexp = function(){ return term_regexp; };
-
-    /*
-     * Function: species_map
-     * 
-     * Access to AmiGO variable species_map.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var species_map = meta_data.species_map;
-    this.species_map = function(){ return species_map; };
-
-    /*
-     * Function: species
-     * 
-     * Access to AmiGO variable species.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var species = meta_data.species;
-    this.species = function(){ return species; };
-
-    /*
-     * Function: ontologies
-     * 
-     * Access to AmiGO variable ontologies.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var ontologies = meta_data.ontologies;
-    this.ontologies = function(){ return ontologies; };
-
-    /*
-     * Function: beta
-     * 
-     * Access to AmiGO variable beta.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var beta = meta_data.beta;
-    this.beta = function(){ return beta; };
-
-    /*
-     * Function: gp_types
-     * 
-     * Access to AmiGO variable gp_types.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var gp_types = meta_data.gp_types;
-    this.gp_types = function(){ return gp_types; };
-
-    /*
-     * Function: sources
-     * 
-     * Access to AmiGO variable sources.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var sources = meta_data.sources;
-    this.sources = function(){ return sources; };
-
-    /*
-     * Function: image_base
-     * 
-     * Access to AmiGO variable image_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var image_base = meta_data.image_base;
-    this.image_base = function(){ return image_base; };
-
-    /*
-     * Function: bbop_img_star
-     * 
-     * Access to AmiGO variable bbop_img_star.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var bbop_img_star = meta_data.bbop_img_star;
-    this.bbop_img_star = function(){ return bbop_img_star; };
-
-    /*
-     * Function: app_base
-     * 
-     * Access to AmiGO variable app_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var app_base = meta_data.app_base;
-    this.app_base = function(){ return app_base; };
-
-    /*
-     * Function: golr_base
-     * 
-     * Access to AmiGO variable golr_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var golr_base = meta_data.golr_base;
-    this.golr_base = function(){ return golr_base; };
-
-    /*
-     * Function: js_base
-     * 
-     * Access to AmiGO variable js_base.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  string
-     */
-    var js_base = meta_data.js_base;
-    this.js_base = function(){ return js_base; };
-
-
-    // Does it look like a term?
-    var tre_str = meta_data.term_regexp;
-    var tre = new RegExp(tre_str);
-
-    /*
-     * Function: term_id_p
-     * 
-     * True or false on whether or not a string looks like a GO term id.
-     * 
-     * Parameters:
-     *  term_id - the string to test
-     * 
-     * Returns:
-     *  boolean
-     */
-    this.term_id_p = function(term_id){
-       var retval = false;
-       if( tre.test(term_id) ){
-          retval = true;
-       }
-       return retval;
-    };
-
-    /*
-     * Function: get_image_resource
-     * 
-     * Get a named resource from the meta_data hash if possible.
-     * 
-     * Parameters:
-     *  resource - the string id of the resource
-     * 
-     * Returns:
-     * string (url) of resource
-     */
-    this.get_image_resource = function(resource){
-
-       var retval = null;
-       var mangled_res = 'bbop_img_' + resource;
-
-       if( meta_data[mangled_res] ){
-          retval = meta_data[mangled_res];
-       }
-       return retval;
-    };
-};
-/*
- * Package: definitions.js
- * 
- * Namespace: amigo.data.definitions
- * 
- * Purpose: Useful information about common GO datatypes and
- * structures, as well as some constants.
- */
-
-// Module and namespace checking.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Constructor: definitions
- * 
- * Encapsulate common structures and constants.
- * 
- * Arguments:
- *  n/a
- */
-amigo.data.definitions = function(){
-
-    /*
-     * Function: gaf_from_golr_fields
-     * 
-     * A list of fields to generate a GAF from using golr fields.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  list of strings
-     */
-    this.gaf_from_golr_fields = function(){
-	return [
-	    'source', // c1
-	    'bioentity_internal_id', // c2; not bioentity
-	    'bioentity_label', // c3
-	    'qualifier', // c4
-	    'annotation_class', // c5
-	    'reference', // c6
-	    'evidence_type', // c7
-	    'evidence_with', // c8
-	    'aspect', // c9
-	    'bioentity_name', // c10
-	    'synonym', // c11
-	    'type', // c12
-	    'taxon', // c13
-	    'date', // c14
-	    'assigned_by', // c15
-	    'annotation_extension_class', // c16
-	    'bioentity_isoform' // c17
-	];
-    };
-
-    /*
-     * Function: download_limit
-     * 
-     * The maximum allowed number of items to download for out server.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  integer
-     */
-    this.download_limit = function(){
-	//return 7500;
-	return 10000;
-    };
-
-};
-/* 
- * Package: xrefs.js
- * 
- * Namespace: amigo.data.xrefs
- * 
- * This package was automatically created during an AmiGO 2 installation
- * from the GO.xrf_abbs file at: "https://raw.githubusercontent.com/geneontology/go-site/master/metadata/db-xrefs.yaml".
- *
- * NOTE: This file is generated dynamically at installation time.
- * Hard to work with unit tests--hope it's not too bad. You have to
- * occasionally copy back to keep the unit tests sane.
- */
-
-// All of the server/instance-specific meta-data.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Variable: xrefs
- * 
- * All the external references that we know about.
- */
-amigo.data.xrefs = {
-   "interpro" : {
-      "id" : "InterPro",
-      "url_syntax" : "http://www.ebi.ac.uk/interpro/entry/[example_id]",
-      "abbreviation" : "INTERPRO",
-      "database" : "InterPro database of protein domains and motifs",
-      "url_example" : "http://www.ebi.ac.uk/interpro/entry/IPR015421",
-      "name" : "InterPro database of protein domains and motifs",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "InterPro:IPR000001",
-      "generic_url" : "http://www.ebi.ac.uk/interpro/",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region"
-   },
-   "refseq" : {
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/RefSeq/",
-      "example_id" : "RefSeq:XP_001068954",
-      "datatype" : "protein",
-      "object" : "protein",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=XP_001068954",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]",
-      "id" : "RefSeq",
-      "abbreviation" : "RefSeq",
-      "database" : "RefSeq",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "RefSeq"
-   },
-   "biopixie_mefit" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://avis.princeton.edu/mefit/",
-      "name" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "bioPIXIE_MEFIT",
-      "url_syntax" : null,
-      "database" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
-      "abbreviation" : "bioPIXIE_MEFIT",
-      "url_example" : null
-   },
-   "syscilia_ccnet" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://syscilia.org/",
-      "example_id" : null,
-      "fullname" : "A systems biology approach to dissect cilia function and its disruption in human genetic disease",
-      "uri_prefix" : null,
-      "name" : "Syscilia",
-      "url_example" : null,
-      "abbreviation" : "SYSCILIA_CCNET",
-      "url_syntax" : null,
-      "id" : "SYSCILIA_CCNET",
-      "database" : "Syscilia"
-   },
-   "echobase" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://www.ecoli-york.org/",
-      "example_id" : "EchoBASE:EB0231",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "EchoBASE post-genomic database for Escherichia coli",
-      "url_example" : "http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=EB0231",
-      "abbreviation" : "EchoBASE",
-      "url_syntax" : "http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=[example_id]",
-      "database" : "EchoBASE post-genomic database for Escherichia coli",
-      "id" : "EchoBASE"
-   },
-   "fb" : {
-      "url_example" : "http://flybase.org/reports/FBgn0000024.html",
-      "url_syntax" : "http://flybase.org/reports/[example_id].html",
-      "id" : "FB",
-      "abbreviation" : "FB",
-      "database" : "FlyBase",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "FlyBase",
-      "generic_url" : "http://flybase.org/",
-      "example_id" : "FB:FBgn0000024",
-      "datatype" : "gene",
-      "object" : "gene"
-   },
-   "jcvi_egad" : {
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=74462",
-      "abbreviation" : "JCVI_EGAD",
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=[example_id]",
-      "id" : "JCVI_EGAD",
-      "database" : "JCVI CMR Egad",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "JCVI CMR Egad",
-      "generic_url" : "http://cmr.jcvi.org/",
-      "example_id" : "JCVI_EGAD:74462",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "vmd" : {
-      "example_id" : "VMD:109198",
-      "generic_url" : "http://phytophthora.vbi.vt.edu",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=[example_id]",
-      "abbreviation" : "VMD",
-      "database" : "Virginia Bioinformatics Institute Microbial Database",
-      "id" : "VMD",
-      "url_example" : "http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=109198",
-      "name" : "Virginia Bioinformatics Institute Microbial Database",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "cl" : {
-      "url_syntax" : "http://purl.obolibrary.org/obo/CL_[example_id]",
-      "database" : "Cell Type Ontology",
-      "id" : "CL",
-      "abbreviation" : "CL",
-      "url_example" : "http://purl.obolibrary.org/obo/CL_0000041",
-      "name" : "Cell Type Ontology",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "CL:0000041",
-      "generic_url" : "http://cellontology.org",
-      "object" : "cell",
-      "datatype" : "cell"
-   },
-   "embl" : {
-      "fullname" : "International nucleotide sequence database collaboration, comprising EMBL-EBI nucleotide sequence data library (EMBL-Bank), DNA DataBank of Japan (DDBJ), and NCBI GenBank",
-      "uri_prefix" : null,
-      "name" : "EMBL Nucleotide Sequence Database",
-      "url_example" : "http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=AA816246",
-      "url_syntax" : "http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=[example_id]",
-      "id" : "EMBL",
-      "abbreviation" : "EMBL",
-      "database" : "EMBL Nucleotide Sequence Database",
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://www.ebi.ac.uk/embl/",
-      "example_id" : "EMBL:AA816246"
-   },
-   "psi-mi" : {
-      "id" : "PSI-MI",
-      "url_syntax" : null,
-      "database" : "Proteomic Standard Initiative for Molecular Interaction",
-      "abbreviation" : "PSI-MI",
-      "url_example" : null,
-      "name" : "Proteomic Standard Initiative for Molecular Interaction",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "MI:0018",
-      "generic_url" : "http://psidev.sourceforge.net/mi/xml/doc/user/index.html",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "pombase" : {
-      "datatype" : "gene",
-      "object" : "gene",
-      "generic_url" : "http://www.pombase.org/",
-      "example_id" : "PomBase:SPBC11B10.09",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "PomBase",
-      "url_example" : "http://www.pombase.org/spombe/result/SPBC11B10.09",
-      "url_syntax" : "http://www.pombase.org/spombe/result/[example_id]",
-      "abbreviation" : "PomBase",
-      "id" : "PomBase",
-      "database" : "PomBase"
-   },
-   "cgd" : {
-      "generic_url" : "http://www.candidagenome.org/",
-      "example_id" : "CGD:CAL0005516",
-      "object" : "gene",
-      "datatype" : "gene",
-      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=CAL0005516",
-      "id" : "CGD",
-      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]",
-      "database" : "Candida Genome Database",
-      "abbreviation" : "CGD",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Candida Genome Database"
-   },
-   "kegg" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.genome.ad.jp/kegg/",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Kyoto Encyclopedia of Genes and Genomes",
-      "url_example" : null,
-      "url_syntax" : null,
-      "abbreviation" : "KEGG",
-      "id" : "KEGG",
-      "database" : "Kyoto Encyclopedia of Genes and Genomes"
-   },
-   "biomd" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ebi.ac.uk/biomodels/",
-      "example_id" : "BIOMD:BIOMD0000000045",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "BioModels Database",
-      "url_example" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=BIOMD0000000045",
-      "id" : "BIOMD",
-      "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
-      "abbreviation" : "BIOMD",
-      "database" : "BioModels Database"
-   },
-   "patric" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "PATRIC:cds.000002.436951",
-      "generic_url" : "http://patric.vbi.vt.edu",
-      "name" : "PathoSystems Resource Integration Center",
-      "fullname" : "PathoSystems Resource Integration Center at the Virginia Bioinformatics Institute",
-      "uri_prefix" : null,
-      "database" : "PathoSystems Resource Integration Center",
-      "url_syntax" : "http://patric.vbi.vt.edu/gene/overview.php?fid=[example_id]",
-      "id" : "PATRIC",
-      "abbreviation" : "PATRIC",
-      "url_example" : "http://patric.vbi.vt.edu/gene/overview.php?fid=cds.000002.436951"
-   },
-   "pmcid" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Pubmed Central",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=PMC201377",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=[example_id]",
-      "abbreviation" : "PMCID",
-      "id" : "PMCID",
-      "database" : "Pubmed Central",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.pubmedcentral.nih.gov/",
-      "example_id" : "PMCID:PMC201377"
-   },
-   "prodom" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "ProDom:PD000001",
-      "generic_url" : "http://prodom.prabi.fr/prodom/current/html/home.php",
-      "name" : "ProDom protein domain families",
-      "uri_prefix" : null,
-      "fullname" : "ProDom protein domain families automatically generated from UniProtKB",
-      "abbreviation" : "ProDom",
-      "url_syntax" : "http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=[example_id]",
-      "id" : "ProDom",
-      "database" : "ProDom protein domain families",
-      "url_example" : "http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=PD000001"
-   },
-   "asap" : {
-      "url_example" : "https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=ABE-0000008",
-      "url_syntax" : "https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=[example_id]",
-      "id" : "ASAP",
-      "abbreviation" : "ASAP",
-      "database" : "A Systematic Annotation Package for Community Analysis of Genomes",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "A Systematic Annotation Package for Community Analysis of Genomes",
-      "generic_url" : "https://asap.ahabs.wisc.edu/annotation/php/ASAP1.htm",
-      "example_id" : "ASAP:ABE-0000008",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "locsvmpsi" : {
-      "abbreviation" : "LOCSVMpsi",
-      "url_syntax" : null,
-      "id" : "LOCSVMpsi",
-      "database" : "LOCSVMPSI",
-      "url_example" : null,
-      "name" : "LOCSVMPSI",
-      "fullname" : "Subcellular localization for eukayotic proteins based on SVM and PSI-BLAST",
-      "uri_prefix" : null,
-      "example_id" : null,
-      "generic_url" : "http://bioinformatics.ustc.edu.cn/locsvmpsi/locsvmpsi.php",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "iuphar_receptor" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "IUPHAR_RECEPTOR:2205",
-      "generic_url" : "http://www.iuphar.org/",
-      "name" : "International Union of Pharmacology",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=[example_id]",
-      "database" : "International Union of Pharmacology",
-      "abbreviation" : "IUPHAR_RECEPTOR",
-      "id" : "IUPHAR_RECEPTOR",
-      "url_example" : "http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=56"
-   },
-   "uniprotkb" : {
-      "url_syntax" : "http://www.uniprot.org/uniprot/[example_id]",
-      "id" : "UniProtKB",
-      "abbreviation" : "UniProtKB",
-      "database" : "Universal Protein Knowledgebase",
-      "url_example" : "http://www.uniprot.org/uniprot/P51587",
-      "name" : "Universal Protein Knowledgebase",
-      "uri_prefix" : null,
-      "fullname" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
-      "example_id" : "UniProtKB:P51587",
-      "generic_url" : "http://www.uniprot.org",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "cazy" : {
-      "fullname" : "The CAZy database describes the families of structurally-related catalytic and carbohydrate-binding modules (or functional domains) of enzymes that degrade, modify, or create glycosidic bonds.",
-      "uri_prefix" : null,
-      "name" : "Carbohydrate Active EnZYmes",
-      "url_example" : "http://www.cazy.org/PL11.html",
-      "abbreviation" : "CAZY",
-      "url_syntax" : "http://www.cazy.org/[example_id].html",
-      "id" : "CAZY",
-      "database" : "Carbohydrate Active EnZYmes",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.cazy.org/",
-      "example_id" : "CAZY:PL11"
-   },
-   "aspgd_locus" : {
-      "example_id" : "AspGD_LOCUS:AN10942",
-      "generic_url" : "http://www.aspergillusgenome.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=[example_id]",
-      "id" : "AspGD_LOCUS",
-      "abbreviation" : "AspGD_LOCUS",
-      "database" : "Aspergillus Genome Database",
-      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=AN10942",
-      "name" : "Aspergillus Genome Database",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "eck" : {
-      "datatype" : "gene",
-      "object" : "gene",
-      "generic_url" : "http://www.ecogene.org/",
-      "example_id" : "ECK:ECK3746",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "url_example" : "http://www.ecogene.org/geneInfo.php?eck_id=ECK3746",
-      "url_syntax" : "http://www.ecogene.org/geneInfo.php?eck_id=[example_id]",
-      "abbreviation" : "ECK",
-      "database" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "id" : "ECK"
-   },
-   "rhea" : {
-      "generic_url" : "http://www.ebi.ac.uk/rhea/",
-      "example_id" : "RHEA:25811",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : "http://www.ebi.ac.uk/rhea/reaction.xhtml?id=25811",
-      "id" : "RHEA",
-      "url_syntax" : "http://www.ebi.ac.uk/rhea/reaction.xhtml?id=[example_id]",
-      "abbreviation" : "RHEA",
-      "database" : "Rhea, the Annotated Reactions Database",
-      "fullname" : "Rhea is a freely available, manually annotated database of chemical reactions created in collaboration with the Swiss Institute of Bioinformatics (SIB).",
-      "uri_prefix" : null,
-      "name" : "Rhea, the Annotated Reactions Database"
-   },
-   "cas" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "CAS:58-08-2",
-      "generic_url" : "http://www.cas.org/expertise/cascontent/registry/index.html",
-      "name" : "CAS Chemical Registry",
-      "uri_prefix" : null,
-      "fullname" : "CAS REGISTRY is the most authoritative collection of disclosed chemical substance information, containing more than 54 million organic and inorganic substances and 62 million sequences. CAS REGISTRY covers substances identified from the scientific literature from 1957 to the present, with additional substances going back to the early 1900s.",
-      "url_syntax" : null,
-      "database" : "CAS Chemical Registry",
-      "abbreviation" : "CAS",
-      "id" : "CAS",
-      "url_example" : null
-   },
-   "nmpdr" : {
-      "url_example" : "http://www.nmpdr.org/linkin.cgi?id=fig|306254.1.peg.183",
-      "url_syntax" : "http://www.nmpdr.org/linkin.cgi?id=[example_id]",
-      "abbreviation" : "NMPDR",
-      "id" : "NMPDR",
-      "database" : "National Microbial Pathogen Data Resource",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "National Microbial Pathogen Data Resource",
-      "generic_url" : "http://www.nmpdr.org",
-      "example_id" : "NMPDR:fig|306254.1.peg.183",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "tigr_tigrfams" : {
-      "name" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://search.jcvi.org/search?p&q=[example_id]",
-      "id" : "JCVI_TIGRFAMS",
-      "database" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
-      "abbreviation" : "TIGR_TIGRFAMS",
-      "url_example" : "http://search.jcvi.org/search?p&q=TIGR00254",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region",
-      "example_id" : "JCVI_TIGRFAMS:TIGR00254",
-      "generic_url" : "http://search.jcvi.org/"
-   },
-   "wb" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "WormBase database of nematode biology",
-      "url_example" : "http://www.wormbase.org/db/get?class=Gene;name=WBGene00003001",
-      "id" : "WB",
-      "url_syntax" : "http://www.wormbase.org/db/gene/gene?name=[example_id]",
-      "abbreviation" : "WB",
-      "database" : "WormBase database of nematode biology",
-      "object" : "protein",
-      "datatype" : "protein",
-      "generic_url" : "http://www.wormbase.org/",
-      "example_id" : "WB:WBGene00003001"
-   },
-   "img" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Integrated Microbial Genomes; JGI web site for genome annotation",
-      "url_example" : "http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=640008772",
-      "url_syntax" : "http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=[example_id]",
-      "database" : "Integrated Microbial Genomes; JGI web site for genome annotation",
-      "id" : "IMG",
-      "abbreviation" : "IMG",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://img.jgi.doe.gov",
-      "example_id" : "IMG:640008772"
-   },
-   "subtilistg" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "SUBTILISTG:accC",
-      "generic_url" : "http://genolist.pasteur.fr/SubtiList/",
-      "name" : "Bacillus subtilis Genome Sequence Project",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "SUBTILISTG",
-      "url_syntax" : null,
-      "abbreviation" : "SUBTILISTG",
-      "database" : "Bacillus subtilis Genome Sequence Project",
-      "url_example" : null
-   },
-   "mengo" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://mengo.vbi.vt.edu/",
-      "example_id" : null,
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Microbial ENergy processes Gene Ontology Project",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Microbial ENergy processes Gene Ontology Project",
-      "abbreviation" : "MENGO",
-      "id" : "MENGO"
-   },
-   "intact" : {
-      "name" : "IntAct protein interaction database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "IntAct",
-      "url_syntax" : "http://www.ebi.ac.uk/intact/search/do/search?searchString=[example_id]",
-      "abbreviation" : "IntAct",
-      "database" : "IntAct protein interaction database",
-      "url_example" : "http://www.ebi.ac.uk/intact/search/do/search?searchString=EBI-17086",
-      "object" : "protein complex",
-      "datatype" : "protein complex",
-      "example_id" : "IntAct:EBI-17086",
-      "generic_url" : "http://www.ebi.ac.uk/intact/"
-   },
-   "hpa_antibody" : {
-      "example_id" : "HPA_antibody:HPA000237",
-      "generic_url" : "http://www.proteinatlas.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "abbreviation" : "HPA_antibody",
-      "url_syntax" : "http://www.proteinatlas.org/antibody_info.php?antibody_id=[example_id]",
-      "id" : "HPA_antibody",
-      "database" : "Human Protein Atlas antibody information",
-      "url_example" : "http://www.proteinatlas.org/antibody_info.php?antibody_id=HPA000237",
-      "name" : "Human Protein Atlas antibody information",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "mo" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://mged.sourceforge.net/ontologies/MGEDontology.php",
-      "example_id" : "MO:Action",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "MGED Ontology",
-      "url_example" : "http://mged.sourceforge.net/ontologies/MGEDontology.php#Action",
-      "database" : "MGED Ontology",
-      "url_syntax" : "http://mged.sourceforge.net/ontologies/MGEDontology.php#[example_id]",
-      "id" : "MO",
-      "abbreviation" : "MO"
-   },
-   "genedb" : {
-      "url_example" : "http://www.genedb.org/gene/PF3D7_1467300",
-      "url_syntax" : "http://www.genedb.org/gene/[example_id]",
-      "abbreviation" : "GeneDB",
-      "database" : "GeneDB",
-      "id" : "GeneDB",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "GeneDB",
-      "generic_url" : "http://www.genedb.org/gene/",
-      "example_id" : "PF3D7_1467300",
-      "datatype" : "gene",
-      "object" : "gene"
-   },
-   "enzyme" : {
-      "example_id" : "ENZYME:EC 1.1.1.1",
-      "generic_url" : "http://www.expasy.ch/",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_syntax" : "http://www.expasy.ch/cgi-bin/nicezyme.pl?[example_id]",
-      "abbreviation" : "ENZYME",
-      "database" : "Swiss Institute of Bioinformatics enzyme database",
-      "id" : "ENZYME",
-      "url_example" : "http://www.expasy.ch/cgi-bin/nicezyme.pl?1.1.1.1",
-      "name" : "Swiss Institute of Bioinformatics enzyme database",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "pharmgkb" : {
-      "url_syntax" : "http://www.pharmgkb.org/do/serve?objId=[example_id]",
-      "id" : "PharmGKB",
-      "abbreviation" : "PharmGKB",
-      "database" : "Pharmacogenetics and Pharmacogenomics Knowledge Base",
-      "url_example" : "http://www.pharmgkb.org/do/serve?objId=PA267",
-      "name" : "Pharmacogenetics and Pharmacogenomics Knowledge Base",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "PharmGKB:PA267",
-      "generic_url" : "http://www.pharmgkb.org",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "casspc" : {
-      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=1979",
-      "database" : "Catalog of Fishes species database",
-      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=[example_id]",
-      "id" : "CASSPC",
-      "abbreviation" : "CASSPC",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Catalog of Fishes species database"
-   },
-   "cog_cluster" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI COG cluster",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=COG0001",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=[example_id]",
-      "abbreviation" : "COG_Cluster",
-      "database" : "NCBI COG cluster",
-      "id" : "COG_Cluster",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
-      "example_id" : "COG_Cluster:COG0001"
-   },
-   "rgd" : {
-      "name" : "Rat Genome Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
-      "abbreviation" : "RGD",
-      "id" : "RGD",
-      "database" : "Rat Genome Database",
-      "url_example" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004",
-      "datatype" : "gene",
-      "object" : "gene",
-      "example_id" : "RGD:2004",
-      "generic_url" : "http://rgd.mcw.edu/"
-   },
-   "ncbi" : {
-      "name" : "National Center for Biotechnology Information",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "database" : "National Center for Biotechnology Information",
-      "abbreviation" : "NCBI",
-      "id" : "NCBI",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/"
-   },
-   "h-invdb_cdna" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.h-invitational.jp/",
-      "example_id" : "H-invDB_cDNA:AK093148",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "H-invitational Database",
-      "url_example" : "http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=AK093149",
-      "url_syntax" : "http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=[example_id]",
-      "abbreviation" : "H-invDB_cDNA",
-      "database" : "H-invitational Database",
-      "id" : "H-invDB_cDNA"
-   },
-   "ro" : {
-      "uri_prefix" : null,
-      "fullname" : "A collection of relations used across OBO ontologies",
-      "name" : "OBO Relation Ontology Ontology",
-      "url_example" : "http://purl.obolibrary.org/obo/RO_0002211",
-      "abbreviation" : "RO",
-      "url_syntax" : "http://purl.obolibrary.org/obo/RO_[example_id]",
-      "id" : "RO",
-      "database" : "OBO Relation Ontology Ontology",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://purl.obolibrary.org/obo/ro",
-      "example_id" : "RO:0002211"
-   },
-   "tigr_cmr" : {
-      "name" : "EGAD database at the J. Craig Venter Institute",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "JCVI_CMR",
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
-      "abbreviation" : "TIGR_CMR",
-      "database" : "EGAD database at the J. Craig Venter Institute",
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557",
-      "object" : "protein",
-      "datatype" : "protein",
-      "example_id" : "JCVI_CMR:VCA0557",
-      "generic_url" : "http://cmr.jcvi.org/"
-   },
-   "go" : {
-      "database" : "Gene Ontology Database",
-      "url_syntax" : "http://amigo.geneontology.org/amigo/term/GO:[example_id]",
-      "abbreviation" : "GO",
-      "id" : "GO",
-      "url_example" : "http://amigo.geneontology.org/amigo/term/GO:0004352",
-      "name" : "Gene Ontology Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "GO:0004352",
-      "generic_url" : "http://amigo.geneontology.org/",
-      "object" : "macromolecular complex",
-      "datatype" : "macromolecular complex"
-   },
-   "modbase" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://modbase.compbio.ucsf.edu/",
-      "example_id" : "ModBase:P10815",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "ModBase comprehensive Database of Comparative Protein Structure Models",
-      "url_example" : "http://salilab.org/modbase/searchbyid?databaseID=P04848",
-      "url_syntax" : "http://salilab.org/modbase/searchbyid?databaseID=[example_id]",
-      "database" : "ModBase comprehensive Database of Comparative Protein Structure Models",
-      "id" : "ModBase",
-      "abbreviation" : "ModBase"
-   },
-   "coriell" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://ccr.coriell.org/",
-      "example_id" : "GM07892",
-      "uri_prefix" : null,
-      "fullname" : "The Coriell Cell Repositories provide essential research reagents to the scientific community by establishing, verifying, maintaining, and distributing cell cultures and DNA derived from cell cultures. These collections, supported by funds from the National Institutes of Health (NIH) and several foundations, are extensively utilized by research scientists around the world.",
-      "name" : "Coriell Institute for Medical Research",
-      "url_example" : "http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=GM07892",
-      "database" : "Coriell Institute for Medical Research",
-      "url_syntax" : "http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=[example_id]",
-      "abbreviation" : "CORIELL",
-      "id" : "CORIELL"
-   },
-   "pamgo_vmd" : {
-      "example_id" : "PAMGO_VMD:109198",
-      "generic_url" : "http://phytophthora.vbi.vt.edu",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=[example_id]",
-      "database" : "Virginia Bioinformatics Institute Microbial Database",
-      "id" : "PAMGO_VMD",
-      "abbreviation" : "PAMGO_VMD",
-      "url_example" : "http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=109198",
-      "name" : "Virginia Bioinformatics Institute Microbial Database",
-      "uri_prefix" : null,
-      "fullname" : "Virginia Bioinformatics Institute Microbial Database; member of PAMGO Interest Group"
-   },
-   "mi" : {
-      "generic_url" : "http://psidev.sourceforge.net/mi/xml/doc/user/index.html",
-      "example_id" : "MI:0018",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "PSI-MI",
-      "abbreviation" : "MI",
-      "database" : "Proteomic Standard Initiative for Molecular Interaction",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Proteomic Standard Initiative for Molecular Interaction"
-   },
-   "uniprot" : {
-      "url_syntax" : "http://www.uniprot.org/uniprot/[example_id]",
-      "id" : "UniProtKB",
-      "abbreviation" : "UniProt",
-      "database" : "Universal Protein Knowledgebase",
-      "url_example" : "http://www.uniprot.org/uniprot/P51587",
-      "name" : "Universal Protein Knowledgebase",
-      "uri_prefix" : null,
-      "fullname" : "A central repository of protein sequence and function created by joining the information contained in Swiss-Prot, TrEMBL, and PIR database",
-      "example_id" : "UniProtKB:P51587",
-      "generic_url" : "http://www.uniprot.org",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "subtilist" : {
-      "object" : "protein",
-      "datatype" : "protein",
-      "generic_url" : "http://genolist.pasteur.fr/SubtiList/",
-      "example_id" : "SUBTILISTG:BG11384",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Bacillus subtilis Genome Sequence Project",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "SUBTILIST",
-      "database" : "Bacillus subtilis Genome Sequence Project",
-      "abbreviation" : "SUBTILIST"
-   },
-   "ensemblfungi" : {
-      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_ID]",
-      "database" : "Ensembl Fungi, the Ensembl Genomes database for accessing fungal genome data",
-      "abbreviation" : "EnsemblFungi",
-      "id" : "EnsemblFungi",
-      "url_example" : "http://www.ensemblgenomes.org/id/YOR197W",
-      "name" : "Ensembl Fungi, the Ensembl Genomes database for accessing fungal genome data",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "EnsemblFungi:YOR197W",
-      "generic_url" : "http://fungi.ensembl.org/",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "ec" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Enzyme Commission",
-      "url_example" : "http://www.expasy.org/enzyme/1.4.3.6",
-      "url_syntax" : "http://www.expasy.org/enzyme/[example_id]",
-      "abbreviation" : "EC",
-      "database" : "Enzyme Commission",
-      "id" : "EC",
-      "datatype" : "catalytic activity",
-      "object" : "catalytic activity",
-      "generic_url" : "http://enzyme.expasy.org/",
-      "example_id" : "EC:1.4.3.6"
-   },
-   "sanger" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.sanger.ac.uk/",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Wellcome Trust Sanger Institute",
-      "url_example" : null,
-      "id" : "Sanger",
-      "url_syntax" : null,
-      "database" : "Wellcome Trust Sanger Institute",
-      "abbreviation" : "Sanger"
-   },
-   "tigr" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.jcvi.org/",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "J. Craig Venter Institute",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "JCVI",
-      "abbreviation" : "TIGR",
-      "database" : "J. Craig Venter Institute"
-   },
-   "issn" : {
-      "id" : "ISSN",
-      "url_syntax" : null,
-      "abbreviation" : "ISSN",
-      "database" : "International Standard Serial Number",
-      "url_example" : null,
-      "name" : "International Standard Serial Number",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "ISSN:1234-1231",
-      "generic_url" : "http://www.issn.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "ncbi_gene" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=4771",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
-      "id" : "NCBI_Gene",
-      "database" : "NCBI Gene",
-      "abbreviation" : "NCBI_Gene",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI Gene",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "example_id" : "NCBI_Gene:4771",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "unipathway" : {
-      "datatype" : "biological_process",
-      "object" : "biological_process",
-      "generic_url" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway",
-      "example_id" : "UniPathway:UPA00155",
-      "uri_prefix" : null,
-      "fullname" : "UniPathway is a a metabolic door to UniProtKB/Swiss-Prot, a curated resource of metabolic pathways for the UniProtKB/Swiss-Prot knowledgebase.",
-      "name" : "UniPathway",
-      "url_example" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=UPA00155",
-      "abbreviation" : "UniPathway",
-      "url_syntax" : "http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=[example_id]",
-      "id" : "UniPathway",
-      "database" : "UniPathway"
-   },
-   "ncbi_gi" : {
-      "abbreviation" : "NCBI_gi",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]",
-      "id" : "NCBI_gi",
-      "database" : "NCBI databases",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=113194944",
-      "name" : "NCBI databases",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "NCBI_gi:113194944",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "agricola_id" : {
-      "url_syntax" : null,
-      "id" : "AGRICOLA_ID",
-      "database" : "AGRICultural OnLine Access",
-      "abbreviation" : "AGRICOLA_ID",
-      "url_example" : null,
-      "name" : "AGRICultural OnLine Access",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "AGRICOLA_NAL:TP248.2 P76 v.14",
-      "generic_url" : "http://agricola.nal.usda.gov/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "locusid" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=4771",
-      "id" : "NCBI_Gene",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
-      "database" : "NCBI Gene",
-      "abbreviation" : "LocusID",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI Gene",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "example_id" : "NCBI_Gene:4771",
-      "datatype" : "gene",
-      "object" : "gene"
-   },
-   "rfam" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Rfam database of RNA families",
-      "url_example" : "http://rfam.sanger.ac.uk/family/RF00012",
-      "id" : "Rfam",
-      "url_syntax" : "http://rfam.sanger.ac.uk/family/[example_id]",
-      "database" : "Rfam database of RNA families",
-      "abbreviation" : "Rfam",
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://rfam.sanger.ac.uk/",
-      "example_id" : "Rfam:RF00012"
-   },
-   "sgn" : {
-      "example_id" : "SGN:4476",
-      "generic_url" : "http://www.sgn.cornell.edu/",
-      "datatype" : "gene",
-      "object" : "gene",
-      "url_syntax" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]",
-      "abbreviation" : "SGN",
-      "database" : "Sol Genomics Network",
-      "id" : "SGN",
-      "url_example" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=4476",
-      "name" : "Sol Genomics Network",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "bfo" : {
-      "id" : "BFO",
-      "url_syntax" : "http://purl.obolibrary.org/obo/BFO_[example_id]",
-      "database" : "Basic Formal Ontology",
-      "abbreviation" : "BFO",
-      "url_example" : "http://purl.obolibrary.org/obo/BFO_0000066",
-      "name" : "Basic Formal Ontology",
-      "uri_prefix" : null,
-      "fullname" : "An upper ontology used by Open Bio Ontologies (OBO) Foundry. BFO contains upper-level classes as well as core relations such as part_of (BFO_0000050)",
-      "example_id" : "BFO:0000066",
-      "generic_url" : "http://purl.obolibrary.org/obo/bfo",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "cgsc" : {
-      "name" : "CGSC",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : null,
-      "id" : "CGSC",
-      "database" : "CGSC",
-      "abbreviation" : "CGSC",
-      "url_example" : "http://cgsc.biology.yale.edu/Site.php?ID=315",
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "CGSC:rbsK",
-      "generic_url" : "http://cgsc.biology.yale.edu/"
-   },
-   "pirsf" : {
-      "name" : "PIR Superfamily Classification System",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "abbreviation" : "PIRSF",
-      "url_syntax" : "http://pir.georgetown.edu/cgi-bin/ipcSF?id=[example_id]",
-      "database" : "PIR Superfamily Classification System",
-      "id" : "PIRSF",
-      "url_example" : "http://pir.georgetown.edu/cgi-bin/ipcSF?id=SF002327",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "PIRSF:SF002327",
-      "generic_url" : "http://pir.georgetown.edu/pirsf/"
-   },
-   "phenoscape" : {
-      "example_id" : null,
-      "generic_url" : "http://phenoscape.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : null,
-      "abbreviation" : "PhenoScape",
-      "database" : "PhenoScape Knowledgebase",
-      "id" : "PhenoScape",
-      "url_example" : null,
-      "name" : "PhenoScape Knowledgebase",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "wbbt" : {
-      "example_id" : "WBbt:0005733",
-      "generic_url" : "http://www.wormbase.org/",
-      "object" : "metazoan anatomical entity",
-      "datatype" : "metazoan anatomical entity",
-      "database" : "C. elegans gross anatomy",
-      "url_syntax" : null,
-      "abbreviation" : "WBbt",
-      "id" : "WBbt",
-      "url_example" : null,
-      "name" : "C. elegans gross anatomy",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "dictybase_ref" : {
-      "name" : "dictyBase literature references",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=[example_id]",
-      "abbreviation" : "dictyBase_REF",
-      "id" : "dictyBase_REF",
-      "database" : "dictyBase literature references",
-      "url_example" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=10157",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "dictyBase_REF:10157",
-      "generic_url" : "http://dictybase.org"
-   },
-   "ntnu_sb" : {
-      "example_id" : null,
-      "generic_url" : "http://www.ntnu.edu/nt/systemsbiology",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_syntax" : null,
-      "id" : "NTNU_SB",
-      "database" : "Norwegian University of Science and Technology, Systems Biology team",
-      "abbreviation" : "NTNU_SB",
-      "url_example" : null,
-      "name" : "Norwegian University of Science and Technology, Systems Biology team",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "apidb_plasmodb" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://plasmodb.org/",
-      "example_id" : "ApiDB_PlasmoDB:PF11_0344",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "PlasmoDB Plasmodium Genome Resource",
-      "url_example" : "http://www.plasmodb.org/gene/PF11_0344",
-      "abbreviation" : "ApiDB_PlasmoDB",
-      "url_syntax" : "http://www.plasmodb.org/gene/[example_id]",
-      "database" : "PlasmoDB Plasmodium Genome Resource",
-      "id" : "ApiDB_PlasmoDB"
-   },
-   "kegg_reaction" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.genome.jp/kegg/reaction/",
-      "example_id" : "KEGG:R02328",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "KEGG Reaction Database",
-      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?rn:R02328",
-      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?rn:[example_id]",
-      "abbreviation" : "KEGG_REACTION",
-      "id" : "KEGG_REACTION",
-      "database" : "KEGG Reaction Database"
-   },
-   "ri" : {
-      "url_example" : null,
-      "abbreviation" : "RI",
-      "url_syntax" : null,
-      "database" : "Roslin Institute",
-      "id" : "Roslin_Institute",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Roslin Institute",
-      "generic_url" : "http://www.roslin.ac.uk/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "cdd" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=34222",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=[example_id]",
-      "database" : "Conserved Domain Database at NCBI",
-      "abbreviation" : "CDD",
-      "id" : "CDD",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Conserved Domain Database at NCBI",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=cdd",
-      "example_id" : "CDD:34222",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "uniprotkb-kw" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "UniProtKB-KW:KW-0812",
-      "generic_url" : "http://www.uniprot.org/keywords/",
-      "name" : "UniProt Knowledgebase keywords",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "abbreviation" : "UniProtKB-KW",
-      "url_syntax" : "http://www.uniprot.org/keywords/[example_id]",
-      "id" : "UniProtKB-KW",
-      "database" : "UniProt Knowledgebase keywords",
-      "url_example" : "http://www.uniprot.org/keywords/KW-0812"
-   },
-   "cog" : {
-      "name" : "NCBI Clusters of Orthologous Groups",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "abbreviation" : "COG",
-      "url_syntax" : null,
-      "id" : "COG",
-      "database" : "NCBI Clusters of Orthologous Groups",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/"
-   },
-   "ncbi_locus_tag" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "NCBI locus tag",
-      "url_example" : null,
-      "id" : "NCBI_locus_tag",
-      "url_syntax" : null,
-      "abbreviation" : "NCBI_locus_tag",
-      "database" : "NCBI locus tag",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "example_id" : "NCBI_locus_tag:CTN_0547"
-   },
-   "pompep" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "ftp://ftp.sanger.ac.uk/pub/yeast/pombe/Protein_data/",
-      "example_id" : "Pompep:SPAC890.04C",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Schizosaccharomyces pombe protein data",
-      "url_example" : null,
-      "url_syntax" : null,
-      "abbreviation" : "Pompep",
-      "id" : "Pompep",
-      "database" : "Schizosaccharomyces pombe protein data"
-   },
-   "geo" : {
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/geo/",
-      "example_id" : "GEO:GDS2223",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS2223",
-      "abbreviation" : "GEO",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=[example_id]",
-      "database" : "NCBI Gene Expression Omnibus",
-      "id" : "GEO",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "NCBI Gene Expression Omnibus"
-   },
-   "cog_function" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
-      "example_id" : "COG_Function:H",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "NCBI COG function",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=H",
-      "abbreviation" : "COG_Function",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=[example_id]",
-      "id" : "COG_Function",
-      "database" : "NCBI COG function"
-   },
-   "cgd_locus" : {
-      "generic_url" : "http://www.candidagenome.org/",
-      "example_id" : "CGD_LOCUS:HWP1",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?locus=HWP1",
-      "database" : "Candida Genome Database",
-      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?locus=[example_id]",
-      "id" : "CGD_LOCUS",
-      "abbreviation" : "CGD_LOCUS",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Candida Genome Database"
-   },
-   "gr_gene" : {
-      "example_id" : "GR_GENE:GR:0060198",
-      "generic_url" : "http://www.gramene.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://www.gramene.org/db/genes/search_gene?acc=[example_id]",
-      "abbreviation" : "GR_gene",
-      "database" : "Gramene",
-      "id" : "GR_GENE",
-      "url_example" : "http://www.gramene.org/db/genes/search_gene?acc=GR:0060198",
-      "name" : "Gramene",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "ipr" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "InterPro database of protein domains and motifs",
-      "url_example" : "http://www.ebi.ac.uk/interpro/entry/IPR015421",
-      "url_syntax" : "http://www.ebi.ac.uk/interpro/entry/[example_id]",
-      "database" : "InterPro database of protein domains and motifs",
-      "id" : "InterPro",
-      "abbreviation" : "IPR",
-      "datatype" : "polypeptide region",
-      "object" : "polypeptide region",
-      "generic_url" : "http://www.ebi.ac.uk/interpro/",
-      "example_id" : "InterPro:IPR000001"
-   },
-   "ecogene" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "url_example" : "http://www.ecogene.org/geneInfo.php?eg_id=EG10818",
-      "url_syntax" : "http://www.ecogene.org/geneInfo.php?eg_id=[example_id]",
-      "database" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "abbreviation" : "ECOGENE",
-      "id" : "ECOGENE",
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://www.ecogene.org/",
-      "example_id" : "ECOGENE:EG10818"
-   },
-   "dictybase" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "example_id" : "dictyBase:DDB_G0277859",
-      "generic_url" : "http://dictybase.org",
-      "name" : "dictyBase",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "dictyBase",
-      "url_syntax" : "http://dictybase.org/gene/[example_id]",
-      "abbreviation" : "DictyBase",
-      "id" : "dictyBase",
-      "url_example" : "http://dictybase.org/gene/DDB_G0277859"
-   },
-   "psort" : {
-      "name" : "PSORT protein subcellular localization databases and prediction tools for bacteria",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "abbreviation" : "PSORT",
-      "id" : "PSORT",
-      "database" : "PSORT protein subcellular localization databases and prediction tools for bacteria",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.psort.org/"
-   },
-   "gb" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=AA816246",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]",
-      "database" : "GenBank",
-      "abbreviation" : "GB",
-      "id" : "GenBank",
-      "uri_prefix" : null,
-      "fullname" : "The NIH genetic sequence database, an annotated collection of all publicly available DNA sequences.",
-      "name" : "GenBank",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
-      "example_id" : "GB:AA816246",
-      "datatype" : "protein",
-      "object" : "protein"
-   },
-   "mim" : {
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM",
-      "example_id" : "OMIM:190198",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://omim.org/entry/190198",
-      "url_syntax" : "http://omim.org/entry/[example_id]",
-      "database" : "Mendelian Inheritance in Man",
-      "id" : "OMIM",
-      "abbreviation" : "MIM",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Mendelian Inheritance in Man"
-   },
-   "obo_rel" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.obofoundry.org/ro/",
-      "example_id" : "OBO_REL:part_of",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "OBO relation ontology",
-      "url_example" : null,
-      "id" : "OBO_REL",
-      "url_syntax" : null,
-      "abbreviation" : "OBO_REL",
-      "database" : "OBO relation ontology"
-   },
-   "pinc" : {
-      "uri_prefix" : null,
-      "fullname" : "represents GO annotations created in 2001 for NCBI and extracted into UniProtKB-GOA from EntrezGene",
-      "name" : "Proteome Inc.",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Proteome Inc.",
-      "abbreviation" : "PINC",
-      "id" : "PINC",
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://www.proteome.com/",
-      "example_id" : null
-   },
-   "vega" : {
-      "url_syntax" : "http://vega.sanger.ac.uk/id/[example_id]",
-      "id" : "VEGA",
-      "database" : "Vertebrate Genome Annotation database",
-      "abbreviation" : "VEGA",
-      "url_example" : "http://vega.sanger.ac.uk/id/OTTHUMP00000000661",
-      "name" : "Vertebrate Genome Annotation database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "VEGA:OTTHUMP00000000661",
-      "generic_url" : "http://vega.sanger.ac.uk/index.html",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "ecocyc" : {
-      "url_example" : "http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=P2-PWY",
-      "url_syntax" : "http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=[example_id]",
-      "id" : "EcoCyc",
-      "abbreviation" : "EcoCyc",
-      "database" : "Encyclopedia of E. coli metabolism",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Encyclopedia of E. coli metabolism",
-      "generic_url" : "http://ecocyc.org/",
-      "example_id" : "EcoCyc:P2-PWY",
-      "object" : "biological_process",
-      "datatype" : "biological_process"
-   },
-   "chebi" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Chemical Entities of Biological Interest",
-      "url_example" : "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17234",
-      "abbreviation" : "ChEBI",
-      "url_syntax" : "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:[example_id]",
-      "database" : "Chemical Entities of Biological Interest",
-      "id" : "CHEBI",
-      "object" : "chemical entity",
-      "datatype" : "chemical entity",
-      "generic_url" : "http://www.ebi.ac.uk/chebi/",
-      "example_id" : "CHEBI:17234"
-   },
-   "ptarget" : {
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "pTARGET",
-      "abbreviation" : "pTARGET",
-      "database" : "pTARGET Prediction server for protein subcellular localization",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "pTARGET Prediction server for protein subcellular localization",
-      "generic_url" : "http://bioinformatics.albany.edu/~ptarget/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "aracyc" : {
-      "example_id" : "AraCyc:PWYQT-62",
-      "generic_url" : "http://www.arabidopsis.org/biocyc/index.jsp",
-      "datatype" : "entity",
-      "object" : "entity",
-      "abbreviation" : "AraCyc",
-      "url_syntax" : "http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=[example_id]",
-      "id" : "AraCyc",
-      "database" : "AraCyc metabolic pathway database for Arabidopsis thaliana",
-      "url_example" : "http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=PWYQT-62",
-      "name" : "AraCyc metabolic pathway database for Arabidopsis thaliana",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "sgn_ref" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Sol Genomics Network",
-      "url_example" : "http://www.sgn.cornell.edu/chado/publication.pl?pub_id=861",
-      "abbreviation" : "SGN_ref",
-      "url_syntax" : "http://www.sgn.cornell.edu/chado/publication.pl?pub_id=[example_id]",
-      "id" : "SGN_ref",
-      "database" : "Sol Genomics Network",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.sgn.cornell.edu/",
-      "example_id" : "SGN_ref:861"
-   },
-   "unimod" : {
-      "generic_url" : "http://www.unimod.org/",
-      "example_id" : "UniMod:1287",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://www.unimod.org/modifications_view.php?editid1=1287",
-      "id" : "UniMod",
-      "url_syntax" : "http://www.unimod.org/modifications_view.php?editid1=[example_id]",
-      "abbreviation" : "UniMod",
-      "database" : "UniMod",
-      "uri_prefix" : null,
-      "fullname" : "protein modifications for mass spectrometry",
-      "name" : "UniMod"
-   },
-   "casgen" : {
-      "name" : "Catalog of Fishes genus database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "database" : "Catalog of Fishes genus database",
-      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=[example_id]",
-      "abbreviation" : "CASGEN",
-      "id" : "CASGEN",
-      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=1040",
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "CASGEN:1040",
-      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html"
-   },
-   "mod" : {
-      "generic_url" : "http://psidev.sourceforge.net/mod/",
-      "example_id" : "MOD:00219",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:00219",
-      "database" : "Proteomics Standards Initiative protein modification ontology",
-      "url_syntax" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:[example_id]",
-      "abbreviation" : "MOD",
-      "id" : "PSI-MOD",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Proteomics Standards Initiative protein modification ontology"
-   },
-   "nc-iubmb" : {
-      "url_syntax" : null,
-      "abbreviation" : "NC-IUBMB",
-      "database" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
-      "id" : "NC-IUBMB",
-      "url_example" : null,
-      "name" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : null,
-      "generic_url" : "http://www.chem.qmw.ac.uk/iubmb/",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "ddb" : {
-      "generic_url" : "http://dictybase.org",
-      "example_id" : "dictyBase:DDB_G0277859",
-      "object" : "gene",
-      "datatype" : "gene",
-      "url_example" : "http://dictybase.org/gene/DDB_G0277859",
-      "abbreviation" : "DDB",
-      "url_syntax" : "http://dictybase.org/gene/[example_id]",
-      "id" : "dictyBase",
-      "database" : "dictyBase",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "dictyBase"
-   },
-   "dictybase_gene_name" : {
-      "url_example" : "http://dictybase.org/gene/mlcE",
-      "abbreviation" : "dictyBase_gene_name",
-      "url_syntax" : "http://dictybase.org/gene/[example_id]",
-      "database" : "dictyBase",
-      "id" : "dictyBase_gene_name",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "dictyBase",
-      "generic_url" : "http://dictybase.org",
-      "example_id" : "dictyBase_gene_name:mlcE",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "maizegdb_locus" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "MaizeGDB",
-      "url_example" : "http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=ZmPK1",
-      "abbreviation" : "MaizeGDB_Locus",
-      "url_syntax" : "http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=[example_id]",
-      "id" : "MaizeGDB_Locus",
-      "database" : "MaizeGDB",
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://www.maizegdb.org",
-      "example_id" : "MaizeGDB_Locus:ZmPK1"
-   },
-   "psi-mod" : {
-      "url_example" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:00219",
-      "id" : "PSI-MOD",
-      "url_syntax" : "http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:[example_id]",
-      "abbreviation" : "PSI-MOD",
-      "database" : "Proteomics Standards Initiative protein modification ontology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Proteomics Standards Initiative protein modification ontology",
-      "generic_url" : "http://psidev.sourceforge.net/mod/",
-      "example_id" : "MOD:00219",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "ipi" : {
-      "example_id" : "IPI:IPI00000005.1",
-      "generic_url" : "http://www.ebi.ac.uk/IPI/IPIhelp.html",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_syntax" : null,
-      "database" : "International Protein Index",
-      "abbreviation" : "IPI",
-      "id" : "IPI",
-      "url_example" : null,
-      "name" : "International Protein Index",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "pamgo_gat" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Genome Annotation Tool (Agrobacterium tumefaciens C58); PAMGO Interest Group",
-      "url_example" : "http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=atu0001",
-      "id" : "PAMGO_GAT",
-      "url_syntax" : "http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=[example_id]",
-      "abbreviation" : "PAMGO_GAT",
-      "database" : "Genome Annotation Tool (Agrobacterium tumefaciens C58); PAMGO Interest Group",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://agro.vbi.vt.edu/public/",
-      "example_id" : "PAMGO_GAT:Atu0001"
-   },
-   "ena" : {
-      "id" : "ENA",
-      "url_syntax" : "http://www.ebi.ac.uk/ena/data/view/[example_id]",
-      "database" : "European Nucleotide Archive",
-      "abbreviation" : "ENA",
-      "url_example" : "http://www.ebi.ac.uk/ena/data/view/AA816246",
-      "name" : "European Nucleotide Archive",
-      "uri_prefix" : null,
-      "fullname" : "ENA is made up of a number of distinct databases that includes EMBL-Bank, the newly established Sequence Read Archive (SRA) and the Trace Archive. International nucleotide sequence database collaboration, comprising ENA-EBI nucleotide sequence data library (EMBL-Bank), DNA DataBank of Japan (DDBJ), and NCBI GenBank",
-      "example_id" : "ENA:AA816246",
-      "generic_url" : "http://www.ebi.ac.uk/ena/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "obo_sf_po" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://sourceforge.net/tracker/?func=browse&group_id=76834&atid=835555",
-      "example_id" : "OBO_SF_PO:3184921",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Source Forge OBO Plant Ontology (PO) term request tracker",
-      "url_example" : "https://sourceforge.net/tracker/index.php?func=detail&aid=3184921&group_id=76834&atid=835555",
-      "abbreviation" : "OBO_SF_PO",
-      "url_syntax" : "https://sourceforge.net/tracker/index.php?func=detail&aid=[example_id]&group_id=76834&atid=835555",
-      "id" : "OBO_SF_PO",
-      "database" : "Source Forge OBO Plant Ontology (PO) term request tracker"
-   },
-   "ddb_ref" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "dictyBase literature references",
-      "url_example" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=10157",
-      "url_syntax" : "http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=[example_id]",
-      "database" : "dictyBase literature references",
-      "id" : "dictyBase_REF",
-      "abbreviation" : "DDB_REF",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://dictybase.org",
-      "example_id" : "dictyBase_REF:10157"
-   },
-   "cgen" : {
-      "name" : "Compugen Gene Ontology Gene Association Data",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "database" : "Compugen Gene Ontology Gene Association Data",
-      "url_syntax" : null,
-      "abbreviation" : "CGEN",
-      "id" : "CGEN",
-      "url_example" : null,
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "CGEN:PrID131022",
-      "generic_url" : "http://www.cgen.com/"
-   },
-   "iuphar_gpcr" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "IUPHAR_GPCR:1279",
-      "generic_url" : "http://www.iuphar.org/",
-      "name" : "International Union of Pharmacology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=[example_id]",
-      "id" : "IUPHAR_GPCR",
-      "abbreviation" : "IUPHAR_GPCR",
-      "database" : "International Union of Pharmacology",
-      "url_example" : "http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=13"
-   },
-   "tair" : {
-      "generic_url" : "http://www.arabidopsis.org/",
-      "example_id" : "TAIR:locus:2146653",
-      "object" : "primary transcript",
-      "datatype" : "primary transcript",
-      "url_example" : "http://arabidopsis.org/servlets/TairObject?accession=locus:2146653",
-      "url_syntax" : "http://arabidopsis.org/servlets/TairObject?accession=[example_id]",
-      "id" : "TAIR",
-      "abbreviation" : "TAIR",
-      "database" : "The Arabidopsis Information Resource",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "The Arabidopsis Information Resource"
-   },
-   "spd" : {
-      "name" : "Schizosaccharomyces pombe Postgenome Database at RIKEN; includes Orfeome Localisation data",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "abbreviation" : "SPD",
-      "url_syntax" : "http://www.riken.jp/SPD/[example_id].html",
-      "database" : "Schizosaccharomyces pombe Postgenome Database at RIKEN; includes Orfeome Localisation data",
-      "id" : "SPD",
-      "url_example" : "http://www.riken.jp/SPD/05/05F01.html",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "SPD:05/05F01",
-      "generic_url" : "http://www.riken.jp/SPD/"
-   },
-   "kegg_pathway" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "KEGG Pathways Database",
-      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?path:ot00020",
-      "id" : "KEGG_PATHWAY",
-      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?path:[example_id]",
-      "database" : "KEGG Pathways Database",
-      "abbreviation" : "KEGG_PATHWAY",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.genome.jp/kegg/pathway.html",
-      "example_id" : "KEGG_PATHWAY:ot00020"
-   },
-   "pato" : {
-      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
-      "example_id" : "PATO:0001420",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Phenotypic quality ontology",
-      "id" : "PATO",
-      "abbreviation" : "PATO",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Phenotypic quality ontology"
-   },
-   "muscletrait" : {
-      "name" : "TRAnscript Integrated Table",
-      "fullname" : "an integrated database of transcripts expressed in human skeletal muscle",
-      "uri_prefix" : null,
-      "abbreviation" : "MuscleTRAIT",
-      "url_syntax" : null,
-      "id" : "TRAIT",
-      "database" : "TRAnscript Integrated Table",
-      "url_example" : null,
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://muscle.cribi.unipd.it/"
-   },
-   "ddbj" : {
-      "url_syntax" : "http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=[example_id]",
-      "id" : "DDBJ",
-      "database" : "DNA Databank of Japan",
-      "abbreviation" : "DDBJ",
-      "url_example" : "http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=AA816246",
-      "name" : "DNA Databank of Japan",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "DDBJ:AA816246",
-      "generic_url" : "http://www.ddbj.nig.ac.jp/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "rebase" : {
-      "name" : "REBASE restriction enzyme database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://rebase.neb.com/rebase/enz/[example_id].html",
-      "id" : "REBASE",
-      "abbreviation" : "REBASE",
-      "database" : "REBASE restriction enzyme database",
-      "url_example" : "http://rebase.neb.com/rebase/enz/EcoRI.html",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "REBASE:EcoRI",
-      "generic_url" : "http://rebase.neb.com/rebase/rebase.html"
-   },
-   "smart" : {
-      "example_id" : "SMART:SM00005",
-      "generic_url" : "http://smart.embl-heidelberg.de/",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region",
-      "url_syntax" : "http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=[example_id]",
-      "id" : "SMART",
-      "abbreviation" : "SMART",
-      "database" : "Simple Modular Architecture Research Tool",
-      "url_example" : "http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=SM00005",
-      "name" : "Simple Modular Architecture Research Tool",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "po_ref" : {
-      "name" : "Plant Ontology custom references",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://wiki.plantontology.org:8080/index.php/PO_REF:[example_id]",
-      "id" : "PO_REF",
-      "database" : "Plant Ontology custom references",
-      "abbreviation" : "PO_REF",
-      "url_example" : "http://wiki.plantontology.org:8080/index.php/PO_REF:00001",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "PO_REF:00001",
-      "generic_url" : "http://wiki.plantontology.org:8080/index.php/PO_references"
-   },
-   "pamgo_mgg" : {
-      "name" : "Magnaporthe grisea database",
-      "uri_prefix" : null,
-      "fullname" : "Magnaporthe grisea database at North Carolina State University; member of PAMGO Interest Group",
-      "id" : "PAMGO_MGG",
-      "url_syntax" : "http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=[example_id]",
-      "abbreviation" : "PAMGO_MGG",
-      "database" : "Magnaporthe grisea database",
-      "url_example" : "http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=MGG_05132",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "PAMGO_MGG:MGG_05132",
-      "generic_url" : "http://scotland.fgl.ncsu.edu/smeng/GoAnnotationMagnaporthegrisea.html"
-   },
-   "agricola_ind" : {
-      "url_syntax" : null,
-      "id" : "AGRICOLA_IND",
-      "abbreviation" : "AGRICOLA_IND",
-      "database" : "AGRICultural OnLine Access",
-      "url_example" : null,
-      "name" : "AGRICultural OnLine Access",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "AGRICOLA_IND:IND23252955",
-      "generic_url" : "http://agricola.nal.usda.gov/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "rnacentral" : {
-      "url_syntax" : "http://rnacentral.org/rna/[example_id]",
-      "id" : "RNAcentral",
-      "abbreviation" : "RNAcentral",
-      "database" : "RNAcentral",
-      "url_example" : "http://rnacentral.org/rna/URS000047C79B_9606",
-      "name" : "RNAcentral",
-      "fullname" : "An international database of ncRNA sequences",
-      "uri_prefix" : null,
-      "example_id" : "RNAcentral:URS000047C79B_9606",
-      "generic_url" : "http://rnacentral.org",
-      "object" : "ribonucleic acid",
-      "datatype" : "ribonucleic acid"
-   },
-   "zfin" : {
-      "name" : "Zebrafish Information Network",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://zfin.org/cgi-bin/ZFIN_jump?record=[example_id]",
-      "abbreviation" : "ZFIN",
-      "id" : "ZFIN",
-      "database" : "Zebrafish Information Network",
-      "url_example" : "http://zfin.org/cgi-bin/ZFIN_jump?record=ZDB-GENE-990415-103",
-      "datatype" : "variation",
-      "object" : "variation",
-      "example_id" : "ZFIN:ZDB-GENE-990415-103",
-      "generic_url" : "http://zfin.org/"
-   },
-   "go_ref" : {
-      "abbreviation" : "GO_REF",
-      "url_syntax" : "http://www.geneontology.org/cgi-bin/references.cgi#GO_REF:[example_id]",
-      "id" : "GO_REF",
-      "database" : "Gene Ontology Database references",
-      "url_example" : "http://www.geneontology.org/cgi-bin/references.cgi#GO_REF:0000001",
-      "name" : "Gene Ontology Database references",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "GO_REF:0000001",
-      "generic_url" : "http://www.geneontology.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "wbphenotype" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "WormBase phenotype ontology",
-      "url_example" : "http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:0000154",
-      "url_syntax" : "http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:[example_id]",
-      "abbreviation" : "WBPhenotype",
-      "database" : "WormBase phenotype ontology",
-      "id" : "WBPhenotype",
-      "object" : "quality",
-      "datatype" : "quality",
-      "generic_url" : "http://www.wormbase.org/",
-      "example_id" : "WBPhenotype:0002117"
-   },
-   "cas_spc" : {
-      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=1979",
-      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=[example_id]",
-      "id" : "CASSPC",
-      "abbreviation" : "CAS_SPC",
-      "database" : "Catalog of Fishes species database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Catalog of Fishes species database"
-   },
-   "genbank" : {
-      "object" : "protein",
-      "datatype" : "protein",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/Genbank/",
-      "example_id" : "GB:AA816246",
-      "uri_prefix" : null,
-      "fullname" : "The NIH genetic sequence database, an annotated collection of all publicly available DNA sequences.",
-      "name" : "GenBank",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=AA816246",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]",
-      "id" : "GenBank",
-      "database" : "GenBank",
-      "abbreviation" : "GenBank"
-   },
-   "jstor" : {
-      "id" : "JSTOR",
-      "url_syntax" : "http://www.jstor.org/stable/[example_id]",
-      "abbreviation" : "JSTOR",
-      "database" : "Digital archive of scholarly articles",
-      "url_example" : "http://www.jstor.org/stable/3093870",
-      "name" : "Digital archive of scholarly articles",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "JSTOR:3093870",
-      "generic_url" : "http://www.jstor.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "pmid" : {
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
-      "example_id" : "PMID:4208797",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/pubmed/[example_id]",
-      "abbreviation" : "PMID",
-      "database" : "PubMed",
-      "id" : "PMID",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "PubMed"
-   },
-   "sgd" : {
-      "abbreviation" : "SGD",
-      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
-      "database" : "Saccharomyces Genome Database",
-      "id" : "SGD",
-      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview",
-      "name" : "Saccharomyces Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "SGD:S000006169",
-      "generic_url" : "http://www.yeastgenome.org/",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "sgdid" : {
-      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview",
-      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
-      "id" : "SGD",
-      "abbreviation" : "SGDID",
-      "database" : "Saccharomyces Genome Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Saccharomyces Genome Database",
-      "generic_url" : "http://www.yeastgenome.org/",
-      "example_id" : "SGD:S000006169",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "sp_kw" : {
-      "url_example" : "http://www.uniprot.org/keywords/KW-0812",
-      "url_syntax" : "http://www.uniprot.org/keywords/[example_id]",
-      "id" : "UniProtKB-KW",
-      "abbreviation" : "SP_KW",
-      "database" : "UniProt Knowledgebase keywords",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "UniProt Knowledgebase keywords",
-      "generic_url" : "http://www.uniprot.org/keywords/",
-      "example_id" : "UniProtKB-KW:KW-0812",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "pubchem_bioassay" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "NCBI PubChem database of bioassay records",
-      "url_example" : "http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=177",
-      "abbreviation" : "PubChem_BioAssay",
-      "url_syntax" : "http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=[example_id]",
-      "database" : "NCBI PubChem database of bioassay records",
-      "id" : "PubChem_BioAssay",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
-      "example_id" : "PubChem_BioAssay:177"
-   },
-   "tgd_ref" : {
-      "id" : "TGD_REF",
-      "url_syntax" : "http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
-      "database" : "Tetrahymena Genome Database",
-      "abbreviation" : "TGD_REF",
-      "url_example" : "http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=T000005818",
-      "name" : "Tetrahymena Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "TGD_REF:T000005818",
-      "generic_url" : "http://www.ciliate.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "biomdid" : {
-      "url_example" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=BIOMD0000000045",
-      "abbreviation" : "BIOMDID",
-      "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
-      "database" : "BioModels Database",
-      "id" : "BIOMD",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "BioModels Database",
-      "generic_url" : "http://www.ebi.ac.uk/biomodels/",
-      "example_id" : "BIOMD:BIOMD0000000045",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "sgd_locus" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Saccharomyces Genome Database",
-      "url_example" : "http://www.yeastgenome.org/locus/S000006169/overview",
-      "url_syntax" : "http://www.yeastgenome.org/locus/[example_id]/overview",
-      "abbreviation" : "SGD_LOCUS",
-      "id" : "SGD_LOCUS",
-      "database" : "Saccharomyces Genome Database",
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://www.yeastgenome.org/",
-      "example_id" : "SGD_LOCUS:GAL4"
-   },
-   "geneid" : {
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "example_id" : "NCBI_Gene:4771",
-      "datatype" : "gene",
-      "object" : "gene",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=4771",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
-      "id" : "NCBI_Gene",
-      "database" : "NCBI Gene",
-      "abbreviation" : "GeneID",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI Gene"
-   },
-   "reac" : {
-      "url_example" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604",
-      "abbreviation" : "REAC",
-      "url_syntax" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=[example_id]",
-      "id" : "Reactome",
-      "database" : "Reactome - a curated knowledgebase of biological pathways",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Reactome - a curated knowledgebase of biological pathways",
-      "generic_url" : "http://www.reactome.org/",
-      "example_id" : "Reactome:REACT_604",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "vz" : {
-      "url_example" : "http://viralzone.expasy.org/all_by_protein/957.html",
-      "url_syntax" : "http://viralzone.expasy.org/all_by_protein/[example_id].html",
-      "id" : "VZ",
-      "abbreviation" : "VZ",
-      "database" : "ViralZone",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "ViralZone",
-      "generic_url" : "http://viralzone.expasy.org/",
-      "example_id" : "VZ:957",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "imgt_hla" : {
-      "name" : "IMGT/HLA human major histocompatibility complex sequence database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "IMGT/HLA human major histocompatibility complex sequence database",
-      "url_syntax" : null,
-      "abbreviation" : "IMGT_HLA",
-      "id" : "IMGT_HLA",
-      "url_example" : null,
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "IMGT_HLA:HLA00031",
-      "generic_url" : "http://www.ebi.ac.uk/imgt/hla"
-   },
-   "wb_ref" : {
-      "name" : "WormBase database of nematode biology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://www.wormbase.org/db/misc/paper?name=[example_id]",
-      "id" : "WB_REF",
-      "abbreviation" : "WB_REF",
-      "database" : "WormBase database of nematode biology",
-      "url_example" : "http://www.wormbase.org/db/misc/paper?name=WBPaper00004823",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "WB_REF:WBPaper00004823",
-      "generic_url" : "http://www.wormbase.org/"
-   },
-   "fypo" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "FYPO:0000001",
-      "generic_url" : "http://www.pombase.org/",
-      "name" : "Fission Yeast Phenotype Ontology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "database" : "Fission Yeast Phenotype Ontology",
-      "url_syntax" : null,
-      "abbreviation" : "FYPO",
-      "id" : "FYPO",
-      "url_example" : null
-   },
-   "omssa" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/omssa/",
-      "name" : "Open Mass Spectrometry Search Algorithm",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "abbreviation" : "OMSSA",
-      "id" : "OMSSA",
-      "database" : "Open Mass Spectrometry Search Algorithm",
-      "url_example" : null
-   },
-   "rnamods" : {
-      "example_id" : "RNAmods:037",
-      "generic_url" : "http://s59.cas.albany.edu/RNAmods/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?[example_id]",
-      "id" : "RNAmods",
-      "abbreviation" : "RNAmods",
-      "database" : "RNA Modification Database",
-      "url_example" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?091",
-      "name" : "RNA Modification Database",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "gonuts" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "GONUTS:MOUSE:CD28",
-      "generic_url" : "http://gowiki.tamu.edu",
-      "name" : "Gene Ontology Normal Usage Tracking System (GONUTS)",
-      "uri_prefix" : null,
-      "fullname" : "Third party documentation for GO and community annotation system.",
-      "id" : "GONUTS",
-      "url_syntax" : "http://gowiki.tamu.edu/wiki/index.php/[example_id]",
-      "abbreviation" : "GONUTS",
-      "database" : "Gene Ontology Normal Usage Tracking System (GONUTS)",
-      "url_example" : "http://gowiki.tamu.edu/wiki/index.php/MOUSE:CD28"
-   },
-   "hamap" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://hamap.expasy.org/",
-      "example_id" : "HAMAP:MF_00031",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "High-quality Automated and Manual Annotation of microbial Proteomes",
-      "url_example" : "http://hamap.expasy.org/unirule/MF_00131",
-      "url_syntax" : "http://hamap.expasy.org/unirule/[example_id]",
-      "database" : "High-quality Automated and Manual Annotation of microbial Proteomes",
-      "id" : "HAMAP",
-      "abbreviation" : "HAMAP"
-   },
-   "prow" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/prow/",
-      "name" : "Protein Reviews on the Web",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "id" : "PROW",
-      "url_syntax" : null,
-      "database" : "Protein Reviews on the Web",
-      "abbreviation" : "PROW",
-      "url_example" : null
-   },
-   "phi" : {
-      "name" : "MeGO (Phage and Mobile Element Ontology)",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "PHI",
-      "url_syntax" : null,
-      "abbreviation" : "PHI",
-      "database" : "MeGO (Phage and Mobile Element Ontology)",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "PHI:0000055",
-      "generic_url" : "http://aclame.ulb.ac.be/Classification/mego.html"
-   },
-   "flybase" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "FlyBase",
-      "url_example" : "http://flybase.org/reports/FBgn0000024.html",
-      "url_syntax" : "http://flybase.org/reports/[example_id].html",
-      "database" : "FlyBase",
-      "id" : "FB",
-      "abbreviation" : "FLYBASE",
-      "datatype" : "gene",
-      "object" : "gene",
-      "generic_url" : "http://flybase.org/",
-      "example_id" : "FB:FBgn0000024"
-   },
-   "brenda" : {
-      "url_syntax" : "http://www.brenda-enzymes.info/php/result_flat.php4?ecno=[example_id]",
-      "database" : "BRENDA, The Comprehensive Enzyme Information System",
-      "abbreviation" : "BRENDA",
-      "id" : "BRENDA",
-      "url_example" : "http://www.brenda-enzymes.info/php/result_flat.php4?ecno=4.2.1.3",
-      "name" : "BRENDA, The Comprehensive Enzyme Information System",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "BRENDA:4.2.1.3",
-      "generic_url" : "http://www.brenda-enzymes.info",
-      "object" : "catalytic activity",
-      "datatype" : "catalytic activity"
-   },
-   "merops_fam" : {
-      "url_example" : "http://merops.sanger.ac.uk/cgi-bin/famsum?family=m18",
-      "url_syntax" : "http://merops.sanger.ac.uk/cgi-bin/famsum?family=[example_id]",
-      "database" : "MEROPS peptidase database",
-      "abbreviation" : "MEROPS_fam",
-      "id" : "MEROPS_fam",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "MEROPS peptidase database",
-      "generic_url" : "http://merops.sanger.ac.uk/",
-      "example_id" : "MEROPS_fam:M18",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "uniparc" : {
-      "uri_prefix" : null,
-      "fullname" : "A non-redundant archive of protein sequences extracted from Swiss-Prot, TrEMBL, PIR-PSD, EMBL, Ensembl, IPI, PDB, RefSeq, FlyBase, WormBase, European Patent Office, United States Patent and Trademark Office, and Japanese Patent Office",
-      "name" : "UniProt Archive",
-      "url_example" : "http://www.uniprot.org/uniparc/UPI000000000A",
-      "url_syntax" : "http://www.uniprot.org/uniparc/[example_id]",
-      "abbreviation" : "UniParc",
-      "id" : "UniParc",
-      "database" : "UniProt Archive",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.uniprot.org/uniparc/",
-      "example_id" : "UniParc:UPI000000000A"
-   },
-   "ensemblplants" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "example_id" : "EnsemblPlants:LOC_Os01g22954",
-      "generic_url" : "http://plants.ensembl.org/",
-      "name" : "Ensembl Plants, the Ensembl Genomes database for accessing plant genome data",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "EnsemblPlants/Gramene",
-      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_ID]",
-      "abbreviation" : "EnsemblPlants",
-      "database" : "Ensembl Plants, the Ensembl Genomes database for accessing plant genome data",
-      "url_example" : "http://www.ensemblgenomes.org/id/LOC_Os01g22954"
-   },
-   "um-bbd_ruleid" : {
-      "url_example" : "http://umbbd.msi.umn.edu/servlets/rule.jsp?rule=bt0330",
-      "url_syntax" : "http://umbbd.msi.umn.edu/servlets/rule.jsp?rule=[example_id]",
-      "id" : "UM-BBD_ruleID",
-      "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "abbreviation" : "UM-BBD_ruleID",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "generic_url" : "http://umbbd.msi.umn.edu/",
-      "example_id" : "UM-BBD_ruleID:bt0330",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "superfamily" : {
-      "fullname" : "A database of structural and functional protein annotations for completely sequenced genomes",
-      "uri_prefix" : null,
-      "name" : "SUPERFAMILY protein annotation database",
-      "url_example" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF51905",
-      "abbreviation" : "SUPERFAMILY",
-      "url_syntax" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF[example_id]",
-      "id" : "SUPERFAMILY",
-      "database" : "SUPERFAMILY protein annotation database",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://supfam.cs.bris.ac.uk/SUPERFAMILY/index.html",
-      "example_id" : "SUPERFAMILY:51905"
-   },
-   "pr" : {
-      "url_example" : "http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:000025380",
-      "url_syntax" : "http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:[example_id]",
-      "abbreviation" : "PR",
-      "database" : "Protein Ontology",
-      "id" : "PR",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Protein Ontology",
-      "generic_url" : "http://www.proconsortium.org/pro/pro.shtml",
-      "example_id" : "PR:000025380",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "h-invdb_locus" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.h-invitational.jp/",
-      "example_id" : "H-invDB_locus:HIX0014446",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "H-invitational Database",
-      "url_example" : "http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=HIX0014446",
-      "database" : "H-invitational Database",
-      "url_syntax" : "http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=[example_id]",
-      "id" : "H-invDB_locus",
-      "abbreviation" : "H-invDB_locus"
-   },
-   "uniprotkb-subcell" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "UniProt Knowledgebase Subcellular Location vocabulary",
-      "url_example" : "http://www.uniprot.org/locations/SL-0012",
-      "abbreviation" : "UniProtKB-SubCell",
-      "url_syntax" : "http://www.uniprot.org/locations/[example_id]",
-      "id" : "UniProtKB-SubCell",
-      "database" : "UniProt Knowledgebase Subcellular Location vocabulary",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.uniprot.org/locations/",
-      "example_id" : "UniProtKB-SubCell:SL-0012"
-   },
-   "smd" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://genome-www.stanford.edu/microarray",
-      "name" : "Stanford Microarray Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "abbreviation" : "SMD",
-      "url_syntax" : null,
-      "id" : "SMD",
-      "database" : "Stanford Microarray Database",
-      "url_example" : null
-   },
-   "eco" : {
-      "url_example" : null,
-      "id" : "ECO",
-      "url_syntax" : null,
-      "database" : "Evidence Code ontology",
-      "abbreviation" : "ECO",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Evidence Code ontology",
-      "generic_url" : "http://www.geneontology.org/",
-      "example_id" : "ECO:0000002",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "alzheimers_university_of_toronto" : {
-      "url_example" : null,
-      "id" : "Alzheimers_University_of_Toronto",
-      "url_syntax" : null,
-      "abbreviation" : "Alzheimers_University_of_Toronto",
-      "database" : "Alzheimers Project at University of Toronto",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Alzheimers Project at University of Toronto",
-      "generic_url" : "http://www.ims.utoronto.ca/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "um-bbd" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://umbbd.msi.umn.edu/",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "url_example" : null,
-      "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "url_syntax" : null,
-      "id" : "UM-BBD",
-      "abbreviation" : "UM-BBD"
-   },
-   "kegg_enzyme" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "KEGG Enzyme Database",
-      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?ec:2.1.1.4",
-      "abbreviation" : "KEGG_ENZYME",
-      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?ec:[example_id]",
-      "id" : "KEGG_ENZYME",
-      "database" : "KEGG Enzyme Database",
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://www.genome.jp/dbget-bin/www_bfind?enzyme",
-      "example_id" : "KEGG_ENZYME:2.1.1.4"
-   },
-   "tgd" : {
-      "generic_url" : "http://www.ciliate.org/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Tetrahymena Genome Database",
-      "abbreviation" : "TGD",
-      "id" : "TGD",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Tetrahymena Genome Database"
-   },
-   "wormbase" : {
-      "generic_url" : "http://www.wormbase.org/",
-      "example_id" : "WB:WBGene00003001",
-      "object" : "protein",
-      "datatype" : "protein",
-      "url_example" : "http://www.wormbase.org/db/get?class=Gene;name=WBGene00003001",
-      "id" : "WB",
-      "url_syntax" : "http://www.wormbase.org/db/gene/gene?name=[example_id]",
-      "abbreviation" : "WormBase",
-      "database" : "WormBase database of nematode biology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "WormBase database of nematode biology"
-   },
-   "ncbigene" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "example_id" : "NCBI_Gene:4771",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "name" : "NCBI Gene",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "NCBI Gene",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]",
-      "id" : "NCBI_Gene",
-      "abbreviation" : "NCBIGene",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=4771"
-   },
-   "seed" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.theseed.org",
-      "example_id" : "SEED:fig|83331.1.peg.1",
-      "fullname" : "Project to annotate the first 1000 sequenced genomes, develop detailed metabolic reconstructions, and construct the corresponding stoichiometric matrices",
-      "uri_prefix" : null,
-      "name" : "The SEED;",
-      "url_example" : "http://www.theseed.org/linkin.cgi?id=fig|83331.1.peg.1",
-      "id" : "SEED",
-      "url_syntax" : "http://www.theseed.org/linkin.cgi?id=[example_id]",
-      "abbreviation" : "SEED",
-      "database" : "The SEED;"
-   },
-   "mesh" : {
-      "abbreviation" : "MeSH",
-      "url_syntax" : "http://www.nlm.nih.gov/cgi/mesh/2015/MB_cgi?view=expanded&field=uid&term=[example_id]",
-      "database" : "Medical Subject Headings",
-      "id" : "MeSH",
-      "url_example" : "http://www.nlm.nih.gov/cgi/mesh/2015/MB_cgi?view=expanded&field=uid&term=D017209",
-      "name" : "Medical Subject Headings",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "MeSH:D017209",
-      "generic_url" : "https://www.nlm.nih.gov/mesh/MBrowser.html",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "biocyc" : {
-      "example_id" : "BioCyc:PWY-5271",
-      "generic_url" : "http://biocyc.org/",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_syntax" : "http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=[example_id]",
-      "id" : "BioCyc",
-      "abbreviation" : "BioCyc",
-      "database" : "BioCyc collection of metabolic pathway databases",
-      "url_example" : "http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=PWY-5271",
-      "name" : "BioCyc collection of metabolic pathway databases",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "casref" : {
-      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=2031",
-      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=[example_id]",
-      "database" : "Catalog of Fishes publications database",
-      "abbreviation" : "CASREF",
-      "id" : "CASREF",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Catalog of Fishes publications database",
-      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
-      "example_id" : "CASREF:2031",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "transfac" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.gene-regulation.com/pub/databases.html#transfac",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "TRANSFAC database of eukaryotic transcription factors",
-      "url_example" : null,
-      "id" : "TRANSFAC",
-      "url_syntax" : null,
-      "database" : "TRANSFAC database of eukaryotic transcription factors",
-      "abbreviation" : "TRANSFAC"
-   },
-   "vbrc" : {
-      "name" : "Viral Bioinformatics Resource Center",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://vbrc.org/query.asp?web_id=VBRC:[example_id]",
-      "id" : "VBRC",
-      "abbreviation" : "VBRC",
-      "database" : "Viral Bioinformatics Resource Center",
-      "url_example" : "http://vbrc.org/query.asp?web_id=VBRC:F35742",
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "VBRC:F35742",
-      "generic_url" : "http://vbrc.org"
-   },
-   "cgdid" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "example_id" : "CGD:CAL0005516",
-      "generic_url" : "http://www.candidagenome.org/",
-      "name" : "Candida Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "CGD",
-      "url_syntax" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]",
-      "abbreviation" : "CGDID",
-      "database" : "Candida Genome Database",
-      "url_example" : "http://www.candidagenome.org/cgi-bin/locus.pl?dbid=CAL0005516"
-   },
-   "jcvi_genprop" : {
-      "id" : "JCVI_GenProp",
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=[example_id]",
-      "abbreviation" : "JCVI_GenProp",
-      "database" : "Genome Properties database at the J. Craig Venter Institute",
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=GenProp0120",
-      "name" : "Genome Properties database at the J. Craig Venter Institute",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "JCVI_GenProp:GenProp0120",
-      "generic_url" : "http://cmr.jcvi.org/",
-      "datatype" : "biological_process",
-      "object" : "biological_process"
-   },
-   "cbs" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.cbs.dtu.dk/",
-      "example_id" : "CBS:TMHMM",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Center for Biological Sequence Analysis",
-      "url_example" : "http://www.cbs.dtu.dk/services/[example_id]/",
-      "url_syntax" : null,
-      "id" : "CBS",
-      "abbreviation" : "CBS",
-      "database" : "Center for Biological Sequence Analysis"
-   },
-   "mgi" : {
-      "object" : "variation",
-      "datatype" : "variation",
-      "generic_url" : "http://www.informatics.jax.org/",
-      "example_id" : "MGI:MGI:80863",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Mouse Genome Informatics",
-      "url_example" : "http://www.informatics.jax.org/accession/MGI:80863",
-      "url_syntax" : "http://www.informatics.jax.org/accession/[example_id]",
-      "abbreviation" : "MGI",
-      "id" : "MGI",
-      "database" : "Mouse Genome Informatics"
-   },
-   "multifun" : {
-      "url_syntax" : null,
-      "abbreviation" : "MultiFun",
-      "id" : "MultiFun",
-      "database" : "MultiFun cell function assignment schema",
-      "url_example" : null,
-      "name" : "MultiFun cell function assignment schema",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : null,
-      "generic_url" : "http://genprotec.mbl.edu/files/MultiFun.html",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "paint_ref" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Phylogenetic Annotation INference Tool References",
-      "url_example" : "http://www.geneontology.org/gene-associations/submission/paint/PTHR10046/PTHR10046.txt",
-      "url_syntax" : "http://www.geneontology.org/gene-associations/submission/paint/[example_id]/[example_id].txt",
-      "id" : "PAINT_REF",
-      "abbreviation" : "PAINT_REF",
-      "database" : "Phylogenetic Annotation INference Tool References",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.pantherdb.org/",
-      "example_id" : "PAINT_REF:PTHR10046"
-   },
-   "panther" : {
-      "example_id" : "PANTHER:PTHR11455",
-      "generic_url" : "http://www.pantherdb.org/",
-      "object" : "protein family",
-      "datatype" : "protein family",
-      "abbreviation" : "PANTHER",
-      "url_syntax" : "http://www.pantherdb.org/panther/lookupId.jsp?id=[example_id]",
-      "id" : "PANTHER",
-      "database" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
-      "url_example" : "http://www.pantherdb.org/panther/lookupId.jsp?id=PTHR10000",
-      "name" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "jcvi_tigrfams" : {
-      "url_syntax" : "http://search.jcvi.org/search?p&q=[example_id]",
-      "id" : "JCVI_TIGRFAMS",
-      "database" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
-      "abbreviation" : "JCVI_TIGRFAMS",
-      "url_example" : "http://search.jcvi.org/search?p&q=TIGR00254",
-      "name" : "TIGRFAMs HMM collection at the J. Craig Venter Institute",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "JCVI_TIGRFAMS:TIGR00254",
-      "generic_url" : "http://search.jcvi.org/",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region"
-   },
-   "uberon" : {
-      "datatype" : "anatomical entity",
-      "object" : "anatomical entity",
-      "generic_url" : "http://uberon.org",
-      "example_id" : "URBERON:0002398",
-      "fullname" : "A multi-species anatomy ontology",
-      "uri_prefix" : null,
-      "name" : "Uber-anatomy ontology",
-      "url_example" : "http://purl.obolibrary.org/obo/UBERON_0002398",
-      "database" : "Uber-anatomy ontology",
-      "url_syntax" : "http://purl.obolibrary.org/obo/UBERON_[example_id]",
-      "abbreviation" : "UBERON",
-      "id" : "UBERON"
-   },
-   "gr_qtl" : {
-      "abbreviation" : "GR_QTL",
-      "url_syntax" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=[example_id]",
-      "id" : "GR_QTL",
-      "database" : "Gramene",
-      "url_example" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=CQU7",
-      "name" : "Gramene",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "GR_QTL:CQU7",
-      "generic_url" : "http://www.gramene.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "broad" : {
-      "generic_url" : "http://www.broad.mit.edu/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Broad Institute",
-      "abbreviation" : "Broad",
-      "id" : "Broad",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Broad Institute"
-   },
-   "ensembl_transcriptid" : {
-      "datatype" : "transcript",
-      "object" : "transcript",
-      "example_id" : "ENSEMBL_TranscriptID:ENST00000371959",
-      "generic_url" : "http://www.ensembl.org/",
-      "name" : "Ensembl database of automatically annotated genomic data",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
-      "id" : "ENSEMBL_TranscriptID",
-      "abbreviation" : "ENSEMBL_TranscriptID",
-      "database" : "Ensembl database of automatically annotated genomic data",
-      "url_example" : "http://www.ensembl.org/id/ENST00000371959"
-   },
-   "agi_locuscode" : {
-      "generic_url" : "http://www.arabidopsis.org",
-      "example_id" : "AGI_LocusCode:At2g17950",
-      "datatype" : "gene",
-      "object" : "gene",
-      "url_example" : "http://arabidopsis.org/servlets/TairObject?type=locus&name=At2g17950",
-      "url_syntax" : "http://arabidopsis.org/servlets/TairObject?type=locus&name=[example_id]",
-      "id" : "AGI_LocusCode",
-      "database" : "Arabidopsis Genome Initiative",
-      "abbreviation" : "AGI_LocusCode",
-      "fullname" : "Comprises TAIR, TIGR and MIPS",
-      "uri_prefix" : null,
-      "name" : "Arabidopsis Genome Initiative"
-   },
-   "sabio-rk" : {
-      "database" : "SABIO Reaction Kinetics",
-      "url_syntax" : "http://sabio.villa-bosch.de/reacdetails.jsp?reactid=[example_id]",
-      "id" : "SABIO-RK",
-      "abbreviation" : "SABIO-RK",
-      "url_example" : "http://sabio.villa-bosch.de/reacdetails.jsp?reactid=1858",
-      "name" : "SABIO Reaction Kinetics",
-      "fullname" : "The SABIO-RK (System for the Analysis of Biochemical Pathways - Reaction Kinetics) is a web-based application based on the SABIO relational database that contains information about biochemical reactions, their kinetic equations with their parameters, and the experimental conditions under which these parameters were measured.",
-      "uri_prefix" : null,
-      "example_id" : "SABIO-RK:1858",
-      "generic_url" : "http://sabio.villa-bosch.de/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "um-bbd_reactionid" : {
-      "example_id" : "UM-BBD_reactionID:r0129",
-      "generic_url" : "http://umbbd.msi.umn.edu/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=r&reacID=[example_id]",
-      "abbreviation" : "UM-BBD_reactionID",
-      "id" : "UM-BBD_reactionID",
-      "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "url_example" : "http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=r&reacID=r0129",
-      "name" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "germonline" : {
-      "generic_url" : "http://www.germonline.org/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "GermOnline",
-      "abbreviation" : "GermOnline",
-      "database" : "GermOnline",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "GermOnline"
-   },
-   "dbsnp" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "dbSNP:rs3131969",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/projects/SNP",
-      "name" : "NCBI dbSNP",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=[example_id]",
-      "id" : "dbSNP",
-      "abbreviation" : "dbSNP",
-      "database" : "NCBI dbSNP",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=rs3131969"
-   },
-   "cacao" : {
-      "name" : "Community Assessment of Community Annotation with Ontologies",
-      "uri_prefix" : null,
-      "fullname" : "The Community Assessment of Community Annotation with Ontologies (CACAO) is a project to do large-scale manual community annotation of gene function using the Gene Ontology as a multi-institution student competition.",
-      "url_syntax" : "http://gowiki.tamu.edu/wiki/index.php/[example_id]",
-      "id" : "CACAO",
-      "abbreviation" : "CACAO",
-      "database" : "Community Assessment of Community Annotation with Ontologies",
-      "url_example" : "http://gowiki.tamu.edu/wiki/index.php/MYCS2:A0QNF5",
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "MYCS2:A0QNF5",
-      "generic_url" : "http://gowiki.tamu.edu/wiki/index.php/Category:CACAO"
-   },
-   "h-invdb" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.h-invitational.jp/",
-      "name" : "H-invitational Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "database" : "H-invitational Database",
-      "abbreviation" : "H-invDB",
-      "id" : "H-invDB",
-      "url_example" : null
-   },
-   "pseudocap" : {
-      "url_example" : "http://v2.pseudomonas.com/getAnnotation.do?locusID=PA4756",
-      "id" : "PseudoCAP",
-      "url_syntax" : "http://v2.pseudomonas.com/getAnnotation.do?locusID=[example_id]",
-      "abbreviation" : "PseudoCAP",
-      "database" : "Pseudomonas Genome Project",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Pseudomonas Genome Project",
-      "generic_url" : "http://v2.pseudomonas.com/",
-      "example_id" : "PseudoCAP:PA4756",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "hgnc" : {
-      "generic_url" : "http://www.genenames.org/",
-      "example_id" : "HGNC:29",
-      "object" : "gene",
-      "datatype" : "gene",
-      "url_example" : "http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:29",
-      "url_syntax" : "http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:[example_id]",
-      "abbreviation" : "HGNC",
-      "database" : "HUGO Gene Nomenclature Committee",
-      "id" : "HGNC",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "HUGO Gene Nomenclature Committee"
-   },
-   "lifedb" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.lifedb.de/",
-      "example_id" : "LIFEdb:DKFZp564O1716",
-      "uri_prefix" : null,
-      "fullname" : "LifeDB is a database for information on protein localization, interaction, functional assays and expression.",
-      "name" : "LifeDB",
-      "url_example" : "http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=DKFZp564O1716",
-      "url_syntax" : "http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=[example_id]",
-      "id" : "LIFEdb",
-      "abbreviation" : "LIFEdb",
-      "database" : "LifeDB"
-   },
-   "biosis" : {
-      "example_id" : "BIOSIS:200200247281",
-      "generic_url" : "http://www.biosis.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "database" : "BIOSIS previews",
-      "url_syntax" : null,
-      "id" : "BIOSIS",
-      "abbreviation" : "BIOSIS",
-      "url_example" : null,
-      "name" : "BIOSIS previews",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "cog_pathway" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI COG pathway",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=14",
-      "id" : "COG_Pathway",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=[example_id]",
-      "database" : "NCBI COG pathway",
-      "abbreviation" : "COG_Pathway",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
-      "example_id" : "COG_Pathway:14"
-   },
-   "gr_protein" : {
-      "generic_url" : "http://www.gramene.org/",
-      "example_id" : "GR_PROTEIN:Q6VSV0",
-      "datatype" : "protein",
-      "object" : "protein",
-      "url_example" : "http://www.gramene.org/db/protein/protein_search?acc=Q6VSV0",
-      "url_syntax" : "http://www.gramene.org/db/protein/protein_search?acc=[example_id]",
-      "database" : "Gramene",
-      "abbreviation" : "GR_protein",
-      "id" : "GR_PROTEIN",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Gramene"
-   },
-   "omim" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM",
-      "example_id" : "OMIM:190198",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Mendelian Inheritance in Man",
-      "url_example" : "http://omim.org/entry/190198",
-      "url_syntax" : "http://omim.org/entry/[example_id]",
-      "id" : "OMIM",
-      "abbreviation" : "OMIM",
-      "database" : "Mendelian Inheritance in Man"
-   },
-   "pdb" : {
-      "datatype" : "protein",
-      "object" : "protein",
-      "example_id" : "PDB:1A4U",
-      "generic_url" : "http://www.rcsb.org/pdb/",
-      "name" : "Protein Data Bank",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "abbreviation" : "PDB",
-      "url_syntax" : "http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=[example_id]",
-      "database" : "Protein Data Bank",
-      "id" : "PDB",
-      "url_example" : "http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=1A4U"
-   },
-   "tgd_locus" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Tetrahymena Genome Database",
-      "url_example" : "http://db.ciliate.org/cgi-bin/locus.pl?locus=PDD1",
-      "url_syntax" : "http://db.ciliate.org/cgi-bin/locus.pl?locus=[example_id]",
-      "database" : "Tetrahymena Genome Database",
-      "id" : "TGD_LOCUS",
-      "abbreviation" : "TGD_LOCUS",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ciliate.org/",
-      "example_id" : "TGD_LOCUS:PDD1"
-   },
-   "ppi" : {
-      "generic_url" : "http://genome.pseudomonas-syringae.org/",
-      "example_id" : null,
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Pseudomonas syringae community annotation project",
-      "abbreviation" : "PPI",
-      "id" : "PPI",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Pseudomonas syringae community annotation project"
-   },
-   "iuphar" : {
-      "example_id" : null,
-      "generic_url" : "http://www.iuphar.org/",
-      "datatype" : "entity",
-      "object" : "entity",
-      "id" : "IUPHAR",
-      "url_syntax" : null,
-      "database" : "International Union of Pharmacology",
-      "abbreviation" : "IUPHAR",
-      "url_example" : null,
-      "name" : "International Union of Pharmacology",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "maizegdb" : {
-      "url_example" : "http://www.maizegdb.org/cgi-bin/id_search.cgi?id=881225",
-      "abbreviation" : "MaizeGDB",
-      "url_syntax" : "http://www.maizegdb.org/cgi-bin/id_search.cgi?id=[example_id]",
-      "database" : "MaizeGDB",
-      "id" : "MaizeGDB",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "MaizeGDB",
-      "generic_url" : "http://www.maizegdb.org",
-      "example_id" : "MaizeGDB:881225",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "jcvi" : {
-      "example_id" : null,
-      "generic_url" : "http://www.jcvi.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "abbreviation" : "JCVI",
-      "url_syntax" : null,
-      "id" : "JCVI",
-      "database" : "J. Craig Venter Institute",
-      "url_example" : null,
-      "name" : "J. Craig Venter Institute",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "nasc_code" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "NASC_code:N3371",
-      "generic_url" : "http://arabidopsis.info",
-      "name" : "Nottingham Arabidopsis Stock Centre Seeds Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=[example_id]",
-      "id" : "NASC_code",
-      "database" : "Nottingham Arabidopsis Stock Centre Seeds Database",
-      "abbreviation" : "NASC_code",
-      "url_example" : "http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=N3371"
-   },
-   "poc" : {
-      "url_syntax" : null,
-      "database" : "Plant Ontology Consortium",
-      "abbreviation" : "POC",
-      "id" : "POC",
-      "url_example" : null,
-      "name" : "Plant Ontology Consortium",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : null,
-      "generic_url" : "http://www.plantontology.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "ensembl" : {
-      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
-      "id" : "ENSEMBL",
-      "database" : "Ensembl database of automatically annotated genomic data",
-      "abbreviation" : "Ensembl",
-      "url_example" : "http://www.ensembl.org/id/ENSP00000265949",
-      "name" : "Ensembl database of automatically annotated genomic data",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "ENSEMBL:ENSP00000265949",
-      "generic_url" : "http://www.ensembl.org/",
-      "object" : "transcript",
-      "datatype" : "transcript"
-   },
-   "aspgd_ref" : {
-      "name" : "Aspergillus Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "AspGD_REF",
-      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
-      "abbreviation" : "AspGD_REF",
-      "database" : "Aspergillus Genome Database",
-      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=90",
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "AspGD_REF:90",
-      "generic_url" : "http://www.aspergillusgenome.org/"
-   },
-   "pubmed" : {
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/pubmed/[example_id]",
-      "database" : "PubMed",
-      "abbreviation" : "PubMed",
-      "id" : "PMID",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/pubmed/4208797",
-      "name" : "PubMed",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "PMID:4208797",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/PubMed/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "parkinsonsuk-ucl" : {
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "ParkinsonsUK-UCL",
-      "database" : "Parkinsons Disease Gene Ontology Initiative",
-      "abbreviation" : "ParkinsonsUK-UCL",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Parkinsons Disease Gene Ontology Initiative",
-      "generic_url" : "http://www.ucl.ac.uk/functional-gene-annotation/neurological",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "hgnc_gene" : {
-      "url_example" : "http://www.genenames.org/data/hgnc_data.php?app_sym=ABCA1",
-      "url_syntax" : "http://www.genenames.org/data/hgnc_data.php?app_sym=[example_id]",
-      "abbreviation" : "HGNC_gene",
-      "id" : "HGNC_gene",
-      "database" : "HUGO Gene Nomenclature Committee",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "HUGO Gene Nomenclature Committee",
-      "generic_url" : "http://www.genenames.org/",
-      "example_id" : "HGNC_gene:ABCA1",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "trait" : {
-      "abbreviation" : "TRAIT",
-      "url_syntax" : null,
-      "id" : "TRAIT",
-      "database" : "TRAnscript Integrated Table",
-      "url_example" : null,
-      "name" : "TRAnscript Integrated Table",
-      "fullname" : "an integrated database of transcripts expressed in human skeletal muscle",
-      "uri_prefix" : null,
-      "example_id" : null,
-      "generic_url" : "http://muscle.cribi.unipd.it/",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "unigene" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=Hs&CID=212293",
-      "database" : "UniGene",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=[organism_abbreviation]&CID=[cluster_id]",
-      "abbreviation" : "UniGene",
-      "id" : "UniGene",
-      "fullname" : "NCBI transcript cluster database, organized by transcriptome. Each UniGene entry is a set of transcript sequences that appear to come from the same transcription locus (gene or expressed pseudogene).",
-      "uri_prefix" : null,
-      "name" : "UniGene",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/UniGene",
-      "example_id" : "UniGene:Hs.212293",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "kegg_ligand" : {
-      "generic_url" : "http://www.genome.ad.jp/kegg/docs/upd_ligand.html",
-      "example_id" : "KEGG_LIGAND:C00577",
-      "datatype" : "chemical entity",
-      "object" : "chemical entity",
-      "url_example" : "http://www.genome.jp/dbget-bin/www_bget?cpd:C00577",
-      "abbreviation" : "KEGG_LIGAND",
-      "url_syntax" : "http://www.genome.jp/dbget-bin/www_bget?cpd:[example_id]",
-      "id" : "KEGG_LIGAND",
-      "database" : "KEGG LIGAND Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "KEGG LIGAND Database"
-   },
-   "um-bbd_enzymeid" : {
-      "generic_url" : "http://umbbd.msi.umn.edu/",
-      "example_id" : "UM-BBD_enzymeID:e0413",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : "http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=ep&enzymeID=e0230",
-      "url_syntax" : "http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=ep&enzymeID=[example_id]",
-      "abbreviation" : "UM-BBD_enzymeID",
-      "id" : "UM-BBD_enzymeID",
-      "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "University of Minnesota Biocatalysis/Biodegradation Database"
-   },
-   "mgd" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.informatics.jax.org/",
-      "example_id" : "MGD:Adcy9",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Mouse Genome Database",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "MGD",
-      "abbreviation" : "MGD",
-      "database" : "Mouse Genome Database"
-   },
-   "go_central" : {
-      "example_id" : null,
-      "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
-      "object" : "entity",
-      "datatype" : "entity",
-      "database" : "GO Central",
-      "url_syntax" : null,
-      "abbreviation" : "GO_Central",
-      "id" : "GO_Central",
-      "url_example" : null,
-      "name" : "GO Central",
-      "fullname" : "Manual annotation from PAINT curators into the UniProt Protein2GO curation tool.",
-      "uri_prefix" : null
-   },
-   "yeastfunc" : {
-      "url_syntax" : null,
-      "id" : "YeastFunc",
-      "abbreviation" : "YeastFunc",
-      "database" : "Yeast Function",
-      "url_example" : null,
-      "name" : "Yeast Function",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : null,
-      "generic_url" : "http://func.med.harvard.edu/yeast/",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "sp_sl" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.uniprot.org/locations/",
-      "example_id" : "UniProtKB-SubCell:SL-0012",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "UniProt Knowledgebase Subcellular Location vocabulary",
-      "url_example" : "http://www.uniprot.org/locations/SL-0012",
-      "database" : "UniProt Knowledgebase Subcellular Location vocabulary",
-      "url_syntax" : "http://www.uniprot.org/locations/[example_id]",
-      "abbreviation" : "SP_SL",
-      "id" : "UniProtKB-SubCell"
-   },
-   "nif_subcellular" : {
-      "url_example" : "http://www.neurolex.org/wiki/sao1770195789",
-      "url_syntax" : "http://www.neurolex.org/wiki/[example_id]",
-      "id" : "NIF_Subcellular",
-      "abbreviation" : "NIF_Subcellular",
-      "database" : "Neuroscience Information Framework standard ontology, subcellular hierarchy",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Neuroscience Information Framework standard ontology, subcellular hierarchy",
-      "generic_url" : "http://www.neurolex.org/wiki",
-      "example_id" : "NIF_Subcellular:sao1186862860",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "ecoliwiki" : {
-      "fullname" : "EcoliHub\\'s subsystem for community annotation of E. coli K-12",
-      "uri_prefix" : null,
-      "name" : "EcoliWiki from EcoliHub",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "EcoliWiki from EcoliHub",
-      "id" : "EcoliWiki",
-      "abbreviation" : "EcoliWiki",
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://ecoliwiki.net/",
-      "example_id" : null
-   },
-   "agbase" : {
-      "generic_url" : "http://www.agbase.msstate.edu/",
-      "example_id" : null,
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : null,
-      "url_syntax" : "http://www.agbase.msstate.edu/cgi-bin/getEntry.pl?db_pick=[ChickGO/MaizeGO]&uid=[example_id]",
-      "database" : "AgBase resource for functional analysis of agricultural plant and animal gene products",
-      "id" : "AgBase",
-      "abbreviation" : "AgBase",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "AgBase resource for functional analysis of agricultural plant and animal gene products"
-   },
-   "ma" : {
-      "id" : "MA",
-      "url_syntax" : "http://www.informatics.jax.org/searches/AMA.cgi?id=MA:[example_id]",
-      "abbreviation" : "MA",
-      "database" : "Adult Mouse Anatomical Dictionary",
-      "url_example" : "http://www.informatics.jax.org/searches/AMA.cgi?id=MA:0000003",
-      "name" : "Adult Mouse Anatomical Dictionary",
-      "uri_prefix" : null,
-      "fullname" : "Adult Mouse Anatomical Dictionary; part of Gene Expression Database",
-      "example_id" : "MA:0000003",
-      "generic_url" : "http://www.informatics.jax.org/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "tigr_ref" : {
-      "generic_url" : "http://cmr.jcvi.org/",
-      "example_id" : "JCVI_REF:GO_ref",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://cmr.jcvi.org/CMR/AnnotationSops.shtml",
-      "abbreviation" : "TIGR_REF",
-      "url_syntax" : null,
-      "id" : "JCVI_REF",
-      "database" : "J. Craig Venter Institute",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "J. Craig Venter Institute"
-   },
-   "jcvi_ref" : {
-      "generic_url" : "http://cmr.jcvi.org/",
-      "example_id" : "JCVI_REF:GO_ref",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : "http://cmr.jcvi.org/CMR/AnnotationSops.shtml",
-      "url_syntax" : null,
-      "database" : "J. Craig Venter Institute",
-      "id" : "JCVI_REF",
-      "abbreviation" : "JCVI_REF",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "J. Craig Venter Institute"
-   },
-   "doi" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://dx.doi.org/",
-      "example_id" : "DOI:10.1016/S0963-9969(99)00021-6",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Digital Object Identifier",
-      "url_example" : "http://dx.doi.org/DOI:10.1016/S0963-9969(99)00021-6",
-      "abbreviation" : "DOI",
-      "url_syntax" : "http://dx.doi.org/DOI:[example_id]",
-      "id" : "DOI",
-      "database" : "Digital Object Identifier"
-   },
-   "ensemblplants/gramene" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://plants.ensembl.org/",
-      "example_id" : "EnsemblPlants:LOC_Os01g22954",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Ensembl Plants, the Ensembl Genomes database for accessing plant genome data",
-      "url_example" : "http://www.ensemblgenomes.org/id/LOC_Os01g22954",
-      "id" : "EnsemblPlants/Gramene",
-      "url_syntax" : "http://www.ensemblgenomes.org/id/[example_ID]",
-      "abbreviation" : "EnsemblPlants/Gramene",
-      "database" : "Ensembl Plants, the Ensembl Genomes database for accessing plant genome data"
-   },
-   "um-bbd_pathwayid" : {
-      "name" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
-      "url_syntax" : "http://umbbd.msi.umn.edu/[example_id]/[example_id]_map.html",
-      "abbreviation" : "UM-BBD_pathwayID",
-      "id" : "UM-BBD_pathwayID",
-      "url_example" : "http://umbbd.msi.umn.edu/acr/acr_map.html",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "UM-BBD_pathwayID:acr",
-      "generic_url" : "http://umbbd.msi.umn.edu/"
-   },
-   "roslin_institute" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.roslin.ac.uk/",
-      "name" : "Roslin Institute",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "abbreviation" : "Roslin_Institute",
-      "url_syntax" : null,
-      "id" : "Roslin_Institute",
-      "database" : "Roslin Institute",
-      "url_example" : null
-   },
-   "jcvi_cmr" : {
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
-      "id" : "JCVI_CMR",
-      "database" : "EGAD database at the J. Craig Venter Institute",
-      "abbreviation" : "JCVI_CMR",
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557",
-      "name" : "EGAD database at the J. Craig Venter Institute",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "JCVI_CMR:VCA0557",
-      "generic_url" : "http://cmr.jcvi.org/",
-      "datatype" : "protein",
-      "object" : "protein"
-   },
-   "gdb" : {
-      "datatype" : "entity",
-      "object" : "entity",
-      "example_id" : "GDB:306600",
-      "generic_url" : "http://www.gdb.org/",
-      "name" : "Human Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "abbreviation" : "GDB",
-      "url_syntax" : "http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:[example_id]",
-      "id" : "GDB",
-      "database" : "Human Genome Database",
-      "url_example" : "http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:306600"
-   },
-   "gorel" : {
-      "name" : "GO Extensions to OBO Relation Ontology Ontology",
-      "uri_prefix" : null,
-      "fullname" : "Additional relations pending addition into RO",
-      "url_syntax" : null,
-      "database" : "GO Extensions to OBO Relation Ontology Ontology",
-      "abbreviation" : "GOREL",
-      "id" : "GOREL",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://purl.obolibrary.org/obo/ro"
-   },
-   "pamgo" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://pamgo.vbi.vt.edu/",
-      "example_id" : null,
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Plant-Associated Microbe Gene Ontology Interest Group",
-      "url_example" : null,
-      "url_syntax" : null,
-      "abbreviation" : "PAMGO",
-      "database" : "Plant-Associated Microbe Gene Ontology Interest Group",
-      "id" : "PAMGO"
-   },
-   "tc" : {
-      "database" : "Transport Protein Database",
-      "url_syntax" : "http://www.tcdb.org/tcdb/index.php?tc=[example_id]",
-      "abbreviation" : "TC",
-      "id" : "TC",
-      "url_example" : "http://www.tcdb.org/tcdb/index.php?tc=9.A.4.1.1",
-      "name" : "Transport Protein Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "TC:9.A.4.1.1",
-      "generic_url" : "http://www.tcdb.org/",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "pir" : {
-      "name" : "Protein Information Resource",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "id" : "PIR",
-      "url_syntax" : "http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=[example_id]",
-      "abbreviation" : "PIR",
-      "database" : "Protein Information Resource",
-      "url_example" : "http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=I49499",
-      "object" : "protein",
-      "datatype" : "protein",
-      "example_id" : "PIR:I49499",
-      "generic_url" : "http://pir.georgetown.edu/"
-   },
-   "fma" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://sig.biostr.washington.edu/projects/fm/index.html",
-      "example_id" : "FMA:61905",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Foundational Model of Anatomy",
-      "url_example" : null,
-      "id" : "FMA",
-      "url_syntax" : null,
-      "abbreviation" : "FMA",
-      "database" : "Foundational Model of Anatomy"
-   },
-   "vida" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Virus Database at University College London",
-      "url_example" : null,
-      "url_syntax" : null,
-      "abbreviation" : "VIDA",
-      "id" : "VIDA",
-      "database" : "Virus Database at University College London",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.biochem.ucl.ac.uk/bsm/virus_database/VIDA.html",
-      "example_id" : null
-   },
-   "pubchem_compound" : {
-      "object" : "chemical entity",
-      "datatype" : "chemical entity",
-      "example_id" : "PubChem_Compound:2244",
-      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
-      "name" : "NCBI PubChem database of chemical structures",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=[example_id]",
-      "database" : "NCBI PubChem database of chemical structures",
-      "abbreviation" : "PubChem_Compound",
-      "id" : "PubChem_Compound",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=2244"
-   },
-   "fbbt" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Drosophila gross anatomy",
-      "url_example" : "http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:00005177",
-      "url_syntax" : "http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:[example_id]",
-      "database" : "Drosophila gross anatomy",
-      "abbreviation" : "FBbt",
-      "id" : "FBbt",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://flybase.org/",
-      "example_id" : "FBbt:00005177"
-   },
-   "hugo" : {
-      "generic_url" : "http://www.hugo-international.org/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "database" : "Human Genome Organisation",
-      "url_syntax" : null,
-      "abbreviation" : "HUGO",
-      "id" : "HUGO",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Human Genome Organisation"
-   },
-   "mips_funcat" : {
-      "url_example" : "http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=11.02",
-      "url_syntax" : "http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=[example_id]",
-      "abbreviation" : "MIPS_funcat",
-      "id" : "MIPS_funcat",
-      "database" : "MIPS Functional Catalogue",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "MIPS Functional Catalogue",
-      "generic_url" : "http://mips.gsf.de/proj/funcatDB/",
-      "example_id" : "MIPS_funcat:11.02",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "gr_ref" : {
-      "name" : "Gramene",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "id" : "GR_REF",
-      "url_syntax" : "http://www.gramene.org/db/literature/pub_search?ref_id=[example_id]",
-      "abbreviation" : "GR_REF",
-      "database" : "Gramene",
-      "url_example" : "http://www.gramene.org/db/literature/pub_search?ref_id=659",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "GR_REF:659",
-      "generic_url" : "http://www.gramene.org/"
-   },
-   "pro" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Protein Ontology",
-      "url_example" : "http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:000025380",
-      "url_syntax" : "http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:[example_id]",
-      "database" : "Protein Ontology",
-      "abbreviation" : "PRO",
-      "id" : "PR",
-      "object" : "protein",
-      "datatype" : "protein",
-      "generic_url" : "http://www.proconsortium.org/pro/pro.shtml",
-      "example_id" : "PR:000025380"
-   },
-   "obi" : {
-      "database" : "Ontology for Biomedical Investigations",
-      "url_syntax" : null,
-      "abbreviation" : "OBI",
-      "id" : "OBI",
-      "url_example" : null,
-      "name" : "Ontology for Biomedical Investigations",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "OBI:0000038",
-      "generic_url" : "http://obi-ontology.org/page/Main_Page",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "gene3d" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://gene3d.biochem.ucl.ac.uk/Gene3D/",
-      "example_id" : "Gene3D:G3DSA:3.30.390.30",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Domain Architecture Classification",
-      "url_example" : "http://gene3d.biochem.ucl.ac.uk/superfamily/?accession=G3DSA%3A3.30.390.30",
-      "database" : "Domain Architecture Classification",
-      "url_syntax" : "http://gene3d.biochem.ucl.ac.uk/superfamily/?accession=[example_id]",
-      "id" : "Gene3D",
-      "abbreviation" : "Gene3D"
-   },
-   "tigr_egad" : {
-      "example_id" : "JCVI_CMR:VCA0557",
-      "generic_url" : "http://cmr.jcvi.org/",
-      "object" : "protein",
-      "datatype" : "protein",
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]",
-      "database" : "EGAD database at the J. Craig Venter Institute",
-      "id" : "JCVI_CMR",
-      "abbreviation" : "TIGR_EGAD",
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557",
-      "name" : "EGAD database at the J. Craig Venter Institute",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "prosite" : {
-      "url_syntax" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?[example_id]",
-      "abbreviation" : "Prosite",
-      "id" : "Prosite",
-      "database" : "Prosite database of protein families and domains",
-      "url_example" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?PS00365",
-      "name" : "Prosite database of protein families and domains",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "Prosite:PS00365",
-      "generic_url" : "http://www.expasy.ch/prosite/",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region"
-   },
-   "hpa" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.proteinatlas.org/",
-      "example_id" : "HPA:HPA000237",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Human Protein Atlas tissue profile information",
-      "url_example" : "http://www.proteinatlas.org/tissue_profile.php?antibody_id=HPA000237",
-      "url_syntax" : "http://www.proteinatlas.org/tissue_profile.php?antibody_id=[example_id]",
-      "id" : "HPA",
-      "abbreviation" : "HPA",
-      "database" : "Human Protein Atlas tissue profile information"
-   },
-   "refgenome" : {
-      "database" : "GO Reference Genomes",
-      "url_syntax" : null,
-      "id" : "RefGenome",
-      "abbreviation" : "RefGenome",
-      "url_example" : null,
-      "name" : "GO Reference Genomes",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : null,
-      "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "medline" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.nlm.nih.gov/databases/databases_medline.html",
-      "example_id" : "MEDLINE:20572430",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Medline literature database",
-      "url_example" : null,
-      "url_syntax" : null,
-      "database" : "Medline literature database",
-      "abbreviation" : "MEDLINE",
-      "id" : "MEDLINE"
-   },
-   "metacyc" : {
-      "name" : "Metabolic Encyclopedia of metabolic and other pathways",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://biocyc.org/META/NEW-IMAGE?type=NIL&object=[example_id]",
-      "id" : "MetaCyc",
-      "abbreviation" : "MetaCyc",
-      "database" : "Metabolic Encyclopedia of metabolic and other pathways",
-      "url_example" : "http://biocyc.org/META/NEW-IMAGE?type=NIL&object=GLUTDEG-PWY",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "MetaCyc:GLUTDEG-PWY",
-      "generic_url" : "http://metacyc.org/"
-   },
-   "prints" : {
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region",
-      "example_id" : "PRINTS:PR00025",
-      "generic_url" : "http://www.bioinf.manchester.ac.uk/dbbrowser/PRINTS/",
-      "name" : "PRINTS compendium of protein fingerprints",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=[example_id]",
-      "id" : "PRINTS",
-      "abbreviation" : "PRINTS",
-      "database" : "PRINTS compendium of protein fingerprints",
-      "url_example" : "http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=PR00025"
-   },
-   "pfam" : {
-      "uri_prefix" : null,
-      "fullname" : "Pfam is a collection of protein families represented by sequence alignments and hidden Markov models (HMMs)",
-      "name" : "Pfam database of protein families",
-      "url_example" : "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?PF00046",
-      "id" : "Pfam",
-      "url_syntax" : "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?[example_id]",
-      "abbreviation" : "Pfam",
-      "database" : "Pfam database of protein families",
-      "object" : "polypeptide region",
-      "datatype" : "polypeptide region",
-      "generic_url" : "http://www.sanger.ac.uk/Software/Pfam/",
-      "example_id" : "Pfam:PF00046"
-   },
-   "isbn" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "International Standard Book Number",
-      "url_example" : "https://en.wikipedia.org/w/index.php?title=Special%3ABookSources&isbn=0123456789",
-      "abbreviation" : "ISBN",
-      "url_syntax" : "https://en.wikipedia.org/w/index.php?title=Special%3ABookSources&isbn=[example_id]",
-      "id" : "ISBN",
-      "database" : "International Standard Book Number",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://isbntools.com/",
-      "example_id" : "ISBN:0781702534"
-   },
-   "unirule" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Manually curated rules for automatic annotation of UniProtKB unreviewed entries",
-      "url_example" : "http://www.uniprot.org/unirule/UR000107224",
-      "abbreviation" : "UniRule",
-      "url_syntax" : "http://www.uniprot.org/unirule/[example_id]",
-      "id" : "UniRule",
-      "database" : "Manually curated rules for automatic annotation of UniProtKB unreviewed entries",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.uniprot.org/unirule",
-      "example_id" : "UniRule:UR000107224"
-   },
-   "wbls" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "C. elegans development",
-      "url_example" : null,
-      "database" : "C. elegans development",
-      "url_syntax" : null,
-      "id" : "WBls",
-      "abbreviation" : "WBls",
-      "datatype" : "nematoda life stage",
-      "object" : "nematoda life stage",
-      "generic_url" : "http://www.wormbase.org/",
-      "example_id" : "WBls:0000010"
-   },
-   "dflat" : {
-      "url_syntax" : null,
-      "id" : "DFLAT",
-      "abbreviation" : "DFLAT",
-      "database" : "Developmental FunctionaL Annotation at Tufts",
-      "url_example" : null,
-      "name" : "Developmental FunctionaL Annotation at Tufts",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : null,
-      "generic_url" : "http://bcb.cs.tufts.edu/dflat/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "imgt_ligm" : {
-      "example_id" : "IMGT_LIGM:U03895",
-      "generic_url" : "http://imgt.cines.fr",
-      "object" : "entity",
-      "datatype" : "entity",
-      "id" : "IMGT_LIGM",
-      "url_syntax" : null,
-      "abbreviation" : "IMGT_LIGM",
-      "database" : "ImMunoGeneTics database covering immunoglobulins and T-cell receptors",
-      "url_example" : null,
-      "name" : "ImMunoGeneTics database covering immunoglobulins and T-cell receptors",
-      "fullname" : "Database of immunoglobulins and T cell receptors from human and other vertebrates, with translation for fully annotated sequences.",
-      "uri_prefix" : null
-   },
-   "ncbitaxon" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
-      "abbreviation" : "NCBITaxon",
-      "id" : "taxon",
-      "database" : "NCBI Taxonomy",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "NCBI Taxonomy",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/",
-      "example_id" : "taxon:7227",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "reactome" : {
-      "url_syntax" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=[example_id]",
-      "database" : "Reactome - a curated knowledgebase of biological pathways",
-      "id" : "Reactome",
-      "abbreviation" : "Reactome",
-      "url_example" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604",
-      "name" : "Reactome - a curated knowledgebase of biological pathways",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "Reactome:REACT_604",
-      "generic_url" : "http://www.reactome.org/",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "rgdid" : {
-      "database" : "Rat Genome Database",
-      "url_syntax" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]",
-      "id" : "RGD",
-      "abbreviation" : "RGDID",
-      "url_example" : "http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004",
-      "name" : "Rat Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "RGD:2004",
-      "generic_url" : "http://rgd.mcw.edu/",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "cgd_ref" : {
-      "url_example" : "http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=1490",
-      "url_syntax" : "http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
-      "id" : "CGD_REF",
-      "abbreviation" : "CGD_REF",
-      "database" : "Candida Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Candida Genome Database",
-      "generic_url" : "http://www.candidagenome.org/",
-      "example_id" : "CGD_REF:1490",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "rnamdb" : {
-      "url_example" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?091",
-      "url_syntax" : "http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?[example_id]",
-      "database" : "RNA Modification Database",
-      "id" : "RNAmods",
-      "abbreviation" : "RNAMDB",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "RNA Modification Database",
-      "generic_url" : "http://s59.cas.albany.edu/RNAmods/",
-      "example_id" : "RNAmods:037",
-      "datatype" : "entity",
-      "object" : "entity"
-   },
-   "ddanat" : {
-      "url_syntax" : null,
-      "id" : "DDANAT",
-      "abbreviation" : "DDANAT",
-      "database" : "Dictyostelium discoideum anatomy",
-      "url_example" : null,
-      "name" : "Dictyostelium discoideum anatomy",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "DDANAT:0000068",
-      "generic_url" : "http://dictybase.org/Dicty_Info/dicty_anatomy_ontology.html",
-      "object" : "anatomical entity",
-      "datatype" : "anatomical entity"
-   },
-   "broad_mgg" : {
-      "example_id" : "Broad_MGG:MGG_05132.5",
-      "generic_url" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/Home.html",
-      "object" : "entity",
-      "datatype" : "entity",
-      "database" : "Magnaporthe grisea Database",
-      "url_syntax" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=S[example_id]",
-      "abbreviation" : "Broad_MGG",
-      "id" : "Broad_MGG",
-      "url_example" : "http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=SMGG_05132",
-      "name" : "Magnaporthe grisea Database",
-      "uri_prefix" : null,
-      "fullname" : "Magnaporthe grisea Database at the Broad Institute"
-   },
-   "gr" : {
-      "name" : "Gramene",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=[example_id]",
-      "id" : "GR",
-      "abbreviation" : "GR",
-      "database" : "Gramene",
-      "url_example" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=sd1",
-      "object" : "protein",
-      "datatype" : "protein",
-      "example_id" : "GR:sd1",
-      "generic_url" : "http://www.gramene.org/"
-   },
-   "cas_gen" : {
-      "example_id" : "CASGEN:1040",
-      "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_syntax" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=[example_id]",
-      "abbreviation" : "CAS_GEN",
-      "database" : "Catalog of Fishes genus database",
-      "id" : "CASGEN",
-      "url_example" : "http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=1040",
-      "name" : "Catalog of Fishes genus database",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "po" : {
-      "name" : "Plant Ontology Consortium Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.plantontology.org/amigo/go.cgi?action=query&view=query&search_constraint=terms&query=PO:[example_id]",
-      "abbreviation" : "PO",
-      "id" : "PO",
-      "database" : "Plant Ontology Consortium Database",
-      "url_example" : "http://www.plantontology.org/amigo/go.cgi?action=query&view=query&search_constraint=terms&query=PO:0009004",
-      "object" : "plant structure development stage",
-      "datatype" : "plant structure development stage",
-      "example_id" : "PO:0009004",
-      "generic_url" : "http://www.plantontology.org/"
-   },
-   "protein_id" : {
-      "abbreviation" : "protein_id",
-      "url_syntax" : null,
-      "id" : "protein_id",
-      "database" : "DDBJ / ENA / GenBank",
-      "url_example" : null,
-      "name" : "DDBJ / ENA / GenBank",
-      "fullname" : "protein identifier shared by DDBJ/EMBL-bank/GenBank nucleotide sequence databases",
-      "uri_prefix" : null,
-      "example_id" : "protein_id:CAA71991",
-      "generic_url" : "http://www.ddbj.nig.ac.jp/",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "ncbi_taxid" : {
-      "id" : "taxon",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
-      "abbreviation" : "ncbi_taxid",
-      "database" : "NCBI Taxonomy",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702",
-      "name" : "NCBI Taxonomy",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "taxon:7227",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "ensembl_geneid" : {
-      "object" : "gene",
-      "datatype" : "gene",
-      "generic_url" : "http://www.ensembl.org/",
-      "example_id" : "ENSEMBL_GeneID:ENSG00000126016",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Ensembl database of automatically annotated genomic data",
-      "url_example" : "http://www.ensembl.org/id/ENSG00000126016",
-      "id" : "ENSEMBL_GeneID",
-      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
-      "abbreviation" : "ENSEMBL_GeneID",
-      "database" : "Ensembl database of automatically annotated genomic data"
-   },
-   "genprotec" : {
-      "generic_url" : "http://genprotec.mbl.edu/",
-      "example_id" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : null,
-      "id" : "GenProtEC",
-      "url_syntax" : null,
-      "database" : "GenProtEC E. coli genome and proteome database",
-      "abbreviation" : "GenProtEC",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "GenProtEC E. coli genome and proteome database"
-   },
-   "pubchem_substance" : {
-      "object" : "chemical entity",
-      "datatype" : "chemical entity",
-      "example_id" : "PubChem_Substance:4594",
-      "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/",
-      "name" : "NCBI PubChem database of chemical substances",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "NCBI PubChem database of chemical substances",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=[example_id]",
-      "abbreviation" : "PubChem_Substance",
-      "id" : "PubChem_Substance",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=4594"
-   },
-   "ncbi_gp" : {
-      "url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=EAL72968",
-      "abbreviation" : "NCBI_GP",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=[example_id]",
-      "id" : "NCBI_GP",
-      "database" : "NCBI GenPept",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "NCBI GenPept",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/",
-      "example_id" : "NCBI_GP:EAL72968",
-      "object" : "protein",
-      "datatype" : "protein"
-   },
-   "ecocyc_ref" : {
-      "example_id" : "EcoCyc_REF:COLISALII",
-      "generic_url" : "http://ecocyc.org/",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_syntax" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=[example_id]",
-      "abbreviation" : "ECOCYC_REF",
-      "database" : "Encyclopedia of E. coli metabolism",
-      "id" : "EcoCyc_REF",
-      "url_example" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=COLISALII",
-      "name" : "Encyclopedia of E. coli metabolism",
-      "fullname" : null,
-      "uri_prefix" : null
-   },
-   "tigr_genprop" : {
-      "object" : "biological_process",
-      "datatype" : "biological_process",
-      "example_id" : "JCVI_GenProp:GenProp0120",
-      "generic_url" : "http://cmr.jcvi.org/",
-      "name" : "Genome Properties database at the J. Craig Venter Institute",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=[example_id]",
-      "id" : "JCVI_GenProp",
-      "database" : "Genome Properties database at the J. Craig Venter Institute",
-      "abbreviation" : "TIGR_GenProp",
-      "url_example" : "http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=GenProp0120"
-   },
-   "mtbbase" : {
-      "name" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "abbreviation" : "MTBBASE",
-      "id" : "MTBBASE",
-      "database" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : null,
-      "generic_url" : "http://www.ark.in-berlin.de/Site/MTBbase.html"
-   },
-   "mitre" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.mitre.org/",
-      "example_id" : null,
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "The MITRE Corporation",
-      "url_example" : null,
-      "id" : "MITRE",
-      "url_syntax" : null,
-      "abbreviation" : "MITRE",
-      "database" : "The MITRE Corporation"
-   },
-   "corum" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "CORUM:837",
-      "generic_url" : "http://mips.gsf.de/genre/proj/corum/",
-      "name" : "CORUM - the Comprehensive Resource of Mammalian protein complexes",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "CORUM - the Comprehensive Resource of Mammalian protein complexes",
-      "url_syntax" : "http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=[example_id]",
-      "id" : "CORUM",
-      "abbreviation" : "CORUM",
-      "url_example" : "http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=837"
-   },
-   "bhf-ucl" : {
-      "database" : "Cardiovascular Gene Ontology Annotation Initiative",
-      "url_syntax" : null,
-      "id" : "BHF-UCL",
-      "abbreviation" : "BHF-UCL",
-      "url_example" : null,
-      "name" : "Cardiovascular Gene Ontology Annotation Initiative",
-      "fullname" : "The Cardiovascular Gene Ontology Annotation Initiative is supported by the British Heart Foundation (BHF) and located at University College London (UCL).",
-      "uri_prefix" : null,
-      "example_id" : null,
-      "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "eurofung" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Eurofungbase community annotation",
-      "url_example" : null,
-      "id" : "Eurofung",
-      "url_syntax" : null,
-      "abbreviation" : "Eurofung",
-      "database" : "Eurofungbase community annotation",
-      "datatype" : "entity",
-      "object" : "entity",
-      "generic_url" : "http://www.eurofung.net/option=com_content&task=section&id=3&Itemid=4",
-      "example_id" : null
-   },
-   "broad_neurospora" : {
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.broadinstitute.org/annotation/genome/neurospora/MultiHome.html",
-      "example_id" : "BROAD_NEUROSPORA:7000007580576824",
-      "uri_prefix" : null,
-      "fullname" : "Neurospora crassa database at the Broad Institute",
-      "name" : "Neurospora crassa Database",
-      "url_example" : "http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S7000007580576824",
-      "url_syntax" : "http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S[example_id]",
-      "database" : "Neurospora crassa Database",
-      "abbreviation" : "Broad_NEUROSPORA",
-      "id" : "Broad_NEUROSPORA"
-   },
-   "ensembl_proteinid" : {
-      "datatype" : "protein",
-      "object" : "protein",
-      "generic_url" : "http://www.ensembl.org/",
-      "example_id" : "ENSEMBL_ProteinID:ENSP00000361027",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Ensembl database of automatically annotated genomic data",
-      "url_example" : "http://www.ensembl.org/id/ENSP00000361027",
-      "database" : "Ensembl database of automatically annotated genomic data",
-      "url_syntax" : "http://www.ensembl.org/id/[example_id]",
-      "abbreviation" : "ENSEMBL_ProteinID",
-      "id" : "ENSEMBL_ProteinID"
-   },
-   "aspgdid" : {
-      "name" : "Aspergillus Genome Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "abbreviation" : "AspGDID",
-      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
-      "id" : "AspGD",
-      "database" : "Aspergillus Genome Database",
-      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
-      "object" : "gene",
-      "datatype" : "gene",
-      "example_id" : "AspGD:ASPL0000067538",
-      "generic_url" : "http://www.aspergillusgenome.org/"
-   },
-   "sgd_ref" : {
-      "name" : "Saccharomyces Genome Database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "url_syntax" : "http://www.yeastgenome.org/reference/[example_id]/overview",
-      "database" : "Saccharomyces Genome Database",
-      "abbreviation" : "SGD_REF",
-      "id" : "SGD_REF",
-      "url_example" : "http://www.yeastgenome.org/reference/S000049602/overview",
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "SGD_REF:S000049602",
-      "generic_url" : "http://www.yeastgenome.org/"
-   },
-   "so" : {
-      "abbreviation" : "SO",
-      "url_syntax" : "http://song.sourceforge.net/SOterm_tables.html#SO:[example_id]",
-      "id" : "SO",
-      "database" : "Sequence Ontology",
-      "url_example" : "http://song.sourceforge.net/SOterm_tables.html#SO:0000195",
-      "name" : "Sequence Ontology",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "SO:0000195",
-      "generic_url" : "http://sequenceontology.org/",
-      "object" : "sequence feature",
-      "datatype" : "sequence feature"
-   },
-   "goc" : {
-      "example_id" : null,
-      "generic_url" : "http://www.geneontology.org/",
-      "object" : "entity",
-      "datatype" : "entity",
-      "abbreviation" : "GOC",
-      "url_syntax" : null,
-      "id" : "GOC",
-      "database" : "Gene Ontology Consortium",
-      "url_example" : null,
-      "name" : "Gene Ontology Consortium",
-      "uri_prefix" : null,
-      "fullname" : null
-   },
-   "wikipedia" : {
-      "generic_url" : "http://en.wikipedia.org/",
-      "example_id" : "Wikipedia:Endoplasmic_reticulum",
-      "object" : "entity",
-      "datatype" : "entity",
-      "url_example" : "http://en.wikipedia.org/wiki/Endoplasmic_reticulum",
-      "database" : "Wikipedia",
-      "url_syntax" : "http://en.wikipedia.org/wiki/[example_id]",
-      "abbreviation" : "Wikipedia",
-      "id" : "Wikipedia",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Wikipedia"
-   },
-   "resid" : {
-      "name" : "RESID Database of Protein Modifications",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "url_syntax" : null,
-      "id" : "RESID",
-      "abbreviation" : "RESID",
-      "database" : "RESID Database of Protein Modifications",
-      "url_example" : null,
-      "object" : "entity",
-      "datatype" : "entity",
-      "example_id" : "RESID:AA0062",
-      "generic_url" : "ftp://ftp.ncifcrf.gov/pub/users/residues/"
-   },
-   "aspgd" : {
-      "abbreviation" : "AspGD",
-      "url_syntax" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
-      "database" : "Aspergillus Genome Database",
-      "id" : "AspGD",
-      "url_example" : "http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538",
-      "name" : "Aspergillus Genome Database",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "example_id" : "AspGD:ASPL0000067538",
-      "generic_url" : "http://www.aspergillusgenome.org/",
-      "object" : "gene",
-      "datatype" : "gene"
-   },
-   "ecogene_g" : {
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "url_example" : null,
-      "url_syntax" : null,
-      "id" : "ECOGENE_G",
-      "database" : "EcoGene Database of Escherichia coli Sequence and Function",
-      "abbreviation" : "ECOGENE_G",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.ecogene.org/",
-      "example_id" : "ECOGENE_G:deoC"
-   },
-   "pfamb" : {
-      "uri_prefix" : null,
-      "fullname" : null,
-      "name" : "Pfam-B supplement to Pfam",
-      "url_example" : null,
-      "id" : "PfamB",
-      "url_syntax" : null,
-      "abbreviation" : "PfamB",
-      "database" : "Pfam-B supplement to Pfam",
-      "object" : "entity",
-      "datatype" : "entity",
-      "generic_url" : "http://www.sanger.ac.uk/Software/Pfam/",
-      "example_id" : "PfamB:PB014624"
-   },
-   "taxon" : {
-      "abbreviation" : "taxon",
-      "url_syntax" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]",
-      "database" : "NCBI Taxonomy",
-      "id" : "taxon",
-      "url_example" : "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702",
-      "name" : "NCBI Taxonomy",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "example_id" : "taxon:7227",
-      "generic_url" : "http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/",
-      "object" : "entity",
-      "datatype" : "entity"
-   },
-   "jcvi_medtr" : {
-      "generic_url" : "http://medicago.jcvi.org/cgi-bin/medicago/overview.cgi",
-      "example_id" : "JCVI_Medtr:Medtr5g024510",
-      "datatype" : "entity",
-      "object" : "entity",
-      "url_example" : "http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=Medtr5g024510",
-      "url_syntax" : "http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=[example_id]",
-      "database" : "Medicago truncatula genome database at the J. Craig Venter Institute",
-      "id" : "JCVI_Medtr",
-      "abbreviation" : "JCVI_Medtr",
-      "fullname" : null,
-      "uri_prefix" : null,
-      "name" : "Medicago truncatula genome database at the J. Craig Venter Institute"
-   },
-   "merops" : {
-      "datatype" : "protein",
-      "object" : "protein",
-      "example_id" : "MEROPS:A08.001",
-      "generic_url" : "http://merops.sanger.ac.uk/",
-      "name" : "MEROPS peptidase database",
-      "uri_prefix" : null,
-      "fullname" : null,
-      "database" : "MEROPS peptidase database",
-      "url_syntax" : "http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=[example_id]",
-      "abbreviation" : "MEROPS",
-      "id" : "MEROPS",
-      "url_example" : "http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=A08.001"
-   }
-};
-/* 
- * Package: dispatch.js
- * 
- * Namespace: amigo.data.dispatch
- * 
- * This package was automatically created during an AmiGO 2 installation
- * from the YAML configuration files that AmiGO pulls in.
- *
- * The mapping file for data fields and contexts to functions, often
- * used for displays. See the package <handler.js> for the API to interact
- * with this data file.
- *
- * NOTE: This file is generated dynamically at installation time.
- * Hard to work with unit tests--hope it's not too bad. You have to
- * occasionally copy back to keep the unit tests sane.
- *
- * NOTE: This file has a slightly different latout from the YAML
- * configuration file.
- */
-
-// All of the server/instance-specific meta-data.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Variable: dispatch
- * 
- * The configuration for the data.
- * Essentially a JSONification of the YAML file.
- * This should be consumed directly by <amigo.handler>.
- */
-amigo.data.dispatch = {
-   "annotation_extension_json" : {
-      "context" : {
-         "bbop.widgets.search_pane" : "amigo.handlers.owl_class_expression"
-      }
-   },
-   "qualifier" : {
-      "context" : {
-         "bbop.widgets.search_pane" : "amigo.handlers.qualifiers"
-      }
-   }
-};
-/*
- * Package: context.js
- * 
- * Namespace: amigo.data.context
- * 
- * Another context.
- */
-
-// Module and namespace checking.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-
-/*
- * Variable: context
- * 
- * Colors are X11: http://cng.seas.rochester.edu/CNG/docs/x11color.html
- */
-amigo.data.context = {
-    'instance_of':
-    {
-	readable: 'activity',
-	priority: 8,
-	aliases: [
-	    'activity'
-	],
-	color: '#FFFAFA' // snow
-    },
-    'BFO:0000050':
-    {
-	readable: 'part of',
-	priority: 15,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/BFO_0000050',
-		//'http://purl.obolibrary.org/obo/part_of',
-	    'BFO_0000050',
-	    'part:of',
-	    'part of',
-	    'part_of'
-	],
-	color: '#add8e6' // light blue
-    },
-    'BFO:0000051':
-    {
-	readable: 'has part',
-	priority: 4,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/BFO_0000051',
-	    'has:part',
-	    'has part',
-	    'has_part'
-	],
-	color: '#6495ED' // cornflower blue
-    },
-    'BFO:0000066':
-    {
-	readable: 'occurs in',
-	priority: 12,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/BFO_0000066',
-		//'BFO_0000066',
-	    'occurs:in',
-	    'occurs in',
-	    'occurs_in'
-	],
-	color: '#66CDAA' // medium aquamarine
-    },
-    'RO:0002202':
-    {
-	readable: 'develops from',
-	priority: 0,
-	aliases: [
-	    'develops:from',
-	    'develops from',
-	    'develops_from'
-	],
-	color: '#A52A2A' // brown
-    },
-    'RO:0002211':
-    {
-	readable: 'regulates',
-	priority: 16,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/RO_0002211'
-	    'regulates'
-	],
-	color: '#2F4F4F' // dark slate grey
-    },
-    'RO:0002212':
-    {
-	readable: 'negatively regulates',
-	priority: 17,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/RO_0002212'
-	    'negatively:regulates',
-	    'negatively regulates',
-	    'negatively_regulates'
-	],
-	glyph: 'bar',
-	color: '#FF0000' // red
-    },
-    'RO:0002213':
-    {
-	readable: 'positively regulates',
-	priority: 18,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/RO_0002213'
-	    'positively:regulates',
-	    'positively regulates',
-	    'positively_regulates'
-	],
-	glyph: 'arrow',
-	color: '#008000' //green
-    },
-    'RO:0002233':
-    {
-	readable: 'has input',
-	priority: 14,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/BFO_0000051',
-	    'has:input',
-	    'has input',
-	    'has_input'
-	],
-	color: '#6495ED' // cornflower blue
-    },
-    'RO:0002234':
-    {
-	readable: 'has output',
-	priority: 0,
-	aliases: [
-	    'has:output',
-	    'has output',
-	    'has_output'
-	],
-	color: '#ED6495' // ??? - random
-    },
-    'RO:0002330':
-    {
-	readable: 'genomically related to',
-	priority: 0,
-	aliases: [
-	    'genomically related to',
-	    'genomically_related_to'
-	],
-	color: '#9932CC' // darkorchid
-    },
-    'RO:0002331':
-    {
-	readable: 'involved in',
-	priority: 3,
-	aliases: [
-	    'involved:in',
-	    'involved in',
-	    'involved_in'
-	],
-	color: '#E9967A' // darksalmon
-    },
-    'RO:0002332':
-    {
-	readable: 'regulates level of',
-	priority: 0,
-	aliases: [
-	    'regulates level of',
-	    'regulates_level_of'
-	],
-	color: '#556B2F' // darkolivegreen
-    },
-    'RO:0002333':
-    {
-	readable: 'enabled by',
-	priority: 13,
-	aliases: [
-	    'RO_0002333',
-	    'enabled:by',
-	    'enabled by',
-	    'enabled_by'
-	],
-	color: '#B8860B' // darkgoldenrod
-    },
-    'RO:0002334':
-    {
-	readable: 'regulated by',
-	priority: 0,
-	aliases: [
-	    'RO_0002334',
-	    'regulated by',
-	    'regulated_by'
-	],
-	color: '#86B80B' // ??? - random
-    },
-    'RO:0002335':
-    {
-	readable: 'negatively regulated by',
-	priority: 0,
-	aliases: [
-	    'RO_0002335',
-	    'negatively regulated by',
-	    'negatively_regulated_by'
-	],
-	color: '#0B86BB' // ??? - random
-    },
-    'RO:0002336':
-    {
-	readable: 'positively regulated by',
-	priority: 0,
-	aliases: [
-	    'RO_0002336',
-	    'positively regulated by',
-	    'positively_regulated_by'
-	],
-	color: '#BB0B86' // ??? - random
-    },
-    'activates':
-    {
-	readable: 'activates',
-	priority: 0,
-	aliases: [
-	    'http://purl.obolibrary.org/obo/activates'
-	],
-	//glyph: 'arrow',
-	//glyph: 'diamond',
-	//glyph: 'wedge',
-	//glyph: 'bar',
-	color: '#8FBC8F' // darkseagreen
-    },
-    'RO:0002404':
-    {
-	readable: 'causally downstream of',
-	priority: 2,
-	aliases: [
-	    'causally_downstream_of'
-	],
-	color: '#FF1493' // deeppink
-    },
-    'RO:0002406':
-    {
-	readable: 'directly activates',
-	priority: 20,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/directly_activates',
-	    'directly:activates',
-	    'directly activates',
-	    'directly_activates'
-	],
-	glyph: 'arrow',
-	color: '#2F4F4F' // darkslategray
-    },
-    'upstream_of':
-    {
-	readable: 'upstream of',
-	priority: 2,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/upstream_of'
-	    'upstream:of',
-	    'upstream of',
-	    'upstream_of'
-	],
-	color: '#FF1493' // deeppink
-    },
-    'RO:0002408':
-    {
-	readable: 'directly inhibits',
-	priority: 19,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/directly_inhibits'
-	    'directly:inhibits',
-	    'directly inhibits',
-	    'directly_inhibits'
-	],
-	glyph: 'bar',
-	color: '#7FFF00' // chartreuse
-    },
-    'RO:0002411':
-    {
-	readable: 'causally upstream of',
-	priority: 2,
-	aliases: [
-	    'causally_upstream_of'
-	],
-	color: '#483D8B' // darkslateblue
-    },
-    'indirectly_disables_action_of':
-    {
-	readable: 'indirectly disables action of',
-	priority: 0,
-	aliases: [
-		//'http://purl.obolibrary.org/obo/indirectly_disables_action_of'
-	    'indirectly disables action of',
-	    'indirectly_disables_action_of'
-	],
-	color: '#483D8B' // darkslateblue
-    },
-    'provides_input_for':
-    {
-	readable: 'provides input for',
-	priority: 0,
-	aliases: [
-	    'GOREL_provides_input_for',
-	    'http://purl.obolibrary.org/obo/GOREL_provides_input_for'
-	],
-	color: '#483D8B' // darkslateblue
-    },
-    'RO:0002413':
-    {
-	readable: 'directly provides input for',
-	priority: 1,
-	aliases: [
-	    'directly_provides_input_for',
-	    'GOREL_directly_provides_input_for',
-	    'http://purl.obolibrary.org/obo/GOREL_directly_provides_input_for'
-	],
-	glyph: 'diamond',
-	color: '#483D8B' // darkslateblue
-    },
-    // New ones for monarch.
-    'subclass_of':
-    {
-	readable: 'subclass of',
-	priority: 100,
-	aliases: [
-	    'SUBCLASS_OF'
-	],
-	glyph: 'diamond',
-	color: '#E9967A' // darksalmon
-    },
-    'superclass_of':
-    {
-	readable: 'superclass of',
-	priority: 100,
-	aliases: [
-	    'SUPERCLASS_OF'
-	],
-	glyph: 'diamond',
-	color: '#556B2F' // darkolivegreen
-    },
-    'annotation':
-    {
-	readable: 'annotation',
-	priority: 100,
-	aliases: [
-	    'ANNOTATION'
-	],
-	glyph: 'diamond',
-	color: '#483D8B' // darkslateblue
-    }
-};
-/*
- * Package: statistics.js
- * 
- * Namespace: amigo.data.statistics
- * 
- * This package was automatically created during an AmiGO 2 installation.
- * 
- * Purpose: Useful numbers about the current data in the store.
- * 
- * Requirements: amigo2.js for bbop.amigo namespace.
- * 
- * NOTE: This file is generated dynamically at installation time.
- *       Hard to work with unit tests--hope it's not too bad.
- *       Want to keep this real simple.
- */
-
-// Module and namespace checking.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
-if ( typeof amigo.data.statistics == "undefined" ){ amigo.data.statistics = {}; }
-
-/*
- * Variable: annotation_evidence
- * 
- * TBD
- */
-amigo.data.statistics.annotation_source = [["MGI", 143898], ["UniProtKB", 131680], ["ZFIN", 88093], ["WB", 68439], ["TAIR", 68319], ["SGD", 44070], ["PomBase", 38714], ["RGD", 23674], ["dictyBase", 20561], ["InterPro", 12251], ["TIGR", 11229], ["RefGenome", 7252], ["GOC", 6282], ["BHF-UCL", 4758], ["IntAct", 2036], ["HGNC", 532], ["UniPathway", 499], ["DFLAT", 311], ["PINC", 18], ["Roslin_Institute", 10], ["ENSEMBL", 5], ["Reactome", 3]];
-
-/*
- * Variable: annotation_source
- * 
- * TBD
- */
-amigo.data.statistics.annotation_evidence = [["experimental evidence", 192016], ["similarity evidence", 132787], ["curator inference", 68788], ["combinatorial evidence", 15414], ["author statement", 11503]];
-
-/*
- * Variable: annotation_overview
- * 
- * TBD
- */
-amigo.data.statistics.annotation_overview = [["Source", "similarity evidence", "experimental evidence", "curator inference", "author statement", "combinatorial evidence", "genomic context evidence", "biological system reconstruction", "imported information"], ["dictyBase", 9289, 4311, 6478, 483, 0, 0, 0, 0], ["EcoCyc", 0, 0, 0, 0, 0, 0, 0, 0], ["FlyBase", 0, 0, 0, 0, 0, 0, 0, 0], ["MGI", 53520, 55284, 32957, 2002, 135, 0, 0, 0], ["PomBase", 10204, 16257, 3661, 2286, 511, 0, 0, 0], ["RGD", 23674, 0, 0, 0, 0, 0, 0, 0], ["SGD", 3396, 33774, 4578, 2321, 1, 0, 0, 0], ["TAIR", 11078, 16661, 6626, 1663, 14752, 0, 0, 0], ["WB", 861, 33166, 60, 144, 1, 0, 0, 0], ["ZFIN", 507, 10672, 10946, 127, 0, 0, 0, 0]];
-/*
- * Package: rollup.js
- * 
- * Namespace: amigo.ui.rollup
- * 
- * BBOP method to roll an information are up to save real estate.
- * This requires jQuery and an HTML format like:
- * 
- * : <div id="ID_TEXT" class="SOME_CLASS_FOR_YOUR_STYLING">
- * :  <span class="ANOTHERONE">ANCHOR_TEXT<a href="#"><img src="?" /></span></a>
- * :  <div>
- * :   ABC
- * :  </div>
- * : </div>
- * 
- * Usage would then simply be:
- * 
- * : amigo.ui.rollup(['ID_TEXT']);
- * 
- * As a note, for AmiGO 2, his is handled by the common templates
- * info_rollup_start.tmpl and info_rollup_end.tmpl in the amigo git
- * repo. Usage would be like:
- * 
- * : [% rollup_id = "ID_TEXT" %]
- * : [% rollup_anchor = "ANCHOR_TEXT" %]
- * : [% INCLUDE "common/info_rollup_start.tmpl" %]
- * : ABC
- * : [% INCLUDE "common/info_rollup_end.tmpl" %]
- * 
- * Again, this is a method, not an object constructor.
- */
-
-// Module and namespace checking.
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-if ( typeof amigo.ui == "undefined" ){ amigo.ui = {}; }
-
-/*
- * Method: rollup
- * 
- * See top-level for details.
- * 
- * Arguments:
- *  elt_ids - a list if element ids of the areas to roll up
- * 
- * Returns:
- *  n/a
- */
-amigo.ui.rollup = function(elt_ids){
-
-    var each = bbop.core.each;
-    each(elt_ids,
-    	 function(eltid){
-	     var eheader = '#' + eltid + ' > div';
-	     var earea = '#' + eltid + ' > span > a';
-	     jQuery(eheader).hide();
-    	     var click_elt =
-		 jQuery(earea).click(function(){
-					 jQuery(eheader).toggle("blind",{},250);
-					 return false;
-				     });
-	 });
-};
-
-// If it looks like we're in an environment that supports CommonJS
-// Modules 1.0, take the amigo namespace whole and export it. Otherwise
-// (browser environment, etc.), take no action and depend on the
-// global namespace.
-if( typeof(exports) != 'undefined' ){
-
-    // Old style--exporting separate namespace.
-    exports.amigo = amigo;
-
-    // New, better, style--assemble; these should not collide.
-    bbop.core.each(amigo, function(k, v){
-	exports[k] = v;
-    });
-}
-
-},{"bbop":78}],9:[function(require,module,exports){
+},{"bbop-core":66,"underscore":242}],17:[function(require,module,exports){
 /*
  * Manager for handling per-model client-to-client and
  * server-to-client communication via Barista.
@@ -44611,7 +45685,7 @@ bbop.extend(manager, registry);
 
 module.exports = manager;
 
-},{"bbop-core":58,"bbop-registry":10,"socket.io-client":11,"underscore":234}],10:[function(require,module,exports){
+},{"bbop-core":66,"bbop-registry":18,"socket.io-client":19,"underscore":242}],18:[function(require,module,exports){
 /* 
  * Generic lightweight listener/callback registry system.
  *
@@ -44790,7 +45864,7 @@ var registry = function(evt_list){
 
 module.exports = registry;
 
-},{"bbop-core":58,"underscore":234}],11:[function(require,module,exports){
+},{"bbop-core":66,"underscore":242}],19:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -44901,7 +45975,7 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./manager":12,"./socket":14,"./url":15,"debug":19,"socket.io-parser":49}],12:[function(require,module,exports){
+},{"./manager":20,"./socket":22,"./url":23,"debug":27,"socket.io-parser":57}],20:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -45463,7 +46537,7 @@ Manager.prototype.onreconnect = function () {
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":13,"./socket":14,"backo2":16,"component-bind":17,"component-emitter":18,"debug":19,"engine.io-client":22,"indexof":46,"socket.io-parser":49}],13:[function(require,module,exports){
+},{"./on":21,"./socket":22,"backo2":24,"component-bind":25,"component-emitter":26,"debug":27,"engine.io-client":30,"indexof":54,"socket.io-parser":57}],21:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -45489,7 +46563,7 @@ function on (obj, ev, fn) {
   };
 }
 
-},{}],14:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -45910,7 +46984,7 @@ Socket.prototype.compress = function (compress) {
   return this;
 };
 
-},{"./on":13,"component-bind":17,"component-emitter":18,"debug":19,"has-binary":44,"socket.io-parser":49,"to-array":57}],15:[function(require,module,exports){
+},{"./on":21,"component-bind":25,"component-emitter":26,"debug":27,"has-binary":52,"socket.io-parser":57,"to-array":65}],23:[function(require,module,exports){
 (function (global){
 
 /**
@@ -45989,7 +47063,7 @@ function url (uri, loc) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"debug":19,"parseuri":47}],16:[function(require,module,exports){
+},{"debug":27,"parseuri":55}],24:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -46076,7 +47150,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],17:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * Slice reference.
  */
@@ -46101,7 +47175,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],18:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -46266,7 +47340,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (process){
 
 /**
@@ -46447,7 +47521,7 @@ function localstorage(){
 }
 
 }).call(this,require('_process'))
-},{"./debug":20,"_process":87}],20:[function(require,module,exports){
+},{"./debug":28,"_process":95}],28:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -46649,7 +47723,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":21}],21:[function(require,module,exports){
+},{"ms":29}],29:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -46800,11 +47874,11 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],22:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 
 module.exports = require('./lib/index');
 
-},{"./lib/index":23}],23:[function(require,module,exports){
+},{"./lib/index":31}],31:[function(require,module,exports){
 
 module.exports = require('./socket');
 
@@ -46816,7 +47890,7 @@ module.exports = require('./socket');
  */
 module.exports.parser = require('engine.io-parser');
 
-},{"./socket":24,"engine.io-parser":33}],24:[function(require,module,exports){
+},{"./socket":32,"engine.io-parser":41}],32:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -47558,7 +48632,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":25,"./transports/index":26,"component-emitter":18,"debug":19,"engine.io-parser":33,"indexof":46,"parsejson":41,"parseqs":42,"parseuri":47}],25:[function(require,module,exports){
+},{"./transport":33,"./transports/index":34,"component-emitter":26,"debug":27,"engine.io-parser":41,"indexof":54,"parsejson":49,"parseqs":50,"parseuri":55}],33:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -47717,7 +48791,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":18,"engine.io-parser":33}],26:[function(require,module,exports){
+},{"component-emitter":26,"engine.io-parser":41}],34:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -47774,7 +48848,7 @@ function polling (opts) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling-jsonp":27,"./polling-xhr":28,"./websocket":30,"xmlhttprequest-ssl":31}],27:[function(require,module,exports){
+},{"./polling-jsonp":35,"./polling-xhr":36,"./websocket":38,"xmlhttprequest-ssl":39}],35:[function(require,module,exports){
 (function (global){
 
 /**
@@ -48009,7 +49083,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":29,"component-inherit":32}],28:[function(require,module,exports){
+},{"./polling":37,"component-inherit":40}],36:[function(require,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -48437,7 +49511,7 @@ function unloadHandler () {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":29,"component-emitter":18,"component-inherit":32,"debug":19,"xmlhttprequest-ssl":31}],29:[function(require,module,exports){
+},{"./polling":37,"component-emitter":26,"component-inherit":40,"debug":27,"xmlhttprequest-ssl":39}],37:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -48684,7 +49758,7 @@ Polling.prototype.uri = function () {
   return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
 };
 
-},{"../transport":25,"component-inherit":32,"debug":19,"engine.io-parser":33,"parseqs":42,"xmlhttprequest-ssl":31,"yeast":43}],30:[function(require,module,exports){
+},{"../transport":33,"component-inherit":40,"debug":27,"engine.io-parser":41,"parseqs":50,"xmlhttprequest-ssl":39,"yeast":51}],38:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -48973,7 +50047,7 @@ WS.prototype.check = function () {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../transport":25,"component-inherit":32,"debug":19,"engine.io-parser":33,"parseqs":42,"ws":79,"yeast":43}],31:[function(require,module,exports){
+},{"../transport":33,"component-inherit":40,"debug":27,"engine.io-parser":41,"parseqs":50,"ws":87,"yeast":51}],39:[function(require,module,exports){
 (function (global){
 // browser shim for xmlhttprequest module
 
@@ -49014,7 +50088,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"has-cors":40}],32:[function(require,module,exports){
+},{"has-cors":48}],40:[function(require,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -49022,7 +50096,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],33:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -49635,7 +50709,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":34,"after":35,"arraybuffer.slice":36,"base64-arraybuffer":37,"blob":38,"has-binary":44,"wtf-8":39}],34:[function(require,module,exports){
+},{"./keys":42,"after":43,"arraybuffer.slice":44,"base64-arraybuffer":45,"blob":46,"has-binary":52,"wtf-8":47}],42:[function(require,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -49656,7 +50730,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],35:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -49686,7 +50760,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],36:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -49717,7 +50791,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -49786,7 +50860,7 @@ module.exports = function(arraybuffer, start, end) {
   };
 })();
 
-},{}],38:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -49886,7 +50960,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],39:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/wtf8 v1.0.0 by @mathias */
 ;(function(root) {
@@ -50124,7 +51198,7 @@ module.exports = (function() {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],40:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -50143,7 +51217,7 @@ try {
   module.exports = false;
 }
 
-},{}],41:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -50178,7 +51252,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],42:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -50217,7 +51291,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -50287,7 +51361,7 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}],44:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 (function (global){
 
 /*
@@ -50350,12 +51424,12 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":45}],45:[function(require,module,exports){
+},{"isarray":53}],53:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],46:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -50366,7 +51440,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],47:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -50407,7 +51481,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -50552,7 +51626,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./is-buffer":50,"isarray":55}],49:[function(require,module,exports){
+},{"./is-buffer":58,"isarray":63}],57:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -50958,7 +52032,7 @@ function error(data){
   };
 }
 
-},{"./binary":48,"./is-buffer":50,"component-emitter":51,"debug":52,"json3":56}],50:[function(require,module,exports){
+},{"./binary":56,"./is-buffer":58,"component-emitter":59,"debug":60,"json3":64}],58:[function(require,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -50975,7 +52049,7 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],51:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -51141,7 +52215,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],52:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -51311,7 +52385,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":53}],53:[function(require,module,exports){
+},{"./debug":61}],61:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -51510,7 +52584,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":54}],54:[function(require,module,exports){
+},{"ms":62}],62:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -51637,9 +52711,9 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],55:[function(require,module,exports){
-arguments[4][45][0].apply(exports,arguments)
-},{"dup":45}],56:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"dup":53}],64:[function(require,module,exports){
 (function (global){
 /*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 ;(function () {
@@ -52545,7 +53619,7 @@ arguments[4][45][0].apply(exports,arguments)
 }).call(this);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],57:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {
@@ -52560,9 +53634,9 @@ function toArray(list, index) {
     return array
 }
 
-},{}],58:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 arguments[4][2][0].apply(exports,arguments)
-},{"dup":2,"underscore":234}],59:[function(require,module,exports){
+},{"dup":2,"underscore":242}],67:[function(require,module,exports){
 /** 
  * Purpose: Noctua editing operations ove a bbop-graph base.
  * 
@@ -54949,7 +56023,7 @@ module.exports = {
 
 };
 
-},{"bbop-core":58,"bbop-graph":60,"class-expression":116,"underscore":234}],60:[function(require,module,exports){
+},{"bbop-core":66,"bbop-graph":68,"class-expression":124,"underscore":242}],68:[function(require,module,exports){
 /** 
  * Purpose: Basic edged graph and operations.
  * 
@@ -56531,7 +57605,7 @@ module.exports = {
 
 };
 
-},{"bbop-core":58,"underscore":234}],61:[function(require,module,exports){
+},{"bbop-core":66,"underscore":242}],69:[function(require,module,exports){
 /**
  * Manager for handling communication and callbacks with a Minerva
  * instances (mediated by Barista).
@@ -57585,9 +58659,9 @@ bbop.extend(manager, registry);
 
 module.exports = manager;
 
-},{"bbop-core":58,"bbop-registry":62,"bbop-response-barista":64,"class-expression":116,"minerva-requests":63,"underscore":234}],62:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"bbop-core":58,"dup":10,"underscore":234}],63:[function(require,module,exports){
+},{"bbop-core":66,"bbop-registry":70,"bbop-response-barista":72,"class-expression":124,"minerva-requests":71,"underscore":242}],70:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"bbop-core":66,"dup":18,"underscore":242}],71:[function(require,module,exports){
 /** 
  * Purpose: Request construction library for interacting with Minerva.
  * 
@@ -59105,7 +60179,7 @@ module.exports = {
 
 };
 
-},{"bbop-core":58,"class-expression":116,"underscore":234}],64:[function(require,module,exports){
+},{"bbop-core":66,"class-expression":124,"underscore":242}],72:[function(require,module,exports){
 /**
  * Response handler for dealing with the parsing of responses from
  * Barista (enveloping Minerva).
@@ -59683,7 +60757,7 @@ response.prototype.models_meta_read_only = function(){
 
 module.exports = response;
 
-},{"bbop-core":58,"bbop-rest-response":65,"underscore":234}],65:[function(require,module,exports){
+},{"bbop-core":66,"bbop-rest-response":73,"underscore":242}],73:[function(require,module,exports){
 /**
  * This module contains two response handlers.
  *
@@ -59875,7 +60949,7 @@ module.exports = {
 
 };
 
-},{"bbop-core":58,"underscore":234}],66:[function(require,module,exports){
+},{"bbop-core":66,"underscore":242}],74:[function(require,module,exports){
 /** 
  * Generic BBOP manager for dealing with basic generic REST calls.
  * This specific one is designed to be overridden by its subclasses.
@@ -60713,9 +61787,9 @@ module.exports = {
 
 };
 
-},{"bbop-core":58,"bbop-registry":67,"http":107,"jquery":68,"q":69,"querystring":91,"sync-request":70,"underscore":234,"url":113}],67:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"bbop-core":58,"dup":10,"underscore":234}],68:[function(require,module,exports){
+},{"bbop-core":66,"bbop-registry":75,"http":115,"jquery":76,"q":77,"querystring":99,"sync-request":78,"underscore":242,"url":121}],75:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"bbop-core":66,"dup":18,"underscore":242}],76:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -69927,7 +71001,7 @@ return jQuery;
 
 }));
 
-},{}],69:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -71979,7 +73053,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":87}],70:[function(require,module,exports){
+},{"_process":95}],78:[function(require,module,exports){
 'use strict';
 
 var Response = require('http-response-object');
@@ -72052,7 +73126,7 @@ function doRequest(method, url, options, callback) {
   return new Response(xhr.status, headers, xhr.responseText);
 }
 
-},{"http-response-object":71,"then-request/lib/handle-qs.js":72}],71:[function(require,module,exports){
+},{"http-response-object":79,"then-request/lib/handle-qs.js":80}],79:[function(require,module,exports){
 'use strict';
 
 module.exports = Response;
@@ -72097,7 +73171,7 @@ Response.prototype.getBody = function (encoding) {
   return encoding ? this.body.toString(encoding) : this.body;
 };
 
-},{}],72:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict';
 
 var parse = require('qs').parse;
@@ -72121,7 +73195,7 @@ function handleQs(url, query) {
   return start + qs + end;
 }
 
-},{"qs":74}],73:[function(require,module,exports){
+},{"qs":82}],81:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -72141,7 +73215,7 @@ module.exports = {
     RFC3986: 'RFC3986'
 };
 
-},{}],74:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -72154,7 +73228,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":73,"./parse":75,"./stringify":76}],75:[function(require,module,exports){
+},{"./formats":81,"./parse":83,"./stringify":84}],83:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -72323,7 +73397,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":77}],76:[function(require,module,exports){
+},{"./utils":85}],84:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -72532,7 +73606,7 @@ module.exports = function (object, opts) {
     return keys.join(delimiter);
 };
 
-},{"./formats":73,"./utils":77}],77:[function(require,module,exports){
+},{"./formats":81,"./utils":85}],85:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty;
@@ -72716,11 +73790,11 @@ exports.isBuffer = function (obj) {
     return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
 };
 
-},{}],78:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3,"http":107,"ringo/httpclient":undefined,"url":113}],79:[function(require,module,exports){
+},{"dup":3,"http":115,"ringo/httpclient":undefined,"url":121}],87:[function(require,module,exports){
 
-},{}],80:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -74513,7 +75587,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":81,"ieee754":82,"isarray":83}],81:[function(require,module,exports){
+},{"base64-js":89,"ieee754":90,"isarray":91}],89:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -74629,7 +75703,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],82:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -74715,14 +75789,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],83:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],84:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -75026,7 +76100,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],85:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -75051,7 +76125,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],86:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -75074,7 +76148,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],87:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -75260,7 +76334,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],88:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -75797,7 +76871,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],89:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -75883,7 +76957,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],90:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -75970,13 +77044,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],91:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":89,"./encode":90}],92:[function(require,module,exports){
+},{"./decode":97,"./encode":98}],100:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -76052,7 +77126,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":94,"./_stream_writable":96,"core-util-is":100,"inherits":85,"process-nextick-args":102}],93:[function(require,module,exports){
+},{"./_stream_readable":102,"./_stream_writable":104,"core-util-is":108,"inherits":93,"process-nextick-args":110}],101:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -76079,7 +77153,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":95,"core-util-is":100,"inherits":85}],94:[function(require,module,exports){
+},{"./_stream_transform":103,"core-util-is":108,"inherits":93}],102:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -77017,7 +78091,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":92,"./internal/streams/BufferList":97,"./internal/streams/stream":98,"_process":87,"buffer":80,"buffer-shims":99,"core-util-is":100,"events":84,"inherits":85,"isarray":101,"process-nextick-args":102,"string_decoder/":103,"util":79}],95:[function(require,module,exports){
+},{"./_stream_duplex":100,"./internal/streams/BufferList":105,"./internal/streams/stream":106,"_process":95,"buffer":88,"buffer-shims":107,"core-util-is":108,"events":92,"inherits":93,"isarray":109,"process-nextick-args":110,"string_decoder/":111,"util":87}],103:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -77200,7 +78274,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":92,"core-util-is":100,"inherits":85}],96:[function(require,module,exports){
+},{"./_stream_duplex":100,"core-util-is":108,"inherits":93}],104:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -77747,7 +78821,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":92,"./internal/streams/stream":98,"_process":87,"buffer":80,"buffer-shims":99,"core-util-is":100,"inherits":85,"process-nextick-args":102,"util-deprecate":105}],97:[function(require,module,exports){
+},{"./_stream_duplex":100,"./internal/streams/stream":106,"_process":95,"buffer":88,"buffer-shims":107,"core-util-is":108,"inherits":93,"process-nextick-args":110,"util-deprecate":113}],105:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -77812,10 +78886,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":80,"buffer-shims":99}],98:[function(require,module,exports){
+},{"buffer":88,"buffer-shims":107}],106:[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":84}],99:[function(require,module,exports){
+},{"events":92}],107:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -77927,7 +79001,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":80}],100:[function(require,module,exports){
+},{"buffer":88}],108:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -78038,9 +79112,9 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../insert-module-globals/node_modules/is-buffer/index.js")})
-},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":86}],101:[function(require,module,exports){
-arguments[4][83][0].apply(exports,arguments)
-},{"dup":83}],102:[function(require,module,exports){
+},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":94}],109:[function(require,module,exports){
+arguments[4][91][0].apply(exports,arguments)
+},{"dup":91}],110:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -78087,7 +79161,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":87}],103:[function(require,module,exports){
+},{"_process":95}],111:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('safe-buffer').Buffer;
@@ -78360,10 +79434,10 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":104}],104:[function(require,module,exports){
+},{"safe-buffer":112}],112:[function(require,module,exports){
 module.exports = require('buffer')
 
-},{"buffer":80}],105:[function(require,module,exports){
+},{"buffer":88}],113:[function(require,module,exports){
 (function (global){
 
 /**
@@ -78434,7 +79508,7 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],106:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -78443,7 +79517,7 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":92,"./lib/_stream_passthrough.js":93,"./lib/_stream_readable.js":94,"./lib/_stream_transform.js":95,"./lib/_stream_writable.js":96}],107:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":100,"./lib/_stream_passthrough.js":101,"./lib/_stream_readable.js":102,"./lib/_stream_transform.js":103,"./lib/_stream_writable.js":104}],115:[function(require,module,exports){
 (function (global){
 var ClientRequest = require('./lib/request')
 var extend = require('xtend')
@@ -78525,7 +79599,7 @@ http.METHODS = [
 	'UNSUBSCRIBE'
 ]
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/request":109,"builtin-status-codes":111,"url":113,"xtend":115}],108:[function(require,module,exports){
+},{"./lib/request":117,"builtin-status-codes":119,"url":121,"xtend":123}],116:[function(require,module,exports){
 (function (global){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
 
@@ -78598,7 +79672,7 @@ function isFunction (value) {
 xhr = null // Help gc
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],109:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 (function (process,global,Buffer){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -78908,7 +79982,7 @@ var unsafeHeaders = [
 ]
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":108,"./response":110,"_process":87,"buffer":80,"inherits":85,"readable-stream":106,"to-arraybuffer":112}],110:[function(require,module,exports){
+},{"./capability":116,"./response":118,"_process":95,"buffer":88,"inherits":93,"readable-stream":114,"to-arraybuffer":120}],118:[function(require,module,exports){
 (function (process,global,Buffer){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -79094,7 +80168,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":108,"_process":87,"buffer":80,"inherits":85,"readable-stream":106}],111:[function(require,module,exports){
+},{"./capability":116,"_process":95,"buffer":88,"inherits":93,"readable-stream":114}],119:[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -79160,7 +80234,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],112:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var Buffer = require('buffer').Buffer
 
 module.exports = function (buf) {
@@ -79189,7 +80263,7 @@ module.exports = function (buf) {
 	}
 }
 
-},{"buffer":80}],113:[function(require,module,exports){
+},{"buffer":88}],121:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -79923,7 +80997,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":114,"punycode":88,"querystring":91}],114:[function(require,module,exports){
+},{"./util":122,"punycode":96,"querystring":99}],122:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -79941,7 +81015,7 @@ module.exports = {
   }
 };
 
-},{}],115:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -79962,9 +81036,9 @@ function extend() {
     return target
 }
 
-},{}],116:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"bbop-core":58,"dup":4,"underscore":234}],117:[function(require,module,exports){
+},{"bbop-core":66,"dup":4,"underscore":242}],125:[function(require,module,exports){
 
 /*!
 
@@ -79994,7 +81068,7 @@ SOFTWARE.
 
 'use strict';
 
-},{}],118:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 'use strict';
 
 var util = require( './util' );
@@ -80231,7 +81305,7 @@ anifn.complete = anifn.completed;
 
 module.exports = Animation;
 
-},{"./is":207,"./promise":210,"./util":224}],119:[function(require,module,exports){
+},{"./is":215,"./promise":218,"./util":232}],127:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -80441,7 +81515,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../is":207}],120:[function(require,module,exports){
+},{"../../is":215}],128:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -80637,7 +81711,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../is":207,"../../util":224}],121:[function(require,module,exports){
+},{"../../is":215,"../../util":232}],129:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -80831,7 +81905,7 @@ elesfn.bc = elesfn.betweennessCentrality;
 
 module.exports = elesfn;
 
-},{"../../heap":205,"../../is":207}],122:[function(require,module,exports){
+},{"../../heap":213,"../../is":215}],130:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -80965,7 +82039,7 @@ elesfn.dfs = elesfn.depthFirstSearch;
 
 module.exports = elesfn;
 
-},{"../../is":207}],123:[function(require,module,exports){
+},{"../../is":215}],131:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -81097,7 +82171,7 @@ elesfn.ccn = elesfn.closenessCentralityNormalised = elesfn.closenessCentralityNo
 
 module.exports = elesfn;
 
-},{"../../is":207}],124:[function(require,module,exports){
+},{"../../is":215}],132:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -81295,7 +82369,7 @@ elesfn.dcn = elesfn.degreeCentralityNormalised = elesfn.degreeCentralityNormaliz
 
 module.exports = elesfn;
 
-},{"../../is":207,"../../util":224}],125:[function(require,module,exports){
+},{"../../is":215,"../../util":232}],133:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -81428,7 +82502,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../heap":205,"../../is":207}],126:[function(require,module,exports){
+},{"../../heap":213,"../../is":215}],134:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -81624,7 +82698,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../is":207}],127:[function(require,module,exports){
+},{"../../is":215}],135:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -81649,7 +82723,7 @@ var elesfn = {};
 
 module.exports = elesfn;
 
-},{"../../util":224,"./a-star":119,"./bellman-ford":120,"./betweenness-centrality":121,"./bfs-dfs":122,"./closeness-centrality":123,"./degree-centrality":124,"./dijkstra":125,"./floyd-warshall":126,"./kerger-stein":128,"./kruskal":129,"./page-rank":130}],128:[function(require,module,exports){
+},{"../../util":232,"./a-star":127,"./bellman-ford":128,"./betweenness-centrality":129,"./bfs-dfs":130,"./closeness-centrality":131,"./degree-centrality":132,"./dijkstra":133,"./floyd-warshall":134,"./kerger-stein":136,"./kruskal":137,"./page-rank":138}],136:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -81823,7 +82897,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../util":224}],129:[function(require,module,exports){
+},{"../../util":232}],137:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -81889,7 +82963,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../is":207}],130:[function(require,module,exports){
+},{"../../is":215}],138:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../is' );
@@ -82072,7 +83146,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../../is":207}],131:[function(require,module,exports){
+},{"../../is":215}],139:[function(require,module,exports){
 'use strict';
 
 var define = require( '../define' );
@@ -82089,7 +83163,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../define":160}],132:[function(require,module,exports){
+},{"../define":168}],140:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -82238,7 +83312,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{"../util":224}],133:[function(require,module,exports){
+},{"../util":232}],141:[function(require,module,exports){
 'use strict';
 
 var is = require('../is');
@@ -82332,7 +83406,7 @@ elesfn.has = elesfn.contains;
 
 module.exports = elesfn;
 
-},{"../is":207,"../selector":211}],134:[function(require,module,exports){
+},{"../is":215,"../selector":219}],142:[function(require,module,exports){
 'use strict';
 
 var elesfn = ({
@@ -82475,7 +83549,7 @@ elesfn.ancestors = elesfn.parents;
 
 module.exports = elesfn;
 
-},{}],135:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 'use strict';
 
 var define = require( '../define' );
@@ -82564,7 +83638,7 @@ fn.removeAttr = fn.removeData;
 
 module.exports = elesfn;
 
-},{"../define":160}],136:[function(require,module,exports){
+},{"../define":168}],144:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -82687,7 +83761,7 @@ util.extend( elesfn, {
 
 module.exports = elesfn;
 
-},{"../util":224}],137:[function(require,module,exports){
+},{"../util":232}],145:[function(require,module,exports){
 'use strict';
 
 var define = require( '../define' );
@@ -83734,7 +84808,7 @@ fn.renderedBoundingbox = fn.renderedBoundingBox;
 
 module.exports = elesfn;
 
-},{"../define":160,"../is":207,"../math":209,"../util":224}],138:[function(require,module,exports){
+},{"../define":168,"../is":215,"../math":217,"../util":232}],146:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -83840,7 +84914,7 @@ var Element = function( cy, params, restore ){
 
 module.exports = Element;
 
-},{"../is":207,"../util":224}],139:[function(require,module,exports){
+},{"../is":215,"../util":232}],147:[function(require,module,exports){
 'use strict';
 
 var define = require( '../define' );
@@ -83871,7 +84945,7 @@ define.eventAliasesOn( elesfn );
 
 module.exports = elesfn;
 
-},{"../define":160}],140:[function(require,module,exports){
+},{"../define":168}],148:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -84247,7 +85321,7 @@ fn.complement = fn.abscomp = fn.absoluteComplement;
 
 module.exports = elesfn;
 
-},{"../is":207,"../selector":211}],141:[function(require,module,exports){
+},{"../is":215,"../selector":219}],149:[function(require,module,exports){
 'use strict';
 
 var elesfn = ({
@@ -84279,7 +85353,7 @@ var elesfn = ({
 
 module.exports = elesfn;
 
-},{}],142:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 'use strict';
 
 var util = require('../util');
@@ -85008,7 +86082,7 @@ elesfn.move = function( struct ){
 
 module.exports = Collection;
 
-},{"../is":207,"../map":208,"../set":212,"../util":224,"./algorithms":127,"./animation":131,"./class":132,"./comparators":133,"./compounds":134,"./data":135,"./degree":136,"./dimensions":137,"./element":138,"./events":139,"./filter":140,"./group":141,"./index":142,"./iteration":143,"./layout":144,"./style":145,"./switch-functions":146,"./traversing":147}],143:[function(require,module,exports){
+},{"../is":215,"../map":216,"../set":220,"../util":232,"./algorithms":135,"./animation":139,"./class":140,"./comparators":141,"./compounds":142,"./data":143,"./degree":144,"./dimensions":145,"./element":146,"./events":147,"./filter":148,"./group":149,"./index":150,"./iteration":151,"./layout":152,"./style":153,"./switch-functions":154,"./traversing":155}],151:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -85135,7 +86209,7 @@ elesfn.each = elesfn.forEach;
 
 module.exports = elesfn;
 
-},{"../is":207,"./zsort":148}],144:[function(require,module,exports){
+},{"../is":215,"./zsort":156}],152:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -85332,7 +86406,7 @@ elesfn.createLayout = elesfn.makeLayout = elesfn.layout;
 
 module.exports = elesfn;
 
-},{"../is":207,"../math":209,"../promise":210,"../util":224}],145:[function(require,module,exports){
+},{"../is":215,"../math":217,"../promise":218,"../util":232}],153:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -85703,7 +86777,7 @@ elesfn.pstyle = elesfn.parsedStyle;
 
 module.exports = elesfn;
 
-},{"../is":207}],146:[function(require,module,exports){
+},{"../is":215}],154:[function(require,module,exports){
 'use strict';
 
 var elesfn = {};
@@ -85856,7 +86930,7 @@ elesfn.inactive = function(){
 
 module.exports = elesfn;
 
-},{}],147:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -86300,7 +87374,7 @@ util.extend( elesfn, {
 
 module.exports = elesfn;
 
-},{"../is":207,"../util":224}],148:[function(require,module,exports){
+},{"../is":215,"../util":232}],156:[function(require,module,exports){
 'use strict';
 
 /**
@@ -86359,7 +87433,7 @@ var zIndexSort = function( a, b ){
 
 module.exports = zIndexSort;
 
-},{}],149:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -86445,7 +87519,7 @@ var corefn = {
 
 module.exports = corefn;
 
-},{"../collection":142,"../collection/element":138,"../is":207,"../util":224}],150:[function(require,module,exports){
+},{"../collection":150,"../collection/element":146,"../is":215,"../util":232}],158:[function(require,module,exports){
 'use strict';
 
 var define = require('../define');
@@ -87212,7 +88286,7 @@ var corefn = ({
 
 module.exports = corefn;
 
-},{"../define":160,"../is":207,"../util":224}],151:[function(require,module,exports){
+},{"../define":168,"../is":215,"../util":232}],159:[function(require,module,exports){
 'use strict';
 
 var define = require( '../define' );
@@ -87229,7 +88303,7 @@ define.eventAliasesOn( corefn );
 
 module.exports = corefn;
 
-},{"../define":160}],152:[function(require,module,exports){
+},{"../define":168}],160:[function(require,module,exports){
 'use strict';
 
 var corefn = ({
@@ -87256,7 +88330,7 @@ corefn.jpeg = corefn.jpg;
 
 module.exports = corefn;
 
-},{}],153:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 'use strict';
 
 var window = require( '../window' );
@@ -87699,7 +88773,7 @@ corefn.$id = corefn.getElementById;
 
 module.exports = Core;
 
-},{"../collection":142,"../define":160,"../is":207,"../promise":210,"../util":224,"../window":232,"./add-remove":149,"./animation":150,"./events":151,"./export":152,"./layout":154,"./notification":155,"./renderer":156,"./search":157,"./style":158,"./viewport":159}],154:[function(require,module,exports){
+},{"../collection":150,"../define":168,"../is":215,"../promise":218,"../util":232,"../window":240,"./add-remove":157,"./animation":158,"./events":159,"./export":160,"./layout":162,"./notification":163,"./renderer":164,"./search":165,"./style":166,"./viewport":167}],162:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -87749,7 +88823,7 @@ corefn.createLayout = corefn.makeLayout = corefn.layout;
 
 module.exports = corefn;
 
-},{"../is":207,"../util":224}],155:[function(require,module,exports){
+},{"../is":215,"../util":232}],163:[function(require,module,exports){
 'use strict';
 
 var corefn = ({
@@ -87867,7 +88941,7 @@ var corefn = ({
 
 module.exports = corefn;
 
-},{}],156:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -87952,7 +89026,7 @@ corefn.invalidateDimensions = corefn.resize;
 
 module.exports = corefn;
 
-},{"../util":224}],157:[function(require,module,exports){
+},{"../util":232}],165:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -88025,7 +89099,7 @@ corefn.elements = corefn.filter = corefn.$;
 
 module.exports = corefn;
 
-},{"../collection":142,"../is":207}],158:[function(require,module,exports){
+},{"../collection":150,"../is":215}],166:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -88065,7 +89139,7 @@ var corefn = ({
 
 module.exports = corefn;
 
-},{"../is":207,"../style":217}],159:[function(require,module,exports){
+},{"../is":215,"../style":225}],167:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -88618,7 +89692,7 @@ corefn.autoungrabifyNodes = corefn.autoungrabify;
 
 module.exports = corefn;
 
-},{"../is":207,"../window":232}],160:[function(require,module,exports){
+},{"../is":215,"../window":240}],168:[function(require,module,exports){
 'use strict';
 
 // use this module to cherry pick functions into your prototype
@@ -89432,7 +90506,7 @@ var define = {
 
 module.exports = define;
 
-},{"./animation":118,"./event":161,"./is":207,"./promise":210,"./selector":211,"./util":224}],161:[function(require,module,exports){
+},{"./animation":126,"./event":169,"./is":215,"./promise":218,"./selector":219,"./util":232}],169:[function(require,module,exports){
 'use strict';
 
 /*!
@@ -89536,7 +90610,7 @@ Event.prototype = {
 
 module.exports = Event;
 
-},{}],162:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 'use strict';
 
 var util = require( './util' );
@@ -89755,7 +90829,7 @@ incExts.forEach( function( group ){
 
 module.exports = extension;
 
-},{"./collection":142,"./core":153,"./define":160,"./extensions":163,"./is":207,"./util":224}],163:[function(require,module,exports){
+},{"./collection":150,"./core":161,"./define":168,"./extensions":171,"./is":215,"./util":232}],171:[function(require,module,exports){
 'use strict';
 
 module.exports = [
@@ -89770,7 +90844,7 @@ module.exports = [
   }
 ];
 
-},{"./layout":169,"./renderer":203}],164:[function(require,module,exports){
+},{"./layout":177,"./renderer":211}],172:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -90205,7 +91279,7 @@ BreadthFirstLayout.prototype.run = function(){
 
 module.exports = BreadthFirstLayout;
 
-},{"../../is":207,"../../math":209,"../../util":224}],165:[function(require,module,exports){
+},{"../../is":215,"../../math":217,"../../util":232}],173:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -90311,7 +91385,7 @@ CircleLayout.prototype.run = function(){
 
 module.exports = CircleLayout;
 
-},{"../../is":207,"../../math":209,"../../util":224}],166:[function(require,module,exports){
+},{"../../is":215,"../../math":217,"../../util":232}],174:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -90513,7 +91587,7 @@ ConcentricLayout.prototype.run = function(){
 
 module.exports = ConcentricLayout;
 
-},{"../../math":209,"../../util":224}],167:[function(require,module,exports){
+},{"../../math":217,"../../util":232}],175:[function(require,module,exports){
 'use strict';
 
 /*
@@ -91903,7 +92977,7 @@ var refreshPositions = function( layoutInfo, cy, options ){
 
 module.exports = CoseLayout;
 
-},{"../../is":207,"../../math":209,"../../promise":210,"../../util":224}],168:[function(require,module,exports){
+},{"../../is":215,"../../math":217,"../../promise":218,"../../util":232}],176:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -92152,7 +93226,7 @@ GridLayout.prototype.run = function(){
 
 module.exports = GridLayout;
 
-},{"../../math":209,"../../util":224}],169:[function(require,module,exports){
+},{"../../math":217,"../../util":232}],177:[function(require,module,exports){
 'use strict';
 
 module.exports = [
@@ -92166,7 +93240,7 @@ module.exports = [
   { name: 'random', impl: require( './random' ) }
 ];
 
-},{"./breadthfirst":164,"./circle":165,"./concentric":166,"./cose":167,"./grid":168,"./null":170,"./preset":171,"./random":172}],170:[function(require,module,exports){
+},{"./breadthfirst":172,"./circle":173,"./concentric":174,"./cose":175,"./grid":176,"./null":178,"./preset":179,"./random":180}],178:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -92220,7 +93294,7 @@ NullLayout.prototype.stop = function(){
 
 module.exports = NullLayout;
 
-},{"../../util":224}],171:[function(require,module,exports){
+},{"../../util":232}],179:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -92283,7 +93357,7 @@ PresetLayout.prototype.run = function(){
 
 module.exports = PresetLayout;
 
-},{"../../is":207,"../../util":224}],172:[function(require,module,exports){
+},{"../../is":215,"../../util":232}],180:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../util' );
@@ -92328,7 +93402,7 @@ RandomLayout.prototype.run = function(){
 
 module.exports = RandomLayout;
 
-},{"../../math":209,"../../util":224}],173:[function(require,module,exports){
+},{"../../math":217,"../../util":232}],181:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../math' );
@@ -92654,7 +93728,7 @@ BRp.registerArrowShapes = function(){
 
 module.exports = BRp;
 
-},{"../../../is":207,"../../../math":209,"../../../util":224}],174:[function(require,module,exports){
+},{"../../../is":215,"../../../math":217,"../../../util":232}],182:[function(require,module,exports){
 'use strict';
 
 var window = require( '../../../../window' );
@@ -93028,7 +94102,7 @@ BRp.getAllInBox = function( x1, y1, x2, y2 ){
 
 module.exports = BRp;
 
-},{"../../../../math":209,"../../../../util":224,"../../../../window":232}],175:[function(require,module,exports){
+},{"../../../../math":217,"../../../../util":232,"../../../../window":240}],183:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../../math' );
@@ -93211,7 +94285,7 @@ BRp.getArrowWidth = BRp.getArrowHeight = function( edgeWidth, scale ){
 
 module.exports = BRp;
 
-},{"../../../../math":209}],176:[function(require,module,exports){
+},{"../../../../math":217}],184:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../../math' );
@@ -93923,7 +94997,7 @@ BRp.findEdgeControlPoints = function( edges ){
 
 module.exports = BRp;
 
-},{"../../../../is":207,"../../../../math":209}],177:[function(require,module,exports){
+},{"../../../../is":215,"../../../../math":217}],185:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../../math' );
@@ -94120,7 +95194,7 @@ BRp.findEndpoints = function( edge ){
 
 module.exports = BRp;
 
-},{"../../../../is":207,"../../../../math":209}],178:[function(require,module,exports){
+},{"../../../../is":215,"../../../../math":217}],186:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../../math' );
@@ -94186,7 +95260,7 @@ BRp.recalculateEdgeProjections = function( edges ){
 
 module.exports = BRp;
 
-},{"../../../../math":209}],179:[function(require,module,exports){
+},{"../../../../math":217}],187:[function(require,module,exports){
 'use strict';
 
 var util = require('../../../../util');
@@ -94209,7 +95283,7 @@ var BRp = {};
 
 module.exports = BRp;
 
-},{"../../../../util":224,"./coords":174,"./edge-arrows":175,"./edge-control-points":176,"./edge-endpoints":177,"./edge-projection":178,"./labels":180,"./nodes":181,"./rendered-style":182,"./z-ordering":183}],180:[function(require,module,exports){
+},{"../../../../util":232,"./coords":182,"./edge-arrows":183,"./edge-control-points":184,"./edge-endpoints":185,"./edge-projection":186,"./labels":188,"./nodes":189,"./rendered-style":190,"./z-ordering":191}],188:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../../math' );
@@ -94696,7 +95770,7 @@ BRp.calculateLabelAngles = function( ele ){
 
 module.exports = BRp;
 
-},{"../../../../is":207,"../../../../math":209,"../../../../util":224}],181:[function(require,module,exports){
+},{"../../../../is":215,"../../../../math":217,"../../../../util":232}],189:[function(require,module,exports){
 'use strict';
 
 var BRp = {};
@@ -94726,7 +95800,7 @@ BRp.getNodeShape = function( node ){
 
 module.exports = BRp;
 
-},{}],182:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 'use strict';
 
 var BRp = {};
@@ -94912,7 +95986,7 @@ BRp.recalculateRenderedStyle = function( eles, useCache ){
 
 module.exports = BRp;
 
-},{}],183:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 'use strict';
 
 var zIndexSort = require( '../../../../collection/zsort' );
@@ -94981,7 +96055,7 @@ BRp.getCachedZSortedEles = function( forceRecalc ){
 
 module.exports = BRp
 
-},{"../../../../collection/zsort":148}],184:[function(require,module,exports){
+},{"../../../../collection/zsort":156}],192:[function(require,module,exports){
 'use strict';
 
 var BRp = {};
@@ -95019,7 +96093,7 @@ BRp.getCachedImage = function( url, crossOrigin, onLoad ){
 
 module.exports = BRp;
 
-},{}],185:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 'use strict';
 
 var is = require('../../../is');
@@ -95227,7 +96301,7 @@ BRp.destroy = function(){
 
 module.exports = BR;
 
-},{"../../../is":207,"../../../util":224,"../../../window":232,"./arrow-shapes":173,"./coord-ele-math":179,"./images":184,"./load-listeners":186,"./node-shapes":187,"./redraw":188}],186:[function(require,module,exports){
+},{"../../../is":215,"../../../util":232,"../../../window":240,"./arrow-shapes":181,"./coord-ele-math":187,"./images":192,"./load-listeners":194,"./node-shapes":195,"./redraw":196}],194:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../../is' );
@@ -97280,7 +98354,7 @@ BRp.load = function(){
 
 module.exports = BRp;
 
-},{"../../../event":161,"../../../is":207,"../../../math":209,"../../../util":224}],187:[function(require,module,exports){
+},{"../../../event":169,"../../../is":215,"../../../math":217,"../../../util":232}],195:[function(require,module,exports){
 'use strict';
 
 var math = require('../../../math');
@@ -97598,7 +98672,7 @@ BRp.registerNodeShapes = function(){
 
 module.exports = BRp;
 
-},{"../../../math":209,"../../../util":224}],188:[function(require,module,exports){
+},{"../../../math":217,"../../../util":232}],196:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../../util' );
@@ -97703,7 +98777,7 @@ BRp.startRenderLoop = function(){
 
 module.exports = BRp;
 
-},{"../../../util":224}],189:[function(require,module,exports){
+},{"../../../util":232}],197:[function(require,module,exports){
 'use strict';
 
 var CRp = {};
@@ -97797,7 +98871,7 @@ CRp.arrowShapeImpl = function( name ){
 
 module.exports = CRp;
 
-},{}],190:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 'use strict';
 
 var CRp = {};
@@ -98073,7 +99147,7 @@ CRp.drawArrowShape = function( edge, arrowType, context, fill, edgeWidth, shape,
 
 module.exports = CRp;
 
-},{}],191:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../math' );
@@ -98189,7 +99263,7 @@ CRp.drawDebugPoints = function( context, eles ){
 
 module.exports = CRp;
 
-},{"../../../math":209}],192:[function(require,module,exports){
+},{"../../../math":217}],200:[function(require,module,exports){
 'use strict';
 
 var CRp = {};
@@ -98341,7 +99415,7 @@ CRp.drawInscribedImage = function( context, img, node, index ){
 
 module.exports = CRp;
 
-},{}],193:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../../util' );
@@ -98696,7 +99770,7 @@ CRp.drawText = function( context, ele, prefix ){
 
 module.exports = CRp;
 
-},{"../../../math":209,"../../../util":224}],194:[function(require,module,exports){
+},{"../../../math":217,"../../../util":232}],202:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../../is' );
@@ -99045,7 +100119,7 @@ CRp.drawPie = function( context, node, nodeOpacity, pos ){
 
 module.exports = CRp;
 
-},{"../../../is":207}],195:[function(require,module,exports){
+},{"../../../is":215}],203:[function(require,module,exports){
 'use strict';
 
 var CRp = {};
@@ -99628,7 +100702,7 @@ CRp.render = function( options ){
 
 module.exports = CRp;
 
-},{"../../../util":224}],196:[function(require,module,exports){
+},{"../../../util":232}],204:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../math' );
@@ -99741,7 +100815,7 @@ CRp.drawEllipsePath = function( context, centerX, centerY, width, height ){
 
 module.exports = CRp;
 
-},{"../../../math":209}],197:[function(require,module,exports){
+},{"../../../math":217}],205:[function(require,module,exports){
 'use strict';
 
 var math = require( '../../../math' );
@@ -100242,7 +101316,7 @@ ETCp.setupDequeueing = defs.setupDequeueing({
 
 module.exports = ElementTextureCache;
 
-},{"../../../heap":205,"../../../math":209,"../../../util":224,"./texture-cache-defs":202}],198:[function(require,module,exports){
+},{"../../../heap":213,"../../../math":217,"../../../util":232,"./texture-cache-defs":210}],206:[function(require,module,exports){
 'use strict';
 
 var is = require( '../../../is' );
@@ -100391,7 +101465,7 @@ CRp.jpg = function( options ){
 
 module.exports = CRp;
 
-},{"../../../is":207}],199:[function(require,module,exports){
+},{"../../../is":215}],207:[function(require,module,exports){
 /*
 The canvas renderer was written by Yue Dong.
 
@@ -100542,7 +101616,7 @@ CRp.usePaths = function(){
 
 module.exports = CR;
 
-},{"../../../is":207,"../../../util":224,"./arrow-shapes":189,"./drawing-edges":190,"./drawing-elements":191,"./drawing-images":192,"./drawing-label-text":193,"./drawing-nodes":194,"./drawing-redraw":195,"./drawing-shapes":196,"./ele-texture-cache":197,"./export-image":198,"./layered-texture-cache":200,"./node-shapes":201}],200:[function(require,module,exports){
+},{"../../../is":215,"../../../util":232,"./arrow-shapes":197,"./drawing-edges":198,"./drawing-elements":199,"./drawing-images":200,"./drawing-label-text":201,"./drawing-nodes":202,"./drawing-redraw":203,"./drawing-shapes":204,"./ele-texture-cache":205,"./export-image":206,"./layered-texture-cache":208,"./node-shapes":209}],208:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../../util' );
@@ -101232,7 +102306,7 @@ LTCp.setupDequeueing = defs.setupDequeueing({
 
 module.exports = LayeredTextureCache;
 
-},{"../../../heap":205,"../../../is":207,"../../../math":209,"../../../util":224,"./texture-cache-defs":202}],201:[function(require,module,exports){
+},{"../../../heap":213,"../../../is":215,"../../../math":217,"../../../util":232,"./texture-cache-defs":210}],209:[function(require,module,exports){
 'use strict';
 
 var CRp = {};
@@ -101252,7 +102326,7 @@ CRp.nodeShapeImpl = function( name, context, centerX, centerY, width, height, po
 
 module.exports = CRp;
 
-},{}],202:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 'use strict';
 
 var util = require( '../../../util' );
@@ -101341,7 +102415,7 @@ module.exports = {
   }
 };
 
-},{"../../../util":224}],203:[function(require,module,exports){
+},{"../../../util":232}],211:[function(require,module,exports){
 'use strict';
 
 module.exports = [
@@ -101350,7 +102424,7 @@ module.exports = [
   { name: 'canvas', impl: require( './canvas' ) }
 ];
 
-},{"./base":185,"./canvas":199,"./null":204}],204:[function(require,module,exports){
+},{"./base":193,"./canvas":207,"./null":212}],212:[function(require,module,exports){
 'use strict';
 
 function NullRenderer( options ){
@@ -101368,7 +102442,7 @@ NullRenderer.prototype = {
 
 module.exports = NullRenderer;
 
-},{}],205:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 /*!
 Ported by Xueqiao Xu <xueqiaoxu@gmail.com>;
 
@@ -101749,7 +102823,7 @@ Heap = (function(){
 
 module.exports = Heap;
 
-},{}],206:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 'use strict';
 
 require('./-preamble');
@@ -101796,7 +102870,7 @@ cytoscape.stylesheet = cytoscape.Stylesheet = Stylesheet;
 
 module.exports = cytoscape;
 
-},{"./-preamble":117,"./core":153,"./extension":162,"./is":207,"./stylesheet":222,"./version":231,"./window":232}],207:[function(require,module,exports){
+},{"./-preamble":125,"./core":161,"./extension":170,"./is":215,"./stylesheet":230,"./version":239,"./window":240}],215:[function(require,module,exports){
 'use strict';
 
 /*global HTMLElement DocumentTouch */
@@ -101979,7 +103053,7 @@ var is = {
 
 module.exports = is;
 
-},{"./window":232}],208:[function(require,module,exports){
+},{"./window":240}],216:[function(require,module,exports){
 function ObjectMap(){
   this._obj = {};
 }
@@ -102004,7 +103078,7 @@ p.get = function( key ){
 
 module.exports = typeof Map !== 'undefined' ? Map : ObjectMap;
 
-},{}],209:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 'use strict';
 
 var math = {};
@@ -103065,7 +104139,7 @@ math.getCutRectangleCornerLength = function(){
 
 module.exports = math;
 
-},{}],210:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 /*!
 Embeddable Minimum Strictly-Compliant Promises/A+ 1.1.1 Thenable
 Copyright (c) 2013-2014 Ralf S. Engelschall (http://engelschall.com)
@@ -103280,7 +104354,7 @@ api.reject = function( val ){
 
 module.exports = typeof Promise !== 'undefined' ? Promise : api; // eslint-disable-line no-undef
 
-},{}],211:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 'use strict';
 
 var is = require( './is' );
@@ -104223,7 +105297,7 @@ selfn.toString = selfn.selector = function(){
 
 module.exports = Selector;
 
-},{"./is":207,"./util":224}],212:[function(require,module,exports){
+},{"./is":215,"./util":232}],220:[function(require,module,exports){
 function ObjectSet(){
   this._obj = {};
 }
@@ -104244,7 +105318,7 @@ p.has = function( val ){
 
 module.exports = typeof Set !== 'undefined' ? Set : ObjectSet;
 
-},{}],213:[function(require,module,exports){
+},{}],221:[function(require,module,exports){
 'use strict';
 
 var util = require('../util');
@@ -104900,7 +105974,7 @@ styfn.checkZOrderTrigger = function( ele, name, fromValue, toValue ){
 
 module.exports = styfn;
 
-},{"../is":207,"../promise":210,"../util":224}],214:[function(require,module,exports){
+},{"../is":215,"../promise":218,"../util":232}],222:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -105078,7 +106152,7 @@ styfn.removeBypasses = function( eles, props, updateTransitions ){
 
 module.exports = styfn;
 
-},{"../is":207,"../util":224}],215:[function(require,module,exports){
+},{"../is":215,"../util":232}],223:[function(require,module,exports){
 'use strict';
 
 var window = require( '../window' );
@@ -105108,7 +106182,7 @@ styfn.containerCss = function( propName ){
 
 module.exports = styfn;
 
-},{"../window":232}],216:[function(require,module,exports){
+},{"../window":240}],224:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -105229,7 +106303,7 @@ styfn.getPropsList = function( propsObj ){
 
 module.exports = styfn;
 
-},{"../is":207,"../util":224}],217:[function(require,module,exports){
+},{"../is":215,"../util":232}],225:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -105402,7 +106476,7 @@ Style.properties = styfn.properties;
 
 module.exports = Style;
 
-},{"../is":207,"../selector":211,"../util":224,"./apply":213,"./bypass":214,"./container":215,"./get-for-ele":216,"./json":218,"./parse":219,"./properties":220,"./string-sheet":221}],218:[function(require,module,exports){
+},{"../is":215,"../selector":219,"../util":232,"./apply":221,"./bypass":222,"./container":223,"./get-for-ele":224,"./json":226,"./parse":227,"./properties":228,"./string-sheet":229}],226:[function(require,module,exports){
 'use strict';
 
 var styfn = {};
@@ -105465,7 +106539,7 @@ styfn.json = function(){
 
 module.exports = styfn;
 
-},{}],219:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -105892,7 +106966,7 @@ styfn.parseImpl = function( name, value, propIsBypass, propIsFlat ){
 
 module.exports = styfn;
 
-},{"../is":207,"../math":209,"../util":224}],220:[function(require,module,exports){
+},{"../is":215,"../math":217,"../util":232}],228:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -106456,7 +107530,7 @@ styfn.addDefaultStylesheet = function(){
 
 module.exports = styfn;
 
-},{"../is":207,"../util":224}],221:[function(require,module,exports){
+},{"../is":215,"../util":232}],229:[function(require,module,exports){
 'use strict';
 
 var util = require( '../util' );
@@ -106596,7 +107670,7 @@ styfn.fromString = function( string ){
 
 module.exports = styfn;
 
-},{"../selector":211,"../util":224}],222:[function(require,module,exports){
+},{"../selector":219,"../util":232}],230:[function(require,module,exports){
 'use strict';
 
 var is = require( './is' );
@@ -106691,7 +107765,7 @@ sheetfn.generateStyle = function( cy ){
 
 module.exports = Stylesheet;
 
-},{"./is":207,"./style":217,"./util":224}],223:[function(require,module,exports){
+},{"./is":215,"./style":225,"./util":232}],231:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -106986,7 +108060,7 @@ module.exports = {
   }
 };
 
-},{"../is":207}],224:[function(require,module,exports){
+},{"../is":215}],232:[function(require,module,exports){
 'use strict';
 
 /*global console */
@@ -107148,7 +108222,7 @@ util.setPrefixedProperty = function( obj, propName, prefix, value ){
 
 module.exports = util;
 
-},{"../is":207,"../math":209,"./colors":223,"./maps":225,"./memoize":226,"./regex":227,"./sort":228,"./strings":229,"./timing":230}],225:[function(require,module,exports){
+},{"../is":215,"../math":217,"./colors":231,"./maps":233,"./memoize":234,"./regex":235,"./sort":236,"./strings":237,"./timing":238}],233:[function(require,module,exports){
 'use strict';
 
 var is = require( '../is' );
@@ -107268,7 +108342,7 @@ module.exports = {
   }
 };
 
-},{"../is":207}],226:[function(require,module,exports){
+},{"../is":215}],234:[function(require,module,exports){
 'use strict';
 
 module.exports = function memoize( fn, keyFn ){
@@ -107309,7 +108383,7 @@ module.exports = function memoize( fn, keyFn ){
   return memoizedFn;
 };
 
-},{}],227:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 'use strict';
 
 var number = '(?:[-+]?(?:(?:\\d+|\\d*\\.\\d+)(?:[Ee][+-]?\\d+)?))';
@@ -107335,7 +108409,7 @@ module.exports = {
   }
 };
 
-},{}],228:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 function ascending( a, b ){
   if( a < b ){
     return -1;
@@ -107357,7 +108431,7 @@ module.exports = {
   }
 };
 
-},{}],229:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 'use strict';
 
 var memoize = require( './memoize' );
@@ -107393,7 +108467,7 @@ module.exports = {
 
 };
 
-},{"../is":207,"./memoize":226}],230:[function(require,module,exports){
+},{"../is":215,"./memoize":234}],238:[function(require,module,exports){
 'use strict';
 
 var window = require( '../window' );
@@ -107559,14 +108633,14 @@ util.debounce = function( func, wait, options ){ // ported lodash debounce funct
 
 module.exports = util;
 
-},{"../is":207,"../window":232}],231:[function(require,module,exports){
+},{"../is":215,"../window":240}],239:[function(require,module,exports){
 module.exports = "3.1.1";
 
-},{}],232:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 module.exports = ( typeof window === 'undefined' ? null : window ); // eslint-disable-line no-undef
 
-},{}],233:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"bbop-core":58,"class-expression":116,"dup":5,"underscore":234}],234:[function(require,module,exports){
+},{"bbop-core":66,"class-expression":124,"dup":5,"underscore":242}],242:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"dup":6}]},{},[7]);
