@@ -787,7 +787,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    glyph_args['foldback'] = 0.25;
 	}else{
 	    // Unpossible.
-	    throw new Error('unpossible glyph...is apparently possible');
+	    // throw new Error('unpossible glyph...is apparently possible');
+	    // For things like diamonds, and other currently unspecified
+	    // relations.
+	    glyph = 'Arrow';
+	    glyph_args['length'] = 12.5;
+	    glyph_args['width'] = 15;
+	    glyph_args['location'] = -4;
+	    glyph_args['foldback'] = 0.25;
 	}
 
 	var openann_edge_str = '<button class="open-annotation-dialog-edge btn btn-default" title="Open annotation dialog"></button>';
