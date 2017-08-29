@@ -33078,7 +33078,8 @@ var CytoViewInit = function(user_token){
 	each(ngraph.all_edges(), function(e){
 
 	    // Detect endpoint type as best as possible.
-	    var rglyph = aid.glyph(e.predicate_id());
+	    var rn = e.relation() || 'n/a';
+	    var rglyph = aid.glyph(rn);
 	    var glyph = null;
 	    if( rglyph === 'arrow' ){ // Arrow is explicit filled "PlainArrow".
 		glyph = 'triangle';
@@ -33098,6 +33099,15 @@ var CytoViewInit = function(user_token){
 		glyph = 'circle';
 	    }
 
+	    var readable_rn = aid.readable(rn) || rn;
+	    // If context aid doesn't work, see if it comes with a label.
+	    if( readable_rn === rn && typeof(e.label) === 'function' ){
+		var label_rn = e.label();
+		if( label_rn !== rn ){
+		    readable_rn = label_rn; // use label
+		}
+	    }
+
 	    // Push final edge data.
 	    elements.push({
 		group: 'edges',
@@ -33106,8 +33116,8 @@ var CytoViewInit = function(user_token){
 		    source: e.subject_id(),
 		    target: e.object_id(),
 		    predicate: e.predicate_id(),
-		    label: aid.readable(e.predicate_id()),
-		    color: aid.color(e.predicate_id()),
+		    label: readable_rn,
+		    color: aid.color(rn),
 		    glyph: glyph
 		}
 	    });
