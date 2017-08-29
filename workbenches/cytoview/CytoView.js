@@ -447,6 +447,7 @@ var CytoViewInit = function(user_token){
 	    maxZoom: 3.0,
 	    zoomingEnabled: true,
 	    userZoomingEnabled: true,
+	    wheelSensitivity: 0.25,
 	    panningEnabled: true,
 	    userPanningEnabled: true,
 	    boxSelectionEnabled: true,
