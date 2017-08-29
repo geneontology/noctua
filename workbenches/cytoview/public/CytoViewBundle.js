@@ -33092,7 +33092,10 @@ var CytoViewInit = function(user_token){
 		//glyph = 'triangle-backcurve';
 	    }else{
 		// Unpossible.
-		throw new Error('unpossible glyph...is apparently possible');
+		// throw new Error('unpossible glyph...is apparently possible');
+		// For things like diamonds, and other currently unspecified
+		// relations.
+		glyph = 'circle';
 	    }
 
 	    // Push final edge data.
