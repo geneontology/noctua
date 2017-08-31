@@ -1757,7 +1757,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var annoton_cc_auto_args = us.clone(base_annoton_auto_args);
 	annoton_bp_auto_args['list_select_callback'] =
 	    function(doc){
-		annoton_bp_auto_val = doc['annotation_class'] || null;
+		annoton_cc_auto_val = doc['annotation_class'] || null;
 	    };
 	
 	// Remember that we're using NEO for this now.
