@@ -14,11 +14,13 @@
 
 ### What is GO-CAM?
 
-GO-CAM (Linked Expressions using the Gene Ontology) is a formalism for
+GO-CAM (Gene Ontology Causal Activity Models) is a formalism for
 constructing models of biological pathways or processes using Gene
 Ontology (GO) annotations, contextual information (e.g., cell and
 tissue types) and defined semantic relations from the Relations
 Ontology (RO).
+
+For more details see the [GO-CAM Curation Guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#)
 
 ### What is Noctua?
 
