@@ -295,6 +295,91 @@ var NoctuaLauncher = function(){
     //    var min_def_name = config['DEFAULT_APP_DEFINITION'].value;
     self.minerva_definition_name = min_def_name;
 
+    // Now that we have some context, try and grab context-specific
+    // SPARQL queries.
+    var named_sparql_templates = {};
+    var sparql_templates_universal = [];
+    var sparql_templates_model = [];
+    var sparql_templates_individual = [];
+    var sparql_templates_edge = [];
+    var read_templates_count = 0;
+    var ignored_templates_count = 0;
+    var sparql_templates_path = 'context/'+ noctua_context +'/sparql-templates/';
+    //console.log('Have canned SPARQL templates? '+sparql_templates_path);
+    try {
+	// Try and read the directory for files.
+	var stp_stats = fs.statSync(sparql_templates_path);
+	if( ! stp_stats.isDirectory() ){
+	    console.log('No SPARQL templates for this context: '+noctua_context);
+	}else{
+	    
+	    var sparql_template_files = fs.readdirSync(sparql_templates_path);
+	    each(sparql_template_files, function(sparql_template_file_base){
+
+		var sparql_template_file =
+			sparql_templates_path + sparql_template_file_base;
+		
+		// Try and read the individual files.
+		var stf_stats = fs.statSync(sparql_template_file);
+		if( ! stf_stats.isFile() ){
+		    console.log('WARNING: Skipping: ' + sparql_template_file);
+		}else{
+		    var stf = null;
+		    try {
+			stf = yaml.load(sparql_template_file);
+		    } catch(e) {
+			console.log('WARNING: Not YAML: '+ sparql_template_file);
+		    }
+
+		    // Okay: we seem to have a thing.
+		    if( stf ){
+			//console.log('stf', stf);
+
+			var read_p = false;
+			
+			// Store an named/addressable SPARQL template.
+			if( stf['handle'] ){
+			    named_sparql_templates['handle'] = stf;
+			    read_p = true;
+			}
+			
+			// Scan the tags for Noctua markings.
+			us.each(stf['tags'], function(tag){
+
+			    if( tag === 'noctua-universal' ){
+				sparql_templates_universal.push(stf);
+				read_p = true;
+			    }else if( tag === 'noctua-model' ){
+				sparql_templates_model.push(stf);
+				read_p = true;
+			    }else if( tag === 'noctua-individual' ){
+				sparql_templates_individual.push(stf);
+				read_p = true;
+			    }else if( tag === 'noctua-edge' ){
+				sparql_templates_edge.push(stf);
+				read_p = true;
+			    }
+			});
+
+			// Increment how/if the template was read.
+			if( read_p ){
+			    read_templates_count++;
+			}else{
+			    ignored_templates_count++;
+			}
+		    }
+		}
+	    });
+	}
+    } catch(e) {
+	console.log('WARNING: Issue while trying to get SPARQL templates ' +
+		    'for this context: ' + noctua_context, e);
+    }
+
+    console.log( read_templates_count +
+		 ' SPARQL template(s) read; ' +
+		 ignored_templates_count +' ignored.');
+
     ///
     /// Environment helpers for deployment; also changing some of the
     /// default values depending on the environment to help with
@@ -424,7 +509,7 @@ var NoctuaLauncher = function(){
 	    // Unknown miss.
 	    console.log('WARNING: unknown context "' + noctua_context + '"');
 	}
-	    
+
 	// Try and see if we have an API token from the request.
 	var barista_token = self.get_token(req);
 	var noctua_landing = _build_token_link(self.frontend, barista_token);
