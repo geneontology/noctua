@@ -5,7 +5,7 @@ handle:
 description:
   "Get title, author, journal, and date by PMID."
 tags:
-  - "model"
+  - "not used, except for fun; maybe a UI?"
 endpoint:
   "https://query.wikidata.org/sparql"
 prefixes:

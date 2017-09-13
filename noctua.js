@@ -297,7 +297,7 @@ var NoctuaLauncher = function(){
 
     // Now that we have some context, try and grab context-specific
     // SPARQL queries.
-    var named_sparql_templates = {};
+    var sparql_templates_named = {};
     var sparql_templates_universal = [];
     var sparql_templates_model = [];
     var sparql_templates_individual = [];
@@ -339,28 +339,34 @@ var NoctuaLauncher = function(){
 			
 			// Store an named/addressable SPARQL template.
 			if( stf['handle'] ){
-			    named_sparql_templates['handle'] = stf;
+			    sparql_templates_named[stf['handle']] = stf;
 			    read_p = true;
 			}
 			
-			// Scan the tags for Noctua markings.
-			us.each(stf['tags'], function(tag){
-
-			    if( tag === 'noctua-universal' ){
-				sparql_templates_universal.push(stf);
-				read_p = true;
-			    }else if( tag === 'noctua-model' ){
-				sparql_templates_model.push(stf);
-				read_p = true;
-			    }else if( tag === 'noctua-individual' ){
-				sparql_templates_individual.push(stf);
-				read_p = true;
-			    }else if( tag === 'noctua-edge' ){
-				sparql_templates_edge.push(stf);
-				read_p = true;
+			// Scan the variable for Noctua location signals.
+			if( ! stf['variables'] || us.isEmpty(stf['variables'] )){
+			    sparql_templates_universal.push(stf);
+			    read_p = true;
+			}else{
+			    if( stf['variables'] ){
+				// Edge, individual, and model.
+				if( stf['variables']['model_id'] &&
+				    stf['variables']['subject_id'] &&
+				    stf['variables']['object_id'] &&
+				    stf['variables']['relation_id'] ){
+				    sparql_templates_edge.push(stf);
+				    read_p = true;
+				}else if( stf['variables']['model_id'] &&
+					  stf['variables']['individual_id'] ){
+				    sparql_templates_individual.push(stf);
+				    read_p = true;
+				}else if( stf['variables']['model_id'] ){
+				    sparql_templates_model.push(stf);
+				    read_p = true;
+				}
 			    }
-			});
-
+			}
+			
 			// Increment how/if the template was read.
 			if( read_p ){
 			    read_templates_count++;
@@ -548,6 +554,10 @@ var NoctuaLauncher = function(){
 
 	var tmpl_args = {
 	    'pup_tent_js_variables': [
+		{name: 'global_model',
+		 value: (model_obj || null)},
+		// BUG/TODO: Three (historical) ways of referring to
+		// model id--fix this.
 		{name: 'global_id',
 		 value: model_id },
 		{name: 'model_id',
@@ -562,8 +572,6 @@ var NoctuaLauncher = function(){
 		 value: object_individual_id },
 		{name: 'global_relation_id',
 		 value: relation_id },
-		{name: 'global_model',
-		 value: (model_obj || null)},
 		{name: 'global_golr_server',
 		 value: golr_server_location},
 		{name: 'global_golr_neo_server',
@@ -586,6 +594,7 @@ var NoctuaLauncher = function(){
 		 value: collapsible_reverse_relations },
 		{name: 'global_barista_token',
 		 value: barista_token },
+		// Workbenches.
 		{name: 'global_workbenches_universal',
 		 value: workbenches_universal },
 		{name: 'global_workbenches_model',
@@ -594,6 +603,18 @@ var NoctuaLauncher = function(){
 		 value: workbenches_individual },
 		{name: 'global_workbenches_edge',
 		 value: workbenches_edge },
+		// SPARQL templates.
+		{name: 'global_sparql_templates_named',
+		 value: sparql_templates_named },
+		{name: 'global_sparql_templates_universal',
+		 value: sparql_templates_universal },
+		{name: 'global_sparql_templates_model',
+		 value: sparql_templates_model },
+		{name: 'global_sparql_templates_individual',
+		 value: sparql_templates_individual },
+		{name: 'global_sparql_templates_edge',
+		 value: sparql_templates_edge },
+		// GitHub.
 		{name: 'global_github_api',
 		 value: github_api },
 		{name: 'global_github_org',
