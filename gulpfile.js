@@ -31,6 +31,7 @@ var request = require('request');
 
 // watch_mode is set by 'gulp watch' tasks to inhibit uglify (which is slow)
 var watch_mode = false;
+//var watch_mode = true;
 
 function _die(str){
     console.error(str);
@@ -91,7 +92,7 @@ var paths = {
     // WARNING: Cannot use glob for clients--I use the explicit listing
     // to generate a dynamic browserify set.
     'form_noctua_clients': [
-	'js/NoctuaBasic/NoctuaBasicApp.js'
+	//'js/NoctuaBasic/NoctuaBasicApp.js'
     ],
     'core_noctua_clients': [
     	'js/NoctuaEditor.js',
