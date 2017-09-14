@@ -9,6 +9,7 @@
 // Let jshint pass over over our external globals (browserify takes
 // care of it all).
 /* global jQuery */
+/* global global_sparql_templates_named */
 
 // Code here will be ignored by JSHint, as we are technically
 // "redefining" jQuery (although we are not).
@@ -21,6 +22,11 @@ var bbop_core = require('bbop-core');
 var bbop = require('bbop').bbop; // for html, etc.
 var minerva_requests = require('minerva-requests');
 var class_expression = require('class-expression');
+
+// To be used for SPARQL actions originating in widgets.
+var response_json = require('bbop-rest-response').json;
+var jquery_engine = require('bbop-rest-manager').jquery;
+var sparql_manager = require('bbop-manager-sparql');
 
 // Underscore aliases.
 var each = us.each;
@@ -1773,7 +1779,15 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     if( ! entity ){
 	alert('unknown id:' + entity_id);
     }else{
+
+	// app_hooks = {
+	//   'app-name': {
+	//     <elt-uuid>: {<arg-to-function>},
+	//     ...
+	// }; 
+	var app_hooks = {};
 	
+
 	// Go through our input list and create a mutable data
 	// structure that we can then use to fill out the editor
 	// slots.
@@ -1794,6 +1808,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	// Going through each of the annotation types, try and collect
 	// them from the model.
+	app_hooks['remote-pmid'] = {};
 	each(us.keys(ann_classes), function(key){
 
 	    // Skip adding anything if the policy is
@@ -1860,7 +1875,11 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				       // link pmids silly
 				       if( rav.split('PMID:').length === 2 ){
 					   var pmid = rav.split('PMID:')[1];
-					   kval += '<br />' + ref_ann.key() +': <a href="http://pmid.us/'+ pmid +'" target="_blank">'+ 'PMID:'+ pmid +' &#128279;</a>';
+					   var pmid_uuid = bbop_core.uuid();
+					   kval += '<br />' + ref_ann.key() +': <a id="'+pmid_uuid+'" href="http://pmid.us/'+ pmid +'" target="_blank">'+ 'PMID:'+ pmid +' &#128279;</a>';
+					   // As well, capture for later.
+					   app_hooks['remote-pmid'][pmid_uuid] =
+					       {'pmid': pmid};
 				       }else if( rav.split('http://').length === 2 ){
 					   kval +='<br />' + ref_ann.key() +': <a href="' + rav + '" target="_blank">'+ rav + ' &#128279;</a>';
 				       }else{
@@ -2255,6 +2274,51 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		
 	    });
 	}
+
+	// Now that they're in the DOM, add the different app classes
+	// we have defined.
+	//console.log('app_hooks', app_hooks);
+	each(us.keys(app_hooks), function(app_hook_set){
+	    us.each(us.keys(app_hooks[app_hook_set]), function(app_elt_uuid){
+		var app_elt_data = app_hooks[app_hook_set][app_elt_uuid];
+		if( app_hook_set === 'remote-pmid' ){
+
+		    var gptmpl = global_sparql_templates_named['get-pmid'];
+		    if( gptmpl ){
+			var sep = gptmpl['endpoint'];
+			//var sqy = gptmpl['query'];
+			console.log('sep', sep);
+			//console.log('query', sqy);
+			console.log('app_elt_data', app_elt_data);
+			
+			var engine_to_use = new jquery_engine(response_json);
+			engine_to_use.headers(
+			    [['accept', 'application/sparql-results+json']]);
+			var sm = new sparql_manager(sep,
+						    [],
+						    response_json,
+						    engine_to_use,
+						    'async');
+			sm.register('error', function(resp, man){
+			    console.log('sparql_manager error', resp);
+			});
+			sm.register('success', function(resp, man){
+			    //console.log('sparql_manager success', resp);
+			    if( resp.raw()['results'] &&
+				resp.raw()['results']['bindings'] &&
+				resp.raw()['results']['bindings'][0] &&
+				resp.raw()['results']['bindings'][0]['title'] ){
+				    var tt = resp.raw()['results']['bindings'][0]['title']['value'];
+				    jQuery("#"+app_elt_uuid).html(tt);
+				}else{
+				    console.log('wikidata return structure bad');
+				}
+			});
+			sm.template(JSON.stringify(gptmpl), app_elt_data);
+		    }
+		}
+            });
+	});
 	
 	// Now that they're all in the DOM, add any delete annotation
 	// actions. These are completely generic--all annotations can
