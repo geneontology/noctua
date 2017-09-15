@@ -112,8 +112,8 @@ var GoslingInit = function(){
 	if( tmpl['endpoint'] ){
 	    var ep = tmpl['endpoint'];
 	    //yasqe.endpoint(tmpl['endpoint']);
-	    //YASQE.defaults.sparql.endpoint = ep;
 	    //yasqe.defaults.sparql.endpoint = ep;
+	    YASQE.defaults.sparql.endpoint = ep;
 	}
     }
 
