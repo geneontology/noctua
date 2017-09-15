@@ -48,8 +48,8 @@ var yasqe_id = 'yasqe';
 var yasr_id = 'yasr';
 
 // Make the default ours at least.
-//YASQE.defaults.sparql.endpoint = "http://rdf.geneontology.org/sparql";
-YASQE.defaults.sparql.endpoint = "http://stove.lbl.gov/sparql";
+YASQE.defaults.sparql.endpoint = "http://rdf.geneontology.org/blazegraph/sparql";
+//YASQE.defaults.sparql.endpoint = "http://stove.lbl.gov/blazegraph/sparql";
 
 ///
 var GoslingInit = function(){
