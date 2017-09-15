@@ -48950,7 +48950,8 @@ var yasqe_id = 'yasqe';
 var yasr_id = 'yasr';
 
 // Make the default ours at least.
-YASQE.defaults.sparql.endpoint = "http://rdf.geneontology.org/sparql";
+YASQE.defaults.sparql.endpoint = "http://rdf.geneontology.org/blazegraph/sparql";
+//YASQE.defaults.sparql.endpoint = "http://stove.lbl.gov/blazegraph/sparql";
 
 ///
 var GoslingInit = function(){
@@ -48985,7 +48986,6 @@ var GoslingInit = function(){
     var yasqe = YASQE(document.getElementById("yasqe"), {
 	sparql: {
 	    showQueryButton: true,
-	    endpoint: 'http://rdf.geneontology.org/sparql'
 	}
     });
     var yasr = YASR(document.getElementById("yasr"), {
@@ -49014,8 +49014,8 @@ var GoslingInit = function(){
 	if( tmpl['endpoint'] ){
 	    var ep = tmpl['endpoint'];
 	    //yasqe.endpoint(tmpl['endpoint']);
-	    //YASQE.defaults.sparql.endpoint = ep;
 	    //yasqe.defaults.sparql.endpoint = ep;
+	    YASQE.defaults.sparql.endpoint = ep;
 	}
     }
 
