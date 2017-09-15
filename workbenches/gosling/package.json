@@ -1,0 +1,91 @@
+{
+    "name": "workbench-go-gosling",
+    "version": "0.0.1",
+    "license": "BSD-3-Clause",
+    "description": "Experimental GOOOSE-like Noctua interface for the Gene Ontology.",
+    "keywords": [
+	"workbench",
+	"gene ontology",
+	"GO",
+	"bbop",
+	"SPARQL",
+	"GOOSE",
+	"YASGUI",
+	"noctua"
+    ],
+    "author": "SJC <sjcarbon@lbl.gov> (http://berkeleybop.org/)",
+    "homepage": "http://berkeleybop.org/",
+    "repository": {
+	"type": "git",
+	"url": "git+https://github.com/geneontology/noctua.git"
+    },
+    "engines": {
+	"node": ">= 4.4",
+	"npm": ">= 2.15"
+    },
+    "dependencies": {
+	"amigo2-instance-data": "2.5.7",
+	"amigo2": "2.4.3",
+	"bbop": "2.4.3",
+	"bbop-core": "0.0.5",
+	"bbop-graph-noctua": "0.0.32",
+	"bbop-manager-sparql": "0.0.5",
+	"bbop-rest-manager": "0.0.17",
+	"bbop-rest-response": "0.0.4",
+	"gulp": "^3.9.1",
+	"jquery": "^2.2.4",
+	"underscore": "1.8.3"
+    },
+    "devDependencies": {
+	"browserify": "^13.0.1",
+	"browserify-shim": "^3.8.12",
+	"chai": "^3.5.0",
+	"eslint": "^2.13.1",
+	"gulp-bump": "^2.1.0",
+	"gulp-git": "^1.7.2",
+	"gulp-jsdoc": "^0.1.5",
+	"gulp-jshint": "^2.0.1",
+	"gulp-mocha": "^2.2.0",
+	"gulp-streamify": "^1.0.2",
+	"gulp-uglify": "^1.5.3",
+	"jsdoc": "^3.4.0",
+	"jshint": "^2.9.3",
+	"uglifyify": "^3.0.2",
+	"vinyl-source-stream": "1.1.0",
+	"wait-on": "^1.5.2",
+	"watchify": "^3.7.0"
+    },
+    "browserify": {
+	"transform": [
+	    "browserify-shim"
+	]
+    },
+    "browser": {
+	"jquery": "./node_modules/jquery/dist/jquery.min.js",
+	"bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
+	"jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
+	"noctua-widgetry": "../../js/lib/noctua-widgetry/widgetry.js"
+    },
+    "browserify-shim": {
+	"jquery": {
+	    "exports": "global:jQuery"
+	},
+	"jquery-ui": {
+	    "depends": [
+		"jquery"
+	    ]
+	}
+    },
+    "bundleDependencies": [],
+    "private": false,
+    "main": null,
+    "bugs": {
+	"url": "https://github.com/geneontology/noctua/issues"
+    },
+    "directories": {
+    },
+    "scripts": {
+	"build": "./node_modules/.bin/browserify Gosling.js -o public/GoslingBundle.js --exclude ringo/httpclient",
+	"test": "echo \"Error: no test specified\" && exit 1"
+    }
+}
