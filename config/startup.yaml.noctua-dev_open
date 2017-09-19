@@ -79,15 +79,19 @@ WORKBENCHES:
   value:
     - 'workbenches'
 ## Minerva operations preferences.
+MINERVA_JAR:
+  comment: The JAR to use for Minerva.
+  type: string
+  value: '../minerva/minerva-cli/bin/minerva-cli.jar'
 MINERVA_REASONER:
   comment: The reasoner to use in Minerva.
   type: string
-  value: slme-elk
+  value: arachne
 ## JVM preferences.
 MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
   type: number
-  value: 4
+  value: 64
 ## Graph preferences.
 COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.
