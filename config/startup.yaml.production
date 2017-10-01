@@ -147,7 +147,7 @@ APP_DEFINITIONS:
         - m3Batch
         - seed/fromProcess
     - id: minerva_public_dev
-      target: http://toaster.lbl.gov:6799
+      target: http://wok.lbl.gov:6800
       public:
         - m3Batch
         - seed/fromProcess
