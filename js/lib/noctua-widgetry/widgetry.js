@@ -319,6 +319,7 @@ function node_stack_object(enode, aid){
     function _add_table_row(item, color, prefix, suffix){
 	//var rep_color = aid.color(item.category());
 	var out_rep = type_to_span(item, color);
+	//console.log('type_to_span' + type_to_span);
 	if( prefix ){ out_rep = prefix + out_rep; }
 	if( suffix ){ out_rep = out_rep + suffix; }
 	var trstr = null;
@@ -1007,10 +1008,25 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     };
     var type_add_btn = new bbop.html.tag('button', type_add_btn_args, 'Add');
 
+    // Create NOT checkbox.
+    var type_not_checkbox_args = {
+    	'generate_id': true,
+    	'type': 'checkbox',
+    };
+    var type_not_checkbox =
+	    new bbop.html.tag('input', type_not_checkbox_args);
+
+    // Final assembly.
     var type_form = [
     	'<div class="form">',
     	'<div class="form-group">',
 	type_add_class_text.to_string(),
+    	'</div>',
+	'<div class="checkbox">',
+	'<label>',
+	type_not_checkbox.to_string(),
+    	' NOT',
+    	'</label>',
     	'</div>',
     	type_add_btn.to_string(),
     	'</div>'
@@ -1265,9 +1281,22 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	
 	var cls = jQuery('#' + type_add_class_text.get_id()).val();
 	if( cls ){
-	    // Trigger the delete--hopefully inconsistent.
-	    manager.add_class_expression(ecore.get_id(), tid, cls);
-	    
+
+	    // Check to see if the input is checked.
+	    var qstr = 'input:checkbox[id=' +
+		    type_not_checkbox.get_id() + ']:checked';
+	    var rval = jQuery(qstr).val();
+	    if( rval === 'on' ){
+		// Create a negated class expression.
+		var ce = new class_expression();
+		ce.as_complement(cls);
+		// Trigger the addition--hopefully inconsistent.
+		manager.add_class_expression(ecore.get_id(), tid, ce);
+	    }else{
+		// Trigger the addition--hopefully inconsistent.
+		manager.add_class_expression(ecore.get_id(), tid, cls);
+	    }
+		
 	    // Wipe out modal.
 	    mdl.destroy();	    
 	}else{
@@ -2874,7 +2903,7 @@ function type_to_full(in_type, aid){
     var text = '[???]';
 
     var t = in_type.type();
-    if( t === 'class' ){ // if simple, the easy way out
+    if( t === 'class' || t === 'complement' ){ // if simple, the easy way out
 	text = in_type.to_string_plus();
     }else{
 	// For everything else, we're gunna hafta do a little

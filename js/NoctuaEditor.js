@@ -52,6 +52,7 @@ var model = require('bbop-graph-noctua');
 var barista_response = require('bbop-response-barista');
 var minerva_requests = require('minerva-requests');
 var rest_response = require('bbop-rest-response').json;
+var class_expression = require('class-expression');
 
 //
 var jquery_engine = require('bbop-rest-manager').jquery;
@@ -387,6 +388,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Ubernoodle contact points.
     var simple_ubernoodle_auto_id = 'simple_ubernoodle_auto';
     var simple_ubernoodle_auto_elt = '#' + simple_ubernoodle_auto_id;
+    var simple_ubernoodle_not_checkbox_id = 'simple_ubernoodle_not_checkbox';
+    var simple_ubernoodle_not_checkbox_elt =
+	    '#' + simple_ubernoodle_not_checkbox_id;
     var simple_ubernoodle_add_btn_id ='simple_ubernoodle_adder_button';
     var simple_ubernoodle_add_btn_elt = '#' + simple_ubernoodle_add_btn_id;
     // MF (free form) button contact points.
@@ -1695,7 +1699,21 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    // Send message to server.
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
 							ecore.get_id());
-	    reqs.add_individual(simple_ubernoodle_auto_val);
+
+	    // Different request depending on the check of the NOT
+	    // box.
+	    var qstr = 'input:checkbox[id=' +
+		    simple_ubernoodle_not_checkbox_id + ']:checked';
+	    var rval = jQuery(qstr).val();
+	    if( rval === 'on' ){		
+		// Create a negated class expression.
+		var ce = new class_expression();
+		ce.as_complement(simple_ubernoodle_auto_val);
+		reqs.add_individual(ce);
+	    }else{
+		reqs.add_individual(simple_ubernoodle_auto_val);
+	    }
+		
 	    //console.log(reqs.structure());
 	    //console.log(manager.use_groups());
 	    manager.request_with(reqs);
