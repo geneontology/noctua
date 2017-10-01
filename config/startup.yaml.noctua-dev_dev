@@ -38,11 +38,11 @@ NOCTUA_CONTEXT:
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
-  value: http://noctua-dev.berkeleybop.org
+  value: http://localhost:8910
 NOCTUA_LOCATION:
   comment: Location that Noctua should think it is internally.
   type: url
-  value: http://131.243.192.20:8910
+  value: http://localhost:8910
 MINERVA_LOCATION:
   comment: The location of the minerva to communicate with.
   type: url
