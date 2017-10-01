@@ -18,7 +18,7 @@ GOLR_NEO_LOOKUP_URL:
 GOLR_LOCATION:
   comment: The actual unprotected location of the GOlr server to load to (if different from GOLR_LOOKUP_URL).
   type: url
-  value: http://toaster.lbl.gov:8080/solr
+  value: http://stove.lbl.gov:8080/solr
 BARISTA_LOOKUP_URL:
   comment: Define where Noctua looks for Barista.
   type: url
