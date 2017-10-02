@@ -1,0 +1,45 @@
+title:
+  "Cellular Component in an Annoton should be a type of Cellular Component (GO:0005575)"
+handle:
+  "annoton-cc"
+description:
+  Finds violations of the rule that in an annoton, the 'occurs in' (BFO:0000066)
+  relation and should be a subclass of Cellular Component (GO:)
+tags:
+  - "CAM"
+  - "Rule"
+endpoint:
+  "rdf.geneontology/blazegraph/sparql"
+# prefixes:
+
+query: >
+
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX occurs_in: <http://purl.obolibrary.org/obo/BFO_0000066>
+  PREFIX CC: <http://purl.obolibrary.org/obo/GO_0005575>
+  PREFIX MF: <http://purl.obolibrary.org/obo/GO_0003674>
+  PREFIX metago: <http://geneontology.org/>
+
+  SELECT ?cam ?cc ?cellClass
+  WHERE {
+
+      GRAPH ?cam {
+        ?cam metago:graphType metago:noctuaCam .
+
+        ?mf occurs_in: ?cc .
+        ?cc a ?cellClass .
+      }
+
+      GRAPH ?cam_inferred {
+        ?cam_inferred metago:inferredFrom ?cam .
+
+        ?mf a MF: .
+      }
+
+      FILTER (?cellClass != <http://www.w3.org/2002/07/owl#NamedIndividual>)
+
+      FILTER NOT EXISTS {
+        ?cellClass rdfs:subClassOf* CC: .
+      }
+}

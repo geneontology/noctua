@@ -1,0 +1,44 @@
+title:
+  "Molecular Function in an Annoton must be a type of Molecular Function (GO:0003674)"
+handle:
+  "annoton-mf"
+description:
+  "Finds violations of the rule that in an annoton, the root should be a subclass of Molecular Function"
+tags:
+  - "CAM"
+  - "Rule"
+endpoint:
+  "rdf.geneontology/blazegraph/sparql"
+# prefixes:
+
+
+query: >
+
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX owl: <http://www.w3.org/2002/07/owl#>
+  PREFIX enabled_by: <http://purl.obolibrary.org/obo/RO_0002333>
+  PREFIX occurs_in: <http://purl.obolibrary.org/obo/BFO_0000066>
+  PREFIX part_of: <http://purl.obolibrary.org/obo/BFO_0000050>
+  PREFIX metago: <http://geneontology.org/>
+
+  SELECT ?cam ?mf ?mfClass
+  WHERE {
+
+    VALUES ?relation { enabled_by: occurs_in: part_of: }
+
+    # BIND ({{ model }} as ?cam)
+
+    GRAPH ?cam {
+    ?cam metago:graphType metago:noctuaCam .
+
+      ?mf ?relation ?o .
+      ?mf a ?mfClass .
+
+      FILTER (?mfClass != <http://www.w3.org/2002/07/owl#NamedIndividual>)
+    }
+
+    FILTER NOT EXISTS {
+      ?mfClass rdfs:subClassOf* MF: .
+    }
+  }
