@@ -43514,7 +43514,7 @@ class_expression.prototype.to_string = function(front_str, back_str){
 	    var cef = ce.frame();
 	    inner_lbl = cetype + '[' + cef.length + ']';
 	}else if( cetype === 'complement' ){
-	    inner_lbl = '[!]';
+	    inner_lbl = '[NOT]';
 	}else if( cetype === 'svf' ){
 	    inner_lbl = '[SVF]';
 	}else{
@@ -43534,7 +43534,7 @@ class_expression.prototype.to_string = function(front_str, back_str){
     }else if( t === 'union' || t === 'intersection' ){
 	ret = t + '[' + f.length + ']';
     }else if( t === 'complement' ){
-	ret = '!' + 
+	ret = 'NOT' +
 	    //'[' + anchor.to_string(anchor.complement_class_expression()) + ']';
 	    '[' + _inner_lbl(anchor.complement_class_expression()) + ']';
     }else if( t === 'svf' ){
@@ -43593,7 +43593,7 @@ class_expression.prototype.to_string_plus = function(front_str, back_str){
 	    var cef = ce.frame();
 	    inner_lbl = cetype + '[' + cef.length + ']';
 	}else if( cetype === 'complement' ){
-	    inner_lbl = '[!]';
+	    inner_lbl = '[NOT]';
 	}else if( cetype === 'svf' ){
 	    inner_lbl = '[SVF]';
 	}else{
@@ -43613,7 +43613,7 @@ class_expression.prototype.to_string_plus = function(front_str, back_str){
     }else if( t === 'union' || t === 'intersection' ){
 	ret = t + '[' + f.length + ']';
     }else if( t === 'complement' ){
-	ret = '!' + 
+	ret = 'NOT' +
 	    //'[' + anchor.to_string(anchor.complement_class_expression()) + ']';
 	    '[' + _inner_lbl(anchor.complement_class_expression()) + ']';
     }else if( t === 'svf' ){

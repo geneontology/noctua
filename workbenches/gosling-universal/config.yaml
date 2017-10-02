@@ -5,7 +5,7 @@ help-link: "http://github.com/geneontology/noctua/issues"
 javascript:
   - http://cdn.jsdelivr.net/yasqe/2.11.10/yasqe.bundled.min.js
   - http://cdn.jsdelivr.net/yasr/2.10.8/yasr.bundled.min.js
-  - GoslingBundle.js
+  - GoslingUniversalBundle.js
 css:
   - http://cdn.jsdelivr.net/yasqe/2.11.10/yasqe.min.css
   - http://cdn.jsdelivr.net/yasr/2.10.8/yasr.min.css

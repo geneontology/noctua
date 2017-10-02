@@ -1,5 +1,5 @@
 {
-    "name": "workbench-go-gosling",
+    "name": "workbench-go-gosling-universal",
     "version": "0.0.1",
     "license": "BSD-3-Clause",
     "description": "Experimental GOOOSE-like Noctua interface for the Gene Ontology.",
@@ -85,7 +85,7 @@
     "directories": {
     },
     "scripts": {
-	"build": "./node_modules/.bin/browserify Gosling.js -o public/GoslingBundle.js --exclude ringo/httpclient",
+	"build": "./node_modules/.bin/browserify GoslingUniversal.js -o public/GoslingUniversalBundle.js --exclude ringo/httpclient",
 	"test": "echo \"Error: no test specified\" && exit 1"
     }
 }
