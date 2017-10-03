@@ -1,0 +1,23 @@
+title:
+  "Trival query (for a model)."
+handle:
+  "trivial03"
+description:
+  "A completely trivial query, with a higher limit and for a model."
+tags:
+  - "TODO"
+endpoint:
+  "https://rdf.geneontology.org/sparql"
+variables:
+  model_id:
+    comment: The intended GO model.
+query: |+
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX gomodel: <http://model.geneontology.org/#>
+  SELECT * WHERE {
+    GRAPH {{ model_id }} {
+      ?sub ?pred ?obj .
+    }
+  }
+  LIMIT 20

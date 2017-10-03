@@ -14,7 +14,7 @@ prefixes:
   - prefix: wdt
     expansion: <http://www.wikidata.org/prop/direct/>
 variables:
-  - name: pmid
+  pmid:
     comment: The intended PMID, just the local part.
 query: >
   SELECT ?rtcl ?title ?author ?journal ?date
