@@ -2705,6 +2705,7 @@ function user_check(barista_loc, given_token, elt_id,
 	    
 	    // Render a single entry in the groups dropdown.
 	    var something_checked_p = false;
+	    var selected_group = 'none';
 	    var _render_entry = function(user_uri, group_id, group_label){	
 
 		var chk = '&#10004&nbsp;';
@@ -2718,6 +2719,7 @@ function user_check(barista_loc, given_token, elt_id,
 		    ret = '<li><a id=' + fresh_id + ' href="#">' +
 			chk + group_label + '</a></li>';
 		    eid2gid[fresh_id] = group_id;
+		    selected_group = group_label;
 		    something_checked_p = true;
 		}else if( user_uri === group_id ){
 		    // Bold if our "none" group.
@@ -2789,7 +2791,8 @@ function user_check(barista_loc, given_token, elt_id,
 		    '<!-- Group controls. -->',
 		    '<li class="dropdown" id="' + elt_id + '">',
 		    '<span class="dropdown-toggle" data-toggle="dropdown">'+
-			name + ' <b class="caret"></b></span>',
+			name + ' <small>(' +
+			selected_group + ')</small><b class="caret"></b></span>',
 		    '<ul class="dropdown-menu">',
 		    group_list.join(' '),
 		    '</ul>',
