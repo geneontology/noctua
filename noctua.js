@@ -328,7 +328,7 @@ var NoctuaLauncher = function(){
 		    try {
 			stf = yaml.load(sparql_template_file);
 		    } catch(e) {
-			console.log('WARNING: Not YAML: '+ sparql_template_file);
+			console.log('WARNING: Not YAML: '+sparql_template_file);
 		    }
 
 		    // Okay: we seem to have a thing.
@@ -347,6 +347,8 @@ var NoctuaLauncher = function(){
 			if( ! stf['variables'] || us.isEmpty(stf['variables'] )){
 			    sparql_templates_universal.push(stf);
 			    read_p = true;
+			    console.log('Gosling (universal): ' +
+					sparql_template_file);
 			}else{
 			    if( stf['variables'] ){
 				// Edge, individual, and model.
@@ -356,14 +358,26 @@ var NoctuaLauncher = function(){
 				    stf['variables']['relation_id'] ){
 				    sparql_templates_edge.push(stf);
 				    read_p = true;
+				    console.log('Gosling (edge): ' +
+				    sparql_template_file);
 				}else if( stf['variables']['model_id'] &&
 					  stf['variables']['individual_id'] ){
 				    sparql_templates_individual.push(stf);
 				    read_p = true;
+				    console.log('Gosling (individual): ' +
+				    sparql_template_file);
 				}else if( stf['variables']['model_id'] ){
 				    sparql_templates_model.push(stf);
 				    read_p = true;
+				    console.log('Gosling (model): '+
+				    sparql_template_file);
+				}else{
+				    console.log('Gosling (skip, missed var)): '+
+				    sparql_template_file);
 				}
+			    }else{
+				console.log('Gosling (skip, empty var)): '+
+					    sparql_template_file);
 			    }
 			}
 			
