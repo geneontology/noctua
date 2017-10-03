@@ -2545,7 +2545,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 					       eco_auto_args);
 	    eco_auto.lite(true);
 	    eco_auto.add_query_filter('document_category', 'ontology_class');
-	    eco_auto.add_query_filter('source', 'eco', ['+']);
+	    eco_auto.add_query_filter('source',
+				      'eco', ['+']);
+	    eco_auto.add_query_filter('regulates_closure',
+				      'ECO:0000352', ['+']);
 	    eco_auto.set_personality('ontology');
 	}
     }
