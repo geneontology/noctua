@@ -1,0 +1,65 @@
+<!-- Main "app". -->
+<div class="container">
+
+  <div class="header text-center">
+    <h3>PathwayView for {{model_id}}</h3>
+  </div>
+
+  <!-- Cytoscape graph view. -->
+  <div class="form-inline">
+    <div class="form-group">
+      <label for="layout_selection">Layout</label>
+      <select id="layout_selection" class="form-control col-sm-6">
+	<option value="noctuadef">
+	  noctua default
+	<option value="breadthfirst">
+	  naive breadthfirst
+	</option>
+	<option value="cose">
+	  force 
+	</option>
+	<option value="cose-bilkent" selected="selected">
+	  super force 
+	</option>
+	<!-- <option value="circle"> -->
+	<!--   circle -->
+	<!-- </option> -->
+	<option value="random">
+	  random
+	</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="nest_selection">Nesting</label>
+      <select id="nest_selection" class="form-control col-sm-6">
+    	<option value="no" selected="selected">
+    	  no
+    	</option>
+    	<option value="yes">
+    	  yes
+    	</option>
+      </select>
+    </div>
+
+    <!-- <\!-- <div class="form-group"> -\-> -->
+    <!-- <\!--   <label for="button">Fold</label> -\-> -->
+    <!--   <button id="button" -->
+    <!-- 	      class="btn btn-primary" -->
+    <!-- 	      style="margin-top: 1.8em;" -->
+    <!-- 	      type="button">Set layout</button> -->
+    <!-- <\!-- </div> -\-> -->
+
+  </div>
+
+  <!-- style="border: 1px black solid; width:100%; height:700px; background-color: #ffebcd; margin-top:5px;"> -->
+  <div id="pathwayview"
+       width="100%" height="700px"
+       style="border: 1px black solid; width:100%; height:700px; background-color: #eeeeee; margin-top:5px;">
+    Loading...
+  </div>
+
+  <!-- Container. -->
+</div>
+
+<!-- Free-floating hover div. -->
+<div id="hoverbox" class="hidden"></div>

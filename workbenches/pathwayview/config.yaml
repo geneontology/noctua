@@ -1,0 +1,7 @@
+menu-name: "Pathway view"
+page-name: "Pathway View"
+type: "model"
+help-link: "http://github.com/geneontology/noctua/issues"
+javascript:
+  - PathwayViewBundle.js
+css: []
