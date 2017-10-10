@@ -68,6 +68,9 @@ var graph_id = 'pathwayview';
 var graph_layout = 'cose-bilkent'; // default
 var graph_fold = 'editor'; // default
 var graph_nest = 'no'; // default
+var graph_show_mf = 'no'; // default
+var graph_show_hi = 'no'; // default
+var graph_show_shape = 'ellipse'; // default
 var graph = null; // the graph itself
 var cy = null;
 var layout_opts = null;
@@ -148,7 +151,7 @@ var PathwayViewInit = function(user_token){
 	return retlist;
     }
     
-    function _render_graph(ngraph, layout, fold, nest){
+    function _render_graph(ngraph, layout, fold, nest, show_mf_p, show_hi_p, show_shape){
 
 	// Wipe it and start again.
 	jQuery('#'+graph_id).empty();
@@ -247,9 +250,11 @@ var PathwayViewInit = function(user_token){
 	    // Where we'll assemble the label.
 	    var table_row = [];
 
-	    // First, extract any GP info, if it's there.
-	    // If it is, it is the exclusive displayed info.
+	    // First, extract any GP info (or has_input, depending on
+	    // rel), if it's there.  If it is, it is the exclusive
+	    // displayed info.
 	    var gp_identified_p = false;
+	    var has_input_collection = [];
 	    var sub = n.subgraph();
 	    if( sub ){
 		each(sub.all_nodes(), function(snode){
@@ -270,10 +275,37 @@ var PathwayViewInit = function(user_token){
 					var gp_labels =
 						_node_labels(gpn, cat_list);
 					each(gp_labels, function(gpl){
+					    // Remove the species name
+					    // from each label for
+					    // readability.
+					    var last = gpl.lastIndexOf(" ");
+					    if( last > 0 ){
+						    gpl = gpl.substring(0, last);
+					    }
 					    table_row.push(gpl);
 					    gp_identified_p = true;
 					});
-				}
+				    }else if( show_hi_p === 'yes' &&
+					      e.predicate_id() === 'RO:0002233' ){
+						  var hin = sub.get_node(snid);
+						  var hilbl = hin;
+						  // Extract type
+						  // labels and add
+						  // them.
+						  var hi_labels = _node_labels(hin, cat_list);
+						  each(hi_labels, function(hil){
+						      // Remove the
+						      // species name
+						      // from each
+						      // label for
+						      // readability.
+						      var last = hil.lastIndexOf(" ");
+						      if( last > 0 ){
+							  hil = hil.substring(0, last);
+						      }
+						      has_input_collection.push(hil);
+						  });
+					      }
 			    });
 			}
 		    }
@@ -284,16 +316,35 @@ var PathwayViewInit = function(user_token){
 	    if( ! gp_identified_p ){
 	    
 		// Extract node type labels and add them.
-		var node_labels = _node_labels(n, cat_list);
-		each(node_labels, function(nl){
-		    table_row.push(nl);
+		each(_node_labels(n, cat_list), function(nl){
+		    if( show_mf_p === 'yes' ){
+			table_row.push('[' + nl + ']');
+		    }else{
+			table_row.push(nl);
+		    }
 		});
+
+	    }else if( show_mf_p === 'yes' ){
+
+		// Extract node type labels and add them.
+		each(_node_labels(n, cat_list), function(nl){
+		    table_row.push('[' + nl + ']');
+		});
+
 	    }else{
 		bgc = 'yellow';
 	    }
 	    
+	    // Add the has_inputs last.
+	    each(has_input_collection, function(itm){
+		//table_row.push('has_input('+itm+')');
+		table_row.push('('+itm+'➔)');
+	    });
+
 	    // Make a label from it.
 	    var nlbl = table_row.join("\n");
+	    console.log(table_row);
+	    console.log(nlbl);
 	    
 	    // Add nesting where desired, if the nesting isn't
 	    // breaking the single parent model.
@@ -553,6 +604,7 @@ var PathwayViewInit = function(user_token){
                         'color': 'black',
 //                      'color': 'black',
 //			'shape': 'roundrectangle',
+			'shape': show_shape,
 //                        'text-outline-width': 1,
 //                        'text-outline-color': '#222222',
 			'text-wrap': 'wrap',
@@ -737,8 +789,10 @@ var PathwayViewInit = function(user_token){
 	graph.load_data_basic(resp.data());
 
 	// Initial rendering of the graph.
-	_render_graph(graph, graph_layout, graph_fold, graph_nest);
-
+	_render_graph(graph, graph_layout, graph_fold,
+		      graph_nest, graph_show_mf, graph_show_hi,
+		      graph_show_shape);
+	
 	// Go ahead and wire-up the interface.
 	jQuery("#" + "layout_selection").change(function(event){
 	    graph_layout = jQuery(this).val();
@@ -754,7 +808,30 @@ var PathwayViewInit = function(user_token){
 	jQuery("#" + "nest_selection").change(function(event){
 	    graph_nest = jQuery(this).val();
 	    console.log('nesting now: "' + graph_nest + '"');
-	    _render_graph(graph, graph_layout, graph_fold, graph_nest);
+	    _render_graph(graph, graph_layout, graph_fold,
+			  graph_nest, graph_show_mf, graph_show_hi,
+			  graph_show_shape);
+	});
+	jQuery("#" + "mf_selection").change(function(event){
+	    graph_show_mf = jQuery(this).val();
+	    console.log('show mf now: "' + graph_show_mf + '"');
+	    _render_graph(graph, graph_layout, graph_fold,
+			  graph_nest, graph_show_mf, graph_show_hi,
+			  graph_show_shape);
+	});
+	jQuery("#" + "hi_selection").change(function(event){
+	    graph_show_hi = jQuery(this).val();
+	    console.log('show hi now: "' + graph_show_hi + '"');
+	    _render_graph(graph, graph_layout, graph_fold,
+			  graph_nest, graph_show_mf, graph_show_hi,
+			  graph_show_shape);
+	});
+	jQuery("#" + "shape_selection").change(function(event){
+	    graph_show_shape = jQuery(this).val();
+	    console.log('show shape now: "' + graph_show_shape + '"');
+	    _render_graph(graph, graph_layout, graph_fold,
+			  graph_nest, graph_show_mf, graph_show_hi,
+			  graph_show_shape);
 	});
     }, 10);
 
@@ -905,32 +982,32 @@ function node_stack_object(enode, aid){
 
     }
 
-    // Inject meta-information if extant.
-    var anns = enode.annotations();
-    if( anns.length !== 0 ){
+    // // Inject meta-information if extant.
+    // var anns = enode.annotations();
+    // if( anns.length !== 0 ){
 
-	// Meta counts.
-	var n_ev = 0;
-	var n_other = 0;
-	each(anns, function(ann){
-	    if( ann.key() === 'evidence' ){
-		n_ev++;
-	    }else{
-		if( ann.key() !== 'hint-layout-x' &&
-		    ann.key() !== 'hint-layout-y' ){
-		    n_other++;
-		}
-	    }
-	});
+    // 	// Meta counts.
+    // 	var n_ev = 0;
+    // 	var n_other = 0;
+    // 	each(anns, function(ann){
+    // 	    if( ann.key() === 'evidence' ){
+    // 		n_ev++;
+    // 	    }else{
+    // 		if( ann.key() !== 'hint-layout-x' &&
+    // 		    ann.key() !== 'hint-layout-y' ){
+    // 		    n_other++;
+    // 		}
+    // 	    }
+    // 	});
 
-	// Add to top. No longer need evidence count on individuals.
-	var trstr = '<tr class="bbop-mme-stack-tr">' +
-		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
-		//'evidence: ' + n_ev + '; other: ' + n_other + 
-		'annotations: ' + n_other + 
-		'</small></td></tr>';
-	enode_stack_table.add_to(trstr);
-    }
+    // 	// Add to top. No longer need evidence count on individuals.
+    // 	var trstr = '<tr class="bbop-mme-stack-tr">' +
+    // 		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
+    // 		//'evidence: ' + n_ev + '; other: ' + n_other + 
+    // 		'annotations: ' + n_other + 
+    // 		'</small></td></tr>';
+    // 	enode_stack_table.add_to(trstr);
+    // }
     
     // Add external visual cue if there were inferred types.
     if( inf_types.length > 0 ){
