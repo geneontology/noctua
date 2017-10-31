@@ -349,9 +349,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'widget_type': 'source_ref',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Enter evidence type (by ECO label)',
-	    'placeholder_secondary': 'Enter source (i.e. PREFIX:id)',
-	    'placeholder_tertiary': "Enter &quot;with&quot;; only for appropriate evidence types"
+	    'placeholder':           'Enter evidence code (ECO label, ECO ID, or 3-letter code)',
+	    'placeholder_secondary': 'Enter reference (must be in form of PREFIX:ID)',
+	    'placeholder_tertiary':  'If appropriate, enter with/from value (must be in form of PREFIX:ID)'
 	},
 	// {
 	//     'id': 'source',
