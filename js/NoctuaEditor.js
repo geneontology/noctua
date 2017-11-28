@@ -96,7 +96,7 @@ var compute_shield_modal = null;
 var MMEnvInit = function(model_json, in_relations, in_token){
 
     //ll('model_json', model_json);
-    
+
     var logger = new bbop.logger('noctua editor');
     logger.DEBUG = true;
     function ll(str){ logger.kvetch(str); }
@@ -208,7 +208,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	//     'policy': 'mutable',
 	//     'cardinality': 'many',
 	//     'placeholder': 'Enter evidence type'
-	
+
 	// },
 	// {
 	//     'id': 'source',
@@ -264,7 +264,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
     var individual_annotation_config = [
@@ -314,7 +314,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
     var fact_annotation_config = [
@@ -367,7 +367,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    'widget_type': 'textarea',
 	    'policy': 'mutable',
 	    'cardinality': 'many',
-	    'placeholder': 'Add comment...'		
+	    'placeholder': 'Add comment...'
 	}
     ];
 
@@ -480,7 +480,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     var vbox_width = 5;
     var vbox_height = 5;
     function _box_top(raw_y){
-	return ((box_height + v_spacer) * raw_y) + v_spacer;	
+	return ((box_height + v_spacer) * raw_y) + v_spacer;
     }
     function _box_left(raw_x){
 	return ((box_width + h_spacer) * raw_x) + h_spacer;
@@ -514,11 +514,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    ret = parseInt(hint_anns[0].value());
 	    //ll('extracted coord ' + x_or_y + ': ' + ret);
 	}else if( hint_anns.length === 0 ){
-	    //ll('no coord');	    
+	    //ll('no coord');
 	}else{
 	    //ll('too many coord');
 	}
-	
+
 	return ret;
     }
 
@@ -533,7 +533,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
             Endpoints : ["Rectangle", ["Dot", { radius:8 } ]],
             //Endpoints : [["Dot", { radius:8 } ], "Rectangle"],
 	    EndpointStyles : [
-		{ 
+		{
 		    width: 15,
 		    height: 15,
 		    //strokeStyle: '#000000',
@@ -645,7 +645,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
             connector:[ "Sugiyama", { curviness: 25 } ]
         });
     }
-    
+
     function _attach_node_click_edit(sel){
 
 	// Add this event to whatever we got called in.
@@ -659,7 +659,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		var parent_elt = target_elt.parent();
 		var parent_id = parent_elt.attr('id');
 		var enode = ecore.get_node_by_elt_id(parent_id);
-		if( ! enode ){		    
+		if( ! enode ){
 		    alert('Could not find related element.');
 		}else{
 		    var nedit = edit_node_modal(ecore, manager, enode,
@@ -689,7 +689,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    alert('Could not find related test element.');
 		}else{
 		    var eam = edit_ann_modal(individual_annotation_config, ecore,
-					     manager, enode.id(), gserv, gconf,
+					     manager, enode.id(),
+					     gserv, gserv_neo, gconf,
 					     global_noctua_context);
 		    eam.show();
 		}
@@ -748,7 +749,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    each(eanns, function(ann){
 		if( ann.key() === 'evidence' ){
 		    n_ev++;
-		}else{				  
+		}else{
 		    n_other++;
 		}
 	    });
@@ -799,7 +800,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	var openann_edge_str = '<button class="open-annotation-dialog-edge btn btn-default" title="Open annotation dialog"></button>';
     	var new_conn_args = {
-	    // remember that edge ids and elts ids are the same 
+	    // remember that edge ids and elts ids are the same
     	    'source': ecore.get_node_elt_id(sn),
     	    'target': ecore.get_node_elt_id(tn),
 	    //'label': 'foo' // works
@@ -830,11 +831,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	new_conn.bind('click', function(connection, event){
 	    //alert('edge click: ' + eedge.id());
 	    var eam = edit_ann_modal(fact_annotation_config, ecore, manager,
-				     eedge.id(), gserv, gconf,
+				     eedge.id(), gserv, gserv_neo, gconf,
 				     global_noctua_context);
 	    eam.show();
 	});
-	
+
 	// NOTE: This is necessary since these connectors are created
 	// under the covers of jsPlumb--I don't have access during
 	// creation like I do with the nodes.
@@ -922,7 +923,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 				   global_collapsible_reverse_relations);
 	}else{
 	    throw new Error('unknown graph editor view: ' + d_view_type);
-	}	
+	}
     }
 
     // The core initial layout function.
@@ -938,7 +939,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// current data. Reasons to preserve could include switching
 	// views.
 	if( model_data ){
-	    ll('REBUILD from scratch: ' + view_type);	
+	    ll('REBUILD from scratch: ' + view_type);
 	    // each(ecore.get_nodes(), function(en, enid){
 	    // 	_delete_iae_from_ecore(enid);
 	    // });
@@ -1007,22 +1008,22 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		ll('take fallback for: ' + enid +': '+ fin_left +', '+ fin_top);
 	    }else{
 		fin_left = _vari();
-		fin_top = _vari();		 
+		fin_top = _vari();
 		ll('take random for: ' + enid +': '+ fin_left +', '+ fin_top);
 	    }
-	    
+
 	    // Update coordinates and report them to others.
 	    local_position_store.add(enid, fin_left, fin_top);
 	    if( barclient ){
 		// Remember: telekinesis does t/l, not l/t (= x/y).
 		barclient.telekinesis(enid, fin_top, fin_left);
 	    }
-	});	
-	
+	});
+
 	// For our intitialization/first drawing, suspend jsPlumb
 	// stuff while we get a little work done rebuilding the UI.
 	instance.doWhileSuspended(function(){
-	    
+
 	    // Initial render of nodes in the graph.
     	    each(ecore.get_nodes(), function(enode, enode_id){
 		// Will have the most up-to-date location info.
@@ -1036,7 +1037,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     		widgetry.add_enode(fact_annotation_config, ecore, manager,
 				   enode, aid, graph_div, left, top,
-				   gserv, gconf);
+				   gserv, gserv_neo, gconf);
     	    });
 
     	    // Now let's try to add all the edges/connections.
@@ -1044,23 +1045,23 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    each(ecore.all_edges(), function(eedge, eeid){
     		_connect_with_edge(eedge);
     	    });
-	    
+
 	    // Make nodes draggable.
 	    _attach_node_draggable(".demo-window");
-	    
+
 	    // Make nodes able to use edit dialog.
 	    _attach_node_click_edit('.open-dialog');
-	    
+
 	    // // Make nodes able to clone themselves.
 	    _attach_node_click_annotation_edit('.open-annotation-dialog');
-	    
+
     	    // Make normal nodes availables as edge targets.
 	    _make_selector_target('.demo-window');
-	    
+
 	    // Make the konn class available as source from inside the
 	    // real node class elements.
 	    _make_selector_source('.demo-window', '.konn');
-	    
+
     	});
 
 	// We will make some changes to the display depending on the
@@ -1103,7 +1104,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		  });
 	    //jQuery('.cloner').css('width', '1em');
 	    jQuery('.konn').css('width', '1em');
-	    jQuery('#template_announce_div').addClass('hidden');	    
+	    jQuery('#template_announce_div').addClass('hidden');
 	    jQuery('#main_exp_graph_container').addClass('app-graph-container');
 	    jQuery('#main_exp_graph_container').removeClass('app-graph-container-as-template');
 	}
@@ -1190,17 +1191,17 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// 	if( update_node ){
 	// 	    ll('update node: ' + ind.id());
 	// 	    updatable_nodes[ind.id()] = true;
-	
+
 	// 	    // "Update" the edit node in core by clobbering
 	// 	    // it.
 	// 	    ecore.add_node(ind);
-	
+
 	// 	    // Wipe node contents; redraw node contents.
 	// 	    widgetry.update_enode(ecore, ind, aid);
 	// 	}else{
 	// 	    ll('add new node: ' + ind.id());
 	// 	    updatable_nodes[ind.id()] = true;
-	
+
 	// 	    // Initial node layout settings.
     	// 	    var dyn_x = _vari() +
 	// 		jQuery(graph_container_div).scrollLeft();
@@ -1208,10 +1209,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// 		jQuery(graph_container_div).scrollTop();
 	// 	    ind.x_init(dyn_x);
 	// 	    ind.y_init(dyn_y);
-	
+
 	// 	    // Add new node to edit core.
 	// 	    ecore.add_node(ind);
-	
+
 	// 	    // Update coordinates and report them.
 	// 	    local_position_store.add(ind.id(), dyn_x, dyn_y);
 	// 	    if( barclient ){
@@ -1220,14 +1221,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// 	    // Draw it to screen.
 	// 	    widgetry.add_enode(ecore, ind, aid, graph_div);
-	// 	}	    
+	// 	}
 	//     });
-	
+
 	//     // Now look at edges (by individual) for purging (and
 	//     // reinstating later)--no going to try and update edges,
 	//     // just remove/clobber.
 	//     each(merge_in_graph.all_nodes(), function(source_node){
-	
+
 	// 	//ll('looking at node: ' + source_node.types()[0].to_string());
 
 	// 	// WARNING: We cannot (apparently?) go from connection
@@ -1238,7 +1239,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// 	// be the ones to update.
 	// 	var snid = source_node.id();
 	// 	var src_edges = ecore.get_edges_by_subject(snid);
-	
+
 	// 	// Delete all edges for said node in model if both the
 	// 	// source and the target appear in the updatable list.
 	// 	var connection_ids = {};
@@ -1258,7 +1259,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// 		// merge subgraph
 	// 	    }
 	// 	});
-	
+
 	// 	// Now delete all connector/edges for the node in the
 	// 	// UI.
 	// 	var snid_elt = ecore.get_node_elt_id(snid);
@@ -1305,7 +1306,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	//     /// Refresh any node created or updated in the jsPlumb
 	//     /// physical view.
 	//     ///
-	
+
 	//     // We previously updated/added nodes, so here just make
 	//     // sure it's/they're active.
 	//     each(merge_in_graph.all_nodes(), function(dn){
@@ -1339,16 +1340,16 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	//     });
 	// }); // close out updating region
     }
-    
+
     ///
     /// Manager registration and ordering.
     ///
-    
+
     // Only run major internal functions when the filters are passed.
     var seen_packets = {};
     //function _continue_update_p(resp, man, run_fun){
     function _continue_update_p(resp, man){
-	
+
 	var ret = false;
 
 	var this_packet = resp.packet_id();
@@ -1394,7 +1395,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 			// }else{
 			//     // Otherwise, ignore it.
 			//     ll("ignoring other's query request");
-			// }		    
+			// }
 		    }
 	    }
 	}
@@ -1450,7 +1451,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     }, 9);
     manager.register('postrun', _shields_down, 8);
-    manager.register('postrun', function(resp, man){ // experimental	
+    manager.register('postrun', function(resp, man){ // experimental
 
 	// TODO: Still need this?
 	// Sends message on minerva manager action completion.
@@ -1467,13 +1468,13 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	alert('There was a manager error (' +
 	      resp.message_type() + '): ' + resp.message());
     }, 10);
-    
+
     manager.register('warning', function(resp, man){
 	var comment = resp.commentary() || null;
 	alert('Warning: ' + resp.message() + '; ' +
 	      'your operation was likely not performed.\n' + comment);
     }, 10);
-    
+
     manager.register('error', function(resp, man){
 
 	var perm_flag = "InsufficientPermissionsException";
@@ -1489,7 +1490,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		  'your operation was likely not performed.\n' + comment);
 	}
     }, 10);
-    
+
     // Remote action registrations.
     manager.register('meta', function(resp, man){
     	//alert('Meta operation successful: ' + resp.message());
@@ -1542,7 +1543,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     manager.register('merge', function(resp, man){
 	if( _continue_update_p(resp, man) ){
-	    
+
 	    var individuals = resp.individuals();
 	    if( ! individuals ){
 		alert('no data/individuals in merge--unable to do');
@@ -1567,24 +1568,24 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
     ///
     /// UI event registration.
-    ///    
+    ///
 
     // TODO/BUG: Read on.
     // Connection event.
     instance.bind("connection", function(info, original_evt) {
-	
+
 	// If it looks like a new drag-and-drop event
 	// connection.
 	if( ! original_evt ){
 	    ll('knock-on "connection": ignoring.');
 	}else{
 	    ll('direct "connection" event.');
-	    
+
 	    // Get the necessary info from the
 	    // connection.
 	    var sn = info.sourceId;
 	    var tn = info.targetId;
-	    
+
 	    // TODO/BUG: Destroy the autogen one (I
 	    // can't make them behave as well as the
 	    // programmatic ones--need to understand:
@@ -1592,11 +1593,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    // then create the programmatic one.
 	    // This connection is no longer needed.
 	    instance.detach(info.connection);
-	    
+
 	    // Create a new edge based on this info.
 	    var snode = ecore.get_node_by_elt_id(sn);
 	    var tnode = ecore.get_node_by_elt_id(tn);
-	    
+
 	    // Pop up the modal.
 	    var init_edge = widgetry.add_edge_modal(ecore, manager,
 						    in_relations, aid,
@@ -1604,29 +1605,29 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    init_edge.show();
 	}
     });
-    
+
     // Detach event.
     instance.bind("connectionDetached", function(info, original_evt) {
-	
+
 	// Only to this for direct detachments, not
 	// knock-on effects from things like merge.
 	if( ! original_evt ){
 	    ll('knock-on "connectionDetached": ignoring.');
 	}else{
 	    ll('direct "connectionDetach" event.');
-	    
+
 	    var cid = info.connection.id;
 	    ll('there was a connection detached: ' + cid);
 	    var eeid = ecore.get_edge_id_by_connector_id(cid);
 	    ll('looks like edge: ' + eeid);
-	    
+
 	    var edge = ecore.get_edge_by_id(eeid);
 	    manager.remove_fact(ecore.get_id(), edge.source(),
 				edge.target(), edge.relation());
 	}
     });
-    
-    // TODO: 
+
+    // TODO:
     // Would like this, since otherwise I'll have to deal with
     // decoding what is happening and possibly a race condition.
     // https://github.com/sporritt/jsPlumb/issues/157
@@ -1635,7 +1636,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	//ll('there was a connection moved: ' + cid);
     	alert('there was a "connectionMoved" event: ' + cid);
     });
-    
+
     // Reapaint with we scroll the graph.
     jQuery(graph_div).scroll(function(){
         jsPlumb.repaintEverything();
@@ -1644,14 +1645,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     ///
     /// Helpers for running the addition templates.
     ///
-    
+
     function _add_composite(base_cls, additions){
-	
+
 	var reqs = new minerva_requests.request_set(manager.user_token(),
 						    ecore.get_id());
 	var new_base = reqs.add_individual(base_cls);
-	
-	// 
+
+	//
 	each(additions, function(pair){
 	    var cls_init = pair[0];
 	    var rel = pair[1];
@@ -1660,10 +1661,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		reqs.add_fact([new_base, new_add, rel]);
 	    }
 	});
-	
+
 	return reqs;
-    }	    
-    
+    }
+
     ///
     /// Activate addition template for Ubernoodle (free).
     ///
@@ -1702,7 +1703,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	    // Wipe controls' state, internal and external.
 	    simple_ubernoodle_auto_val = null;
-	    jQuery(simple_ubernoodle_auto_elt).val('');	    
+	    jQuery(simple_ubernoodle_auto_elt).val('');
     	}
     });
 
@@ -1745,21 +1746,21 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    function(doc){
 		annoton_bp_auto_val = doc['annotation_class'] || null;
 	    };
-	
+
 	// molecular function
 	var annoton_mf_auto_args = us.clone(base_annoton_auto_args);
 	annoton_mf_auto_args['list_select_callback'] =
 	    function(doc){
 		annoton_mf_auto_val = doc['annotation_class'] || null;
 	    };
-	
+
 	// cellular component
 	var annoton_cc_auto_args = us.clone(base_annoton_auto_args);
 	annoton_cc_auto_args['list_select_callback'] =
 	    function(doc){
 		annoton_cc_auto_val = doc['annotation_class'] || null;
 	    };
-	
+
 	// Remember that we're using NEO for this now.
 	var annoton_eb_auto =
 		new bbop_legacy.widget.search_box(gserv_neo, gconf,
@@ -1818,7 +1819,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     		}else if( cc && cc !== '' && ( ! annoton_cc_auto_val || annoton_cc_auto_val === '') ){
     		    alert('Must select something from autocomplete list for cellular_component.');
     		}else{
-		    
+
 		    // Ready new super request.
 		    var reqs = new minerva_requests.request_set(
 			manager.user_token(),
@@ -1917,7 +1918,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	simple_bp_free_act_auto.set_personality('ontology');
 
 	var simple_bp_free_occ_auto =
-		new bbop_legacy.widget.search_box(gserv, gconf, 
+		new bbop_legacy.widget.search_box(gserv, gconf,
 						  simple_bp_free_occ_auto_id,
 						  simple_bp_free_occ_auto_args);
 	simple_bp_free_occ_auto.lite(true);
@@ -1946,7 +1947,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    //jQuery(simple_bp_free_enb_auto_elt).val('');
     		    jQuery(simple_bp_free_act_auto_elt).val('');
     		    jQuery(simple_bp_free_occ_auto_elt).val('');
-		    
+
 		    // Send message to server.
 		    // var reqs = _add_composite(act, [[enb, 'RO:0002333'],
 		    // 				[occ, 'BFO:0000066']]);
@@ -2018,7 +2019,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	simple_mf_free_act_auto.add_query_filter('regulates_closure_label',
     						 'molecular_function');
 	simple_mf_free_act_auto.set_personality('ontology');
-	
+
 	var simple_mf_free_occ_auto =
 		new bbop_legacy.widget.search_box(gserv, gconf,
 						  simple_mf_free_occ_auto_id,
@@ -2037,7 +2038,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    var enb = simple_mf_free_enb_auto_val || '';
     	    var act = simple_mf_free_act_auto_val || '';
     	    var occ = simple_mf_free_occ_auto_val || '';
-	    
+
     	    if( act === '' ){
     		alert('Must select activity field from autocomplete list.');
     	    }else{
@@ -2048,7 +2049,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		jQuery(simple_mf_free_enb_auto_elt).val('');
     		jQuery(simple_mf_free_act_auto_elt).val('');
     		jQuery(simple_mf_free_occ_auto_elt).val('');
-		
+
 		// Send message to server.
 		var reqs = _add_composite(act, [[enb, 'RO:0002333'],
 						[occ, 'BFO:0000066']]);
@@ -2074,7 +2075,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	var nz = instance.getZoom() - 0.25;
     	_set_zoom(nz);
     });
-    
+
     // Refresh button.
     // Trigger a model get and an inconsistent redraw.
     jQuery(refresh_btn_elt).click(function(){
@@ -2152,7 +2153,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     ll('refresh tables (startup)');
     _refresh_tables();
     // Get initial information.
-    // TODO: This will be unnecessary in future versions where the 
+    // TODO: This will be unnecessary in future versions where the
     // model was pulled live (standard rebuild).
     ll('start get-undo-redo (startup)');
     _trigger_undo_redo_lookup();
@@ -2188,12 +2189,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// // Change our user id.
 	// manager.user_token(uid);
-	// 
+	//
 	// TODO: Actually, this call could be used to paint or display with
 	// our user info beyond the token.
     }
 
-    // Catch both the regular back-and-forth, as well as the 
+    // Catch both the regular back-and-forth, as well as the
     function _on_message_update(data){
 	//function _on_message_update(data, uid, ucolor){
 
@@ -2204,7 +2205,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Add to the top of the message list.
 	reporter.comment(data);
-	
+
 	// Visible alert when new information comes in.
 	// Skip hightlighting if we're already over it.
 	//alert('someone did something');
@@ -2221,7 +2222,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    });
 	}
     }
-    
+
     // Catch incoming broadcast messages.
     function _on_broadcast_update(data){
 
@@ -2274,7 +2275,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    }
 	}
     }
-    
+
     function _on_clairvoyance_update(data){
 	//function _on_clairvoyance_update(id, color, top, left){
 
@@ -2319,7 +2320,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 		var iid = obj['item_id'];
 		var top = obj['top'];
-		var left = obj['left'];	
+		var left = obj['left'];
 
 		//var en = ecore.get_node(iid);
 		var enelt = ecore.get_node_elt_id(iid);
@@ -2336,7 +2337,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    // TODO: Still seems a bit slow. Tried throwing events as
 		    // well, but didn't work. This is certainly the "right"
 		    // way to do it...
-    		    //instance.repaintEverything();	
+    		    //instance.repaintEverything();
 		    instance.repaint(enelt);
 		}
 	    });
@@ -2350,10 +2351,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	var mid = data['model_id'];
 	var dresp = data['data'];
 	var bar_resp = new barista_response(dresp);
-	
+
 	// // First, make sure we haven't seen this message before.
 	// if( _continue_update_p(bar_resp, manager) ){
-	
+
 	// We can make some assumptions for now that since it came out
 	// of Barista that it is good and clean. If not an action, we
 	// want to ignore, unless it looks like somebody is using the
@@ -2387,10 +2388,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // Jimmy into telekinesis format and trigger
     // _on_telekinesis_update().
     function _on_layout_response(data){
-	
+
 	//ll('_on_layout_response:', data);
 	if( data && data['response'] ){
-	    
+
 	    // Prep layout info.
 	    var tk_items = {'objects':[]};
 	    each(data['response'], function(tnl, iid){
@@ -2400,7 +2401,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    'left': tnl['left']
 		});
 	    });
-	    
+
 	    //
 	    //ll('tk_items:', tk_items);
 	    _on_telekinesis_update(tk_items);
@@ -2464,11 +2465,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	// The compactor is currently assuming we're taking an
 	// infinite range and trying to map it into a 700x700 box,
 	// with things farther out getting yanked more than things
-	// closer in.	
+	// closer in.
 	var _compactor = function(n){
 	    return Math.round(Math.atan(n/500.00) * (1400/Math.PI));
 	};
-	
+
 	// Ready new request set.
 	var reqs = new minerva_requests.request_set(manager.user_token(),
 						    ecore.get_id());
@@ -2512,7 +2513,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		barclient.telekinesis(iid, cy, cx);
 	    }
 	});
- 
+
 	// And add the actual storage.
 	//reqs.store_model();
 	manager.request_with(reqs);
@@ -2533,27 +2534,27 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     //
     jQuery(model_ann_elt).click(function(){
 	var eam = edit_ann_modal(model_annotation_config, ecore, manager,
-				 ecore.get_id(), gserv, gconf,
+				 ecore.get_id(), gserv, gserv_neo, gconf,
 				 global_noctua_context);
 	eam.show();
     });
 
-    // // 
+    // //
     // jQuery(test_btn_elt).click(function(){
     // 	//alert('in progress');
-	
+
     // 	// Grab node.
     // 	var nset = ecore.get_nodes();
     // 	var nkeys = us.keys(nset);
     // 	var node = nset[nkeys[0]];
     // 	if( node ){
-    // 	    // 
+    // 	    //
     // 	    //alert('in progress: + ' + node.id());
     // 	    //bbop_mme_widgetry.contained_modal('shield');
     // 	    //var mdl = new bbop_mme_widgetry.contained_modal('dialog', 'hi');
     // 	    var mdl = widgetry.compute_shield();
     // 	    mdl.show();
-	    
+
     // 	    // Works.
     // 	    // Test that destroy works.
     // 	    window.setTimeout(
@@ -2603,7 +2604,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // 	// /// Individuals.
     // 	// // axon guidance receptor activity
     // 	// reqs.add_simple_individual('GO:0008046');
-    // 	// var mf = reqs.last_individual_id();    
+    // 	// var mf = reqs.last_individual_id();
     // 	// // neurogenesis
     // 	// reqs.add_simple_individual('GO:0022008');
     // 	// var bp = reqs.last_individual_id();
@@ -2613,8 +2614,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // 	// // Drd3
     // 	// reqs.add_simple_individual('MGI:MGI:94925');
     // 	// var gp = reqs.last_individual_id();
-	
-    // 	// // Edges and evidence.    
+
+    // 	// // Edges and evidence.
     // 	// reqs.add_fact(mf, bp, 'part_of');
     // 	// reqs.add_evidence_to_fact('ECO:0000001', ['PMID:0000000'],
     // 	// 			  mf, bp, 'part_of');
@@ -2624,10 +2625,10 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // 	// manager.request_with(reqs, ecore.get_id());
     // });
 
-    // Toggle the visibility of the part_of connectors. 
+    // Toggle the visibility of the part_of connectors.
     var viz_p = true; // obviously, start visible
     jQuery(toggle_part_of_elt).click(function(){
-	
+
 	// First, collect all of the part_of connections.
 	var poc = {};
 	each(ecore.all_edges(), function(edge){
@@ -2639,14 +2640,14 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 
 	// Switch viz.
 	if( viz_p ){ viz_p = false; }else{ viz_p = true; }
-	
+
 	// Toggle viz on and off.
 	each(instance.getConnections(), function(conn){
 	    if( poc[conn.id] ){
 		conn.setVisible(viz_p);
 		conn.endpoints[0].setVisible(viz_p);
 		conn.endpoints[1].setVisible(viz_p);
-		
+
 		// Disappearing is easy, making visiable
 		// leads to artifacts.
 		if( viz_p ){
@@ -2660,7 +2661,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    }
 	});
     });
-    
+
     // Toggle the use of the reasoner.
     var use_reasoner_p = false;
     jQuery(toggle_reasoner_elt).click(function(){
@@ -2683,21 +2684,21 @@ var MMEnvInit = function(model_json, in_relations, in_token){
             manager.request_with(reqs);
 	}
     });
-    
+
     // Toggle the screenshot mode.
     var screen_p = false;
     jQuery(toggle_screen_elt).click(function(){
 
 	// Toggle switch.
 	if( screen_p ){ screen_p = false; }else{ screen_p = true; }
-	
+
 	// Change the styles.
 	if( screen_p ){
 	    // Remove the side.
 	    jQuery('.app-graph-container').css('margin-left', '0em');
 	    jQuery('.app-editor-bounds').css('height', '100%');
 	    jQuery('.app-table-bounds').css('height', '0%');
-	    jQuery('.app-controls').css('width', '0em');		
+	    jQuery('.app-controls').css('width', '0em');
 	}else{
 	    // Re-establish the sides.
 	    jQuery('.app-graph-container').css('margin-left', '15em');
@@ -2705,9 +2706,9 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    jQuery('.app-table-bounds').css('height', '30%');
 	    jQuery('.app-controls').css('width', '15em');
 	}
-	
+
     });
-    
+
     // Switch the edit view mode.
     jQuery(view_basic_elt).click(function(){
 	view_type = 'basic';
@@ -2730,7 +2731,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	_refresh_tables();
 	_shields_down();
     });
-    
+
     // Let the canvas (div) underneath be dragged around in an
     // intuitive way.
     bbopx.noctua.draggable_canvas(graph_container_id);
@@ -2790,7 +2791,7 @@ jsPlumb.ready(function(){
 	typeof(global_barista_location) === 'undefined' ){
 	    alert('environment not ready');
 	}else{
-	    
+
 	    // BUG: Bad, bad, bad code...
 	    // DEBUG: Path for heiko that prevents initial manager pass and
 	    // uses embedded model.
@@ -2813,17 +2814,17 @@ jsPlumb.ready(function(){
 			new minerva_manager(global_barista_location,
 					    global_minerva_definition_name,
 					    start_token, engine, 'async');
-		
+
 		// Have a manager and model id, defined a success callback
 		// and try and get the full model to start the bootstrap.
 		init_manager.register('manager_error', function(resp, man){
 		    alert('Early manager error (' +
 			  resp.message_type() + '): ' + resp.message());
 		}, 10);
-		init_manager.register('error', function(resp, man){		
+		init_manager.register('error', function(resp, man){
 		    if( ! resp.commentary() ){
 			alert('Early error (' +
-			      resp.message_type()+ '): ' + 
+			      resp.message_type()+ '): ' +
 			      resp.message());
 		    }else{
 			alert('Early error (' +
@@ -2844,7 +2845,7 @@ jsPlumb.ready(function(){
 		init_manager.get_model(global_id);
 		//var rr = manager.get_model(global_id);
 		//ll('rr: ' + rr);
-		
+
 	    }
 
 	    ///
@@ -2904,7 +2905,7 @@ jsPlumb.ready(function(){
 		    }
 		}).done();
 	    }
-	    
+
 	}
 
 });
