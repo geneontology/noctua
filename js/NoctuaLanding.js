@@ -321,6 +321,9 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    }else{
 			mtitle = match[1];
 		    }
+
+		    // Add model id for findability.
+		    mtitle += ' <small>'+model_id+'</small>';
 		}
 		
 		return mtitle;

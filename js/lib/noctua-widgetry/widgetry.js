@@ -39,7 +39,7 @@ var each = us.each;
  */
 function build_token_link(url, token){
     var new_url = url;
-    
+
     if( token ){
 	if( new_url.indexOf('?') === -1 ){
 	    new_url = new_url + '?' + 'barista_token=' + token;
@@ -47,7 +47,7 @@ function build_token_link(url, token){
 	    new_url = new_url + '&' + 'barista_token=' + token;
 	}
     }
-    
+
     return new_url;
 }
 
@@ -59,7 +59,7 @@ function repaint_info(ecore, aid, info_div){
     // Node and edge counts.
     var nds = us.keys(ecore.get_nodes()) || [];
     var eds = us.keys(ecore.all_edges()) || [];
-    
+
     // Any annotation information that came in.
     var anns = '';
     each(ecore.annotations(), function(ann){
@@ -113,7 +113,7 @@ function repaint_info(ecore, aid, info_div){
 	'<dt>Annotations</dt>',
 	anns
     ];
-    
+
     // Add to display.
     jQuery(info_div).empty();
      jQuery(info_div).append(str_cache.join(' '));
@@ -127,7 +127,7 @@ function repaint_info(ecore, aid, info_div){
 function repaint_exp_table(ecore, aid, table_div){
 
     // First, lets get the headers that we'll need by poking the
-    // model and getting all of the possible categories.	
+    // model and getting all of the possible categories.
     var cat_list = [];
     each(ecore.get_nodes(), function(enode, enode_id){
 	each(enode.types(), function(in_type){
@@ -141,18 +141,18 @@ function repaint_exp_table(ecore, aid, table_div){
     // If we actually got something, render the table. Otherwise,
     // a message.
     if( us.isEmpty(cat_list) ){
-	
+
 	// Add to display.
 	jQuery(table_div).empty();
 	jQuery(table_div).append('<p><h4>no instances</h4></p>');
 
     }else{
-	
+
 	// Sort header list according to known priorities.
 	cat_list = cat_list.sort(function(a, b){
 	    return aid.priority(b) - aid.priority(a);
 	});
-	
+
 	// Convert the ids into readable headers.
 	var nav_tbl_headers = [];
 	each(cat_list, function(cat_id){
@@ -162,18 +162,18 @@ function repaint_exp_table(ecore, aid, table_div){
 	    ];
 	    nav_tbl_headers.push(hdrc.join(' '));
 	});
-	
+
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
 				{'generate_id': true,
 				 'class': ['table', 'table-bordered',
 					   'table-hover',
 					   'table-condensed'].join(' ')});
-	
+
 	//each(ecore.get_nodes(),
 	each(ecore.edit_node_order(), function(enode_id){
 	    var enode = ecore.get_node(enode_id);
-	    
+
 	    // Now that we have an enode, we want to mimic the order
 	    // that we created for the header (cat_list). Start by
 	    // binning the types.
@@ -183,7 +183,7 @@ function repaint_exp_table(ecore, aid, table_div){
 		if( ! bin[cat] ){ bin[cat] = []; }
 		bin[cat].push(in_type);
 	    });
-	    
+
 	    // Now unfold the binned types into the table row
 	    // according to the sorted order.
 	    var table_row = [];
@@ -196,15 +196,15 @@ function repaint_exp_table(ecore, aid, table_div){
 		});
 		table_row.push(cell_cache.join('<br />'));
 	    });
-	    nav_tbl.add_to(table_row);		     
+	    nav_tbl.add_to(table_row);
 	});
-	
+
 	// Add to display.
 	jQuery(table_div).empty();
 	jQuery(table_div).append(nav_tbl.to_string());
 
 	// Make it sortable using the plugin.
-	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
+	jQuery('#' + nav_tbl.get_id()).tablesorter();
     }
 }
 
@@ -218,13 +218,13 @@ function repaint_edge_table(ecore, aid, table_div){
     // If we actually got something, render the table. Otherwise,
     // a message.
     if( us.isEmpty(edge_list) ){
-	
+
 	// Add to display.
 	jQuery(table_div).empty();
 	jQuery(table_div).append('<p><h4>no relations</h4></p>');
 
     }else{
-	
+
 	// Make the (obvjously known) headers pretty.
 	var nav_tbl_headers = [];
 	each(['subject', 'relation', 'object'], function(hdr){
@@ -234,14 +234,14 @@ function repaint_edge_table(ecore, aid, table_div){
 	    ];
 	    nav_tbl_headers.push(hdrc.join(' '));
 	});
-		
+
 	var nav_tbl =
 	    new bbop.html.table(nav_tbl_headers, [],
 				{'generate_id': true,
 				 'class': ['table', 'table-bordered',
 					   'table-hover',
 					   'table-condensed'].join(' ')});
-	
+
 	each(edge_list, function(edge){
 	    var s = edge.source();
 	    var r = edge.relation();
@@ -253,16 +253,16 @@ function repaint_edge_table(ecore, aid, table_div){
 		aid.readable(r),
 		aid.readable(t)
 	    ];
-	    
-	    nav_tbl.add_to(table_row);		     
+
+	    nav_tbl.add_to(table_row);
 	});
-	
+
 	// Add to display.
 	jQuery(table_div).empty();
 	jQuery(table_div).append(nav_tbl.to_string());
 
 	// Make it sortable using the plugin.
-	jQuery('#' + nav_tbl.get_id()).tablesorter(); 
+	jQuery('#' + nav_tbl.get_id()).tablesorter();
     }
 }
 
@@ -278,7 +278,7 @@ function wipe(div){
  * them.
  */
 function enode_types_to_ordered_stack(enode_types, aid){
-	
+
     // Sort the types within the stack according to the known
     // type priorities.
     function _sorter(a, b){
@@ -288,11 +288,11 @@ function enode_types_to_ordered_stack(enode_types, aid){
 	return apri - bpri;
     }
 
-    // 
+    //
     var out_stack = enode_types.sort(_sorter);
     return out_stack;
 }
-    
+
 /**
  * This is a silly little object that represents a node stack. It can
  * render the stack as a string (the original non-object purpose of
@@ -310,7 +310,7 @@ function enode_types_to_ordered_stack(enode_types, aid){
 function node_stack_object(enode, aid){
 
     var hook_list = [];
-    
+
     // Create a colorful label stack into an individual table.
     var enode_stack_table = new bbop.html.tag('table',
 					      {'class':'bbop-mme-stack-table'});
@@ -326,10 +326,10 @@ function node_stack_object(enode, aid){
 	if( color ){
 	    trstr = '<tr class="bbop-mme-stack-tr" ' +
 		'style="background-color: ' + color +
-		';"><td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';   
+		';"><td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';
 	}else{
 	    trstr = '<tr class="bbop-mme-stack-tr">' +
-		'<td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';   
+		'<td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';
 	}
 	enode_stack_table.add_to(trstr);
     }
@@ -439,12 +439,12 @@ function node_stack_object(enode, aid){
 	// Add to top. No longer need evidence count on individuals.
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
 		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
-		//'evidence: ' + n_ev + '; other: ' + n_other + 
-		'annotations: ' + n_other + 
+		//'evidence: ' + n_ev + '; other: ' + n_other +
+		'annotations: ' + n_other +
 		'</small></td></tr>';
 	enode_stack_table.add_to(trstr);
     }
-    
+
     // Add external visual cue if there were inferred types.
     if( inf_types.length > 0 ){
 	var itcstr = '<tr class="bbop-mme-stack-tr">' +
@@ -469,7 +469,7 @@ function node_stack_object(enode, aid){
  * annotation editor work, by plugging into the node stack creation
  * object.
  */
-function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, left, top, gserv, gconf){
+function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, left, top, gserv, gserv_neo, gconf){
 
     // See whether or not we need to place the nodes with style.
     var style_str = '';
@@ -484,39 +484,39 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
 			      {'id': div_id,
 			       'class': 'demo-window',
 			       'style': style_str});
-    
+
     var enode_stack_table = new node_stack_object(enode, aid);
     w.add_to(enode_stack_table.to_string());
-    
-    // Box to drag new connections from.	
+
+    // Box to drag new connections from.
     var konn = new bbop.html.tag('div', {'class': 'konn'});
     w.add_to(konn);
-    
+
     // Box to click for edit dialog.
     var opend = new bbop.html.tag('button',
 				  {'class': 'open-dialog btn btn-default',
 				   'title': 'Open edit annoton dialog'});
     w.add_to(opend);
-    
+
     // Box to open annotation dialog.
     var openann = new bbop.html.tag('button',
 				    {'class':
 				     'open-annotation-dialog btn btn-default',
 				     'title': 'Open annotation dialog'});
     w.add_to(openann);
-    
+
     // Add to display.
     jQuery(graph_div).append(w.to_string());
 
-    // 
+    //
     each(enode_stack_table.hooks(), function(hook_pair){
 	var edge_id = hook_pair[0];
 	var element_id = hook_pair[1];
 	jQuery('#'+element_id).click(function(evt){
 	    evt.stopPropagation();
-	    
+
 	    var eam = edit_annotations_modal(annotation_config, ecore, manager,
-					     edge_id, gserv, gconf);
+					     edge_id, gserv, gserv_neo, gconf);
 	    eam.show();
 	});
     });
@@ -533,12 +533,12 @@ function update_enode(ecore, enode, aid){
 
     var enode_stack_table = new node_stack_object(enode, aid);
     jQuery('#' + uelt).append(enode_stack_table.to_string());
-    
-    // Box to drag new connections from.	
+
+    // Box to drag new connections from.
     var konn = new bbop.html.tag('div', {'class': 'konn'});
     jQuery('#' + uelt).append(konn.to_string());
-    
-    // Box to open the edit dialog.	
+
+    // Box to open the edit dialog.
     var opend = new bbop.html.tag('button',
 				  {'class': 'open-dialog btn btn-default',
 				   'title': 'Open edit annoton dialog'});
@@ -554,21 +554,21 @@ function update_enode(ecore, enode, aid){
 
 /**
  * Object.
- * 
- * The contained_modal is a simple modal dialog 
+ *
+ * The contained_modal is a simple modal dialog
  * Node modal: invisible until it's not modal dialog.
- * 
+ *
  * NOTE: We're skipping some of the bbop.html stuff since we
  * specifically want BS3 stuff and not the jQuery-UI stuff that is
  * sometimes haning around in there.
- * 
+ *
  * arg_title may be null, string, or bbop.html
  * arg_body may be null, string, or bbop.html
- * 
+ *
  * @constructor
  */
 function contained_modal(type, arg_title, arg_body){
-    
+
     var shield_p = false;
     if( type && type === 'shield' ){
 	shield_p = true;
@@ -594,7 +594,7 @@ function contained_modal(type, arg_title, arg_body){
     // Then the title.
     var title_args = {
 	'generate_id': true,
-	'class': 'modal-title'	
+	'class': 'modal-title'
     };
     var title = new bbop.html.tag('div', title_args, arg_title);
 
@@ -619,7 +619,7 @@ function contained_modal(type, arg_title, arg_body){
     // Ready the body.
     var body_args = {
 	'generate_id': true,
-	'class': 'modal-body'	
+	'class': 'modal-body'
     };
     var body = new bbop.html.tag('div', body_args, arg_body);
 
@@ -631,15 +631,15 @@ function contained_modal(type, arg_title, arg_body){
     if( shield_p ){
 	content = new bbop.html.tag('div', content_args, [header,body]);
     }else{
-	content = new bbop.html.tag('div', content_args, [header,body,footer]); 
+	content = new bbop.html.tag('div', content_args, [header,body,footer]);
     }
 
     // Dialog contains content.
     var dialog_args = {
 	'class': 'modal-dialog'
     };
-    var dialog = new bbop.html.tag('div', dialog_args, content); 
-    
+    var dialog = new bbop.html.tag('div', dialog_args, content);
+
     // And the container contains it all.
     var container_args = {
 	'generate_id': true,
@@ -649,7 +649,7 @@ function contained_modal(type, arg_title, arg_body){
 	'aria-labelledby': body.get_id(),
 	'aria-hidden': 'true'
     };
-    var container = new bbop.html.tag('div', container_args, dialog); 
+    var container = new bbop.html.tag('div', container_args, dialog);
 
     // Attach the assembly to the DOM.
     var modal_elt = '#' + container.get_id();
@@ -679,26 +679,26 @@ function contained_modal(type, arg_title, arg_body){
 	var add_to_elt = '#' + body.get_id();
 	jQuery(add_to_elt).append(str);
     };
-    
+
     // // To be used before show--add elements (as a string) to the main
     // // modal DOM (which can have events attached).
     // this.reset_footer = function(){
     // 	var add_to_elt = '#' + footer.get_id();
     // 	jQuery(add_to_elt).append(str);
     // };
-    
+
     // To be used before show--add elements (as a string) to the main
     // modal DOM (which can have events attached).
     this.add_to_footer = function(str){
 	var add_to_elt = '#' + footer.get_id();
 	jQuery(add_to_elt).append(str);
     };
-    
+
     //
     this.show = function(){
-	jQuery(modal_elt).modal(modal_opts);	
+	jQuery(modal_elt).modal(modal_opts);
     };
-    
+
     //
     // Will end up destorying it since we are listening for the
     // "hidden" event above.
@@ -709,13 +709,13 @@ function contained_modal(type, arg_title, arg_body){
 
 /**
  * Contained blocking shield for general compute activity.
- * 
+ *
  * Function that returns object.
- * 
+ *
  * TODO: make subclass?
- * 
+ *
  * @constructor
- */ 
+ */
 function compute_shield(){
 
     // Text.
@@ -745,31 +745,31 @@ function compute_shield(){
 
 /**
  * Function that returns a sorted relation list of the form [[id, label], ...]
- * 
+ *
  * Optional boost when we don't care using the boolean "relevant" field.
  * The boost is 10.
- * 
+ *
  * TODO: make subclass?
  */
 function sorted_relation_list(relations, aid){
-    
+
     var boost = 10;
 
     // Get a sorted list of known rels.
     //var rels = aid.all_entities();
-    var rels = relations.sort(function(a,b){ 
+    var rels = relations.sort(function(a,b){
 	var id_a = a['id'];
 	var id_b = b['id'];
-	
+
 	var pr_a = aid.priority(id_a);
 	var pr_b = aid.priority(id_b);
-	
+
 	// Looking at the optional boolean "relevant" field, if we
 	// showed no preference in our context, give these a
 	// boost.
 	if( pr_a === 0 && a['relevant'] ){ pr_a = boost; }
 	if( pr_b === 0 && b['relevant'] ){ pr_b = boost; }
-	
+
 	return pr_b - pr_a;
     });
     var rellist = [];
@@ -789,9 +789,9 @@ function sorted_relation_list(relations, aid){
 
 /**
  * Contained shield for creating new edges between nodes.
- * 
+ *
  * Function that returns object.
- * 
+ *
  * TODO: make subclass?
  *
  * @constructor
@@ -800,7 +800,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 
     // Get a sorted list of known rels.
     var rellist = sorted_relation_list(relations, aid);
-    
+
     // Preamble.
     var mebe = [
 	// '<h4>Relation selection</h4>',
@@ -851,8 +851,8 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 
 	return '<div>' + str + '</div>';
     }
-    
-    // 
+
+    //
     var str_tree = [
 	'<div style="padding-left: 5px; border-left: 0px solid gray; margin-bottom: 1em;">',
 	'<div><em>Common relations</em></div>',
@@ -897,11 +897,11 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	// }
 	tcache.push(tmp_rel[1] + ' ');
 	tcache.push('(' + tmp_rel[0] + ')');
-	tcache.push('</label></div>');	     
+	tcache.push('</label></div>');
     });
     tcache.push('</div>');
     tcache.push('</div>');
-    
+
     var save_btn_args = {
 	'generate_id': true,
 	'type': 'button',
@@ -922,7 +922,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	var qstr ='input:radio[name=' + radio_name + ']:checked';
 	var rval = jQuery(qstr).val();
 	// ll('rval: ' + rval);
-	
+
 	// // TODO: Should I report this too? Smells a
 	// // bit like the missing properties with
 	// // setParameter/s(),
@@ -934,7 +934,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	// 			 'cssClass': "aLabel",
 	// 			 'id': 'label' } ]);
 
-	// Kick off callback.	
+	// Kick off callback.
 	manager.add_fact(ecore.get_id(), source_id, target_id, rval);
 
 	// Close modal.
@@ -945,7 +945,7 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	evt.stopPropagation();
 	_rel_save_button_start();
     });
-    
+
     // Return our final product.
     return mdl;
 }
@@ -953,15 +953,15 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 /**
  * Contained shield for editing the properties of a node (including
  * deletion).
- * 
+ *
  * Function that returns object.
- * 
+ *
  * TODO: make subclass?
  *
  * @constructor
  */
 function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iworkbenches, user_token){
-    
+
     // Start with ID.
     var tid = enode.id();
 
@@ -972,7 +972,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     each(enode_types_to_ordered_stack(enode.types(), aid), function(item){
 	var type_str = type_to_full(item, aid);
 	var eid = bbop_core.uuid();
-	elt2type[eid] = item;		 
+	elt2type[eid] = item;
 	var acache = [];
 	acache.push('<li class="list-group-item" style="background-color: ' +
 		    aid.color(item.category()) + ';">');
@@ -1043,11 +1043,11 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     var sub = enode.subgraph();
     if( sub ){
 	each(sub.all_nodes(), function(snode){
-	    
+
     	    var snid = snode.id();
-	    
+
 	    if( snid !== tid ){
-		
+
     		var eid = bbop_core.uuid();
     		elt2ind[eid] = snid;
 
@@ -1056,7 +1056,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 		each(snode.types(), function(stype){
 		    scache.push(type_to_span(stype));
 		});
-		var slabel = scache.join(' / ') || '<none>'; 
+		var slabel = scache.join(' / ') || '<none>';
 
 		// See if we can get the edge labeling.
 		var edge_labels = [];
@@ -1066,7 +1066,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 			edge_labels.push(e.label() || e.predicate_id());
 		    });
 		}
-		
+
 		// Build UI.
     		var acache = [];
     		acache.push('<li class="list-group-item">');
@@ -1215,7 +1215,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	    var target_id = evt.target.id;
 	    var target_type = elt2type[target_id];
 	    var cid = target_type.class_id();
-	    
+
 	    manager.remove_class_expression(ecore.get_id(), tid, target_type);
 	    // // Trigger the delete.
 	    // if( target_type.type() === 'class' ){
@@ -1235,7 +1235,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	jQuery('#' + elt_id).click(function(evt){
 	    evt.stopPropagation();
 	    var target_id = evt.target.id;
-	    var iid = elt2ind[target_id];	    
+	    var iid = elt2ind[target_id];
 
 	    // Ready a new request.
 	    var reqs = new minerva_requests.request_set(manager.user_token(),
@@ -1278,7 +1278,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     // Add add expression action.
     jQuery('#' + type_add_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
-	
+
 	var cls = jQuery('#' + type_add_class_text.get_id()).val();
 	if( cls ){
 
@@ -1296,19 +1296,19 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 		// Trigger the addition--hopefully inconsistent.
 		manager.add_class_expression(ecore.get_id(), tid, cls);
 	    }
-		
+
 	    // Wipe out modal.
-	    mdl.destroy();	    
+	    mdl.destroy();
 	}else{
 	    // Allow modal to remain for retry.
 	    alert('At least class must be defined');
 	}
     });
-    
+
     // Add add bundle action.
     jQuery('#' + bundle_add_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
-	
+
 	var cls = jQuery('#' + bundle_add_class_text.get_id()).val();
 	var rel = jQuery('#' + bundle_add_fact_text.get_id()).val();
 	if( cls && rel ){
@@ -1320,13 +1320,13 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	    manager.request_with(reqs);
 
 	    // Wipe out modal.
-	    mdl.destroy();	    
+	    mdl.destroy();
 	}else{
 	    // Allow modal to remain for retry.
 	    alert('Class and relations must be defined');
 	}
     });
-    
+
     // Add clone action. "tid" is the closed individual identifier.
     jQuery('#' + type_clone_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
@@ -1380,7 +1380,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 		    var o_node = subgr.get_node(oid);
 		    if( o_node ){
 			var cloned_ob_id = add_with_types(reqs, o_node);
-		    
+
 			// Clone edge.
 			reqs.add_fact([cloned_ind_id, cloned_ob_id, pid]);
 		    }
@@ -1388,7 +1388,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 		}else if( oid === tid ){ // clone object direction
 
 		    console.log('ob', sid, oid, pid);
-		    
+
 		    // Clone node.
 		    var s_node = subgr.get_node(sid);
 		    if( s_node ){
@@ -1412,15 +1412,15 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 
 	// Trigger the clone--hopefully consistent.
 	manager.request_with(reqs);
-	
+
 	// Wipe out modal.
 	mdl.destroy();
     });
-    
+
     // Add delete action. "tid" is the closed individual identifier.
     jQuery('#' + type_del_btn.get_id()).click(function(evt){
 	evt.stopPropagation();
-	
+
 	// Do NOT start with the main deletion target, just an empty
 	// list--remember that the subgraphs contain the outer
 	// individual, so we'd be adding it twice and cause errors.
@@ -1437,7 +1437,7 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	}else{
 	    // However, if there was no subgraph, we need to add the
 	    // original target so we delete /something/.
-	    to_delete_ids = [tid];  
+	    to_delete_ids = [tid];
 	}
 
 	// Ready a new request.
@@ -1452,18 +1452,18 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 	// Trigger the delete--hopefully consistent.
 	//manager.remove_individual(ecore.get_id(), tid);
 	manager.request_with(reqs);
-	
+
 	// Wipe out modal.
 	mdl.destroy();
     });
-    
+
     // Add autocomplete box for ECO to evidence box.
     var eco_auto_args = {
     	'label_template':'{{annotation_class_label}} ({{annotation_class}})',
     	'value_template': '{{annotation_class}}',
     	'list_select_callback': function(doc){}
     };
-    
+
     // Add general autocomplete to the input.
     var gen_auto_args = {
     	'label_template':'{{entity_label}} ({{entity}})',
@@ -1488,15 +1488,15 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 /**
  * Contained shield for generically editing the annotations of an
  * identifier entity.
- * 
+ *
  * Function that returns object.
- * 
+ *
  * TODO: make subclass?
- * 
+ *
  * @constructor
  */
 function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
-				gserv, gconf, context){
+				gserv, gserv_neo, gconf, context){
 
     ///
     /// This first section describes a semi-generic way of generating
@@ -1568,7 +1568,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		if( ! ann_val['evidence_id'] || ! ann_val['source_ids'] ){
 		    throw new Error('bad evidence ann args');
 		}
-				
+
 		// Evidence addition is only defined for individuals
 		// and facts.
 		if( entity_type === 'individual' ){
@@ -1594,7 +1594,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// removed).
 		manager.remove_evidence(model_id, ann_val);
 	    }
-	    
+
 	}else{
 
 	    // All add/remove operations run with the same arguments.
@@ -1627,14 +1627,14 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		}
 	    }
 	}
-    }	
+    }
 
     ///
     /// This next section is concerned with generating the UI
     /// necessary and connecting it to the correct callbacks.
     ///
-    
-    // Constructor: 
+
+    // Constructor:
     // A simple object to have a more object-like sub-widget for
     // handling the addition calls.
     //
@@ -1815,9 +1815,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	//   'app-name': {
 	//     <elt-uuid>: {<arg-to-function>},
 	//     ...
-	// }; 
+	// };
 	var app_hooks = {};
-	
+
 
 	// Go through our input list and create a mutable data
 	// structure that we can then use to fill out the editor
@@ -1829,7 +1829,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 	    // Clone.
 	    ann_classes[aid] = bbop_core.clone(ann_class);
-	    
+
 	    // Add our additions.
 	    ann_classes[aid]['elt2ann'] = {};
 	    ann_classes[aid]['list'] = [];
@@ -1850,9 +1850,9 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    // 	(! anns_by_key || anns_by_key.length === 0 ) ){
 	    // 	    // skip
 	    // }else{
-	    
+
 	    each(entity.get_annotations_by_key(key), function(ann){
-		
+
 		// For every one found, assemble the actual display
 		// string while storing the ids for later use.
 		var kval = ann.value();
@@ -1865,7 +1865,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		// for us now, and we need to dig out the guts from a
 		// subgraph elsewhere.
 		if( ann.key() === 'evidence' && ann.value_type() === 'IRI' ){
-		    
+
 		    // Setup a dummy in case we fail, like if we're
 		    // fully exploded and there is no subgraph.
 		    var ref_val = ann.value();
@@ -1921,10 +1921,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			});
 		    }
 		}
-		
+
 		// And the annotation id for the key.
 		var kid = bbop_core.uuid();
-		
+
 		// Only add to action set if mutable.
 		if( ann_classes[key]['policy'] === 'mutable' ){
 		    ann_classes[key]['elt2ann'][kid] = ann.id();
@@ -1960,12 +1960,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// TODO: Generate the final code from the created structure.
 	// Use the original ordering of the argument list.
 	var out_cache = [];
-	each(annotation_config, function(list_entry){	
-    
+	each(annotation_config, function(list_entry){
+
 	    //
 	    var eid = list_entry['id'];
 	    var entry_info = ann_classes[eid];
-	    
+
 	    //
 	    var elbl =  entry_info['label'];
 	    var ewid =  entry_info['widget_type'];
@@ -1990,7 +1990,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    //out_cache.push('<p>');
 	    out_cache.push('<ul class="list-group">' + eout + '</ul>');
 	    //out_cache.push('</p>');
-	    
+
 	    // And add an input widget if mutable...
 	    //console.log('epol: ' + epol);
 	    if( epol && epol === 'mutable' ){
@@ -2043,7 +2043,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	// Add them to the display at the bottom if there is anything
 	// worth acting on.
 	if( ! us.isEmpty(all_undefined_annotations) ){
-		
+
 	    // As above, but manually add visible annotations.
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">Other annotations</div>');
@@ -2123,10 +2123,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    // Standard TPC--#316 implementation.
 	    jQuery('#' + tpc_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
-		
+
 		// Close out what we had.
 		mdl.destroy();
-		
+
 		var taemdl =
 		    new contained_modal('dialog', 'TPC interaction');
 		taemdl.add_to_body('<div><p>TPC!</p></div>');
@@ -2160,18 +2160,18 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				'endpoint_url=' + endpoint_url +
 				'&endpoint_arguments=' + endpoint_arguments,
 				'_blank');
-		    
+
 		}
 		taemdl.destroy();
-	    });	
+	    });
 
 	    // Standard Textpresso--token only.
 	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
-		
+
 		// Close out what we had.
 		mdl.destroy();
-		
+
 		var taemdl =
 		    new contained_modal('dialog', 'Textpresso interaction');
 		taemdl.add_to_body('<div><p>Textpresso!</p></div>');
@@ -2187,7 +2187,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				'_blank');
 		}
 		taemdl.destroy();
-	    });	
+	    });
 
 	// }else if( (entity_type === 'fact' || entity_type === 'individual' ) &&
 	// 	  context === 'go' ){
@@ -2196,10 +2196,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    // PubAnnotation.
 	    jQuery('#' + pubann_btn.get_id()).click( function(evt){
 		evt.stopPropagation();
-		
+
 		// Close out what we had.
 		mdl.destroy();
-		
+
 		var taemdl =
 		    new contained_modal('dialog', 'PubAnnotation pattern interaction');
 		var tofm = [
@@ -2260,7 +2260,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				if( good_pmid_b.test(inp) ){
 				    inp = inp.substr(5, inp.length);
 				}
-				    
+
 				// Finally, kick out to PubAnnotation.
 				var endp_url = 'http://'+ window.location.origin +'/tractorbeam';
 				var endpoint_url = encodeURIComponent(endp_url);
@@ -2296,13 +2296,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				'endpoint_url=' + endpoint_url +
 				'&endpoint_arguments=' + endpoint_arguments,
 				'_blank');
-				
+
 				taemdl.destroy();
 			    }
 			}
 		    }
 		});
-		
+
 	    });
 	}
 
@@ -2321,7 +2321,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			console.log('sep', sep);
 			//console.log('query', sqy);
 			console.log('app_elt_data', app_elt_data);
-			
+
 			var engine_to_use = new jquery_engine(response_json);
 			engine_to_use.headers(
 			    [['accept', 'application/sparql-results+json']]);
@@ -2350,7 +2350,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		}
             });
 	});
-	
+
 	// Now that they're all in the DOM, add any delete annotation
 	// actions. These are completely generic--all annotations can
 	// be deleted in the same fashion.
@@ -2359,7 +2359,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	    each(ann_classes[ann_key]['elt2ann'], function(ann_id, elt_id){
 		jQuery('#' + elt_id).click( function(evt){
 		    evt.stopPropagation();
-		    
+
 		    //var annid = elt2ann[elt_id];
 		    //alert('blow away: ' + annid);
 		    var ann = entity.get_annotation_by_id(ann_id);
@@ -2367,13 +2367,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    var aval = ann.value();
 		    _ann_dispatch(entity, entity_type, 'remove',
 				  ecore.get_id(), akey, aval);
-		    
+
 		    // Wipe out modal on action.
 		    mdl.destroy();
 		});
 	    });
 	});
-	
+
 	// Walk through again, this time activating and annotation
 	// "add" buttons that we added.
 	each(us.keys(ann_classes), function(ann_key){
@@ -2401,7 +2401,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 				//console.log(ce);
 				ce_cache[ce.class_id()] = true;
 			    });
-			    
+
 			    // Mine out source and with.
 			    var cln_src = [];
 			    var cln_with = [];
@@ -2424,7 +2424,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    //console.log('uniq', uniq);
 			    if( cln_ce_str.length === 1 &&
 			    	cln_src.length > 0 ){
-				
+
 				// Create add button.
 				var cln_btn_args = {
     				    'generate_id': true,
@@ -2480,12 +2480,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			// Make buttons from cache.
 			us.each(us.values(cln_line_cache), function(store){
 
-			    // 
+			    //
 			    var cln_btn = store['button'];
 			    var cln_ce = store['class_expressions'];
 			    var cln_src = store['sources'];
 			    var cln_with = store['withs'] || []; // nil p?
-			    
+
 			    jQuery('#'+cln_btn.get_id()).click(function(evt){
 
 				// BUG/TODO: class express still
@@ -2513,13 +2513,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		    evt.stopPropagation();
 
 		    if( ann_key === 'evidence' ){
-			
+
 			// In the case of evidence, we need to bring
 			// in the two different text items and make
 			// them into the correct object for
 			// _ann_dispatch(). The "with" field is an
 			// optional add-on.
-			var val_a = 
+			var val_a =
 			    jQuery('#'+form.text_input.get_id()).val();
 			var val_b =
 			    jQuery('#'+form.text_input_secondary.get_id()).val();
@@ -2547,10 +2547,10 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 			    alert('no ' + ann_key + ' added for ' + entity_id);
 			}
 		    }
-	    
+
 		    // Wipe out modal.
-		    mdl.destroy();	    
-		});	
+		    mdl.destroy();
+		});
 	    }
 	});
 
@@ -2558,7 +2558,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	/// Special section for special additions (autocomplete, etc.).
 	/// TODO: Eventually, this should also be in the config.
 	///
-	
+
 	// Add autocomplete box for ECO to evidence box.
 	if( ann_classes['evidence'] && ann_classes['evidence']['widget'] ){
 	    var ev_form = ann_classes['evidence']['widget'];
@@ -2569,12 +2569,13 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     		'list_select_callback': function(doc){}
 	    };
 	    var eco_auto =
-		    new bbop.widget.search_box(gserv, gconf,
+		    new bbop.widget.search_box(gserv_neo, gconf,
 					       ev_form.text_input.get_id(),
 					       eco_auto_args);
 	    eco_auto.lite(true);
 	    eco_auto.add_query_filter('document_category', 'ontology_class');
-	    eco_auto.add_query_filter('source', 'eco', ['+']);
+	    eco_auto.add_query_filter('regulates_closure',
+				      'ECO:0000352', ['+']);
 	    eco_auto.set_personality('ontology');
 	}
     }
@@ -2585,7 +2586,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 
 /**
  * Object.
- * 
+ *
  * Output formatted commentary to element.
  *
  * @constructor
@@ -2605,7 +2606,7 @@ function reporter(output_id){
 	    }
 	    return ret;
 	}
-	
+
 	var now = new Date();
 	var dts = now.getFullYear() + '/' +
 	    _zero_fill(now.getMonth() +1) + '/' +
@@ -2614,8 +2615,8 @@ function reporter(output_id){
 	    _zero_fill(now.getMinutes()) + ':' +
 	    _zero_fill(now.getSeconds());
 	return dts;
-    }	
-    
+    }
+
     this.reset = function(){
 	jQuery(output_elt).empty();
 	var new_list_id = bbop_core.uuid();
@@ -2624,7 +2625,7 @@ function reporter(output_id){
     };
 
     this.comment = function(message){
-	
+
 	// Try and set some defaults.
 	var uid = null;
 	var color = null;
@@ -2655,19 +2656,19 @@ function reporter(output_id){
 
 	// make a sensible message.
 	if( mess_type === 'error' ){
-	    out += mess_type + ': there was a problem: ' + mess; 
+	    out += mess_type + ': there was a problem: ' + mess;
 	}else{
 	    if( sig === 'merge' || sig === 'rebuild' ){
 		if( intent === 'query' ){
-		    out += mess_type + ': they likely refreshed';		
-		}else{		    
+		    out += mess_type + ': they likely refreshed';
+		}else{
 		    out += 'performed  <span class="bbop-mme-message-op">' +
 			intent + '</span> (' + mess + '), ' +
 			'<span class="">' +
 			'you may wish to refresh' + '</span>';
 		}
 	    }else{
-		out += mess_type + ': ' + mess;		
+		out += mess_type + ': ' + mess;
 	    }
 	}
 
@@ -2685,13 +2686,13 @@ function reporter(output_id){
 /**
  * Given a token, either report a bad token ot
  *
- * Parameters: 
+ * Parameters:
  *  barista_loc - barista location
  *  given_token - token
  *  elt_id - element to replace
  *  user_group_fun - [optional] function that returns the current user group id
  *  change_group_announce_fun - [optional] function that returns the current user group id; if false or null (a opposed to undefined), don't use callback and don't draw selector
- *  
+ *
  * Returns: function that returns current group id/state ???
  */
 function user_check(barista_loc, given_token, elt_id,
@@ -2709,7 +2710,7 @@ function user_check(barista_loc, given_token, elt_id,
     }else if(change_group_announce_fun === null ){
 	render_groups_p = false;
     }
-    
+
     // Redraw the widget from scratch with the incoming data.
     var _redraw_widget = function(user_group_id, data){
 
@@ -2721,29 +2722,31 @@ function user_check(barista_loc, given_token, elt_id,
 	    var to_remove = 'barista_token=' + given_token;
 	    var new_url = window.location.toString().replace(to_remove, '');
 	    //var new_url = window.location;
-	    
+
 	    window.location.replace(new_url);
 	    console.log('user_check window.location', window.location);
 
 	}else{
 
 	    var eid2gid = {};
-	    
+
 	    // Render a single entry in the groups dropdown.
 	    var something_checked_p = false;
-	    var _render_entry = function(user_uri, group_id, group_label){	
+	    var selected_group = 'none';
+	    var _render_entry = function(user_uri, group_id, group_label){
 
 		var chk = '&#10004&nbsp;';
 		var box = '&square;&nbsp;';
 		var ret = '';
 
 		var fresh_id = '_user_group_' + bbop_core.uuid();
-		
+
 		if( user_group_id === group_id ){
 		    // Bold if it is our current group.
 		    ret = '<li><a id=' + fresh_id + ' href="#">' +
 			chk + group_label + '</a></li>';
 		    eid2gid[fresh_id] = group_id;
+		    selected_group = group_label;
 		    something_checked_p = true;
 		}else if( user_uri === group_id ){
 		    // Bold if our "none" group.
@@ -2763,31 +2766,31 @@ function user_check(barista_loc, given_token, elt_id,
 			box + group_label +'</a></li>';
 		    eid2gid[fresh_id] = group_id;
 		}
-		
+
 		return ret;
 	    };
 
 	    // Try and get the best user name we can.
 	    var name = data['nickname'] || data['uri'];
-	    
+
 	    // If there is group information, create an active widget,
 	    // otherwise create a silent one.
 	    if( ! us.isArray(data['groups']) ||
 		data['groups'].length === 0 ||
 		render_groups_p === false ){
-		
+
 		// Inactive replacement.
 		var nsel = '<span id="user_name_info">' + name + '</span>';
 		jQuery('#' + elt_id).replaceWith(nsel);
 
 	    }else{
-		
+
 		// Create the groups list, select the first.
 		// If the first is the uri of the user, select none.
 		var group_list = [];
 		var add_none_p = true;
 		us.each(data['groups'], function(grp){
-		    
+
 		    // If the user's URI is in there, skip adding
 		    // "none" later.
 		    if( grp['id'] === data['uri'] ){
@@ -2797,7 +2800,7 @@ function user_check(barista_loc, given_token, elt_id,
 					    grp['id'], grp['label']);
 		    group_list.push(ent);
 		});
-		
+
 		// If we did not run into the user's id, add "none" to
 		// the bottom.
 		if( add_none_p ){
@@ -2809,20 +2812,21 @@ function user_check(barista_loc, given_token, elt_id,
 		    }
 		    group_list.push(nent);
 		}
-		
+
 		// Create active widget.
 		var gsel = [
 		    '<!-- Group controls. -->',
 		    '<li class="dropdown" id="' + elt_id + '">',
 		    '<span class="dropdown-toggle" data-toggle="dropdown">'+
-			name + ' <b class="caret"></b></span>',
+			name + ' <small>(' +
+			selected_group + ')</small><b class="caret"></b></span>',
 		    '<ul class="dropdown-menu">',
 		    group_list.join(' '),
 		    '</ul>',
 		    '</li>'
 		];
 		jQuery('#' + elt_id).replaceWith(gsel.join(''));
-		
+
 		// User callback on change.
 		us.each(eid2gid, function(gid, eid){
 		    jQuery('#' + eid).click(function(evt){
@@ -2836,11 +2840,11 @@ function user_check(barista_loc, given_token, elt_id,
 			    change_group_announce_fun(gid);
 			}
 		    });
-		});		
+		});
 	    }
-	}	    
+	}
     };
-    
+
     var user_info_loc = barista_loc + "/user_info_by_token/" + given_token;
     jQuery.ajax({
 	'type': "GET",
@@ -2910,7 +2914,7 @@ function type_to_full(in_type, aid){
 	// lifting...
 	var cache = [];
 	if( t === 'union' || t === 'intersection' ){
-	    
+
 	    // Some kind of recursion on a frame then.
 	    cache = [
 		'<table width="80%" class="table table-bordered table-hover table-condensed mme-type-table" ' +
@@ -2933,12 +2937,12 @@ function type_to_full(in_type, aid){
 		cache.push(type_to_full(ftype, aid));
 		cache.push('</td>');
 		cache.push('</tr>');
-	    });	
+	    });
 	    // cache.push('</tr>');
 	    cache.push('</tbody>');
 	    cache.push('</table>');
-	    
-	    text = cache.join('');	    
+
+	    text = cache.join('');
 
 	}else{
 
@@ -2959,7 +2963,7 @@ function type_to_full(in_type, aid){
 	    cache.push('</td></tr>');
 	    cache.push('</tbody>');
 	    cache.push('</table>');
-	    
+
 	    text = cache.join('');
 	}
     }

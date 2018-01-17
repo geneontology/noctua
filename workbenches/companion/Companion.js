@@ -267,30 +267,19 @@ var CompanionInit = function(user_token){
 		    });
 		    
 		    // Assemble a batch to run.
-		    var acls_set_f = {};
-		    var acls_set_p = {};
-		    var acls_set_c = {};
+		    var acls_set = {};
 		    each(docs_to_run, function(doc){
 			
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
+			// Who "did" it? Mark it for later request set
+			// grouping.
+			var assby = doc['assigned_by'];
+
 			// Using aspect, place the information under a
 			// paricular aspect grouping.
 			var aspect = doc['aspect'];
-			var acls_set = null;
-			//var rel = null;
-			if( aspect === 'F' ){
-			    acls_set = acls_set_f;
-			    //rel = 'RO:0002333'; // enabled_by
-			}else if( aspect === 'P' ){
-			    acls_set = acls_set_p;
-			    //rel = 'RO:0002233'; // has_input
-			}else{ // C
-			    acls_set = acls_set_c;
-			    //rel = 'BFO:0000066'; // occurs_in
-			}
-			// 'BFO:0000050'; // part_of
 
 			// Attempt at save ECO mapping.
 			var ev = doc['evidence_type'];
@@ -321,60 +310,77 @@ var CompanionInit = function(user_token){
 			// Okay, try and compact this down as much as
 			// possible. First, select which aspect
 			// grouping it's in, then ensure structure.
-			if( ! acls_set[acls] ){
-			    acls_set[acls] = {};
+			if( ! acls_set[assby] ){
+			    acls_set[assby] = {};
 			}
-			if( ! acls_set[acls][bio] ){
-			    //acls_set[acls][bio] = {};
-			    acls_set[acls][bio] = [];
+			if( ! acls_set[assby][acls] ){
+			    acls_set[assby][acls] = {};
 			}
-			// if( ! acls_set[acls][bio][rel] ){
-			//     acls_set[acls][bio][rel] = [];
-			// }
-			// Add on the evidence.
-			//acls_set[acls][bio][rel].push({
-			acls_set[acls][bio].push({
+			if( ! acls_set[assby][acls][bio] ){
+			    acls_set[assby][acls][bio] = [];
+			}
+			acls_set[assby][acls][bio].push({
 			    ev: ev,
 			    refs: refs,
 			    withs: withs
 			});
 		    });
 			
-		    // Now let's actually assemble the requests for
-		    // the run.
-		    var reqs = new minerva_requests.request_set(
-			global_barista_token, global_id);
+		    // WARNING: Warn if we are going to be batching a lot.
+		    if( us.keys(acls_set).length > 3 ){
+			alert('You have a lot of requests from different ' +
+			      'sources; this many may not batch well; please ' +
+			      'check that everything made it over.');
+		    }
 
 		    // A slightly harder algorithm here. Everything
-		    // starts from F, no matter what.
-		    each(acls_set_f, function(bio_set, acls){
-			
-			var sub = reqs.add_individual(acls);
+		    // starts from F, no matter what, and we need to
+		    // group them by assigned_by to give the group for
+		    // providedBy.
+		    us.each(acls_set, function(acls_assby_subset, assby){
 
-			each(bio_set, function(ev_list, bio){
+			// Now let's actually assemble the /generic/ requests
+			// for the run.
+			var reqs = new minerva_requests.request_set(
+			    global_barista_token, global_id);			
+			reqs.use_groups([
+			    // WARNING: We're minting money that we
+			    // might not honor here.
+			    'http://purl.obolibrary.org/go/groups/' + assby
+			]);
 
-			    var obj = reqs.add_individual(bio);
-			    var edge = reqs.add_fact([sub, obj, 'RO:0002333']);
+			us.each(acls_assby_subset, function(bio_set, acls){
 			    
-			    each(ev_list, function(ev_set){
+			    var sub = reqs.add_individual(acls);
+			    
+			    us.each(bio_set, function(ev_list, bio){
 				
-				// Recover.
-				var ev = ev_set['ev'];
-				var refs = ev_set['refs'];
-				var withs = ev_set['withs'];
-				
-				// Tag on the final evidence.
-				reqs.add_evidence(ev, refs, withs,
-						  [sub, obj, 'RO:0002333']);
+				var obj = reqs.add_individual(bio);
+				var edge = reqs.add_fact(
+				    [sub, obj, 'RO:0002333']);
+			    
+				us.each(ev_list, function(ev_set){
+				    
+				    // Recover.
+				    var ev = ev_set['ev'];
+				    var refs = ev_set['refs'];
+				    var withs = ev_set['withs'];
+				    var assby = ev_set['assigned_by'];
+				    
+				    // Tag on the final evidence.
+				    reqs.add_evidence(
+					ev, refs, withs,
+					[sub, obj, 'RO:0002333']);
+				});
 			    });
+			    
+			    // ???			    
 			});
 
-			// ???
-			
+			// Fire and forget.
+			mmanager.request_with(reqs);
 		    });
 		    
-		    // Final request action - fire and forget.
-		    mmanager.request_with(reqs);
 		}
 	    };
 	}

@@ -338,6 +338,9 @@ var StageTwo = function(user_token, bioentity_ids, cc_indiv_ids,
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
+			// Who "did" it? Mark it for later request set
+			// grouping.
+			var assby = doc['assigned_by'];
 
 			// Attempt at safe ECO mapping.
 			var ev = doc['evidence_type'];
@@ -365,65 +368,94 @@ var StageTwo = function(user_token, bioentity_ids, cc_indiv_ids,
 			    withs = [withs];
 			}
 
-			// Okay, group by class, entity, ev.
-			if( ! acls_set[acls] ){
-			    acls_set[acls] = {};
+			// Okay, group by assigned_by, class, entity, ev.
+			if( ! acls_set[assby] ){
+			    acls_set[assby] = {};
 			}
-			if( ! acls_set[acls][bio] ){
-			    acls_set[acls][bio] = [];
+			if( ! acls_set[assby][acls] ){
+			    acls_set[assby][acls] = {};
+			}
+			if( ! acls_set[assby][acls][bio] ){
+			    acls_set[assby][acls][bio] = [];
 			}
 			// Add on the evidence.
 			//console.log(ev, refs, withs);
 			//alert('breakpoint');
-			acls_set[acls][bio].push({
+			acls_set[assby][acls][bio].push({
 			    ev: ev,
 			    refs: refs,
 			    withs: withs
 			});
 		    });
-			
+
+		    // WARNING: Warn if we are going to be batching a lot.
+		    if( us.keys(acls_set).length > 3 ){
+			alert('You have a lot of requests from different ' +
+			      'sources; this many may not batch well; please ' +
+			      'check that everything made it over.');
+		    }
+
 		    // Now let's actually assemble the requests for
 		    // the run.
-		    var reqs = new minerva_requests.request_set(
-			global_barista_token, global_model_id);
-
-		    // If there is already an "occurs_in" go
-		    // ahead and take it out.
-		    each(cc_indiv_ids, function(cc_indiv_id){
-			var sub = indiv_id;
-			var obj = cc_indiv_id;
-			reqs.remove_fact([sub, obj, 'BFO:0000066']);
-		    });
-		    
-		    // 
-		    each(acls_set, function(bio_set, acls){
+		    var first_run_p = true;
+		    us.each(acls_set, function(acls_assby_subset, assby){
 			
-			var obj = reqs.add_individual(acls);
+			// Now let's actually assemble the /generic/ requests
+			// for the run.
+			var reqs = new minerva_requests.request_set(
+			    global_barista_token, global_model_id);
+			reqs.use_groups([
+			    // WARNING: We're minting money that we
+			    // might not honor here.
+			    'http://purl.obolibrary.org/go/groups/' + assby
+			]);
 
-			each(bio_set, function(ev_list, bio){
+			// If this is the first run, tag on the remove ops.
+			// First request set to get rid of what we already
+			// have there.
+			if( first_run_p ){
+			    first_run_p = false;
 
-			    var sub = indiv_id;
-			    var edge = reqs.add_fact([sub, obj, 'BFO:0000066']);
-			    
-			    each(ev_list, function(ev_set){
-				
-				// Recover.
-				var ev = ev_set['ev'];
-				var refs = ev_set['refs'];
-				var withs = ev_set['withs'];
-				
-				// Tag on the final evidence.
-				reqs.add_evidence(ev, refs, withs,
-						  [sub, obj, 'BFO:0000066']);
+			    // If there is already an "occurs_in" go
+			    // ahead and take it out.
+			    each(cc_indiv_ids, function(cc_indiv_id){
+		    		var sub = indiv_id;
+		    		var obj = cc_indiv_id;
+		    		//reqs.remove_fact([sub, obj, 'BFO:0000066']);
+		    		reqs.remove_individual(obj);
 			    });
-			});
+			}
+			
+			each(acls_assby_subset, function(bio_set, acls){
+			
+			    var obj = reqs.add_individual(acls);
+
+			    each(bio_set, function(ev_list, bio){
+
+				var sub = indiv_id;
+				var edge = reqs.add_fact(
+				    [sub, obj, 'BFO:0000066']);
+			    
+				each(ev_list, function(ev_set){
+				
+				    // Recover.
+				    var ev = ev_set['ev'];
+				    var refs = ev_set['refs'];
+				    var withs = ev_set['withs'];
+				    
+				    // Tag on the final evidence.
+				    reqs.add_evidence(
+					ev, refs, withs,
+					[sub, obj, 'BFO:0000066']);
+				});
+			    });
 
 			// ???
-			
-		    });
+			});
 		    
-		    // Final request action - fire and forget.
-		    mmanager.request_with(reqs);
+			// Final request action - fire and forget.
+			mmanager.request_with(reqs);
+		    });
 		}
 	    };
 	}
