@@ -5,8 +5,7 @@ Welcome to Noctua, the GO consortium tool for editing GO Causal Activity Models 
 ## Quickstart for...
 
  * *GO-CAM Editors*
-    * Start with the [video demos](https://vimeo.com/channels/Noctua), such as the [editing example](https://vimeo.com/channels/noctua/148780879)
-    * GO curators should read the [Noctua Quickstart](/doc/quick-start-guide) (draft, in progress)
+    * Read the [guide on the wiki](http://wiki.geneontology.org/index.php/Noctua)
     * After that, read the full [GO-CAM modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
     * For general tool usage, see the instructions below
  * *Software Developers* -- Development and technical documentation can be found on the [GitHub repository](http://github.com/geneontology/noctua).
