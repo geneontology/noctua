@@ -1,12 +1,12 @@
 # Introduction
 
-Welcome to Noctua. 
+Welcome to Noctua, the GO consortium tool for editing GO Causal Activity Models (GO-CAMs)
 
 ![Noctua screenshot](https://geneontology.github.io/noctua/images/screenshot.png)
 
 ## Quickstart
 
- * *Noctua Users*
+ * *GOCAM editors*
     * Start with the [video demos](https://vimeo.com/channels/Noctua), such as the [editing example](https://vimeo.com/channels/noctua/148780879)
     * GO curators should read the [LEGO modeling guide](https://docs.google.com/document/d/18ihslb7prB6CWtu2yjF-pMHZBTY1-AdXJAu-ZyuyXS4/edit#) (draft, in progress)
     * For general tool usage, see the instructions below
