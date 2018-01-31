@@ -333,10 +333,43 @@ function node_stack_object(enode, aid){
 	enode_stack_table.add_to(trstr);
     }
 
-    // Inferred types first.
+    // Collect meta-information if extant.
+    var anns = enode.annotations();
+    var rdfs_label = null;
+    if( anns.length !== 0 ){
+
+	// Meta counts.
+	var n_ev = 0;
+	var n_other = 0;
+	each(anns, function(ann){
+	    if( ann.key() === 'evidence' ){
+		n_ev++;
+	    }else{
+		if( ann.key() !== 'hint-layout-x' &&
+		    ann.key() !== 'hint-layout-y' ){
+			n_other++;
+		}
+    		// Capture rdfs:label annotation for visual override
+		// if extant. Allow clobber of last.
+		if( ann.key() === 'rdfs:label' ){
+		    rdfs_label = ann.value();
+		}
+	    }
+	});
+    }
+
+    // rdfs:label first, if extant.
+    if( rdfs_label ){
+	var trstr = '<tr class="bbop-mme-stack-tr">' +
+		'<td class="bbop-mme-stack-td"><em style="color: grey;">' +
+		rdfs_label +
+		'</em></td></tr>';
+	enode_stack_table.add_to(trstr);
+    }
+    // Inferred types next.
     var inf_types = enode.get_unique_inferred_types();
     each(inf_types, function(item){ _add_table_row(item, null, '[', ']'); });
-    // Editable types next.
+    // Editable types last.
     var std_types = enode.types();
     each(std_types, function(item){ _add_table_row(item); });
 
@@ -417,23 +450,8 @@ function node_stack_object(enode, aid){
 
     }
 
-    // Inject meta-information if extant.
-    var anns = enode.annotations();
+    // Inject meta-information at bottom if extant.
     if( anns.length !== 0 ){
-
-	// Meta counts.
-	var n_ev = 0;
-	var n_other = 0;
-	each(anns, function(ann){
-	    if( ann.key() === 'evidence' ){
-		n_ev++;
-	    }else{
-		if( ann.key() !== 'hint-layout-x' &&
-		    ann.key() !== 'hint-layout-y' ){
-		    n_other++;
-		}
-	    }
-	});
 
 	// Add to top. No longer need evidence count on individuals.
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
