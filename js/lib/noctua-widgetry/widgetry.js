@@ -362,7 +362,7 @@ function node_stack_object(enode, aid){
     // rdfs:label first, if extant.
     if( rdfs_label ){
 	var trstr = '<tr class="bbop-mme-stack-tr">' +
-		'<td class="bbop-mme-stack-td"><em style="color: grey;">' +
+		'<td class="bbop-mme-stack-td bbop-mme-stack-td-rdfslabel"><em style="color: grey;">' +
 		rdfs_label +
 		'</em></td></tr>';
 	enode_stack_table.add_to(trstr);
