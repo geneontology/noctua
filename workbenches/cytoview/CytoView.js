@@ -29,6 +29,8 @@ var model = require('bbop-graph-noctua');
 var widgetry = require('noctua-widgetry');
 
 var cytoscape = require('cytoscape');
+var regCose = require('cytoscape-cose-bilkent');
+regCose( cytoscape ); // register extension
 
 // Aliases
 var each = us.each;
@@ -62,7 +64,7 @@ var minerva_manager = require('bbop-manager-minerva');
 ///
 
 var graph_id = 'cytoview';
-var graph_layout = 'noctuadef'; // default
+var graph_layout = 'cose-bilkent'; // default
 var graph_fold = 'editor'; // default
 var graph = null; // the graph itself
 var cy = null;
@@ -123,7 +125,7 @@ var CytoViewInit = function(user_token){
     function _node_labels(n, cat_list){
 
 	var retlist = [];
-	
+
 	var bin = {};
 	each(n.types(), function(in_type){
 	    var cat = in_type.category();
@@ -143,7 +145,7 @@ var CytoViewInit = function(user_token){
 
 	return retlist;
     }
-    
+
     function _render_graph(ngraph, layout, fold){
 
 	// Wipe it and start again.
@@ -177,7 +179,7 @@ var CytoViewInit = function(user_token){
 	each(ngraph.all_nodes(), function(n){
 
 	    var nid = n.id();
-	    
+
 	    // Where we'll assemble the label.
 	    var table_row = [];
 
@@ -185,9 +187,9 @@ var CytoViewInit = function(user_token){
 	    var sub = n.subgraph();
 	    if( sub ){
 		each(sub.all_nodes(), function(snode){
-  
+
     		    var snid = snode.id();
-	    
+
 		    if( nid !== snid ){
 
 			var edges = sub.get_edges(nid, snid);
@@ -216,7 +218,7 @@ var CytoViewInit = function(user_token){
 	    each(node_labels, function(nl){
 		table_row.push(nl);
 	    });
-	    
+
 	    // Make a label from it.
 	    var nlbl = table_row.join("\n");
 
@@ -290,57 +292,108 @@ var CytoViewInit = function(user_token){
 	layout_opts = {
 	    'cose': {
 		name: 'cose',
-	    	padding: 10,
-	    	animate: false,
-	    	// animate: true,
-		// 'directed': true,
-		'fit': true
+	    	//padding: 10,
+	    	//animate: false,
+	    	animate: true,
+		'directed': true
+		//'fit': true
 		// //'maximalAdjustments': 0,
 		// 'circle': false,
-		// 'roots': cyroots
+		//'roots': cyroots
+	    },
+	    'cose-bilkent': {
+		name: 'cose-bilkent',
+		// // Called on `layoutready`
+		// ready: function () {
+		// },
+		// // Called on `layoutstop`
+		// stop: function () {
+		// },
+		// // Whether to include labels in node dimensions. Useful for avoiding label overlap
+		// nodeDimensionsIncludeLabels: false,
+		// // number of ticks per frame; higher is faster but more jerky
+		// refresh: 30,
+		// // Whether to fit the network view after when done
+		// fit: true,
+		// // Padding on fit
+		// padding: 10,
+		// // Whether to enable incremental mode
+		randomize: true,
+		// // Node repulsion (non overlapping) multiplier
+		// nodeRepulsion: 4500,
+		// // Ideal (intra-graph) edge length
+//		idealEdgeLength: 150,
+		// // Divisor to compute edge forces
+		// edgeElasticity: 0.45,
+		// // Nesting factor (multiplier) to compute ideal edge length for inter-graph edges
+		// nestingFactor: 0.1,
+		// // Gravity force (constant)
+		// gravity: 0.25,
+		// // Maximum number of iterations to perform
+		// numIter: 2500,
+		// // Whether to tile disconnected nodes
+		// tile: true,
+		// // Type of layout animation. The option set is {'during', 'end', false}
+		// animate: 'end',
+		// // Amount of vertical space to put between degree zero nodes during tiling (can also be a function)
+		// tilingPaddingVertical: 10,
+		// // Amount of horizontal space to put between degree zero nodes during tiling (can also be a function)
+		// tilingPaddingHorizontal: 10,
+		// // Gravity range (constant) for compounds
+		// gravityRangeCompound: 1.5,
+		// // Gravity force (constant) for compounds
+		// gravityCompound: 1.0,
+		// // Gravity range (constant)
+		// gravityRange: 3.8,
+		// // Initial cooling factor for incremental layout
+		// initialEnergyOnIncremental:0.8
 	    },
 	    'noctuadef': {
 	        'name': 'preset',
-	        'padding': 30,
-		'fit': true,
+	        // 'padding': 30,
+		// 'fit': true,
 	        'positions': function(a){
 
 		    var nid = a.data('id');
 		    var node = ngraph.get_node(nid);
-		    
+
 		    // Somewhat vary the intitial placement.
 		    function _vari(){
 			var min = -25;
 			var max = 25;
 			var rand = Math.random();
 			var seed = Math.floor(rand * (max-min+1) +min);
-			return seed + 100;
+		        //return seed + 100;
+			return seed + 50;
 		    }
 		    function _extract_node_position(node, x_or_y){
 			var ret = null;
-			
+
 			var hint_str = null;
 			if( x_or_y === 'x' || x_or_y === 'y' ){
 			    hint_str = 'hint-layout-' + x_or_y;
 			}
-			
+
 			var hint_anns = node.get_annotations_by_key(hint_str);
 			if( hint_anns.length === 1 ){
-			    ret = parseInt(hint_anns[0].value());
+			    // Scale with the superforce defaults we
+			    // took.
+                            var raw_coord = parseInt(hint_anns[0].value());
+			    ret = Math.round(raw_coord / 3.0);
 			    //ll('extracted coord ' + x_or_y + ': ' + ret);
 			}else if( hint_anns.length === 0 ){
-			    //ll('no coord');	    
+			    //ll('no coord');
 			}else{
 			    //ll('too many coord');
 			}
-	
+
 			return ret;
 		    }
-		    
+
 		    var old_x = _extract_node_position(node, 'x') || _vari();
 		    var old_y = _extract_node_position(node, 'y') || _vari();
 		    console.log('nid', nid, 'old_x', old_x, 'old_y', old_y);
-		    
+
 		    return {'x': old_x, 'y': old_y };
 		}
 	    },
@@ -350,19 +403,19 @@ var CytoViewInit = function(user_token){
 	    //     'position': get_pos
 	    // },
 	    'random': {
-		name: 'random',
-		fit: true
+		name: 'random'
+		// fit: true
 	    },
 	    'grid': {
 		name: 'grid',
-		fit: true,
-		padding: 30,
+		// fit: true,
+		// padding: 30,
 		rows: undefined,
 		columns: undefined
 	    },
 	    'circle': {
 		name: 'circle',
-		fit: true,
+		// fit: true,
 		sort: function(a, b){
 		    return a.data('degree') - b.data('degree');
 		}
@@ -370,10 +423,10 @@ var CytoViewInit = function(user_token){
 	    'breadthfirst': {
 		name: 'breadthfirst',
 		directed: true,
-		fit: true,
+		// fit: true,
 		//nodeDimensionsIncludeLabels: true,
-		spacingFactor: 1.0,// 1.75,
-		padding: 30,// 30,
+		// spacingFactor: 1.0,// 1.75,
+		// padding: 30,// 30,
 		//maximalAdjustments: 0,
 		circle: false//,
 		//roots: root_ids
@@ -384,7 +437,7 @@ var CytoViewInit = function(user_token){
 	    // 	padding: 10 // fit padding
 	    // },
 	};
-	
+
 	// Ramp up view.
 	cy = cytoscape({
 	    // UI loc
@@ -397,20 +450,25 @@ var CytoViewInit = function(user_token){
 		    selector: 'node',
 		    style: {
 			'content': 'data(label)',
-			'width': 150,
-			'height': 100,
+//			'width': 150,
+//			'height': 100,
+			'width': 50,
+			'height': 35,
 			'background-color': 'white',
-			'border-width': 2,
+//			'background-color': 'black',
+			'border-width': 0.5,
 			'border-color': 'black',
-			'font-size': 14,
+//			'font-size': 14,
+			'font-size': 8,
 			'min-zoomed-font-size': 3, //10,
                         'text-valign': 'center',
                         'color': 'black',
-			'shape': 'roundrectangle',
-                        //'text-outline-width': 2,
-                        //'text-outline-color': '#222222',
+//                      'color': 'black',
+		        'shape': 'roundrectangle',
+//                        'text-outline-width': 1,
+//                        'text-outline-color': '#222222',
 			'text-wrap': 'wrap',
-			'text-max-width': '100px'
+			'text-max-width': '48px'
 		    }
 		},
 		{
@@ -419,23 +477,25 @@ var CytoViewInit = function(user_token){
 			// NOTE/WARNING: From
 			// http://js.cytoscape.org/#style/edge-line
 			// and other places, we need to use 'bezier'
-			// here, rather than the defaulr 'haystack'
+			// here, rather than the default 'haystack'
 			// because the latter does not support glyphs
 			// on the endpoints. However, this apparently
 			// incurs a non-trivial performance hit.
 			'curve-style': 'bezier',
+			'text-rotation': 'autorotate',
+			'text-margin-y': '-6px',
 			'target-arrow-color': 'data(color)',
 			'target-arrow-shape': 'data(glyph)',
 			'target-arrow-fill': 'filled',
 			'line-color': 'data(color)',
 			'content': 'data(label)',
-			'font-size': 14,
+			'font-size': 6,
 			'min-zoomed-font-size': 3, //10,
                         'text-valign': 'center',
                         'color': 'white',
-			'width': 6,
-                        'text-outline-width': 2,
-                        'text-outline-color': '#222222'
+//			'width': 6,
+                        'text-outline-width': 1,
+			'text-outline-color': '#222222'
 		    }
 		}
 	    ],
@@ -478,12 +538,12 @@ var CytoViewInit = function(user_token){
 	    console.log( 'unselected: ' + evt.target.id() );
 	    evt.target.style('background-color', 'white');
 	});
-	
+
 	///
 	/// We have environment and token, get ready to allow live
 	/// layout work.
 	///
-		
+
 	// Zoom has no affect on the "position" of the nodes, so we can
 	// just find a box and translate it into noctua.
 	jQuery('#button').click(function(){
@@ -516,20 +576,20 @@ var CytoViewInit = function(user_token){
 		    if( x < least_x ){ least_x = x; }
 		    var y = cnode.position('y');
 		    if( y < least_y ){ least_y = y; }
-		    
+
 		    console.log('position', cnode.position());
 		});
 		//alert(cy.zoom());
-		
+
 		console.log('zoom', cy.zoom());
 		console.log('least_x', least_x);
 		console.log('least_y', least_y);
-		
+
 		//
 		var base_shift = 50;
 		var x_shift = (-1.0 * least_x) + base_shift;
 		var y_shift = (-1.0 * least_y) + base_shift;
-		
+
 		// Start a new request and cycle through all the nodes
 		// to force updates.
 		var reqs = new minerva_requests.request_set(
@@ -538,9 +598,9 @@ var CytoViewInit = function(user_token){
 
 		    var nid = cnode.data('id');
 		    var node = ngraph.get_node(nid);
-		    
-		    var new_x =  cnode.position('x') + x_shift;
-		    var new_y =  cnode.position('y') + y_shift;
+
+		    var new_x = (cnode.position('x') * 3.0) + x_shift;
+		    var new_y = (cnode.position('y') * 3.0) + y_shift;
 
 		    console.log('nx', new_x, 'ny', new_y);
 

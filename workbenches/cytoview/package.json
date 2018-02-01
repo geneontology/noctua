@@ -34,6 +34,7 @@
 	"bbop-rest-manager": "0.0.11",
 	"class-expression": "0.0.11",
 	"cytoscape": "3.1.1",
+	"cytoscape-cose-bilkent": "2.1.0",
 	"gulp": "^3.9.1",
 	"jquery": "^2.2.4",
 	"minerva-requests": "0.0.15",
