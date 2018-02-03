@@ -130,7 +130,7 @@ var PathwayViewInit = function(user_token){
     function _node_labels(n, cat_list){
 
 	var retlist = [];
-	
+
 	var bin = {};
 	each(n.types(), function(in_type){
 	    var cat = in_type.category();
@@ -150,7 +150,7 @@ var PathwayViewInit = function(user_token){
 
 	return retlist;
     }
-    
+
     function _render_graph(ngraph, layout, fold, nest, show_mf_p, show_hi_p, show_shape){
 
 	// Wipe it and start again.
@@ -169,7 +169,7 @@ var PathwayViewInit = function(user_token){
 	}
 
 	///
-	/// Strip the graph down to the desired level by destruction. 
+	/// Strip the graph down to the desired level by destruction.
 	///
 
 	// Get a copy to start--we're gunna take our scissors to it.
@@ -180,7 +180,7 @@ var PathwayViewInit = function(user_token){
 	var sings = g.get_singleton_nodes();
 	us.each(sings, function(sing){
 	    all_starting_singletons_by_id[sing.id()] = true;
-	});	    
+	});
 
 	// Remove all of the undesireable rels.
 	var parent_trap = {};
@@ -224,12 +224,12 @@ var PathwayViewInit = function(user_token){
 		    g.remove_node(eing.id());
 		}
 	    }
-	});	    	
-		     
+	});
+
 	///
 	/// Assemble labels and draw.
 	///
-	
+
 	// Stolen from the internal workings of widgetry.
 	// Part 1.
 	var cat_list = [];
@@ -246,9 +246,25 @@ var PathwayViewInit = function(user_token){
 	each(g.all_nodes(), function(n){
 
 	    var nid = n.id();
-	    
+
 	    // Where we'll assemble the label.
 	    var table_row = [];
+
+	    // Collect rdfs:label if extant.
+	    var anns = n.annotations();
+	    var rdfs_label = null;
+	    if( anns.length !== 0 ){
+		each(anns, function(ann){
+    		    // Capture rdfs:label annotation for visual override
+		    // if extant. Allow clobber of last.
+		    if( ann.key() === 'rdfs:label' ){
+			rdfs_label = ann.value();
+		    }
+		});
+	    }
+	    if( rdfs_label ){
+		table_row.push('<<' + rdfs_label + '>>');
+	    }
 
 	    // First, extract any GP info (or has_input, depending on
 	    // rel), if it's there.  If it is, it is the exclusive
@@ -258,9 +274,9 @@ var PathwayViewInit = function(user_token){
 	    var sub = n.subgraph();
 	    if( sub ){
 		each(sub.all_nodes(), function(snode){
-  
+
     		    var snid = snode.id();
-	    
+
 		    if( nid !== snid ){
 
 			var edges = sub.get_edges(nid, snid);
@@ -314,7 +330,7 @@ var PathwayViewInit = function(user_token){
 
 	    var bgc = 'white';
 	    if( ! gp_identified_p ){
-	    
+
 		// Extract node type labels and add them.
 		each(_node_labels(n, cat_list), function(nl){
 		    if( show_mf_p === 'yes' ){
@@ -334,7 +350,7 @@ var PathwayViewInit = function(user_token){
 	    }else{
 		bgc = 'yellow';
 	    }
-	    
+
 	    // Add the has_inputs last.
 	    each(has_input_collection, function(itm){
 		//table_row.push('has_input('+itm+')');
@@ -344,8 +360,8 @@ var PathwayViewInit = function(user_token){
 	    // Make a label from it.
 	    var nlbl = table_row.join("\n");
 	    console.log(table_row);
-	    console.log(nlbl);
-	    
+	    //console.log(nlbl);
+
 	    // Add nesting where desired, if the nesting isn't
 	    // breaking the single parent model.
 	    var parent = null;
@@ -360,7 +376,7 @@ var PathwayViewInit = function(user_token){
 		    text_h_align = 'left';
 		}
 	    }
-	
+
 	    // Create the final element.
 	    elements.push({
 		group: 'nodes',
@@ -455,7 +471,7 @@ var PathwayViewInit = function(user_token){
 		// // Whether to include labels in node dimensions. Useful for avoiding label overlap
 		// nodeDimensionsIncludeLabels: false,
 		// // number of ticks per frame; higher is faster but more jerky
-		// refresh: 30, 
+		// refresh: 30,
 		// // Whether to fit the network view after when done
 		// fit: true,
 		// // Padding on fit
@@ -499,7 +515,7 @@ var PathwayViewInit = function(user_token){
 
 		    var nid = a.data('id');
 		    var node = g.get_node(nid);
-		    
+
 		    // Somewhat vary the intitial placement.
 		    function _vari(){
 			var min = -25;
@@ -510,29 +526,29 @@ var PathwayViewInit = function(user_token){
 		    }
 		    function _extract_node_position(node, x_or_y){
 			var ret = null;
-			
+
 			var hint_str = null;
 			if( x_or_y === 'x' || x_or_y === 'y' ){
 			    hint_str = 'hint-layout-' + x_or_y;
 			}
-			
+
 			var hint_anns = node.get_annotations_by_key(hint_str);
 			if( hint_anns.length === 1 ){
 			    ret = parseInt(hint_anns[0].value());
 			    //ll('extracted coord ' + x_or_y + ': ' + ret);
 			}else if( hint_anns.length === 0 ){
-			    //ll('no coord');	    
+			    //ll('no coord');
 			}else{
 			    //ll('too many coord');
 			}
-	
+
 			return ret;
 		    }
-		    
+
 		    var old_x = _extract_node_position(node, 'x') || _vari();
 		    var old_y = _extract_node_position(node, 'y') || _vari();
 		    console.log('nid', nid, 'old_x', old_x, 'old_y', old_y);
-		    
+
 		    return {'x': old_x, 'y': old_y };
 		}
 	    },
@@ -576,7 +592,7 @@ var PathwayViewInit = function(user_token){
 	    // 	padding: 10 // fit padding
 	    // },
 	};
-	
+
 	// Ramp up view.
 	cy = cytoscape({
 	    // UI loc
@@ -682,7 +698,7 @@ var PathwayViewInit = function(user_token){
 	// TODO: notice on hover.
 	//
 	// Hacky, but I think should work in practice.
-	var color_holder = 'red';
+	var color_holder = 'lightgreen';
 	var offset = 25;
 	cy.on('mouseover', function(evt){
 	    if( evt && evt.target && evt.target.id ){
@@ -693,13 +709,13 @@ var PathwayViewInit = function(user_token){
 		    console.log( 'mouseovered: (' +
 				 color_holder + ') ' +
 				 entity_id );
-		    evt.target.style('background-color', 'red');
+		    evt.target.style('background-color', 'lightgreen');
 
 		    // jQuery("#hoverbox").append('info about: ' + entity_id);
 		    var gotten_node = g.get_node(entity_id);
 		    var nso = new node_stack_object(gotten_node, aid);
 		    jQuery("#hoverbox").append(nso.to_string());
-		    
+
 		    var scroll_left = jQuery(document).scrollLeft();
 		    var scroll_top = jQuery(document).scrollTop();
 		    var x = (evt.originalEvent.pageX + offset - scroll_left) +
@@ -792,7 +808,7 @@ var PathwayViewInit = function(user_token){
 	_render_graph(graph, graph_layout, graph_fold,
 		      graph_nest, graph_show_mf, graph_show_hi,
 		      graph_show_shape);
-	
+
 	// Go ahead and wire-up the interface.
 	jQuery("#" + "layout_selection").change(function(event){
 	    graph_layout = jQuery(this).val();
@@ -875,7 +891,7 @@ jQuery(document).ready(function(){
 function node_stack_object(enode, aid){
 
     var hook_list = [];
-    
+
     // Create a colorful label stack into an individual table.
     var enode_stack_table = new bbop_legacy.html.tag('table',
 					      {'class':'bbop-mme-stack-table'});
@@ -890,14 +906,47 @@ function node_stack_object(enode, aid){
 	if( color ){
 	    trstr = '<tr class="bbop-mme-stack-tr" ' +
 		'style="background-color: ' + color +
-		';"><td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';   
+		';"><td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';
 	}else{
 	    trstr = '<tr class="bbop-mme-stack-tr">' +
-		'<td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';   
+		'<td class="bbop-mme-stack-td">' + out_rep + '</td></tr>';
 	}
 	enode_stack_table.add_to(trstr);
     }
 
+    // Collect meta-information if extant.
+    var anns = enode.annotations();
+    var rdfs_label = null;
+    if( anns.length !== 0 ){
+
+	// Meta counts.
+	var n_ev = 0;
+	var n_other = 0;
+	each(anns, function(ann){
+	    if( ann.key() === 'evidence' ){
+		n_ev++;
+	    }else{
+		if( ann.key() !== 'hint-layout-x' &&
+		    ann.key() !== 'hint-layout-y' ){
+			n_other++;
+		}
+    		// Capture rdfs:label annotation for visual override
+		// if extant. Allow clobber of last.
+		if( ann.key() === 'rdfs:label' ){
+		    rdfs_label = ann.value();
+		}
+	    }
+	});
+    }
+
+    // rdfs:label first, if extant.
+    if( rdfs_label ){
+	var trstr = '<tr class="bbop-mme-stack-tr">' +
+		'<td class="bbop-mme-stack-td bbop-mme-stack-td-rdfslabel"><em style="color: grey;">' +
+		rdfs_label +
+		'</em></td></tr>';
+	enode_stack_table.add_to(trstr);
+    }
     // Inferred types first.
     var inf_types = enode.get_unique_inferred_types();
     each(inf_types, function(item){ _add_table_row(item, null, '[', ']'); });
@@ -1003,12 +1052,12 @@ function node_stack_object(enode, aid){
     // 	// Add to top. No longer need evidence count on individuals.
     // 	var trstr = '<tr class="bbop-mme-stack-tr">' +
     // 		'<td class="bbop-mme-stack-td"><small style="color: grey;">' +
-    // 		//'evidence: ' + n_ev + '; other: ' + n_other + 
-    // 		'annotations: ' + n_other + 
+    // 		//'evidence: ' + n_ev + '; other: ' + n_other +
+    // 		'annotations: ' + n_other +
     // 		'</small></td></tr>';
     // 	enode_stack_table.add_to(trstr);
     // }
-    
+
     // Add external visual cue if there were inferred types.
     if( inf_types.length > 0 ){
 	var itcstr = '<tr class="bbop-mme-stack-tr">' +
@@ -1061,7 +1110,7 @@ function type_to_full(in_type, aid){
 	// lifting...
 	var cache = [];
 	if( t === 'union' || t === 'intersection' ){
-	    
+
 	    // Some kind of recursion on a frame then.
 	    cache = [
 		'<table width="80%" class="table table-bordered table-hover table-condensed mme-type-table" ' +
@@ -1084,12 +1133,12 @@ function type_to_full(in_type, aid){
 		cache.push(type_to_full(ftype, aid));
 		cache.push('</td>');
 		cache.push('</tr>');
-	    });	
+	    });
 	    // cache.push('</tr>');
 	    cache.push('</tbody>');
 	    cache.push('</table>');
-	    
-	    text = cache.join('');	    
+
+	    text = cache.join('');
 
 	}else{
 
@@ -1110,7 +1159,7 @@ function type_to_full(in_type, aid){
 	    cache.push('</td></tr>');
 	    cache.push('</tbody>');
 	    cache.push('</table>');
-	    
+
 	    text = cache.join('');
 	}
     }
