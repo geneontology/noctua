@@ -55,7 +55,7 @@
     "bbopx": "0.9.32",
     "body-parser": "1.15.2",
     "bootstrap": "3.3.6",
-    "class-expression": "0.0.11",
+    "class-expression": "0.0.13",
     "cookie-parser": "^1.4.3",
     "cors": "2.7.1",
     "cytoscape": "2.7.3",
