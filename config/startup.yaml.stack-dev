@@ -82,7 +82,6 @@ MINERVA_JAR:
   comment: The JAR to use for Minerva.
   type: string
   value: '../minerva/minerva-cli/bin/minerva-cli.jar'
-## Minerva operations preferences.
 MINERVA_REASONER:
   comment: The reasoner to use in Minerva.
   type: string
