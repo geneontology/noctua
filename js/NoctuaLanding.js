@@ -315,15 +315,15 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		
 		if( hlists && hlists['title'] ){
 		    var tmp_title = hlists['title'].join("|");
-		    var match = tmp_title.match(uggo_string);
+			var match = tmp_title.match(uggo_string);
 		    if( ! match ){
-			mtitle = tmp_title;
+				mtitle = tmp_title;
 		    }else{
-			mtitle = match[1];
-		    }
+				mtitle = match[1];
+			}
 
-		    // Add model id for findability.
-		    mtitle += ' <small>'+model_id+'</small>';
+			// Add model id for findability (but hides it)
+			mtitle += '<span style="display:none;">' + model_id + '</span>';
 		}
 		
 		return mtitle;
@@ -332,20 +332,41 @@ var MinervaBootstrapping = function(user_token, issue_list){
 	    // Get user contributors to model.
 	    var _model_contributor_list = function(model_id){
 		var retlist = [];
-		
+
 		if( models_meta && models_meta[model_id]){
-		    each(models_meta[model_id], function(row) {
+			each(models_meta[model_id], function(row) {
 			if (row.key === 'contributor') {
-			    var url = '<a href=' + row.value +
-				    ' target="blank">' + row.value +
-				    '</a>';
-			    retlist.push(url);
+				name = row.value;
+				if(row.label) {
+					name = _simplify_name(row.label);
+				} else {
+					console.error("NoctuaLanding.js::_model_contributor_listV2(): models_meta[" + model_id + "] has no label field");
+				}
+				var url = '<a href=' + row.value +
+					' target="blank">' + name +
+					'</a>';
+				retlist.push(url);
 			}
-		    });
+			});
 		}
 		
 		return retlist;
-	    };
+		};
+		
+		// Format the name of the user
+		var _simplify_name = function(name) {
+			// simple regex to divide name based on space or dash (differentiate last name dash and first name dash)
+			split = name.split(/\s|-(?=[a-zA-Zéèàïü]+\s)/);	
+			if(split.length == 1) {
+				return name;
+			}
+
+			firstNames = "";
+			for(i = 0; i < split.length - 1; i++) {
+				firstNames += split[i].substring(0, 1) + ".";
+			}
+			return firstNames + split[split.length - 1];
+		}
 	    
 	    // Get group contributors to model.
 	    var _model_group_list = function(model_id){
