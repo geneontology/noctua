@@ -723,16 +723,16 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // because we want to model the (not yet) return of current
     // species from Minerva.
 
-    // Active learn-more button.
-    var learn_more_trigger_elt = '#learn_more_trigger';
-    var learn_more_trigger_target_elt = '#about_trigger > a';
-    jQuery(learn_more_trigger_elt).click(function(evt){
-	evt.stopPropagation();
-	evt.preventDefault();
-	jQuery('.navbar-nav li.active').removeClass('active');
-	jQuery('.tab-content div.active').removeClass('active');
-	jQuery(learn_more_trigger_target_elt).tab('show');
-    });
+    // // Active learn-more button.
+    // var learn_more_trigger_elt = '#learn_more_trigger';
+    // var learn_more_trigger_target_elt = '#about_trigger > a';
+    // jQuery(learn_more_trigger_elt).click(function(evt){
+    // 	evt.stopPropagation();
+    // 	evt.preventDefault();
+    // 	jQuery('.navbar-nav li.active').removeClass('active');
+    // 	jQuery('.tab-content div.active').removeClass('active');
+    // 	jQuery(learn_more_trigger_target_elt).tab('show');
+    // });
 
     jQuery('.overview_trigger').click(function(evt){
 	evt.stopPropagation();
