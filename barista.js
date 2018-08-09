@@ -41,7 +41,7 @@ var http = require('http');
 ///
 
 function ll(arg1){
-    console.log('barista [' + (new Date()).toJSON() + ']: ', arg1); 
+    console.log('barista [' + (new Date()).toJSON() + ']: ', arg1);
 }
 
 function _die(message){
@@ -179,22 +179,25 @@ var bogus_users = [
 	token: '123',
 	nickname: 'kltm (editor)',
 	uri: 'GOC:kltm',
-	'user-type': 'allow-edit'
+	'user-type': 'allow-edit',
+	groups: []
     },
     {
 	email: 'spam@genkisugi.net',
 	token: '000',
 	nickname: 'kltm (admin)',
 	uri: 'GOC:kltm',
-	'user-type': 'allow-admin'
+	'user-type': 'allow-admin',
+	groups: []
     },
     // Create a random bogus user for this barista run.
     {
 	email: 'anonymous@localhost',
 	token: rand_user_token,
 	nickname: 'anonymous',
-	uri: 'TEMP:anonymous', 
-	'user-type': 'allow-edit'
+	uri: 'TEMP:anonymous',
+	'user-type': 'allow-edit',
+	groups: []
     }
 ];
 
@@ -213,15 +216,15 @@ var ModelCubby = function(){
      *
      * returns true if new, false if update
      *
-     * Parameters: 
+     * Parameters:
      *  model - model id
      *  namespace - namespace
      *  key - key
      *  value - value
      *
-     * Returns: 
+     * Returns:
      *  boolean
-     */ 
+     */
     self.dropoff = function(model, namespace, key, value){
 
 	var ret = null;
@@ -244,13 +247,13 @@ var ModelCubby = function(){
 	// Add to data bundle.
 	cubby[model][namespace][key] = value;
 	//ll('cubby dropoff: '+ key + ', ', value);
-	
+
 	return ret;
     };
 
     /*
      * returns hash for specified namespace
-     */    
+     */
     self.pickup = function(model, namespace){
 	var ret = {};
 
@@ -297,7 +300,7 @@ var ModelCubby = function(){
 	    typeof(cubby[model][namespace]) !== 'undefined' ){
 	    ret = Object.keys(cubby[model][namespace]).length;
 	}
-	
+
 	return ret;
     };
 };
@@ -314,19 +317,19 @@ var AppGuard = function(app_list){
     var app_by_namespace = {};
     each(app_list,
 	 function(a){
-	     
+
 	     var aid = a['id'];
 	     app_by_namespace[aid] = {
 		 "target": a['target'],
 		 "public": a['public']
 	     };
-	     
+
 	     each(a['public'],
 		  function(p){
 		      app_by_namespace[aid]['public'][p] = true;
 		  });
 	 });
-    
+
     /*
      * true or false.
      */
@@ -336,7 +339,7 @@ var AppGuard = function(app_list){
 	if( app_by_namespace[namespace] ){
 	    ret = true;
 	}
-	
+
 	return ret;
     };
 
@@ -349,7 +352,7 @@ var AppGuard = function(app_list){
 	if( app_by_namespace[namespace] ){
 	    ret = app_by_namespace[namespace]['target'];
 	}
-	
+
 	return ret;
     };
 
@@ -387,7 +390,7 @@ var Sessioner = function(auth_list, group_list){
 	'allow-edit', // can edit models
 	'allow-admin' // has powers
     ];
-    
+
     var ucolor_list = [
 	'red', 'green', 'purple', 'blue', 'brown', 'black', 'orange'
     ];
@@ -468,13 +471,13 @@ var Sessioner = function(auth_list, group_list){
 		uinf_by_account[account_provider][account_id] = a;
 	    }
 	});
-	
+
 	// There are a list of valid emails, so hash for them all.
 	var valid_em5_list = a['email-md5'];
 	each(valid_em5_list, function(em5){
 	    uinf_by_md5[em5] = a;
 	});
-	
+
 	// Just the URI.
 	uinf_by_uri[a['uri']] = a;
 
@@ -495,13 +498,13 @@ var Sessioner = function(auth_list, group_list){
      */
     self.authorize_by_email = function(email, user_type){
 	var ret = false;
-	
+
 	// If no user_type is listed, assume the lowest ranked one for
 	// the attempt.
 	if( ! us.isString(user_type) ){
 	    user_type = known_user_types[0];
 	}
-	
+
 	// Our requirements are: email (by md5 proxy), uri, and
 	// "noctua/go" authorization (empty is fine).
 	var emd5 = str2md5(email);
@@ -525,10 +528,10 @@ var Sessioner = function(auth_list, group_list){
 		      ret = true;
 	    }
 	}
-	
+
 	return ret;
     };
-    
+
     /*
      * Failure is an unknown, unauthorized, or ill-formed user. If no
      * user_type is listed, assume the lowest ranked one for the
@@ -565,10 +568,10 @@ var Sessioner = function(auth_list, group_list){
 		      ret = true;
 	    }
 	}
-	
+
 	return ret;
     };
-    
+
     // Internal function to actually create the used session
     // structure.
     // NOTE/TODO: Can safely remove email stuff after Persona switch?
@@ -593,7 +596,7 @@ var Sessioner = function(auth_list, group_list){
 	if( ! us.isString(nickname) ){
 	    nickname = '???';
 	}
-	
+
 	// Groups and accounts, while not required, will be empty.
 	var sess_groups = [];
 	if( us.isArray(groups) ){
@@ -603,7 +606,7 @@ var Sessioner = function(auth_list, group_list){
 	if( us.isObject(accounts) ){
 	    sess_accounts = accounts;
 	}
-	
+
 	// Email/md5 is now optional? Moving to a post-Persona
 	// universe.
 	var emd5 = null;
@@ -630,10 +633,10 @@ var Sessioner = function(auth_list, group_list){
 	};
 	email2token[email] = token;
 	uri2token[uri] = token;
-	
+
 	// Clone for return.
 	var ret = clone(sessions_by_token[token]);
-	
+
 	return ret;
     }
 
@@ -652,9 +655,9 @@ var Sessioner = function(auth_list, group_list){
 	// create a new one.
 	if( email && email2token[email] &&
 	    sessions_by_token[email2token[email]] ){
-	
+
 	    ret = clone( sessions_by_token[email2token[email]]);
-	    
+
 	}else{
 
 	    // Cycle through to see what kind of user we have.
@@ -664,11 +667,11 @@ var Sessioner = function(auth_list, group_list){
 		    user_type = try_user_type;
 		}
 	    });
-	    
+
 	    if( ! user_type ){
 		// Cannot--likely bad info or unauthorized.
 	    }else{
-		
+
 		// Get available user information.
 		var emd5 = str2md5(email);
 		var uinf = uinf_by_md5[emd5];
@@ -676,17 +679,17 @@ var Sessioner = function(auth_list, group_list){
 		var new_nick = uinf['nickname'] || '???';
 		var new_groups = uinf['groups'] || [];
 		var new_accounts = uinf['accounts'] || {};
-		
+
 		// Generate a new token.
 		var new_token = get_token();
-		
+
 		// Gel and clone for return.
 		return _gel_session(new_token, new_uri, user_type,
 				    new_nick, new_groups, new_accounts,
 				    email);
 	    }
 	}
-	
+
 	return ret;
     };
 
@@ -703,9 +706,9 @@ var Sessioner = function(auth_list, group_list){
 	// First, just return a current session if there is one--don't
 	// create a new one.
 	if( uri && uri2token[uri] && sessions_by_token[uri2token[uri]] ){
-	
+
 	    ret = clone( sessions_by_token[uri2token[uri]]);
-	    
+
 	}else{
 
 	    // Cycle through to see what kind of user we have.
@@ -715,11 +718,11 @@ var Sessioner = function(auth_list, group_list){
 		    user_type = try_user_type;
 		}
 	    });
-	    
+
 	    if( ! user_type ){
 		// Cannot--likely bad info or unauthorized.
 	    }else{
-		
+
 		// Get available user information.
 		var uinf = uinf_by_uri[uri];
 		var new_uri = uinf['uri'];
@@ -727,17 +730,17 @@ var Sessioner = function(auth_list, group_list){
 		var new_email = uinf['email'] || null;
 		var new_groups = uinf['groups'] || [];
 		var new_accounts = uinf['accounts'] || {};
-	    
+
 		// Generate a new token.
 		var new_token = get_token();
-		
+
 		// Gel and clone for return.
 		return _gel_session(new_token, new_uri, user_type,
 				    new_nick, new_groups, new_accounts,
 				    new_email);
 	    }
 	}
-	
+
 	return ret;
     };
 
@@ -754,13 +757,13 @@ var Sessioner = function(auth_list, group_list){
 	var try_uri = null;
 	if( uinf_by_account[provider_name] &&
 	    uinf_by_account[provider_name][user_id] ){
-		
+
 		var sess = uinf_by_account[provider_name][user_id];
 		if( sess && sess['uri'] ){
 		    try_uri = sess['uri'];
 		}
 	    }
-	
+
 	return self.create_session_by_uri(try_uri);
     };
 
@@ -798,7 +801,7 @@ var Sessioner = function(auth_list, group_list){
     self.get_sessions = function(){
 
 	var ret = [];
-	
+
 	each(sessions_by_token,
 	     function(token, session){
 		 ret.push(clone(session));
@@ -843,7 +846,7 @@ var Sessioner = function(auth_list, group_list){
 
 	    ret = true;
 	}
-	
+
 	return ret;
     };
 
@@ -860,7 +863,7 @@ var Sessioner = function(auth_list, group_list){
      * True or false.
      */
     self.delete_session_by_uri = function(uri){
-	var token = uri2token[uri];	
+	var token = uri2token[uri];
 	return self.delete_session_by_token(token);
     };
 };
@@ -878,15 +881,16 @@ function _setup_sessioner(fname, gname){
 
     var new_sessioner = new Sessioner(auth_list, group_list);
 
-    // Bring on the listed bogus user sessions.
+    // Whenever we referesh sessions, also bring in the listed
+    // internal bogus user sessions.
     us.each(bogus_users, function(bu){
 	new_sessioner.create_bogus_session(
 	    bu['token'],
 	    bu['uri'],
 	    bu['user-type'],
 	    bu['nickname'],
-	    [],
-	    {},
+	    bu['groups'],
+	    {}, // no accouts, pretty much by definition
 	    bu['email']);
     });
 
@@ -906,7 +910,7 @@ passport.serializeUser(function(user, done){
 passport.deserializeUser(function(id, done) {
     console.log('passport deserializeUser: ', id);
     done(null, {'id': id});
-    // else done(err, null)  
+    // else done(err, null)
 });
 
 // Scan secloc for secrets at "<provider>.yaml". "local" is special,
@@ -924,7 +928,7 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
     }catch(e){
 	ll('Will not use provider: ' + provider);
     }
-    
+
     if( prov_stats ){
 	ll('Will search for (' + provider + ') secrets at: ' + secloc);
 
@@ -937,14 +941,14 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 	    var local_secrets = {};
 	    var local_secrets_list = yaml.load(provider_path);
 	    us.each( local_secrets_list, function(local_secret){
-		if( us.isString(local_secret['uri']) && 
+		if( us.isString(local_secret['uri']) &&
 		    us.isString(local_secret['username']) &&
 		    us.isString(local_secret['password']) ){
 
 		    local_secrets[local_secret['username']] = local_secret;
 		}
 	    });
-	    
+
 	    // Local password strategy.
 	    var LocalStrategy = require('passport-local').Strategy;
 	    passport.use(new LocalStrategy({
@@ -969,10 +973,10 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 		    });
 		}
 	    }));
-					   
+
 	    // We're go.
 	    use_provider_local_p = true;
-	    
+
 	}else if( provider === 'github' ){
 
 	    // TODO.
@@ -986,7 +990,7 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 		}else{
 		    throw new Error(provider + ' not structured correctly!');
 		}
-	    
+
 	    var GitHubStrategy = require('passport-github').Strategy;
 	    passport.use(new GitHubStrategy({
 		passReqToCallback: true,
@@ -1020,7 +1024,7 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 
 	    // We're go.
 	    use_provider_github_p = true;
-	    
+
 	}else if( provider === 'google-plus' ){
 
 	    // Pick-up secrets file and check structure.
@@ -1033,7 +1037,7 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 		}else{
 		    throw new Error(provider + ' not structured correctly!');
 		}
-	    
+
 	    var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 	    passport.use(new GoogleStrategy({
 		passReqToCallback: true,
@@ -1066,13 +1070,13 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 
 	    // We're go.
 	    use_provider_google_plus_p = true;
-	    
+
 	}else if( provider === 'orcid' ){
 	    // WARNING: ORCID provides a somewhat standard OAuth2
 	    // interface, but with quirks that need to be detected and
 	    // dealt with.
 	    // https://gist.github.com/JanKoppe/1491e37d1022c77a286087e6c81d6092#file-example-js-L5
-	    
+
 	    // TODO.
 	    // Pick-up secrets file and check structure.
 	    var orcid_secrets = yaml.load(provider_path);
@@ -1084,7 +1088,7 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 		}else{
 		    throw new Error(provider + ' not structured correctly!');
 		}
-	    
+
 	    var ORCIDStrategy = require('passport-oauth2').Strategy;
 	    passport.use(new ORCIDStrategy({
 	      passReqToCallback: true,
@@ -1120,11 +1124,11 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function(provider){
 
 	    // We're go.
 	    use_provider_orcid_p = true;
-	    
+
 	}else{
 	    _die('Impossible to use provider: ' + provider);
 	}
-    }    
+    }
 });
 
 ///
@@ -1173,30 +1177,30 @@ var BaristaLauncher = function(){
 
 	// Not my problem, not my use case--try and get rid of it.
 	var vnt_cmd = vantage.find('vantage');
-	if( vnt_cmd ){ 
+	if( vnt_cmd ){
 	    vnt_cmd.hidden();
 	    vnt_cmd.remove();
 	}
-	
+
 	// Reset.
 	var rld_cmd = vantage.command('reset [user_filename] [group_filename]');
 	rld_cmd.description("Reset using a specified file for the Sessioner, defaults to initial files.");
 	rld_cmd.action(function(args, cb){
 	    var fname = args.user_filename || user_fname;
 	    var gname = args.group_filename || group_fname;
-	    
+
 	    var new_sessioner = null;
 	    try {
 		new_sessioner = _setup_sessioner(fname, gname);
 	    }catch(e){
 		rlog(this, 'Failed to load: ' + fname + ' or ' + gname);
 	    }
-	    
+
 	    if( new_sessioner ){
 		sessioner = new_sessioner;
-		rlog(this, '(Re)loaded: ' + fname);
+		rlog(this, '(Re)loaded: ' + fname + ' and ' + gname);
 	    }
-	    
+
 	    cb();
 	});
 
@@ -1207,7 +1211,7 @@ var BaristaLauncher = function(){
 	rfr_cmd.action(function(args, cb){
 	    var fname = args.user_filename || user_fname;
 	    var gname = args.group_filename || group_fname;
-	    
+
 	    var current_sessions = sessioner.get_sessions();
 
 	    var new_sessioner = null;
@@ -1216,7 +1220,7 @@ var BaristaLauncher = function(){
 	    }catch(e){
 		rlog(this, 'Failed to load: ' + fname + ' or ' + gname);
 	    }
-	    
+
 	    if( new_sessioner ){
 
 		us.each(current_sessions, function(cs){
@@ -1225,15 +1229,15 @@ var BaristaLauncher = function(){
 			cs['uri'],
 			cs['user-type'],
 			cs['nickname'],
-			[],
-			{},
+			cs['groups'],
+			cs['accounts'],
 			cs['email']);
 		});
 
 		sessioner = new_sessioner;
-		rlog(this, '(Re)loaded: ' + fname);
+		rlog(this, '(Re)loaded: ' + fname + ' and ' + gname);
 	    }
-	    
+
 	    cb();
 	});
 
@@ -1248,7 +1252,7 @@ var BaristaLauncher = function(){
 	    // Optional.
 	    var name = args.name || '???';
 	    var email = args.email;
-	    
+
 	    if( ! token || ! uri || ! user_type ){
 		rlog(this, 'Cannot create bogus session with given info.' );
 	    }else{
@@ -1256,20 +1260,20 @@ var BaristaLauncher = function(){
 					       name, [], {}, email);
 		rlog(this, 'Created bogus session with given info.' );
 	    }
-	    
+
 	    cb();
 	});
-	
+
 	var get_cmd = vantage.command('list');
 	get_cmd.description("List all current sessions.");
 	get_cmd.action(function(args, cb){
-	    
+
 	    var all_sess = sessioner.get_sessions();
 	    rlog(this, all_sess);
-	    
+
 	    cb();
 	});
-	
+
 	var delt_cmd = vantage.command('delete token [token]');
 	delt_cmd.description("Delete a session by token.");
 	delt_cmd.action(function(args, cb){
@@ -1280,7 +1284,7 @@ var BaristaLauncher = function(){
 	    }
 	    cb();
 	});
-	
+
 	var dele_cmd = vantage.command('delete email [email]');
 	dele_cmd.description("Delete a session by email address.");
 	dele_cmd.action(function(args, cb){
@@ -1288,10 +1292,10 @@ var BaristaLauncher = function(){
 	    if( email ){
 		var tf = sessioner.delete_session_by_email(email);
 		rlog(this, 'Deleted session by email: ' + tf);
-	    }	
+	    }
 	    cb();
 	});
-	
+
 	// // Veeery basic auth, just to keep the riff-raff out.
 	// // BUG: Although in the docs, this does not seem to
 	// // yet be supported...
@@ -1304,7 +1308,7 @@ var BaristaLauncher = function(){
 	// 	"deny": 1,
 	// 	"unlockTime": 3000
 	// });
-	
+
 	// Can only be invoked after "listen", so we're down here.
 	// NOTE/TODO: May want to add configurable firewall stuff later.
 	// https://github.com/dthree/vantage/blob/master/examples/server/server.js
@@ -1315,7 +1319,7 @@ var BaristaLauncher = function(){
 	vantage.firewall.accept(
 		['192', '168', '0', '0'].join('.'), 16); // home/local
 	vantage.firewall.accept(
-		['131', '243', '0', '0'].join('.'), 16); // lbl-bbop	
+		['131', '243', '0', '0'].join('.'), 16); // lbl-bbop
     }
 
     ///
@@ -1359,8 +1363,8 @@ var BaristaLauncher = function(){
 
     function _extract_referer_query_field(req, field){
 	var ret = null;
-	
-	if( req && req['headers'] && req['headers']['referer'] ){	
+
+	if( req && req['headers'] && req['headers']['referer'] ){
 	    console.log('referer', req['headers']['referer']);
 	    var ref_url = req['headers']['referer'];
 	    if( us.isString(ref_url) ){
@@ -1373,10 +1377,10 @@ var BaristaLauncher = function(){
 		}
 	    }
 	}
-	
+
 	return ret;
     }
-    
+
     function _response_redirect_to_success(res, ret_url, user_token){
 	var base_url = '/login/success?barista_token=' +
 		encodeURIComponent(user_token);
@@ -1498,7 +1502,7 @@ var BaristaLauncher = function(){
 	     }else if( html_re.test(thing) ){
 		 ctype = 'text/html';
 	     }
-	     
+
 	     // This will skip cached templates.
 	     if( ctype !== null ){
 		 messaging_app.get('/' + thing, function(req, res) {
@@ -1569,7 +1573,7 @@ var BaristaLauncher = function(){
 	if( req.query && req.query['barista_token'] ){
 	    // Capture token.
 	    var barista_token = req.query['barista_token'];
-	    
+
 	    // Try and retrieve by the barista token.
 	    sess = sessioner.get_session_by_token(barista_token);
 	    if( sess ){
@@ -1598,7 +1602,7 @@ var BaristaLauncher = function(){
 
     // Gross overview of current users.
     messaging_app.get('/user_info/:action?', function(req, res) {
-	
+
 	// First, check to see if we have access to the good stuff,
 	// both for later drawing use and for local actions.
 	var sess_stat = _session_status(req);
@@ -1639,7 +1643,7 @@ var BaristaLauncher = function(){
 	}else if( do_refresh_p && sess_stat !== SESS_GOOD_ADMIN ){
 	    ll('non-admin triggered refresh--ignoring');
 	}else if( (do_reset_p||do_refresh_p) && sess_stat === SESS_GOOD_ADMIN ){
-	    
+
 	    // In-place refresh from given files.
 	    ll('admin triggered refresh');
 
@@ -1655,8 +1659,8 @@ var BaristaLauncher = function(){
 	    try {
 		new_sessioner = _setup_sessioner(user_fname, group_fname);
 	    }catch(e){
-		ll('Failed to load: ' + user_fname);
-	    }	    
+		ll('Failed to load: ' + user_fname + ' or ' + group_fname);
+	    }
 	    if( new_sessioner ){
 
 		// Load current sessions back into the system.
@@ -1666,11 +1670,11 @@ var BaristaLauncher = function(){
 			cs['uri'],
 			cs['user-type'],
 			cs['nickname'],
-			[],
-			{},
+			cs['groups'],
+			cs['accounts'],
 			cs['email']);
 		});
-	    
+
 		// Final reload by switching.
 		sessioner = new_sessioner;
 		ll('(Re)loaded: ' + user_fname + ' and ' + group_fname);
@@ -1715,27 +1719,27 @@ var BaristaLauncher = function(){
 				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
     });
-    
-    // REST service that 
+
+    // REST service that
     messaging_app.get('/user_info_by_token/:token', function(req, res) {
-	
+
 	// Do we have permissions to make the call?
 	var token = req.params['token'] || null;
 	var sess = sessioner.get_session_by_token(token);
 
 	var ret_obj = {};
-	
+
 	// Gather session info.
 	if( sess && token ){
 	    ret_obj = sessioner.get_session_by_token(token);
 	}
 
-	// 
+	//
 	var fin = JSON.stringify(ret_obj);
 	ll('got user info for:' + fin['uri']);
 	_standard_response(res, 200, 'application/json', fin);
     });
-    
+
     // Shared login page.
     messaging_app.get('/login', function(req, res){
 
@@ -1776,12 +1780,12 @@ var BaristaLauncher = function(){
 	    tok = req.query['barista_token'];
 	}
 	//console.log('tok', tok);
-	
+
 	// We'll need this URL in some cases.
 	var return_link = _build_token_link(ret, tok);
 	var logout_link = _build_token_link('/logout?return='+ ret, tok);
 	var login_link = _build_token_link('/login?return='+ ret, tok);
-	
+
 	var sess = sessioner.get_session_by_token(tok);
 	var user_name = '???';
 	var user_email = null;
@@ -1853,7 +1857,7 @@ var BaristaLauncher = function(){
 	// We'll need this URL in some cases.
 	var return_link = ret;
 	var login_link = '/login?return='+ ret;
-	
+
 	// Get return argument (originating URL) if there.
     	var tmpl_args = {
     	    'pup_tent_js_variables': [],
@@ -1889,11 +1893,11 @@ var BaristaLauncher = function(){
 	//console.log('ret (pre)', ret);
 	ret = _filter_token_from_url(ret);
 	//console.log('ret (post)', ret);
-	
+
 	// We'll need this URL in some cases.
 	var return_link = ret;
 	var login_link = '/login?return='+ ret;
-	
+
 	//
 	var deleted_session_p = sessioner.delete_session_by_token(tok);
 
@@ -2017,7 +2021,7 @@ var BaristaLauncher = function(){
 		}else{
 		    // TODO: Something if in error?
 		}
-		
+
 		return _response_redirect_to_success(res, ret, created_token);
 	    }
 	})(req, res, next);
@@ -2119,7 +2123,7 @@ var BaristaLauncher = function(){
     // Generic messages on a generic error.
     function _proxy_error(error_obj, error_msg, req, res){
 	// Report...
-	ll('We have proxy problem! Maybe a timeout error against Minerva? ' + 
+	ll('We have proxy problem! Maybe a timeout error against Minerva? ' +
 	   error_msg);
 	ll(error_obj);
 	// ..then handle.
@@ -2143,7 +2147,7 @@ var BaristaLauncher = function(){
 		// prependPath: false,
     };
     var api_proxy = http_proxy.createProxyServer(api_proxy_opts);
-    messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){ 
+    messaging_app.get("/api/:namespace/:call/:subcall?", function(req, res){
 
 	// TODO: Request logging hooks could be placed in here.
 	//ll('pre api req: ' + req.url);
@@ -2209,7 +2213,7 @@ var BaristaLauncher = function(){
 	call = call + subcall; // allow for things like seed/fromProcess
 	if( ! app_guard.is_public(ns, call) && ! uuri ){
 	    ll('blocking call: ' + req.url);
-	    
+
 	    var error_msg = 'sproing!';
 	    if( has_token_p && ! has_sess_p ){
 		error_msg = 'You are using a bad token; please remove it.';
@@ -2306,7 +2310,7 @@ var BaristaLauncher = function(){
     });
 
     // POST version.
-    messaging_app.post("/api/:namespace/:call/:subcall?", function(req, res){ 
+    messaging_app.post("/api/:namespace/:call/:subcall?", function(req, res){
 
 	// TODO: Request logging hooks could be placed in here.
 	//ll('pre api req: ' + req.url);
@@ -2320,11 +2324,11 @@ var BaristaLauncher = function(){
 	});
 	req.on('end', function() {
 	    ll("Received body data: " + full_body);
-	    
+
 	    var decoded_body = querystring.parse(full_body) || {};
 	    console.log(api_loc);
 	    console.log(decoded_body);
-	    
+
 	    // Extract the arguments one way or another. The end
 	    // product is to try and get a session out for use. The
 	    // important thing we need here is the uri to pass back to
@@ -2341,7 +2345,7 @@ var BaristaLauncher = function(){
 	    // Try to resolve to token into known sessions.
 	    if( attempt_token ){
 		ll('looks like a token was attempted');
-		
+
 		// Best attempt at extracting a UID.
 		has_token_p = true;
 		var sess = sessioner.get_session_by_token(attempt_token);
@@ -2367,14 +2371,14 @@ var BaristaLauncher = function(){
 	    call = call + subcall; // allow for things like seed/fromProcess
 	    if( ! app_guard.is_public(ns, call) && ! uuri ){
 		ll('blocking call: ' + req.url);
-		
+
 		var error_msg = 'sproing!';
 		if( has_token_p && ! has_sess_p ){
 		    error_msg = 'You are using a bad token; please remove it.';
 		}else{
 		    error_msg = 'You do not have permission for this operation.';
 		}
-		
+
 		// Catch error here if no proper ID on non-public.
 		res.setHeader('Content-Type', 'text/json');
 		var eresp = {
@@ -2428,7 +2432,7 @@ var BaristaLauncher = function(){
 			'Content-Length': post_data.length
 		    }
 		};
-		
+
 		var proxy_req = http.request(options, function(proxy_res) {
 
 		    //console.log('status: '+proxy_res.statusCode);
@@ -2453,12 +2457,12 @@ var BaristaLauncher = function(){
 			res.send(proxied_body);
 		    });
 		});
-		
+
 		proxy_req.on('error', function(e) {
 		    _proxy_error(e, 'result proxy problem: ' + e.message,
 				 req, res);
 		});
-		
+
 		// End by writing data to request body.
 		proxy_req.write(post_data);
 		proxy_req.end();
@@ -2514,17 +2518,17 @@ var BaristaLauncher = function(){
 	    if( sess ){
 		ret = true;
 	    }
-	    
+
 	    return ret;
 	}
 
 	// Add session identification information where available.
 	function _mod_data_with_session_info(data){
-	    
+
 	    var user_name = '???';
 	    var user_email = '???';
 	    var user_color = 'white';
-	    
+
 	    // If possibles, the info packet can tie us to the
 	    // information via the passed token.
 	    if( ! data ){
@@ -2540,14 +2544,14 @@ var BaristaLauncher = function(){
 		    user_email = sess['email'];
 		    user_color = sess['color'];
 		}
-	    
+
 		// Inject user data into data.
 		//data['user_id'] = user_id;
 		data['user_name'] = user_name;
 		data['user_email'] = user_email;
 		data['user_color'] = user_color;
 	    }
-	    
+
 	    // Can always add socket id.
 	    data['socket_id'] = socket_id;
 
@@ -2569,7 +2573,7 @@ var BaristaLauncher = function(){
 		// Relay the actions of logged-in users.
 		data = _mod_data_with_session_info(data);
 		socket.broadcast.emit('relay', data);
-		
+
 		// Skim object location and update cubby layout
 		// information when screen items are moving via
 		// telekinesis by logged-in users.
@@ -2601,7 +2605,7 @@ var BaristaLauncher = function(){
 		}
 	    }
 	});
-	
+
 	//
 	socket.on('query', function(data){
 	    //ll('srv tele: ' + data);
@@ -2633,7 +2637,7 @@ var BaristaLauncher = function(){
 		}
 	    }
 	});
-	
+
 	// Disconnect info.
 	socket.on('disconnect', function(){
 	    ll('srv disconnect');
@@ -2652,5 +2656,5 @@ var BaristaLauncher = function(){
     });
 };
 
-// 
+//
 var barista = new BaristaLauncher();
