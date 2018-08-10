@@ -828,6 +828,21 @@ var Sessioner = function(auth_list, group_list){
     };
 
     /*
+     * Cloned objects or empty list.
+     * Return a session-like object for user information in the system.
+     */
+    self.get_info_by_uri = function(uri){
+
+	var ret = {};
+
+	if( uinf_by_uri[uri] ){
+	    ret = uinf_by_uri[uri];
+	}
+
+	return clone(ret);
+    };
+
+    /*
      * True or false.
      */
     self.delete_session_by_token = function(token){
@@ -1223,17 +1238,33 @@ var BaristaLauncher = function(){
 
 	    if( new_sessioner ){
 
+		// Load current sessions back into the system.
 		us.each(current_sessions, function(cs){
+
+		    // See what we have in the new file-based session
+		    // for the user.
+		    var new_groups = null;
+		    var sess = new_sessioner.get_info_by_uri(cs['uri']);
+		    if( sess && sess['groups'] && us.isArray(sess['groups']) ){
+			new_groups = sess['groups'];
+			ll('Using "new" groups for: ' + cs['nickname']);
+		    }
+		    // Do a light folding, allowing groups to be added
+		    // or reordered.
+		    // Note that something like updating the URI would be
+		    // impossible as that is essentially the primary
+		    // identifier.
 		    new_sessioner.create_bogus_session(
 			cs['token'],
 			cs['uri'],
 			cs['user-type'],
 			cs['nickname'],
-			cs['groups'],
+			new_groups || cs['groups'],
 			cs['accounts'],
 			cs['email']);
 		});
 
+		// Final reload by switching.
 		sessioner = new_sessioner;
 		rlog(this, '(Re)loaded: ' + fname + ' and ' + gname);
 	    }
@@ -1665,12 +1696,26 @@ var BaristaLauncher = function(){
 
 		// Load current sessions back into the system.
 		us.each(current_sessions, function(cs){
+
+		    // See what we have in the new file-based session
+		    // for the user.
+		    var new_groups = null;
+		    var sess = new_sessioner.get_info_by_uri(cs['uri']);
+		    if( sess && sess['groups'] && us.isArray(sess['groups']) ){
+			new_groups = sess['groups'];
+			ll('Using "new" groups for: ' + cs['nickname']);
+		    }
+		    // Do a light folding, allowing groups to be added
+		    // or reordered.
+		    // Note that something like updating the URI would be
+		    // impossible as that is essentially the primary
+		    // identifier.
 		    new_sessioner.create_bogus_session(
 			cs['token'],
 			cs['uri'],
 			cs['user-type'],
 			cs['nickname'],
-			cs['groups'],
+			new_groups || cs['groups'],
 			cs['accounts'],
 			cs['email']);
 		});
