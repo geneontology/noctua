@@ -745,7 +745,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     var tabId = location.hash; // will look something like "#h-02"
     if (tabId === '#about') {
 	// This will fired only when url get hash.
-	jQuery(learn_more_trigger_elt).tab('show');
+	//jQuery(learn_more_trigger_elt).tab('show');
     }
     var path = window.location.pathname + window.location.search;
     history.replaceState({}, document.title, path);
