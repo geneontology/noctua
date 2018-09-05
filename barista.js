@@ -169,32 +169,33 @@ if( ! fstats.isDirectory() ){
     ll('Will use secrets directory at: ' + secloc);
 }
 
-// Define bogus users.
+// Define bogus users. / Select runtime developer and admin tokens.
 // TODO: Put out into private file on filesystem; still report on startup.
+var admin_token = argv['a'] || argv['admin-token'] || '000';
+ll('Barista admin token (self): ' + admin_token);
+var edit_token = argv['e'] || argv['edit-token'] || '123';
+ll('Barista editor token (self): ' + edit_token);
 var rand_user_token = bbop.core.randomness(4);
 ll('Anonymous editor token: ' + rand_user_token);
 var bogus_users = [
     {
-	email: 'spam@genkisugi.net',
-	token: '123',
-	nickname: 'kltm (editor)',
-	uri: 'GOC:kltm',
-	'user-type': 'allow-edit',
+	token: admin_token,
+	nickname: 'Developer (admin)',
+	uri: 'TEMP:admin',
+	'user-type': 'allow-admin',
 	groups: []
     },
     {
-	email: 'spam@genkisugi.net',
-	token: '000',
-	nickname: 'kltm (admin)',
-	uri: 'GOC:kltm',
-	'user-type': 'allow-admin',
+	token: edit_token,
+	nickname: 'Developer (editor)',
+	uri: 'TEMP:editor',
+	'user-type': 'allow-edit',
 	groups: []
     },
     // Create a random bogus user for this barista run.
     {
-	email: 'anonymous@localhost',
 	token: rand_user_token,
-	nickname: 'anonymous',
+	nickname: 'Developer (anonymous)',
 	uri: 'TEMP:anonymous',
 	'user-type': 'allow-edit',
 	groups: []
