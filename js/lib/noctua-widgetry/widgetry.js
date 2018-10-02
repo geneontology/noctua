@@ -2090,7 +2090,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	if( entity_type === 'model' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
-			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
+			   'Paper markup tools</div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
 	    var pubann_model_btn_args = {
@@ -2099,12 +2099,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
-	    var textpr_btn =
-		new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso');
+	    // var textpr_btn =
+	    // 	new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso');
 	    var tpc_btn =
-		new bbop.html.tag('button', pubann_model_btn_args, 'TPC');
-	    out_cache.push(textpr_btn.to_string());
-	    out_cache.push('&nbsp;');
+		new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso Central');
+	    // out_cache.push(textpr_btn.to_string());
+	    // out_cache.push('&nbsp;');
 	    out_cache.push(tpc_btn.to_string());
 	    out_cache.push('</div>');
 	    out_cache.push('</div>');
@@ -2185,29 +2185,29 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		taemdl.destroy();
 	    });
 
-	    // Standard Textpresso--token only.
-	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
-		evt.stopPropagation();
+	    // // Standard Textpresso--token only.
+	    // jQuery('#' + textpr_btn.get_id()).click( function(evt){
+	    // 	evt.stopPropagation();
 
-		// Close out what we had.
-		mdl.destroy();
+	    // 	// Close out what we had.
+	    // 	mdl.destroy();
 
-		var taemdl =
-		    new contained_modal('dialog', 'Textpresso interaction');
-		taemdl.add_to_body('<div><p>Textpresso!</p></div>');
-		taemdl.show();
+	    // 	var taemdl =
+	    // 	    new contained_modal('dialog', 'Textpresso interaction');
+	    // 	taemdl.add_to_body('<div><p>Textpresso!</p></div>');
+	    // 	taemdl.show();
 
-		// Kick people to new link in new window.
-		var btkn = manager.user_token();
-		if( ! btkn || ! us.isString(btkn) ){
-		    alert('Need to be logged in to kick out to Textpresso.');
-		}else{
-		    var txtpr = 'http://tpc.textpresso.org';
-		    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?token=' + btkn,
-				'_blank');
-		}
-		taemdl.destroy();
-	    });
+	    // 	// Kick people to new link in new window.
+	    // 	var btkn = manager.user_token();
+	    // 	if( ! btkn || ! us.isString(btkn) ){
+	    // 	    alert('Need to be logged in to kick out to Textpresso.');
+	    // 	}else{
+	    // 	    var txtpr = 'http://tpc.textpresso.org';
+	    // 	    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?token=' + btkn,
+	    // 			'_blank');
+	    // 	}
+	    // 	taemdl.destroy();
+	    // });
 
 	// }else if( (entity_type === 'fact' || entity_type === 'individual' ) &&
 	// 	  context === 'go' ){
