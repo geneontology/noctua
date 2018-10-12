@@ -28,13 +28,41 @@ There are currently four different workbench types.
 These are the environmental variables made available to workbenches
 (as above):
 
-- `global_token`: TODO
-- `global_model_id`: TODO
-- `global_individual_id`: TODO 
-- `global_source_id`: TODO
-- `global_target_id`: TODO
-- `global_relation_id`: TODO
-- TODO
+```javascript
+global_model = null
+global_id = null
+// (deprecated) `model_id = null
+global_model_id = null
+global_individual_id = null
+global_subject_individual_id = null
+global_object_individual_id = null
+global_relation_id = null
+global_golr_server = "http://amigo-dev-golr.berkeleybop.org/"
+global_golr_neo_server = "http://noctua-golr.berkeleybop.org/"
+global_minerva_definition_name = "minerva_public_dev"
+global_barista_location = "http://barista-dev.berkeleybop.org"
+global_noctua_context = "go"
+global_noctua_minimal_p = false
+global_external_browser_location = "http://tomodachi.berkeleybop.org/amigo/search/model_annotation"
+global_known_relations = [{"id":"BFO:0000050","label":"part_of","relevant":true},
+global_collapsible_relations = ["RO:0002233","RO:0002234","RO:0002333","RO:0002488","BFO:0000066","BFO:0000051","RO:0001025"]
+global_collapsible_reverse_relations = ["RO:0002430","RO:0002429","RO:0002428"]
+global_barista_token = null
+global_workbenches_universal = [{"menu-name":"Model count (template)","page-name":"Model Count","type":"universal","help-link":"http://github.com/geneontology/noctua/issues","javascript":["http://vuejs.org/js/vue.min.js","foo.js"],"workbench-id":"count","template-injectable":"workbenches/count/public/inject.tmpl","public-directory":"workbenches/count/public"},
+global_workbenches_model = [{"menu-name":"Annotation preview","page-name":"Annotation Preview","type":"model","help-link":"http://github.com/geneontology/noctua/issues","javascript":["AnnPreviewBundle.js","jquery.dataTables.min.js"],"css":["https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css"],"workbench-id":"annpreview","template-injectable":"workbenches/annpreview/public/inject.tmpl","public-directory":"workbenches/annpreview/public"},
+global_workbenches_individual = [{"menu-name":"Component companion ","page-name":"Component Companion","type":"individual","help-link":"http://github.com/geneontology/noctua/issues","javascript":["http://cdnjs.cloudflare.com/ajax/libs/vue/2.1.0/vue.js","vue-spinner.min.js","GPBuddyBundle.js"],"css":[],"workbench-id":"gpbuddy","template-injectable":"workbenches/gpbuddy/public/inject.tmpl","public-directory":"workbenches/gpbuddy/public"}]
+global_workbenches_edge = []
+global_sparql_templates_named = {"trivial03":{"title":"Trival.","handle":"trivial03","description":"A completely trivial query, with a higher limit and for a model.","tags":["TODO"],"endpoint":"https://rdf.geneontology.org/sparql","variables":{"model_id":{"comment":"The intended GO model."}},"query":"TODO"}}
+global_sparql_templates_universal = [{"title":"Trival query (longer).","handle":"trivial02","description":"A completely trivial query, with a higher limit.","tags":["TODO"],"endpoint":"https://rdf.geneontology.org/sparql","query":"TODO"}]
+global_sparql_templates_model = [{"title":"foo","handle":"trivial03","description":"Trivial","tags":["TODO"],"endpoint":"https://rdf.geneontology.org/sparql","variables":{"model_id":{"comment":"The intended GO model."}},"query":"TODO"}]
+global_sparql_templates_individual = []
+global_sparql_templates_edge = []
+global_github_api = "api.github.com"
+global_github_org = "geneontology"
+global_github_repo = "noctua-models"
+global_use_github_p = true
+```
+
 
 ### Workbench file scan
 
