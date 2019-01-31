@@ -139,8 +139,8 @@ var linker = new amigo.linker();
 var sd = new amigo.data.server();
 var app_base = sd.app_base();
 
-// The name we're using this week.
-var notw = 'Noctua (Beta)';
+// The base name for the web page title
+var base_title = 'Noctua';
 
 ///
 /// Define the loadable application.
@@ -638,7 +638,7 @@ var NoctuaLauncher = function(){
 		{name: 'global_use_github_p',
 		 value: use_github_p }
 	    ],
-	    'title': notw + ' ' + app_name,
+	    'title': base_title + ' ' + app_name,
 	    'model_id': model_id,
 	    'individual_id': individual_id,
 	    'subject_individual_id': subject_individual_id,
