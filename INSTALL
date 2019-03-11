@@ -1,0 +1,46 @@
+# Noctua Stack is a multi-repositories project, create a main directory for the stack
+mkdir noctua-stack && cd noctua-stack
+
+git clone https://github.com/geneontology/go-site.git
+git clone https://github.com/geneontology/noctua-models.git
+git clone https://github.com/geneontology/minerva.git
+
+# Build minerva server & client
+minerva/build-server.sh
+minerva/build-cli.sh
+
+# Create default authentication users
+mkdir barista
+vim barista/local.yaml
+```
+-
+ uri: 'http://orcid.org/XXXX-XXXX-XXXX-XXXX'
+ username: my_username
+ password: my_assword
+```
+
+# Install Noctua Form (old "simple-annoton-editor")
+git clone https://github.com/geneontology/simple-annoton-editor.git
+cd simple-annoton-editor
+npm install
+npm run build
+cd ../
+
+# Install Noctua
+git clone https://github.com/geneontology/noctua.git
+cd noctua
+npm install
+cp config/startup.yaml.noctua-dev ./startup.yaml
+
+# Edit configuration file (barista, user, group, noctua models, minerva memory to at least 16GB, link to NoctuaForm / SAE)
+vim startup.yaml
+
+# Build the stack and Blazegraph Journal (triplestore)
+gulp build
+gulp batch-minerva-create-journal
+ 
+# Then launch the stack:
+gulp run-barista &> barista.log
+gulp run-minerva &> minerva.log
+gulp run-noctua &> noctua.log
+ 
