@@ -37,6 +37,7 @@ vim startup.yaml
 
 # Build the stack and Blazegraph Journal (triplestore)
 gulp build
+# Optional if running first time.
 gulp batch-minerva-destroy-journal
 gulp batch-minerva-create-journal
  
