@@ -16,7 +16,7 @@ vim barista/local.yaml
 -
  uri: 'http://orcid.org/XXXX-XXXX-XXXX-XXXX'
  username: my_username
- password: my_assword
+ password: my_password
 ```
 
 # Install Noctua Form (old "simple-annoton-editor")
