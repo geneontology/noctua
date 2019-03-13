@@ -1,4 +1,4 @@
-# The Noctua (Editor + Barista + Minerva) Stack
+# The Noctua Stack
 
 The Noctua Stack is a curation platform developped by the [Gene Ontology Consortium](http://geneontology.org). The stack is composed of:
 * [Minerva](https://github.com/geneontology/minerva): the backend data server to retrieve, store, update and delete annotations.
