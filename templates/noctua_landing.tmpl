@@ -59,7 +59,7 @@
         </li>
 
         <li id="action_help" class="navbar-link">
-          <a href="https://github.com/geneontology/noctua" title="Help!">Help</a>
+          <a href="http://wiki.geneontology.org/index.php/Noctua" title="Help!">Help</a>
         </li>
 
         <li>
@@ -126,9 +126,9 @@
              type="button"
              style="float:right;margin-top:-23px;"
              xdata-toggle="tab"
-             href="#about"
+             href="http://wiki.geneontology.org/index.php/Noctua"
              xrole="tab">
-            Learn More...
+            Learn more...
           </a>
         </div>
         <div class="panel-body">
@@ -136,11 +136,18 @@
           {{#barista_token}}
           <div class="row">
             {{#noctua_dev_tabs}}
-            <div class="col-xs-3">
-              &nbsp;
+            <div class="col-xs-6">
+              <button id="create_button_form" type="submit"
+                      class="btn btn-primary btn-block">
+                Create new model in Form
+              </button>
             </div>
-            <button id="create_button_graph" type="submit"
-                    class="col-xs-6 btn btn-primary">Create Noctua Model</button>
+            <div class="col-xs-6">
+              <button id="create_button_graph" type="submit"
+                      class="btn btn-primary btn-block">
+                Create new model in Graph Editor
+              </button>
+            </div>
             {{/noctua_dev_tabs}}
             {{^noctua_dev_tabs}}
             <div class="col-xs-4">
@@ -230,7 +237,7 @@
     <!-- Select tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="select">
 
-      {{#external_browser_location}}	
+      {{#external_browser_location}}
       <!-- Browse. -->
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -247,7 +254,7 @@
           </p>
         </div>
       </div>
-      {{/external_browser_location}}	
+      {{/external_browser_location}}
 
     </div>
     {{/noctua_dev_tabs}}
@@ -383,10 +390,10 @@
     {{/noctua_dev_tabs}}
 
     {{#noctua_dev_tabs}}
-    
+
     <!-- Universal workbenches tab. -->
     <div class="tab-pane noctua_tab_wrapper" id="workbenches">
-      
+
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Workbenches</h3>
@@ -476,7 +483,7 @@
           <!-- </form> -->
         </div>
       </div>
-	
+
       <!-- Cheap-and-dirty debugging wire JSON. -->
       <div class="panel panel-default">
         <div class="panel-heading">

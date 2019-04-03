@@ -10,7 +10,7 @@
 GOLR_LOOKUP_URL:
   comment: The public location of the GOlr server ask information from about seeding, etc.
   type: url
-  value: http://amigo-dev-golr.berkeleybop.org/
+  value: http://golr-aux.geneontology.io/solr/
 GOLR_NEO_LOOKUP_URL:
   comment: The public location of the NEO GOlr server to ask information from for autocomplete, etc.
   type: url
@@ -38,7 +38,7 @@ NOCTUA_CONTEXT:
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
-  value: http://noctua.berkeleybop.org
+  value: http://noctua.geneontology.org
 NOCTUA_LOCATION:
   comment: Location that Noctua should think it is internally.
   type: url

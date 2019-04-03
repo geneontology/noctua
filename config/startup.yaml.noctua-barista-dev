@@ -10,7 +10,7 @@
 GOLR_LOOKUP_URL:
   comment: The public location of the GOlr server ask information from about seeding, etc.
   type: url
-  value: http://amigo-dev-golr.berkeleybop.org/
+  value: http://golr-aux.geneontology.io/solr/
 GOLR_NEO_LOOKUP_URL:
   comment: The public location of the NEO GOlr server to ask information from for autocomplete, etc.
   type: url
@@ -78,6 +78,7 @@ WORKBENCHES:
   type: list
   value:
     - 'workbenches'
+    - '../simple-annoton-editor/workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
   comment: The JAR to use for Minerva.

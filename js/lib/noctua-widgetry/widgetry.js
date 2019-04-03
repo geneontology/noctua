@@ -319,6 +319,7 @@ function node_stack_object(enode, aid){
     function _add_table_row(item, color, prefix, suffix){
 	//var rep_color = aid.color(item.category());
 	var out_rep = type_to_span(item, color);
+	//console.log('type_to_span' + type_to_span);
 	if( prefix ){ out_rep = prefix + out_rep; }
 	if( suffix ){ out_rep = out_rep + suffix; }
 	var trstr = null;
@@ -878,7 +879,9 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	_fuse('part of', 'BFO:0000050', radio_name, 0),
 	_fuse('causally upstream of or within', 'RO:0002418', radio_name, 0),
 	_fuse('causally upstream of', 'RO:0002411', radio_name, 1),
+	_fuse('causally upstream of or within, positive effect', 'RO:0004047', radio_name, 1),
 	_fuse('causally upstream of, positive effect', 'RO:0002304', radio_name, 2),
+	_fuse('causally upstream of or within, negative effect', 'RO:0004046', radio_name, 1),
 	_fuse('causally upstream of, negative effect', 'RO:0002305', radio_name, 2),
 	_fuse('immediately causally upstream of', 'RO:0002412', radio_name, 2),
 	_fuse('directly provides input for', 'RO:0002413', radio_name, 3),
@@ -1025,10 +1028,25 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
     };
     var type_add_btn = new bbop.html.tag('button', type_add_btn_args, 'Add');
 
+    // Create NOT checkbox.
+    var type_not_checkbox_args = {
+    	'generate_id': true,
+    	'type': 'checkbox',
+    };
+    var type_not_checkbox =
+	    new bbop.html.tag('input', type_not_checkbox_args);
+
+    // Final assembly.
     var type_form = [
     	'<div class="form">',
     	'<div class="form-group">',
 	type_add_class_text.to_string(),
+    	'</div>',
+	'<div class="checkbox">',
+	'<label>',
+	type_not_checkbox.to_string(),
+    	' NOT',
+    	'</label>',
     	'</div>',
     	type_add_btn.to_string(),
     	'</div>'
@@ -1283,8 +1301,21 @@ function edit_node_modal(ecore, manager, enode, relations, aid, gserv, gconf, iw
 
 	var cls = jQuery('#' + type_add_class_text.get_id()).val();
 	if( cls ){
-	    // Trigger the delete--hopefully inconsistent.
-	    manager.add_class_expression(ecore.get_id(), tid, cls);
+
+	    // Check to see if the input is checked.
+	    var qstr = 'input:checkbox[id=' +
+		    type_not_checkbox.get_id() + ']:checked';
+	    var rval = jQuery(qstr).val();
+	    if( rval === 'on' ){
+		// Create a negated class expression.
+		var ce = new class_expression();
+		ce.as_complement(cls);
+		// Trigger the addition--hopefully inconsistent.
+		manager.add_class_expression(ecore.get_id(), tid, ce);
+	    }else{
+		// Trigger the addition--hopefully inconsistent.
+		manager.add_class_expression(ecore.get_id(), tid, cls);
+	    }
 
 	    // Wipe out modal.
 	    mdl.destroy();
@@ -2059,7 +2090,7 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 	if( entity_type === 'model' && context === 'go' ){
 	    out_cache.push('<div class="panel panel-default">');
 	    out_cache.push('<div class="panel-heading">' +
-			   'Paper markup tools <span class="alpha">ALPHA</span></div>');
+			   'Paper markup tools</div>');
 	    out_cache.push('<div class="panel-body">');
 	    // Markup buttons.
 	    var pubann_model_btn_args = {
@@ -2068,12 +2099,12 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
     		'class': 'btn btn-success btn-xs',
 		'style': 'padding-right: 1em;'
 	    };
-	    var textpr_btn =
-		new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso');
+	    // var textpr_btn =
+	    // 	new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso');
 	    var tpc_btn =
-		new bbop.html.tag('button', pubann_model_btn_args, 'TPC');
-	    out_cache.push(textpr_btn.to_string());
-	    out_cache.push('&nbsp;');
+		new bbop.html.tag('button', pubann_model_btn_args, 'Textpresso Central');
+	    // out_cache.push(textpr_btn.to_string());
+	    // out_cache.push('&nbsp;');
 	    out_cache.push(tpc_btn.to_string());
 	    out_cache.push('</div>');
 	    out_cache.push('</div>');
@@ -2154,29 +2185,29 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
 		taemdl.destroy();
 	    });
 
-	    // Standard Textpresso--token only.
-	    jQuery('#' + textpr_btn.get_id()).click( function(evt){
-		evt.stopPropagation();
+	    // // Standard Textpresso--token only.
+	    // jQuery('#' + textpr_btn.get_id()).click( function(evt){
+	    // 	evt.stopPropagation();
 
-		// Close out what we had.
-		mdl.destroy();
+	    // 	// Close out what we had.
+	    // 	mdl.destroy();
 
-		var taemdl =
-		    new contained_modal('dialog', 'Textpresso interaction');
-		taemdl.add_to_body('<div><p>Textpresso!</p></div>');
-		taemdl.show();
+	    // 	var taemdl =
+	    // 	    new contained_modal('dialog', 'Textpresso interaction');
+	    // 	taemdl.add_to_body('<div><p>Textpresso!</p></div>');
+	    // 	taemdl.show();
 
-		// Kick people to new link in new window.
-		var btkn = manager.user_token();
-		if( ! btkn || ! us.isString(btkn) ){
-		    alert('Need to be logged in to kick out to Textpresso.');
-		}else{
-		    var txtpr = 'http://tpc.textpresso.org';
-		    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?token=' + btkn,
-				'_blank');
-		}
-		taemdl.destroy();
-	    });
+	    // 	// Kick people to new link in new window.
+	    // 	var btkn = manager.user_token();
+	    // 	if( ! btkn || ! us.isString(btkn) ){
+	    // 	    alert('Need to be logged in to kick out to Textpresso.');
+	    // 	}else{
+	    // 	    var txtpr = 'http://tpc.textpresso.org';
+	    // 	    window.open(txtpr + '/cgi-bin/tc/NoctuaIn?token=' + btkn,
+	    // 			'_blank');
+	    // 	}
+	    // 	taemdl.destroy();
+	    // });
 
 	// }else if( (entity_type === 'fact' || entity_type === 'individual' ) &&
 	// 	  context === 'go' ){
@@ -2896,7 +2927,7 @@ function type_to_full(in_type, aid){
     var text = '[???]';
 
     var t = in_type.type();
-    if( t === 'class' ){ // if simple, the easy way out
+    if( t === 'class' || t === 'complement' ){ // if simple, the easy way out
 	text = in_type.to_string_plus();
     }else{
 	// For everything else, we're gunna hafta do a little

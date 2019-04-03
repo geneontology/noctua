@@ -87,12 +87,13 @@ var rest_response = require('bbop-rest-response').json;
 ///
 
 // Button/link as edit.
-function _generate_jump_url(id, editor_type) {
+function _generate_jump_url(id, editor_type){
     var new_url = "";
-    if (editor_type === 'monarch' || editor_type === 'hpo') {
+    if( editor_type === 'monarch' || editor_type === 'hpo' ){
 	new_url = '/basic/' + editor_type + '/' + id;
-    }
-    else {
+    }else if( editor_type === 'simple-annoton-editor' ){
+	new_url = '/workbench/' + editor_type + '/?model_id=' + id;
+    }else{
 	new_url = '/editor/graph/' + id;
     }
     return new_url;
@@ -122,6 +123,8 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // Create new model from nothing.
     var model_create_by_nothing_id = 'create_button_graph';
     var model_create_by_nothing_elt = '#' + model_create_by_nothing_id;
+    var model_create_by_form_id = 'create_button_form';
+    var model_create_by_form_elt = '#' + model_create_by_form_id;
     // // Create new model from process and taxon.
     // var model_create_by_protax_button_id = 'button_protax_for_create';
     // var model_create_by_protax_button_elt =
@@ -180,7 +183,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 	}
     }
 
-    function _jump_to_page(page_url){ 
+    function _jump_to_page(page_url){
 	var newrl = widgetry.build_token_link(page_url, user_token);
 	window.location.replace(newrl);
     }
@@ -269,28 +272,28 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		  us.keys(resp.data()).length === 1 ){
 	    // Got a seeding response?
 	    console.log('meta: seeding kick');
-	    
+
 	    // Kick out to the new model.
 	    _generated_model(resp, man);
-	    
+
 	}else{
 	    // Rebuild interface with general meta data.
 
 	    // We'll construct a hash that looks like:
 	    // {'<MODEL_ID>' : {<ANN_KEY_1>: [VAL, VAL], <ANN_KEY_2>: [], },  }
 	    var model_to_value_hash_list = {};
-	    
+
 	    // Get the model meta information and sort the models by
 	    // alphabetical titles.
 	    var models_meta = resp.models_meta();
 	    var models_meta_ro = resp.models_meta_read_only();
 	    each(models_meta, function(annotations, mid){
-		
+
 		// Ensure mid.
 		if( ! model_to_value_hash_list[mid] ){
 		    model_to_value_hash_list[mid] = {};
 		}
-		
+
 		// Collect and bin all the annotations.
 		var key_to_value_list = {};
 		each(annotations, function(ann){
@@ -301,18 +304,18 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    }
 		    key_to_value_list[k].push(ann['value']);
 		});
-		
+
 		// Attach results to model id in hash.
 		model_to_value_hash_list[mid] = key_to_value_list;
 	    });
-	    
+
 	    // Try and probe out the best title from the data we
 	    // having there.
 	    var _get_model_title = function(model_id){
-		
+
 		var mtitle = model_id; // default return
 		var hlists = model_to_value_hash_list[model_id];
-		
+
 		if( hlists && hlists['title'] ){
 		    var tmp_title = hlists['title'].join("|");
 		    var match = tmp_title.match(uggo_string);
@@ -325,14 +328,14 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    // Add model id for findability.
 		    mtitle += ' <small>'+model_id+'</small>';
 		}
-		
+
 		return mtitle;
 	    };
-	    
+
 	    // Get user contributors to model.
 	    var _model_contributor_list = function(model_id){
 		var retlist = [];
-		
+
 		if( models_meta && models_meta[model_id]){
 		    each(models_meta[model_id], function(row) {
 			if (row.key === 'contributor') {
@@ -343,14 +346,14 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			}
 		    });
 		}
-		
+
 		return retlist;
 	    };
-	    
+
 	    // Get group contributors to model.
 	    var _model_group_list = function(model_id){
 		var retlist = [];
-		
+
 		if( models_meta && models_meta[model_id]){
 		    each(models_meta[model_id], function(row) {
 			if (row.key === 'providedBy') {
@@ -361,15 +364,15 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			}
 		    });
 		}
-		
+
 		return retlist;
 	    };
-	    
+
 	    // Get the issues associated with a model.
 	    // TODO/BUG: Obviously needs to be optimized.
 	    var _model_issue_list = function(model_id){
 		var retlist = [];
-		
+
 		us.each(issue_list, function(issue){
 		    var title = issue['title'];
 		    var number = issue['number'];
@@ -382,14 +385,14 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			retlist.push(link);
 		    }
 		});
-		
+
 		return retlist;
 	    };
-	    
+
 	    //
 	    var _model_type = function(model_id){
 		var retval = 'hpo';
-		
+
 		var hlists = model_to_value_hash_list[model_id];
 		if ( hlists && hlists['dc11:type'] ) {
 		    // Search all annotations for state.
@@ -401,11 +404,11 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		}
 		return retval;
 	    };
-	    
+
 	    //
 	    var _model_state = function(model_id){
 		var retval = '???';
-		
+
 		var hlists = model_to_value_hash_list[model_id];
 		if( hlists && hlists['state'] ){
 		    var valcache = [];
@@ -420,14 +423,14 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			retval = valcache.join(', ');
 		    }
 		}
-		
+
 		return retval;
 	    };
-	    
+
 	    //
 	    var _model_date = function(model_id){
 		var retval = '???';
-		
+
 		if( models_meta && models_meta[model_id] ){
 		    each(models_meta[model_id], function(row) {
 		    	if (row.key === 'date') {
@@ -435,30 +438,30 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    	}
 		    });
 		}
-		
+
 		return retval;
 	    };
-	    
+
 	    // Check if model is modified.
 	    var _model_modified_p = function(model_id){
 		var retval = false;
-		
+
 		if( models_meta_ro && models_meta_ro[model_id] &&
 		    models_meta_ro[model_id]['modified-p'] &&
 		    models_meta_ro[model_id]['modified-p'] === true ){
-			
+
 			retval = true;
 		    }
-		
+
 		return retval;
 	    };
-	    
+
 	    // Check if model is a template.
 	    var _model_template_p = function(model_id){
 		var retval = false;
-		
+
 		var hlists = model_to_value_hash_list[model_id];
-		
+
 		if( hlists && hlists['template'] ){
 		    // Search all annotations for templateness.
 		    each(hlists['template'], function(entry){
@@ -467,16 +470,16 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			}
 		    });
 		}
-		
+
 		return retval;
 	    };
-	    
+
 	    // Check if model is deprecated.
 	    var _model_deprecated_p = function(model_id){
 		var retval = false;
-		
+
 		var hlists = model_to_value_hash_list[model_id];
-		
+
 		if( hlists && hlists['deprecated'] ){
 		    // Search all annotations for deprecatedness.
 		    each(hlists['deprecated'], function(entry){
@@ -485,10 +488,10 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			}
 		    });
 		}
-		
+
 		return retval;
 	    };
-	    
+
 	    var model_meta_ids = us.keys(models_meta) || [];
 	    //console.log(model_meta_ids);
 	    var sorted_model_meta_ids = model_meta_ids.sort(function(a, b){
@@ -507,25 +510,25 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			retval = -1;
 		    }
 		}
-		
+
 		return retval;
 	    });
-	    
+
 	    if (sorted_model_meta_ids.length > 0) {
 
 		// Generate table contents.
 		var geneont_table_cache = [];
 		var monarch_table_cache = [];
 		each(sorted_model_meta_ids, function(model_id){
-		    
+
 		    var geneont_tr_cache = [];
 		    var monarch_tr_cache = [];
-		    
+
 		    // Title (go+monarch).
 		    var mtitle =  _get_model_title(model_id);
 		    geneont_tr_cache.push(mtitle);
 		    monarch_tr_cache.push(mtitle);
-		    
+
 		    // Contributors (go+monarch).
 		    var clist = _model_contributor_list(model_id);
 		    geneont_tr_cache.push(clist.join(', '));
@@ -535,12 +538,12 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    var state = _model_state(model_id);
 	            geneont_tr_cache.push(state);
 	            monarch_tr_cache.push(state);
-		    
+
 		    // Date (go+monarch).
 		    var date = _model_date(model_id);
 		    geneont_tr_cache.push(date);
 		    monarch_tr_cache.push(date);
-		    
+
 		    // Check to see if it's modified and highlight that
 		    // fact (go).
 		    if( _model_modified_p(model_id) ){
@@ -548,7 +551,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    }else{
 			geneont_tr_cache.push('');
 		    }
-		    
+
 		    // Check to see if it's a template and
 		    // highlight that fact (go).
 		    if( _model_template_p(model_id) ){
@@ -556,7 +559,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    }else{
 			geneont_tr_cache.push('');
 		    }
-		    
+
 		    // Check to see if it's deprecated and
 		    // highlight that fact (go).
 		    if( _model_deprecated_p(model_id) ){
@@ -575,24 +578,24 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			    monarch_tr_cache.push('');
 			}
 		    }
-		    
+
 	            // Cram all the buttons in.
 		    var bstrs = [];
 		    if (global_noctua_context !== 'monarch') {
 			bstrs = [
 			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
-			    // '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'basic'), user_token) +'" role="button"><strike>Form</strike></a>',
+			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'simple-annoton-editor'), user_token) +'" role="button">Form</a>',
 			    // '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button">GPAD</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
 			];
-			
+
 			geneont_tr_cache.push(bstrs.join('&nbsp;'));
 
 		    }else{ // monarch
 
 			var model_type = _model_type(model_id);
-			
+
 	        	bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, model_type), user_token) +'" role="button">Form</a>');
 	    		bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
 	        	// bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
@@ -617,7 +620,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    table_str += monarch_table_cache.join('</tr><tr>');
 		}
 		table_str += '</tr>';
-		
+
 		// Make the tables real nice. Sort by date.
 		jQuery('#mmm-selection-data').empty();
 		jQuery('#mmm-selection-data').append(table_str);
@@ -626,7 +629,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		);
 	    }
 	}
-	
+
 	// Creation for form. Since default is in the callback is
 	// "graph", goose it over to kick me to form instead.
 	jQuery(model_create_monarch_button_elt).click(function(evt) {
@@ -637,14 +640,14 @@ var MinervaBootstrapping = function(user_token, issue_list){
 	    to_editor = "hpo";
 	    manager.add_model();
 	});
-	
+
     // 	///
     // 	/// Make the process/taxon seeding interactive.
     // 	///
-	
+
     // 	var protax_proc_auto_val = null;
     // 	var protax_tax_auto_val = null;
-	
+
     // 	// go process
     // 	var protax_proc_auto_args = {
     // 	    'label_template':
@@ -667,7 +670,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // 	protax_proc_auto.add_query_filter('regulates_closure_label',
     // 					  'biological_process');
     // 	protax_proc_auto.set_personality('ontology');
-	
+
     // 	// taxon
     // 	var protax_tax_auto_args = {
     // 	    'label_template':
@@ -690,10 +693,10 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // 	protax_tax_auto.add_query_filter('source',
     // 					 'ncbi_taxonomy');
     // 	protax_tax_auto.set_personality('ontology');
-	
+
     // 	// Get create-by-process/taxon ready to go.
     // 	jQuery(model_create_by_protax_button_elt).click(function(evt){
-	    
+
     // 	    if( protax_proc_auto_val && protax_tax_auto_val ){
     // 		// alert('You have: ' + protax_proc_auto_val +
     // 		// 	  ' and ' + protax_tax_auto_val);
@@ -703,7 +706,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // 		alert('ERROR: Need both process ID (GO:XXXXXXX) and ' +
     // 		      'taxon ID (NCBITaxon:XXXXXXX) to proceed.');
     // 	    }
-    // 	});	
+    // 	});
     });
 
     // Likely result of a new model being built on Minerva.
@@ -720,16 +723,16 @@ var MinervaBootstrapping = function(user_token, issue_list){
     // because we want to model the (not yet) return of current
     // species from Minerva.
 
-    // Active learn-more button.
-    var learn_more_trigger_elt = '#learn_more_trigger';
-    var learn_more_trigger_target_elt = '#about_trigger > a';
-    jQuery(learn_more_trigger_elt).click(function(evt){
-	evt.stopPropagation();
-	evt.preventDefault();
-	jQuery('.navbar-nav li.active').removeClass('active');
-	jQuery('.tab-content div.active').removeClass('active');
-	jQuery(learn_more_trigger_target_elt).tab('show');
-    });
+    // // Active learn-more button.
+    // var learn_more_trigger_elt = '#learn_more_trigger';
+    // var learn_more_trigger_target_elt = '#about_trigger > a';
+    // jQuery(learn_more_trigger_elt).click(function(evt){
+    // 	evt.stopPropagation();
+    // 	evt.preventDefault();
+    // 	jQuery('.navbar-nav li.active').removeClass('active');
+    // 	jQuery('.tab-content div.active').removeClass('active');
+    // 	jQuery(learn_more_trigger_target_elt).tab('show');
+    // });
 
     jQuery('.overview_trigger').click(function(evt){
 	evt.stopPropagation();
@@ -742,7 +745,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     var tabId = location.hash; // will look something like "#h-02"
     if (tabId === '#about') {
 	// This will fired only when url get hash.
-	jQuery(learn_more_trigger_elt).tab('show');
+	//jQuery(learn_more_trigger_elt).tab('show');
     }
     var path = window.location.pathname + window.location.search;
     history.replaceState({}, document.title, path);
@@ -751,6 +754,15 @@ var MinervaBootstrapping = function(user_token, issue_list){
     jQuery(model_create_by_nothing_elt).click(function(evt){
 	evt.stopPropagation();
 	evt.preventDefault();
+	to_editor = "graph";
+	manager.add_model();
+    });
+
+    // Active create-from-form.
+    jQuery(model_create_by_form_elt).click(function(evt){
+	evt.stopPropagation();
+	evt.preventDefault();
+	to_editor = "simple-annoton-editor";
 	manager.add_model();
     });
 
@@ -832,7 +844,7 @@ jQuery(document).ready(function(){
 			    var number = item['number'];
 			    display_list.push({
 				"title": title,
-				"number": number, 
+				"number": number,
 				"url": url
 			    });
 			    //console.log(JSON.stringify(item, null, 4));
@@ -840,7 +852,7 @@ jQuery(document).ready(function(){
 			MinervaBootstrapping(start_token, display_list);
 		    }
 		}).done();
-	    }		
+	    }
 	    // // Try and make contact with GitHub.
 	    // var github = new ghapi({
 	    //     debug: true,
@@ -868,7 +880,7 @@ jQuery(document).ready(function(){
 	    // 	// Start without GitHub contact.
 	    // 	MinervaBootstrapping(start_token, null);
 	    //     }else{
-	    
+
 	    // 	var display_list = [];
 	    // 	us.each(res['data'], function(item){
 	    // 	    var title = item['title'];
@@ -876,7 +888,7 @@ jQuery(document).ready(function(){
 	    // 	    var number = item['number'];
 	    // 	    display_list.push({
 	    // 		"title": title,
-	    // 		"number": number, 
+	    // 		"number": number,
 	    // 		"url": url
 	    // 	    });
 	    // 	    //console.log(JSON.stringify(item, null, 4));

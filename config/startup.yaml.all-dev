@@ -77,11 +77,16 @@ WORKBENCHES:
   type: list
   value:
     - 'workbenches'
+    - '../simple-annoton-editor/workbenches'
 ## Minerva operations preferences.
+MINERVA_JAR:
+  comment: The JAR to use for Minerva.
+  type: string
+  value: '../minerva/minerva-cli/bin/minerva-cli.jar'
 MINERVA_REASONER:
   comment: The reasoner to use in Minerva.
   type: string
-  value: slme-elk
+  value: arachne
 ## JVM preferences.
 MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
@@ -114,6 +119,18 @@ BARISTA_REPL_PORT:
   comment: The port to start the Barista REPL on. If not defined, will not start listener.
   type: number
   value: 9090
+GITHUB_API:
+  comment: The location of the GitHub API that we want to use.
+  type: string
+  value: api.github.com
+GITHUB_ORG:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: geneontology
+GITHUB_REPO:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: noctua-models
 APP_DEFINITIONS:
   comment: A list of resources that Barista will allow public access to.
   type: list
@@ -129,7 +146,7 @@ APP_DEFINITIONS:
         - m3Batch
         - seed/fromProcess
     - id: minerva_public_dev
-      target: http://toaster.lbl.gov:6799
+      target: http://wok.lbl.gov:6800
       public:
         - m3Batch
         - seed/fromProcess

@@ -18,7 +18,7 @@ describe('our testing environment is sane', function(){
     
     // Trivially works two ways.
     it('works at all (thingy)', function(){
-	thingy.should.equal(1);
+	//thingy.should.equal(1);
         assert.equal(thingy, 1);
     });
 

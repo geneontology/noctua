@@ -39,6 +39,12 @@ This is the file that is used by the current "production" instance of
 the services. It can be used as a guide for setting up your own
 instance.
 
+### startup.yaml.production-dev
+
+This is the file that is used by the current development "production"
+instance of the services. It can be used as a guide for setting up
+your own instance for experimentation.
+
 ## Others
 ### users.json
    A downstream version of geneontology/go-site's metadata/users.yaml
