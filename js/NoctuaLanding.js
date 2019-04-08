@@ -114,8 +114,39 @@ var MinervaBootstrapping = function(user_token, issue_list){
     var engine = new jquery_engine(barista_response);
     var manager = new minerva_manager(global_barista_location,
 				      global_minerva_definition_name,
-				      user_token, engine, 'async');
+					  user_token, engine, 'async');
 
+
+	var sync_request = require('bbop-rest-manager').sync_request;
+	var sync_engine = new sync_request(barista_response);
+	this.sync_manager = new minerva_manager(global_barista_location, global_minerva_definition_name, user_token, sync_engine, "async");
+
+
+	this.dim = function(bool) {
+		if (typeof bool=='undefined') bool=true; // so you can shorten dim(true) to dim()
+		document.getElementById('dimmer').style.display=(bool?'block':'none');
+	}
+
+	this.duplicate_model = function(src_model_id, new_title) {
+		this.dim(true);
+		var spinner_div = document.createElement("div"); 
+		spinner_div.innerHTML = "<div class=\'loader\' id=\'temp_spinner\'></div>"; 
+		document.getElementsByTagName("BODY")[0].appendChild(spinner_div); 
+
+		this.sync_manager.async_duplicate_model(src_model_id, new_title).then(function(value) {
+			var new_link = "/editor/graph/" + value.model_id();
+			window.location.pathname = new_link;
+
+		}, function(error) {
+			console.error(error);
+			var child = document.getElementById('temp_spinner');
+			child.remove();
+			alert("An error occured: ", error);
+			this.dim(false);
+		})
+	}
+
+		
     // GOlr location and conf setup.
     var gserv = global_golr_server;
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
@@ -579,6 +610,10 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			}
 		    }
 
+			var true_title = mtitle;
+			if(mtitle.includes("<small>")) {
+				true_title = mtitle.substring(0, mtitle.indexOf("<small>"));
+			}
 	            // Cram all the buttons in.
 		    var bstrs = [];
 		    if (global_noctua_context !== 'monarch') {
@@ -587,7 +622,9 @@ var MinervaBootstrapping = function(user_token, issue_list){
 			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'simple-annoton-editor'), user_token) +'" role="button">Form</a>',
 			    // '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button">GPAD</a>',
-			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
+			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>',
+				'<a class="btn brn-primary btn-xs" onclick="duplicateModel(\'' + model_id + '\', \'' + true_title + '\', \'' + user_token + '\')" role="button">Copy</a>',
+				'<script>function duplicateModel(model_id, model_title, user_token) { if(!user_token || user_token == "null" || user_token.trim() == "") { alert("Must be logged in !"); return; } new_title = prompt("Enter new title", "Copy of \" + model_title + \""); if(new_title) { console.log(new_title , model_id , user_token); this.duplicate_model(model_id, new_title); }  }</script>'
 			];
 
 			geneont_tr_cache.push(bstrs.join('&nbsp;'));
@@ -600,7 +637,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 	    		bstrs.push('<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Graph</a>');
 	        	// bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button" target="_blank">GAF</a>');
 	        	bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button" target="_blank">GPAD</a>');
-			bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button" target="_blank">OWL</a>');
+				bstrs.push('<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button" target="_blank">OWL</a>');
 
 			monarch_tr_cache.push(bstrs.join(' '));
 		    }
@@ -795,8 +832,8 @@ jQuery(document).ready(function(){
     var start_token = null;
     if( global_barista_token ){
 	start_token = global_barista_token;
-    }
-
+	}
+	
     // Next we need a manager to try and pull in the model.
     if( typeof(global_minerva_definition_name) === 'undefined' ||
 	typeof(global_barista_location) === 'undefined' ){

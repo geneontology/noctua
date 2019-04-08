@@ -38,3 +38,35 @@ div.dataTables_info#model-golr-selection_info {
 }
 
 
+.loader {
+  background-color: white;
+  position: fixed;
+  left: 90.8%;
+  top: 90%;
+  border: 18px solid #2f2f2f;; /* Light grey */
+  border-top: 18px solid #3498db; /* Blue */
+  border-bottom: 18px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 75px;
+  height: 75px;
+  animation: spin 3s linear infinite;
+  z-index: 100;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#dimmer
+{
+    background:#000;
+    opacity:0.5;
+    position:fixed; /* important to use fixed, not absolute */
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    display:none;
+    z-index:99; /* may not be necessary */
+}
