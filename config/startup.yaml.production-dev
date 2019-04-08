@@ -106,6 +106,9 @@ COLLAPSIBLE_RELATIONS:
     - BFO:0000051
     ## located in
     - RO:0001025
+    ## Rels for #589
+    - RO:0002339
+    - RO:0002338
 COLLAPSIBLE_REVERSE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse, with the edges flowing the other direction.
   type: list
