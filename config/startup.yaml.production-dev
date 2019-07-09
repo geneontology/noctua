@@ -29,6 +29,10 @@ BARISTA_LOGIN_SECRETS:
   comment: Directory where Barista should look to try and find YAML files defining the site-defined login secrets for OAuth2 and others.
   type: directory
   value: ~/local/src/git/go-internal/barista-dev/
+BARISTA_DEFAULT_NAMESPACE:
+  comment: Default namespace that barista will attempt for searches against a minerva.
+  type: string
+  value: minerva_public_dev
 NOCTUA_CONTEXT:
   comment: The context/audience for which Noctua will be run.
   type: string
