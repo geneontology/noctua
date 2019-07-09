@@ -343,6 +343,9 @@ if( config['EXTERNAL_BROWSER_LOCATION'] ){
 	config['EXTERNAL_BROWSER_LOCATION'].value || null;
 }
 
+// Now necessary.
+var barista_default_namespace = config['BARISTA_DEFAULT_NAMESPACE'].value;
+
 // Optional.
 var barista_repl_port = config['BARISTA_REPL_PORT'].value;
 
@@ -538,6 +541,7 @@ gulp.task('run-barista', shell.task(_run_cmd(
      '--self', barista_location,
      '--secrets', login_secrets_dir,
      '--context', noctua_context,
+     '--default-namespace', barista_default_namespace,
      '--repl', barista_repl_port
     ]
 )));
