@@ -191,6 +191,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    'comment': 'The model is a work in progress, would only be exported in development environments; the standard initial state (public).'
 		},
 		{
+		    'label': 'internal test',
+		    'identifier': 'internal_test',
+		    'comment': 'The model is intended at an exemplar or serve some internal or pedagogical purpose. These models are not intended to for production use and may contain other metadata.'
+		},
+		{
 		    'label': 'closed',
 		    'identifier': 'closed',
 		    'comment': 'Editable, but never exported.'
@@ -1706,7 +1711,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    var qstr = 'input:checkbox[id=' +
 		    simple_ubernoodle_not_checkbox_id + ']:checked';
 	    var rval = jQuery(qstr).val();
-	    if( rval === 'on' ){		
+	    if( rval === 'on' ){
 		// Create a negated class expression.
 		var ce = new class_expression();
 		ce.as_complement(simple_ubernoodle_auto_val);
@@ -1714,7 +1719,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    }else{
 		reqs.add_individual(simple_ubernoodle_auto_val);
 	    }
-		
+
 	    //console.log(reqs.structure());
 	    //console.log(manager.use_groups());
 	    manager.request_with(reqs);
