@@ -176,7 +176,7 @@ var AnnPreviewInit = function(user_token){
 	    console.log('a meta callback?');
 	});
     });
-	
+
     // Likely result of a new model being built on Minerva.
     model_manager.register('rebuild', function(resp, man){
 	console.log('rebuild callback for model');
@@ -184,10 +184,10 @@ var AnnPreviewInit = function(user_token){
 	// Noctua graph.
 	graph = new noctua_graph();
 	graph.load_data_basic(resp.data());
-	
+
 	// Max node exposure.
 	graph.unfold();
-	
+
 	// Populate the cache with the opened contents of the graph.
 	cache = {};
 	us.each(graph.all_nodes(), function(n){
@@ -203,7 +203,7 @@ var AnnPreviewInit = function(user_token){
 		cache[t.class_id()] = t.class_label();
 	    });
 	});
-	
+
 	// Secondarily, go and get the GPAD.
 	gpad_manager.export_model(global_id, 'gpad');
 
@@ -218,9 +218,9 @@ var AnnPreviewInit = function(user_token){
 	    jQuery('#page-title').empty();
 	    jQuery('#page-title').append('<b>' + title + '</b> (' + graph.get_id() + ')');
 	}
-	
+
     }, 10);
-			   
+
     // Likely result of a new model being built on Minerva.
     gpad_manager.register('meta', function(resp, man){
 	console.log('rebuild callback for gpad');
@@ -271,7 +271,7 @@ var AnnPreviewInit = function(user_token){
 	    tbl_str += line.join('</td><td>');
 	    tbl_str += '</td></tr>';
 	});
-	
+
 	// Add to DOM.
 	jQuery('#tbl-bdy').empty();
         jQuery('#tbl-bdy').append(tbl_str);
@@ -282,10 +282,10 @@ var AnnPreviewInit = function(user_token){
 	if( initial_p && tbl_str !== '' ){
 	    initial_p = false;
 
-	    if( typeofjQuery('#ann-tbl').DataTable ){
+	    if( typeof(jQuery('#ann-tbl').DataTable) ){
 		jQuery('#ann-tbl').DataTable({
 		    "autoWidth": true,
-		    // "order": [[3, "desc"], [0, "asc"]],
+		    "order": [[0, "asc"]],
 		    "lengthMenu": [10, 50, 100, 500],
 		    "pageLength": 100,
 		    "iDisplayLength": 100
