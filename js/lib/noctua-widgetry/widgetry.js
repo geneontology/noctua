@@ -306,8 +306,10 @@ function enode_types_to_ordered_stack(enode_types, aid){
  *
  * This whole bit will change a lot with new evidence coming down the
  * pipe.
+ *
+ * ecore is used to detect graph violations.
  */
-function node_stack_object(enode, aid){
+function node_stack_object(enode, aid, ecore){
 
     var hook_list = [];
 
@@ -503,7 +505,7 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
 			       'class': 'demo-window',
 			       'style': style_str});
 
-    var enode_stack_table = new node_stack_object(enode, aid);
+    var enode_stack_table = new node_stack_object(enode, aid, ecore);
     w.add_to(enode_stack_table.to_string());
 
     // Box to drag new connections from.
@@ -522,6 +524,15 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
 				     'open-annotation-dialog btn btn-default',
 				     'title': 'Open annotation dialog'});
     w.add_to(openann);
+
+    // Box to open violation dialog, if exist.
+    if( ecore.get_violations_by_id(enode.id()).length > 0 ){
+	var openvio = new bbop.html.tag('button',
+					{'class':
+					 'open-violation-dialog btn btn-default',
+					 'title': 'Open violation dialog'});
+	w.add_to(openvio);
+    }
 
     // Add to display.
     jQuery(graph_div).append(w.to_string());
@@ -549,7 +560,7 @@ function update_enode(ecore, enode, aid){
     var uelt = ecore.get_node_elt_id(enode.id());
     jQuery('#' + uelt).empty();
 
-    var enode_stack_table = new node_stack_object(enode, aid);
+    var enode_stack_table = new node_stack_object(enode, aid, ecore);
     jQuery('#' + uelt).append(enode_stack_table.to_string());
 
     // Box to drag new connections from.
@@ -568,6 +579,15 @@ function update_enode(ecore, enode, aid){
 				     'open-annotation-dialog btn btn-default',
 				     'title': 'Open annotation dialog'});
     jQuery('#' + uelt).append(openann.to_string());
+
+    // Box to open violation dialog, if exist.
+    if( ecore.get_violations_by_id(enode.id()).length > 0 ){
+	var openvio = new bbop.html.tag('button',
+					{'class':
+					 'open-violation-dialog btn btn-default',
+					 'title': 'Open violation dialog'});
+	jQuery('#' + uelt).append(openvio.to_string());
+    }
 }
 
 /**
