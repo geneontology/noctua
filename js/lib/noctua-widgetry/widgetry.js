@@ -89,6 +89,11 @@ function repaint_info(ecore, aid, info_div){
     var tanns = ecore.get_annotations_by_key('title');
     if( tanns && tanns.length === 1 ){ mtitle = tanns[0].value(); }
 
+    var vio_p = 'true';
+    if( ecore.valid_p() === false ){
+	vio_p = '<b>INVALID</b>';
+    }
+
     var str_cache = [
 	'<dl class="dl-horizontal">',
 	// '<dt></dt>',
@@ -97,6 +102,10 @@ function repaint_info(ecore, aid, info_div){
 	'<dt>ID</dt>',
 	'<dd>',
 	ecore.get_id(),
+	'</dd>',
+	'<dt>Valid</dt>',
+	'<dd>',
+	vio_p,
 	'</dd>',
 	'<dt>Name</dt>',
 	'<dd>',

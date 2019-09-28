@@ -938,6 +938,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    mtitle = '*' + mtitle + '*';
 	}
 
+	// Tag on violation mark.
+	ll('valid-p: ' + ecore.valid_p());
+	if( ecore.valid_p() === false ){
+	    mtitle = '! ' + mtitle;
+	}
+
 	document.title = mtitle + ' (Noctua Editor)';
     }
 
