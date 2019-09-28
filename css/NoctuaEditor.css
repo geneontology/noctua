@@ -143,7 +143,7 @@ a:active {
 }
 
 .menu, #render, #explanation {
-    background-color:#fff;        
+    background-color:#fff;
 }
 
 .menu {
@@ -173,7 +173,7 @@ a:active {
     color:orange !important;
 }
 
-.window, .demo-window, .label {    
+.window, .demo-window, .label {
     text-align: center;
     z-index: 24;
     cursor: grab;
@@ -385,6 +385,43 @@ path, ._jsPlumb_endpoint { cursor: pointer; }
     box-shadow: 0px 0px 6px black;
 }
 
+/* open violation button */
+.open-violation-dialog {
+    position: absolute;
+    bottom: 37%;
+    top: 5px;
+    left: 25px;
+    width: 1em;
+    height: 1em;
+    background-color: #ee0000;
+    cursor: zoom-in;
+    box-shadow: 0px 0px 2px black;
+    -webkit-transition:-webkit-box-shadow 0.25s ease-in;
+    -moz-transition:-moz-box-shadow 0.25s ease-in;
+    transition:box-shadow 0.25s ease-in;
+    padding: 0 0; /* override bootstrap 3 padding for compaction */
+}
+.open-violation-dialog:hover {
+    box-shadow: 0px 0px 6px black;
+}
+
+/* open violation button, edge version (different mechanisms in jsplumb) */
+.open-violation-dialog-edge {
+    width: 1em;
+    height: 1em;
+    background-color: #ee0000;
+    cursor: zoom-in;
+    box-shadow: 0px 0px 2px black;
+    -webkit-transition:-webkit-box-shadow 0.25s ease-in;
+    -moz-transition:-moz-box-shadow 0.25s ease-in;
+    transition:box-shadow 0.25s ease-in;
+    padding: 0 0; /* override bootstrap 3 padding for compaction */
+    margin-bottom: 2px; /* looks a little better in FF */
+}
+.open-violation-dialog-edge:hover {
+    box-shadow: 0px 0px 6px black;
+}
+
 .mme-type-table {
     margin-bottom: 5px;
 }
@@ -436,7 +473,7 @@ path, ._jsPlumb_endpoint { cursor: pointer; }
     -moz-border-radius: 10px/10px;
     -webkit-border-radius: 10px 10px;
     border-radius: 10px/10px;;
-    border:solid 3px #FF0000; 
+    border:solid 3px #FF0000;
     width:10px;
     height:10px;
     opacity: 0.5;
@@ -504,7 +541,7 @@ path, ._jsPlumb_endpoint { cursor: pointer; }
 .aLabel {
         background-color: white;
         opacity: 0.8;
-        padding: 0.3em;                                
+        padding: 0.3em;
         border-radius: 0.5em;
         border: 1px solid #346789;
         cursor: pointer;
@@ -556,8 +593,8 @@ path, ._jsPlumb_endpoint { cursor: pointer; }
 }
 
 /*
- * BBOP MME 
- */ 
+ * BBOP MME
+ */
 .bbop-mme-more-results-ul {
     border-bottom: 3px dotted;
 }
