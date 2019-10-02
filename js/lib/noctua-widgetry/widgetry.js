@@ -89,9 +89,58 @@ function repaint_info(ecore, aid, info_div){
     var tanns = ecore.get_annotations_by_key('title');
     if( tanns && tanns.length === 1 ){ mtitle = tanns[0].value(); }
 
+    // Basic validation.
     var vio_p = 'true';
     if( ecore.valid_p() === false ){
 	vio_p = '<b>INVALID</b>';
+    }
+
+    // Validation/violations details, rule first. See unit tests for
+    // bbop-graph-noctua.
+    var vios = '';
+    var vio_cache = {};
+    each(ecore.violations(), function(v){
+
+	// Assemble a human-readable label.
+	var nid = v.node_id();
+	var node = ecore.get_node(nid);
+	var node_label = '';
+	var std_types = node.types();
+	us.each(std_types, function(in_type){
+	    node_label += type_to_span(in_type);
+	});
+	if( node_label === '' ){
+	    node_label = nid;
+	}
+
+	// Probe the explanations.
+	if( v.explanations() && v.explanations().length > 0 ){
+	    each(v.explanations(), function(e){
+
+		if( e['shape'] ){
+		    if( ! vio_cache[e['shape']] ){
+			vio_cache[e['shape']] = [];
+		    }
+		    vio_cache[e['shape']].push(node_label);
+		}
+	    });
+
+	}else{
+	    if( ! vio_cache[['unknown']] ){
+		vio_cache[['unknown']] = [];
+	    }
+	    vio_cache['unknown'].push(node_label);
+	}
+    });
+    var half_cache = [];
+    us.each(vio_cache, function(list, k){
+	half_cache.push('<dd>' + '<small><strong>' +
+			k + '</strong></small> <br /> ' +
+			list.join(',<br />') + '</dd>');
+    });
+    vios = half_cache.join(' ');
+    if( vios === '' ){
+	vios = '<dd>none</dd>';
     }
 
     var str_cache = [
@@ -103,14 +152,16 @@ function repaint_info(ecore, aid, info_div){
 	'<dd>',
 	ecore.get_id(),
 	'</dd>',
-	'<dt>Valid</dt>',
-	'<dd>',
-	vio_p,
-	'</dd>',
 	'<dt>Name</dt>',
 	'<dd>',
 	mtitle,
 	'</dd>',
+	'<dt>Valid</dt>',
+	'<dd>',
+	vio_p,
+	'</dd>',
+	'<dt>Violations</dt>',
+	vios,
 	'<dt>Individuals</dt>',
 	'<dd>',
 	nds.length || 0,
@@ -372,11 +423,11 @@ function node_stack_object(enode, aid, ecore){
 
     // rdfs:label first, if extant.
     if( rdfs_label ){
-	var trstr = '<tr class="bbop-mme-stack-tr">' +
+	var trstr1 = '<tr class="bbop-mme-stack-tr">' +
 		'<td class="bbop-mme-stack-td bbop-mme-stack-td-rdfslabel"><em style="color: grey;">' +
 		rdfs_label +
 		'</em></td></tr>';
-	enode_stack_table.add_to(trstr);
+	enode_stack_table.add_to(trstr1);
     }
     // Inferred types next.
     var inf_types = enode.get_unique_inferred_types();
