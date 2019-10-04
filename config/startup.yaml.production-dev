@@ -79,7 +79,7 @@ WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
   value:
-    - '../noctua-form-base/workbenches'
+    - '../noctua-form/workbenches'
     - '../noctua-annotation-review/workbenches'
     - '../noctua-search/workbenches'
     - '../noctua-form-legacy/workbenches'
