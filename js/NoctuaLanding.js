@@ -91,7 +91,7 @@ function _generate_jump_url(id, editor_type){
     var new_url = "";
     if( editor_type === 'monarch' || editor_type === 'hpo' ){
 	new_url = '/basic/' + editor_type + '/' + id;
-    }else if( editor_type === 'simple-annoton-editor' ){
+    }else if( editor_type === 'noctua-form' ){
 	new_url = '/workbench/' + editor_type + '/?model_id=' + id;
     }else{
 	new_url = '/editor/graph/' + id;
@@ -584,7 +584,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
 		    if (global_noctua_context !== 'monarch') {
 			bstrs = [
 			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'graph'), user_token) +'" role="button">Edit</a>',
-			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'simple-annoton-editor'), user_token) +'" role="button">Form</a>',
+			    '<a class="btn btn-primary btn-xs" href="' + widgetry.build_token_link(_generate_jump_url(model_id, 'noctua-form'), user_token) +'" role="button">Form</a>',
 			    // '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gaf" role="button">GAF</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/gpad" role="button">GPAD</a>',
 			    '<a class="btn btn-primary btn-xs" href="/download/'+model_id+'/owl" role="button">OWL</a>'
@@ -762,7 +762,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     jQuery(model_create_by_form_elt).click(function(evt){
 	evt.stopPropagation();
 	evt.preventDefault();
-	to_editor = "simple-annoton-editor";
+	to_editor = "noctua-form";
 	manager.add_model();
     });
 
