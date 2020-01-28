@@ -72,6 +72,9 @@ var notify_github = require('toastr'); // notifications
 // And the layouts!
 var layout_engine = require('bbop-layout');
 
+// Some render support.
+var pretty = require('js-object-pretty-print').pretty;
+
 // Aliases.
 var each = us.each;
 var noctua_graph = model.graph;
@@ -189,6 +192,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    'label': 'development',
 		    'identifier': 'development',
 		    'comment': 'The model is a work in progress, would only be exported in development environments; the standard initial state (public).'
+		},
+		{
+		    'label': 'internal test',
+		    'identifier': 'internal_test',
+		    'comment': 'The model is intended at an exemplar or serve some internal or pedagogical purpose. These models are not intended to for production use and may contain other metadata.'
 		},
 		{
 		    'label': 'closed',
@@ -701,6 +709,42 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     	    });
     }
 
+    function _attach_node_click_violation_view(sel){
+
+    	// Add this event to whatever we got called in.
+    	jQuery(sel).unbind('click');
+    	jQuery(sel).click(
+    	    function(evnt){
+    		evnt.stopPropagation();
+
+    		// Resolve the event into the edit core node.
+		var target_elt = jQuery(evnt.target);
+		var parent_elt = target_elt.parent();
+		var parent_id = parent_elt.attr('id');
+		var enode = ecore.get_node_by_elt_id(parent_id);
+		if( ! enode ){
+		    alert('Could not find related violation element.');
+		}else{
+
+		    var violation_renderings = [];
+		    var violations = ecore.get_violations_by_id(enode.id());
+		    each(violations, function(v){
+			if( v.explanations().length === 0 ){
+			    violation_renderings.push(
+				'[No explanation available.]');
+			}else{
+			    violation_renderings.push(
+				pretty(v.explanations(), '3', 'HTML'));
+			}
+		    });
+		    var vvm = new widgetry.contained_modal(
+			null, 'Violations',
+			violation_renderings.join(' <hr /> '));
+		    vvm.show();
+		}
+    	    });
+    }
+
     // Delete all UI connections associated with node. This also
     // triggers the "connectionDetached" event, so the edges are being
     // removed from the model at the same time.
@@ -894,6 +938,12 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    mtitle = '*' + mtitle + '*';
 	}
 
+	// Tag on violation mark.
+	ll('valid-p: ' + ecore.valid_p());
+	if( ecore.valid_p() === false ){
+	    mtitle = '! ' + mtitle;
+	}
+
 	document.title = mtitle + ' (Noctua Editor)';
     }
 
@@ -1056,8 +1106,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    // Make nodes able to use edit dialog.
 	    _attach_node_click_edit('.open-dialog');
 
-	    // // Make nodes able to clone themselves.
+	    // Make nodes able to clone themselves.
 	    _attach_node_click_annotation_edit('.open-annotation-dialog');
+
+	    // Make nodes able to clone themselves.
+	    _attach_node_click_violation_view('.open-violation-dialog');
 
     	    // Make normal nodes availables as edge targets.
 	    _make_selector_target('.demo-window');
@@ -1089,6 +1142,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    //
 	    each(['.open-dialog',
 		  '.open-annotation-dialog',
+		  '.open-violations-dialog',
 		  '.open-annotation-dialog-edge'], function(cls){
 		      jQuery(cls).addClass('hidden');
 		  });
@@ -1103,6 +1157,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    //
 	    each(['.open-dialog',
 		  '.open-annotation-dialog',
+		  '.open-violations-dialog',
 		  '.open-annotation-dialog-edge'], function(cls){
 		      jQuery(cls).removeClass('hidden');
 		  });
@@ -1706,7 +1761,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    var qstr = 'input:checkbox[id=' +
 		    simple_ubernoodle_not_checkbox_id + ']:checked';
 	    var rval = jQuery(qstr).val();
-	    if( rval === 'on' ){		
+	    if( rval === 'on' ){
 		// Create a negated class expression.
 		var ce = new class_expression();
 		ce.as_complement(simple_ubernoodle_auto_val);
@@ -1714,7 +1769,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	    }else{
 		reqs.add_individual(simple_ubernoodle_auto_val);
 	    }
-		
+
 	    //console.log(reqs.structure());
 	    //console.log(manager.use_groups());
 	    manager.request_with(reqs);

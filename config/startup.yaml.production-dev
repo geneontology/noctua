@@ -25,6 +25,10 @@ BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
   value: http://wok.lbl.gov:3400
+BARISTA_DEFAULT_NAMESPACE:
+  comment: Default namespace that barista will attempt for searches against a minerva.
+  type: string
+  value: minerva_public_dev
 BARISTA_LOGIN_SECRETS:
   comment: Directory where Barista should look to try and find YAML files defining the site-defined login secrets for OAuth2 and others.
   type: directory
@@ -75,8 +79,11 @@ WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
   value:
+    - '../noctua-form/workbenches'
+    - '../noctua-annotation-review/workbenches'
+    - '../noctua-search/workbenches'
+    - '../noctua-form-legacy/workbenches'
     - 'workbenches'
-    - '../simple-annoton-editor/workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
   comment: The JAR to use for Minerva.
@@ -106,6 +113,9 @@ COLLAPSIBLE_RELATIONS:
     - BFO:0000051
     ## located in
     - RO:0001025
+    ## Rels for #589
+    - RO:0002339
+    - RO:0002338
 COLLAPSIBLE_REVERSE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse, with the edges flowing the other direction.
   type: list

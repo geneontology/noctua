@@ -89,6 +89,60 @@ function repaint_info(ecore, aid, info_div){
     var tanns = ecore.get_annotations_by_key('title');
     if( tanns && tanns.length === 1 ){ mtitle = tanns[0].value(); }
 
+    // Basic validation.
+    var vio_p = 'true';
+    if( ecore.valid_p() === false ){
+	vio_p = '<b>INVALID</b>';
+    }
+
+    // Validation/violations details, rule first. See unit tests for
+    // bbop-graph-noctua.
+    var vios = '';
+    var vio_cache = {};
+    each(ecore.violations(), function(v){
+
+	// Assemble a human-readable label.
+	var nid = v.node_id();
+	var node = ecore.get_node(nid);
+	var node_label = '';
+	var std_types = node.types();
+	us.each(std_types, function(in_type){
+	    node_label += type_to_span(in_type);
+	});
+	if( node_label === '' ){
+	    node_label = nid;
+	}
+
+	// Probe the explanations.
+	if( v.explanations() && v.explanations().length > 0 ){
+	    each(v.explanations(), function(e){
+
+		if( e['shape'] ){
+		    if( ! vio_cache[e['shape']] ){
+			vio_cache[e['shape']] = [];
+		    }
+		    vio_cache[e['shape']].push(node_label);
+		}
+	    });
+
+	}else{
+	    if( ! vio_cache[['unknown']] ){
+		vio_cache[['unknown']] = [];
+	    }
+	    vio_cache['unknown'].push(node_label);
+	}
+    });
+    var half_cache = [];
+    us.each(vio_cache, function(list, k){
+	half_cache.push('<dd>' + '<small><strong>' +
+			k + '</strong></small> <br /> ' +
+			list.join(',<br />') + '</dd>');
+    });
+    vios = half_cache.join(' ');
+    if( vios === '' ){
+	vios = '<dd>none</dd>';
+    }
+
     var str_cache = [
 	'<dl class="dl-horizontal">',
 	// '<dt></dt>',
@@ -102,6 +156,12 @@ function repaint_info(ecore, aid, info_div){
 	'<dd>',
 	mtitle,
 	'</dd>',
+	'<dt>Valid</dt>',
+	'<dd>',
+	vio_p,
+	'</dd>',
+	'<dt>Violations</dt>',
+	vios,
 	'<dt>Individuals</dt>',
 	'<dd>',
 	nds.length || 0,
@@ -306,8 +366,10 @@ function enode_types_to_ordered_stack(enode_types, aid){
  *
  * This whole bit will change a lot with new evidence coming down the
  * pipe.
+ *
+ * ecore is used to detect graph violations.
  */
-function node_stack_object(enode, aid){
+function node_stack_object(enode, aid, ecore){
 
     var hook_list = [];
 
@@ -361,11 +423,11 @@ function node_stack_object(enode, aid){
 
     // rdfs:label first, if extant.
     if( rdfs_label ){
-	var trstr = '<tr class="bbop-mme-stack-tr">' +
+	var trstr1 = '<tr class="bbop-mme-stack-tr">' +
 		'<td class="bbop-mme-stack-td bbop-mme-stack-td-rdfslabel"><em style="color: grey;">' +
 		rdfs_label +
 		'</em></td></tr>';
-	enode_stack_table.add_to(trstr);
+	enode_stack_table.add_to(trstr1);
     }
     // Inferred types next.
     var inf_types = enode.get_unique_inferred_types();
@@ -503,7 +565,7 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
 			       'class': 'demo-window',
 			       'style': style_str});
 
-    var enode_stack_table = new node_stack_object(enode, aid);
+    var enode_stack_table = new node_stack_object(enode, aid, ecore);
     w.add_to(enode_stack_table.to_string());
 
     // Box to drag new connections from.
@@ -522,6 +584,15 @@ function add_enode(annotation_config, ecore, manager, enode, aid, graph_div, lef
 				     'open-annotation-dialog btn btn-default',
 				     'title': 'Open annotation dialog'});
     w.add_to(openann);
+
+    // Box to open violation dialog, if exist.
+    if( ecore.get_violations_by_id(enode.id()).length > 0 ){
+	var openvio = new bbop.html.tag('button',
+					{'class':
+					 'open-violation-dialog btn btn-default',
+					 'title': 'Open violation dialog'});
+	w.add_to(openvio);
+    }
 
     // Add to display.
     jQuery(graph_div).append(w.to_string());
@@ -549,7 +620,7 @@ function update_enode(ecore, enode, aid){
     var uelt = ecore.get_node_elt_id(enode.id());
     jQuery('#' + uelt).empty();
 
-    var enode_stack_table = new node_stack_object(enode, aid);
+    var enode_stack_table = new node_stack_object(enode, aid, ecore);
     jQuery('#' + uelt).append(enode_stack_table.to_string());
 
     // Box to drag new connections from.
@@ -568,6 +639,15 @@ function update_enode(ecore, enode, aid){
 				     'open-annotation-dialog btn btn-default',
 				     'title': 'Open annotation dialog'});
     jQuery('#' + uelt).append(openann.to_string());
+
+    // Box to open violation dialog, if exist.
+    if( ecore.get_violations_by_id(enode.id()).length > 0 ){
+	var openvio = new bbop.html.tag('button',
+					{'class':
+					 'open-violation-dialog btn btn-default',
+					 'title': 'Open violation dialog'});
+	jQuery('#' + uelt).append(openvio.to_string());
+    }
 }
 
 /**
