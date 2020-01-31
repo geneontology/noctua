@@ -81,8 +81,8 @@ WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
   value:
+    - '../noctua-form/workbenches'
     - 'workbenches'
-    - '../simple-annoton-editor/workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
   comment: The JAR to use for Minerva.
@@ -147,16 +147,6 @@ APP_DEFINITIONS:
         - seed/fromProcess
     - id: minerva_public
       target: http://toaster.lbl.gov:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_public_dev
-      target: http://wok.lbl.gov:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_monarch_dev
-      target: http://poole.monarchinitiative.org:6800
       public:
         - m3Batch
         - seed/fromProcess
