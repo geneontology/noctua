@@ -651,6 +651,24 @@ var Sessioner = function(auth_list, group_list){
 	return ret;
     }
 
+    // Internal function to remove possibly "sensitive" stuff from the
+    // user output.
+    function _hide_sensitive_user_info(info){
+
+	var copied_info = clone(info);
+
+	// Remove...stuff.
+	delete copied_info['authorizations'];
+	delete copied_info['email-md5'];
+	delete copied_info['accounts'];
+	delete copied_info['xref'];
+	delete copied_info['comment'];
+	//delete copied_info['groups'];
+	delete copied_info['previous-groups'];
+
+	return copied_info;
+    }
+
     /*
      * Will not clobber or repeat if a session exists--just return what's there.
      * Cloned object or null.
@@ -913,13 +931,7 @@ var Sessioner = function(auth_list, group_list){
 		var copied_info = self.get_info_by_uri(uinf['uri']);
 
 		// Remove...stuff.
-		delete copied_info['authorizations'];
-		delete copied_info['email-md5'];
-		delete copied_info['accounts'];
-		delete copied_info['xref'];
-		delete copied_info['comment'];
-		delete copied_info['groups'];
-		delete copied_info['previous-groups'];
+		copied_info = _hide_sensitive_user_info(copied_info);
 
 		noctua_users.push(copied_info);
 	    }
@@ -933,6 +945,36 @@ var Sessioner = function(auth_list, group_list){
      */
     self.known_groups = function(uri){
 	return group_list;
+    };
+
+    /*
+     * Cloned objects or empty list.
+     * Return an object for group information in the system.
+     */
+    self.get_group_by_uri = function(uri){
+
+	var ret = {};
+
+	if( group_info[uri] ){
+	    ret = group_info[uri];
+	}
+
+	return clone(ret);
+    };
+
+    /*
+     * Cloned objects or empty list.
+     * Return a session-like object for user information in the system.
+     */
+    self.get_clean_info_by_uri = function(uri){
+
+	var ret = {};
+
+	if( uinf_by_uri[uri] ){
+	    ret = uinf_by_uri[uri];
+	}
+
+	return clone(_hide_sensitive_user_info(ret));
     };
 
 };
@@ -1841,7 +1883,7 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'text/html', out);
     });
 
-    // REST service that returns available information fora user by
+    // REST service that returns available information for a user by
     // their token. This is useful for federate services to
     // cross-check user information for authentication and/or
     // authorization.
@@ -1864,10 +1906,50 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'application/json', fin);
     });
 
+    // REST service that returns available information for a user by
+    // their URI.
+    messaging_app.get('/user_info_by_id/:uri', function(req, res) {
+
+	// Do we have permissions to make the call?
+	var uri = req.params['uri'] || null;
+
+	var ret_obj = {};
+
+	// Get info.
+	if( uri ){
+	    ret_obj = sessioner.get_clean_info_by_uri(uri);
+	}
+
+	//
+	var fin = JSON.stringify(ret_obj);
+	ll('got user info for:' + fin['uri']);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // REST service that returns available information for a group by
+    // their URI.
+    messaging_app.get('/group_info_by_id/:uri', function(req, res) {
+
+	// Do we have permissions to make the call?
+	var uri = req.params['uri'] || null;
+
+	var ret_obj = {};
+
+	// Get info.
+	if( uri ){
+	    ret_obj = sessioner.get_group_by_uri(uri);
+	}
+
+	//
+	var fin = JSON.stringify(ret_obj);
+	ll('got group info for:' + fin['uri']);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
     // Return information about users known by barista authorization.
     // Essentially parroting the safe parts of users.yaml.
     // No token needed: public info.
-    messaging_app.get('/known_users', function(req, res) {
+    messaging_app.get('/users', function(req, res) {
 	var fin = JSON.stringify(sessioner.known_users());
 	console.log(fin);
 	console.log(fin.length);
@@ -1878,7 +1960,7 @@ var BaristaLauncher = function(){
     // Return information about groups known by barista authorization.
     // Essentially parroting the safe parts of groups.yaml.
     // No token needed: public info.
-    messaging_app.get('/known_groups', function(req, res) {
+    messaging_app.get('/groups', function(req, res) {
 	var fin = JSON.stringify(sessioner.known_groups());
 	_standard_response(res, 200, 'application/json', fin);
     });
