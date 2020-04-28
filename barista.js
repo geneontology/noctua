@@ -2712,7 +2712,7 @@ var BaristaLauncher = function(){
     /// simplest way possible.
     ///
 
-    messaging_app.get("/search", function(req, res){
+    messaging_app.get("/search/*", function(req, res){
 
     	// TODO: Request logging hooks could be placed in here.
     	//ll('pre api req: ' + req.url);
@@ -2726,6 +2726,16 @@ var BaristaLauncher = function(){
     	// Not much to see, except forcing the namespace to help the
     	// backend lookup, assuming we are search what should be
     	// local.
+	var ns = barista_default_namespace;
+	var api_loc = app_guard.app_target(ns);
+	ll('api xlate (GET): [' + api_loc + ']' + req.url);
+    	api_proxy.web(req, res, {
+    	    'target': api_loc
+    	});
+    });
+    // Compressed default of the above.
+    messaging_app.get("/search", function(req, res){
+    	monitor_calls = monitor_calls +1;
 	var ns = barista_default_namespace;
 	var api_loc = app_guard.app_target(ns);
 	ll('api xlate (GET): [' + api_loc + ']' + req.url);
