@@ -1,7 +1,5 @@
 ####
-#### This file defines a local development setup where a developer
-#### runs only noctua on localhost--all other services are the public
-#### version.
+#### This file defines the actual production environment.
 ####
 #### See README.md.
 ####
@@ -73,10 +71,10 @@ NOCTUA_STORE:
   type: file
   value: /srv/noctua/blazegraph.jnl
 ONTOLOGY_LIST:
-  comment: The ontologies to use for Minerva.
+  comment: The ontologies to use for Minerva. (WARNING: will need to update with https://github.com/geneontology/pipeline/issues/35.)
   type: list
   value:
-    - http://purl.obolibrary.org/obo/go/extensions/go-lego.owl
+    - http://skyhook.berkeleybop.org/go-lego-reacto.owl
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
@@ -97,6 +95,11 @@ MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
   type: number
   value: 128
+## Ontology journal location.
+MINERVA_ONTOLOGY_JOURNAL:
+  comment: The local location of the full ontology space for Minerva.
+  type: string
+  value: /srv/noctua/blazegraph-go-lego-reacto-neo.jnl
 ## Graph preferences.
 COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.

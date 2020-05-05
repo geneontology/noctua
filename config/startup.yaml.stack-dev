@@ -26,6 +26,10 @@ BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
   value: http://localhost:3400
+BARISTA_DEFAULT_NAMESPACE:
+  comment: Default namespace that barista will attempt for searches against a minerva.
+  type: string
+  value: minerva_local
 BARISTA_LOGIN_SECRETS:
   comment: Directory where Barista should look to try and find YAML files defining the site-defined login secrets for OAuth2 and others.
   type: directory
@@ -68,10 +72,10 @@ NOCTUA_STORE:
   type: file
   value: /tmp/blazegraph.jnl
 ONTOLOGY_LIST:
-  comment: The ontologies to use for Minerva.
+  comment: The ontologies to use for Minerva. (WARNING: will need to update with https://github.com/geneontology/pipeline/issues/35.)
   type: list
   value:
-    - http://purl.obolibrary.org/obo/go/extensions/go-lego.owl
+    - http://skyhook.berkeleybop.org/go-lego-reacto.owl
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
@@ -92,6 +96,11 @@ MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
   type: number
   value: 8
+## Ontology journal location.
+MINERVA_ONTOLOGY_JOURNAL:
+  comment: The local location of the full ontology space for Minerva.
+  type: string
+  value: /tmp/blazegraph-go-lego-reacto-neo.jnl
 ## Graph preferences.
 COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.
@@ -137,21 +146,6 @@ APP_DEFINITIONS:
   value:
     - id: minerva_local
       target: http://localhost:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_public
-      target: http://toaster.lbl.gov:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_public_dev
-      target: http://wok.lbl.gov:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_monarch_dev
-      target: http://poole.monarchinitiative.org:6800
       public:
         - m3Batch
         - seed/fromProcess
