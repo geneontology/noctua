@@ -335,6 +335,7 @@ var minerva_location = config['MINERVA_LOCATION'].value;
 var minerva_port = url.parse(minerva_location).port || 80;
 var minerva_max_mem = parseInt(config['MINERVA_MAX_MEMORY'].value);
 var minerva_reasoner = config['MINERVA_REASONER'].value;
+var minerva_ontology_journal = config['MINERVA_ONTOLOGY_JOURNAL'].value;
 
 // External tools.
 var external_browser_location = null;
@@ -449,6 +450,7 @@ var minerva_opts_base = [
     '-g', ontology_list,
     '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
     '--port', minerva_port,
+    '--ontojournal', minerva_ontology_journal, // ontology journal file
     '-f', noctua_store, // blazegraph journal file
     '--export-folder', noctua_models
 ];
