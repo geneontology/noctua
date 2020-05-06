@@ -922,10 +922,10 @@ var Sessioner = function(auth_list, group_list){
     	var noctua_users = [];
     	us.each(auth_list, function(uinf){
 
-	    if( uinf['uri'] &&
-		uinf['authorizations'] &&
-		uinf['authorizations']['noctua'] &&
-		uinf['authorizations']['noctua'][barista_context] ){
+	    if( uinf['uri'] ){
+		// uinf['authorizations'] &&
+		// uinf['authorizations']['noctua'] &&
+		// uinf['authorizations']['noctua'][barista_context] ){
 
 		// Get a copy of the info.
 		var copied_info = self.get_info_by_uri(uinf['uri']);
