@@ -794,7 +794,7 @@ var NoctuaLauncher = function(){
 	    // Check if there is a token to forward as well.
 	    var barista_token = self.get_token(req);
 	    if( barista_token ){
-		landing_location = landing_location + '?barista_token=' + barista_token;
+		landing_location = _build_token_link(landing_location, barista_token);
 	    }
 
 	    res.location(landing_location);
