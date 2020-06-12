@@ -786,12 +786,22 @@ var NoctuaLauncher = function(){
 	/// Static routes.
 	///
 
+	// Redirect to given workbench from root route.
 	self.app.get('/', function(req, res) {
+	    // TODO: This workbench should be made a parameter.
 	    var landing_location = 'workbench/noctua-landing-page';
+
+	    // Check if there is a token to forward as well.
+	    var barista_token = self.get_token(req);
+	    if( barista_token ){
+		landing_location = landing_location + '?barista_token=' + barista_token;
+	    }
+
 	    res.location(landing_location);
 	    res.redirect(302, landing_location);
 	});
 
+	// Administration page (old landing).
 	self.app.get('/admin', function(req, res) {
 	    // Grab markdown renderable file.
 	    var landing_raw = fs.readFileSync('./OVERVIEW.' + noctua_context + '.md').toString();
