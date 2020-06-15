@@ -80,6 +80,7 @@ WORKBENCHES:
   type: list
   value:
     - '../noctua-form/workbenches'
+    - '../noctua-landing-page/workbenches'
     - 'workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
