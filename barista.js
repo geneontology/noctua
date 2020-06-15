@@ -651,6 +651,24 @@ var Sessioner = function(auth_list, group_list){
 	return ret;
     }
 
+    // Internal function to remove possibly "sensitive" stuff from the
+    // user output.
+    function _hide_sensitive_user_info(info){
+
+	var copied_info = clone(info);
+
+	// Remove...stuff.
+	delete copied_info['authorizations'];
+	delete copied_info['email-md5'];
+	delete copied_info['accounts'];
+	delete copied_info['xref'];
+	delete copied_info['comment'];
+	//delete copied_info['groups'];
+	delete copied_info['previous-groups'];
+
+	return copied_info;
+    }
+
     /*
      * Will not clobber or repeat if a session exists--just return what's there.
      * Cloned object or null.
@@ -892,6 +910,75 @@ var Sessioner = function(auth_list, group_list){
 	var token = uri2token[uri];
 	return self.delete_session_by_token(token);
     };
+
+
+    /*
+     * Return information on noctua users (subset of users.yaml).
+     */
+    self.known_users = function(uri){
+
+	// Pull the desired information from the super authorization
+	// list (users.yaml).
+    	var noctua_users = [];
+    	us.each(auth_list, function(uinf){
+
+	    if( uinf['uri'] &&
+		// Filter out those users without authorization to
+		// edit on this instance.
+		uinf['authorizations'] &&
+		uinf['authorizations']['noctua'] &&
+		uinf['authorizations']['noctua'][barista_context] ){
+
+		// Get a copy of the info.
+		var copied_info = self.get_info_by_uri(uinf['uri']);
+
+		// Remove...stuff.
+		copied_info = _hide_sensitive_user_info(copied_info);
+
+		noctua_users.push(copied_info);
+	    }
+    	});
+
+    	return noctua_users;
+    };
+
+    /*
+     * Return information on input groups.
+     */
+    self.known_groups = function(uri){
+	return group_list;
+    };
+
+    /*
+     * Cloned objects or empty list.
+     * Return an object for group information in the system.
+     */
+    self.get_group_by_uri = function(uri){
+
+	var ret = {};
+
+	if( group_info[uri] ){
+	    ret = group_info[uri];
+	}
+
+	return clone(ret);
+    };
+
+    /*
+     * Cloned objects or empty list.
+     * Return a session-like object for user information in the system.
+     */
+    self.get_clean_info_by_uri = function(uri){
+
+	var ret = {};
+
+	if( uinf_by_uri[uri] ){
+	    ret = uinf_by_uri[uri];
+	}
+
+	return clone(_hide_sensitive_user_info(ret));
+    };
+
 };
 
 ///
@@ -1306,6 +1393,26 @@ var BaristaLauncher = function(){
 	    cb();
 	});
 
+	var get_users_cmd = vantage.command('known_users');
+	get_users_cmd.description("List known Noctua users in the system.");
+	get_users_cmd.action(function(args, cb){
+
+	    var all_noctua_users = sessioner.known_users();
+	    rlog(this, all_noctua_users);
+
+	    cb();
+	});
+
+	var get_groups_cmd = vantage.command('known_groups');
+	get_groups_cmd.description("List known groups in the system.");
+	get_groups_cmd.action(function(args, cb){
+
+	    var all_groups = sessioner.known_groups();
+	    rlog(this, all_groups);
+
+	    cb();
+	});
+
 	var get_cmd = vantage.command('list');
 	get_cmd.description("List all current sessions.");
 	get_cmd.action(function(args, cb){
@@ -1398,7 +1505,9 @@ var BaristaLauncher = function(){
 
     function _standard_response(res, code, type, body){
 	res.setHeader('Content-Type', type);
-	res.setHeader('Content-Length', body.length);
+	// NOTE: we got bitten
+	//res.setHeader('Content-Length', body.length);
+	res.setHeader('Content-Length', Buffer.byteLength(body, 'utf-8'));
 	res.end(body);
 	return res;
     }
@@ -1776,7 +1885,10 @@ var BaristaLauncher = function(){
 	_standard_response(res, 200, 'text/html', out);
     });
 
-    // REST service that
+    // REST service that returns available information for a user by
+    // their token. This is useful for federate services to
+    // cross-check user information for authentication and/or
+    // authorization.
     messaging_app.get('/user_info_by_token/:token', function(req, res) {
 
 	// Do we have permissions to make the call?
@@ -1793,6 +1905,65 @@ var BaristaLauncher = function(){
 	//
 	var fin = JSON.stringify(ret_obj);
 	ll('got user info for:' + fin['uri']);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // REST service that returns available information for a user by
+    // their URI.
+    messaging_app.get('/user_info_by_id/:uri', function(req, res) {
+
+	// Do we have permissions to make the call?
+	var uri = req.params['uri'] || null;
+
+	var ret_obj = {};
+
+	// Get info.
+	if( uri ){
+	    ret_obj = sessioner.get_clean_info_by_uri(uri);
+	}
+
+	//
+	var fin = JSON.stringify(ret_obj);
+	ll('got user info for:' + fin['uri']);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // REST service that returns available information for a group by
+    // their URI.
+    messaging_app.get('/group_info_by_id/:uri', function(req, res) {
+
+	// Do we have permissions to make the call?
+	var uri = req.params['uri'] || null;
+
+	var ret_obj = {};
+
+	// Get info.
+	if( uri ){
+	    ret_obj = sessioner.get_group_by_uri(uri);
+	}
+
+	//
+	var fin = JSON.stringify(ret_obj);
+	ll('got group info for:' + fin['uri']);
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // Return information about users known by barista authorization.
+    // Essentially parroting the safe parts of users.yaml.
+    // No token needed: public info.
+    messaging_app.get('/users', function(req, res) {
+	var fin = JSON.stringify(sessioner.known_users());
+	console.log(fin);
+	console.log(fin.length);
+	console.log(Buffer.byteLength(fin, 'utf-8'));
+	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // Return information about groups known by barista authorization.
+    // Essentially parroting the safe parts of groups.yaml.
+    // No token needed: public info.
+    messaging_app.get('/groups', function(req, res) {
+	var fin = JSON.stringify(sessioner.known_groups());
 	_standard_response(res, 200, 'application/json', fin);
     });
 
@@ -2543,7 +2714,7 @@ var BaristaLauncher = function(){
     /// simplest way possible.
     ///
 
-    messaging_app.get("/search", function(req, res){
+    messaging_app.get("/search/*", function(req, res){
 
     	// TODO: Request logging hooks could be placed in here.
     	//ll('pre api req: ' + req.url);
@@ -2557,6 +2728,16 @@ var BaristaLauncher = function(){
     	// Not much to see, except forcing the namespace to help the
     	// backend lookup, assuming we are search what should be
     	// local.
+	var ns = barista_default_namespace;
+	var api_loc = app_guard.app_target(ns);
+	ll('api xlate (GET): [' + api_loc + ']' + req.url);
+    	api_proxy.web(req, res, {
+    	    'target': api_loc
+    	});
+    });
+    // Compressed default of the above.
+    messaging_app.get("/search", function(req, res){
+    	monitor_calls = monitor_calls +1;
 	var ns = barista_default_namespace;
 	var api_loc = app_guard.app_target(ns);
 	ll('api xlate (GET): [' + api_loc + ']' + req.url);

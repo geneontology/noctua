@@ -18,7 +18,7 @@ public GOlr and has no expectation of being able to use epione (in
 fact, with a setup like this, one should avoid epione as you may
 accidentally clobber production data).
 
-###	startup.yaml.noctua-dev
+###	startup.yaml.environment-development
 
 This file defines a default local development setup where a developer
 runs only noctua on localhost--all other services are the public
@@ -33,7 +33,7 @@ tracker issues.
 Naturally, one should be **very** careful as it is possible to destroy
 public data with this setup.
 
-### startup.yaml.production
+### startup.yaml.environment-production
 
 This is the file that is used by the current "production" instance of
 the services. It can be used as a guide for setting up your own

@@ -168,7 +168,7 @@ var NoctuaLauncher = function(){
 
 	// Look at all of the listed directories.
 	var maybe_dir_files = fs.readdirSync(dir);
-	
+
 	each(maybe_dir_files, function(subdir){
 	    //console.log('subdir', subdir);
 
@@ -186,7 +186,7 @@ var NoctuaLauncher = function(){
 		var wbpath = dir + '/' + subdir;
 		var wbid = subdir; // also the ID of our workbench
 		//console.log('Checking ' + wbid + ' (' + wbpath + ')');
-		
+
 		// Check that the file looks right.
 		var wb = null;
 		try {
@@ -211,12 +211,12 @@ var NoctuaLauncher = function(){
 
 		    console.log('Rejected workbench: ' + wbid + '; ' +
 				'workbench ID not alphanum.');
-		    
+
 		}else if( workbenches_all_ids[wbid] ){
 
 		    console.log('Rejected workbench: ' + wbid + '; ' +
 				'workbench ID not unique.');
-		    
+
 		}else{
 
 		    /// Get ready a second battery of more invasive
@@ -244,7 +244,7 @@ var NoctuaLauncher = function(){
 
 			console.log('Rejected workbench: ' + wbid + '; ' +
 				    'no public/inject.tmpl');
-		    
+
 		    }else{
 
 			/// It looks like we are probably going to be
@@ -256,7 +256,7 @@ var NoctuaLauncher = function(){
 			// Add things to the permenent record.
 			wb['template-injectable'] = wbpath_try_tmpl;
 			wb['public-directory'] = wbpath_try_public;
-			
+
 			// Load workbench for later.
 			if( wb['type'] === 'universal' ){
 			    workbenches_universal.push(wb);
@@ -312,13 +312,13 @@ var NoctuaLauncher = function(){
 	if( ! stp_stats.isDirectory() ){
 	    console.log('No SPARQL templates for this context: '+noctua_context);
 	}else{
-	    
+
 	    var sparql_template_files = fs.readdirSync(sparql_templates_path);
 	    each(sparql_template_files, function(sparql_template_file_base){
 
 		var sparql_template_file =
 			sparql_templates_path + sparql_template_file_base;
-		
+
 		// Try and read the individual files.
 		var stf_stats = fs.statSync(sparql_template_file);
 		if( ! stf_stats.isFile() ){
@@ -336,13 +336,13 @@ var NoctuaLauncher = function(){
 			//console.log('stf', stf);
 
 			var read_p = false;
-			
+
 			// Store an named/addressable SPARQL template.
 			if( stf['handle'] ){
 			    sparql_templates_named[stf['handle']] = stf;
 			    read_p = true;
 			}
-			
+
 			// Scan the variable for Noctua location signals.
 			if( ! stf['variables'] || us.isEmpty(stf['variables'] )){
 			    sparql_templates_universal.push(stf);
@@ -380,7 +380,7 @@ var NoctuaLauncher = function(){
 					    sparql_template_file);
 			    }
 			}
-			
+
 			// Increment how/if the template was read.
 			if( read_p ){
 			    read_templates_count++;
@@ -413,54 +413,54 @@ var NoctuaLauncher = function(){
     self.IS_ENV_OPENSHIFT = false;
     self.IS_ENV_HEROKU = false;
     self.IS_ENV_LOCAL = false;
-    
+
     if( process.env.OPENSHIFT_APP_DNS ){
 	self.IS_ENV_OPENSHIFT = true;
-	
+
 	// Try and setup hostname and port as best we can.
         self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
         self.port = process.env.OPENSHIFT_NODEJS_PORT;
 	self.hostport = 'http://' + process.env.OPENSHIFT_APP_DNS;
-	
+
 	// Also, we need to use the public version or minerva or badness.
 	//self.barista_location = barloc_public;
 	console.log('Changing Barista location  to: ' +
 		    self.barista_location + ' for openshift');
 	console.log('Changing Minerva definition to: ' +
 		    self.minerva_definition_name + ' for openshift');
-	
+
         console.log('Running as: OPENSHIFT_NODEJS');
     }else if( process.env.PORT ){
 	    self.IS_ENV_HEROKU = true;
-	
+
 	// Try and setup port as best we can.
         self.port = process.env.PORT || 8910; // why this default?
 	self.hostport = '';
-	
+
 	// Also, we need to use the public version or minerva or badness.
 	//self.barista_location = barloc_public;
 	console.log('Changing Barista location  to: ' +
 		    self.barista_location + ' for heroku');
 	console.log('Changing Minerva definition to: ' +
 		    self.minerva_definition_name + ' for heroku');
-	
+
         console.log('Running as: HEROKU_NODEJS');
     }else{
 	self.IS_ENV_LOCAL = true;
-	
+
 	// If Noctua host is env defined, use that, or sane default.
 	var u = url.parse(noctua_location);
         self.ipaddress =  u.hostname || '127.0.0.1';
         self.port = u.port;
 	self.hostport = 'http://'+ self.ipaddress +':'+ self.port;
-	
+
         console.log('Running as: LOCAL_NODEJS');
     }
     // This allows the links available to be optionally
     // different than the literal operating address of noctua.
     self.frontend = noctua_frontend || self.hostport;
     console.log('Detected frontend: ' + self.frontend);
-    
+
     // Attempt to intelligently add a token to an input URL.
     // BUG: This code is repeated in bbop_mme_widgets.build_token_link()
     // and barista.js.
@@ -555,7 +555,7 @@ var NoctuaLauncher = function(){
 		'&return=' + _build_token_link(self.frontend + app_path,
 					       barista_token);
 	}
-	    
+
 	var barista_users =
 		_build_token_link(self.barista_location +'/user_info',
 				  barista_token);
@@ -669,7 +669,7 @@ var NoctuaLauncher = function(){
 	each(additional_args, function(val, key){
 	    tmpl_args[key] = val;
 	});
-	    
+
 	return tmpl_args;
     };
 
@@ -786,7 +786,23 @@ var NoctuaLauncher = function(){
 	/// Static routes.
 	///
 
+	// Redirect to given workbench from root route.
 	self.app.get('/', function(req, res) {
+	    // TODO: This workbench should be made a parameter.
+	    var landing_location = 'workbench/noctua-landing-page';
+
+	    // Check if there is a token to forward as well.
+	    var barista_token = self.get_token(req);
+	    if( barista_token ){
+		landing_location = _build_token_link(landing_location, barista_token);
+	    }
+
+	    res.location(landing_location);
+	    res.redirect(302, landing_location);
+	});
+
+	// Administration page (old landing).
+	self.app.get('/admin', function(req, res) {
 	    // Grab markdown renderable file.
 	    var landing_raw = fs.readFileSync('./OVERVIEW.' + noctua_context + '.md').toString();
 	    var landing_md = md.markdown.toHTML(landing_raw);
@@ -794,7 +810,7 @@ var NoctuaLauncher = function(){
 	    var about_md = md.markdown.toHTML(about_raw);
 
 	    var tmpl_args = self.standard_variable_load(
-		'/', 'Landing', req,
+		'/admin', 'Administration', req,
 		null, null,
 		null, null,
 		null, null,
@@ -832,7 +848,7 @@ var NoctuaLauncher = function(){
 
 		// Optionally, remove .html (for now).
 		fname = path.basename(fname, '.html');
-		
+
 		// For now, map this to a markdown doc in the context
 		// directory.
 		var mapped_fname = './context/' + noctua_context +
@@ -844,7 +860,7 @@ var NoctuaLauncher = function(){
 		    if( ! fstats.isFile() ){
 			// Catch error here if not found.
 			final_content = '<h5>' + fname + '" not file</h5>';
-		    }else{			
+		    }else{
 			// Grab markdown renderable file.
 			var fname_raw = fs.readFileSync(mapped_fname).toString();
 			final_content = md.markdown.toHTML(fname_raw);
@@ -874,7 +890,7 @@ var NoctuaLauncher = function(){
 		    ],
 		    'content_insert': final_content
 		});
-	    
+
 	    // Render.
 	    var o = pup_tent.render('noctua_markdoc.tmpl',
 				    tmpl_args,
@@ -882,7 +898,7 @@ var NoctuaLauncher = function(){
 	    self.standard_response(res, 200, 'text/html', o);
 	});
 
-	// 
+	//
 	self.app.get('/basic/:model_type/:query', function(req, res) {
 
 	    // Try and see if we have an API token.
@@ -1009,7 +1025,7 @@ var NoctuaLauncher = function(){
 		'</div>',
 		'</html>',
 	    ];
-	    
+
 	    self.standard_response(res, 200, 'text/html', fin.join(''));
 	});
 
@@ -1092,13 +1108,13 @@ var NoctuaLauncher = function(){
 
 	    // Scrape out the content of the public directory
 	    // for injection into template.
-	    var injectable_js = wb['javascript'] || [];	
-	    var injectable_css = wb['css'] || [];	
+	    var injectable_js = wb['javascript'] || [];
+	    var injectable_css = wb['css'] || [];
 
 	    self.app.get('/workbench/' + wbid, function(req, res){
-		    
+
 		monitor_internal_kicks = monitor_internal_kicks + 1;
-		
+
 		// All possible workbench types. Jimmy out the arguments.
 		var model_id = null;
 		var individual_id = null;
@@ -1149,7 +1165,7 @@ var NoctuaLauncher = function(){
 			'pup_tent_js_libraries': injectable_js,
 			'workbench_help_link': help_link
 		    });
-		
+
 		// Render.
 		//console.log('tmpl_inj', tmpl_inj);
 		var ret = pup_tent.render(tmpl_inj, tmpl_args,
@@ -1157,7 +1173,7 @@ var NoctuaLauncher = function(){
 		self.standard_response(res, 200, 'text/html', ret);
 	    });
 	});
-	
+
 	// DEBUG: A JSON model debugging tool for @hdietze
 	/// This path will eventually be destroyed.
 	self.app.post('/seed/json', function(req, res) {
@@ -1181,7 +1197,7 @@ var NoctuaLauncher = function(){
 	var tll = function(str){
 	    console.log('tractorbeam ['+ (new Date()).toJSON() +']: ', str);
 	};
-	
+
 	// A function to send a fail response to a client without
 	// bothering barista/minerva with requests we know ain't gunna
 	// work.
@@ -1189,7 +1205,7 @@ var NoctuaLauncher = function(){
 	    // Headers.
 	    res.status(404);
 	    res.setHeader('Content-Type', 'application/json');
-	    
+
 	    // Fake bbop-response-barista response as above.
 	    var fail_resp = {
 		"message-type": "error",
@@ -1248,14 +1264,14 @@ var NoctuaLauncher = function(){
 		if( x_return_url && us.isString(x_return_url) ){
 		    json_response_p = false;
 		}
-	    
+
 		// We assume Textpresso, but others could be using
-		// this too. 
+		// this too.
 		var external_client_id = null;
 		if( decoded_body['x-client-id'] ){
 		    external_client_id = decoded_body['x-client-id'];
 		}
-		
+
 	        tll('looks like we can make minerva attempt');
 	        var cap_token = decoded_body['token'];
 		tll('with token: ' + cap_token);
@@ -1278,7 +1294,7 @@ var NoctuaLauncher = function(){
 		    //  "x-model-id": "gomodel:584b49fa00000194",
 		    //  "token": "1234567890"
 		    //}
-		    
+
 		    // We require a model.
 		    var pa_model_id = decoded_body['x-model-id'];
 		    rs = new minerva_requests.request_set(cap_token, pa_model_id);
@@ -1288,7 +1304,7 @@ var NoctuaLauncher = function(){
 		    var pa_fact_source_id = decoded_body['x-fact-source-id'];
 		    var pa_fact_target_id = decoded_body['x-fact-target-id'];
 		    var pa_fact_relation_id = decoded_body['x-fact-relation-id'];
-		    
+
 		    // We can throw this out as it is Barista's problem,
 		    // not ours.
 		    var pa_user_id = null;
@@ -1298,7 +1314,7 @@ var NoctuaLauncher = function(){
 
 		    // This is known/hoped to be a populated array.
 		    var pa_requests = decoded_body['requests'];
-		    
+
 		    // From here, loop through and collect all of the
 		    // requests, depending on who we think the client is.
 		    var comments = [];
@@ -1307,7 +1323,7 @@ var NoctuaLauncher = function(){
 		    });
 
 		    if( ! pa_fact_source_id || ! pa_fact_target_id || ! pa_fact_relation_id || ! pa_model_id || ! us.isArray(comments) || (comments.length === 0) || ! cap_token ){
-			
+
 			pre_fail(res, 'insufficient arg data to continue',
 				 'one of the necessary fields was not provided');
 		    }else{
@@ -1319,9 +1335,9 @@ var NoctuaLauncher = function(){
 						   pa_fact_target_id,
 						   pa_fact_relation_id]);
 		    }
-		
+
 		}else if( external_client_id === 'tpc' ){
-		    
+
 		    // We first need to extract these:
 		    // https://github.com/geneontology/noctua/issues/147
 		    // https://github.com/geneontology/noctua/issues/283
@@ -1370,75 +1386,75 @@ var NoctuaLauncher = function(){
 		    // This is known to be a populated array, but the
 		    // contents will depend on who the calling client is.
 		    var incoming_requests = decoded_body['requests'];
-		    
+
 		    // From here, loop through and collect all of the
 		    // requests, depending on who we think the client is.
 		    each(incoming_requests, function(incoming_request){
-			
+
 			// GP/entity.
 			var gpid = null;
 			if( incoming_request['database-id'] ){
 			    gpid = incoming_request['database-id'];
 			}
-			
+
 			// Evidence.
 			var evid = null;
 			if( incoming_request['evidence-id'] ){
 			    evid = incoming_request['evidence-id'];
 			}
-			
+
 			// Class/term.
 			var clsid = null;
 			if( incoming_request['class-id'] ){
 			    clsid = incoming_request['class-id'];
 			}
-			
+
 			// Class/term.
 			var refid = null;
 			if( incoming_request['reference-id'] ){
 			    refid = incoming_request['reference-id'];
 			}
-			
+
 			// External ID.
 			var txpid = null;
 			if( incoming_request['external-id'] ){
 			    txpid = incoming_request['external-id'];
 			}
-			
+
 			// Comments, list of strings.
 			var comments = [];
 			if( incoming_request['comments'] ){
 			    var cmts = incoming_request['comments'];
-			    
+
 			    if( us.isArray(cmts) ){
 				comments = cmts;
 			    }else if( us.isString(cmts) ){
 				comments.push(cmts);
 			    }
 			}
-			
+
 			// TODO/BUG: For now, toss the textspresso id into
 			// comments for experimentation.
 			if( txpid ){
 			    comments.push(txpid);
 			}
-			
+
 			// Double check we're clear, then go.
 			if( ! refid || ! clsid || ! evid || ! gpid ){
 			    pre_fail(res, 'insufficient arg data to continue',
 				     'n/a');
 			}else{
-			    
+
 			    // Assemble a minerva-request to go along with
 			    // rich annoton.
 			    var ind1 = rs.add_individual(clsid);
 			    var ind2 = rs.add_individual(gpid);
 			    var f1 = rs.add_fact([ind1, ind2, 'RO:0002333']);
-			    //rs.add_svf_expression(gpid, 'RO:0002333');	
+			    //rs.add_svf_expression(gpid, 'RO:0002333');
 			    var ev1 =
 				    rs.add_evidence(evid, [refid], [],
 						    [ind1, ind2, 'RO:0002333']);
-			    
+
 			    // BUG/TODO: temporarily store comments here.
 			    rs.add_annotation_to_fact('comment', comments,
 						      null, f1);
@@ -1453,7 +1469,7 @@ var NoctuaLauncher = function(){
 		    pre_fail(res, "does not yet support min-req", "almost");
 
 		}
-		
+
 		// Okay, we've got probably good input as we haven't
 		// bailed out yet. Grab model for export with fresh
 		// manager. Switch fundamentally on whether this is a
@@ -1468,7 +1484,7 @@ var NoctuaLauncher = function(){
 						    cap_token, cap_engine,
 						    'async');
 			//null, cap_engine, 'async');
-			
+
 			// First, error callbacks.
 			cap_manager.register('error', function(resp, man){
 			    pre_fail(res, 'could not resolve model: ' +
@@ -1478,7 +1494,7 @@ var NoctuaLauncher = function(){
 			    pre_fail(res, 'comms issues for this model: ' +
 				     JSON.stringify(resp.raw()), 'n/a');
 			});
-		    
+
 			// Possible success callback--return response
 			// straight?
 			cap_manager.register('merge', function(resp, man){
@@ -1489,14 +1505,14 @@ var NoctuaLauncher = function(){
 			    res.setHeader('Content-Type', 'application/json');
 			    res.send(JSON.stringify(resp.raw()));
 			});
-			
+
 			// Trigger tractorbeam manager.
 			tll('request_with: ' + JSON.stringify(rs.structure()));
 			cap_manager.request_with(rs);
 		    })();
-		    
+
 		}else{
-		    
+
 		    // TODO:
 		    // Forward on success, display error page on
 		    // failure.
@@ -1508,7 +1524,7 @@ var NoctuaLauncher = function(){
 						    cap_token, cap_engine,
 						    'async');
 			//null, cap_engine, 'async');
-			
+
 			// First, error callbacks.
 			cap_manager.register('error', function(resp, man){
 			    var etype = encodeURIComponent(
@@ -1524,7 +1540,7 @@ var NoctuaLauncher = function(){
 				JSON.stringify(resp.raw()));
 			    res.redirect('/error');
 			});
-			
+
 			// Possible success callback--return response
 			// straight?
 			cap_manager.register('merge', function(resp, man){
@@ -1533,7 +1549,7 @@ var NoctuaLauncher = function(){
 			cap_manager.register('rebuild', function(resp, man){
 			    res.redirect(x_return_url);
 			});
-			
+
 			// Trigger tractorbeam manager.
 			tll('request_with: ' + JSON.stringify(rs.structure()));
 			cap_manager.request_with(rs);
@@ -1542,7 +1558,7 @@ var NoctuaLauncher = function(){
 	    }
 	    //});
 	});
-	
+
 	// Test export handler.
 	self.app.post('/action/display', function(req, res) {
 
@@ -1552,18 +1568,18 @@ var NoctuaLauncher = function(){
 		    req.body['thing'] ||
 		    '???';
 	    //console.log('display thing: ' + mstr);
-	    
+
 	    // Assemble return doc.
 	    //res.setHeader('Content-Type', 'text/owl');
 	    res.setHeader('Content-Type', 'text/plain');
 	    res.send(unescape(mstr));
 	});
-	
+
 	// Downloads for the impatient.
 	self.app.get('/download/:model/:format?', function(req, res){
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
-	    
+
 	    // Listing of known download formats.
 	    var known_formats = ['owl', 'gaf', 'gpad'];
 
@@ -1587,7 +1603,7 @@ var NoctuaLauncher = function(){
 		res.setHeader('Content-Type', 'text/plain');
 		res.send('no known format identifier: ' + format);
 	    }else{
-		
+
 		// Okay, we've got probably good input. Grab model for
 		// export with fresh manager.
 		var ex_engine = new node_engine(barista_response);
@@ -1595,7 +1611,7 @@ var NoctuaLauncher = function(){
 			new minerva_manager(self.barista_location,
 					    self.minerva_definition_name,
 					    null, ex_engine, 'async');
-		
+
 		// First, error callbacks.
 		ex_manager.register('error', function(resp, man){
 		    res.status(400);
@@ -1607,7 +1623,7 @@ var NoctuaLauncher = function(){
 		    res.setHeader('Content-Type', 'text/plain');
 		    res.send('comms issues for this model');
 		});
-		
+
 		// Possible success callback.
 		ex_manager.register('meta', function(resp, man){
 	    	    // Export error.
@@ -1618,10 +1634,10 @@ var NoctuaLauncher = function(){
 		    }else{
 			var exp = resp.export_model();
 			res.setHeader('Content-Type', 'text/plain');
-			res.send(exp);		    
+			res.send(exp);
 		    }
 		});
-		
+
 		// Trigger export, owl is default.
 		if( format === 'owl' ){
 	    	    ex_manager.export_model(model_id);
@@ -1690,7 +1706,7 @@ init_manager.register('meta', function(resp, man){
     }else{
 	console.error('failure: no relations on initialization response');
     }
-    
+
 });
 init_manager.register('manager_error', function(resp, man){
     console.log('okay?: %j', resp.okay());

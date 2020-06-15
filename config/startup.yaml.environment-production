@@ -1,7 +1,5 @@
 ####
-#### This file defines a local development setup where a developer
-#### runs only noctua and barista on localhost--all other services are
-#### the public version.
+#### This file defines the actual production environment.
 ####
 #### See README.md.
 ####
@@ -14,23 +12,27 @@ GOLR_LOOKUP_URL:
 GOLR_NEO_LOOKUP_URL:
   comment: The public location of the NEO GOlr server to ask information from for autocomplete, etc.
   type: url
-  value: http://noctua-obo.berkeleybop.org:8080/
+  value: http://noctua-golr.berkeleybop.org/
 GOLR_LOCATION:
   comment: The actual unprotected location of the GOlr server to load to (if different from GOLR_LOOKUP_URL).
   type: url
-  value: http://noctua-obo.berkeleybop.org:8080/
+  value: http://stove.lbl.gov:8080/solr
 BARISTA_LOOKUP_URL:
   comment: Define where Noctua looks for Barista.
   type: url
-  value: http://localhost:3400
+  value: http://barista.berkeleybop.org
 BARISTA_LOCATION:
   comment: Location that Barista should think it is. (may be different than that in BARISTA_LOOKUP_URL)
   type: number
-  value: http://localhost:3400
+  value: http://toaster.lbl.gov:3400
+BARISTA_DEFAULT_NAMESPACE:
+  comment: Default namespace that barista will attempt for searches against a minerva.
+  type: string
+  value: minerva_public
 BARISTA_LOGIN_SECRETS:
   comment: Directory where Barista should look to try and find YAML files defining the site-defined login secrets for OAuth2 and others.
   type: directory
-  value: ~/local/src/git/go-internal/barista-dev/
+  value: ~/local/src/git/go-internal/barista/
 NOCTUA_CONTEXT:
   comment: The context/audience for which Noctua will be run.
   type: string
@@ -38,15 +40,15 @@ NOCTUA_CONTEXT:
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
-  value: http://localhost:8910
+  value: http://noctua.geneontology.org
 NOCTUA_LOCATION:
   comment: Location that Noctua should think it is internally.
   type: url
-  value: http://localhost:8910
+  value: http://131.243.192.110:8910
 MINERVA_LOCATION:
   comment: The location of the minerva to communicate with.
   type: url
-  value: http://noctua-obo.berkeleybop.org:6800
+  value: http://toaster.lbl.gov:6800
 EXTERNAL_BROWSER_LOCATION:
   comment: The location of a top-level external browser to use to look at the models.
   type: url
@@ -67,16 +69,17 @@ NOCTUA_MODELS:
 NOCTUA_STORE:
   comment: The location/file of the graph store to use or initially write to.
   type: file
-  value: /tmp/blazegraph.jnl
+  value: /srv/noctua/blazegraph.jnl
 ONTOLOGY_LIST:
-  comment: The ontologies to use for Minerva.
+  comment: The ontologies to use for Minerva. (WARNING: will need to update with https://github.com/geneontology/pipeline/issues/35.)
   type: list
   value:
-    - http://purl.obolibrary.org/obo/go/extensions/go-lego.owl
+    - http://skyhook.berkeleybop.org/go-lego-reacto.owl
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
   value:
+    - '../noctua-form/workbenches'
     - 'workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
@@ -91,7 +94,12 @@ MINERVA_REASONER:
 MINERVA_MAX_MEMORY:
   comment: The maximum memory that can be taken by Minerva.
   type: number
-  value: 64
+  value: 128
+## Ontology journal location.
+MINERVA_ONTOLOGY_JOURNAL:
+  comment: The local location of the full ontology space for Minerva.
+  type: string
+  value: /srv/noctua/blazegraph-go-lego-reacto-neo.jnl
 ## Graph preferences.
 COLLAPSIBLE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse.
@@ -105,7 +113,6 @@ COLLAPSIBLE_RELATIONS:
     - BFO:0000066
     ## has_part
     - BFO:0000051
-    - RO:0000053
 COLLAPSIBLE_REVERSE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse, with the edges flowing the other direction.
   type: list
@@ -114,12 +121,24 @@ COLLAPSIBLE_REVERSE_RELATIONS:
 DEFAULT_APP_DEFINITION:
   comment: The application profile to use at startup.
   type: string
-  value: minerva_obo_public
+  value: minerva_public
 ## Barista variables.
 BARISTA_REPL_PORT:
   comment: The port to start the Barista REPL on. If not defined, will not start listener.
   type: number
   value: 9090
+GITHUB_API:
+  comment: The location of the GitHub API that we want to use.
+  type: string
+  value: api.github.com
+GITHUB_ORG:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: geneontology
+GITHUB_REPO:
+  comment: The name of the GitHub org/user that we will use.
+  type: string
+  value: noctua-models
 APP_DEFINITIONS:
   comment: A list of resources that Barista will allow public access to.
   type: list
@@ -131,21 +150,6 @@ APP_DEFINITIONS:
         - seed/fromProcess
     - id: minerva_public
       target: http://toaster.lbl.gov:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_obo_public
-      target: http://noctua-obo.berkeleybop.org:6800
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_public_dev
-      target: http://toaster.lbl.gov:6799
-      public:
-        - m3Batch
-        - seed/fromProcess
-    - id: minerva_monarch_dev
-      target: http://poole.monarchinitiative.org:6800
       public:
         - m3Batch
         - seed/fromProcess

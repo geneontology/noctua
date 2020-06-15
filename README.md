@@ -31,8 +31,11 @@ git clone https://github.com/geneontology/go-site.git
 git clone https://github.com/geneontology/noctua-models.git
 git clone https://github.com/geneontology/minerva.git
 
-# Build minerva CLI
+# Build Minerva CLI
 minerva/build-cli.sh
+
+# Get file(s) for Minerva (check default locations in startup.yaml)
+wget -L -o /tmp/blazegraph-go-lego-reacto-neo.jnl.gz http://skyhook.berkeleybop.org/blazegraph-go-lego-reacto-neo.jnl.gz
 
 # Create default authentication users
 mkdir barista
@@ -63,7 +66,7 @@ gulp build
 # Optional if running first time.
 gulp batch-minerva-destroy-journal
 gulp batch-minerva-create-journal
- 
+
 # Then launch the stack:
 gulp run-barista &> barista.log &
 gulp run-minerva &> minerva.log &
@@ -93,7 +96,7 @@ gulp batch-minerva-create-journal
 ```
 
 ### Users & groups
-Barista, the authentication layer needs two files to run: [users.yaml](https://github.com/geneontology/go-site/blob/master/metadata/users.yaml) and [groups.yaml](https://github.com/geneontology/go-site/blob/master/metadata/groups.yaml). 
+Barista, the authentication layer needs two files to run: [users.yaml](https://github.com/geneontology/go-site/blob/master/metadata/users.yaml) and [groups.yaml](https://github.com/geneontology/go-site/blob/master/metadata/groups.yaml).
 These files defined who is authorized to log in to the Noctua Stack to perform biological curations.
 * To know more about curation with the Noctua Stack, [visit our wiki](http://wiki.geneontology.org/index.php/Noctua).
 * To request an account to curate with the Noctua Stack, [contact us](http://help.geneontology.org)
@@ -130,4 +133,3 @@ not mentioned here or in the tracker, please contact [Seth Carbon](https://githu
   model
 - The endpoint scheme is reversed between creation and instantiation
 - TODO, etc.
-
