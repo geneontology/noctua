@@ -195,6 +195,9 @@ var PathwayViewInit = function(user_token){
 	    "RO:0002220": true, // adjacent to
 	    "BFO:0000066": true // occurs in
 	};
+	if (show_hi_p === 'no') {
+		strippable_rels["RO:0002233"] = true;
+	}
 	us.each(g.all_edges(), function(e){
 	    if( nestable_rels[e.predicate_id()] ){
 		if( ! parent_trap[e.subject_id()] ){
