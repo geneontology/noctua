@@ -65,6 +65,7 @@ vim startup.yaml
 gulp build
 # Optional if running first time.
 gulp batch-minerva-destroy-journal
+gulp batch-minerva-destroy-ontology-journal
 gulp batch-minerva-create-journal
 
 # Then launch the stack:
@@ -92,6 +93,7 @@ gulp run-noctua &> noctua.log &
 And Gulp can be used to both destroy and create [blazegraph](https://www.blazegraph.com) journals (triplestore):
 ```
 gulp batch-minerva-destroy-journal
+gulp batch-minerva-destroy-ontology-journal
 gulp batch-minerva-create-journal
 ```
 

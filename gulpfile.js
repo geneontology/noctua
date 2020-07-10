@@ -506,6 +506,11 @@ gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
     'rm', '-f', noctua_store
 ])));
 
+// Minerva batch: destroy the current ontology journal.
+gulp.task('batch-minerva-destroy-ontology-journal', shell.task(_run_cmd([
+  'rm', '-f',  minerva_ontology_journal
+])));
+
 // Minerva batch: get used minerva version.
 gulp.task('batch-minerva-version', shell.task(_run_cmd([
     'java',
