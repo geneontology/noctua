@@ -739,6 +739,7 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 		    });
 		    var vvm = new widgetry.contained_modal(
 			null, 'Violations',
+                        '<p>This feature is <strong>currently under development</strong>, with more user friendly error reports coming. If you have questions about the error messages you\'re seeing, please create a <a href="https://github.com/geneontology/noctua"><u>ticket</u></a>.</p>' +
 			violation_renderings.join(' <hr /> '));
 		    vvm.show();
 		}
