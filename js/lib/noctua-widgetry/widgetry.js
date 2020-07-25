@@ -104,11 +104,18 @@ function repaint_info(ecore, aid, info_div){
 	// Assemble a human-readable label.
 	var nid = v.node_id();
 	var node = ecore.get_node(nid);
-	var node_label = '';
-	var std_types = node.types();
-	us.each(std_types, function(in_type){
-	    node_label += type_to_span(in_type);
-	});
+	// This /could/ be a model.
+	// See: https://github.com/geneontology/noctua/issues/683
+	if( ! node ){
+	    // This is likely a model-level violation and cannot be
+	    // matched with a node.
+	}else{
+	    var node_label = '';
+	    var std_types = node.types();
+	    us.each(std_types, function(in_type){
+		node_label += type_to_span(in_type);
+	    });
+	}
 	if( node_label === '' ){
 	    node_label = nid;
 	}
