@@ -122,6 +122,8 @@ COLLAPSIBLE_RELATIONS:
     ## Rels for #589
     - RO:0002339
     - RO:0002338
+    ## Rel for reactome work
+    - RO:0002313
 COLLAPSIBLE_REVERSE_RELATIONS:
   comment: The relations that the graph system will attempt to collapse, with the edges flowing the other direction.
   type: list
