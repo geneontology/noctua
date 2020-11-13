@@ -33,7 +33,7 @@ var widgetry = require('noctua-widgetry');
 var jQuery = require('jquery');
 /* jshint ignore:end */
 
-// Items 
+// Items
 var barista_response = require('bbop-response-barista');
 var class_expression = require('class-expression');
 var minerva_requests = require('minerva-requests');
@@ -47,6 +47,7 @@ var gserv = global_golr_server;
 var defs = new amigo.data.definitions();
 var handler = new amigo.handler();
 var linker = new amigo.linker();
+linker.app_base = 'http://amigo.geneontology.org';
 //var dlimit = defs.download_limit();
 var dlimit = 1000;
 
@@ -113,7 +114,7 @@ var CompanionInit = function(user_token){
     var mmanager = new minerva_manager(global_barista_location,
 				       global_minerva_definition_name,
 				       user_token, engine, 'async');
-    
+
     // GOlr location and conf setup.
     var gconf = new bbop_legacy.golr.conf(amigo.data.golr);
 
@@ -211,7 +212,7 @@ var CompanionInit = function(user_token){
     ///
     /// AmiGO comms.
     ///
-    
+
     // Ready the primary widget manager.
     var widget_manager = new bbop_legacy.golr.manager.jquery(gserv, gconf);
     var confc = gconf.get_class('annotation');
@@ -219,7 +220,7 @@ var CompanionInit = function(user_token){
     widget_manager.add_query_filter('document_category',
 				    confc.document_category(), ['*']);
     widget_manager.add_query_filter('aspect', 'F'); // removable
-    
+
     // Attach filters to manager.
     var hargs = {
 	meta_label: 'Total documents:&nbsp;',
@@ -230,24 +231,24 @@ var CompanionInit = function(user_token){
     var filters = new bbop_legacy.widget.live_filters(
 	'input-filter-accordion', widget_manager, gconf, hargs);
     filters.establish_display();
-    
+
     // Attach pager to manager.
     var pager_opts = {
     };
     var pager = new bbop_legacy.widget.live_pager('pager', widget_manager,
 						  pager_opts);
-    
-    // Describe the button that will attempt to compact the selected 
+
+    // Describe the button that will attempt to compact the selected
     // annotations and send macro commands to noctua/minerva.
     // The alrorithm is derived from a diagram here:
     // https://github.com/geneontology/noctua/issues/170#issuecomment-134414048
     var port_to_noctua_button = {
 	label: 'Import',
 	diabled_p: false,
-	click_function_generator: function(results_table, widget_manager){ // 
-	    
+	click_function_generator: function(results_table, widget_manager){ //
+
 	    return function(event){
-		
+
    		var selected_ids = results_table.get_selected_items();
    		var resp = results_table.last_response();
 
@@ -256,7 +257,7 @@ var CompanionInit = function(user_token){
 		    alert('No action can be taken currently.');
 		}else{
 		    //alert('Actionable input.');
-		    
+
 		    // Extract the documents that we'll operate on.
 		    var docs_to_run = [];
 		    each(selected_ids, function(sid){
@@ -265,11 +266,11 @@ var CompanionInit = function(user_token){
 			    docs_to_run.push(doc);
 			}
 		    });
-		    
+
 		    // Assemble a batch to run.
 		    var acls_set = {};
 		    each(docs_to_run, function(doc){
-			
+
 			// Who are we talking about?
 			var acls = doc['annotation_class'];
 			var bio = doc['bioentity'];
@@ -325,7 +326,7 @@ var CompanionInit = function(user_token){
 			    withs: withs
 			});
 		    });
-			
+
 		    // WARNING: Warn if we are going to be batching a lot.
 		    if( us.keys(acls_set).length > 3 ){
 			alert('You have a lot of requests from different ' +
@@ -342,7 +343,7 @@ var CompanionInit = function(user_token){
 			// Now let's actually assemble the /generic/ requests
 			// for the run.
 			var reqs = new minerva_requests.request_set(
-			    global_barista_token, global_id);			
+			    global_barista_token, global_id);
 			reqs.use_groups([
 			    // WARNING: We're minting money that we
 			    // might not honor here.
@@ -350,37 +351,37 @@ var CompanionInit = function(user_token){
 			]);
 
 			us.each(acls_assby_subset, function(bio_set, acls){
-			    
+
 			    var sub = reqs.add_individual(acls);
-			    
+
 			    us.each(bio_set, function(ev_list, bio){
-				
+
 				var obj = reqs.add_individual(bio);
 				var edge = reqs.add_fact(
 				    [sub, obj, 'RO:0002333']);
-			    
+
 				us.each(ev_list, function(ev_set){
-				    
+
 				    // Recover.
 				    var ev = ev_set['ev'];
 				    var refs = ev_set['refs'];
 				    var withs = ev_set['withs'];
 				    var assby = ev_set['assigned_by'];
-				    
+
 				    // Tag on the final evidence.
 				    reqs.add_evidence(
 					ev, refs, withs,
 					[sub, obj, 'RO:0002333']);
 				});
 			    });
-			    
-			    // ???			    
+
+			    // ???
 			});
 
 			// Fire and forget.
 			mmanager.request_with(reqs);
 		    });
-		    
+
 		}
 	    };
 	}
@@ -397,7 +398,7 @@ var CompanionInit = function(user_token){
     var results = new bbop_legacy.widget.live_results('results', widget_manager,
 						      confc, handler, linker,
 						      results_opts);
-    
+
     // Add pre and post run spinner (borrow filter's for now).
     widget_manager.register('prerun', 'foo', function(){
 	filters.spin_up();
