@@ -162,9 +162,9 @@ var NoctuaLauncher = function(){
     var workbenches_universal = [];
     var workbenches_model = [];
     var workbenches_individual = [];
-	var workbenches_edge = [];
-	var workbenches_universal_beta_test = [];
-	var workbenches_model_beta_test = [];
+    var workbenches_edge = [];
+    var workbenches_universal_beta_test = [];
+    var workbenches_model_beta_test = [];
     each(workbench_maybe_dirs, function(dir){
 	//console.log('dir', dir);
 
@@ -261,7 +261,7 @@ var NoctuaLauncher = function(){
 
 			// Load workbench for later.
 			if(wb['is-beta'] && wb['type'] === 'universal' ) {
-				workbenches_universal_beta_test.push(wb);
+			    workbenches_universal_beta_test.push(wb);
 			    console.log('Added workbench (b: ' + wbid + ')');
 			}else if(wb['is-beta'] && wb['type'] === 'model' ) {
 				workbenches_model_beta_test.push(wb);
@@ -277,9 +277,9 @@ var NoctuaLauncher = function(){
 			    console.log('Added workbench (i: '+wbid+')');
 			}else if( wb['type'] === 'edge' ){
 			    workbenches_edge.push(wb);
-				console.log('Added workbench (e: '+wbid+')');
+			    console.log('Added workbench (e: '+wbid+')');
 			}else{
-			    console.log('Rejected workbench (type)');  
+			    console.log('Rejected workbench (type)');
 			}
 		    }
 		}
@@ -679,9 +679,9 @@ var NoctuaLauncher = function(){
 	    'noctua_workbenches_universal': workbenches_universal,
 	    'noctua_workbenches_model': workbenches_model,
 	    'noctua_workbenches_individual': workbenches_individual,
-		'noctua_workbenches_edge': workbenches_edge,
-		'noctua_workbenches_universal_beta_test': workbenches_universal_beta_test,
-		'noctua_workbenches_model_beta_test': workbenches_model_beta_test
+	    'noctua_workbenches_edge': workbenches_edge,
+	    'noctua_workbenches_universal_beta_test': workbenches_universal_beta_test,
+	    'noctua_workbenches_model_beta_test': workbenches_model_beta_test
 	};
 
 	// Load in the additions.
