@@ -87,7 +87,7 @@
     "pup-tent": "0.9.10",
     "request": "2.72.0",
     "selectize": "^0.12.1",
-    "socket.io": "1.4.6",
+    "socket.io": "2.4.0",
     "solr-client": "0.6.0",
     "toastr": "2.1.2",
     "ui-select": "^0.18.0",
