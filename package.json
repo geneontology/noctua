@@ -91,7 +91,7 @@
     "solr-client": "0.6.0",
     "toastr": "2.1.2",
     "ui-select": "^0.18.0",
-    "underscore": "1.8.3",
+    "underscore": "1.12.1",
     "underscore.string": "3.3.4",
     "vantage": "1.7.0",
     "wait.for": "0.6.6",
