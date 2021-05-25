@@ -163,6 +163,8 @@ var NoctuaLauncher = function(){
     var workbenches_model = [];
     var workbenches_individual = [];
     var workbenches_edge = [];
+    var workbenches_universal_beta_test = [];
+    var workbenches_model_beta_test = [];
     each(workbench_maybe_dirs, function(dir){
 	//console.log('dir', dir);
 
@@ -258,7 +260,13 @@ var NoctuaLauncher = function(){
 			wb['public-directory'] = wbpath_try_public;
 
 			// Load workbench for later.
-			if( wb['type'] === 'universal' ){
+			if(wb['is-beta'] && wb['type'] === 'universal' ) {
+			    workbenches_universal_beta_test.push(wb);
+			    console.log('Added workbench (b: ' + wbid + ')');
+			}else if(wb['is-beta'] && wb['type'] === 'model' ) {
+				workbenches_model_beta_test.push(wb);
+			    console.log('Added workbench (b: ' + wbid + ')');
+			}else if( wb['type'] === 'universal' ){
 			    workbenches_universal.push(wb);
 			    console.log('Added workbench (u: '+wbid+')');
 			}else if( wb['type'] === 'model' ){
@@ -280,7 +288,12 @@ var NoctuaLauncher = function(){
     });
 
     // Apply external to internal variables.
-    var all_workbenches = workbenches_universal.concat(workbenches_model).concat(workbenches_individual).concat(workbenches_edge);
+	var all_workbenches = workbenches_universal
+		.concat(workbenches_model)
+		.concat(workbenches_individual)
+		.concat(workbenches_edge)
+		.concat(workbenches_universal_beta_test)
+		.concat(workbenches_model_beta_test);
     if( us.isEmpty(all_workbenches) ){
 	console.log('No workbenches defined.');
     }else{
@@ -617,6 +630,10 @@ var NoctuaLauncher = function(){
 		 value: workbenches_individual },
 		{name: 'global_workbenches_edge',
 		 value: workbenches_edge },
+		{name: 'global_workbenches_universal_beta_test',
+		 value: workbenches_universal_beta_test },
+		{name: 'global_workbenches_model_beta_test',
+		 value: workbenches_model_beta_test },
 		// SPARQL templates.
 		{name: 'global_sparql_templates_named',
 		 value: sparql_templates_named },
@@ -662,7 +679,9 @@ var NoctuaLauncher = function(){
 	    'noctua_workbenches_universal': workbenches_universal,
 	    'noctua_workbenches_model': workbenches_model,
 	    'noctua_workbenches_individual': workbenches_individual,
-	    'noctua_workbenches_edge': workbenches_edge
+	    'noctua_workbenches_edge': workbenches_edge,
+	    'noctua_workbenches_universal_beta_test': workbenches_universal_beta_test,
+	    'noctua_workbenches_model_beta_test': workbenches_model_beta_test
 	};
 
 	// Load in the additions.

@@ -104,11 +104,18 @@ function repaint_info(ecore, aid, info_div){
 	// Assemble a human-readable label.
 	var nid = v.node_id();
 	var node = ecore.get_node(nid);
-	var node_label = '';
-	var std_types = node.types();
-	us.each(std_types, function(in_type){
-	    node_label += type_to_span(in_type);
-	});
+	// This /could/ be a model.
+	// See: https://github.com/geneontology/noctua/issues/683
+	if( ! node ){
+	    // This is likely a model-level violation and cannot be
+	    // matched with a node.
+	}else{
+	    var node_label = '';
+	    var std_types = node.types();
+	    us.each(std_types, function(in_type){
+		node_label += type_to_span(in_type);
+	    });
+	}
 	if( node_label === '' ){
 	    node_label = nid;
 	}
@@ -971,6 +978,10 @@ function add_edge_modal(ecore, manager, relations, aid, source_id, target_id){
 	_fuse('positively regulates', 'RO:0002213', radio_name, 3),
 	_fuse('directly positively regulates', 'RO:0002629', radio_name, 4),
 	_fuse('has participant',  'RO:0000057', radio_name, 0),
+	_fuse('has small molecule regulator',  'RO:0012000', radio_name, 1),
+	_fuse('has small molecule activator',  'RO:0012001', radio_name, 2),
+	_fuse('has small molecular inhibitor',  'RO:0012002', radio_name, 2),
+	_fuse('acts on population of', 'RO:0012003', radio_name, 1),
 	_fuse('has input', 'RO:0002233', radio_name, 1),
 	_fuse('has output', 'RO:0002234', radio_name, 1),
 	_fuse('transports or maintains localization of', 'RO:0002313', radio_name, 1),

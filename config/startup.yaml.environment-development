@@ -81,8 +81,6 @@ WORKBENCHES:
   value:
     - '../noctua-form/workbenches'
     - '../noctua-landing-page/workbenches'
-    - '../noctua-annotation-review/workbenches'
-    - '../noctua-search/workbenches'
     - '../noctua-form-legacy/workbenches'
     - 'workbenches'
 ## Minerva operations preferences.
