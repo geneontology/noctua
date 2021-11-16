@@ -38,7 +38,7 @@
     "angular-toastr": "^1.7.0",
     "angular-ui-bootstrap": "^1.3.3",
     "angular-ui-grid": "^3.1.1",
-    "aws-sdk": "2.4.1",
+    "aws-sdk": "2.814.0",
     "bbop": "2.4.3",
     "bbop-client-barista": "0.0.7",
     "bbop-core": "0.0.5",
