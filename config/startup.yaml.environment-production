@@ -80,6 +80,7 @@ WORKBENCHES:
   type: list
   value:
     - '../noctua-form/workbenches'
+    - '../alliance-pathway-preview/workbenches'
     - '../noctua-landing-page/workbenches'
     - 'workbenches'
 ## Minerva operations preferences.

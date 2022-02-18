@@ -83,6 +83,7 @@ WORKBENCHES:
   value:
     - '../noctua-form/workbenches'
     - '../noctua-visual-pathway-editor/workbenches'
+    - '../alliance-pathway-preview/workbenches'
     - '../noctua-landing-page/workbenches'
     - 'workbenches'
     - '../noctua-form-legacy/workbenches'
