@@ -1845,8 +1845,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 						  annoton_eb_auto_args);
 	annoton_eb_auto.lite(true);
 	annoton_eb_auto.add_query_filter('document_category', 'ontology_class');
-	// Root is CHEBI:23367 ! molecular entity.
-	annoton_eb_auto.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
+	// "Roots" are CHEBI:23367 and GO:0032991 for this case.
+	// See: https://github.com/geneontology/noctua/issues/753
+	//annoton_eb_auto.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
+	annoton_eb_auto.set_extra('&fq=regulates_closure:"CHEBI:33695" OR regulates_closure:"GO:0032991"');
+
 	annoton_eb_auto.set_personality('ontology');
 
 	var annoton_mf_auto =
@@ -2081,9 +2084,11 @@ var MMEnvInit = function(model_json, in_relations, in_token){
 	simple_mf_free_enb_auto.lite(true);
 	simple_mf_free_enb_auto.add_query_filter('document_category',
 						 'ontology_class');
-	// Root is CHEBI:23367 ! molecular entity.
-	simple_mf_free_enb_auto.add_query_filter('regulates_closure',
-    						 'CHEBI:23367', ['*']);
+	// "Roots" are CHEBI:23367 and GO:0032991 for this case.
+	// See: https://github.com/geneontology/noctua/issues/753
+	//simple_mf_free_enb_auto.add_query_filter('regulates_closure', 'CHEBI:23367', ['*']);
+	simple_mf_free_enb_auto.set_extra('&fq=regulates_closure:"CHEBI:33695" OR regulates_closure:"GO:0032991"');
+
 	simple_mf_free_enb_auto.set_personality('ontology');
 
 	var simple_mf_free_act_auto =
