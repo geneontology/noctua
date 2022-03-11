@@ -57,6 +57,26 @@ function _tilde_expand_list(list){
     });
 }
 
+
+// Basic input sanitation to buffer input against XSS attempts. No
+// need for chevrons (i.e. tagged input) in our server-client universe
+// for now.
+var r1 = new RegExp("<", "g");
+var r2 = new RegExp(">", "g");
+var r3 = new RegExp("\\(", "g");
+var r4 = new RegExp("\\)", "g");
+function _sanitize(in_str){
+    if( Object.prototype.toString.call(in_str)=== '[object String]' ){
+	//console.log('PRE:: ' + in_str);
+	in_str = in_str.replace(r1, "");
+	in_str = in_str.replace(r2, "");
+	in_str = in_str.replace(r3, "");
+	in_str = in_str.replace(r4, "");
+	//console.log('POST:: ' + in_str);
+    }
+    return in_str;
+}
+
 // Aliases.
 var each = us.each;
 var what_is = bbop.what_is;
@@ -498,6 +518,28 @@ var NoctuaLauncher = function(){
     /// Response helper.
     ///
 
+    // False, return true is something sanitized.
+    self.sanitize_request = function(req){
+	var ret = false;
+
+	var purgable = ['model_id',
+			'individual_id',
+			'subject_individual_id',
+			'object_individual_id',
+			'relation_id',
+			'barista_token'];
+	if( req && req.query ){
+
+	    each(purgable, function(p){
+		if( req.query[p] ){
+		    req.query[p] = _sanitize(req.query[p]);
+		    ret = true;
+		}
+	    });
+	}
+	return ret;
+    };
+
     self.get_token = function(req){
 	var ret = null;
 	if( req && req.query && req.query['barista_token'] ){
@@ -807,6 +849,8 @@ var NoctuaLauncher = function(){
 
 	// Redirect to given workbench from root route.
 	self.app.get('/', function(req, res) {
+	    self.sanitize_request(req);
+
 	    // TODO: This workbench should be made a parameter.
 	    var landing_location = 'workbench/noctua-landing-page';
 
@@ -822,6 +866,8 @@ var NoctuaLauncher = function(){
 
 	// Administration page (old landing).
 	self.app.get('/admin', function(req, res) {
+	    self.sanitize_request(req);
+
 	    // Grab markdown renderable file.
 	    var landing_raw = fs.readFileSync('./OVERVIEW.' + noctua_context + '.md').toString();
 	    var landing_md = md.markdown.toHTML(landing_raw);
@@ -857,6 +903,7 @@ var NoctuaLauncher = function(){
 
 	// General markdown documentation.
 	self.app.get('/doc/:fname', function(req, res) {
+	    self.sanitize_request(req);
 
 	    var final_content = '???';
 	    var fname = req.params['fname'] || '';
@@ -919,6 +966,7 @@ var NoctuaLauncher = function(){
 
 	//
 	self.app.get('/basic/:model_type/:query', function(req, res) {
+	    self.sanitize_request(req);
 
 	    // Try and see if we have an API token.
 	    var barista_token = self.get_token(req);
@@ -980,6 +1028,7 @@ var NoctuaLauncher = function(){
 	    // This will skip cached templates.
 	    if (ctype !== null) {
 		self.app.get('/' + thing, function(req, res) {
+		    self.sanitize_request(req);
 
 		    res.setHeader('Content-Type', ctype);
 		    res.send(pup_tent.get(thing) );
@@ -1011,6 +1060,7 @@ var NoctuaLauncher = function(){
 	    var fname = item[0];
 	    var type = item[1];
 	    self.app.get('/images/' + fname, function(req, res){
+		self.sanitize_request(req);
 		res.setHeader('Content-Type', 'image/' + type);
 		res.sendfile('static/' + fname);
 	    });
@@ -1019,11 +1069,13 @@ var NoctuaLauncher = function(){
 	// TODO: This obviously does not do anything than supress some types
 	// of error messages.
 	self.app.get('/favicon.ico', function(req, res){
+	    self.sanitize_request(req);
 	    self.standard_response(res, 200, 'image/x-icon', '');
 	});
 
 	// Error redirect catch.
 	self.app.get('/error', function(req, res) {
+	    self.sanitize_request(req);
 
 	    console.log('caught intentional redirect for error report');
 
@@ -1053,6 +1105,7 @@ var NoctuaLauncher = function(){
 	///
 
 	self.app.get('/status', function(req, res) {
+	    self.sanitize_request(req);
 
 	    console.log('process heartbeat request');
 
@@ -1088,6 +1141,7 @@ var NoctuaLauncher = function(){
 	// Directly kick-to-edit an extant model--most things should
 	// pass through here.
 	self.app.get('/editor/graph/:query', function(req, res) {
+	    self.sanitize_request(req);
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
@@ -1131,6 +1185,7 @@ var NoctuaLauncher = function(){
 	    var injectable_css = wb['css'] || [];
 
 	    self.app.get('/workbench/' + wbid, function(req, res){
+		self.sanitize_request(req);
 
 		monitor_internal_kicks = monitor_internal_kicks + 1;
 
@@ -1169,7 +1224,7 @@ var NoctuaLauncher = function(){
 					       'subject_individual_id or' +
 					       'object_individual_id or' +
 					       'relation_id');
-			}
+		    }
 		}else{
 		    // TODO: Error.
 		}
@@ -1196,6 +1251,7 @@ var NoctuaLauncher = function(){
 	// DEBUG: A JSON model debugging tool for @hdietze
 	/// This path will eventually be destroyed.
 	self.app.post('/seed/json', function(req, res) {
+	    self.sanitize_request(req);
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
@@ -1236,11 +1292,13 @@ var NoctuaLauncher = function(){
 
 	// Offer POST, not GET.
 	self.app.get('/tractorbeam', function(req, res){
+	    self.sanitize_request(req);
 	    tll('attempt to GET tractorbeam');
 	    pre_fail(res, "no GET endpoint",
 		     "try POST instead of GET at this URL");
 	});
 	self.app.post('/tractorbeam', function(req, res){
+	    self.sanitize_request(req);
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
@@ -1580,6 +1638,7 @@ var NoctuaLauncher = function(){
 
 	// Test export handler.
 	self.app.post('/action/display', function(req, res) {
+	    self.sanitize_request(req);
 
 	    // Deal with incoming parameters.
 	    var mstr = req.query['thing'] ||
@@ -1596,6 +1655,7 @@ var NoctuaLauncher = function(){
 
 	// Downloads for the impatient.
 	self.app.get('/download/:model/:format?', function(req, res){
+	    self.sanitize_request(req);
 
 	    monitor_internal_kicks = monitor_internal_kicks + 1;
 
