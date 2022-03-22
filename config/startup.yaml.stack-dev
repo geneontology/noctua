@@ -81,8 +81,11 @@ WORKBENCHES:
   type: list
   value:
     - '../noctua-form/workbenches'
+    - '../noctua-visual-pathway-editor/workbenches'
+    - '../noctua-alliance-pathway-preview/workbenches'
     - '../noctua-landing-page/workbenches'
     - 'workbenches'
+    - '../noctua-form-legacy/workbenches'
 ## Minerva operations preferences.
 MINERVA_JAR:
   comment: The JAR to use for Minerva.
