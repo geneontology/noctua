@@ -7,16 +7,14 @@ the top directory.
 ### startup.yaml.all-dev
 
 This file defines a default local development setup where a developer
-runs all services locally on localhost, including GOlr, epione,
+runs all services locally on localhost, including GOlr,
 etc. All-inclusive, all local.
 
 ###	startup.yaml.stack-dev
 
 This file defines a default local development setup where a developer
 runs all services defined in this repo on localhost. This setup uses a
-public GOlr and has no expectation of being able to use epione (in
-fact, with a setup like this, one should avoid epione as you may
-accidentally clobber production data).
+public GOlr.
 
 ###	startup.yaml.environment-development
 

@@ -23,21 +23,25 @@ brew install node
 
 ### Steps for a local Installation
 ```
-# Noctua Stack is a multi-repositories project, optionally create a main directory for the stack
-# These instruction assume that "gulp" is in your path; if local-only: ./node_modules/.bin/gulp
+# The full Noctua stack is a multi-repositorie project; optionally create a main directory for the stack to contain all the repositories.
+# These instruction assume that "gulp" is in your path; if local-only, use: `./node_modules/.bin/gulp`.
+
+# Creating a local directory for our work.
 mkdir noctua-stack && cd noctua-stack
 
+# Repo containing metadata (users, groups, etc.).
 git clone https://github.com/geneontology/go-site.git
+# The data repo to start the store and save to.
 git clone https://github.com/geneontology/noctua-models.git
+# Repo for the backend server.
 git clone https://github.com/geneontology/minerva.git
+# Repo for the Noctua client and middleware (Barista).
+git clone https://github.com/geneontology/noctua.git
 
-# Build Minerva CLI
-minerva/build-cli.sh
+# Build the Minerva server (and CLI).
+cd minerva && sh ./build-cli.sh && cd ..
 
-# Get file(s) for Minerva (check default locations in startup.yaml)
-wget -L -o /tmp/blazegraph-go-lego-reacto-neo.jnl.gz http://skyhook.berkeleybop.org/blazegraph-go-lego-reacto-neo.jnl.gz
-
-# Create default authentication users
+# Create default authentication users with your favorite editor.
 mkdir barista
 vim barista/local.yaml
 -
@@ -46,14 +50,10 @@ vim barista/local.yaml
  password: my_password
 
 # Install Noctua Form (old "simple-annoton-editor")
-git clone https://github.com/geneontology/simple-annoton-editor.git
-cd simple-annoton-editor
-npm install
-npm run build
-cd ../
+git clone https://github.com/geneontology/noctua-form.git
+git clone https://github.com/geneontology/noctua-landing-page.git
 
 # Install Noctua as an all-local installation.
-git clone https://github.com/geneontology/noctua.git
 cd noctua
 npm install
 cp config/startup.yaml.stack-dev ./startup.yaml
@@ -62,16 +62,16 @@ cp config/startup.yaml.stack-dev ./startup.yaml
 vim startup.yaml
 
 # Build the stack and Blazegraph Journal (triplestore)
-gulp build
-# Optional if running first time.
-gulp batch-minerva-destroy-journal
-gulp batch-minerva-destroy-ontology-journal
-gulp batch-minerva-create-journal
+./node_modules/.bin/gulp build
+# If running first time.
+./node_modules/.bin/gulp batch-minerva-destroy-journal
+./node_modules/.bin/gulp batch-minerva-destroy-ontology-journal
+./node_modules/.bin/gulp batch-minerva-create-journal
 
-# Then launch the stack:
-gulp run-barista &> barista.log &
-gulp run-minerva &> minerva.log &
-gulp run-noctua &> noctua.log &
+# Then launch the stack, waiting for each to successfully start up:
+./node_modules/.bin/gulp run-minerva &> minerva.log &
+./node_modules/.bin/gulp run-barista &> barista.log &
+./node_modules/.bin/gulp run-noctua &> noctua.log &
 ```
 
 ## Additional notes

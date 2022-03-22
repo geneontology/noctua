@@ -25,7 +25,7 @@ There are currently four different workbench types.
 
 ### Workbench variables
 
-These are the environmental variables made available to workbenches
+These are the environmental variables (with example values) made available to workbenches
 (as above):
 
 ```javascript
