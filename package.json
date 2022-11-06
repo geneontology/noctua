@@ -66,7 +66,7 @@
     "express-persona": "0.1.2",
     "express-session": "^1.13.0",
     "golr-conf": "0.0.3",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-flatten": "0.3.0",
     "gulp-shell": "0.5.2",
     "http-proxy": "1.14.0",
@@ -96,7 +96,7 @@
     "vantage": "1.7.0",
     "wait.for": "0.6.6",
     "watch": "0.19.1",
-    "yamljs": "0.2.7"
+    "yamljs": "0.2.10"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.5",
@@ -105,7 +105,7 @@
     "chai": "^4.1.2",
     "del": "^3.0.0",
     "eslint": "^2.13.1",
-    "gulp": "^3.8.11",
+    "gulp": "^4.0.2",
     "gulp-bump": "^3.1.0",
     "gulp-git": "^2.5.2",
     "gulp-jshint": "^2.0.1",
