@@ -44,6 +44,8 @@ var bbop_legacy = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo_inst_gen = require('amigo2-instance-data');
 var amigo_inst = new amigo_inst_gen();
+// Replacement for context data.
+var ontext = require('ontology-ui-overlay-data');
 
 // The new backbone libs.
 var us = require('underscore');
@@ -112,7 +114,8 @@ var MMEnvInit = function(model_json, in_relations, in_token){
     // amigo.data.context['RO:0002413']['priority'] = 1;
     // console.log(amigo.data.context);
     // // Instantiate.
-    var aid = new bbop_legacy.context(amigo_inst.data.context);
+    //var aid = new bbop_legacy.context(amigo_inst.data.context);
+    var aid = new bbop_legacy.context(ontext);
 
     // Create the core model.
     var ecore = new noctua_graph();
