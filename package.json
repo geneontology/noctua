@@ -79,7 +79,7 @@
     "morgan": "^1.7.0",
     "mustache": "2.2.1",
     "ngtouch": "^1.0.1",
-    "ontology-ui-overlay-data": "0.0.1",
+    "ontology-ui-overlay-data": "0.0.2",
     "passport": "0.3.2",
     "passport-local": "1.0.0",
     "passport-github": "1.1.0",
