@@ -42,11 +42,11 @@ NOCTUA_CONTEXT:
 NOCTUA_LOOKUP_URL:
   comment: The external self-reference URL that Noctua should use.
   type: url
-  value: http://localhost:8910
+  value: http://localhost:3400
 NOCTUA_LOCATION:
   comment: Location that Noctua should think it is internally.
   type: url
-  value: http://localhost:8910
+  value: http://localhost:3400
 MINERVA_LOCATION:
   comment: The location of the minerva to communicate with.
   type: url
@@ -82,6 +82,7 @@ WORKBENCHES:
   type: list
   value:
     - '../noctua-form/workbenches'
+    - "../noctua-standard-annotations/workbenches"
     - '../noctua-visual-pathway-editor/workbenches'
     - '../noctua-alliance-pathway-preview/workbenches'
     - '../noctua-landing-page/workbenches'
