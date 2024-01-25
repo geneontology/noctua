@@ -80,6 +80,7 @@ WORKBENCHES:
   type: list
   value:
     - '../noctua-form/workbenches'
+    - "../noctua-standard-annotations/workbenches"
     - '../noctua-alliance-pathway-preview/workbenches'
     - '../noctua-landing-page/workbenches'
     - 'workbenches'
