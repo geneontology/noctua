@@ -1,7 +1,7 @@
 ---
-name: Outage issue
+name: Maintenance outage issue
 about: Create a new outage issue
-title: 'Outage: 20YY-MM-DD'
+title: 'Maintenance outage: 20YY-MM-DD'
 labels: ''
 assignees: kltm, vanaukenk
 
