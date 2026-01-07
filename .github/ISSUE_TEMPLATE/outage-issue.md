@@ -17,6 +17,8 @@ assignees: kltm, vanaukenk
 - [ ] Cycle minerva to get latest ontology
 - [ ] Update NEO
 - [ ] Check git push (next day)
+- [ ] TODO: What, if any, commands need to be run to update Noctua software
+  - [ ] `git pull ???`
 
 ---
 
