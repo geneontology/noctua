@@ -7,7 +7,6 @@ assignees: kltm, vanaukenk
 
 ---
 
-- [ ] Send email to go-consortium mailing list prior to software update to communicate what changes will go in (Tuesday before)
 - [ ] Update noctua-visual-pathway-editor workbench
         
   ```bash
@@ -24,17 +23,24 @@ assignees: kltm, vanaukenk
 - [ ] Update standard-annotation-editor workbench
         
   ```bash
-  cd ???
+  cd noctua-standard-annotations
   git pull origin master        
   ```
 
-- [ ] Announce changes on production on Thursdays at 12:30pm PST
-- [ ] Add software updates to Release Notes in Noctua User Guide
+- [ ] Update Pathway Viewer workbench
+        
+  ```bash
+  cd noctua-alliance-pathway-preview
+  git pull origin master        
+  ```
+
+- [ ] Announce software changes once completed
+- [ ]  If needed, add software updates to Release Notes in Noctua User Guide
 - [ ] If needed, document changes on Noctua User Guide
 
 ---
 
-**Project: 
+**Project: link to project 
 
 The following issues/PRs will be addressed in this outage:
 - [ ] 1 
