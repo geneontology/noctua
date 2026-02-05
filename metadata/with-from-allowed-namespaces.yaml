@@ -1,0 +1,27 @@
+id: https://geneontology.org/noctua/metadata/with-from-allowed-namespaces
+name: with-from-allowed-namespaces
+
+enums:
+  WithFromAllowedNamespaces:
+    description: Allowed namespaces for with/from fields.
+    permissible_values:
+      AGI_LocusCode:
+      EcoCyc:
+      FB:
+      GO:
+      MGI:
+      PomBase:
+      PR:
+      RGD:
+      RNAcentral:
+      SGD:
+      UniProtKB:
+      WB:
+      Xenbase:
+      ZFIN:
+      CHEBI:
+      ComplexPortal:
+      EC:
+      InterPro:
+      PANTHER:
+      RHEA:
