@@ -1,0 +1,10 @@
+id: https://geneontology.org/noctua/metadata/allowed-references
+name: allowed-references
+
+enums:
+  AllowedReferences:
+    description: Allowed namespaces for references.
+    permissible_values:
+      DOI:
+      GO_REF:
+      PMID:
