@@ -6,22 +6,22 @@ enums:
     description: Allowed namespaces for with/from fields.
     permissible_values:
       AGI_LocusCode:
+      CHEBI:
+      ComplexPortal:
+      EC:
       EcoCyc:
       FB:
       GO:
+      InterPro:
       MGI:
+      PANTHER:
       PomBase:
       PR:
       RGD:
+      RHEA:
       RNAcentral:
       SGD:
       UniProtKB:
       WB:
       Xenbase:
       ZFIN:
-      CHEBI:
-      ComplexPortal:
-      EC:
-      InterPro:
-      PANTHER:
-      RHEA:
