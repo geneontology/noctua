@@ -18,7 +18,7 @@ assignees: kltm, vanaukenk
 - [ ] Update NEO
 - [ ] Check git push (next day)
 - [ ] TODO: What, if any, commands need to be run to update Noctua software
-  - [ ] `git pull ???`
+  - [ ] TBD SOFTWARE TICKET 
 
 ---
 
