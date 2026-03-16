@@ -2342,7 +2342,8 @@ var BaristaLauncher = function(){
 	// For filtering, there is a unique ID from Minerva so
 	// that they can block messages they've heard
 	// before--similar to the current model filtering. Ish.
-	if( response_okay_p && resp && resp.okay() && resp.model_id() ){
+	if( response_okay_p && resp && resp.okay() && resp.model_id() &&
+	    resp.message_type() !== 'error' ){
 	    if( resp.intention() !== 'action' ){
 		ll("Skip broadcast of message (non-action).");
 	    }else if( resp.signal() === 'merge' ){
