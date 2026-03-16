@@ -2362,10 +2362,11 @@ var BaristaLauncher = function(){
 	    // Capture error responses from Minerva for the error
 	    // monitor. Skip SPARQL responses that lack useful
 	    // message/message_type fields.
-	    var raw_str = JSON.stringify(resp.raw());
-	    if( raw_str.indexOf('sparql') !== -1 ){
+	    var raw_obj = resp.raw() || {};
+	    var raw_str = JSON.stringify(raw_obj);
+	    if( 'sparql' in raw_obj ){
 		ll("Skip SPARQL error for monitor.");
-	    }else if( raw_str.indexOf('taxa') !== -1 ){
+	    }else if( 'taxa' in raw_obj ){
 		ll("Skip taxa error for monitor.");
 	    }else{
 		ll("Captured error response for monitor.");
