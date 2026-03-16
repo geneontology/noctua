@@ -17,10 +17,34 @@
 	function _b64Encode(str){
 	    return btoa(unescape(encodeURIComponent(str || '{}')));
 	}
+	// Recursively parse any string values that are embedded JSON,
+	// so nested structures like "requests" get fully expanded.
+	function _deepParseJson(obj){
+	    if( typeof obj === 'string' ){
+		try {
+		    var parsed = JSON.parse(obj);
+		    return _deepParseJson(parsed);
+		} catch(e) {
+		    return obj;
+		}
+	    } else if( Array.isArray(obj) ){
+		return obj.map(_deepParseJson);
+	    } else if( obj && typeof obj === 'object' ){
+		var result = {};
+		for( var k in obj ){
+		    if( obj.hasOwnProperty(k) ){
+			result[k] = _deepParseJson(obj[k]);
+		    }
+		}
+		return result;
+	    }
+	    return obj;
+	}
 	function _b64Decode(b64){
 	    try {
 		var raw = decodeURIComponent(escape(atob(b64)));
-		return JSON.stringify(JSON.parse(raw), null, 2);
+		var parsed = _deepParseJson(JSON.parse(raw));
+		return JSON.stringify(parsed, null, 2);
 	    } catch(e) {
 		return decodeURIComponent(escape(atob(b64)));
 	    }
