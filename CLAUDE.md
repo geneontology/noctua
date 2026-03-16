@@ -6,9 +6,9 @@ platform for creating and managing GO-CAMs.
 ## Architecture
 
 Three-tier stack (each runs as a separate process):
-- **Minerva** (port 6800): Backend data server (Blazegraph triplestore, OWL/RDF)
-- **Barista** (`barista.js`, port 3400): Auth middleware + Socket.io relay
-- **Noctua** (`noctua.js`, port 8910): Main Express.js web application
+- **Minerva** (separate repo): Backend data server (Blazegraph triplestore, OWL/RDF)
+- **Barista** (`barista.js`): Auth middleware + Socket.io relay
+- **Noctua** (`noctua.js`): Main Express.js web application
 
 Frontend uses AngularJS 1.5 + Browserify. Real-time updates via Socket.io.
 
