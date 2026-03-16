@@ -14,6 +14,17 @@
       <script type="text/javascript"
 	      src="/socket.io/socket.io.js"></script>
       <script type="text/javascript">
+	function _b64Encode(str){
+	    return btoa(unescape(encodeURIComponent(str || '{}')));
+	}
+	function _b64Decode(b64){
+	    try {
+		var raw = decodeURIComponent(escape(atob(b64)));
+		return JSON.stringify(JSON.parse(raw), null, 2);
+	    } catch(e) {
+		return decodeURIComponent(escape(atob(b64)));
+	    }
+	}
 	var errorTable;
 	jQuery(document).ready(function(){
 	    errorTable = jQuery('#error-table').DataTable({
@@ -25,8 +36,8 @@
 	    // Connect to Socket.IO for real-time error updates.
 	    var socket = io.connect(window.location.origin);
 	    socket.on('minerva_error', function(data){
-		var rawB64 = btoa(unescape(encodeURIComponent(
-		    data.raw || '{}')));
+		var rawB64 = _b64Encode(data.raw);
+		var reqB64 = _b64Encode(data.request_raw);
 		errorTable.row.add([
 		    jQuery('<span/>').text(data.timestamp || '').html(),
 		    jQuery('<span/>').text(data.message || '').html(),
@@ -36,22 +47,26 @@
 		    jQuery('<span/>').text(data.signal || '').html(),
 		    jQuery('<span/>').text(data.packet_id || '').html(),
 		    '<button class="btn btn-xs btn-default raw-btn" ' +
-			'data-raw="' + rawB64 + '">Raw</button>'
+			'data-raw="' + rawB64 + '">Raw</button>',
+		    '<button class="btn btn-xs btn-info req-btn" ' +
+			'data-raw="' + reqB64 + '">Req</button>'
 		]).draw(false);
 	    });
 
-	    // Raw button handler (delegated).
+	    // Raw response button handler (delegated).
 	    jQuery('#error-table').on('click', '.raw-btn', function(){
-		var rawB64 = jQuery(this).data('raw');
-		var rawJson = '{}';
-		try {
-		    rawJson = decodeURIComponent(escape(atob(rawB64)));
-		    rawJson = JSON.stringify(JSON.parse(rawJson), null, 2);
-		} catch(e) {
-		    rawJson = decodeURIComponent(escape(atob(rawB64)));
-		}
-		jQuery('#raw-modal-body').text(rawJson);
-		jQuery('#raw-modal').modal('show');
+		jQuery('#detail-modal-title').text('Raw Minerva Response');
+		jQuery('#detail-modal-body').text(
+		    _b64Decode(jQuery(this).data('raw')));
+		jQuery('#detail-modal').modal('show');
+	    });
+
+	    // Raw request button handler (delegated).
+	    jQuery('#error-table').on('click', '.req-btn', function(){
+		jQuery('#detail-modal-title').text('Original Request');
+		jQuery('#detail-modal-body').text(
+		    _b64Decode(jQuery(this).data('raw')));
+		jQuery('#detail-modal').modal('show');
 	    });
 	});
       </script>
@@ -68,6 +83,7 @@
 	    <th>Signal</th>
 	    <th>Packet ID</th>
 	    <th>Raw</th>
+	    <th>Request</th>
 	  </tr>
 	</thead>
 	<tbody>
@@ -82,6 +98,8 @@
 	    <td>{{packet_id}}</td>
 	    <td><button class="btn btn-xs btn-default raw-btn"
 			data-raw="{{raw_b64}}">Raw</button></td>
+	    <td><button class="btn btn-xs btn-info req-btn"
+			data-raw="{{request_raw_b64}}">Req</button></td>
 	  </tr>
 	  {{/monitor_errors}}
 	</tbody>
@@ -90,17 +108,17 @@
     </div>
   </div>
 
-  <!-- Modal for raw JSON display. -->
-  <div class="modal fade" id="raw-modal" tabindex="-1" role="dialog">
+  <!-- Shared modal for raw JSON display (response or request). -->
+  <div class="modal fade" id="detail-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
 	<div class="modal-header">
 	  <button type="button" class="close"
 		  data-dismiss="modal">&times;</button>
-	  <h4 class="modal-title">Raw Minerva Response</h4>
+	  <h4 class="modal-title" id="detail-modal-title">Details</h4>
 	</div>
 	<div class="modal-body">
-	  <pre id="raw-modal-body"
+	  <pre id="detail-modal-body"
 	       style="max-height:500px; overflow:auto;"></pre>
 	</div>
 	<div class="modal-footer">

@@ -1905,6 +1905,8 @@ var BaristaLauncher = function(){
 		var copy = JSON.parse(JSON.stringify(e));
 		copy['raw_b64'] = Buffer.from(
 		    copy['raw'] || '{}').toString('base64');
+		copy['request_raw_b64'] = Buffer.from(
+		    copy['request_raw'] || '{}').toString('base64');
 		return copy;
 	    });
 	var tmpl_args = {
@@ -2319,7 +2321,7 @@ var BaristaLauncher = function(){
     ///
 
     // Generic function for notifying listeners of some events.
-    function _notify_listeners(json_string){
+    function _notify_listeners(json_string, req_info){
 
 	// Now what should we do with the JSON? Check it.
 	var response_okay_p = true;
@@ -2379,7 +2381,8 @@ var BaristaLauncher = function(){
 		    'user_id': resp.user_id() || '',
 		    'signal': resp.signal() || '',
 		    'packet_id': resp.packet_id() || '',
-		    'raw': raw_str
+		    'raw': raw_str,
+		    'request_raw': JSON.stringify(req_info || {})
 		};
 		monitor_errors.push(error_record);
 		if( monitor_errors.length > MONITOR_ERRORS_MAX ){
@@ -2583,7 +2586,12 @@ var BaristaLauncher = function(){
 	    var json_string = _extract_json_from_jsonp(possibly_jsonp);
 
 	    // Notify listeners of model.
-	    _notify_listeners(json_string);
+	    _notify_listeners(json_string, {
+		'method': req.method,
+		'url': req.url,
+		'params': req.params,
+		'query': req.query
+	    });
 	});
     });
 
@@ -2740,7 +2748,12 @@ var BaristaLauncher = function(){
 
 			// Notify any listeners.
 			var json_string = _extract_json_from_jsonp(proxied_body);
-			_notify_listeners(json_string);
+			_notify_listeners(json_string, {
+			    'method': req.method,
+			    'url': req.url,
+			    'params': req.params,
+			    'body': decoded_body
+			});
 
 			// Well, three down, but we're finally
 			// here. Send our data back up to the top.
