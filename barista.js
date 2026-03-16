@@ -2365,6 +2365,8 @@ var BaristaLauncher = function(){
 	    var raw_str = JSON.stringify(resp.raw());
 	    if( raw_str.indexOf('sparql') !== -1 ){
 		ll("Skip SPARQL error for monitor.");
+	    }else if( raw_str.indexOf('taxa') !== -1 ){
+		ll("Skip taxa error for monitor.");
 	    }else{
 		ll("Captured error response for monitor.");
 		var error_record = {
