@@ -2360,24 +2360,30 @@ var BaristaLauncher = function(){
 	    }
 	}else if( response_okay_p && resp && ! resp.okay() ){
 	    // Capture error responses from Minerva for the error
-	    // monitor.
-	    ll("Captured error response for monitor.");
-	    var error_record = {
-		'timestamp': new Date().toISOString(),
-		'message_type': resp.message_type() || 'unknown',
-		'message': resp.message() || 'unknown',
-		'commentary': resp.commentary() || '',
-		'model_id': resp.model_id() || '',
-		'user_id': resp.user_id() || '',
-		'signal': resp.signal() || '',
-		'packet_id': resp.packet_id() || '',
-		'raw': JSON.stringify(resp.raw())
-	    };
-	    monitor_errors.push(error_record);
-	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
-		monitor_errors.shift();
+	    // monitor. Skip SPARQL responses that lack useful
+	    // message/message_type fields.
+	    var raw_str = JSON.stringify(resp.raw());
+	    if( raw_str.indexOf('sparql') !== -1 ){
+		ll("Skip SPARQL error for monitor.");
+	    }else{
+		ll("Captured error response for monitor.");
+		var error_record = {
+		    'timestamp': new Date().toISOString(),
+		    'message_type': resp.message_type() || 'unknown',
+		    'message': resp.message() || 'unknown',
+		    'commentary': resp.commentary() || '',
+		    'model_id': resp.model_id() || '',
+		    'user_id': resp.user_id() || '',
+		    'signal': resp.signal() || '',
+		    'packet_id': resp.packet_id() || '',
+		    'raw': raw_str
+		};
+		monitor_errors.push(error_record);
+		if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		    monitor_errors.shift();
+		}
+		sio.emit('minerva_error', error_record);
 	    }
-	    sio.emit('minerva_error', error_record);
 	}
 
 	return response_okay_p;
