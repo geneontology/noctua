@@ -2360,7 +2360,8 @@ var BaristaLauncher = function(){
 	    }else{
 		ll("Skip broadcast of message (different signal).");
 	    }
-	}else if( response_okay_p && resp && ! resp.okay() ){
+	}else if( response_okay_p && resp &&
+		  (! resp.okay() || resp.message_type() === 'error') ){
 	    // Capture error responses from Minerva for the error
 	    // monitor. Skip SPARQL responses that lack useful
 	    // message/message_type fields.
