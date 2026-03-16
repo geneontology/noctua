@@ -1,0 +1,114 @@
+<div class="container">
+
+  <div class="header text-center">
+    <h2>Minerva Error Monitor</h2>
+  </div>
+
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      <h3 class="panel-title">Error responses from Minerva</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <script type="text/javascript"
+	      src="/socket.io/socket.io.js"></script>
+      <script type="text/javascript">
+	var errorTable;
+	jQuery(document).ready(function(){
+	    errorTable = jQuery('#error-table').DataTable({
+		autoWidth: true,
+		order: [[0, "desc"]],
+		pageLength: 25
+	    });
+
+	    // Connect to Socket.IO for real-time error updates.
+	    var socket = io.connect(window.location.origin);
+	    socket.on('minerva_error', function(data){
+		var rawB64 = btoa(unescape(encodeURIComponent(
+		    data.raw || '{}')));
+		errorTable.row.add([
+		    jQuery('<span/>').text(data.timestamp || '').html(),
+		    jQuery('<span/>').text(data.message || '').html(),
+		    jQuery('<span/>').text(data.message_type || '').html(),
+		    jQuery('<span/>').text(data.model_id || '').html(),
+		    jQuery('<span/>').text(data.user_id || '').html(),
+		    jQuery('<span/>').text(data.signal || '').html(),
+		    jQuery('<span/>').text(data.packet_id || '').html(),
+		    '<button class="btn btn-xs btn-default raw-btn" ' +
+			'data-raw="' + rawB64 + '">Raw</button>'
+		]).draw(false);
+	    });
+
+	    // Raw button handler (delegated).
+	    jQuery('#error-table').on('click', '.raw-btn', function(){
+		var rawB64 = jQuery(this).data('raw');
+		var rawJson = '{}';
+		try {
+		    rawJson = decodeURIComponent(escape(atob(rawB64)));
+		    rawJson = JSON.stringify(JSON.parse(rawJson), null, 2);
+		} catch(e) {
+		    rawJson = decodeURIComponent(escape(atob(rawB64)));
+		}
+		jQuery('#raw-modal-body').text(rawJson);
+		jQuery('#raw-modal').modal('show');
+	    });
+	});
+      </script>
+
+      <table id="error-table"
+	     class="table table-striped table-bordered table-hover">
+	<thead>
+	  <tr>
+	    <th>Timestamp</th>
+	    <th>Message</th>
+	    <th>Type</th>
+	    <th>Model ID</th>
+	    <th>User ID</th>
+	    <th>Signal</th>
+	    <th>Packet ID</th>
+	    <th>Raw</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#monitor_errors}}
+	  <tr>
+	    <td>{{timestamp}}</td>
+	    <td>{{message}}</td>
+	    <td>{{message_type}}</td>
+	    <td>{{model_id}}</td>
+	    <td>{{user_id}}</td>
+	    <td>{{signal}}</td>
+	    <td>{{packet_id}}</td>
+	    <td><button class="btn btn-xs btn-default raw-btn"
+			data-raw="{{raw_b64}}">Raw</button></td>
+	  </tr>
+	  {{/monitor_errors}}
+	</tbody>
+      </table>
+
+    </div>
+  </div>
+
+  <!-- Modal for raw JSON display. -->
+  <div class="modal fade" id="raw-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+	<div class="modal-header">
+	  <button type="button" class="close"
+		  data-dismiss="modal">&times;</button>
+	  <h4 class="modal-title">Raw Minerva Response</h4>
+	</div>
+	<div class="modal-body">
+	  <pre id="raw-modal-body"
+	       style="max-height:500px; overflow:auto;"></pre>
+	</div>
+	<div class="modal-footer">
+	  <button type="button" class="btn btn-default"
+		  data-dismiss="modal">Close</button>
+	</div>
+      </div>
+    </div>
+  </div>
+
+</div>

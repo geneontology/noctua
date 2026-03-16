@@ -1270,6 +1270,8 @@ var BaristaLauncher = function(){
     var monitor_messages = 0;
     var monitor_calls = 0;
     var monitor_last_op = {};
+    var monitor_errors = [];
+    var MONITOR_ERRORS_MAX = 100;
 
     ///
     /// Setup a REPL system first--we'll be running the app out of
@@ -1877,9 +1879,42 @@ var BaristaLauncher = function(){
 	    'barista_sessions': sessions,
 	    'barista_user_reset': barista_user_reset,
 	    'barista_user_refresh': barista_user_refresh,
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
 	    'title': notw + ': Status'
 	};
 	var out = pup_tent.render('barista_status.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
+	_standard_response(res, 200, 'text/html', out);
+    });
+
+    // Admin-only error monitor page showing Minerva error responses.
+    messaging_app.get('/error_monitor', function(req, res) {
+
+	var sess_stat = _session_status(req);
+	if( sess_stat !== SESS_GOOD_ADMIN ){
+	    _standard_response(res, 403, 'text/html',
+			       'Error monitor requires admin access.');
+	    return;
+	}
+
+	var token = _get_token(req);
+	var errors_for_display = monitor_errors.slice().reverse().map(
+	    function(e){
+		var copy = JSON.parse(JSON.stringify(e));
+		copy['raw_b64'] = Buffer.from(
+		    copy['raw'] || '{}').toString('base64');
+		return copy;
+	    });
+	var tmpl_args = {
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
+	    'monitor_errors_p': errors_for_display.length > 0,
+	    'monitor_errors': errors_for_display,
+	    'title': notw + ': Error Monitor'
+	};
+	var out = pup_tent.render('barista_error_monitor.tmpl',
 				  tmpl_args,
 				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
@@ -2323,6 +2358,26 @@ var BaristaLauncher = function(){
 	    }else{
 		ll("Skip broadcast of message (different signal).");
 	    }
+	}else if( response_okay_p && resp && ! resp.okay() ){
+	    // Capture error responses from Minerva for the error
+	    // monitor.
+	    ll("Captured error response for monitor.");
+	    var error_record = {
+		'timestamp': new Date().toISOString(),
+		'message_type': resp.message_type() || 'unknown',
+		'message': resp.message() || 'unknown',
+		'commentary': resp.commentary() || '',
+		'model_id': resp.model_id() || '',
+		'user_id': resp.user_id() || '',
+		'signal': resp.signal() || '',
+		'packet_id': resp.packet_id() || '',
+		'raw': JSON.stringify(resp.raw())
+	    };
+	    monitor_errors.push(error_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', error_record);
 	}
 
 	return response_okay_p;
