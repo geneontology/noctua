@@ -2374,12 +2374,37 @@ var BaristaLauncher = function(){
 		ll("Skip taxa error for monitor.");
 	    }else{
 		ll("Captured error response for monitor.");
+		// Try to extract model ID: first from the parsed
+		// response, then from the raw response data, then
+		// from the originating request body/query.
+		var error_model_id = resp.model_id() || '';
+		if( ! error_model_id &&
+		    raw_obj['data'] && raw_obj['data']['id'] ){
+		    error_model_id = raw_obj['data']['id'];
+		}
+		if( ! error_model_id && req_info ){
+		    try {
+			var req_str = req_info.body
+			    ? req_info.body.requests
+			    : (req_info.query
+			       ? req_info.query.requests : null);
+			if( req_str ){
+			    var req_parsed = JSON.parse(req_str);
+			    if( req_parsed && req_parsed[0] &&
+				req_parsed[0]['model-id'] ){
+				error_model_id = req_parsed[0]['model-id'];
+			    }
+			}
+		    }catch(extract_e){
+			// Best effort; leave empty.
+		    }
+		}
 		var error_record = {
 		    'timestamp': new Date().toISOString(),
 		    'message_type': resp.message_type() || 'unknown',
 		    'message': resp.message() || 'unknown',
 		    'commentary': resp.commentary() || '',
-		    'model_id': resp.model_id() || '',
+		    'model_id': error_model_id,
 		    'user_id': resp.user_id() || '',
 		    'signal': resp.signal() || '',
 		    'packet_id': resp.packet_id() || '',
