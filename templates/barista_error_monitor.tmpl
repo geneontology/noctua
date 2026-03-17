@@ -66,9 +66,11 @@
 		order: [[0, "desc"]],
 		pageLength: 25,
 		createdRow: function(row, data, dataIndex){
-		    // data[2] is the Type column; apply muted style
-		    // for non-Minerva error categories.
-		    if( data[2] === 'parse_error' ){
+		    // Apply muted style for non-Minerva error
+		    // categories using the data attribute set on
+		    // server-rendered rows.
+		    if( jQuery(row).data('category') &&
+			jQuery(row).data('category') !== 'minerva' ){
 			jQuery(row).addClass('filtered-error');
 		    }
 		}
@@ -130,7 +132,7 @@
       <div class="checkbox" style="margin-bottom: 10px;">
 	<label>
 	  <input type="checkbox" id="toggle-filtered" checked>
-	  Show filtered errors (e.g. parse errors)
+	  Show filtered errors (e.g. parse errors, unexpected responses)
 	</label>
       </div>
 
@@ -152,7 +154,7 @@
 	</thead>
 	<tbody>
 	  {{#monitor_errors}}
-	  <tr{{#category_is_filtered}} class="filtered-error"{{/category_is_filtered}}>
+	  <tr data-category="{{category}}"{{#category_is_filtered}} class="filtered-error"{{/category_is_filtered}}>
 	    <td>{{timestamp}}</td>
 	    <td>{{message}}</td>
 	    <td>{{message_type}}</td>

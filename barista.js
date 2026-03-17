@@ -2442,6 +2442,32 @@ var BaristaLauncher = function(){
 		}
 		sio.emit('minerva_error', error_record);
 	    }
+	}else if( response_okay_p && resp ){
+	    // Response parsed and is okay, but fell through both
+	    // branches (e.g. no model_id and not typed as error).
+	    // Capture as an unexpected response so it surfaces in the
+	    // error monitor rather than being silently dropped.
+	    var uncat_raw_obj = resp.raw() || {};
+	    var uncat_raw_str = JSON.stringify(uncat_raw_obj);
+	    var uncat_record = {
+		'timestamp': new Date().toISOString(),
+		'category': 'unexpected',
+		'message_type': resp.message_type() || 'unknown',
+		'message': resp.message() || 'Uncategorized response',
+		'commentary': resp.commentary() || '',
+		'model_id': resp.model_id() || '',
+		'user_id': resp.user_id() || '',
+		'signal': resp.signal() || '',
+		'packet_id': resp.packet_id() || '',
+		'ip': (req_info && req_info.ip) || '',
+		'raw': uncat_raw_str,
+		'request_raw': JSON.stringify(req_info || {})
+	    };
+	    monitor_errors.push(uncat_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', uncat_record);
 	}
 
 	return response_okay_p;
