@@ -1270,6 +1270,8 @@ var BaristaLauncher = function(){
     var monitor_messages = 0;
     var monitor_calls = 0;
     var monitor_last_op = {};
+    var monitor_errors = [];
+    var MONITOR_ERRORS_MAX = 100;
 
     ///
     /// Setup a REPL system first--we'll be running the app out of
@@ -1877,9 +1879,46 @@ var BaristaLauncher = function(){
 	    'barista_sessions': sessions,
 	    'barista_user_reset': barista_user_reset,
 	    'barista_user_refresh': barista_user_refresh,
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
 	    'title': notw + ': Status'
 	};
 	var out = pup_tent.render('barista_status.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
+	_standard_response(res, 200, 'text/html', out);
+    });
+
+    // Admin-only error monitor page showing Minerva error responses.
+    messaging_app.get('/error_monitor', function(req, res) {
+
+	var sess_stat = _session_status(req);
+	if( sess_stat !== SESS_GOOD_ADMIN ){
+	    _standard_response(res, 403, 'text/html',
+			       'Error monitor requires admin access.');
+	    return;
+	}
+
+	var token = _get_token(req);
+	var errors_for_display = monitor_errors.slice().reverse().map(
+	    function(e){
+		var copy = JSON.parse(JSON.stringify(e));
+		copy['raw_b64'] = Buffer.from(
+		    copy['raw'] || '{}').toString('base64');
+		copy['request_raw_b64'] = Buffer.from(
+		    copy['request_raw'] || '{}').toString('base64');
+		copy['category_is_filtered'] =
+		    copy['category'] && copy['category'] !== 'minerva';
+		return copy;
+	    });
+	var tmpl_args = {
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
+	    'monitor_errors_p': errors_for_display.length > 0,
+	    'monitor_errors': errors_for_display,
+	    'title': notw + ': Error Monitor'
+	};
+	var out = pup_tent.render('barista_error_monitor.tmpl',
 				  tmpl_args,
 				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
@@ -2284,7 +2323,7 @@ var BaristaLauncher = function(){
     ///
 
     // Generic function for notifying listeners of some events.
-    function _notify_listeners(json_string){
+    function _notify_listeners(json_string, req_info){
 
 	// Now what should we do with the JSON? Check it.
 	var response_okay_p = true;
@@ -2297,6 +2336,27 @@ var BaristaLauncher = function(){
 	}catch(e){
 	    response_okay_p = false;
 	    ll("unparsable response: " + json_string);
+
+	    // Capture unparseable responses for the error monitor.
+	    var parse_error_record = {
+		'timestamp': new Date().toISOString(),
+		'category': 'parse_error',
+		'message_type': 'parse_error',
+		'message': 'Unparseable response from Minerva',
+		'commentary': e.message || '',
+		'model_id': '',
+		'user_id': '',
+		'signal': '',
+		'packet_id': '',
+		'ip': (req_info && req_info.ip) || '',
+		'raw': json_string || '',
+		'request_raw': JSON.stringify(req_info || {})
+	    };
+	    monitor_errors.push(parse_error_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', parse_error_record);
 	}
 
 	// Emit to all listeners--cannot target all but call since
@@ -2305,7 +2365,8 @@ var BaristaLauncher = function(){
 	// For filtering, there is a unique ID from Minerva so
 	// that they can block messages they've heard
 	// before--similar to the current model filtering. Ish.
-	if( response_okay_p && resp && resp.okay() && resp.model_id() ){
+	if( response_okay_p && resp && resp.okay() && resp.model_id() &&
+	    resp.message_type() !== 'error' ){
 	    if( resp.intention() !== 'action' ){
 		ll("Skip broadcast of message (non-action).");
 	    }else if( resp.signal() === 'merge' ){
@@ -2322,6 +2383,64 @@ var BaristaLauncher = function(){
 				   'data': resp.raw()});
 	    }else{
 		ll("Skip broadcast of message (different signal).");
+	    }
+	}else if( response_okay_p && resp &&
+		  (! resp.okay() || resp.message_type() === 'error') ){
+	    // Capture error responses from Minerva for the error
+	    // monitor. Skip SPARQL responses that lack useful
+	    // message/message_type fields.
+	    var raw_obj = resp.raw() || {};
+	    var raw_str = JSON.stringify(raw_obj);
+	    if( 'sparql' in raw_obj ){
+		ll("Skip SPARQL error for monitor.");
+	    }else if( 'taxa' in raw_obj ){
+		ll("Skip taxa error for monitor.");
+	    }else{
+		ll("Captured error response for monitor.");
+		// Try to extract model ID: first from the parsed
+		// response, then from the raw response data, then
+		// from the originating request body/query.
+		var error_model_id = resp.model_id() || '';
+		if( ! error_model_id &&
+		    raw_obj['data'] && raw_obj['data']['id'] ){
+		    error_model_id = raw_obj['data']['id'];
+		}
+		if( ! error_model_id && req_info ){
+		    try {
+			var req_str = req_info.body
+			    ? req_info.body.requests
+			    : (req_info.query
+			       ? req_info.query.requests : null);
+			if( req_str ){
+			    var req_parsed = JSON.parse(req_str);
+			    if( req_parsed && req_parsed[0] &&
+				req_parsed[0]['model-id'] ){
+				error_model_id = req_parsed[0]['model-id'];
+			    }
+			}
+		    }catch(extract_e){
+			// Best effort; leave empty.
+		    }
+		}
+		var error_record = {
+		    'timestamp': new Date().toISOString(),
+		    'category': 'minerva',
+		    'message_type': resp.message_type() || 'unknown',
+		    'message': resp.message() || 'unknown',
+		    'commentary': resp.commentary() || '',
+		    'model_id': error_model_id,
+		    'user_id': resp.user_id() || '',
+		    'signal': resp.signal() || '',
+		    'packet_id': resp.packet_id() || '',
+		    'ip': (req_info && req_info.ip) || '',
+		    'raw': raw_str,
+		    'request_raw': JSON.stringify(req_info || {})
+		};
+		monitor_errors.push(error_record);
+		if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		    monitor_errors.shift();
+		}
+		sio.emit('minerva_error', error_record);
 	    }
 	}
 
@@ -2519,7 +2638,13 @@ var BaristaLauncher = function(){
 	    var json_string = _extract_json_from_jsonp(possibly_jsonp);
 
 	    // Notify listeners of model.
-	    _notify_listeners(json_string);
+	    _notify_listeners(json_string, {
+		'method': req.method,
+		'url': req.url,
+		'params': req.params,
+		'query': req.query,
+		'ip': req.ip
+	    });
 	});
     });
 
@@ -2676,7 +2801,13 @@ var BaristaLauncher = function(){
 
 			// Notify any listeners.
 			var json_string = _extract_json_from_jsonp(proxied_body);
-			_notify_listeners(json_string);
+			_notify_listeners(json_string, {
+			    'method': req.method,
+			    'url': req.url,
+			    'params': req.params,
+			    'body': decoded_body,
+			    'ip': req.ip
+			});
 
 			// Well, three down, but we're finally
 			// here. Send our data back up to the top.
