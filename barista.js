@@ -2383,6 +2383,7 @@ var BaristaLauncher = function(){
 		    'user_id': resp.user_id() || '',
 		    'signal': resp.signal() || '',
 		    'packet_id': resp.packet_id() || '',
+		    'ip': (req_info && req_info.ip) || '',
 		    'raw': raw_str,
 		    'request_raw': JSON.stringify(req_info || {})
 		};
@@ -2592,7 +2593,8 @@ var BaristaLauncher = function(){
 		'method': req.method,
 		'url': req.url,
 		'params': req.params,
-		'query': req.query
+		'query': req.query,
+		'ip': req.ip
 	    });
 	});
     });
@@ -2754,7 +2756,8 @@ var BaristaLauncher = function(){
 			    'method': req.method,
 			    'url': req.url,
 			    'params': req.params,
-			    'body': decoded_body
+			    'body': decoded_body,
+			    'ip': req.ip
 			});
 
 			// Well, three down, but we're finally

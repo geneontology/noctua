@@ -68,6 +68,7 @@
 		    jQuery('<span/>').text(data.message_type || '').html(),
 		    jQuery('<span/>').text(data.model_id || '').html(),
 		    jQuery('<span/>').text(data.user_id || '').html(),
+		    jQuery('<span/>').text(data.ip || '').html(),
 		    jQuery('<span/>').text(data.signal || '').html(),
 		    jQuery('<span/>').text(data.packet_id || '').html(),
 		    '<button class="btn btn-xs btn-default raw-btn" ' +
@@ -104,6 +105,7 @@
 	    <th>Type</th>
 	    <th>Model ID</th>
 	    <th>User ID</th>
+	    <th>IP</th>
 	    <th>Signal</th>
 	    <th>Packet ID</th>
 	    <th>Raw</th>
@@ -118,6 +120,7 @@
 	    <td>{{message_type}}</td>
 	    <td>{{model_id}}</td>
 	    <td>{{user_id}}</td>
+	    <td>{{ip}}</td>
 	    <td>{{signal}}</td>
 	    <td>{{packet_id}}</td>
 	    <td><button class="btn btn-xs btn-default raw-btn"
