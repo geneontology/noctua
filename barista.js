@@ -1907,6 +1907,8 @@ var BaristaLauncher = function(){
 		    copy['raw'] || '{}').toString('base64');
 		copy['request_raw_b64'] = Buffer.from(
 		    copy['request_raw'] || '{}').toString('base64');
+		copy['category_is_filtered'] =
+		    copy['category'] && copy['category'] !== 'minerva';
 		return copy;
 	    });
 	var tmpl_args = {
@@ -2334,6 +2336,27 @@ var BaristaLauncher = function(){
 	}catch(e){
 	    response_okay_p = false;
 	    ll("unparsable response: " + json_string);
+
+	    // Capture unparseable responses for the error monitor.
+	    var parse_error_record = {
+		'timestamp': new Date().toISOString(),
+		'category': 'parse_error',
+		'message_type': 'parse_error',
+		'message': 'Unparseable response from Minerva',
+		'commentary': e.message || '',
+		'model_id': '',
+		'user_id': '',
+		'signal': '',
+		'packet_id': '',
+		'ip': (req_info && req_info.ip) || '',
+		'raw': json_string || '',
+		'request_raw': JSON.stringify(req_info || {})
+	    };
+	    monitor_errors.push(parse_error_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', parse_error_record);
 	}
 
 	// Emit to all listeners--cannot target all but call since
@@ -2401,6 +2424,7 @@ var BaristaLauncher = function(){
 		}
 		var error_record = {
 		    'timestamp': new Date().toISOString(),
+		    'category': 'minerva',
 		    'message_type': resp.message_type() || 'unknown',
 		    'message': resp.message() || 'unknown',
 		    'commentary': resp.commentary() || '',

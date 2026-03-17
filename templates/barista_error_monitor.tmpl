@@ -11,6 +11,12 @@
 
     <div class="panel-body">
 
+      <style>
+	tr.filtered-error { opacity: 0.45; }
+	tr.filtered-error td { font-style: italic; }
+	.hide-filtered tr.filtered-error { display: none; }
+      </style>
+
       <script type="text/javascript"
 	      src="/socket.io/socket.io.js"></script>
       <script type="text/javascript">
@@ -58,7 +64,25 @@
 	    errorTable = jQuery('#error-table').DataTable({
 		autoWidth: true,
 		order: [[0, "desc"]],
-		pageLength: 25
+		pageLength: 25,
+		createdRow: function(row, data, dataIndex){
+		    // data[2] is the Type column; apply muted style
+		    // for non-Minerva error categories.
+		    if( data[2] === 'parse_error' ){
+			jQuery(row).addClass('filtered-error');
+		    }
+		}
+	    });
+
+	    // Toggle visibility of filtered/non-Minerva errors.
+	    jQuery('#toggle-filtered').on('change', function(){
+		if( jQuery(this).is(':checked') ){
+		    jQuery('#error-table').closest('.dataTables_wrapper')
+			.removeClass('hide-filtered');
+		}else{
+		    jQuery('#error-table').closest('.dataTables_wrapper')
+			.addClass('hide-filtered');
+		}
 	    });
 
 	    // Connect to Socket.IO for real-time error updates.
@@ -66,7 +90,7 @@
 	    socket.on('minerva_error', function(data){
 		var rawB64 = _b64Encode(data.raw);
 		var reqB64 = _b64Encode(data.request_raw);
-		errorTable.row.add([
+		var rowNode = errorTable.row.add([
 		    jQuery('<span/>').text(data.timestamp || '').html(),
 		    jQuery('<span/>').text(data.message || '').html(),
 		    jQuery('<span/>').text(data.message_type || '').html(),
@@ -79,7 +103,10 @@
 			'data-raw="' + rawB64 + '">Raw</button>',
 		    '<button class="btn btn-xs btn-info req-btn" ' +
 			'data-raw="' + reqB64 + '">Req</button>'
-		]).draw(false);
+		]).draw(false).node();
+		if( data.category && data.category !== 'minerva' ){
+		    jQuery(rowNode).addClass('filtered-error');
+		}
 	    });
 
 	    // Raw response button handler (delegated).
@@ -100,6 +127,13 @@
 	});
       </script>
 
+      <div class="checkbox" style="margin-bottom: 10px;">
+	<label>
+	  <input type="checkbox" id="toggle-filtered" checked>
+	  Show filtered errors (e.g. parse errors)
+	</label>
+      </div>
+
       <table id="error-table"
 	     class="table table-striped table-bordered table-hover">
 	<thead>
@@ -118,7 +152,7 @@
 	</thead>
 	<tbody>
 	  {{#monitor_errors}}
-	  <tr>
+	  <tr{{#category_is_filtered}} class="filtered-error"{{/category_is_filtered}}>
 	    <td>{{timestamp}}</td>
 	    <td>{{message}}</td>
 	    <td>{{message_type}}</td>
