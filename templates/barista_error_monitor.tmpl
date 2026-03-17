@@ -44,7 +44,11 @@
 	    try {
 		var raw = decodeURIComponent(escape(atob(b64)));
 		var parsed = _deepParseJson(JSON.parse(raw));
-		return JSON.stringify(parsed, null, 2);
+		var pretty = JSON.stringify(parsed, null, 2);
+		// Unescape newlines and tabs so that multi-line
+		// strings (e.g. Java stack traces in commentary)
+		// render readably in the <pre> block.
+		return pretty.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
 	    } catch(e) {
 		return decodeURIComponent(escape(atob(b64)));
 	    }
