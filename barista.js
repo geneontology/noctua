@@ -35,6 +35,7 @@ var bar_response = require('bbop-response-barista');
 // We will require our own http client for proxying POST requests with
 // modifications.
 var http = require('http');
+var https = require('https');
 
 ///
 /// Helpers.
@@ -1270,6 +1271,8 @@ var BaristaLauncher = function(){
     var monitor_messages = 0;
     var monitor_calls = 0;
     var monitor_last_op = {};
+    var monitor_errors = [];
+    var MONITOR_ERRORS_MAX = 100;
 
     ///
     /// Setup a REPL system first--we'll be running the app out of
@@ -1877,9 +1880,46 @@ var BaristaLauncher = function(){
 	    'barista_sessions': sessions,
 	    'barista_user_reset': barista_user_reset,
 	    'barista_user_refresh': barista_user_refresh,
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
 	    'title': notw + ': Status'
 	};
 	var out = pup_tent.render('barista_status.tmpl',
+				  tmpl_args,
+				  'barista_base.tmpl');
+	_standard_response(res, 200, 'text/html', out);
+    });
+
+    // Admin-only error monitor page showing Minerva error responses.
+    messaging_app.get('/error_monitor', function(req, res) {
+
+	var sess_stat = _session_status(req);
+	if( sess_stat !== SESS_GOOD_ADMIN ){
+	    _standard_response(res, 403, 'text/html',
+			       'Error monitor requires admin access.');
+	    return;
+	}
+
+	var token = _get_token(req);
+	var errors_for_display = monitor_errors.slice().reverse().map(
+	    function(e){
+		var copy = JSON.parse(JSON.stringify(e));
+		copy['raw_b64'] = Buffer.from(
+		    copy['raw'] || '{}').toString('base64');
+		copy['request_raw_b64'] = Buffer.from(
+		    copy['request_raw'] || '{}').toString('base64');
+		copy['category_is_filtered'] =
+		    copy['category'] && copy['category'] !== 'minerva';
+		return copy;
+	    });
+	var tmpl_args = {
+	    'barista_error_monitor':
+		_build_token_link('/error_monitor', token),
+	    'monitor_errors_p': errors_for_display.length > 0,
+	    'monitor_errors': errors_for_display,
+	    'title': notw + ': Error Monitor'
+	};
+	var out = pup_tent.render('barista_error_monitor.tmpl',
 				  tmpl_args,
 				  'barista_base.tmpl');
 	_standard_response(res, 200, 'text/html', out);
@@ -1906,6 +1946,184 @@ var BaristaLauncher = function(){
 	var fin = JSON.stringify(ret_obj);
 	ll('got user info for:' + fin['uri']);
 	_standard_response(res, 200, 'application/json', fin);
+    });
+
+    // REST service that exchanges a GitHub access token for a Barista
+    // session token. The GitHub token is validated against the GitHub
+    // API, the resulting username is looked up in users.yaml, and a
+    // Barista session is created if the user is authorized.
+    //
+    // POST /auth/token/exchange
+    // Body (JSON): { "github_access_token": "gho_..." }
+    // Success: 200 { "token": "...", "nickname": "...", "uri": "..." }
+    // Failure: 401/403 { "error": "..." }
+    //
+    // Rate limiting: simple per-IP tracking, 10 requests per minute.
+    //
+    // Vibe coded by Claude (Opus 4.6) with SJC, 2026-03-21.
+    var _token_exchange_attempts = {};
+    var TOKEN_EXCHANGE_RATE_LIMIT = 10;
+    var TOKEN_EXCHANGE_RATE_WINDOW_MS = 60 * 1000;
+
+    messaging_app.post('/auth/token/exchange', function(req, res) {
+
+	// Rate limiting by IP.
+	var client_ip = req.headers['x-forwarded-for'] ||
+	    req.connection.remoteAddress || 'unknown';
+	var now = Date.now();
+	if( ! _token_exchange_attempts[client_ip] ){
+	    _token_exchange_attempts[client_ip] = [];
+	}
+	// Prune old attempts outside the window.
+	_token_exchange_attempts[client_ip] =
+	    us.filter(_token_exchange_attempts[client_ip], function(t){
+		return (now - t) < TOKEN_EXCHANGE_RATE_WINDOW_MS;
+	    });
+	if( _token_exchange_attempts[client_ip].length >=
+	    TOKEN_EXCHANGE_RATE_LIMIT ){
+	    ll('token exchange rate limited for: ' + client_ip);
+	    var rl_body = JSON.stringify({'error': 'rate limit exceeded'});
+	    _standard_response(res, 429, 'application/json', rl_body);
+	    return;
+	}
+	_token_exchange_attempts[client_ip].push(now);
+
+	// Collect POST body (following existing barista.js idiom).
+	var full_body = '';
+	req.on('data', function(chunk) {
+	    // Guard against oversized payloads.
+	    full_body += chunk.toString();
+	    if( full_body.length > 4096 ){
+		full_body = '';
+		res.writeHead(413, {'Content-Type': 'application/json'});
+		res.end(JSON.stringify({'error': 'payload too large'}));
+		req.destroy();
+	    }
+	});
+	req.on('end', function() {
+
+	    // Parse body.
+	    var parsed = null;
+	    try {
+		parsed = JSON.parse(full_body);
+	    }catch(e){
+		// Bad JSON.
+	    }
+
+	    var github_token = null;
+	    if( parsed && us.isString(parsed['github_access_token']) ){
+		github_token = parsed['github_access_token'];
+	    }
+
+	    if( ! github_token ){
+		ll('token exchange: missing or invalid github_access_token');
+		var bad_body = JSON.stringify(
+		    {'error': 'missing github_access_token'});
+		_standard_response(res, 400, 'application/json', bad_body);
+		return;
+	    }
+
+	    // Validate the GitHub access token by calling the GitHub
+	    // API. This is the only way to confirm the token is real
+	    // and to get the associated username.
+	    var gh_options = {
+		hostname: 'api.github.com',
+		path: '/user',
+		method: 'GET',
+		headers: {
+		    'Authorization': 'Bearer ' + github_token,
+		    'Accept': 'application/json',
+		    'User-Agent': 'Barista-Token-Exchange'
+		}
+	    };
+
+	    var gh_req = https.request(gh_options, function(gh_res) {
+
+		var gh_body = '';
+		gh_res.on('data', function(chunk) {
+		    gh_body += chunk.toString();
+		});
+		gh_res.on('end', function() {
+
+		    // GitHub returns non-200 for bad tokens.
+		    if( gh_res.statusCode !== 200 ){
+			ll('token exchange: GitHub rejected token ' +
+			   '(status ' + gh_res.statusCode + ')');
+			var gh_err = JSON.stringify(
+			    {'error': 'authentication failed'});
+			_standard_response(res, 401,
+					   'application/json', gh_err);
+			return;
+		    }
+
+		    // Parse GitHub response.
+		    var gh_user = null;
+		    try {
+			gh_user = JSON.parse(gh_body);
+		    }catch(e){
+			// Bad response from GitHub.
+		    }
+
+		    var github_username = null;
+		    if( gh_user && us.isString(gh_user['login']) ){
+			github_username = gh_user['login'];
+		    }
+
+		    if( ! github_username ){
+			ll('token exchange: GitHub response missing login');
+			var no_login = JSON.stringify(
+			    {'error': 'authentication failed'});
+			_standard_response(res, 401,
+					   'application/json', no_login);
+			return;
+		    }
+
+		    ll('token exchange: GitHub user validated: ' +
+		       github_username);
+
+		    // Look up and create session using existing
+		    // Sessioner infrastructure -- same path as the
+		    // OAuth callback.
+		    var sess = sessioner.create_session_by_provider(
+			'github', github_username);
+
+		    if( ! sess || ! sess['token'] ){
+			ll('token exchange: user not authorized: ' +
+			   github_username);
+			var no_auth = JSON.stringify(
+			    {'error': 'authorization failed'});
+			_standard_response(res, 403,
+					   'application/json', no_auth);
+			return;
+		    }
+
+		    ll('token exchange: session created for: ' +
+		       github_username + ' (' + sess['uri'] + ')');
+
+		    // Return minimal session info -- token plus
+		    // enough context for the caller to confirm
+		    // identity.
+		    var ret = {
+			'token': sess['token'],
+			'uri': sess['uri'],
+			'nickname': sess['nickname'],
+			'groups': sess['groups']
+		    };
+		    var ok_body = JSON.stringify(ret);
+		    _standard_response(res, 200,
+				       'application/json', ok_body);
+		});
+	    });
+
+	    gh_req.on('error', function(err) {
+		ll('token exchange: GitHub API error: ' + err.message);
+		var api_err = JSON.stringify(
+		    {'error': 'authentication failed'});
+		_standard_response(res, 502, 'application/json', api_err);
+	    });
+
+	    gh_req.end();
+	});
     });
 
     // REST service that returns available information for a user by
@@ -2284,7 +2502,7 @@ var BaristaLauncher = function(){
     ///
 
     // Generic function for notifying listeners of some events.
-    function _notify_listeners(json_string){
+    function _notify_listeners(json_string, req_info){
 
 	// Now what should we do with the JSON? Check it.
 	var response_okay_p = true;
@@ -2297,6 +2515,27 @@ var BaristaLauncher = function(){
 	}catch(e){
 	    response_okay_p = false;
 	    ll("unparsable response: " + json_string);
+
+	    // Capture unparseable responses for the error monitor.
+	    var parse_error_record = {
+		'timestamp': new Date().toISOString(),
+		'category': 'parse_error',
+		'message_type': 'parse_error',
+		'message': 'Unparseable response from Minerva',
+		'commentary': e.message || '',
+		'model_id': '',
+		'user_id': '',
+		'signal': '',
+		'packet_id': '',
+		'ip': (req_info && req_info.ip) || '',
+		'raw': json_string || '',
+		'request_raw': JSON.stringify(req_info || {})
+	    };
+	    monitor_errors.push(parse_error_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', parse_error_record);
 	}
 
 	// Emit to all listeners--cannot target all but call since
@@ -2305,7 +2544,8 @@ var BaristaLauncher = function(){
 	// For filtering, there is a unique ID from Minerva so
 	// that they can block messages they've heard
 	// before--similar to the current model filtering. Ish.
-	if( response_okay_p && resp && resp.okay() && resp.model_id() ){
+	if( response_okay_p && resp && resp.okay() && resp.model_id() &&
+	    resp.message_type() !== 'error' ){
 	    if( resp.intention() !== 'action' ){
 		ll("Skip broadcast of message (non-action).");
 	    }else if( resp.signal() === 'merge' ){
@@ -2323,6 +2563,90 @@ var BaristaLauncher = function(){
 	    }else{
 		ll("Skip broadcast of message (different signal).");
 	    }
+	}else if( response_okay_p && resp &&
+		  (! resp.okay() || resp.message_type() === 'error') ){
+	    // Capture error responses from Minerva for the error
+	    // monitor. Skip SPARQL responses that lack useful
+	    // message/message_type fields.
+	    var raw_obj = resp.raw() || {};
+	    var raw_str = JSON.stringify(raw_obj);
+	    if( 'sparql' in raw_obj ){
+		ll("Skip SPARQL error for monitor.");
+	    }else if( 'taxa' in raw_obj ){
+		ll("Skip taxa error for monitor.");
+	    }else{
+		ll("Captured error response for monitor.");
+		// Try to extract model ID: first from the parsed
+		// response, then from the raw response data, then
+		// from the originating request body/query.
+		var error_model_id = resp.model_id() || '';
+		if( ! error_model_id &&
+		    raw_obj['data'] && raw_obj['data']['id'] ){
+		    error_model_id = raw_obj['data']['id'];
+		}
+		if( ! error_model_id && req_info ){
+		    try {
+			var req_str = req_info.body
+			    ? req_info.body.requests
+			    : (req_info.query
+			       ? req_info.query.requests : null);
+			if( req_str ){
+			    var req_parsed = JSON.parse(req_str);
+			    if( req_parsed && req_parsed[0] &&
+				req_parsed[0]['model-id'] ){
+				error_model_id = req_parsed[0]['model-id'];
+			    }
+			}
+		    }catch(extract_e){
+			// Best effort; leave empty.
+		    }
+		}
+		var error_record = {
+		    'timestamp': new Date().toISOString(),
+		    'category': 'minerva',
+		    'message_type': resp.message_type() || 'unknown',
+		    'message': resp.message() || 'unknown',
+		    'commentary': resp.commentary() || '',
+		    'model_id': error_model_id,
+		    'user_id': resp.user_id() || '',
+		    'signal': resp.signal() || '',
+		    'packet_id': resp.packet_id() || '',
+		    'ip': (req_info && req_info.ip) || '',
+		    'raw': raw_str,
+		    'request_raw': JSON.stringify(req_info || {})
+		};
+		monitor_errors.push(error_record);
+		if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		    monitor_errors.shift();
+		}
+		sio.emit('minerva_error', error_record);
+	    }
+	}else if( response_okay_p && resp ){
+	    // Response parsed and is okay, but fell through both
+	    // branches (e.g. no model_id and not typed as error).
+	    // Capture as an unexpected response so it surfaces in the
+	    // error monitor rather than being silently dropped.
+	    var uncat_raw_obj = resp.raw() || {};
+	    var uncat_raw_str = JSON.stringify(uncat_raw_obj);
+	    var uncat_record = {
+		'timestamp': new Date().toISOString(),
+		'category': 'unexpected',
+		'message_type': resp.message_type() || 'unknown',
+		'message': resp.message() || 'Uncategorized response',
+		'commentary': resp.commentary() || '',
+		'model_id': resp.model_id() || '',
+		'user_id': resp.user_id() || '',
+		'signal': resp.signal() || '',
+		'packet_id': resp.packet_id() || '',
+		'ip': (req_info && req_info.ip) || '',
+		'raw': uncat_raw_str,
+		'request_raw': JSON.stringify(req_info || {})
+	    };
+	    monitor_errors.push(uncat_record);
+	    if( monitor_errors.length > MONITOR_ERRORS_MAX ){
+		monitor_errors.shift();
+	    }
+	    sio.emit('minerva_error', uncat_record);
 	}
 
 	return response_okay_p;
@@ -2519,7 +2843,13 @@ var BaristaLauncher = function(){
 	    var json_string = _extract_json_from_jsonp(possibly_jsonp);
 
 	    // Notify listeners of model.
-	    _notify_listeners(json_string);
+	    _notify_listeners(json_string, {
+		'method': req.method,
+		'url': req.url,
+		'params': req.params,
+		'query': req.query,
+		'ip': req.ip
+	    });
 	});
     });
 
@@ -2676,7 +3006,13 @@ var BaristaLauncher = function(){
 
 			// Notify any listeners.
 			var json_string = _extract_json_from_jsonp(proxied_body);
-			_notify_listeners(json_string);
+			_notify_listeners(json_string, {
+			    'method': req.method,
+			    'url': req.url,
+			    'params': req.params,
+			    'body': decoded_body,
+			    'ip': req.ip
+			});
 
 			// Well, three down, but we're finally
 			// here. Send our data back up to the top.
