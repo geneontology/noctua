@@ -15,14 +15,6 @@ assignees: kltm, vanaukenk
 - [ ] Refresh minerva code with latest from minerva `master`
 - [ ] Run `replaced_by` term update on blazegraph SOP (@vanaukenk)
 - [ ] Cycle minerva to get latest ontology
+- [ ] restart barista (and noctua)
 - [ ] Update NEO
 - [ ] Check git push (next day)
-- [ ] TODO: What, if any, commands need to be run to update Noctua software
-  - [ ] TBD SOFTWARE TICKET 
-
----
-
-The following issues/PRs will be addressed in this outage:
-
-- [ ] 1
-- [ ] 2
