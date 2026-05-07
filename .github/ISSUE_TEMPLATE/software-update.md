@@ -3,7 +3,7 @@ name: Software update issue
 about: Create a new software update issue
 title: 'Software update: 20YY-MM-DD'
 labels: ''
-assignees: kltm, vanaukenk
+assignees: kltm, pgaudet
 
 ---
 
