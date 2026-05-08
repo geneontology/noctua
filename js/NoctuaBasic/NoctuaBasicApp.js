@@ -11,19 +11,19 @@ require('ngtouch'); // https://github.com/Foxandxss/angular-toastr
 
 
 var app = angular.module('noctuaBasicApp',
-    [require('angular-route'),
-     'ui.bootstrap',
-     require('angular-aria'),
-     'ngAnimate',
-     'ngTouch',
-     'toastr',
-     'bsTable',
-     'ui.select',
-     'ngSanitize',
-     'ui.grid', 'ui.grid.edit', 'ui.grid.rowEdit', 'ui.grid.cellNav', 'ui.grid.autoResize', 'ui.grid.resizeColumns']);
+  [require('angular-route'),
+    'ui.bootstrap',
+    require('angular-aria'),
+    'ngAnimate',
+    'ngTouch',
+    'toastr',
+    'bsTable',
+    'ui.select',
+    'ngSanitize',
+    'ui.grid', 'ui.grid.edit', 'ui.grid.rowEdit', 'ui.grid.cellNav', 'ui.grid.autoResize', 'ui.grid.resizeColumns']);
 
 
-app.config(['toastrConfig', function(toastrConfig) {
+app.config(['toastrConfig', function (toastrConfig) {
   angular.extend(toastrConfig, {
     allowHtml: false,
     closeButton: true,

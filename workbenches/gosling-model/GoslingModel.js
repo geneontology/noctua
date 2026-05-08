@@ -57,115 +57,119 @@ YASQE.defaults.sparql.endpoint = "http://rdf.geneontology.org/blazegraph/sparql"
 //YASQE.defaults.sparql.endpoint = "http://stove.lbl.gov/blazegraph/sparql";
 
 ///
-var GoslingInit = function(){
+var GoslingInit = function () {
 
-    var logger = new bbop.logger('gosling');
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
+  var logger = new bbop.logger('gosling');
+  logger.DEBUG = true;
 
-    ll('in');
-    
-    ///
-    /// Add option to dropdown.
-    ///
+  function ll(str) {
+    logger.kvetch(str);
+  }
 
-    // Attach to interface.
-    var app_map = {};
-    var selopts_str = [];
-    us.each(global_sparql_templates_model, function(tmpl){
-	var uuid = bbop.uuid();
+  ll('in');
 
-	// Mental.
-	app_map[uuid] = tmpl;
+  ///
+  /// Add option to dropdown.
+  ///
 
-	// Physical.
-	var str = '<option value="' + uuid + '">' + tmpl.title + '</option>';
-	selopts_str.push(str);
-    });
-    jQuery('#'+sparql_select_id).append(selopts_str.join(''));
+  // Attach to interface.
+  var app_map = {};
+  var selopts_str = [];
+  us.each(global_sparql_templates_model, function (tmpl) {
+    var uuid = bbop.uuid();
 
-    ///
-    /// Setup and glue YAS*.
-    ///
-    
-    var yasqe = YASQE(document.getElementById("yasqe"), {
-	sparql: {
-	    showQueryButton: true,
-	}
-    });
-    var yasr = YASR(document.getElementById("yasr"), {
-	//this way, the URLs in the results are prettified using the
-	//defined prefixes in the query
-	getUsedPrefixes: yasqe.getPrefixesFromQuery
-    });
-    
-    //link both together
-    yasqe.options.sparql.callbacks.complete = yasr.setResponse;
+    // Mental.
+    app_map[uuid] = tmpl;
 
-    ///
-    /// ...
-    ///
+    // Physical.
+    var str = '<option value="' + uuid + '">' + tmpl.title + '</option>';
+    selopts_str.push(str);
+  });
+  jQuery('#' + sparql_select_id).append(selopts_str.join(''));
 
-    var m = new sparql_manager();    
-    function _insertion(tmpl){
+  ///
+  /// Setup and glue YAS*.
+  ///
 
-	console.log('qstr1', qstr);
-	console.log('tmp', tmpl['query']);
-	var qstr = m.template(tmpl['query'],
-			      {"model_id": global_model_id});
-	console.log('qstr2', qstr);
-	
-	yasqe.setValue(qstr);
-	if( tmpl['endpoint'] ){
-	    var ep = tmpl['endpoint'];
-	    //yasqe.endpoint(tmpl['endpoint']);
-	    //yasqe.defaults.sparql.endpoint = ep;
-	    YASQE.defaults.sparql.endpoint = ep;
-	}
+  var yasqe = YASQE(document.getElementById("yasqe"), {
+    sparql: {
+      showQueryButton: true,
     }
+  });
+  var yasr = YASR(document.getElementById("yasr"), {
+    //this way, the URLs in the results are prettified using the
+    //defined prefixes in the query
+    getUsedPrefixes: yasqe.getPrefixesFromQuery
+  });
 
-    // Make the interface live.
-    jQuery("#"+sparql_select_id).change(function(){
-        var tmpl_id = jQuery(this).val();
-	console.log(tmpl_id);
-	var tmpl = app_map[tmpl_id];
-	console.log(tmpl);
-	console.log(app_map);
-	_insertion(tmpl);
-    });
+  //link both together
+  yasqe.options.sparql.callbacks.complete = yasr.setResponse;
 
-    // Insert first item.
-    var stu = global_sparql_templates_model;
-    if( stu && stu[0] ){
-	_insertion(stu[0]);
+  ///
+  /// ...
+  ///
+
+  var m = new sparql_manager();
+
+  function _insertion(tmpl) {
+
+    console.log('qstr1', qstr);
+    console.log('tmp', tmpl['query']);
+    var qstr = m.template(tmpl['query'],
+      {"model_id": global_model_id});
+    console.log('qstr2', qstr);
+
+    yasqe.setValue(qstr);
+    if (tmpl['endpoint']) {
+      var ep = tmpl['endpoint'];
+      //yasqe.endpoint(tmpl['endpoint']);
+      //yasqe.defaults.sparql.endpoint = ep;
+      YASQE.defaults.sparql.endpoint = ep;
     }
+  }
+
+  // Make the interface live.
+  jQuery("#" + sparql_select_id).change(function () {
+    var tmpl_id = jQuery(this).val();
+    console.log(tmpl_id);
+    var tmpl = app_map[tmpl_id];
+    console.log(tmpl);
+    console.log(app_map);
+    _insertion(tmpl);
+  });
+
+  // Insert first item.
+  var stu = global_sparql_templates_model;
+  if (stu && stu[0]) {
+    _insertion(stu[0]);
+  }
 };
 
 // Start the day the jQuery way.
-jQuery(document).ready(function(){
-    console.log('jQuery ready');
+jQuery(document).ready(function () {
+  console.log('jQuery ready');
 
-    // Try to define token.
-    var start_token = null;
-    if( global_barista_token ){
-	start_token = global_barista_token;
+  // Try to define token.
+  var start_token = null;
+  if (global_barista_token) {
+    start_token = global_barista_token;
+  }
+
+  // Next we need a manager to try and pull in the model.
+  if (typeof (global_minerva_definition_name) === 'undefined' ||
+    typeof (global_barista_location) === 'undefined') {
+    alert('environment not ready');
+  } else {
+    // Only roll if the env is correct.
+    // Will use the above variables internally (sorry).
+    GoslingInit();
+
+    // When all is said and done, let's also fillout the user
+    // name just for niceness. This is also a test of CORS in
+    // express.
+    if (start_token) {
+      widgetry.user_check(global_barista_location,
+        start_token, 'user_name_info', false);
     }
-
-    // Next we need a manager to try and pull in the model.
-    if( typeof(global_minerva_definition_name) === 'undefined' ||
-	typeof(global_barista_location) === 'undefined' ){
-	    alert('environment not ready');
-	}else{
-	    // Only roll if the env is correct.
-	    // Will use the above variables internally (sorry).
-	    GoslingInit();
-
-	    // When all is said and done, let's also fillout the user
-	    // name just for niceness. This is also a test of CORS in
-	    // express.
-	    if( start_token ){
-		widgetry.user_check(global_barista_location,
-				    start_token, 'user_name_info', false);
-	    }
-	}
+  }
 });

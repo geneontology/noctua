@@ -31,57 +31,58 @@ var request = require('request');
 
 // watch_mode is set by 'gulp watch' tasks to inhibit uglify (which is slow)
 var watch_mode = false;
+
 //var watch_mode = true;
 
-function _die(str){
-    console.error(str);
-    process.exit(-1);
+function _die(str) {
+  console.error(str);
+  process.exit(-1);
 }
 
 // Ping server; used during certain commands.
-function _ping_count(){
+function _ping_count() {
 
-    if( count_url && typeof(count_url) === 'string' && count_url !== '' ){
+  if (count_url && typeof (count_url) === 'string' && count_url !== '') {
 
-        request({
-            url: count_url
-        }, function(error, response, body){
-            if( error || response.statusCode !== 200 ){
-                console.log('Unable to ping: ' + count_url);
-            }else{
-                console.log('Pinged: ' + count_url);
-            }
-        });
-    }else{
-        console.log('Will not ping home.');
-    }
+    request({
+      url: count_url
+    }, function (error, response, body) {
+      if (error || response.statusCode !== 200) {
+        console.log('Unable to ping: ' + count_url);
+      } else {
+        console.log('Pinged: ' + count_url);
+      }
+    });
+  } else {
+    console.log('Will not ping home.');
+  }
 }
 
-function _tilde_expand(ufile){
+function _tilde_expand(ufile) {
+  return tilde(ufile);
+}
+
+function _tilde_expand_list(list) {
+  return us.map(list, function (ufile) {
+    //console.log('ufile: ' + ufile);
     return tilde(ufile);
+  });
 }
 
-function _tilde_expand_list(list){
-    return us.map(list, function(ufile){
-        //console.log('ufile: ' + ufile);
-        return tilde(ufile);
-    });
+function _run_cmd(command_bits) {
+  var final_command = command_bits.join(' ');
+  return ['echo \'' + final_command + '\'', final_command];
 }
 
-function _run_cmd(command_bits){
-    var final_command = command_bits.join(' ');
-    return ['echo \'' + final_command + '\'', final_command];
-}
+function _run_cmd_list(commands) {
+  var final_list = [];
 
-function _run_cmd_list(commands){
-    var final_list = [];
+  us.each(commands, function (cmd) {
+    final_list.push('echo \'' + cmd + '\'');
+    final_list.push(cmd);
+  });
 
-    us.each(commands, function(cmd){
-        final_list.push('echo \'' + cmd + '\'');
-        final_list.push(cmd);
-    });
-
-    return final_list;
+  return final_list;
 }
 
 ///
@@ -89,30 +90,30 @@ function _run_cmd_list(commands){
 ///
 
 var paths = {
-    // WARNING: Cannot use glob for clients--I use the explicit listing
-    // to generate a dynamic browserify set.
-    'form_noctua_clients': [
-	//'js/NoctuaBasic/NoctuaBasicApp.js'
-    ],
-    'core_noctua_clients': [
-    	'js/NoctuaEditor.js',
-    	'js/NoctuaLanding.js'
-    ],
-    // 'core_workbench_clients': [
-    //     // A temporary place for internal workspaces.
-    //     //'workbenches/copy_in_model/CopyInModel.js',
-    //     'workbenches/mmcc/MMCC.js',
-    //     'workbenches/bioentity_companion/BioentityCompanion.js',
-    //     'workbenches/companion/Companion.js',
-    //     'workbenches/cytoview/CytoView.js'
-    // ],
-    support: ['js/connectors-sugiyama.js'],
-    scripts: ['scripts/*'],
-    tests: ['tests/*.test.js'],
-    lint_targets: [
-	'js/NoctuaEditor.js',
-	'js/NoctuaLanding.js'
-    ]
+  // WARNING: Cannot use glob for clients--I use the explicit listing
+  // to generate a dynamic browserify set.
+  'form_noctua_clients': [
+    //'js/NoctuaBasic/NoctuaBasicApp.js'
+  ],
+  'core_noctua_clients': [
+    'js/NoctuaEditor.js',
+    'js/NoctuaLanding.js'
+  ],
+  // 'core_workbench_clients': [
+  //     // A temporary place for internal workspaces.
+  //     //'workbenches/copy_in_model/CopyInModel.js',
+  //     'workbenches/mmcc/MMCC.js',
+  //     'workbenches/bioentity_companion/BioentityCompanion.js',
+  //     'workbenches/companion/Companion.js',
+  //     'workbenches/cytoview/CytoView.js'
+  // ],
+  support: ['js/connectors-sugiyama.js'],
+  scripts: ['scripts/*'],
+  tests: ['tests/*.test.js'],
+  lint_targets: [
+    'js/NoctuaEditor.js',
+    'js/NoctuaLanding.js'
+  ]
 };
 
 // var paths = {
@@ -140,7 +141,7 @@ var paths = {
 
 // Testing with mocha/chai.
 // NOTE: I'm using chai here.
-gulp.task('unit-tests', function() {
+gulp.task('unit-tests', function () {
   return gulp.src(paths.tests, {
     read: false
   }).pipe(mocha({
@@ -152,28 +153,28 @@ gulp.task('unit-tests', function() {
   }));
 });
 
-gulp.task('lint-tests', function(){
-    return gulp.src(paths.lint_targets)
-	.pipe(jshint('./config/jshintrc'))
-	.pipe(jshint.reporter('fail'));
+gulp.task('lint-tests', function () {
+  return gulp.src(paths.lint_targets)
+    .pipe(jshint('./config/jshintrc'))
+    .pipe(jshint.reporter('fail'));
 });
 
 gulp.task('test', ['unit-tests', 'lint-tests']);
 
 //
-gulp.task('ready-non-commonjs-libs', function() {
+gulp.task('ready-non-commonjs-libs', function () {
   var pkg = require('./package.json');
-  us.each(pkg.browser, function(val, key) {
+  us.each(pkg.browser, function (val, key) {
     console.log('copy: ' + key);
     gulp.src(val)
       .pipe(gulp.dest('./deploy/'));
   });
 });
 
-gulp.task('copy-css-from-npm-deps', function() {
+gulp.task('copy-css-from-npm-deps', function () {
   gulp.src('./node_modules/**/*.css', {
-      base: './node_modules'
-    })
+    base: './node_modules'
+  })
     .pipe(flatten())
     .pipe(gulp.dest('./deploy/css'));
 });
@@ -191,19 +192,19 @@ function _client_compile_task(file) {
     // another file that has been require()-ed...no idea why
     // See: https://github.com/thlorenz/browserify-shim/issues/143
     b.transform('browserify-shim', {
-        global: true
+      global: true
     });
   }
 
   var result = b
-                // not in npm, don't need in browser
-                .exclude('ringo/httpclient')
-                .bundle()
-                // desired output filename to vinyl-source-stream
-                .pipe(source(file));
+    // not in npm, don't need in browser
+    .exclude('ringo/httpclient')
+    .bundle()
+    // desired output filename to vinyl-source-stream
+    .pipe(source(file));
 
-  if( ! watch_mode ){    // Only uglify when building, not when watching.
-      result = result.pipe(streamify(uglify()));
+  if (!watch_mode) {    // Only uglify when building, not when watching.
+    result = result.pipe(streamify(uglify()));
   }
 
   result = result.pipe(gulp.dest('./deploy/'));
@@ -218,21 +219,21 @@ var base_build_tasks = [
 
 // Dynamically define tasks.
 var form_build_tasks = us.clone(base_build_tasks);
-us.each(paths.form_noctua_clients, function(file, index) {
-    var taskname = 'build-client_' + file;
-    form_build_tasks.push(taskname);
-    gulp.task(taskname, function(cb){
-       return _client_compile_task(file);
-    });
+us.each(paths.form_noctua_clients, function (file, index) {
+  var taskname = 'build-client_' + file;
+  form_build_tasks.push(taskname);
+  gulp.task(taskname, function (cb) {
+    return _client_compile_task(file);
+  });
 });
 
 var noctua_build_tasks = us.clone(base_build_tasks);
-us.each(paths.core_noctua_clients, function(file, index) {
-    var taskname = 'build-client_' + file;
-    noctua_build_tasks.push(taskname);
-    gulp.task(taskname, function(cb){
-       return _client_compile_task(file);
-    });
+us.each(paths.core_noctua_clients, function (file, index) {
+  var taskname = 'build-client_' + file;
+  noctua_build_tasks.push(taskname);
+  gulp.task(taskname, function (cb) {
+    return _client_compile_task(file);
+  });
 });
 
 // var workbench_build_tasks = us.clone(base_build_tasks);
@@ -246,32 +247,32 @@ us.each(paths.core_noctua_clients, function(file, index) {
 // });
 
 gulp.task('build', noctua_build_tasks.concat(
-    form_build_tasks));
+  form_build_tasks));
 // workbench_build_tasks));
 
 gulp.task('watch', ['watch-noctua', 'watch-form']);
 
 // Rerun tasks when a file changes.
-gulp.task('watch-noctua', function(cb) {
-    watch_mode = true;
-    var basic_client_files = paths.core_noctua_clients;
-    gulp.watch(basic_client_files, noctua_build_tasks);
-    //gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
-    cb(null);
+gulp.task('watch-noctua', function (cb) {
+  watch_mode = true;
+  var basic_client_files = paths.core_noctua_clients;
+  gulp.watch(basic_client_files, noctua_build_tasks);
+  //gulp.watch(paths.core_workbench_clients, workbench_build_tasks);
+  cb(null);
 });
 
 // Rerun tasks when a file changes.
-gulp.task('watch-form', function(cb) {
-    watch_mode = true;
-    var basic_client_files = paths.form_noctua_clients.concat(
-                                'js/NoctuaBasic/NoctuaBasicController.js',
-                                'node_modules/selectize/dist/js/standalone/selectize.js');
-    gulp.watch(basic_client_files, form_build_tasks);
-    cb(null);
+gulp.task('watch-form', function (cb) {
+  watch_mode = true;
+  var basic_client_files = paths.form_noctua_clients.concat(
+    'js/NoctuaBasic/NoctuaBasicController.js',
+    'node_modules/selectize/dist/js/standalone/selectize.js');
+  gulp.watch(basic_client_files, form_build_tasks);
+  cb(null);
 });
 
 //
-gulp.task('clean', function(cb) {
+gulp.task('clean', function (cb) {
   del(['./deploy/*', './deploy/js/*', '!./deploy/README.org',
     './doc/*', '!./doc/README.org'
   ]);
@@ -281,7 +282,7 @@ gulp.task('clean', function(cb) {
 // Release tools for patch release.
 gulp.task('release', ['patch-bump', 'publish-npm']);
 
-gulp.task('patch-bump', function() {
+gulp.task('patch-bump', function () {
   gulp.src('./package.json')
     .pipe(bump({
       type: 'patch'
@@ -290,9 +291,9 @@ gulp.task('patch-bump', function() {
 });
 
 //
-gulp.task('publish-npm', function(cb) {
+gulp.task('publish-npm', function (cb) {
   var npm = require("npm");
-  npm.load(function(er, npm) {
+  npm.load(function (er, npm) {
     // NPM
     npm.commands.publish();
   });
@@ -308,9 +309,9 @@ var conf_file = './startup.yaml';
 // Pull in our configuration.
 var config = null;
 try {
-    config = yaml.load(conf_file);
-}catch(e){
-    _die('Could not find "' + conf_file + '", look in ./config for examples.');
+  config = yaml.load(conf_file);
+} catch (e) {
+  _die('Could not find "' + conf_file + '", look in ./config for examples.');
 }
 
 function ensure_noslash(s) {
@@ -339,9 +340,9 @@ var minerva_ontology_journal = config['MINERVA_ONTOLOGY_JOURNAL'].value;
 
 // External tools.
 var external_browser_location = null;
-if( config['EXTERNAL_BROWSER_LOCATION'] ){
-    external_browser_location =
-	config['EXTERNAL_BROWSER_LOCATION'].value || null;
+if (config['EXTERNAL_BROWSER_LOCATION']) {
+  external_browser_location =
+    config['EXTERNAL_BROWSER_LOCATION'].value || null;
 }
 
 // Now necessary.
@@ -355,17 +356,17 @@ var use_github_p = false;
 var github_api = null;
 var github_org = null;
 var github_repo = null;
-if( config['GITHUB_API'] ){
-    github_api = config['GITHUB_API'].value || null;
+if (config['GITHUB_API']) {
+  github_api = config['GITHUB_API'].value || null;
 }
-if( config['GITHUB_ORG'] ){
-    github_org = config['GITHUB_ORG'].value || null;
+if (config['GITHUB_ORG']) {
+  github_org = config['GITHUB_ORG'].value || null;
 }
-if( config['GITHUB_REPO'] ){
-    github_repo = config['GITHUB_REPO'].value || null;
+if (config['GITHUB_REPO']) {
+  github_repo = config['GITHUB_REPO'].value || null;
 }
-if( github_api && github_org && github_repo ){
-    use_github_p = true;
+if (github_api && github_org && github_repo) {
+  use_github_p = true;
 }
 
 //
@@ -382,18 +383,18 @@ var workbench_dirs_str = workbench_dirs.join(' ');
 var collapsible_relations = config['COLLAPSIBLE_RELATIONS'].value;
 var collapsible_relations_str = collapsible_relations.join(' ');
 var collapsible_reverse_relations =
-        config['COLLAPSIBLE_REVERSE_RELATIONS'].value;
+  config['COLLAPSIBLE_REVERSE_RELATIONS'].value;
 var collapsible_reverse_relations_str =
-        collapsible_reverse_relations.join(' ');
+  collapsible_reverse_relations.join(' ');
 var def_app_def = config['DEFAULT_APP_DEFINITION'].value;
 // NOTE: Allowing barista to slurp up startup.yaml itself to get the
 // application definitions.
 
 // Execute by default; variable must be present and empty to stop.
 var count_url =
-        'https://s3-us-west-1.amazonaws.com/go-noctua-usage-master/ping.json';
-if( config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value ){
-    count_url = config['NOCTUA_COUNTER_URL'].value;
+  'https://s3-us-west-1.amazonaws.com/go-noctua-usage-master/ping.json';
+if (config['NOCTUA_COUNTER_URL'] && config['NOCTUA_COUNTER_URL'].value) {
+  count_url = config['NOCTUA_COUNTER_URL'].value;
 }
 
 // Execute counter.
@@ -404,65 +405,65 @@ _ping_count();
 ///
 
 // Select minerva jar to use.
-function _select_minerva(){
+function _select_minerva() {
 
-    // Default reasoner is still legacy.
-    var ret = null;
-    if( config['MINERVA_JAR'] && config['MINERVA_JAR'].value ){
-	ret = config['MINERVA_JAR'].value;
-    }else{
-	_die('External MINERVA_JAR path must be defined'+
-	     ' explicitly in startup.yaml.');
-    }
+  // Default reasoner is still legacy.
+  var ret = null;
+  if (config['MINERVA_JAR'] && config['MINERVA_JAR'].value) {
+    ret = config['MINERVA_JAR'].value;
+  } else {
+    _die('External MINERVA_JAR path must be defined' +
+      ' explicitly in startup.yaml.');
+  }
 
-    return ret;
+  return ret;
 }
 
 // Add reasoner, or not, depending on external cues.
-function _select_reasoner(){
+function _select_reasoner() {
 
-    // Default reasoner is still legacy.
-    var ret = '--slme-elk';
+  // Default reasoner is still legacy.
+  var ret = '--slme-elk';
 
-    if( minerva_reasoner === 'none' ){
-	// Apparently no reasoner--should only be used for debugging or
-	// madness.
-    }else if( minerva_reasoner === 'arachne' ){
-	ret = '--arachne';
-    }else if( minerva_reasoner === 'slme-elk' ){
-	// Legacy reasoner.
-	ret = '--slme-elk';
-    }
+  if (minerva_reasoner === 'none') {
+    // Apparently no reasoner--should only be used for debugging or
+    // madness.
+  } else if (minerva_reasoner === 'arachne') {
+    ret = '--arachne';
+  } else if (minerva_reasoner === 'slme-elk') {
+    // Legacy reasoner.
+    ret = '--slme-elk';
+  }
 
-    return ret;
+  return ret;
 }
 
 // TODO: All of the listed options should be pushed into the config
 // file like the ontology catalog--no more secrets in the gulpfiles.
 var minerva_opts_base = [
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-cp', _select_minerva(),
-    'org.geneontology.minerva.server.StartUpTool',
-    '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
-    '--use-request-logging',
-    _select_reasoner(),
-    '-g', ontology_list,
-    '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
-    '--port', minerva_port,
-    '--ontojournal', minerva_ontology_journal, // ontology journal file
-    '-f', noctua_store, // blazegraph journal file
-    '--export-folder', noctua_models
+  'java',
+  '-Xmx' + minerva_max_mem + 'G',
+  '-cp', _select_minerva(),
+  'org.geneontology.minerva.server.StartUpTool',
+  '--use-golr-url-logging', // possibly unnecessary in non-lookup cases
+  '--use-request-logging',
+  _select_reasoner(),
+  '-g', ontology_list,
+  '--set-important-relation-parent', 'http://purl.obolibrary.org/obo/LEGOREL_0000000',
+  '--port', minerva_port,
+  '--ontojournal', minerva_ontology_journal, // ontology journal file
+  '-f', noctua_store, // blazegraph journal file
+  '--export-folder', noctua_models
 ];
 
 var minerva_opts_lookup = [
-    '--golr-labels', golr_neo_lookup_url_noslash,
-    '--golr-seed', golr_lookup_url_noslash
+  '--golr-labels', golr_neo_lookup_url_noslash,
+  '--golr-seed', golr_lookup_url_noslash
 ];
 
 // Using validation is the default setting.
 var minerva_opts_no_validation = [
-    '--skip-class-id-validation'
+  '--skip-class-id-validation'
 ];
 
 // // Optional catalog, depending on startup config environment.
@@ -473,124 +474,124 @@ var minerva_opts_no_validation = [
 
 // Minerva runner: +lookup +validation
 gulp.task('run-minerva', shell.task(_run_cmd(
-    minerva_opts_base.concat(minerva_opts_lookup)
+  minerva_opts_base.concat(minerva_opts_lookup)
 )));
 
 // Minerva runner: -lookup +validation
 gulp.task('run-minerva-no-lookup', shell.task(_run_cmd(
-    minerva_opts_base.concat([])
+  minerva_opts_base.concat([])
 )));
 
 // Minerva runner: +lookup -validation
 gulp.task('run-minerva-no-validation', shell.task(_run_cmd(
-    minerva_opts_base.concat(minerva_opts_lookup, minerva_opts_no_validation)
+  minerva_opts_base.concat(minerva_opts_lookup, minerva_opts_no_validation)
 )));
 
 // Minerva runner: -lookup -validation
 gulp.task('run-minerva-no-lookup-no-validation', shell.task(_run_cmd(
-    minerva_opts_base.concat(minerva_opts_no_validation)
+  minerva_opts_base.concat(minerva_opts_no_validation)
 )));
 
 // Minerva batch: create a new journal from the files directory.
 gulp.task('batch-minerva-create-journal', shell.task(_run_cmd([
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-jar', _select_minerva(),
-    '--import-owl-models',
-    '-j', noctua_store,
-    ' -f', noctua_models
+  'java',
+  '-Xmx' + minerva_max_mem + 'G',
+  '-jar', _select_minerva(),
+  '--import-owl-models',
+  '-j', noctua_store,
+  ' -f', noctua_models
 ])));
 
 // Minerva batch: destroy the current journal.
 gulp.task('batch-minerva-destroy-journal', shell.task(_run_cmd([
-    'rm', '-f', noctua_store
+  'rm', '-f', noctua_store
 ])));
 
 // Minerva batch: destroy the current ontology journal.
 gulp.task('batch-minerva-destroy-ontology-journal', shell.task(_run_cmd([
-  'rm', '-f',  minerva_ontology_journal
+  'rm', '-f', minerva_ontology_journal
 ])));
 
 // Minerva batch: get used minerva version.
 gulp.task('batch-minerva-version', shell.task(_run_cmd([
-    'java',
-    '-jar', _select_minerva(),
-    '--version'
+  'java',
+  '-jar', _select_minerva(),
+  '--version'
 ])));
 
 // Minerva batch: dump models in offline journal to directory.
 gulp.task('batch-minerva-dump-from-journal', shell.task(_run_cmd([
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-jar', _select_minerva(),
-    '--dump-owl-models',
-    '-j', noctua_store,
-    ' -f', noctua_models
+  'java',
+  '-Xmx' + minerva_max_mem + 'G',
+  '-jar', _select_minerva(),
+  '--dump-owl-models',
+  '-j', noctua_store,
+  ' -f', noctua_models
 ])));
 
 // Minerva batch: apply 'update.rq' to offline journal.
 gulp.task('batch-minerva-apply-sparql-update', shell.task(_run_cmd([
-    'java',
-    '-Xmx' + minerva_max_mem + 'G',
-    '-jar', _select_minerva(),
-    '--sparql-update',
-    '-j', noctua_store,
-    ' -f', 'update.rq'
+  'java',
+  '-Xmx' + minerva_max_mem + 'G',
+  '-jar', _select_minerva(),
+  '--sparql-update',
+  '-j', noctua_store,
+  ' -f', 'update.rq'
 ])));
 
 //node barista.js --self http://localhost:3400
 gulp.task('run-barista', shell.task(_run_cmd(
-    ['node', 'barista.js',
-     '--debug', 0,
-     '--users', user_data,
-     '--groups', group_data,
-     // '--public', barista_lookup_url,
-     '--self', barista_location,
-     '--secrets', login_secrets_dir,
-     '--context', noctua_context,
-     '--default-namespace', barista_default_namespace,
-     '--repl', barista_repl_port
-    ]
+  ['node', 'barista.js',
+    '--debug', 0,
+    '--users', user_data,
+    '--groups', group_data,
+    // '--public', barista_lookup_url,
+    '--self', barista_location,
+    '--secrets', login_secrets_dir,
+    '--context', noctua_context,
+    '--default-namespace', barista_default_namespace,
+    '--repl', barista_repl_port
+  ]
 )));
 
 //node noctua.js -c "RO:0002333 BFO:0000066 RO:0002233 RO:0002488" -g http://golr.geneontology.org/solr/ -b http://localhost:3400 -m minerva_local
 var noctua_run_list = [
-    'node', 'noctua.js',
-    '--golr', golr_lookup_url,
-    '--golr-neo', golr_neo_lookup_url,
-    '--barista', barista_lookup_url,
-    '--noctua-context', noctua_context,
-    '--noctua-public', noctua_lookup_url,
-    '--noctua-self', noctua_location,
-    '--minerva-definition', def_app_def,
-    // Lists need to be quoted.
-    '--workbenches', '"' + workbench_dirs_str + '"'
+  'node', 'noctua.js',
+  '--golr', golr_lookup_url,
+  '--golr-neo', golr_neo_lookup_url,
+  '--barista', barista_lookup_url,
+  '--noctua-context', noctua_context,
+  '--noctua-public', noctua_lookup_url,
+  '--noctua-self', noctua_location,
+  '--minerva-definition', def_app_def,
+  // Lists need to be quoted.
+  '--workbenches', '"' + workbench_dirs_str + '"'
 ];
 // The relations are variable.
-if( collapsible_relations_str ){
-    noctua_run_list.push('--collapsible-relations');
-    noctua_run_list.push('"' + collapsible_relations_str + '"');
+if (collapsible_relations_str) {
+  noctua_run_list.push('--collapsible-relations');
+  noctua_run_list.push('"' + collapsible_relations_str + '"');
 }
-if( collapsible_reverse_relations_str ){
-    noctua_run_list.push('--collapsible-reverse-relations');
-    noctua_run_list.push('"' + collapsible_reverse_relations_str + '"');
+if (collapsible_reverse_relations_str) {
+  noctua_run_list.push('--collapsible-reverse-relations');
+  noctua_run_list.push('"' + collapsible_reverse_relations_str + '"');
 }
 // See if we have an external browser.
-if( external_browser_location ){
-    noctua_run_list.push('--external-browser-location');
-    noctua_run_list.push('"' + external_browser_location + '"');
+if (external_browser_location) {
+  noctua_run_list.push('--external-browser-location');
+  noctua_run_list.push('"' + external_browser_location + '"');
 }
 // See if we will be using github.
-if( use_github_p ){
-    noctua_run_list.push('--github-api');
-    noctua_run_list.push(github_api);
-    noctua_run_list.push('--github-org');
-    noctua_run_list.push(github_org);
-    noctua_run_list.push('--github-repo');
-    noctua_run_list.push(github_repo);
+if (use_github_p) {
+  noctua_run_list.push('--github-api');
+  noctua_run_list.push(github_api);
+  noctua_run_list.push('--github-org');
+  noctua_run_list.push(github_org);
+  noctua_run_list.push('--github-repo');
+  noctua_run_list.push(github_repo);
 }
 gulp.task('run-noctua', shell.task(_run_cmd(
-    noctua_run_list
+  noctua_run_list
 )));
 
 ///

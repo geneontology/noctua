@@ -54,7 +54,7 @@ jQuery.widget('widget.solrautocomplete', {
     maxItems: 1
   },
 
-  _create: function() {
+  _create: function () {
     var that = this;
     // redefine the variables to avoid conflicts with selectize's scope
     var widgetOnChange = this.options.onChange;
@@ -86,7 +86,7 @@ jQuery.widget('widget.solrautocomplete', {
         option: widgetOptionDisplay,
         item: widgetItemDisplay
       },
-      load: function(query, callback) {
+      load: function (query, callback) {
         if (!query.length) {
           return callback();
         }
@@ -95,10 +95,11 @@ jQuery.widget('widget.solrautocomplete', {
           _updateHits(res._raw.response.numFound);
           callback(res._raw.response.docs);
         }
+
         widgetGolrManager.register('search', 'foo', customCallBack);
         if (widgetFilterData) {
           var filterData = widgetFilterData();
-          _.each(filterData, function(f) {
+          _.each(filterData, function (f) {
             widgetGolrManager.add_query_filter(f[0], f[1]);
           });
         }
@@ -112,17 +113,17 @@ jQuery.widget('widget.solrautocomplete', {
 
         return null;
       },
-      onChange: function(value) {
+      onChange: function (value) {
         widgetOnChange(value);
         _checkSanity(value, this);
         _currentValue = value;
       },
-      onType: function(str) {
+      onType: function (str) {
         if (widgetMaxItems === 1) {
           _clearCache(); // in order to request the server at each typing, only for single items
         }
       },
-      onBlur: function() {
+      onBlur: function () {
         _checkSanity(_currentValue);
       },
       maxItems: widgetMaxItems
@@ -130,33 +131,32 @@ jQuery.widget('widget.solrautocomplete', {
 
     this.selectized = selectized;
 
-    _checkSanity = function(value) {
+    _checkSanity = function (value) {
       if (widgetRequired && (value === null || value === '')) {
         feedbackLabel.show();
         feedbackLabel.text('Cannot be empty');
-      }
-      else {
+      } else {
         feedbackLabel.hide();
         feedbackLabel.text('');
       }
     };
 
-    _clearCache = function() {
+    _clearCache = function () {
       selectized[0].selectize.clearCache("option");
       selectized[0].selectize.clearOptions();
     };
 
-    _updateHits = function(h) {
+    _updateHits = function (h) {
       feedbackLabel.show();
       feedbackLabel.text(h + ' hits');
     };
   },
 
-  _destroy: function() {
+  _destroy: function () {
     this.selectized[0].selectize.destroy();
   },
 
-  _setOptions: function(options) {
+  _setOptions: function (options) {
     this._super(options);
     // this.refresh();
   }
@@ -186,7 +186,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       // http://embed.plnkr.co/RpNyqU/
       enableCellEdit: false, // set all columns to non-editable unless otherwise specified; cellEditableCondition won't override that
       enableCellEditOnFocus: true, // set any editable column to allow edit on focus
-      cellEditableCondition: function(scope) {
+      cellEditableCondition: function (scope) {
         console.log('cellEditableCondition', scope.row.entity, that.editing_row);
         // put your enable-edit code here, using values from $scope.row.entity and/or $scope.col.colDef as you desire
         return scope.row.entity === that.editing_row; // in this example, we'll only allow active rows to be edited
@@ -212,9 +212,9 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         enableCellEdit: true
       },
 
-      { name: 'ageofonset_label', displayName: 'Age of Onset' },
-      { name: 'description', displayName: 'Description', enableCellEdit: true },
-      { name: 'evidence_label', displayName: 'Evidence' },
+      {name: 'ageofonset_label', displayName: 'Age of Onset'},
+      {name: 'description', displayName: 'Description', enableCellEdit: true},
+      {name: 'evidence_label', displayName: 'Evidence'},
       {
         name: 'actions',
         displayName: 'Actions',
@@ -231,7 +231,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     this.saveRowPromise = null;
 
-    this.saveRow = function(rowEntity) {
+    this.saveRow = function (rowEntity) {
       console.log('saveRow...this:', this, ' row:', rowEntity);
       that.selected_description = rowEntity.description;
       // // create a fake promise - normally you'd use the promise returned by $http or $resource
@@ -242,10 +242,10 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         that.gridApi.rowEdit.setSavePromise(rowEntity, promise.promise);
       }
 
-      that.$timeout(function() {
-        promise.resolve();
-      },
-      100);
+      that.$timeout(function () {
+          promise.resolve();
+        },
+        100);
       // that.saveEditedRow();
 
       // var sortedData = that.gridApi.core.getVisibleRows();
@@ -257,39 +257,39 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       //   that.gridOptions.columnDefs[0]);
     };
 
-    this.gridOptions.onRegisterApi = function(gridApi) {
+    this.gridOptions.onRegisterApi = function (gridApi) {
       that.gridApi = gridApi;
       that.$scope.gridApi = gridApi;
 
       if (that.gridApi.rowEdit) {
-        gridApi.rowEdit.on.saveRow(null, function(rowEntity) {
+        gridApi.rowEdit.on.saveRow(null, function (rowEntity) {
           console.log('rowEdit.on.saveRow', rowEntity);
           that.saveRow(rowEntity);
         });
       }
 
-      gridApi.edit.on.beginCellEdit($scope, function(rowEntity, colDef) {
+      gridApi.edit.on.beginCellEdit($scope, function (rowEntity, colDef) {
         console.log('beginCellEdit', rowEntity, colDef);
         var rowIndex = rowEntity.rowIndex;
         console.log('...rowIndex', rowIndex);
 
         if (!that.editing_row) {
           // that.$timeout(function() {
-            that.editRow(rowEntity, rowIndex, false);
-            if (colDef.field === 'phenotype') {
-              that.editingPhenotype = true;
-            }
+          that.editRow(rowEntity, rowIndex, false);
+          if (colDef.field === 'phenotype') {
+            that.editingPhenotype = true;
+          }
           // }, 100);
         }
       });
 
-      gridApi.edit.on.afterCellEdit($scope, function(rowEntity, colDef, newValue, oldValue) {
+      gridApi.edit.on.afterCellEdit($scope, function (rowEntity, colDef, newValue, oldValue) {
         console.log('afterCellEdit', oldValue, newValue);
         that.editingPhenotype = false;
         // that.saveRow(rowEntity);
       });
 
-      that.$timeout(function() {
+      that.$timeout(function () {
         that.gridApi.core.handleWindowResize();
         // var sortedData = that.gridApi.core.getVisibleRows();
         // console.log('sortedData', sortedData.map(function(e) {
@@ -346,11 +346,15 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   var ecoPrefix = 'http://purl.obolibrary.org/obo/ECO_';
   var hpPrefix = 'http://human-phenotype-ontology.github.io/documentation.html#annot';
   this.HPShortCodes = {  /* eslint no-multi-spaces: 0 */
-    IEA: {id: 'ECO:0000501',  label: 'Inferred from Electronic Annotation', url: ecoPrefix + '0000501'},
+    IEA: {
+      id: 'ECO:0000501',
+      label: 'Inferred from Electronic Annotation',
+      url: ecoPrefix + '0000501'
+    },
     // ITM: {id: 'ECO:HPOITM',   label: 'Inferred by Text-mining', url: hpPrefix},
-    TAS: {id: 'ECO:0000304',  label: 'Traceable Author Statement', url: ecoPrefix + '0000304'},
-    PCS: {id: 'ECO:HPOPCS',   label: 'Published Clinical Study', url: hpPrefix},
-    ICE: {id: 'ECO:HPOICE',   label: 'Individual Clinical Experience', url: hpPrefix}
+    TAS: {id: 'ECO:0000304', label: 'Traceable Author Statement', url: ecoPrefix + '0000304'},
+    PCS: {id: 'ECO:HPOPCS', label: 'Published Clinical Study', url: hpPrefix},
+    ICE: {id: 'ECO:HPOICE', label: 'Individual Clinical Experience', url: hpPrefix}
   };
   this.HPECOToShortCode = {
     'ECO:0000501': 'IEA',
@@ -369,8 +373,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   function _shields_up() {
     if (compute_shield_modal) {
       // Already have one.
-    }
-    else {
+    } else {
       compute_shield_modal = bbopx.noctua.widgets.compute_shield();
       compute_shield_modal.show();
     }
@@ -381,13 +384,12 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     if (compute_shield_modal) {
       compute_shield_modal.destroy();
       compute_shield_modal = null;
-    }
-    else {
+    } else {
       // None to begin with.
     }
   }
 
-  this.init = function() {
+  this.init = function () {
     // Only roll if the env is correct.
 
     // Try to define token.
@@ -404,11 +406,10 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     // Next we need a manager to try and pull in the model.
     if (typeof (global_minerva_definition_name) === 'undefined' ||
-        typeof (global_barista_location) === 'undefined') {
+      typeof (global_barista_location) === 'undefined') {
       /* eslint no-alert: 0 */
       alert('environment not ready');
-    }
-    else {
+    } else {
       _shields_up();
       manager = new bbopx.minerva.manager(global_barista_location,
         global_minerva_definition_name,
@@ -420,7 +421,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
   // type is 'error' or 'success'
-  this.displayToast = function(type, msg) {
+  this.displayToast = function (type, msg) {
     var toastrFuncMap = {
       success: that.toastr.success,
       error: that.toastr.error
@@ -442,14 +443,14 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }
   }
 
-  this.store = function() {
+  this.store = function () {
     // this.setTitle(this.modelTitle);
     _shields_up();
     manager.store_model(model_id);
     _shields_down();
   };
 
-  this.editTitle = function(optionalDefaultTitle) {
+  this.editTitle = function (optionalDefaultTitle) {
     that.newTitle = optionalDefaultTitle || that.modelTitle;
     that.editingTitle = true;
     $timeout(function () {
@@ -457,11 +458,11 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }, 10);
   };
 
-  this.cancelEditTitle = function(newTitle) {
+  this.cancelEditTitle = function (newTitle) {
     that.editingTitle = false;
   };
 
-  this.saveEditedTitle = function() {
+  this.saveEditedTitle = function () {
     if (that.modelTitle !== that.newTitle) {
       _shields_up();
       var r = new minerva_requests.request_set(manager.user_token(), model_id);
@@ -496,13 +497,12 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }
     if (hit === null) {
       return null;
-    }
-    else {
+    } else {
       return hit._id;
     }
   }
 
-  this.saveEditedSubject = function() {
+  this.saveEditedSubject = function () {
     if (that.modelSubject !== that.newSubject) {
       _shields_up();
 
@@ -531,13 +531,11 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-
   function extract_class_id_from_node(node) {
     var types = node._types;
     if (types.length === 1) {
       return types[0].class_id();
-    }
-    else {
+    } else {
       return "";
     }
   }
@@ -557,8 +555,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         }
       }
       return result;
-    }
-    else {
+    } else {
       return "";
     }
   }
@@ -567,32 +564,30 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     return id === label ? [label, label] : [id, label];
   }
 
-  this.set_subject = function(subject) {
+  this.set_subject = function (subject) {
     that.modelSubject = subject;
     that.modelSubjectMonarchKey = subject.replace(/^MeSH:/, 'MESH:');
     that.modelSubjectNodeId = subject;
     that.modelSubjectLabel = [subject, subject];
   };
 
-  this.refresh_subject = function() {
+  this.refresh_subject = function () {
     var annotations = graph.get_annotations_by_key(annotationSubjectKeyShorthand);
     if (annotations.length === 0) {
       // no subject set yet
       // console.log('refresh_subject no annotations');
-    }
-    else {
+    } else {
       var subject = annotations[0].value(); // there should be only one
       this.set_subject(subject);
     }
   };
 
-  this.refresh_title = function() {
+  this.refresh_title = function () {
     var annotations = graph.get_annotations_by_key(annotationTitleKey);
     if (annotations.length === 0) {
       // no title set yet
       console.log('refresh_title no annotations');
-    }
-    else {
+    } else {
       var title = annotations[0].value(); // there should be only one
       that.modelTitle = title;
     }
@@ -600,21 +595,21 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
   this.isValidModel = function () {
     return that.modelTitle && that.modelTitle.length > 0 &&
-            that.grid_model.length > 0;
+      that.grid_model.length > 0;
   };
 
 
   this.isValidAssociation = function () {
     return that.selected_disease &&
-            that.selected_phenotype;
-            // that.selected_ageofonset &&
-            // that.selected_evidence_metadata.length > 0 &&
-            // that.selected_evidence_metadata[0].ev &&
-            // that.selected_evidence_metadata[0].ev.length &&
-            // that.selected_description;
+      that.selected_phenotype;
+    // that.selected_ageofonset &&
+    // that.selected_evidence_metadata.length > 0 &&
+    // that.selected_evidence_metadata[0].ev &&
+    // that.selected_evidence_metadata[0].ev.length &&
+    // that.selected_description;
   };
 
-  this.create = function() {
+  this.create = function () {
     var disease_id = that.selected_disease;
     var phenotype_id = that.selected_phenotype;
     var ageofonset_id = that.selected_ageofonset;
@@ -631,14 +626,13 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       requestSetForCreation(r, disease_id, phenotype_id, ageofonset_id, evidence_metadata, description, existing_disease_id);
       var result = manager.request_with(r, "create");
 
-    }
-    else {
+    } else {
       _shields_down();
     }
   }
 
 
-  this.addRow = function() {
+  this.addRow = function () {
     var row = {
       "disease": null,
       "disease_node_id": null,
@@ -669,20 +663,20 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     that.grid_model.push(row);
 
     if (!that.USE_UI_GRID) {
-      $timeout(function() {
+      $timeout(function () {
         that.editRow(row, that.grid_model.length - 1, true);
       }, 10);
     }
   };
 
 
-  this.editRow = function(row, rowIndex, isNew) {
+  this.editRow = function (row, rowIndex, isNew) {
     that.editing_row = row;
     that.new_row = isNew ? row : null;
     that.selected_disease = row.disease_id;
     that.selected_phenotype = row.phenotype_id;
     that.selected_ageofonset = row.ageofonset_id;
-    var evidence_ids = underscore.map(row.evidence_metadata, function(ev) {
+    var evidence_ids = underscore.map(row.evidence_metadata, function (ev) {
       return ev.id;
     });
     that.selected_evidence = evidence_ids;
@@ -728,18 +722,17 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     var parentIndex = rowIndex;
 
     var evIndex = 0;
-    underscore.each(that.selected_evidence_metadata, function(ev) {
-      $timeout(function() {
+    underscore.each(that.selected_evidence_metadata, function (ev) {
+      $timeout(function () {
         var ev_selector = '#' + ev.htmlid + '_' + parentIndex + '_' + evIndex;
         if (that.modelType !== 'hpo') {
           var ev_selectize = jQuery(ev_selector)[0];
           if (ev_selectize && ev_selectize.selectize) {
             ev_selectize = ev_selectize.selectize;
             // console.log('ev_selectize FOUND', ev_selector, ev_selectize);
-          }
-          else {
-            Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
-              $timeout(function() {
+          } else {
+            Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function (value) {
+              $timeout(function () {
                 ev.id = value;
               }, 10);
             }));
@@ -757,15 +750,14 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
             }]);
             ev_selectize.setValue(ev.id);
           }
-        }
-        else {
+        } else {
           // xxx
         }
 
         ++evIndex;
       }, 10);
     });
-    $timeout(function() {
+    $timeout(function () {
       if (isNew) {
         $anchorScroll.yOffset = 200;
         $anchorScroll('scroll_anchor_' + rowIndex);
@@ -779,7 +771,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
       phenotype_selectize = jQuery('#select_phenotype_' + rowIndex)[0];
       if (phenotype_selectize) {
-        $timeout(function() {
+        $timeout(function () {
           // console.log('phenotype_selectize.selectize', phenotype_selectize.selectize);
           phenotype_selectize.selectize.focus();
         }, 100);
@@ -788,7 +780,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-  this.cancelEditRow = function(rowIndex) {
+  this.cancelEditRow = function (rowIndex) {
     that.cleanupRowAutocomplete(rowIndex);
 
     if (that.new_row === underscore.last(that.grid_model)) {
@@ -797,8 +789,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     that.editing_row = null;
   };
-
-
 
 
   function requestSetForDeletion(request_set, disease_node_id, phenotype_node_id, ageofonset_node_id) {
@@ -822,8 +812,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         phenotype_tmp_id,
         has_phenotype_relation
       ]);
-    }
-    else {
+    } else {
       request_set.add_fact([existing_disease_id,
         phenotype_tmp_id,
         has_phenotype_relation
@@ -832,14 +821,14 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     // Attach the metadata to the phenotype individual
     if (evidence_metadata !== "" &&
-        evidence_metadata !== null &&
-        evidence_metadata.length !== 0) {
-      underscore.map(evidence_metadata, function(ev) {
+      evidence_metadata !== null &&
+      evidence_metadata.length !== 0) {
+      underscore.map(evidence_metadata, function (ev) {
         var evidence_tmp_id = request_set.add_individual(ev.id);
         request_set.add_annotation_to_individual("evidence", evidence_tmp_id, null, phenotype_tmp_id);
         var ref_list = ev.ref_list;
         if (ref_list !== "" && ref_list !== null && ref_list.length !== 0) {
-          underscore.map(ref_list, function(ref) {
+          underscore.map(ref_list, function (ref) {
             // TODO create a proper individual when it'll supported by Minerva and Noctua
             // var ref_tmp_id = request_set.add_individual(ref.ref);
             // request_set.add_annotation_to_individual("source", ref_tmp_id, evidence_tmp_id);
@@ -862,7 +851,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }
   }
 
-  this.saveEditedRow = function() {
+  this.saveEditedRow = function () {
     that.editing_row = null;
 
     _shields_up();
@@ -875,7 +864,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       }
     }
 
-    var ev_ref_list = that.selected_evidence_metadata.map(function(e) {
+    var ev_ref_list = that.selected_evidence_metadata.map(function (e) {
       e = angular.copy(e);
       if (e.id in that.HPShortCodes) {
         e.id = 'HP:ECO_' + e.id;
@@ -884,7 +873,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     });
 
     if (ev_ref_list.length === 1 &&
-        (!ev_ref_list[0].id || ev_ref_list[0].id === '')) {
+      (!ev_ref_list[0].id || ev_ref_list[0].id === '')) {
       ev_ref_list = [];
     }
 
@@ -898,7 +887,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     manager.request_with(r, "edit_row");
   };
 
-  this.duplicateRow = function(sourceRow, sourceRowIndex) {
+  this.duplicateRow = function (sourceRow, sourceRowIndex) {
     var row = {
       "disease": sourceRow.disease,
       "disease_node_id": null,
@@ -917,12 +906,12 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     };
     row.rowIndex = that.grid_model.length;
     that.grid_model.push(row);
-    $timeout(function() {
+    $timeout(function () {
       that.editRow(row, row.rowIndex, true);
     }, 10);
   };
 
-  this.deleteRow = function(disease_node_id, phenotype_node_id, ageofonset_node_id) {
+  this.deleteRow = function (disease_node_id, phenotype_node_id, ageofonset_node_id) {
     if (that.$window.confirm('Are you sure you want to delete this entry?')) {
       _shields_up();
       var r = new minerva_requests.request_set(manager.user_token(), model_id);
@@ -932,7 +921,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-  this.formatEVURL = function(ev) {
+  this.formatEVURL = function (ev) {
     var result = 'http://purl.obolibrary.org/obo/' + ev.id.replace(':', '_');
 
     if (this.modelType === 'hpo') {
@@ -946,7 +935,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-  this.formatEVLabel = function(ev) {
+  this.formatEVLabel = function (ev) {
     var result = ev.id + ' ' + ev.label;
 
     if (this.modelType === 'hpo') {
@@ -960,7 +949,6 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-
   function activate_evidence_widget(ev, id, rowIndex, refIndex) {
     var ev_selector = '#' + ev.htmlid + '_' + rowIndex + '_' + refIndex;
     if (that.modelType !== 'hpo') {
@@ -968,14 +956,12 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       if (ev_selectize && ev_selectize.selectize) {
         ev_selectize = ev_selectize.selectize;
         // console.log('activate_evidence_widget FOUND', ev_selector, ev_selectize);
-      }
-      else {
-        Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function(value) {
+      } else {
+        Solrautocomplete.createSolrAutocompleteForElement(ev_selector, that.evidence_autocomplete_options(function (value) {
           if (!ev) {
             console.log('activate_evidence_widget...undefined ev');
-          }
-          else {
-            that.$timeout(function() {
+          } else {
+            that.$timeout(function () {
               ev.id = value;
             }, 10);
           }
@@ -992,7 +978,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   }
 
 
-  this.add_ev = function(selected_evidence_metadata, rowIndex) {
+  this.add_ev = function (selected_evidence_metadata, rowIndex) {
     var ev_id = 'ev' + selected_evidence_metadata.length;
     var ev = {
       'htmlid': ev_id,
@@ -1000,17 +986,16 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     };
     selected_evidence_metadata.push(ev);
     that.add_ref(ev);
-    $timeout(function() {
+    $timeout(function () {
       activate_evidence_widget(ev, ev_id, rowIndex, selected_evidence_metadata.length - 1);
     }, 10);
   };
 
-  this.ensure_ev = function(selected_evidence_metadata, rowIndex) {
+  this.ensure_ev = function (selected_evidence_metadata, rowIndex) {
     if (selected_evidence_metadata.length === 0) {
       that.add_ev(selected_evidence_metadata, rowIndex);
-    }
-    else {
-      underscore.each(that.selected_evidence_metadata, function(ev) {
+    } else {
+      underscore.each(that.selected_evidence_metadata, function (ev) {
         if (!ev.ref_list || ev.ref_list.length === 0) {
           that.add_ref(ev);
         }
@@ -1018,9 +1003,9 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     }
   };
 
-  this.lookup_ev_by_id = function(ev_id) {
+  this.lookup_ev_by_id = function (ev_id) {
     var result = null;
-    underscore.each(that.selected_evidence_metadata, function(ev) {
+    underscore.each(that.selected_evidence_metadata, function (ev) {
       if (ev.id === ev_id) {
         result = ev;
       }
@@ -1028,13 +1013,13 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     return result;
   };
 
-  this.ensure_reflist = function(ev) {
+  this.ensure_reflist = function (ev) {
     if (!ev.ref_list) {
       ev.ref_list = [];
     }
   };
 
-  this.add_ref = function(ev) {
+  this.add_ref = function (ev) {
     this.ensure_reflist(ev);
     var ev_ref_id = ev.htmlid + 'ref' + ev.ref_list.length;
     var ev_ref = {
@@ -1050,7 +1035,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     that.grid_model = [];
     var edges = graph.all_edges();
-    var has_phenotype_edges = underscore.filter(edges, function(edge) {
+    var has_phenotype_edges = underscore.filter(edges, function (edge) {
       return edge._predicate_id === has_phenotype_relation;
     });
 
@@ -1079,8 +1064,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
         var value = annotation._properties.value;
         if (key === "evidence") {
           evidence_annotations.push(value);
-        }
-        else if (key === "comment") {
+        } else if (key === "comment") {
           description = value;
         }
       }
@@ -1092,7 +1076,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       //   return build_joined_label(extract_class_id_from_node(evidence_node), extract_class_label_from_node(evidence_node));
       // });
       var counter = 0;
-      var evidence_metadata = underscore.map(evidence_annotations, function(ev_node_id) {
+      var evidence_metadata = underscore.map(evidence_annotations, function (ev_node_id) {
         counter += 1;
         var evidence_node = graph.get_node(ev_node_id);
         var evidence_node_annotations = evidence_node._annotations;
@@ -1130,7 +1114,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
       var edges_from_phenotype = graph.get_edges_by_subject(current_edge.target());
 
-      var phenotype_ageofonset_edges = underscore.filter(edges_from_phenotype, function(edge) {
+      var phenotype_ageofonset_edges = underscore.filter(edges_from_phenotype, function (edge) {
         return edge._predicate_id === phenotype_ageofonset_relation;
       });
       if (phenotype_ageofonset_edges.length > 0) {
@@ -1167,8 +1151,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
       if (!that.modelSubject) {
         that.set_subject(entry.disease_id);
-      }
-      else if (that.modelSubject !== entry.disease_id) {
+      } else if (that.modelSubject !== entry.disease_id) {
         console.log('####build_table non-identical subject detected', that.modelSubject, entry.disease_id);
       }
 
@@ -1213,8 +1196,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       console.log('that.newTitle:', that.newTitle);
       that.modelSubjectLabel = [subjectId, subjectId];
       that.editingSubject = false;
-    }
-    else {
+    } else {
       that.selected_disease = null;
       that.selected_phenotype = null;
       that.selected_ageofonset = null;
@@ -1229,7 +1211,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   }
 
   function initializeCallbacks() {
-    manager.register('manager_error', 'manager_errorx', function(resp, man) {
+    manager.register('manager_error', 'manager_errorx', function (resp, man) {
       console.log("manager_error");
       console.log(resp);
       console.log(man);
@@ -1237,7 +1219,7 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       that.displayToast("error", resp._message);
     }, 10);
 
-    manager.register('error', 'errorargh', function(resp, man) {
+    manager.register('error', 'errorargh', function (resp, man) {
       console.log("error");
       console.log(resp);
       _shields_down();
@@ -1268,27 +1250,27 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     // dirty trick to make jQuery avaiable in the golrmanager's scope.
     golr_manager_for_disease.JQ = jQuery;
-    that.disease_autocomplete_options = function(onChangeFunc) {
+    that.disease_autocomplete_options = function (onChangeFunc) {
       return {
         onChange: onChangeFunc,
         required: true,
-        optionDisplay: function(item, escape) {
+        optionDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
-        itemDisplay: function(item, escape) {
+        itemDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
-        filterData: function() {
+        filterData: function () {
           var filter = [['isa_partof_closure', rootDiseaseId]];
           return filter;
         },
-        queryData: function(query) {
+        queryData: function (query) {
           var result = 'annotation_class_label_searchable:*' + query + '*';
           if (that.modelType === 'hpo') {
             result += ' AND id:OMIM\\:*';
@@ -1303,27 +1285,27 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     golr_manager_for_phenotype.set_results_count(10);
     // dirty trick to make jQuery avaiable in the golrmanager's scope.
     golr_manager_for_phenotype.JQ = jQuery;
-    that.phenotype_autocomplete_options = function(onChangeFunc) {
+    that.phenotype_autocomplete_options = function (onChangeFunc) {
       return {
         onChange: onChangeFunc,
         required: true,
-        optionDisplay: function(item, escape) {
+        optionDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
-        itemDisplay: function(item, escape) {
+        itemDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
-        filterData: function() {
+        filterData: function () {
           var filter = [['isa_partof_closure', rootPhenotypeId]];
           return filter;
         },
-        queryData: function(query) {
+        queryData: function (query) {
           var result = 'annotation_class_label_searchable:*' + query + '*';
           if (that.modelType === 'hpo') {
             result += ' AND id:HP\\:*';
@@ -1339,25 +1321,25 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     golr_manager_for_ageofonset.set_results_count(50);
     // dirty trick to make jQuery avaiable in the golrmanager's scope.
     golr_manager_for_ageofonset.JQ = jQuery;
-    that.ageofonset_autocomplete_options = function(onChangeFunc) {
+    that.ageofonset_autocomplete_options = function (onChangeFunc) {
       return {
         onChange: onChangeFunc,
-        optionDisplay: function(item, escape) {
+        optionDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
-        itemDisplay: function(item, escape) {
+        itemDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             '</div>';
         },
         valueField: 'id',
         searchField: ['id', 'annotation_class_label_searchable'],
-        filterData: function() {
+        filterData: function () {
           return [['isa_partof_closure', rootOnsetId]];
         },
-        queryData: function(query) {
+        queryData: function (query) {
           // return 'isa_partof_closure_label_searchable:Onset AND id:*' + query.replace(':', '\\:').toUpperCase() + '*';
           return 'annotation_class_label_searchable:*' + query + '*';
         },
@@ -1368,32 +1350,32 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
 
     var golr_manager_for_evidence = new bbop.golr.manager.jquery(golr_loc, gconf);
     golr_manager_for_evidence.set_results_count(50);
-    that.evidence_autocomplete_options = function(onChangeFunc) {
+    that.evidence_autocomplete_options = function (onChangeFunc) {
       return {
         onChange: onChangeFunc,
-        optionDisplay: function(item, escape) {
+        optionDisplay: function (item, escape) {
           return '<div>' +
             item.id + ' (' + item.annotation_class_label_searchable + ')' +
             // item.id + ' (' + item.synonym_searchable + ')' +
             '</div>';
         },
-        itemDisplay: function(item, escape) {
+        itemDisplay: function (item, escape) {
           var result =
-              '<div>' +
-                item.id +
-                ' (' + item.annotation_class_label_searchable + ')' +
-              '</div>';
+            '<div>' +
+            item.id +
+            ' (' + item.annotation_class_label_searchable + ')' +
+            '</div>';
           return result;
         },
         valueField: 'id',
         // searchField: ['id', 'annotation_class_label_searchable'],
         searchField: ['id', 'synonym_searchable'],
 
-        filterData: function() {
+        filterData: function () {
           var filter = [['isa_partof_closure', rootEvidenceId]];
           return filter;
         },
-        queryData: function(query) {
+        queryData: function (query) {
           var result = 'synonym_searchable:*' + query + '*';
           return result;
         },
@@ -1402,34 +1384,33 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     };
   }
 
-  this.initializeSubjectAutocomplete = function() {
+  this.initializeSubjectAutocomplete = function () {
     var subject_selector = '#select_subject_default';
     var subject_selectize = jQuery(subject_selector)[0];
 
     if (subject_selectize && subject_selectize.selectize) {
       subject_selectize = subject_selectize.selectize;
       // console.log('initializeSubjectAutocomplete FOUND', subject_selector, subject_selectize);
-    }
-    else {
+    } else {
       Solrautocomplete.createSolrAutocompleteForElement(
-        '#select_subject_default', that.disease_autocomplete_options(function(value) {
-        var title = subject_selectize.options[value].annotation_class_label;
-        $timeout(function() {
-          value = value.replace(/^MESH:/, 'MeSH:');
-          that.newSubject = value;
-          that.newTitle = title;
-        }, 10);
-      }));
+        '#select_subject_default', that.disease_autocomplete_options(function (value) {
+          var title = subject_selectize.options[value].annotation_class_label;
+          $timeout(function () {
+            value = value.replace(/^MESH:/, 'MeSH:');
+            that.newSubject = value;
+            that.newTitle = title;
+          }, 10);
+        }));
       subject_selectize = jQuery(subject_selector)[0].selectize;
       // console.log('initializeSubjectAutocomplete CREATE', subject_selector, subject_selectize);
     }
 
-    $timeout(function() {
+    $timeout(function () {
       subject_selectize.focus();
     }, 300);
   };
 
-  this.initializeRowAutocomplete = function(rowIndex) {
+  this.initializeRowAutocomplete = function (rowIndex) {
     // console.log('initializeRowAutocomplete', rowIndex);
     this.editingPhenotype = false;
     var phenotype_selector = '#select_phenotype_' + rowIndex;
@@ -1438,15 +1419,14 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
     if (phenotype_selectize && phenotype_selectize.selectize) {
       phenotype_selectize = phenotype_selectize.selectize;
       // console.log('initializeRowAutocomplete FOUND', phenotype_selector, phenotype_selectize);
-    }
-    else {
-      Solrautocomplete.createSolrAutocompleteForElement(phenotype_selector, that.phenotype_autocomplete_options(function(value) {
+    } else {
+      Solrautocomplete.createSolrAutocompleteForElement(phenotype_selector, that.phenotype_autocomplete_options(function (value) {
         that.selected_phenotype = value;
         if (phenotype_selectize.options[value]) {
           var title = phenotype_selectize.options[value].annotation_class_label;
           that.selected_phenotype_label = value;
           if (that.editingPhenotype) {
-            that.$timeout(function() {
+            that.$timeout(function () {
               that.$scope.$broadcast('uiGridEventEndCellEdit');
             }, 100);
           }
@@ -1456,8 +1436,8 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
       // console.log('initializeRowAutocomplete CREATE', phenotype_selector, phenotype_selectize);
 
       var ageofonset_selector = '#select_ageofonset_' + rowIndex;
-      Solrautocomplete.createSolrAutocompleteForElement(ageofonset_selector, that.ageofonset_autocomplete_options(function(value) {
-        $timeout(function() {
+      Solrautocomplete.createSolrAutocompleteForElement(ageofonset_selector, that.ageofonset_autocomplete_options(function (value) {
+        $timeout(function () {
           that.selected_ageofonset = value;
         }, 10);
       }));
@@ -1465,13 +1445,11 @@ function NoctuaBasicController($q, $scope, $animate, $timeout, $interval, $locat
   };
 
 
-  this.cleanupRowAutocomplete = function(rowIndex) {
+  this.cleanupRowAutocomplete = function (rowIndex) {
   };
 
   this.init();
 }
-
-
 
 
 var NoctuaBasicControllerBundle = [
@@ -1483,10 +1461,9 @@ var app = angular.module('noctuaBasicApp');
 app.controller('NoctuaBasicController', NoctuaBasicControllerBundle);
 
 
-
 if (USE_UI_GRID) {
   app.filter('phenotypeLabel', function () {
-    return function(phenotype) {
+    return function (phenotype) {
       return phenotype ? phenotype[1] : '';
     };
   });
@@ -1500,9 +1477,11 @@ if (USE_UI_GRID) {
           $document.off('click', docClick);
         }
       }
+
       $document.on('clickIcon', docClick);
     };
   }
+
   uiSelectWrapIcon.$inject = ['$document', 'uiGridEditConstants'];
 
 
@@ -1541,6 +1520,7 @@ if (USE_UI_GRID) {
       link: link
     };
   }
+
   uiSelectWrap.$inject = ['$document', 'uiGridEditConstants'];
 
   app.directive('uiSelectWrap', uiSelectWrap);
@@ -1549,50 +1529,50 @@ if (USE_UI_GRID) {
   // http://stackoverflow.com/a/32717235
   app.config(
     ['$provide',
-    function($provide) {
-      $provide.decorator('uiGridCellNavService',
-        ['$delegate', 'uiGridConstants', 'uiGridCellNavConstants',
-        function ($delegate, uiGridConstants, uiGridCellNavConstants) {
-          var getDirection = $delegate.getDirection;
-          $delegate.getDirection = function (evt) {
-            if (evt.keyCode === uiGridConstants.keymap.LEFT ||
-              (evt.keyCode === uiGridConstants.keymap.TAB && evt.shiftKey)) {
-              return uiGridCellNavConstants.direction.LEFT;
-            }
-            if (evt.keyCode === uiGridConstants.keymap.RIGHT ||
-              evt.keyCode === uiGridConstants.keymap.TAB) {
-              return uiGridCellNavConstants.direction.RIGHT;
-            }
+      function ($provide) {
+        $provide.decorator('uiGridCellNavService',
+          ['$delegate', 'uiGridConstants', 'uiGridCellNavConstants',
+            function ($delegate, uiGridConstants, uiGridCellNavConstants) {
+              var getDirection = $delegate.getDirection;
+              $delegate.getDirection = function (evt) {
+                if (evt.keyCode === uiGridConstants.keymap.LEFT ||
+                  (evt.keyCode === uiGridConstants.keymap.TAB && evt.shiftKey)) {
+                  return uiGridCellNavConstants.direction.LEFT;
+                }
+                if (evt.keyCode === uiGridConstants.keymap.RIGHT ||
+                  evt.keyCode === uiGridConstants.keymap.TAB) {
+                  return uiGridCellNavConstants.direction.RIGHT;
+                }
 
-            if (evt.keyCode === uiGridConstants.keymap.UP ||
-              (evt.keyCode === uiGridConstants.keymap.ENTER && evt.shiftKey) ) {
-              return uiGridCellNavConstants.direction.UP;
-            }
+                if (evt.keyCode === uiGridConstants.keymap.UP ||
+                  (evt.keyCode === uiGridConstants.keymap.ENTER && evt.shiftKey)) {
+                  return uiGridCellNavConstants.direction.UP;
+                }
 
-            if (evt.keyCode === uiGridConstants.keymap.PG_UP) {
-              return uiGridCellNavConstants.direction.PG_UP;
-            }
-            // override listener for key ENTER
-            if (evt.keyCode === uiGridConstants.keymap.ENTER) {
-              return uiGridCellNavConstants.direction.RIGHT;
-            }
-            // delete listener for key ENTER
-            if (evt.keyCode === uiGridConstants.keymap.DOWN) {
-              return uiGridCellNavConstants.direction.DOWN;
-            }
-            // original code
-            //    if (evt.keyCode === uiGridConstants.keymap.DOWN ||
-            //      evt.keyCode === uiGridConstants.keymap.ENTER) {
-            //      return uiGridCellNavConstants.direction.DOWN;
-            //    }
+                if (evt.keyCode === uiGridConstants.keymap.PG_UP) {
+                  return uiGridCellNavConstants.direction.PG_UP;
+                }
+                // override listener for key ENTER
+                if (evt.keyCode === uiGridConstants.keymap.ENTER) {
+                  return uiGridCellNavConstants.direction.RIGHT;
+                }
+                // delete listener for key ENTER
+                if (evt.keyCode === uiGridConstants.keymap.DOWN) {
+                  return uiGridCellNavConstants.direction.DOWN;
+                }
+                // original code
+                //    if (evt.keyCode === uiGridConstants.keymap.DOWN ||
+                //      evt.keyCode === uiGridConstants.keymap.ENTER) {
+                //      return uiGridCellNavConstants.direction.DOWN;
+                //    }
 
-            if (evt.keyCode === uiGridConstants.keymap.PG_DOWN) {
-              return uiGridCellNavConstants.direction.PG_DOWN;
-            }
+                if (evt.keyCode === uiGridConstants.keymap.PG_DOWN) {
+                  return uiGridCellNavConstants.direction.PG_DOWN;
+                }
 
-            return null;
-          };
-          return $delegate;
-        }]);
-    }]);
+                return null;
+              };
+              return $delegate;
+            }]);
+      }]);
 }
