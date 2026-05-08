@@ -14,14 +14,12 @@
 
 // Required shareable Node libs.
 var md = require('markdown');
-var mustache = require('mustache');
 var fs = require('fs');
 var path = require('path');
 var tilde = require('expand-home-dir');
 var yaml = require('yamljs');
 var mime = require('mime');
 var url = require('url');
-var querystring = require('querystring');
 
 // Required add-on libs.
 var amigo = require('amigo2');

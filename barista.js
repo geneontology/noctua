@@ -13,23 +13,18 @@
 ////
 
 // Required shareable Node libs.
-var mustache = require('mustache');
 var fs = require('fs');
 var yaml = require('yamljs');
-var url = require('url');
 var us = require('underscore');
 var querystring = require('querystring');
 var crypto = require('crypto');
 
-var path = require('path');
 var url = require('url');
 
 var vantage = require('vantage')();
 
 // Required add-on libs.
 var bbop = require('bbop');
-//var bbopx = require('bbopx');
-var amigo = require('amigo2');
 var bar_response = require('bbop-response-barista');
 
 // We will require our own http client for proxying POST requests with
@@ -2512,8 +2507,6 @@ var BaristaLauncher = function () {
     // response, so we have to assemble it ourselves.
     var chunks = [];
     proxyRes.on('data', function (chunk) {
-
-      //var util = require('util');
       var jsonp_partial = chunk.toString();
       chunks.push(jsonp_partial);
     });

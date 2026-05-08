@@ -3,7 +3,6 @@
 ////
 
 var gulp = require('gulp');
-//var jsdoc = require("gulp-jsdoc");
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
 var shell = require('gulp-shell');
@@ -14,17 +13,12 @@ var uglify = require('gulp-uglify');
 var us = require('underscore');
 var del = require('del');
 var yaml = require('yamljs');
-var fs = require('fs');
 var url = require('url');
 var tilde = require('expand-home-dir');
 var bump = require('gulp-bump');
 var flatten = require('gulp-flatten');
 var request = require('request');
-//var git = require('gulp-git');
-//var watch = require('gulp-watch');
-//var watchify = require('watchify');
-//var concat = require('gulp-concat');
-//var sourcemaps = require('gulp-sourcemaps');
+
 ///
 /// Helpers.
 ///
