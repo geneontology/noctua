@@ -24,7 +24,6 @@ brew install node
 ### Steps for a local Installation
 ```
 # The full Noctua stack is a multi-repositorie project; optionally create a main directory for the stack to contain all the repositories.
-# These instruction assume that "gulp" is in your path; if local-only, use: `./node_modules/.bin/gulp`.
 
 # Creating a local directory for our work.
 mkdir noctua-stack && cd noctua-stack
@@ -62,39 +61,38 @@ cp config/startup.yaml.stack-dev ./startup.yaml
 vim startup.yaml
 
 # Build the stack and Blazegraph Journal (triplestore)
-./node_modules/.bin/gulp build
+npm run build
 # If running first time.
-./node_modules/.bin/gulp batch-minerva-destroy-journal
-./node_modules/.bin/gulp batch-minerva-destroy-ontology-journal
-./node_modules/.bin/gulp batch-minerva-create-journal
+npm run batch-minerva-destroy-journal
+npm run batch-minerva-create-journal
 
 # Then launch the stack, waiting for each to successfully start up:
-./node_modules/.bin/gulp run-minerva &> minerva.log &
-./node_modules/.bin/gulp run-barista &> barista.log &
-./node_modules/.bin/gulp run-noctua &> noctua.log &
+npm run run-minerva &> minerva.log &
+npm run run-barista &> barista.log &
+npm run run-noctua &> noctua.log &
 ```
 
 ## Additional notes
 
-### Gulp Tasks
-- doc - build the docs, available in doc/
-- test - need more here
+### NPM Scripts
+- test - run mocha tests
 - build - assemble the apps for running
 - watch - development file monitor
-- clean - clean out /doc and /deploy
+- run-barista - start auth/relay middleware
+- run-minerva - start Blazegraph
+- run-noctua - start main web app
 
-In addition, the last 3 lines of the installation steps launch all the 3 layers of the Noctua Stack:
+In addition, the installation steps launch all the 3 layers of the Noctua Stack:
 ```
-gulp run-barista &> barista.log &
-gulp run-minerva &> minerva.log &
-gulp run-noctua &> noctua.log &
+npm run run-barista &> barista.log &
+npm run run-minerva &> minerva.log &
+npm run run-noctua &> noctua.log &
 ```
 
-And Gulp can be used to both destroy and create [blazegraph](https://www.blazegraph.com) journals (triplestore):
+And npm scripts can be used to both destroy and create [blazegraph](https://www.blazegraph.com) journals (triplestore):
 ```
-gulp batch-minerva-destroy-journal
-gulp batch-minerva-destroy-ontology-journal
-gulp batch-minerva-create-journal
+npm run batch-minerva-destroy-journal
+npm run batch-minerva-create-journal
 ```
 
 ### Users & groups

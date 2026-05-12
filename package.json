@@ -24,8 +24,7 @@
     "url": "git+https://github.com/geneontology/noctua.git"
   },
   "engines": {
-    "node": ">= 8.11.1",
-    "npm": ">= 5.6.0"
+    "node": ">=22 <25"
   },
   "dependencies": {
     "amigo2": "2.4.3",
@@ -76,9 +75,9 @@
     "ngtouch": "^1.0.1",
     "ontology-ui-overlay-data": "0.0.2",
     "passport": "0.3.2",
-    "passport-local": "1.0.0",
     "passport-github": "1.1.0",
     "passport-google-oauth": "1.0.0",
+    "passport-local": "1.0.0",
     "passport-oauth2": "1.3.0",
     "pup-tent": "0.9.10",
     "selectize": "^0.12.1",
@@ -91,69 +90,15 @@
   },
   "devDependencies": {
     "babel-eslint": "^6.0.5",
-    "browserify": "^13.0.1",
-    "browserify-shim": "^3.8.12",
     "chai": "^4.1.2",
     "del": "^3.0.0",
-    "gulp": "^3.8.11",
-    "gulp-bump": "^3.1.0",
-    "gulp-flatten": "0.3.0",
-    "gulp-git": "^2.5.2",
-    "gulp-jshint": "^2.0.1",
-    "gulp-mocha": "^5.0.0",
-    "gulp-shell": "^0.6.5",
-    "gulp-streamify": "^1.0.2",
-    "gulp-uglify": "^3.0.0",
-    "jsdoc": "^3.3.0",
-    "jshint": "^2.9.3",
-    "request": "2.72.0",
-    "uglifyify": "^3.0.2",
-    "vinyl-source-stream": "1.1.0",
-    "wait-on": "^1.5.2"
-  },
-  "browserify": {
-    "transform": [
-      "browserify-shim"
-    ]
-  },
-  "browser": {
-    "jquery": "./node_modules/jquery/dist/jquery.min.js",
-    "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
-    "jquery-ui": "./external_js/jquery-ui-1.10.3.custom.min.js",
-    "jsplumb": "./external_js/jquery.jsPlumb-1.5.5-min.js",
-    "tablesorter": "./external_js/jquery.tablesorter.min.js",
-    "datatables": "./external_js/jquery.dataTables.min.js",
-    "selectize": "./node_modules/selectize/dist/js/standalone/selectize.min.js",
-    "toastr": "./node_modules/toastr/toastr.js",
-    "connectors-sugiyama": "./js/connectors-sugiyama.js",
-    "noctua-widgetry": "./js/lib/noctua-widgetry/widgetry.js",
-    "bs-table": "./external_js/bs-table.min.js",
-    "angular-animate": "./node_modules/angular-animate/angular-animate.min.js",
-    "angular-xeditable": "./external_js/xeditable.min.js",
-    "angular-toastr": "./node_modules/angular-toastr/dist/angular-toastr.min.js",
-    "angular-toastr-tpls": "./node_modules/angular-toastr/dist/angular-toastr.tpls.min.js",
-    "angular:": "./node_modules/angular/angular.min.js",
-    "angular-sanitize": "./node_modules/angular-sanitize/angular-sanitize.min.js",
-    "angular-ui-grid": "./node_modules/angular-ui-grid/ui-grid.js",
-    "ui-select": "./node_modules/ui-select/dist/select.min.js"
-  },
-  "browserify-shim": {
-    "jquery": {
-      "exports": "global:jQuery"
-    },
-    "jquery-ui": {
-      "depends": [
-        "jquery"
-      ]
-    },
-    "datatables": {
-      "depends": [
-        "jquery"
-      ]
-    },
-    "jsplumb": {
-      "exports": "global:jsPlumb"
-    }
+    "glob": "^10.5.0",
+    "imports-loader": "^5.0.0",
+    "mocha": "^10.8.2",
+    "terser": "^5.47.1",
+    "wait-on": "^1.5.2",
+    "webpack": "^5.106.2",
+    "webpack-cli": "^7.0.2"
   },
   "bundleDependencies": [],
   "private": false,
@@ -166,7 +111,14 @@
     "test": "tests"
   },
   "scripts": {
-    "lint": "node_modules/.bin/eslint js/NoctuaBasic/ || exit 0",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests/*.test.js",
+    "build": "node scripts/build.js",
+    "watch": "node scripts/build.js --watch",
+    "run-noctua": "node scripts/noctua.js",
+    "run-barista": "node scripts/barista.js",
+    "run-minerva": "node scripts/minerva.js",
+    "run-minerva-no-validation": "node scripts/minerva.js --no-validation",
+    "batch-minerva-create-journal": "node scripts/minerva.js --batch-create",
+    "batch-minerva-destroy-journal": "node scripts/minerva.js --batch-destroy"
   }
 }

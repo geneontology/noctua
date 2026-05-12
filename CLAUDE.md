@@ -10,7 +10,7 @@ Three-tier stack (each runs as a separate process):
 - **Barista** (`barista.js`): Auth middleware + Socket.io relay
 - **Noctua** (`noctua.js`): Main Express.js web application
 
-Frontend uses AngularJS 1.5 + Browserify. Real-time updates via Socket.io.
+Frontend uses AngularJS 1.5 + Webpack. Real-time updates via Socket.io.
 
 ## Key Directories
 
@@ -20,25 +20,24 @@ Frontend uses AngularJS 1.5 + Browserify. Real-time updates via Socket.io.
 - `workbenches/` — Pluggable extension modules (configured externally)
 - `config/` — Startup YAML profiles (dev/prod)
 - `external_js/` — Legacy third-party JS (jQuery UI, jsPlumb, etc.)
-- `deploy/` — Browserify output bundles (gitignored)
+- `deploy/` — Webpack output bundles (gitignored)
 
 ## Build & Run
 
 ```sh
 npm install
-gulp build          # compile browserify bundles
-gulp watch          # dev mode with file watching
-gulp test           # mocha tests + eslint
-gulp run-minerva    # start Blazegraph
-gulp run-barista    # start auth/relay middleware
-gulp run-noctua     # start main web app
+npm run build          # compile webpack bundles
+npm run test           # mocha tests
+npm run run-minerva    # start Blazegraph
+npm run run-barista    # start auth/relay middleware
+npm run run-noctua     # start main web app
 ```
 
 ## Code Conventions
 
 - **Style:** snake_case for variables/functions (no CamelCase)
 - **Private functions:** prefix with underscore (`_myFunc`)
-- **Modules:** CommonJS `require()` (browserified)
+- **Modules:** CommonJS `require()` (webpack handles bundling)
 - **Linting:** ESLint with babel parser — strict `===`, no `eval`, no `alert`
 - **Libraries:** underscore.js utilities throughout, bbop-* ecosystem for data/graph
 - **Templates:** Mustache for server-side rendering
@@ -48,7 +47,7 @@ gulp run-noctua     # start main web app
 
 - Mocha + Chai (non-chained assertions)
 - Test files: `tests/*.test.js`
-- Run: `gulp test`
+- Run: `npm run test`
 
 ## Configuration
 

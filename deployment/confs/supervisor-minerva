@@ -1,6 +1,6 @@
 [program:minerva]
 directory=/home/{{ remote_user }}/local/src/git/noctua
-command=bash -c "./node_modules/.bin/gulp run-minerva"
+command=bash -c "npm run run-minerva"
 autostart=true
 autorestart=true
 startsecs=120
