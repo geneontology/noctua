@@ -1037,66 +1037,6 @@ var NoctuaLauncher = function () {
       self.standard_response(res, 200, 'text/html', o);
     });
 
-    //
-    self.app.get('/basic/:model_type/:query', function (req, res) {
-      self.sanitize_request(req);
-
-      // Try and see if we have an API token.
-      var barista_token = self.get_token(req);
-      var model_type = req.params['model_type'] || '';
-      var model_id = req.params['query'] || '';
-      var noctua_landing = _build_token_link(self.frontend, barista_token);
-      var noctua_branding = 'Noctua';
-      if (noctua_context === 'monarch') {
-        noctua_branding = 'WebPhenote';
-      }
-      var barista_login = self.barista_location + '/login?return=' +
-        self.frontend + '/basic/' + model_type + '/' + model_id;
-      var barista_logout =
-        _build_token_link(self.barista_location + '/logout' +
-          '?barista_token=' + barista_token +
-          '&return=' + self.frontend + '/basic/' +
-          model_type + '/' + model_id, barista_token);
-
-      //
-      var model_obj = null;
-
-      var tmpl_args = self.standard_variable_load(
-        '/basic/' + model_type + '/' + model_id, 'FormEditor', req,
-        model_id, model_obj,
-        null, null,
-        null, null,
-        {
-          'pup_tent_js_libraries': [
-            '/deploy/js/NoctuaBasic/NoctuaBasicApp.js',
-            '/deploy/angular-toastr.tpls.min.js'
-          ],
-          'pup_tent_css_libraries': [
-            '/noctua_common.css',
-            '/NoctuaBasic.css',
-            '/selectize.css',
-            '/selectize.bootstrap3.css',
-            '/selectize.custom.css',
-            '/angular-toastr.css',
-            '/ui-grid.css',
-            '/select.min.css',
-            '/toastr_custom.css'
-          ],
-          'model_type': model_type
-        });
-
-      tmpl_args.pup_tent_js_variables.push(
-        {
-          name: 'global_model_type',
-          value: model_type
-        });
-
-      var ind = pup_tent.render('noctua_basic.tmpl',
-        tmpl_args,
-        'noctua_base_landing.tmpl');
-      self.standard_response(res, 200, 'text/html', ind);
-    });
-
     // Routes for all static cache items.
     each(pup_tent.cached_list(), function (thing) {
 
@@ -1115,9 +1055,6 @@ var NoctuaLauncher = function () {
 
     // Fonts are special!
     self.app.use('/fonts', launcher_app.static('static/fonts'));
-    self.app.use('/ui-grid.svg', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.svg'));
-    self.app.use('/ui-grid.ttf', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.ttf'));
-    self.app.use('/ui-grid.woff', launcher_app.static('./node_modules/angular-ui-grid/ui-grid.woff'));
 
     // Other static routes.
     // BUG/TODO: Hardcoded--likely need a pathname getter in pup_tent.

@@ -3017,7 +3017,7 @@ jsPlumb.ready(function () {
             }
           }
         }
-      }).done();
+      });
     }
 
   }

@@ -10,11 +10,11 @@ Three-tier stack (each runs as a separate process):
 - **Barista** (`barista.js`): Auth middleware + Socket.io relay
 - **Noctua** (`noctua.js`): Main Express.js web application
 
-Frontend uses AngularJS 1.5 + Webpack. Real-time updates via Socket.io.
+Frontend bundled with Webpack. Real-time updates via Socket.io.
 
 ## Key Directories
 
-- `js/` — Client-side code (`NoctuaEditor.js`, `NoctuaLanding.js`, `NoctuaBasic/`)
+- `js/` — Client-side code (`NoctuaEditor.js`, `NoctuaLanding.js`)
 - `js/lib/noctua-widgetry/` — Shared UI widget library
 - `templates/` — Server-side Mustache templates
 - `workbenches/` — Pluggable extension modules (configured externally)

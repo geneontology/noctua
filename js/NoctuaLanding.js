@@ -89,9 +89,7 @@ var rest_response = require('bbop-rest-response').json;
 // Button/link as edit.
 function _generate_jump_url(id, editor_type) {
   var new_url = "";
-  if (editor_type === 'monarch' || editor_type === 'hpo') {
-    new_url = '/basic/' + editor_type + '/' + id;
-  } else if (editor_type === 'noctua-form') {
+  if (editor_type === 'noctua-form') {
     new_url = '/workbench/' + editor_type + '/?model_id=' + id;
   } else {
     new_url = '/editor/graph/' + id;
@@ -139,10 +137,6 @@ var MinervaBootstrapping = function (user_token, issue_list) {
   // var model_create_by_protax_input_tax_elt =
   // 	    '#' + model_create_by_protax_input_tax_id;
   // Create new model from nothing for form.
-  var model_create_monarch_button_id = 'create_button_monarch';
-  var model_create_monarch_button_elt = '#' + model_create_monarch_button_id;
-  var model_create_hpo_button_id = 'create_button_hpo';
-  var model_create_hpo_button_elt = '#' + model_create_hpo_button_id;
   // // Export DOM hooks.
   // var model_export_by_id_def_button_id = 'button_id_for_def_export';
   // var model_export_by_id_def_button_elt = '#'+model_export_by_id_def_button_id;
@@ -638,17 +632,6 @@ var MinervaBootstrapping = function (user_token, issue_list) {
       }
     }
 
-    // Creation for form. Since default is in the callback is
-    // "graph", goose it over to kick me to form instead.
-    jQuery(model_create_monarch_button_elt).click(function (evt) {
-      to_editor = "monarch";
-      manager.add_model();
-    });
-    jQuery(model_create_hpo_button_elt).click(function (evt) {
-      to_editor = "hpo";
-      manager.add_model();
-    });
-
     // 	///
     // 	/// Make the process/taxon seeding interactive.
     // 	///
@@ -859,7 +842,7 @@ jQuery(document).ready(function () {
           });
           MinervaBootstrapping(start_token, display_list);
         }
-      }).done();
+      });
     }
     // // Try and make contact with GitHub.
     // var github = new ghapi({

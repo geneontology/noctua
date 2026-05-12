@@ -1565,7 +1565,7 @@ var BaristaLauncher = function () {
   /// Cache and template rendering.
   ///
 
-  var ppaths = ['static', 'deploy', 'deploy/js', 'css', 'templates'];
+  var ppaths = ['static', 'deploy', 'css', 'templates'];
   var pup_tent = require('pup-tent')(ppaths);
   pup_tent.use_cache_p(false);
 

@@ -26,15 +26,6 @@ async function readyNonCommonjsLibs() {
     "toastr": "./node_modules/toastr/toastr.js",
     "connectors-sugiyama": "./js/connectors-sugiyama.js",
     "noctua-widgetry": "./js/lib/noctua-widgetry/widgetry.js",
-    "bs-table": "./external_js/bs-table.min.js",
-    "angular-animate": "./node_modules/angular-animate/angular-animate.min.js",
-    "angular-xeditable": "./external_js/xeditable.min.js",
-    "angular-toastr": "./node_modules/angular-toastr/dist/angular-toastr.min.js",
-    "angular-toastr-tpls": "./node_modules/angular-toastr/dist/angular-toastr.tpls.min.js",
-    "angular:": "./node_modules/angular/angular.min.js",
-    "angular-sanitize": "./node_modules/angular-sanitize/angular-sanitize.min.js",
-    "angular-ui-grid": "./node_modules/angular-ui-grid/ui-grid.js",
-    "ui-select": "./node_modules/ui-select/dist/select.min.js"
   }
   for (const [key, val] of Object.entries(libs)) {
     if (val.startsWith('./')) {
