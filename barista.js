@@ -922,12 +922,16 @@ var Sessioner = function(auth_list, group_list){
     	var noctua_users = [];
     	us.each(auth_list, function(uinf){
 
-	    if( uinf['uri'] &&
-		// Filter out those users without authorization to
-		// edit on this instance.
-		uinf['authorizations'] &&
+	    var ctx_auth = uinf['authorizations'] &&
 		uinf['authorizations']['noctua'] &&
-		uinf['authorizations']['noctua'][barista_context] ){
+		uinf['authorizations']['noctua'][barista_context];
+
+	    // Filter to users with edit or admin authorization on
+	    // this instance; merely having a context entry is not
+	    // enough.
+	    if( uinf['uri'] && ctx_auth &&
+		(ctx_auth['allow-edit'] === true ||
+		 ctx_auth['allow-admin'] === true) ){
 
 		// Get a copy of the info.
 		var copied_info = self.get_info_by_uri(uinf['uri']);
