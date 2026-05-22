@@ -1752,7 +1752,7 @@ var BaristaLauncher = function () {
   }
 
   // Gross overview of current users.
-  messaging_app.get('/user_info/:action?', function (req, res) {
+  messaging_app.get('/user_info{/:action}', function (req, res) {
 
     // First, check to see if we have access to the good stuff,
     // both for later drawing use and for local actions.
@@ -2378,7 +2378,7 @@ var BaristaLauncher = function () {
     // prependPath: false,
   };
   var api_proxy = http_proxy.createProxyServer(api_proxy_opts);
-  messaging_app.get("/api/:namespace/:call/:subcall?", function (req, res) {
+  messaging_app.get("/api/:namespace/:call{/:subcall}", function (req, res) {
 
     // TODO: Request logging hooks could be placed in here.
     //ll('pre api req: ' + req.url);
@@ -2538,7 +2538,7 @@ var BaristaLauncher = function () {
   });
 
   // POST version.
-  messaging_app.post("/api/:namespace/:call/:subcall?", function (req, res) {
+  messaging_app.post("/api/:namespace/:call{/:subcall}", function (req, res) {
 
     // TODO: Request logging hooks could be placed in here.
     //ll('pre api req: ' + req.url);
@@ -2715,7 +2715,7 @@ var BaristaLauncher = function () {
   /// simplest way possible.
   ///
 
-  messaging_app.get("/search/*", function (req, res) {
+  messaging_app.get("/search/*splat", function (req, res) {
 
     // TODO: Request logging hooks could be placed in here.
     //ll('pre api req: ' + req.url);
