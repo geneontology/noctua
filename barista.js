@@ -13,13 +13,13 @@
 ////
 
 // Required shareable Node libs.
-var fs = require('fs');
+var fs = require('node:fs');
 var yaml = require('yamljs');
 var us = require('underscore');
-var querystring = require('querystring');
-var crypto = require('crypto');
+var querystring = require('node:querystring');
+var crypto = require('node:crypto');
 
-var url = require('url');
+var url = require('node:url');
 
 var vantage = require('vantage')();
 
@@ -29,7 +29,7 @@ var bar_response = require('bbop-response-barista');
 
 // We will require our own http client for proxying POST requests with
 // modifications.
-var http = require('http');
+var http = require('node:http');
 
 ///
 /// Helpers.
@@ -2755,7 +2755,7 @@ var BaristaLauncher = function () {
   // This is the main socket.io hook.
   //messaging_app.get('/messenger', function (req, res) {
   messaging_app.get('/', function (req, res) {
-    res.sendfile(__dirname + '/static/messenger.html');
+    res.sendFile(__dirname + '/static/messenger.html');
   });
 
   // TODO: Turn on recommended production settings when in production.

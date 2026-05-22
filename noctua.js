@@ -14,12 +14,12 @@
 
 // Required shareable Node libs.
 var md = require('markdown');
-var fs = require('fs');
-var path = require('path');
+var fs = require('node:fs');
+var path = require('node:path');
 var tilde = require('expand-home-dir');
 var yaml = require('yamljs');
-var mime = require('mime');
-var url = require('url');
+var mime = require('mime').default;
+var url = require('node:url');
 
 // Required add-on libs.
 var amigo = require('amigo2');
@@ -1040,7 +1040,7 @@ var NoctuaLauncher = function () {
     // Routes for all static cache items.
     each(pup_tent.cached_list(), function (thing) {
 
-      var ctype = mime.lookup(thing);
+      var ctype = mime.getType(thing);
 
       // This will skip cached templates.
       if (ctype !== null) {
@@ -1076,7 +1076,9 @@ var NoctuaLauncher = function () {
       self.app.get('/images/' + fname, function (req, res) {
         self.sanitize_request(req);
         res.setHeader('Content-Type', 'image/' + type);
-        res.sendfile('static/' + fname);
+        res.sendFile(fname, {
+          root: path.join(__dirname, 'static')
+        });
       });
     });
 
@@ -1668,7 +1670,7 @@ var NoctuaLauncher = function () {
     });
 
     // Downloads for the impatient.
-    self.app.get('/download/:model/:format?', function (req, res) {
+    self.app.get('/download/:model{/:format}', function (req, res) {
       self.sanitize_request(req);
 
       monitor_internal_kicks = monitor_internal_kicks + 1;
