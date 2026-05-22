@@ -34,23 +34,13 @@ module.exports = {
     },
     extensions: ['.js', '.json'],
 
-    // Some shared bbop-era modules contain server-only requires. The browser
-    // bundles do not need those modules, so mark them unavailable instead of
-    // pulling in large polyfills.
+    // The `bbop` package contain server-only requires. The browser bundles do
+    // not need those modules, so mark them unavailable instead of pulling in
+    // large polyfills.
     fallback: {
       "ringo/httpclient": false,
       "http": false,
-      "https": false,
       "url": false,
-      "path": false,
-      "fs": false,
-      "util": false,
-      "stream": false,
-      "buffer": false,
-      "querystring": false,
-      "zlib": false,
-      "os": false,
-      "crypto": false
     }
   },
 
