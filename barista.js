@@ -155,13 +155,23 @@ if (barista_debug > 0) {
   process.env['DEBUG'] = process.env['DEBUG'] + ' xsocket.io:*';
 }
 
-// CLI handling.
-var argv = require('minimist')(process.argv.slice(2));
 var secloc = argv['x'] || argv['secrets'];
 if (!secloc) {
   secloc = './secrets';
   ll('Secrets location defaulting to: ' + secloc);
 }
+
+// If --cors-origins is supplied, split on comma and trim whitespace to get list of allowed origins
+// for CORS requests. Otherwise, default to false, which will disable CORS handling.
+var corsOrigins = argv['cors-origins'];
+if (corsOrigins) {
+  corsOrigins = corsOrigins.split(',').map(function (origin) {
+    return origin.trim();
+  });
+} else {
+  corsOrigins = false;
+}
+ll('Barista CORS origins: ' + (corsOrigins ? corsOrigins.join(', ') : 'none'));
 
 // Make sure secloc extant, etc.
 var fstats = null;
@@ -1631,8 +1641,12 @@ var BaristaLauncher = function () {
   // This initial require() of socket.io respects the process.env
   // variable DEBUG (see the processing of the barista_debug value above).
   //
-  var socketio = require('socket.io');
-  var sio = socketio.listen(messaging_server);
+  var { Server } = require('socket.io');
+  var sio = new Server(messaging_server, {
+    cors: {
+      origin: corsOrigins,
+    }
+  });
   // Run app server through vantage to get vantage goodies.
   messaging_server.listen(messaging_app.get('port'), function () {
     console.log('Express server listening on port ' + messaging_app.get('port'));
