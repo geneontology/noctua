@@ -15,6 +15,5 @@
     "browserify": true,
     "devel": true,
     "jquery": true,
-    "mocha": true,
     "node": true
 }

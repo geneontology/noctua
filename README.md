@@ -75,7 +75,7 @@ npm run run-noctua &> noctua.log &
 ## Additional notes
 
 ### NPM Scripts
-- test - run mocha tests
+- test - run tests
 - build - assemble the apps for running
 - watch - development file monitor
 - run-barista - start auth/relay middleware

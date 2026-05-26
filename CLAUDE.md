@@ -27,7 +27,7 @@ Frontend bundled with Webpack. Real-time updates via Socket.io.
 ```sh
 npm install
 npm run build          # compile webpack bundles
-npm run test           # mocha tests
+npm run test           # run tests
 npm run run-minerva    # start Blazegraph
 npm run run-barista    # start auth/relay middleware
 npm run run-noctua     # start main web app
@@ -45,7 +45,7 @@ npm run run-noctua     # start main web app
 
 ## Testing
 
-- Mocha + Chai (non-chained assertions)
+- Node built-in test runner + Chai (non-chained assertions)
 - Test files: `tests/*.test.js`
 - Run: `npm run test`
 
