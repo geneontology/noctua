@@ -7,7 +7,7 @@ const groupData = getValue('GROUP_DATA');
 const baristaLocation = getValue('BARISTA_LOCATION');
 const loginSecretsDir = getValue('BARISTA_LOGIN_SECRETS');
 const noctuaContext = getValue('NOCTUA_CONTEXT', 'go');
-const noctuaLocation = getValue('NOCTUA_LOCATION');
+const noctuaURL = getValue('NOCTUA_LOOKUP_URL');
 const baristaDefaultNamespace = getValue('BARISTA_DEFAULT_NAMESPACE');
 const baristaReplPort = getValue('BARISTA_REPL_PORT');
 
@@ -23,7 +23,7 @@ const args = [
   '--context', noctuaContext,
   '--default-namespace', baristaDefaultNamespace,
   '--repl', baristaReplPort,
-  '--cors-origins', noctuaLocation,
+  '--cors-origins', noctuaURL,
 ];
 
 // Inherit stdio so supervisor/local logs contain the child process output.
