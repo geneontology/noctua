@@ -181,11 +181,17 @@ if( ! fstats.isDirectory() ){
 
 // Define bogus users. / Select runtime developer and admin tokens.
 // TODO: Put out into private file on filesystem; still report on startup.
-var admin_token = argv['a'] || argv['admin-token'] || '000';
+// Generate a cryptographically strong, URL-safe token from a CSPRNG:
+// nbytes bytes of entropy -> ceil(nbytes/3)*4 base64url chars.
+// Developer tokens use 12 bytes (16 chars / 96 bits).
+function _gen_token(nbytes){
+    return crypto.randomBytes(nbytes).toString('base64url');
+}
+var admin_token = argv['a'] || argv['admin-token'] || _gen_token(12);
 ll('Barista admin token (self): ' + admin_token);
-var edit_token = argv['e'] || argv['edit-token'] || '123';
+var edit_token = argv['e'] || argv['edit-token'] || _gen_token(12);
 ll('Barista editor token (self): ' + edit_token);
-var rand_user_token = bbop.core.randomness(4);
+var rand_user_token = _gen_token(12);
 ll('Anonymous editor token: ' + rand_user_token);
 var bogus_users = [
     {
@@ -416,7 +422,8 @@ var Sessioner = function(auth_list, group_list){
 
     // Generate a new token.
     function get_token(){
-	var token = bbop.core.randomness(20);
+	// 15 bytes -> 20 URL-safe chars / 120 bits from a CSPRNG.
+	var token = _gen_token(15);
 	return token;
     }
 
