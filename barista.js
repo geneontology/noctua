@@ -184,8 +184,12 @@ if( ! fstats.isDirectory() ){
 // Generate a cryptographically strong, URL-safe token from a CSPRNG:
 // nbytes bytes of entropy -> ceil(nbytes/3)*4 base64url chars.
 // Developer tokens use 12 bytes (16 chars / 96 bits).
+// NOTE: base64url is hand-rolled from base64 rather than via
+// toString('base64url'), because production Node (v8) predates that
+// encoding name (added in Node 14/15). base64 works on every version.
 function _gen_token(nbytes){
-    return crypto.randomBytes(nbytes).toString('base64url');
+    var b64 = crypto.randomBytes(nbytes).toString('base64');
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 var admin_token = argv['a'] || argv['admin-token'] || _gen_token(12);
 ll('Barista admin token (self): ' + admin_token);
