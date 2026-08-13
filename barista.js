@@ -1494,6 +1494,30 @@ var BaristaLauncher = function(){
 	return ret;
     }
 
+    // Sanitize an incoming "return" URL before it reaches an href or a
+    // redirect. The value is attacker-controllable, and HTML-escaping in the
+    // templates does NOT neutralize a dangerous URL *scheme* -- so constrain
+    // it here: site-relative or absolute http(s) only. Anything else
+    // (javascript:, data:, vbscript:, protocol-relative //host) returns null,
+    // and callers then render no return link.
+    function _safe_return_url(url_str){
+	if( ! url_str || typeof url_str !== 'string' ){ return null; }
+	var trimmed = url_str.trim();
+	// Browsers strip control characters, so "java<TAB>script:" would
+	// survive a naive scheme test; reject such values outright.
+	if( /[\x00-\x1F\x7F]/.test(trimmed) ){ return null; }
+	// Protocol-relative ("//example.com/...") is off-site.
+	if( trimmed.indexOf('//') === 0 ){ return null; }
+	// Site-relative is always acceptable.
+	if( trimmed === '/' || /^\/[^\/]/.test(trimmed) ){ return trimmed; }
+	// Otherwise an explicit, allowed scheme is required.
+	var scheme_match = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.\-]*):/);
+	if( ! scheme_match ){ return null; }
+	var scheme = scheme_match[1].toLowerCase();
+	if( scheme !== 'http' && scheme !== 'https' ){ return null; }
+	return trimmed;
+    }
+
     function _filter_token_from_url(url_str){
 	var ret = url_str;
 
@@ -1984,7 +2008,7 @@ var BaristaLauncher = function(){
 	// Get return argument (originating URL) if there.
 	var ret = null;
 	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
+	    ret = _safe_return_url(req.query['return']);
 	    req.session.return = ret;
 	}
 
@@ -2010,7 +2034,7 @@ var BaristaLauncher = function(){
 	// Get return argument (originating URL) if there.
 	var ret = null;
 	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
+	    ret = _safe_return_url(req.query['return']);
 	}
 	// Get the token, which really should be there.
 	var tok = null;
@@ -2066,7 +2090,7 @@ var BaristaLauncher = function(){
 	// First, see if we stashed it in the url.
 	var ret = null;
 	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
+	    ret = _safe_return_url(req.query['return']);
 	    console.log('Recovered return URL from URL.');
 	}
 	// Next, see if we stashed it in the session.
@@ -2117,7 +2141,7 @@ var BaristaLauncher = function(){
 	// Get return argument (originating URL) if there.
 	var ret = null;
 	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
+	    ret = _safe_return_url(req.query['return']);
 	}
 	// Get the token, which reall should be there.
 	var tok = null;
@@ -2166,7 +2190,7 @@ var BaristaLauncher = function(){
 	// Get return argument (originating URL) if there.
 	var ret = null;
 	if( req.query && req.query['return'] ){
-	    ret = req.query['return'];
+	    ret = _safe_return_url(req.query['return']);
 	}
 	console.log('/auth/local GET got "return": ' + ret);
 	// TODO: Err if nothing to return to?
