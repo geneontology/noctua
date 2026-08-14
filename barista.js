@@ -1501,21 +1501,25 @@ var BaristaLauncher = function(){
     // (javascript:, data:, vbscript:, protocol-relative //host) returns null,
     // and callers then render no return link.
     function _safe_return_url(url_str){
-	if( ! url_str || typeof url_str !== 'string' ){ return null; }
+	// Reject control characters and DEL *before* trimming (a redirect
+	// target wrapped in stray whitespace is not something to normalize),
+	// and reject backslashes anywhere: HTTP(S) URL parsing treats "\" as a
+	// path/authority separator, so "/\evil.example" would otherwise pass
+	// the site-relative test below and then navigate to evil.example.
+	if( typeof url_str !== 'string' ||
+	    /[\x00-\x1F\x7F\\]/.test(url_str) ){ return null; }
+
 	var trimmed = url_str.trim();
-	// Browsers strip control characters, so "java<TAB>script:" would
-	// survive a naive scheme test; reject such values outright.
-	if( /[\x00-\x1F\x7F]/.test(trimmed) ){ return null; }
-	// Protocol-relative ("//example.com/...") is off-site.
-	if( trimmed.indexOf('//') === 0 ){ return null; }
-	// Site-relative is always acceptable.
-	if( trimmed === '/' || /^\/[^\/]/.test(trimmed) ){ return trimmed; }
-	// Otherwise an explicit, allowed scheme is required.
-	var scheme_match = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.\-]*):/);
-	if( ! scheme_match ){ return null; }
-	var scheme = scheme_match[1].toLowerCase();
-	if( scheme !== 'http' && scheme !== 'https' ){ return null; }
-	return trimmed;
+
+	// Site-relative (but not protocol-relative "//host"), or a well-formed
+	// absolute http(s) URL with an authority. Everything else -- other
+	// schemes (javascript:, data:, blob:, vbscript:), bare "https:host",
+	// and empty input -- is rejected.
+	if( /^\/(?!\/)/.test(trimmed) ||
+	    /^https?:\/\/[^\/?#]+(?:[\/?#]|$)/i.test(trimmed) ){
+	    return trimmed;
+	}
+	return null;
     }
 
     function _filter_token_from_url(url_str){
@@ -1571,7 +1575,7 @@ var BaristaLauncher = function(){
 	var base_url = '/login/success?barista_token=' +
 		encodeURIComponent(user_token);
 	if( ret_url ){
-	    base_url += '&return=' + ret_url;
+	    base_url += '&return=' + encodeURIComponent(ret_url);
 	}
 	return res.redirect(base_url);
     }
@@ -1581,6 +1585,10 @@ var BaristaLauncher = function(){
     // and noctua.js.
     function _build_token_link(url, token, token_name){
 	var new_url = url;
+
+	// A rejected return URL arrives here as null; without this guard the
+	// token branch below would throw on null.indexOf().
+	if( typeof new_url !== 'string' ){ return new_url; }
 
 	// Default to "barista_token".
 	if( ! token_name ){ token_name = 'barista_token'; }
@@ -2045,8 +2053,9 @@ var BaristaLauncher = function(){
 
 	// We'll need this URL in some cases.
 	var return_link = _build_token_link(ret, tok);
-	var logout_link = _build_token_link('/logout?return='+ ret, tok);
-	var login_link = _build_token_link('/login?return='+ ret, tok);
+	var ret_query = ret ? '?return=' + encodeURIComponent(ret) : '';
+	var logout_link = _build_token_link('/logout' + ret_query, tok);
+	var login_link = _build_token_link('/login' + ret_query, tok);
 
 	var sess = sessioner.get_session_by_token(tok);
 	var user_name = '???';
@@ -2118,7 +2127,7 @@ var BaristaLauncher = function(){
 
 	// We'll need this URL in some cases.
 	var return_link = ret;
-	var login_link = '/login?return='+ ret;
+	var login_link = '/login' + (ret ? '?return=' + encodeURIComponent(ret) : '');
 
 	// Get return argument (originating URL) if there.
     	var tmpl_args = {
@@ -2158,7 +2167,7 @@ var BaristaLauncher = function(){
 
 	// We'll need this URL in some cases.
 	var return_link = ret;
-	var login_link = '/login?return='+ ret;
+	var login_link = '/login' + (ret ? '?return=' + encodeURIComponent(ret) : '');
 
 	//
 	var deleted_session_p = sessioner.delete_session_by_token(tok);
