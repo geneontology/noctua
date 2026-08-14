@@ -8,8 +8,10 @@ enums:
       AGI_LocusCode:
       CHEBI:
       ComplexPortal:
+      dictyBase:
       EC:
       EcoCyc:
+      Ensembl:
       FB:
       GO:
       InterPro:
@@ -22,6 +24,7 @@ enums:
       RNAcentral:
       SGD:
       UniProtKB:
+      TAIR:
       WB:
       Xenbase:
       ZFIN:

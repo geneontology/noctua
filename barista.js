@@ -188,11 +188,18 @@ if (!fstats.isDirectory()) {
 
 // Define bogus users. / Select runtime developer and admin tokens.
 // TODO: Put out into private file on filesystem; still report on startup.
-var admin_token = argv['a'] || argv['admin-token'] || '000';
+// URL-safe token carrying nbytes of CSPRNG entropy.
+// base64url is hand-rolled rather than toString('base64url'): that encoding
+// name needs Node >= 14, and this file also runs on the Node 8 hosts.
+function _gen_token(nbytes) {
+  var b64 = crypto.randomBytes(nbytes).toString('base64');
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+var admin_token = argv['a'] || argv['admin-token'] || _gen_token(12);
 ll('Barista admin token (self): ' + admin_token);
-var edit_token = argv['e'] || argv['edit-token'] || '123';
+var edit_token = argv['e'] || argv['edit-token'] || _gen_token(12);
 ll('Barista editor token (self): ' + edit_token);
-var rand_user_token = bbop.core.randomness(4);
+var rand_user_token = _gen_token(12);
 ll('Anonymous editor token: ' + rand_user_token);
 var bogus_users = [
   {
@@ -423,7 +430,8 @@ var Sessioner = function (auth_list, group_list) {
 
   // Generate a new token.
   function get_token() {
-    var token = bbop.core.randomness(20);
+    // 15 bytes -> 20 URL-safe chars / 120 bits from a CSPRNG.
+    var token = _gen_token(15);
     return token;
   }
 
@@ -929,12 +937,16 @@ var Sessioner = function (auth_list, group_list) {
     var noctua_users = [];
     us.each(auth_list, function (uinf) {
 
-      if (uinf['uri'] &&
-        // Filter out those users without authorization to
-        // edit on this instance.
-        uinf['authorizations'] &&
+      var ctx_auth = uinf['authorizations'] &&
         uinf['authorizations']['noctua'] &&
-        uinf['authorizations']['noctua'][barista_context]) {
+        uinf['authorizations']['noctua'][barista_context];
+
+      // Filter to users with edit or admin authorization on
+      // this instance; merely having a context entry is not
+      // enough.
+      if (uinf['uri'] && ctx_auth &&
+        (ctx_auth['allow-edit'] === true ||
+        ctx_auth['allow-admin'] === true)) {
 
         // Get a copy of the info.
         var copied_info = self.get_info_by_uri(uinf['uri']);
@@ -1491,6 +1503,28 @@ var BaristaLauncher = function () {
     return ret;
   }
 
+  // Constrain a caller-supplied "return" URL before it reaches an href or a
+  // redirect: site-relative or absolute http(s) only, else null (callers then
+  // render no return link). Template escaping does not neutralize a URL
+  // scheme, so this is the only thing stopping javascript: and friends.
+  // Regex rather than the WHATWG URL parser: this file also runs on Node 8.
+  function _safe_return_url(url_str) {
+    // Backslashes are rejected because http(s) parsing treats "\" as a
+    // separator: "/\evil.example" would pass the site-relative test below
+    // and navigate off-origin.
+    if (typeof url_str !== 'string' ||
+      /[\x00-\x1F\x7F\\]/.test(url_str)) { return null; }
+
+    var trimmed = url_str.trim();
+
+    // Site-relative, but not protocol-relative "//host".
+    if (/^\/(?!\/)/.test(trimmed) ||
+      /^https?:\/\/[^\/?#]+(?:[\/?#]|$)/i.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  }
+
   function _filter_token_from_url(url_str) {
     var ret = url_str;
 
@@ -1544,7 +1578,7 @@ var BaristaLauncher = function () {
     var base_url = '/login/success?barista_token=' +
       encodeURIComponent(user_token);
     if (ret_url) {
-      base_url += '&return=' + ret_url;
+      base_url += '&return=' + encodeURIComponent(ret_url);
     }
     return res.redirect(base_url);
   }
@@ -1554,6 +1588,10 @@ var BaristaLauncher = function () {
   // and noctua.js.
   function _build_token_link(url, token, token_name) {
     var new_url = url;
+
+    // A rejected return URL arrives here as null; without this guard the
+    // token branch below would throw on null.indexOf().
+    if (typeof new_url !== 'string') { return new_url; }
 
     // Default to "barista_token".
     if (!token_name) {
@@ -1987,7 +2025,7 @@ var BaristaLauncher = function () {
     // Get return argument (originating URL) if there.
     var ret = null;
     if (req.query && req.query['return']) {
-      ret = req.query['return'];
+      ret = _safe_return_url(req.query['return']);
       req.session.return = ret;
     }
 
@@ -2013,7 +2051,7 @@ var BaristaLauncher = function () {
     // Get return argument (originating URL) if there.
     var ret = null;
     if (req.query && req.query['return']) {
-      ret = req.query['return'];
+      ret = _safe_return_url(req.query['return']);
     }
     // Get the token, which really should be there.
     var tok = null;
@@ -2024,8 +2062,9 @@ var BaristaLauncher = function () {
 
     // We'll need this URL in some cases.
     var return_link = _build_token_link(ret, tok);
-    var logout_link = _build_token_link('/logout?return=' + ret, tok);
-    var login_link = _build_token_link('/login?return=' + ret, tok);
+    var ret_query = ret ? '?return=' + encodeURIComponent(ret) : '';
+    var logout_link = _build_token_link('/logout' + ret_query, tok);
+    var login_link = _build_token_link('/login' + ret_query, tok);
 
     var sess = sessioner.get_session_by_token(tok);
     var user_name = '???';
@@ -2069,7 +2108,7 @@ var BaristaLauncher = function () {
     // First, see if we stashed it in the url.
     var ret = null;
     if (req.query && req.query['return']) {
-      ret = req.query['return'];
+      ret = _safe_return_url(req.query['return']);
       console.log('Recovered return URL from URL.');
     }
     // Next, see if we stashed it in the session.
@@ -2097,7 +2136,7 @@ var BaristaLauncher = function () {
 
     // We'll need this URL in some cases.
     var return_link = ret;
-    var login_link = '/login?return=' + ret;
+    var login_link = '/login' + (ret ? '?return=' + encodeURIComponent(ret) : '');
 
     // Get return argument (originating URL) if there.
     var tmpl_args = {
@@ -2120,7 +2159,7 @@ var BaristaLauncher = function () {
     // Get return argument (originating URL) if there.
     var ret = null;
     if (req.query && req.query['return']) {
-      ret = req.query['return'];
+      ret = _safe_return_url(req.query['return']);
     }
     // Get the token, which reall should be there.
     var tok = null;
@@ -2137,7 +2176,7 @@ var BaristaLauncher = function () {
 
     // We'll need this URL in some cases.
     var return_link = ret;
-    var login_link = '/login?return=' + ret;
+    var login_link = '/login' + (ret ? '?return=' + encodeURIComponent(ret) : '');
 
     //
     var deleted_session_p = sessioner.delete_session_by_token(tok);
@@ -2169,7 +2208,7 @@ var BaristaLauncher = function () {
     // Get return argument (originating URL) if there.
     var ret = null;
     if (req.query && req.query['return']) {
-      ret = req.query['return'];
+      ret = _safe_return_url(req.query['return']);
     }
     console.log('/auth/local GET got "return": ' + ret);
     // TODO: Err if nothing to return to?
