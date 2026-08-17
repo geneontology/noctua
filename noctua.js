@@ -531,11 +531,33 @@ var NoctuaLauncher = function () {
       'barista_token'];
     if (req && req.query) {
 
+      // Sanitize a copy and install it as an OWN property, rather than
+      // assigning into req.query in place. Express 5 exposes req.query as a
+      // lazy accessor on the prototype that re-parses the query string on
+      // every read, so `req.query[p] = ...` writes into a throwaway object
+      // and every later read still returns the raw value -- which silently
+      // disabled this sanitizer for all of `purgable`. (Express 4 had a
+      // writable own property, so in-place assignment worked there.) An own
+      // property shadows the accessor and is correct on both versions.
+      // Do not "simplify" this back to direct assignment.
+      var raw = req.query;
+      var cleaned = {};
+      Object.keys(raw).forEach(function (k) {
+        cleaned[k] = raw[k];
+      });
+
       each(purgable, function (p) {
-        if (req.query[p]) {
-          req.query[p] = _sanitize(req.query[p]);
+        if (cleaned[p]) {
+          cleaned[p] = _sanitize(cleaned[p]);
           ret = true;
         }
+      });
+
+      Object.defineProperty(req, 'query', {
+        value: cleaned,
+        writable: true,
+        configurable: true,
+        enumerable: true
       });
     }
     return ret;
