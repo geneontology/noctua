@@ -69,7 +69,7 @@
     "passport-google-oauth": "1.0.0",
     "passport-local": "1.0.0",
     "passport-oauth2": "1.8.0",
-    "pup-tent": "0.9.10",
+    "pup-tent": "0.9.12",
     "selectize": "^0.12.1",
     "socket.io": "4.8.3",
     "toastr": "2.1.2",
