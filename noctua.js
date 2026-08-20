@@ -14,6 +14,7 @@
 
 // Required shareable Node libs.
 var md = require('markdown');
+var mustache = require('mustache');
 var fs = require('node:fs');
 var path = require('node:path');
 var tilde = require('expand-home-dir');
@@ -993,21 +994,30 @@ var NoctuaLauncher = function () {
         var mapped_fname = './context/' + noctua_context +
           '/markdown-docs/' + fname + '.md';
 
+        // The name is echoed back on failure, and content_insert is
+        // rendered unescaped (it normally carries rendered markdown),
+        // so escape it the same way mustache escapes it in the title
+        // and header.
+        var safe_fname = mustache.escape(fname);
+
+        // One message for every failure. The resolved path, the context
+        // name, and which kind of failure occurred all describe the
+        // server rather than the request, so none of them are reported
+        // to the caller.
+        var not_found = '<h5>no document "' + safe_fname + '"</h5>';
+
         // Detect if file exists.
         try {
           var fstats = fs.statSync(mapped_fname);
           if (!fstats.isFile()) {
-            // Catch error here if not found.
-            final_content = '<h5>' + fname + '" not file</h5>';
+            final_content = not_found;
           } else {
             // Grab markdown renderable file.
             var fname_raw = fs.readFileSync(mapped_fname).toString();
             final_content = md.markdown.toHTML(fname_raw);
           }
         } catch (e) {
-          // Catch error here if not found.
-          final_content = '<h5>no "' + fname + '" for "' +
-            noctua_context + '"</h5>: ' + mapped_fname;
+          final_content = not_found;
         }
       }
 
