@@ -560,7 +560,8 @@ var NoctuaLauncher = function () {
 
   self.standard_response = function (res, code, type, body) {
     res.setHeader('Content-Type', type);
-    res.setHeader('Content-Length', body.length);
+    // Bytes, not characters: barista hit this and fixed it the same way.
+    res.setHeader('Content-Length', Buffer.byteLength(body, 'utf-8'));
     res.end(body);
     return res;
   };
@@ -1107,8 +1108,9 @@ var NoctuaLauncher = function () {
 
       //console.log(req.route);
       //console.log(req.params['query']);
-      var etype = self.get_qp(req, 'type') || 'unclassified error';
-      var emessage = self.get_qp(req, 'message') || 'unknown error';
+      // sanitize_request does not reach these: it walks a fixed key list.
+      var etype = mustache.escape(self.get_qp(req, 'type') || 'unclassified error');
+      var emessage = mustache.escape(self.get_qp(req, 'message') || 'unknown error');
 
       var fin = [
         '<html>',

@@ -2120,7 +2120,8 @@ var BaristaLauncher = function () {
       // Fall back on trying to get return argument from the header
       // referer.
       if (!ret) {
-        ret = _extract_referer_query_field(req, 'return');
+        // Referer-sourced and lands in an href; validate as the query tier does.
+        ret = _safe_return_url(_extract_referer_query_field(req, 'return'));
         if (ret) {
           console.log('Recovered return URL from field.');
         } else {
