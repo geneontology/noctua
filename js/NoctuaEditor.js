@@ -40,6 +40,7 @@ var jsPlumb = require('jsplumb');
 //require('bootstrap');
 //require('tablesorter');
 //require('./js/connectors-sugiyama.js');
+var us = require('underscore');
 var bbop_legacy = require('bbop').bbop;
 var bbopx = require('bbopx');
 var amigo_inst_gen = require('amigo2-instance-data');
@@ -3006,7 +3007,9 @@ jsPlumb.ready(function () {
               var url = item['html_url'];
               var number = item['number'];
               if (title && title.indexOf(global_id) !== -1) {
-                var menu_link = '<li><a href="' + url + '" title="' + title + '" target="_blank"><strong style="color:green;">Open</strong> ' + title + ' (#' + number + ')</a></li>';
+                // Issue titles are writable by anyone with a GitHub account.
+                var safe_title = us.escape(title);
+                var menu_link = '<li><a href="' + url + '" title="' + safe_title + '" target="_blank"><strong style="color:green;">Open</strong> ' + safe_title + ' (#' + number + ')</a></li>';
                 to_append += menu_link;
               }
             });

@@ -377,8 +377,10 @@ var MinervaBootstrapping = function (user_token, issue_list) {
           var number = issue['number'];
           var url = issue['url'];
           if (title && title.indexOf(model_id) !== -1) {
+            // Issue titles are writable by anyone with a GitHub account.
+            var safe_title = us.escape(title);
             var link = '<a href="' + url +
-              '" title="' + title + '"' +
+              '" title="' + safe_title + '"' +
               ' target="_blank">#' + number +
               '</a>';
             retlist.push(link);
