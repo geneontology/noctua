@@ -2493,7 +2493,8 @@ function edit_annotations_modal(annotation_config, ecore, manager, entity_id,
                 resp.raw()['results']['bindings'][0] &&
                 resp.raw()['results']['bindings'][0]['title']) {
                 var tt = resp.raw()['results']['bindings'][0]['title']['value'];
-                jQuery("#" + app_elt_uuid).html(tt);
+                // Third-party editable; .text() renders, does not parse.
+                jQuery("#" + app_elt_uuid).text(tt);
               } else {
                 console.log('wikidata return structure bad');
               }
