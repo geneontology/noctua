@@ -62,7 +62,7 @@
     "del": "^2.2.1",
     "errorhandler": "^1.4.3",
     "expand-home-dir": "0.0.3",
-    "express": "4.14.0",
+    "express": "4.17.3",
     "express-persona": "0.1.2",
     "express-session": "^1.13.0",
     "golr-conf": "0.0.3",
