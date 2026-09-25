@@ -3,7 +3,7 @@ name: Maintenance outage issue
 about: Create a new outage issue
 title: 'Maintenance outage: 20YY-MM-DD'
 labels: ''
-assignees: kltm, vanaukenk
+assignees: vanaukenk, kltm, pgaudet
 
 ---
 
@@ -26,4 +26,4 @@ assignees: kltm, vanaukenk
 
 The following issues/PRs will be addressed in this outage:
 
-- [ ] 
+- [ ]
