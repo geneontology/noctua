@@ -204,6 +204,7 @@ var MinervaBootstrapping = function(user_token, issue_list){
     manager.register('postrun', function(){
 	//_shields_down();
 	notify_minerva.clear();
+	jQuery('#mmm-load-models').prop('disabled', false).text('Load models from Minerva');
     });
     manager.register('manager_error', function(resp, man){
 	alert('There was a manager error (' +
@@ -779,7 +780,13 @@ var MinervaBootstrapping = function(user_token, issue_list){
     /// Get info from server.
     ///
 
-    manager.get_meta();
+    // Load models on demand via button click instead of automatically.
+    jQuery('#mmm-load-models').click(function(evt){
+	evt.stopPropagation();
+	evt.preventDefault();
+	jQuery(this).prop('disabled', true).text('Loading...');
+	manager.get_meta();
+    });
 
     // When all is said and done, let's get the user and group
     // information. This is also a test of CORS in express.
