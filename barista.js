@@ -1683,6 +1683,9 @@ var BaristaLauncher = function () {
   //
   var { Server } = require('socket.io');
   var sio = new Server(messaging_server, {
+    // Accept socket.io 1.x/2.x (Engine.IO v3) clients alongside 4.x ones,
+    // so older workbenches keep their socket while clients are upgraded.
+    allowEIO3: true,
     cors: {
       origin: corsOrigins,
     }
