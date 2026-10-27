@@ -2985,7 +2985,7 @@ var BaristaLauncher = function () {
       //ll('PROCESSING', socket);
       // Send message back to just the sending client.
       // TODO: I feel there has to be a better way of doing this.
-      if (sio.sockets.sockets[socket_id]) {
+      if (sio.sockets.sockets.get(socket_id)) {
 
         // Check that we have a good looking packet.
         var dq = data['query'];
@@ -2999,7 +2999,7 @@ var BaristaLauncher = function () {
             data['response'] = cubby.pickup(mid, 'layout');
 
             // Send back.
-            sio.sockets.sockets[socket_id].emit('query', data);
+            sio.sockets.sockets.get(socket_id).emit('query', data);
             ll('respond to query from ' + socket_id);// +'with:',data);
           }
         }
