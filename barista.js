@@ -339,20 +339,22 @@ var AppGuard = function (app_list) {
 
   // Assemble easy-to-access information for all of the apps behind
   // Barista.
-  var app_by_namespace = {};
+  // Null-prototype maps: a namespace or call name that is also an
+  // inherited Object property must not read as configured.
+  var app_by_namespace = Object.create(null);
   each(app_list,
     function (a) {
 
       var aid = a['id'];
-      app_by_namespace[aid] = {
-        "target": a['target'],
-        "public": a['public']
-      };
-
+      var pub = Object.create(null);
       each(a['public'],
         function (p) {
-          app_by_namespace[aid]['public'][p] = true;
+          pub[p] = true;
         });
+      app_by_namespace[aid] = {
+        "target": a['target'],
+        "public": pub
+      };
     });
 
   /*
@@ -2386,6 +2388,22 @@ var BaristaLauncher = function () {
     return response_okay_p;
   }
 
+  // An API call to a namespace that is not configured gets the
+  // standard error envelope (JSONP-wrapped when asked for) instead
+  // of going on to a proxy call with no target.
+  function _unknown_namespace_response(ns, envelope, res) {
+    ll('blocking call to unknown namespace: ' + encodeURIComponent(ns));
+    var eresp_str = JSON.stringify({
+      message_type: 'error',
+      message: 'Unknown API namespace.'
+    });
+    if (envelope) {
+      eresp_str = envelope + '(' + eresp_str + ');';
+    }
+    res.setHeader('Content-Type', 'text/json');
+    res.send(eresp_str);
+  }
+
   // NOTE: Assuming either jQuery JSONP action JSON via CORS
   // or similar.
   // "jQuery1910009816080028417162_1412824223034(.*);"
@@ -2538,6 +2556,12 @@ var BaristaLauncher = function () {
       // Route the simple call to the right place.
       // Clip "/api/" and the namespace.
       var api_loc = app_guard.app_target(ns);
+      if (!api_loc) {
+        var get_envelope =
+          (req && req['query']) ? req['query']['json.wrf'] : null;
+        _unknown_namespace_response(ns, get_envelope, res);
+        return;
+      }
       req.url = req.url.substr(ns.length + 5);
       ll('api xlate (GET): [' + api_loc + ']' + req.url);
       // var urlObj = url.parse(req.url, true).query;
@@ -2689,6 +2713,11 @@ var BaristaLauncher = function () {
         //ll('req: ', req);
         // Clip "/api/" and the namespace.
         var api_loc = app_guard.app_target(ns);
+        if (!api_loc) {
+          _unknown_namespace_response(
+            ns, decoded_body ? decoded_body['json.wrf'] : null, res);
+          return;
+        }
         req.url = req.url.substr(ns.length + 5);
         ll('api xlate (POST): [' + api_loc + ']' + req.url);
         //ll(req.url);
@@ -2785,6 +2814,11 @@ var BaristaLauncher = function () {
     // local.
     var ns = barista_default_namespace;
     var api_loc = app_guard.app_target(ns);
+    if (!api_loc) {
+      _unknown_namespace_response(
+        ns, (req && req['query']) ? req['query']['json.wrf'] : null, res);
+      return;
+    }
     ll('api xlate (GET): [' + api_loc + ']' + req.url);
     api_proxy.web(req, res, {
       'target': api_loc
@@ -2795,6 +2829,11 @@ var BaristaLauncher = function () {
     monitor_calls = monitor_calls + 1;
     var ns = barista_default_namespace;
     var api_loc = app_guard.app_target(ns);
+    if (!api_loc) {
+      _unknown_namespace_response(
+        ns, (req && req['query']) ? req['query']['json.wrf'] : null, res);
+      return;
+    }
     ll('api xlate (GET): [' + api_loc + ']' + req.url);
     api_proxy.web(req, res, {
       'target': api_loc
