@@ -76,7 +76,7 @@ ONTOLOGY_LIST:
   comment: The ontologies to use for Minerva. (WARNING: will need to update with https://github.com/geneontology/pipeline/issues/35.)
   type: list
   value:
-    - http://skyhook.berkeleybop.org/go-lego-reacto.owl
+    - https://skyhook.berkeleybop.org/go-lego-reacto.owl
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list

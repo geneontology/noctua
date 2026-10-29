@@ -8,71 +8,74 @@
 /// Initialze with (optional) incoming data ans setup the GUI.
 ///
 
-var CapellaInit = function(){
-    
-    var logger = new bbop.logger('cap kick');
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
+var CapellaInit = function () {
 
-    // Aliases
-    var each = bbop.core.each;
-    var is_defined = bbop.core.is_defined;
-    var is_empty = bbop.core.is_empty;
-    var what_is = bbop.core.what_is;
-    
-    ///
-    /// Very similar to NoctuaLanding.
-    ///
+  var logger = new bbop.logger('cap kick');
+  logger.DEBUG = true;
 
-    // Events registry.
-    var manager = new bbopx.minerva.manager(global_barista_location,
-					    global_minerva_definition_name,
-					    global_barista_token);
+  function ll(str) {
+    logger.kvetch(str);
+  }
 
-    manager.register('manager_error', 'foo', function(message_type, message){
-	console.log('manager error (' + message_type + '): ' + message);
-    }, 10);
-    manager.register('warning', 'foo', function(resp, man){
-	console.log('warning: ' + resp.message());
-    }, 10);
-    // NOTE: This is the most likely place we'll have an error--taken
-    // from NoctuaLanding.
-    manager.register('error', 'foo', function(resp, man){
+  // Aliases
+  var each = bbop.core.each;
+  var is_defined = bbop.core.is_defined;
+  var is_empty = bbop.core.is_empty;
+  var what_is = bbop.core.what_is;
 
-	// Do something different if we think that this is a
-	// permissions issue.
-	var perm_flag = "InsufficientPermissionsException";
-	var token_flag = "token";
-	var err_msg = '!!!';
-	if( resp.message() && resp.message().indexOf(perm_flag) != -1 ){
-	    err_msg = 'Error: it seems like you do not have permission to ' +
-		'perform that operation. Did you remember to login?';
-	}else if( resp.message() && resp.message().indexOf(token_flag) != -1 ){
-	    err_msg = "Error: it seems like you have a bad token...";
-	}else{
-	    // Generic error.
-	    err_msg = 'Error (' + resp.message_type() + '): ' + resp.message() +
-		'; ' + 'your operation was likely not performed.';
-	}
-	console.log(err_msg);
+  ///
+  /// Very similar to NoctuaLanding.
+  ///
 
-	// Change the display sadness.
-	jQuery('#success-panel').removeClass('panel-success');
-	jQuery('#success-panel').addClass('panel-danger');
-	jQuery('#success-title').empty();
-	jQuery('#success-title').append('Uh-oh!');
-	jQuery('#success-message').empty();
-	jQuery('#success-message').append(err_msg);
-    }, 10);
-    manager.register('rebuild', 'foo', function(resp, man){
-	var id = resp.data()['id'];	
-	console.log('forward to: ', id);
-	//alert('forward to: ' + id);
-	window.location.replace("/seed/model/" + id);
-    }, 10);
+  // Events registry.
+  var manager = new bbopx.minerva.manager(global_barista_location,
+    global_minerva_definition_name,
+    global_barista_token);
 
-    // Go!
-    manager.capella_bootstrap_model(global_payload, global_term2aspect);
+  manager.register('manager_error', 'foo', function (message_type, message) {
+    console.log('manager error (' + message_type + '): ' + message);
+  }, 10);
+  manager.register('warning', 'foo', function (resp, man) {
+    console.log('warning: ' + resp.message());
+  }, 10);
+  // NOTE: This is the most likely place we'll have an error--taken
+  // from NoctuaLanding.
+  manager.register('error', 'foo', function (resp, man) {
+
+    // Do something different if we think that this is a
+    // permissions issue.
+    var perm_flag = "InsufficientPermissionsException";
+    var token_flag = "token";
+    var err_msg = '!!!';
+    if (resp.message() && resp.message().indexOf(perm_flag) != -1) {
+      err_msg = 'Error: it seems like you do not have permission to ' +
+        'perform that operation. Did you remember to login?';
+    } else if (resp.message() && resp.message().indexOf(token_flag) != -1) {
+      err_msg = "Error: it seems like you have a bad token...";
+    } else {
+      // Generic error.
+      err_msg = 'Error (' + resp.message_type() + '): ' + resp.message() +
+        '; ' + 'your operation was likely not performed.';
+    }
+    console.log(err_msg);
+
+    // Change the display sadness.
+    jQuery('#success-panel').removeClass('panel-success');
+    jQuery('#success-panel').addClass('panel-danger');
+    jQuery('#success-title').empty();
+    jQuery('#success-title').append('Uh-oh!');
+    jQuery('#success-message').empty();
+    jQuery('#success-message').append(err_msg);
+  }, 10);
+  manager.register('rebuild', 'foo', function (resp, man) {
+    var id = resp.data()['id'];
+    console.log('forward to: ', id);
+    //alert('forward to: ' + id);
+    window.location.replace("/seed/model/" + id);
+  }, 10);
+
+  // Go!
+  manager.capella_bootstrap_model(global_payload, global_term2aspect);
 };
 
 ///
@@ -80,11 +83,11 @@ var CapellaInit = function(){
 ///
 
 // 
-jQuery(document).ready(function(){
-    // Only 
-    if( typeof(global_attempt_creation_p) !== 'undefined' &&
-	global_attempt_creation_p == true ){
-	console.log('looks good to try CapellaInit');
-	CapellaInit();
-    }
+jQuery(document).ready(function () {
+  // Only
+  if (typeof (global_attempt_creation_p) !== 'undefined' &&
+    global_attempt_creation_p == true) {
+    console.log('looks good to try CapellaInit');
+    CapellaInit();
+  }
 });

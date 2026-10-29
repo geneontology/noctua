@@ -75,7 +75,7 @@ ONTOLOGY_LIST:
   comment: The ontologies to use for Minerva.
   type: list
   value:
-    - http://skyhook.berkeleybop.org/issue-35-neo-test/ontology/extensions/go-lego-reacto.owl
+    - https://skyhook.berkeleybop.org/issue-35-neo-test/ontology/extensions/go-lego-reacto.owl
 WORKBENCHES:
   comment: The location of workbench directories to add to the configuration.
   type: list
