@@ -186,8 +186,6 @@ if (!fstats.isDirectory()) {
   ll('Will use secrets directory at: ' + secloc);
 }
 
-// Define bogus users. / Select runtime developer and admin tokens.
-// TODO: Put out into private file on filesystem; still report on startup.
 // URL-safe token carrying nbytes of CSPRNG entropy.
 // base64url is hand-rolled rather than toString('base64url'): that encoding
 // name needs Node >= 14, and this file also runs on the Node 8 hosts.
@@ -195,13 +193,33 @@ function _gen_token(nbytes) {
   var b64 = crypto.randomBytes(nbytes).toString('base64');
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-var admin_token = argv['a'] || argv['admin-token'] || _gen_token(12);
-ll('Barista admin token (self): ' + admin_token);
-var edit_token = argv['e'] || argv['edit-token'] || _gen_token(12);
-ll('Barista editor token (self): ' + edit_token);
+
+// Built-in developer accounts (admin, editor, anonymous editor). They are
+// created only with --dev-accounts; a server without the flag has no
+// account that bypasses the login providers. Their tokens come, in order,
+// from <secrets>/self.yaml (keys admin_token, edit_token; mode 0600), from
+// -a/--admin-token and -e/--edit-token, or are generated for this run.
+// Token values are never logged: read them from the file you supplied.
+var use_dev_accounts_p = argv['dev-accounts'] ? true : false;
+var self_secrets = {};
+if (use_dev_accounts_p && secloc) {
+  var self_path = secloc + '/self.yaml';
+  if (fs.existsSync(self_path)) {
+    self_secrets = yaml.load(self_path) || {};
+    ll('Developer account tokens read from: ' + self_path);
+  }
+}
+var admin_token = self_secrets['admin_token'] ||
+  argv['a'] || argv['admin-token'] || _gen_token(12);
+var edit_token = self_secrets['edit_token'] ||
+  argv['e'] || argv['edit-token'] || _gen_token(12);
 var rand_user_token = _gen_token(12);
-ll('Anonymous editor token: ' + rand_user_token);
-var bogus_users = [
+if (use_dev_accounts_p) {
+  ll('Developer accounts enabled: admin, editor, anonymous editor');
+} else {
+  ll('Developer accounts disabled (no --dev-accounts)');
+}
+var bogus_users = !use_dev_accounts_p ? [] : [
   {
     token: admin_token,
     nickname: 'Developer (admin)',
