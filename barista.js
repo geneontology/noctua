@@ -1117,7 +1117,8 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function (provider) {
       // TODO.
       // Pick-up secrets file and check structure.
       var github_secrets = yaml.load(provider_path);
-      console.log('secrets for ' + provider, github_secrets);
+      ll('secrets loaded for ' + provider + ' (client id ' +
+        (github_secrets && github_secrets['clientID'] ? github_secrets['clientID'] : 'missing') + ')');
       if (github_secrets['clientID'] &&
         github_secrets['clientSecret'] &&
         github_secrets['callbackURL']) {
@@ -1164,7 +1165,8 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function (provider) {
 
       // Pick-up secrets file and check structure.
       var google_secrets = yaml.load(provider_path);
-      console.log('secrets for ' + provider, google_secrets);
+      ll('secrets loaded for ' + provider + ' (client id ' +
+        (google_secrets && google_secrets['clientID'] ? google_secrets['clientID'] : 'missing') + ')');
       if (google_secrets['clientID'] &&
         google_secrets['clientSecret'] &&
         google_secrets['callbackURL']) {
@@ -1215,7 +1217,8 @@ us.each(['local', 'github', 'google-plus', 'orcid'], function (provider) {
       // TODO.
       // Pick-up secrets file and check structure.
       var orcid_secrets = yaml.load(provider_path);
-      console.log('secrets for ' + provider, orcid_secrets);
+      ll('secrets loaded for ' + provider + ' (client id ' +
+        (orcid_secrets && orcid_secrets['clientID'] ? orcid_secrets['clientID'] : 'missing') + ')');
       if (orcid_secrets['clientID'] &&
         orcid_secrets['clientSecret'] &&
         orcid_secrets['callbackURL']) {
@@ -1661,8 +1664,10 @@ var BaristaLauncher = function () {
   // referring "return" location after oauth2 kickouts.
   // https://github.com/expressjs/session#options
   var session = require('express-session');
+  // Per-process secret: sessions do not outlive the process anyway, and a
+  // fixed string would let anyone forge the session cookie.
   var session_options = {
-    secret: 'notverysecret',
+    secret: _gen_token(32),
     resave: false,
     saveUninitialized: false
   };
