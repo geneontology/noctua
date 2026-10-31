@@ -22,9 +22,12 @@ const args = [
   '--secrets', loginSecretsDir,
   '--context', noctuaContext,
   '--default-namespace', baristaDefaultNamespace,
-  '--repl', baristaReplPort,
   '--cors-origins', noctuaURL,
 ];
+// The REPL listener is optional: only pass --repl when startup.yaml sets a port.
+if (baristaReplPort) {
+  args.push('--repl', String(baristaReplPort));
+}
 
 // Inherit stdio so supervisor/local logs contain the child process output.
 console.log(`Executing: node ${args.join(' ')}`);
