@@ -34,7 +34,7 @@ assignees: kltm, pgaudet
   git pull origin master        
   ```
 
-- [ ] Announce software changes once completed
+- [ ] Announce software changes once completed (via https://github.com/geneontology/noctua-announcements/tree/main/announcements) 
 - [ ]  If needed, add software updates to Release Notes in Noctua User Guide
 - [ ] If needed, document changes on Noctua User Guide
 
