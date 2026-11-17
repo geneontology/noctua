@@ -67,7 +67,7 @@ TODO
 - scope and for loops
 - unit test types
   - behave
-  - mocha/chai (non-chained)
+  - node:test/chai (non-chained)
 
 preferred:
 

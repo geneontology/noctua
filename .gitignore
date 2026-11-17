@@ -29,3 +29,7 @@ tramp
 # Org-mode
 .org-id-locations
 *_archive
+
+## Other IDEs
+.idea
+.vscode
