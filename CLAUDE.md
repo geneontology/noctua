@@ -24,8 +24,12 @@ Frontend bundled with Webpack. Real-time updates via Socket.io.
 
 ## Build & Run
 
+Requires Node `>=22 <25` (`engines` in `package.json`); `master` has been the
+Node 22 / webpack / express 5 / socket.io 4 line since #1155 (2026-11-18).
+There is no gulpfile any more: the `run-*` scripts call `scripts/*.js`.
+
 ```sh
-npm install
+npm ci --legacy-peer-deps   # plain `npm ci` stops with ERESOLVE (selectize's jquery peer range)
 npm run build          # compile webpack bundles
 npm run test           # run tests
 npm run run-minerva    # start Blazegraph
@@ -48,6 +52,8 @@ npm run run-noctua     # start main web app
 - Node built-in test runner + Chai (non-chained assertions)
 - Test files: `tests/*.test.js`
 - Run: `npm run test`
+- As of 2026-11 the only test (`tests/trivial.test.js`) is a skipped
+  placeholder, so a passing run asserts nothing about a change.
 
 ## Configuration
 
